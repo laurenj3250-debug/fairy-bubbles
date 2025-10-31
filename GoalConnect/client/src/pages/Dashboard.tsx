@@ -4,6 +4,7 @@ import { VirtualPet } from "@/components/VirtualPet";
 import { EmptyState } from "@/components/EmptyState";
 import { FAB } from "@/components/FAB";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Star, Crown } from "lucide-react";
+import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -391,8 +392,11 @@ export default function Dashboard() {
                         )}>
                           {habit.completed && <span className="text-white font-bold pop">✓</span>}
                         </div>
-                        <div className="w-7 h-7 text-2xl flex-shrink-0" style={{filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)'}}>
-                          {habit.icon}
+                        <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center" style={{filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)', color: habit.color}}>
+                          {(() => {
+                            const IconComponent = (Icons as any)[habit.icon] || Icons.Sparkles;
+                            return <IconComponent className="w-6 h-6" />;
+                          })()}
                         </div>
                         <div className={cn(
                           "flex-1 font-medium text-base",
