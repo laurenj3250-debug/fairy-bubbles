@@ -40,5 +40,5 @@ externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "cd GoalConnect && npm run start"]
-build = ["bash", "-c", "cd GoalConnect && npm run build"]
+run = ["npm", "--prefix", "GoalConnect", "run", "start"]
+build = ["npm", "--prefix", "GoalConnect", "run", "build"]
