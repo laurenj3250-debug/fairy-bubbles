@@ -7,7 +7,7 @@ import catImage from "@assets/3d ish crumpet.png";
 // Evolution configurations
 const EVOLUTION_CONFIG = {
   seed: {
-    size: 120,
+    size: 180,
     primaryColor: '#a855f7',
     secondaryColor: '#ec4899',
     glowColor: 'rgba(168, 85, 247, 0.6)',
@@ -15,7 +15,7 @@ const EVOLUTION_CONFIG = {
     description: 'Just starting out! 🌱',
   },
   sprout: {
-    size: 140,
+    size: 210,
     primaryColor: '#ec4899',
     secondaryColor: '#f59e0b',
     glowColor: 'rgba(236, 72, 153, 0.6)',
@@ -23,7 +23,7 @@ const EVOLUTION_CONFIG = {
     description: 'Growing strong! 🌿',
   },
   sapling: {
-    size: 160,
+    size: 240,
     primaryColor: '#10b981',
     secondaryColor: '#3b82f6',
     glowColor: 'rgba(16, 185, 129, 0.6)',
@@ -31,7 +31,7 @@ const EVOLUTION_CONFIG = {
     description: 'Thriving beautifully! 🌳',
   },
   tree: {
-    size: 180,
+    size: 270,
     primaryColor: '#3b82f6',
     secondaryColor: '#8b5cf6',
     glowColor: 'rgba(59, 130, 246, 0.6)',
@@ -39,7 +39,7 @@ const EVOLUTION_CONFIG = {
     description: 'So impressive! 🌲',
   },
   ancient: {
-    size: 200,
+    size: 300,
     primaryColor: '#f59e0b',
     secondaryColor: '#ef4444',
     glowColor: 'rgba(245, 158, 11, 0.8)',
