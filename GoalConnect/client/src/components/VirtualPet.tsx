@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp } from "lucide-react";
 import type { VirtualPet as VirtualPetType } from "@shared/schema";
+import catImage from "@assets/3d ish crumpet.png";
 
 // Evolution configurations
 const EVOLUTION_CONFIG = {
@@ -55,82 +56,12 @@ function PetAvatar({ evolution, size }: { evolution: keyof typeof EVOLUTION_CONF
       className="relative mx-auto float-animation"
       style={{ width: size, height: size }}
     >
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <defs>
-          <linearGradient id={`bodyGradient-${evolution}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: config.primaryColor, stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: config.secondaryColor, stopOpacity: 1 }} />
-          </linearGradient>
-          <filter id={`glow-${evolution}`}>
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Main Body - size scales with evolution */}
-        <circle
-          cx="100"
-          cy="100"
-          r={evolution === 'seed' ? 40 : evolution === 'sprout' ? 50 : evolution === 'sapling' ? 55 : evolution === 'tree' ? 58 : 60}
-          fill={`url(#bodyGradient-${evolution})`}
-          filter={`url(#glow-${evolution})`}
-        />
-
-        {/* Fairy Wings - appear after seed stage */}
-        {evolution !== 'seed' && (
-          <>
-            <ellipse cx="60" cy="80" rx="30" ry="45" fill="#a7f3d0" opacity="0.7" transform="rotate(-20 60 80)">
-              <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite"/>
-            </ellipse>
-            <ellipse cx="140" cy="80" rx="30" ry="45" fill="#a7f3d0" opacity="0.7" transform="rotate(20 140 80)">
-              <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite" begin="0.5s"/>
-            </ellipse>
-          </>
-        )}
-
-        {/* Eyes */}
-        <circle cx="85" cy="90" r="10" fill="white"/>
-        <circle cx="115" cy="90" r="10" fill="white"/>
-        <circle cx="87" cy="92" r="6" fill="#2d3748"/>
-        <circle cx="117" cy="92" r="6" fill="#2d3748"/>
-        <circle cx="89" cy="90" r="3" fill="white"/>
-        <circle cx="119" cy="90" r="3" fill="white"/>
-
-        {/* Nose */}
-        <circle cx="100" cy="105" r="5" fill="#fbbf24"/>
-
-        {/* Smile */}
-        <path
-          d="M 85 115 Q 100 130 115 115"
-          stroke="#2d3748"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-
-        {/* Ears - grow with evolution */}
-        <circle cx="70" cy="60" r={evolution === 'seed' ? 10 : 15} fill={`url(#bodyGradient-${evolution})`}/>
-        <circle cx="130" cy="60" r={evolution === 'seed' ? 10 : 15} fill={`url(#bodyGradient-${evolution})`}/>
-        <circle cx="70" cy="62" r={evolution === 'seed' ? 5 : 8} fill="#fbbf24"/>
-        <circle cx="130" cy="62" r={evolution === 'seed' ? 5 : 8} fill="#fbbf24"/>
-
-        {/* Magical antenna - gets more prominent */}
-        {evolution !== 'seed' && (
-          <>
-            <line x1="100" y1="40" x2="100" y2="20" stroke="#a7f3d0" strokeWidth="2"/>
-            <circle cx="100" cy="20" r={evolution === 'ancient' ? 7 : 5} fill="#fbbf24">
-              <animate attributeName="r" values={`${evolution === 'ancient' ? '7;9;7' : '5;7;5'}`} dur="1.5s" repeatCount="indefinite"/>
-            </circle>
-          </>
-        )}
-
-        {/* Rosy cheeks */}
-        <circle cx="70" cy="110" r="10" fill="#fca5a5" opacity="0.5"/>
-        <circle cx="130" cy="110" r="10" fill="#fca5a5" opacity="0.5"/>
-      </svg>
+      <img 
+        src={catImage} 
+        alt="Your virtual pet cat" 
+        className="w-full h-full object-contain drop-shadow-2xl"
+        style={{ filter: 'drop-shadow(0 0 20px rgba(251, 191, 36, 0.3))' }}
+      />
 
       {/* Glow effect around pet */}
       <div
