@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Vampire Costume",
+    "description": "Complete vampire outfit with cape and top hat",
+    "category": "outfit",
+    "price": 60,
+    "imageFile": "vampire_full_costume.png",
+    "rarity": "epic"
+  }
+]
