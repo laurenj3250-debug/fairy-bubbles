@@ -34,6 +34,7 @@ export interface IStorage {
   deleteHabit(id: number): Promise<boolean>;
   
   getHabitLogs(habitId: number): Promise<HabitLog[]>;
+  getAllHabitLogs(userId: number): Promise<HabitLog[]>;
   getHabitLogsByDate(userId: number, date: string): Promise<HabitLog[]>;
   getHabitLog(id: number): Promise<HabitLog | undefined>;
   createHabitLog(log: InsertHabitLog): Promise<HabitLog>;
@@ -202,6 +203,10 @@ export class MemStorage implements IStorage {
 
   async getHabitLogs(habitId: number): Promise<HabitLog[]> {
     return Array.from(this.habitLogs.values()).filter(log => log.habitId === habitId);
+  }
+
+  async getAllHabitLogs(userId: number): Promise<HabitLog[]> {
+    return Array.from(this.habitLogs.values()).filter(log => log.userId === userId);
   }
 
   async getHabitLogsByDate(userId: number, date: string): Promise<HabitLog[]> {

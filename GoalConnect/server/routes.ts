@@ -11,8 +11,52 @@ import {
   insertPointTransactionSchema,
   insertTodoSchema,
 } from "@shared/schema";
+import {
+  calculatePetStats,
+  calculateStreak,
+  calculateWeeklyCompletion,
+  calculateCoinsEarned,
+} from "./pet-utils";
 
 const USER_ID = 1;
+
+// Helper function to update pet stats automatically
+async function updatePetFromHabits(userId: number) {
+  try {
+    const habits = await storage.getHabits(userId);
+    const allLogs = await storage.getAllHabitLogs(userId);
+    let pet = await storage.getVirtualPet(userId);
+
+    if (!pet) {
+      // Create default pet if doesn't exist
+      pet = await storage.createVirtualPet({
+        userId,
+        name: "Forest Friend",
+        species: "Gremlin",
+        happiness: 50,
+        health: 100,
+        level: 1,
+        experience: 0,
+        evolution: "seed",
+      });
+    }
+
+    const stats = calculatePetStats(habits, allLogs, pet);
+
+    // Update pet with new stats
+    await storage.updateVirtualPet(pet.id, {
+      experience: stats.experience,
+      level: stats.level,
+      happiness: stats.happiness,
+      evolution: stats.evolution,
+    });
+
+    return { stats, leveledUp: stats.leveledUp, evolved: stats.evolved };
+  } catch (error) {
+    console.error("Failed to update pet stats:", error);
+    return null;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/habits", async (req, res) => {
@@ -97,21 +141,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validated = insertHabitLogSchema.parse({ ...req.body, userId: USER_ID });
       const log = await storage.createHabitLog(validated);
-      
+
       // Award points for completing a habit
       const habit = await storage.getHabit(validated.habitId);
       if (habit && validated.completed) {
-        const points = 10; // Base points for completing a habit
+        // Calculate streak for bonus coins
+        const allLogs = await storage.getAllHabitLogs(USER_ID);
+        const currentStreak = calculateStreak(allLogs);
+        const coins = calculateCoinsEarned(habit, currentStreak);
+
         await storage.addPoints(
           USER_ID,
-          points,
+          coins,
           "habit_complete",
           log.id,
           `Completed "${habit.title}"`
         );
       }
-      
-      res.status(201).json(log);
+
+      // Auto-update pet stats
+      const petUpdate = await updatePetFromHabits(USER_ID);
+
+      res.status(201).json({
+        ...log,
+        petUpdate: petUpdate ? {
+          leveledUp: petUpdate.leveledUp,
+          evolved: petUpdate.evolved,
+        } : null,
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid habit log data" });
     }
@@ -124,7 +181,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!log) {
         return res.status(404).json({ error: "Habit log not found" });
       }
-      res.json(log);
+
+      // Auto-update pet stats after changing a log
+      const petUpdate = await updatePetFromHabits(USER_ID);
+
+      res.json({
+        ...log,
+        petUpdate: petUpdate ? {
+          leveledUp: petUpdate.leveledUp,
+          evolved: petUpdate.evolved,
+        } : null,
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update habit log" });
     }
@@ -291,6 +358,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stats endpoint for dashboard
+  app.get("/api/stats", async (req, res) => {
+    try {
+      const habits = await storage.getHabits(USER_ID);
+      const allLogs = await storage.getAllHabitLogs(USER_ID);
+
+      const currentStreak = calculateStreak(allLogs);
+      const weeklyCompletion = calculateWeeklyCompletion(habits, allLogs);
+
+      res.json({
+        currentStreak,
+        weeklyCompletion,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   // Virtual Pet Routes
   app.get("/api/pet", async (req, res) => {
     try {
@@ -298,12 +383,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!pet) {
         pet = await storage.createVirtualPet({
           userId: USER_ID,
-          name: "Gizmo",
+          name: "Forest Friend",
           species: "Gremlin",
-          happiness: 100,
+          happiness: 50,
           health: 100,
           level: 1,
           experience: 0,
+          evolution: "seed",
         });
       }
       res.json(pet);

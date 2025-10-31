@@ -58,13 +58,16 @@ export const userSettings = pgTable("user_settings", {
 export const virtualPets = pgTable("virtual_pets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique().references(() => users.id),
-  name: text("name").notNull(),
-  species: varchar("species", { length: 50 }).notNull().$type<"Gremlin">(),
-  happiness: integer("happiness").notNull().default(100),
+  name: text("name").notNull().default("Forest Friend"),
+  species: varchar("species", { length: 50 }).notNull().default("Gremlin").$type<"Gremlin">(),
+  happiness: integer("happiness").notNull().default(50),
   health: integer("health").notNull().default(100),
   level: integer("level").notNull().default(1),
   experience: integer("experience").notNull().default(0),
+  evolution: varchar("evolution", { length: 20 }).notNull().default("seed").$type<"seed" | "sprout" | "sapling" | "tree" | "ancient">(),
   currentCostumeId: integer("current_costume_id").references(() => costumes.id),
+  lastFed: timestamp("last_fed").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const costumes = pgTable("costumes", {
