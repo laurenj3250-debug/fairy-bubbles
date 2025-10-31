@@ -55,8 +55,8 @@ Preferred communication style: Simple, everyday language.
 
 **Data Access Layer**:
 - Storage abstraction interface (`IStorage`) defined in `server/storage.ts`
-- In-memory storage implementation (`MemStorage`) currently active
-- Prepared for database integration (Drizzle ORM configuration present)
+- Database storage implementation (`DbStorage`) currently active
+- Using Drizzle ORM with PostgreSQL database
 
 **Development Setup**:
 - Vite dev server integrated with Express in development mode
@@ -66,13 +66,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage
 
-**Current State**: In-memory storage using Map data structures
+**Current State**: PostgreSQL database using Drizzle ORM
 
-**Prepared Migration Path**: 
+**Database Setup**: 
 - Drizzle ORM configured for PostgreSQL via `drizzle.config.ts`
 - Neon serverless PostgreSQL driver installed (`@neondatabase/serverless`)
-- Schema definitions in `shared/schema.ts` (currently mock objects, ready for conversion to Drizzle schema)
-- Migration directory configured at `./migrations`
+- Schema definitions in `shared/schema.ts` with Drizzle table definitions
+- Database migrations managed via `npm run db:push`
+- Seeded with demo data via `server/seed.ts`
 
 **Data Models**:
 - **Users**: Basic user information (id, name, email)
@@ -126,3 +127,45 @@ Preferred communication style: Simple, everyday language.
 **Session Management (Prepared)**:
 - Express session middleware configured but not yet integrated
 - PostgreSQL session store ready via `connect-pg-simple`
+
+## Recent Changes
+
+### Replit Environment Setup (October 31, 2025)
+
+**Setup Completed**:
+- Configured Node.js 20 environment
+- Installed all npm dependencies (478 packages)
+- Created PostgreSQL database with Replit's built-in database service
+- Ran database migrations using `npm run db:push`
+- Seeded database with demo data including:
+  - Demo user account
+  - 4 sample habits (Morning Exercise, Read 30 minutes, Meditate, Weekly Review)
+  - 21 habit log entries for the past 7 days
+  - 4 goals with progress tracking
+  - 12 costumes for the virtual pet shop
+  - Initial points balance (250 points)
+  - Virtual pet (Forest Friend, Level 3)
+
+**Bug Fixes**:
+- Added missing `getAllHabitLogs` method to `DbStorage` class
+  - This method was defined in the `IStorage` interface but not implemented in the database storage layer
+  - Fixed 500 error on `/api/stats` endpoint that was preventing streak and weekly completion stats from loading
+
+**Deployment Configuration**:
+- Set up autoscale deployment target
+- Build command: `cd GoalConnect && npm run build`
+- Run command: `cd GoalConnect && npm run start`
+- Server runs on port 5000 (both frontend and backend on same port)
+
+**Workflow Configuration**:
+- Created "GoalConnect Dev Server" workflow
+- Command: `cd GoalConnect && npm run dev`
+- Port: 5000 (configured for webview)
+- Server configured with `allowedHosts: true` for Replit's proxy environment
+
+**Current Status**: ✅ Fully functional
+- All API endpoints working correctly (200/304 status codes)
+- Frontend rendering properly with all features operational
+- Database connected and seeded with demo data
+- Development server running on port 5000
+- Ready for deployment to production

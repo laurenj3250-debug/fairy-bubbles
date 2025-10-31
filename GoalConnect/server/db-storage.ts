@@ -59,6 +59,10 @@ export class DbStorage implements IStorage {
     return await db.select().from(schema.habitLogs).where(eq(schema.habitLogs.habitId, habitId));
   }
 
+  async getAllHabitLogs(userId: number): Promise<HabitLog[]> {
+    return await db.select().from(schema.habitLogs).where(eq(schema.habitLogs.userId, userId));
+  }
+
   async getHabitLogsByDate(userId: number, date: string): Promise<HabitLog[]> {
     return await db
       .select()
