@@ -550,6 +550,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alias for user points
+  app.get("/api/user-points", async (req, res) => {
+    try {
+      const points = await storage.getUserPoints(USER_ID);
+      res.json(points);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch points" });
+    }
+  });
+
   app.get("/api/points/transactions", async (req, res) => {
     try {
       const transactions = await storage.getPointTransactions(USER_ID);

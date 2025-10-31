@@ -60,14 +60,20 @@ async function seed() {
   });
   console.log("✓ User settings created");
 
-  // Seed costumes
+  // Seed costumes (using emojis for easy display)
   const costumeData = [
-    { name: "Party Hat", description: "A festive party hat with stars and confetti", category: "hat" as const, price: 50, imageUrl: "/attached_assets/generated_images/Party_hat_for_cat_79b322cc.png", rarity: "common" as const },
-    { name: "Royal Crown", description: "A golden royal crown fit for a king", category: "hat" as const, price: 200, imageUrl: "/attached_assets/generated_images/Royal_crown_for_cat_a6a52cf7.png", rarity: "rare" as const },
-    { name: "Wizard Hat", description: "A magical wizard hat with stars and moons", category: "hat" as const, price: 150, imageUrl: "/attached_assets/generated_images/Wizard_hat_for_cat_1530fbe8.png", rarity: "rare" as const },
-    { name: "Superhero Cape", description: "Feel like a superhero with this flowing cape", category: "outfit" as const, price: 100, imageUrl: "/attached_assets/generated_images/Superhero_cape_for_cat_1bb6ad3e.png", rarity: "common" as const },
-    { name: "Cool Sunglasses", description: "Stylish shades for your cool cat", category: "accessory" as const, price: 75, imageUrl: "/attached_assets/generated_images/Sunglasses_for_cat_3e1586b0.png", rarity: "common" as const },
+    { name: "Party Hat", description: "A festive party hat with stars and confetti", category: "hat" as const, price: 50, imageUrl: "🎉", rarity: "common" as const },
+    { name: "Royal Crown", description: "A golden royal crown fit for a king", category: "hat" as const, price: 200, imageUrl: "👑", rarity: "rare" as const },
+    { name: "Wizard Hat", description: "A magical wizard hat with stars and moons", category: "hat" as const, price: 150, imageUrl: "🧙", rarity: "rare" as const },
+    { name: "Witch Hat", description: "Spooky and magical", category: "hat" as const, price: 120, imageUrl: "🧹", rarity: "common" as const },
+    { name: "Top Hat", description: "Classy and sophisticated", category: "hat" as const, price: 100, imageUrl: "🎩", rarity: "common" as const },
+    { name: "Superhero Cape", description: "Feel like a superhero with this flowing cape", category: "outfit" as const, price: 100, imageUrl: "🦸", rarity: "common" as const },
+    { name: "Cool Sunglasses", description: "Stylish shades for your cool friend", category: "accessory" as const, price: 75, imageUrl: "😎", rarity: "common" as const },
     { name: "Gold Medal", description: "Achievement unlocked!", category: "accessory" as const, price: 300, imageUrl: "🏅", rarity: "epic" as const },
+    { name: "Rainbow Wings", description: "Magical rainbow fairy wings", category: "accessory" as const, price: 250, imageUrl: "🌈", rarity: "rare" as const },
+    { name: "Diamond Ring", description: "Sparkly and precious", category: "accessory" as const, price: 500, imageUrl: "💍", rarity: "legendary" as const },
+    { name: "Forest Background", description: "Enchanted forest scenery", category: "background" as const, price: 150, imageUrl: "🌲", rarity: "rare" as const },
+    { name: "Star Power", description: "Surrounded by stars", category: "accessory" as const, price: 180, imageUrl: "⭐", rarity: "rare" as const },
   ];
 
   await db.insert(schema.costumes).values(costumeData);
@@ -76,12 +82,13 @@ async function seed() {
   // Create virtual pet
   await db.insert(schema.virtualPets).values({
     userId: user.id,
-    name: "Gizmo",
+    name: "Forest Friend",
     species: "Gremlin",
     happiness: 85,
     health: 90,
     level: 3,
     experience: 150,
+    evolution: "seed",
     currentCostumeId: null,
   });
   console.log("✓ Virtual pet created");

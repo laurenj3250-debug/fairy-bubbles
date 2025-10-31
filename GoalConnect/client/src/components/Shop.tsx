@@ -27,7 +27,7 @@ export function Shop() {
   });
 
   const { data: points } = useQuery<UserPoints>({
-    queryKey: ["/api/points"],
+    queryKey: ["/api/user-points"],
   });
 
   const purchaseMutation = useMutation({
