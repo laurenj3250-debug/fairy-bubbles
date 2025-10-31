@@ -66,6 +66,9 @@ export interface IStorage {
   
   getUserCostumes(userId: number): Promise<UserCostume[]>;
   purchaseCostume(userId: number, costumeId: number): Promise<UserCostume>;
+  equipCostume(userId: number, costumeId: number): Promise<UserCostume>;
+  unequipCostume(userId: number, costumeId: number): Promise<UserCostume>;
+  getEquippedCostumes(userId: number): Promise<Array<UserCostume & { costume: Costume }>>;
   
   getUserPoints(userId: number): Promise<UserPoints>;
   addPoints(userId: number, amount: number, type: PointTransaction['type'], relatedId: number | null, description: string): Promise<PointTransaction>;

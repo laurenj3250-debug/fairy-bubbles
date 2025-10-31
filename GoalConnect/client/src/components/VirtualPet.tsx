@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp } from "lucide-react";
-import type { VirtualPet as VirtualPetType } from "@shared/schema";
+import type { VirtualPet as VirtualPetType, UserCostume, Costume } from "@shared/schema";
 import catImage from "@assets/3d ish crumpet.png";
 
 // Evolution configurations
@@ -48,7 +48,15 @@ const EVOLUTION_CONFIG = {
   },
 };
 
-function PetAvatar({ evolution, size }: { evolution: keyof typeof EVOLUTION_CONFIG; size: number }) {
+function PetAvatar({ 
+  evolution, 
+  size, 
+  equippedCostumes = []
+}: { 
+  evolution: keyof typeof EVOLUTION_CONFIG; 
+  size: number;
+  equippedCostumes?: Array<UserCostume & { costume: Costume }>;
+}) {
   const config = EVOLUTION_CONFIG[evolution];
 
   return (
@@ -59,9 +67,21 @@ function PetAvatar({ evolution, size }: { evolution: keyof typeof EVOLUTION_CONF
       <img 
         src={catImage} 
         alt="Your virtual pet cat" 
-        className="w-full h-full object-contain drop-shadow-2xl"
+        className="w-full h-full object-contain drop-shadow-2xl relative z-10"
         style={{ filter: 'drop-shadow(0 0 20px rgba(251, 191, 36, 0.3))' }}
       />
+
+      {equippedCostumes?.map((uc) => (
+        <img
+          key={uc.id}
+          src={uc.costume.imageUrl}
+          alt={uc.costume.name}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+          style={{
+            filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+          }}
+        />
+      ))}
 
       {/* Glow effect around pet */}
       <div
@@ -79,6 +99,10 @@ export function VirtualPet() {
 
   const { data: stats } = useQuery<{ currentStreak: number; weeklyCompletion: number }>({
     queryKey: ["/api/stats"],
+  });
+
+  const { data: equippedCostumes = [] } = useQuery<Array<UserCostume & { costume: Costume }>>({
+    queryKey: ["/api/costumes/equipped"],
   });
 
   if (isLoading || !pet) {
@@ -109,7 +133,7 @@ export function VirtualPet() {
       <div className="relative z-10">
         {/* Pet Avatar with evolution */}
         <div className="mb-6">
-          <PetAvatar evolution={pet.evolution} size={config.size} />
+          <PetAvatar evolution={pet.evolution} size={config.size} equippedCostumes={equippedCostumes} />
         </div>
 
         {/* Pet Name & Evolution Stage */}

@@ -261,6 +261,80 @@ export class DbStorage implements IStorage {
     return newUserCostume;
   }
 
+  async equipCostume(userId: number, costumeId: number): Promise<UserCostume> {
+    const costume = await this.getCostume(costumeId);
+    if (!costume) {
+      throw new Error("Costume not found");
+    }
+
+    const costumeCategory = costume.category;
+    
+    const sameCategoryCostumes = await db
+      .select()
+      .from(schema.userCostumes)
+      .innerJoin(schema.costumes, eq(schema.userCostumes.costumeId, schema.costumes.id))
+      .where(
+        and(
+          eq(schema.userCostumes.userId, userId),
+          eq(schema.costumes.category, costumeCategory),
+          eq(schema.userCostumes.isEquipped, true)
+        )
+      );
+
+    for (const uc of sameCategoryCostumes) {
+      await db
+        .update(schema.userCostumes)
+        .set({ isEquipped: false })
+        .where(eq(schema.userCostumes.id, uc.user_costumes.id));
+    }
+
+    const [equipped] = await db
+      .update(schema.userCostumes)
+      .set({ isEquipped: true })
+      .where(
+        and(
+          eq(schema.userCostumes.userId, userId),
+          eq(schema.userCostumes.costumeId, costumeId)
+        )
+      )
+      .returning();
+
+    return equipped;
+  }
+
+  async unequipCostume(userId: number, costumeId: number): Promise<UserCostume> {
+    const [unequipped] = await db
+      .update(schema.userCostumes)
+      .set({ isEquipped: false })
+      .where(
+        and(
+          eq(schema.userCostumes.userId, userId),
+          eq(schema.userCostumes.costumeId, costumeId)
+        )
+      )
+      .returning();
+
+    return unequipped;
+  }
+
+  async getEquippedCostumes(userId: number): Promise<Array<UserCostume & { costume: Costume }>> {
+    const result = await db
+      .select()
+      .from(schema.userCostumes)
+      .innerJoin(schema.costumes, eq(schema.userCostumes.costumeId, schema.costumes.id))
+      .where(
+        and(
+          eq(schema.userCostumes.userId, userId),
+          eq(schema.userCostumes.isEquipped, true)
+        )
+      );
+
+    return result.map((row) => ({
+      ...row.user_costumes,
+      costume: row.costumes,
+    }));
+  }
+
   // Points
   async getUserPoints(userId: number): Promise<UserPoints> {
     const [points] = await db.select().from(schema.userPoints).where(eq(schema.userPoints.userId, userId));

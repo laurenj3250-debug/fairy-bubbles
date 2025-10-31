@@ -540,6 +540,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/costumes/equip", async (req, res) => {
+    try {
+      const { costumeId } = req.body;
+      if (!costumeId || typeof costumeId !== "number") {
+        return res.status(400).json({ error: "Costume ID required" });
+      }
+
+      const userCostumes = await storage.getUserCostumes(USER_ID);
+      if (!userCostumes.some(uc => uc.costumeId === costumeId)) {
+        return res.status(400).json({ error: "You don't own this costume" });
+      }
+
+      const equipped = await storage.equipCostume(USER_ID, costumeId);
+      res.json(equipped);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to equip costume" });
+    }
+  });
+
+  app.post("/api/costumes/unequip", async (req, res) => {
+    try {
+      const { costumeId } = req.body;
+      if (!costumeId || typeof costumeId !== "number") {
+        return res.status(400).json({ error: "Costume ID required" });
+      }
+
+      const unequipped = await storage.unequipCostume(USER_ID, costumeId);
+      res.json(unequipped);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to unequip costume" });
+    }
+  });
+
+  app.get("/api/costumes/equipped", async (req, res) => {
+    try {
+      const equipped = await storage.getEquippedCostumes(USER_ID);
+      res.json(equipped);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch equipped costumes" });
+    }
+  });
+
   // Points Routes
   app.get("/api/points", async (req, res) => {
     try {

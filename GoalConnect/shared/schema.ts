@@ -85,6 +85,7 @@ export const userCostumes = pgTable("user_costumes", {
   userId: integer("user_id").notNull().references(() => users.id),
   costumeId: integer("costume_id").notNull().references(() => costumes.id),
   purchasedAt: timestamp("purchased_at").defaultNow().notNull(),
+  isEquipped: boolean("is_equipped").notNull().default(false),
 });
 
 export const pointTransactions = pgTable("point_transactions", {
