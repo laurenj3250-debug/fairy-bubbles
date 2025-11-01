@@ -43,7 +43,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <CardHeader>
           <CardTitle className="text-center text-2xl">Sign in to GoalConnect</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            Use the username and password from your <code>.env</code> file. Defaults are <strong>laurenj3250</strong> / <strong>Crumpet11!!</strong>.
+            Use the username and password from your <code>.env</code> file. Defaults are <strong>demo</strong> / <strong>demo1234</strong>.
           </p>
         </CardHeader>
         <CardContent>

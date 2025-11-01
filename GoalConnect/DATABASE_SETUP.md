@@ -4,6 +4,17 @@ Your Neon database is configured but needs to be set up from your **local machin
 
 ## Quick Setup (Pick Your Style)
 
+### Prefer to Skip Neon?
+
+If you just want to explore GoalConnect locally without provisioning the hosted database yet:
+
+1. Run `npm install` and then `npm run dev` inside `GoalConnect/`.
+2. Sign in with the default credentials **demo / demo1234**.
+3. Update `APP_USERNAME`, `APP_PASSWORD`, and `SESSION_SECRET` in `.env` whenever you want to change them.
+4. Want to skip the login screen entirely while you experiment? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
+
+This mode uses the in-memory storage so data resets on server restart. Follow the Neon steps below when you're ready for long-term persistence.
+
 ### Option A — One Command (Recommended)
 
 From the `GoalConnect` directory run:
@@ -25,14 +36,14 @@ It prints each step so you can watch the progress and flags anything that needs 
 
 If you prefer to run the commands yourself, follow the steps below.
 
-#### Step 1: Review Your `.env`
+#### Step 1: Create Your `.env`
 
-A ready-to-use `.env` file is already committed with your Neon credentials and auth defaults. Open it to confirm nothing has
-changed, or duplicate it if you want an alternate configuration:
+Copy the provided Neon credentials into a new `.env` file so the server and Drizzle migrations can connect to your database:
 
 ```bash
 cd GoalConnect
-nano .env   # or use your editor of choice
+cp .env.example .env
+# (Optional) open .env and verify the values match the ones below
 ```
 
 #### Step 2: Install Dependencies
@@ -108,9 +119,8 @@ Your data will now **persist** across:
 ## What's Already Configured
 
 ✅ `.env.example` filled with your Neon connection strings
-✅ Database storage always uses Neon (`DbStorage`) so progress is persistent
+✅ Database storage automatically enabled in `server/storage.ts` when `DATABASE_URL` is set
 ✅ Simple username/password auth via `APP_USERNAME` and `APP_PASSWORD`
-✅ Login is disabled by default (`AUTH_DISABLED=true`) so the dashboard loads instantly
 ✅ Complete seed script with all your November goals and habits
 
 ---
@@ -120,17 +130,18 @@ Your data will now **persist** across:
 Your `.env` should contain the following values:
 
 ```env
-DATABASE_URL=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
-DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL_UNPOOLED="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 ```
 
-Required login credentials (update these whenever you rotate them):
+Optional additions for local auth:
 
 ```env
-APP_USERNAME=laurenj3250
-APP_PASSWORD=Crumpet11!!
-SESSION_SECRET=goalconnect-session-secret
-AUTH_DISABLED=true
+APP_USERNAME="your-username"
+APP_PASSWORD="choose-a-strong-password"
+SESSION_SECRET="unique-random-string"
+# Toggle this on only for local development if you want to bypass the login screen.
+AUTH_DISABLED="true"
 ```
 
 Reference details:
@@ -141,6 +152,8 @@ Reference details:
 - **User:** `neondb_owner`
 - **Password:** `npg_JGAL7QpaKHc6`
 - **Region:** `us-east-1` (AWS)
+
+The `.env` file you created is gitignored, so your credentials stay local to your machine.
 
 ---
 
@@ -156,7 +169,9 @@ Reference details:
 - If you need to reset, use Neon's dashboard to drop/recreate tables
 
 ### "User already exists" (when running seed script)
-- This warning shouldn't appear anymore. The script reuses the `laurenj3250` account automatically and refreshes all of its data each time you run it.
+- Your database is already seeded!
+- To re-seed: Drop all data from Neon dashboard and re-run Steps 3-4
+- Or just keep your existing data
 
 ---
 

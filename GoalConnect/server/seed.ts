@@ -1,4 +1,3 @@
-import "./load-env";
 import { getDb } from "./db";
 import * as schema from "@shared/schema";
 
