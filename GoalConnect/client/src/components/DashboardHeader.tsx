@@ -19,8 +19,10 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
   });
 
   const { data: session } = useSession();
-  const resolvedName = (userName ?? session?.user?.username ?? "User").trim() || "User";
-  const avatarInitials = resolvedName.slice(0, 2).toUpperCase();
+  const sessionName = session?.user?.name?.trim();
+  const sessionEmail = session?.user?.email ?? "";
+  const resolvedName = (userName ?? sessionName ?? sessionEmail ?? "User").trim() || "User";
+  const avatarInitials = (resolvedName || sessionEmail || "U").slice(0, 2).toUpperCase();
 
   return (
     <header

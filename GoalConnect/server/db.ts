@@ -1,12 +1,12 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
-type NeonDatabase = ReturnType<typeof drizzle<typeof schema>>;
+type Database = ReturnType<typeof drizzle<typeof schema>>;
 
-let cachedDb: NeonDatabase | null = null;
+let cachedDb: Database | null = null;
 
-export function getDb(): NeonDatabase {
+export function getDb(): Database {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -14,7 +14,15 @@ export function getDb(): NeonDatabase {
   }
 
   if (!cachedDb) {
-    const pool = new Pool({ connectionString });
+    const needsSSL =
+      !/localhost|127\.0\.0\.1/.test(connectionString) &&
+      !connectionString.toLowerCase().includes("sslmode=disable");
+
+    const pool = new Pool({
+      connectionString,
+      ...(needsSSL ? { ssl: { rejectUnauthorized: false } } : {}),
+    });
+
     cachedDb = drizzle(pool, { schema });
   }
 

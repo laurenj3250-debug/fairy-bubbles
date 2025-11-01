@@ -15,7 +15,8 @@ import { logout } from "@/lib/auth";
 export default function Settings() {
   const { toast } = useToast();
   const sessionQuery = useSession();
-  const username = sessionQuery.data?.user?.username ?? "User";
+  const accountName = sessionQuery.data?.user?.name ?? "GoalConnect user";
+  const accountEmail = sessionQuery.data?.user?.email ?? "unknown@goalconnect.local";
 
   const { data: settings, isLoading } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
@@ -118,10 +119,12 @@ export default function Settings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="username" className="text-sm font-medium">
-                Username
-              </Label>
-              <span className="text-sm text-muted-foreground">{username}</span>
+              <Label className="text-sm font-medium">Display name</Label>
+              <span className="text-sm text-muted-foreground">{accountName}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Email</Label>
+              <span className="text-sm text-muted-foreground">{accountEmail}</span>
             </div>
             <Button
               variant="outline"
@@ -132,7 +135,8 @@ export default function Settings() {
               {logoutMutation.isPending ? "Signing out…" : "Sign out"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              Update <code>APP_USERNAME</code> and <code>APP_PASSWORD</code> in your <code>.env</code> to change these credentials.
+              Manage credentials in Supabase Auth. Ensure <code>APP_USER_EMAIL</code> (and optional name overrides) in your{" "}
+              <code>.env</code> match the Supabase account you want to use.
             </p>
           </CardContent>
         </Card>

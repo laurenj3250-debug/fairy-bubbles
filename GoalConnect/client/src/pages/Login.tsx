@@ -10,14 +10,14 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onSuccess }: LoginPageProps) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const usernameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    usernameRef.current?.focus();
+    emailRef.current?.focus();
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -26,7 +26,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     setIsSubmitting(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       await onSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to sign in";
@@ -43,19 +43,21 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <CardHeader>
           <CardTitle className="text-center text-2xl">Sign in to GoalConnect</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            Use the username and password from your <code>.env</code> file. Defaults are <strong>demo</strong> / <strong>demo1234</strong>.
+            Use the email and password from your Supabase Auth account. For the local fallback, defaults are{" "}
+            <strong>demo@goalconnect.local</strong> / <strong>demo1234</strong>.
           </p>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                autoComplete="username"
-                ref={usernameRef}
-                value={username}
-                onChange={event => setUsername(event.target.value)}
+                id="email"
+                type="email"
+                autoComplete="email"
+                ref={emailRef}
+                value={email}
+                onChange={event => setEmail(event.target.value)}
                 required
               />
             </div>

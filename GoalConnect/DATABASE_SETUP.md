@@ -9,8 +9,8 @@ Your Neon database is configured but needs to be set up from your **local machin
 If you just want to explore GoalConnect locally without provisioning the hosted database yet:
 
 1. Run `npm install` and then `npm run dev` inside `GoalConnect/`.
-2. Sign in with the default credentials **demo / demo1234**.
-3. Update `APP_USERNAME`, `APP_PASSWORD`, and `SESSION_SECRET` in `.env` whenever you want to change them.
+2. Sign in with your Supabase Auth credentials (set `SUPABASE_URL` / `SUPABASE_ANON_KEY` in `.env`). If you skip Supabase, the fallback credentials **demo / demo1234** still work.
+3. Update `APP_USER_EMAIL`, `APP_USERNAME`, `APP_PASSWORD`, and `SESSION_SECRET` in `.env` whenever you want to change the fallback/local login.
 4. Want to skip the login screen entirely while you experiment? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
 
 This mode uses the in-memory storage so data resets on server restart. Follow the Neon steps below when you're ready for long-term persistence.
@@ -120,7 +120,7 @@ Your data will now **persist** across:
 
 ✅ `.env.example` filled with your Neon connection strings
 ✅ Database storage automatically enabled in `server/storage.ts` when `DATABASE_URL` is set
-✅ Simple username/password auth via `APP_USERNAME` and `APP_PASSWORD`
+✅ Supabase-first authentication with fallback `.env` credentials (`APP_USERNAME` / `APP_PASSWORD`)
 ✅ Complete seed script with all your November goals and habits
 
 ---
