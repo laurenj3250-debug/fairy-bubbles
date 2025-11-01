@@ -49,7 +49,7 @@ export default function Goals() {
   if (goalsLoading) {
     return (
       <div className="min-h-screen pb-20">
-        <DashboardHeader userName="Alex" />
+        <DashboardHeader />
         <main className="max-w-7xl mx-auto p-4 space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             {[1, 2].map(i => (
@@ -72,7 +72,7 @@ export default function Goals() {
   if (goals.length === 0) {
     return (
       <div className="min-h-screen pb-20">
-        <DashboardHeader userName="Alex" />
+        <DashboardHeader />
         <main className="max-w-7xl mx-auto p-4">
           <EmptyState
             icon={Target}
@@ -89,7 +89,7 @@ export default function Goals() {
 
   return (
     <div className="min-h-screen pb-20">
-      <DashboardHeader userName="Alex" />
+      <DashboardHeader />
       
       <main className="max-w-7xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">

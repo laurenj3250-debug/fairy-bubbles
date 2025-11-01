@@ -78,7 +78,9 @@ export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
     }
   };
 
-  const progress = form.watch("currentValue") / form.watch("targetValue") * 100 || 0;
+  const currentValue = form.watch("currentValue") ?? 0;
+  const targetValue = form.watch("targetValue") ?? 0;
+  const progress = targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
