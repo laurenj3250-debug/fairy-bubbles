@@ -10,7 +10,8 @@ const FALLBACK_USERNAME = "lauren3250";
 const FALLBACK_PASSWORD = "Crumpet11!!";
 const FALLBACK_SECRET = "goalconnect-session-secret";
 
-const authDisabled = process.env.AUTH_DISABLED?.trim()?.toLowerCase() === "true";
+const rawAuthDisabled = process.env.AUTH_DISABLED ?? "true";
+const authDisabled = rawAuthDisabled.trim().toLowerCase() === "true";
 
 const configuredUsername = process.env.APP_USERNAME?.trim() || FALLBACK_USERNAME;
 const configuredPassword = process.env.APP_PASSWORD?.trim() || FALLBACK_PASSWORD;
@@ -78,7 +79,7 @@ function authenticateRequest(req: Request, res: Response, next: NextFunction) {
 export function configureAuth(app: Express) {
   if (authDisabled) {
     console.log(
-      "[auth] AUTH_DISABLED=true – all API requests are treated as authenticated. Update APP_USERNAME/APP_PASSWORD in your .env when you're ready to require sign-in.",
+      "[auth] AUTH_DISABLED=true – all API requests are treated as authenticated. Update APP_USERNAME/APP_PASSWORD and set AUTH_DISABLED=false when you're ready to require sign-in.",
     );
 
     app.use((req, _res, next) => {
@@ -102,7 +103,7 @@ export function configureAuth(app: Express) {
   }
 
   console.log(
-    `[auth] Using APP_USERNAME='${configuredUsername}'. Change APP_USERNAME/APP_PASSWORD in your .env to customize the login.`,
+    `[auth] Using APP_USERNAME='${configuredUsername}'. Change APP_USERNAME/APP_PASSWORD in your .env and set AUTH_DISABLED=false to require the login.`,
   );
 
   app.use(

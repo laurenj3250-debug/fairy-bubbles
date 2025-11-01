@@ -2,7 +2,7 @@
 
 ## Summary
 
-Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! Once you copy the Neon credentials into a local `.env` file (see `DATABASE_SETUP.md`) or run the new `./scripts/bootstrap-neon.sh` helper, the app will use the hosted database so your progress persists across restarts and devices.
+Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! A ready-to-go `.env` file is already included with the Neon credentials, so the app immediately uses the hosted database and your progress persists across restarts and devices. The `./scripts/bootstrap-neon.sh` helper is still available if you want it to rerun migrations or reseed everything for you.
 
 ## What Was Set Up
 
@@ -63,7 +63,7 @@ All goals have a deadline of **November 30, 2025** and start at **0 progress**.
 - **Points Available**: 250 points to spend on costumes
 - **Dark Mode**: Enabled
 - **Notifications**: Enabled
-- **Login**: Defaults to `lauren3250 / Crumpet11!!` unless you override `APP_USERNAME` / `APP_PASSWORD`
+- **Login**: Disabled by default (`AUTH_DISABLED=true`) so you land straight on the dashboard; set `AUTH_DISABLED=false` if you want to require the username/password
 
 ---
 
@@ -75,7 +75,7 @@ cd /home/user/fairy-bubbles/GoalConnect
 npm run dev
 ```
 
-The app will start in development mode. Sign in with the credentials from your `.env` (defaults are lauren3250 / Crumpet11!!) and your November goals and habits will be ready to go!
+The app will start in development mode and skip the login screen, dropping you directly into the dashboard. Flip `AUTH_DISABLED` to `false` in `.env` if you'd rather require the username/password (`lauren3250 / Crumpet11!!`).
 
 ---
 
@@ -92,8 +92,9 @@ The app will start in development mode. Sign in with the credentials from your `
    - Kept all other features (virtual pet, costumes, points system)
 
 3. **Added simple username/password auth** (`GoalConnect/server/auth.ts`)
-   - Express session + Passport local strategy protect all `/api` routes
+   - Express session + Passport local strategy protect all `/api` routes when enabled
    - Credentials come from `APP_USERNAME` / `APP_PASSWORD` with defaults of `lauren3250 / Crumpet11!!`
+   - Auth is disabled by default via `AUTH_DISABLED=true` so you can jump straight into the app
 
 ### Data Persistence Note
 

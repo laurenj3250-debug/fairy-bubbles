@@ -25,14 +25,14 @@ It prints each step so you can watch the progress and flags anything that needs 
 
 If you prefer to run the commands yourself, follow the steps below.
 
-#### Step 1: Create Your `.env`
+#### Step 1: Review Your `.env`
 
-Copy the provided Neon credentials into a new `.env` file so the server and Drizzle migrations can connect to your database:
+A ready-to-use `.env` file is already committed with your Neon credentials and auth defaults. Open it to confirm nothing has
+changed, or duplicate it if you want an alternate configuration:
 
 ```bash
 cd GoalConnect
-cp .env.example .env
-# (Optional) open .env and verify the values match the ones below
+nano .env   # or use your editor of choice
 ```
 
 #### Step 2: Install Dependencies
@@ -109,6 +109,7 @@ Your data will now **persist** across:
 ✅ `.env.example` filled with your Neon connection strings
 ✅ Database storage always uses Neon (`DbStorage`) so progress is persistent
 ✅ Simple username/password auth via `APP_USERNAME` and `APP_PASSWORD`
+✅ Login is disabled by default (`AUTH_DISABLED=true`) so the dashboard loads instantly
 ✅ Complete seed script with all your November goals and habits
 
 ---
@@ -118,16 +119,17 @@ Your data will now **persist** across:
 Your `.env` should contain the following values:
 
 ```env
-DATABASE_URL="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
-DATABASE_URL_UNPOOLED="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 Required login credentials (update these whenever you rotate them):
 
 ```env
-APP_USERNAME="lauren3250"
-APP_PASSWORD="Crumpet11!!"
-SESSION_SECRET="unique-random-string"
+APP_USERNAME=lauren3250
+APP_PASSWORD=Crumpet11!!
+SESSION_SECRET=goalconnect-session-secret
+AUTH_DISABLED=true
 ```
 
 Reference details:
@@ -138,8 +140,6 @@ Reference details:
 - **User:** `neondb_owner`
 - **Password:** `npg_JGAL7QpaKHc6`
 - **Region:** `us-east-1` (AWS)
-
-The `.env` file you created is gitignored, so your credentials stay local to your machine.
 
 ---
 
