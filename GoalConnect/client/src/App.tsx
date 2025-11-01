@@ -14,6 +14,7 @@ import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
+import { AuthGate } from "@/components/AuthGate";
 
 function Router() {
   return (
@@ -29,7 +30,6 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
-      <BottomNav />
     </>
   );
 }
@@ -40,7 +40,10 @@ function App() {
       <TooltipProvider>
         <MagicalForest />
         <Toaster />
-        <Router />
+        <AuthGate>
+          <Router />
+          <BottomNav />
+        </AuthGate>
       </TooltipProvider>
     </QueryClientProvider>
   );
