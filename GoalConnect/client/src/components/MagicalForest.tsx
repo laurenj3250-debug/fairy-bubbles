@@ -160,8 +160,14 @@ export default function MagicalForest() {
     <div
       id="magical-forest-container"
       ref={containerRef}
-      className="fixed top-0 left-0 w-screen h-screen -z-10 overflow-hidden"
       style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -1,
+        overflow: 'hidden',
         background: 'linear-gradient(to bottom, #0a0e1a 0%, #1a1f3a 50%, #0f1828 100%)'
       }}
     >
@@ -169,12 +175,28 @@ export default function MagicalForest() {
         id="magical-forest-bg"
         src={FOREST_IMAGE}
         alt="Magical Forest Background"
-        className="absolute top-0 left-0 w-full h-full object-cover opacity-80 pointer-events-none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 1,
+          pointerEvents: 'none'
+        }}
       />
       <canvas
         id="magical-forest-canvas"
         ref={canvasRef}
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none'
+        }}
       />
     </div>
   );
