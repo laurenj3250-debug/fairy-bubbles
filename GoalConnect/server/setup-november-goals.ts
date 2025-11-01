@@ -1,5 +1,20 @@
+import { eq } from "drizzle-orm";
+
 import { getDb } from "./db";
-import { users, goals, habits, virtualPets, userSettings, userPoints, costumes } from "../shared/schema";
+import {
+  users,
+  goals,
+  habits,
+  virtualPets,
+  userSettings,
+  userPoints,
+  costumes,
+  goalUpdates,
+  pointTransactions,
+  habitLogs,
+  todos,
+  userCostumes,
+} from "../shared/schema";
 
 /**
  * Complete database setup with user, goals, habits, and all necessary data

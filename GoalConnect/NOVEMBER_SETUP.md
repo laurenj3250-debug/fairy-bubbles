@@ -77,7 +77,7 @@ cd /home/user/fairy-bubbles/GoalConnect
 npm run dev
 ```
 
-The app will start in development mode. Sign in with the credentials from your `.env` (defaults are demo / demo1234) and your November goals and habits will be ready to go!
+The app will start in development mode. Sign in with your Supabase Auth email + password (set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`). Without Supabase configured, the fallback credentials from your `.env` (`APP_USERNAME` / `APP_PASSWORD`, defaults demo / demo1234) still work.
 
 ---
 
@@ -94,9 +94,9 @@ The app will start in development mode. Sign in with the credentials from your `
    - Replaced demo goals with your 15 monthly goals
    - Kept all other features (virtual pet, costumes, points system)
 
-3. **Added simple username/password auth** (`GoalConnect/server/auth.ts`)
-   - Express session + Passport local strategy protect all `/api` routes (unless you set `AUTH_DISABLED=true` for local dev)
-   - Credentials come from `APP_USERNAME` / `APP_PASSWORD` with safe defaults
+3. **Supabase-powered authentication** (`GoalConnect/server/auth.ts`)
+   - Uses Supabase Auth when `SUPABASE_URL` and `SUPABASE_ANON_KEY` are provided; sessions are stored server-side
+   - Falls back to environment-based credentials (`APP_USERNAME` / `APP_PASSWORD`) or `AUTH_DISABLED=true` for quick local demos
 
 ### Data Persistence Note
 

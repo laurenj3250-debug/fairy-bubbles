@@ -1,8 +1,12 @@
+export interface SessionUser {
+  id: number;
+  email: string;
+  name: string;
+}
+
 export interface SessionResponse {
   authenticated: boolean;
-  user?: {
-    username: string;
-  };
+  user?: SessionUser;
 }
 
 export async function fetchSession(): Promise<SessionResponse> {
@@ -15,13 +19,13 @@ export async function fetchSession(): Promise<SessionResponse> {
   return await response.json();
 }
 
-export async function login(username: string, password: string): Promise<SessionResponse> {
+export async function login(email: string, password: string): Promise<SessionResponse> {
   const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
     credentials: "include",
   });
 
@@ -29,7 +33,7 @@ export async function login(username: string, password: string): Promise<Session
 
   if (!response.ok) {
     const error = (payload as { error?: string }).error;
-    throw new Error(error || "Invalid username or password");
+    throw new Error(error || "Invalid email or password");
   }
 
   return payload as SessionResponse;
