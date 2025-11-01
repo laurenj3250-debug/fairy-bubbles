@@ -633,7 +633,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Always use the Neon-backed database store so data persists across restarts.
-const storageImplementation: IStorage = new DbStorage();
+// Use database storage when DATABASE_URL is configured; otherwise fall back to the in-memory store
+// so the app works out of the box without Neon.
+const storageImplementation: IStorage = process.env.DATABASE_URL ? new DbStorage() : new MemStorage();
 
 export const storage = storageImplementation;
