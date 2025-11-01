@@ -9,10 +9,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { UserSettings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/hooks/use-session";
+import { logout } from "@/lib/auth";
 
 export default function Settings() {
   const { toast } = useToast();
-  
+  const sessionQuery = useSession();
+  const username = sessionQuery.data?.user?.username ?? "User";
+
   const { data: settings, isLoading } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
   });
@@ -25,6 +29,26 @@ export default function Settings() {
       toast({
         title: "Settings updated",
         description: "Your preferences have been saved",
+      });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: async () => {
+      queryClient.removeQueries({ predicate: query => query.queryKey[0] !== "session" });
+      await sessionQuery.refetch();
+      toast({
+        title: "Signed out",
+        description: "You have been logged out.",
+      });
+    },
+    onError: error => {
+      const message = error instanceof Error ? error.message : "Unable to log out.";
+      toast({
+        title: "Logout failed",
+        description: message,
+        variant: "destructive",
       });
     },
   });
@@ -69,7 +93,7 @@ export default function Settings() {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20">
-        <DashboardHeader userName="Alex" />
+        <DashboardHeader />
         <main className="max-w-7xl mx-auto p-4 space-y-6">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
@@ -80,7 +104,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen pb-20">
-      <DashboardHeader userName="Alex" />
+      <DashboardHeader />
       
       <main className="max-w-7xl mx-auto p-4 space-y-6">
         <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
@@ -97,8 +121,19 @@ export default function Settings() {
               <Label htmlFor="username" className="text-sm font-medium">
                 Username
               </Label>
-              <span className="text-sm text-muted-foreground">Alex</span>
+              <span className="text-sm text-muted-foreground">{username}</span>
             </div>
+            <Button
+              variant="outline"
+              onClick={() => logoutMutation.mutate()}
+              className="w-full"
+              disabled={logoutMutation.isPending}
+            >
+              {logoutMutation.isPending ? "Signing out…" : "Sign out"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Update <code>APP_USERNAME</code> and <code>APP_PASSWORD</code> in your <code>.env</code> to change these credentials.
+            </p>
           </CardContent>
         </Card>
 

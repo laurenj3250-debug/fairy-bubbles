@@ -2,12 +2,43 @@
 
 Your Neon database is configured but needs to be set up from your **local machine** or **deployment environment** (this coding environment doesn't have network access to external databases).
 
-## Quick Setup (4 Steps)
+## Quick Setup (Pick Your Style)
 
-### Step 1: Create Your `.env`
+### Prefer to Skip Neon?
 
-Copy the provided Neon credentials into a new `.env` file so the server and
-Drizzle migrations can connect to your database:
+If you just want to explore GoalConnect locally without provisioning the hosted database yet:
+
+1. Run `npm install` and then `npm run dev` inside `GoalConnect/`.
+2. Sign in with the default credentials **demo / demo1234**.
+3. Update `APP_USERNAME`, `APP_PASSWORD`, and `SESSION_SECRET` in `.env` whenever you want to change them.
+4. Want to skip the login screen entirely while you experiment? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
+
+This mode uses the in-memory storage so data resets on server restart. Follow the Neon steps below when you're ready for long-term persistence.
+
+### Option A — One Command (Recommended)
+
+From the `GoalConnect` directory run:
+
+```bash
+./scripts/bootstrap-neon.sh
+```
+
+The script will:
+
+1. Create `.env` from `.env.example` if it doesn't exist yet
+2. Install npm dependencies
+3. Push the latest Drizzle migrations to Neon
+4. Seed all November data (user, goals, habits, pet, costumes, starting points)
+
+It prints each step so you can watch the progress and flags anything that needs your attention (for example, reviewing the `.env`).
+
+### Option B — Manual 4-Step Flow
+
+If you prefer to run the commands yourself, follow the steps below.
+
+#### Step 1: Create Your `.env`
+
+Copy the provided Neon credentials into a new `.env` file so the server and Drizzle migrations can connect to your database:
 
 ```bash
 cd GoalConnect
@@ -15,7 +46,7 @@ cp .env.example .env
 # (Optional) open .env and verify the values match the ones below
 ```
 
-### Step 2: Install Dependencies
+#### Step 2: Install Dependencies
 
 Run this from the `GoalConnect` directory (Step 1 already moved you there):
 
@@ -23,7 +54,7 @@ Run this from the `GoalConnect` directory (Step 1 already moved you there):
 npm install
 ```
 
-### Step 3: Run Database Migrations
+#### Step 3: Run Database Migrations
 
 This creates all the tables (users, goals, habits, virtual_pets, costumes, etc.):
 
@@ -37,7 +68,7 @@ You should see:
 ✓ Changes applied
 ```
 
-### Step 4: Seed Your November Data
+#### Step 4: Seed Your November Data
 
 This populates your database with:
 - Your user account (Lauren)
@@ -87,7 +118,8 @@ Your data will now **persist** across:
 ## What's Already Configured
 
 ✅ `.env.example` filled with your Neon connection strings
-✅ Database storage enabled in `server/storage.ts`
+✅ Database storage automatically enabled in `server/storage.ts` when `DATABASE_URL` is set
+✅ Simple username/password auth via `APP_USERNAME` and `APP_PASSWORD`
 ✅ Complete seed script with all your November goals and habits
 
 ---
@@ -99,6 +131,16 @@ Your `.env` should contain the following values:
 ```env
 DATABASE_URL="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 DATABASE_URL_UNPOOLED="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+```
+
+Optional additions for local auth:
+
+```env
+APP_USERNAME="your-username"
+APP_PASSWORD="choose-a-strong-password"
+SESSION_SECRET="unique-random-string"
+# Toggle this on only for local development if you want to bypass the login screen.
+AUTH_DISABLED="true"
 ```
 
 Reference details:

@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -17,8 +17,9 @@ import {
   calculateWeeklyCompletion,
   calculateCoinsEarned,
 } from "./pet-utils";
+import { requireUser } from "./auth";
 
-const USER_ID = 1;
+const getUserId = (req: Request) => requireUser(req).id;
 
 // Helper function to update pet stats automatically
 async function updatePetFromHabits(userId: number) {
@@ -61,7 +62,8 @@ async function updatePetFromHabits(userId: number) {
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/habits", async (req, res) => {
     try {
-      const habits = await storage.getHabits(USER_ID);
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
       res.json(habits);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch habits" });
@@ -83,7 +85,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/habits", async (req, res) => {
     try {
-      const validated = insertHabitSchema.parse({ ...req.body, userId: USER_ID });
+      const userId = getUserId(req);
+      const validated = insertHabitSchema.parse({ ...req.body, userId });
       const habit = await storage.createHabit(validated);
       res.status(201).json(habit);
     } catch (error: any) {
@@ -119,10 +122,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/habit-logs", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const { habitId, date } = req.query;
-      
+
       if (date && typeof date === "string") {
-        const logs = await storage.getHabitLogsByDate(USER_ID, date);
+        const logs = await storage.getHabitLogsByDate(userId, date);
         return res.json(logs);
       }
       
@@ -139,19 +143,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/habit-logs", async (req, res) => {
     try {
-      const validated = insertHabitLogSchema.parse({ ...req.body, userId: USER_ID });
+      const userId = getUserId(req);
+      const validated = insertHabitLogSchema.parse({ ...req.body, userId });
       const log = await storage.createHabitLog(validated);
 
       // Award points for completing a habit
       const habit = await storage.getHabit(validated.habitId);
       if (habit && validated.completed) {
         // Calculate streak for bonus coins
-        const allLogs = await storage.getAllHabitLogs(USER_ID);
+        const allLogs = await storage.getAllHabitLogs(userId);
         const currentStreak = calculateStreak(allLogs);
         const coins = calculateCoinsEarned(habit, currentStreak);
 
         await storage.addPoints(
-          USER_ID,
+          userId,
           coins,
           "habit_complete",
           log.id,
@@ -160,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Auto-update pet stats
-      const petUpdate = await updatePetFromHabits(USER_ID);
+      const petUpdate = await updatePetFromHabits(userId);
 
       res.status(201).json({
         ...log,
@@ -183,7 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Auto-update pet stats after changing a log
-      const petUpdate = await updatePetFromHabits(USER_ID);
+      const userId = getUserId(req);
+      const petUpdate = await updatePetFromHabits(userId);
 
       res.json({
         ...log,
@@ -212,7 +218,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/goals", async (req, res) => {
     try {
-      const goals = await storage.getGoals(USER_ID);
+      const userId = getUserId(req);
+      const goals = await storage.getGoals(userId);
       res.json(goals);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goals" });
@@ -234,7 +241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/goals", async (req, res) => {
     try {
-      const validated = insertGoalSchema.parse({ ...req.body, userId: USER_ID });
+      const userId = getUserId(req);
+      const validated = insertGoalSchema.parse({ ...req.body, userId });
       const goal = await storage.createGoal(validated);
       res.status(201).json(goal);
     } catch (error: any) {
@@ -280,16 +288,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/goal-updates", async (req, res) => {
     try {
-      const validated = insertGoalUpdateSchema.parse({ ...req.body, userId: USER_ID });
-      
+      const userId = getUserId(req);
+      const validated = insertGoalUpdateSchema.parse({ ...req.body, userId });
+
       // Create update and get milestone info in a single atomic operation
       const result = await storage.createGoalUpdate(validated);
-      
+
       // Check if milestones were crossed and award points
       if (result.milestonesCrossed && result.milestonesCrossed > 0 && result.goal) {
         const points = result.milestonesCrossed * 5; // 5 points per 10% milestone
         await storage.addPoints(
-          USER_ID,
+          userId,
           points,
           "goal_progress",
           result.update.id,
@@ -305,10 +314,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/settings", async (req, res) => {
     try {
-      let settings = await storage.getUserSettings(USER_ID);
+      const userId = getUserId(req);
+      let settings = await storage.getUserSettings(userId);
       if (!settings) {
         settings = await storage.updateUserSettings({
-          userId: USER_ID,
+          userId,
           darkMode: true,
           notifications: true,
         });
@@ -321,7 +331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/settings", async (req, res) => {
     try {
-      const validated = insertUserSettingsSchema.parse({ ...req.body, userId: USER_ID });
+      const userId = getUserId(req);
+      const validated = insertUserSettingsSchema.parse({ ...req.body, userId });
       const settings = await storage.updateUserSettings(validated);
       res.json(settings);
     } catch (error: any) {
@@ -331,8 +342,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/export", async (req, res) => {
     try {
-      const habits = await storage.getHabits(USER_ID);
-      const goals = await storage.getGoals(USER_ID);
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
+      const goals = await storage.getGoals(userId);
       
       const allLogs = await Promise.all(
         habits.map(h => storage.getHabitLogs(h.id))
@@ -361,8 +373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats endpoint for dashboard
   app.get("/api/stats", async (req, res) => {
     try {
-      const habits = await storage.getHabits(USER_ID);
-      const allLogs = await storage.getAllHabitLogs(USER_ID);
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
+      const allLogs = await storage.getAllHabitLogs(userId);
 
       const currentStreak = calculateStreak(allLogs);
       const weeklyCompletion = calculateWeeklyCompletion(habits, allLogs);
@@ -379,10 +392,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Virtual Pet Routes
   app.get("/api/pet", async (req, res) => {
     try {
-      let pet = await storage.getVirtualPet(USER_ID);
+      const userId = getUserId(req);
+      let pet = await storage.getVirtualPet(userId);
       if (!pet) {
         pet = await storage.createVirtualPet({
-          userId: USER_ID,
+          userId,
           name: "Forest Friend",
           species: "Gremlin",
           happiness: 50,
@@ -453,7 +467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/user-costumes", async (req, res) => {
     try {
-      const userCostumes = await storage.getUserCostumes(USER_ID);
+      const userId = getUserId(req);
+      const userCostumes = await storage.getUserCostumes(userId);
       res.json(userCostumes);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch user costumes" });
@@ -516,24 +531,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user already owns it
-      const userCostumes = await storage.getUserCostumes(USER_ID);
+      const userId = getUserId(req);
+      const userCostumes = await storage.getUserCostumes(userId);
       if (userCostumes.some(uc => uc.costumeId === actualCostumeId)) {
         return res.status(400).json({ error: "You already own this costume" });
       }
 
       // Check if user has enough points
-      const points = await storage.getUserPoints(USER_ID);
+      const points = await storage.getUserPoints(userId);
       if (points.available < costume.price) {
         return res.status(400).json({ error: "Not enough points" });
       }
 
       // Purchase costume
-      const success = await storage.spendPoints(USER_ID, costume.price, `Purchased ${costume.name}`);
+      const success = await storage.spendPoints(userId, costume.price, `Purchased ${costume.name}`);
       if (!success) {
         return res.status(400).json({ error: "Failed to deduct points" });
       }
 
-      const userCostume = await storage.purchaseCostume(USER_ID, actualCostumeId);
+      const userCostume = await storage.purchaseCostume(userId, actualCostumeId);
       res.status(201).json(userCostume);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to purchase costume" });
@@ -547,12 +563,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Costume ID required" });
       }
 
-      const userCostumes = await storage.getUserCostumes(USER_ID);
+      const userId = getUserId(req);
+      const userCostumes = await storage.getUserCostumes(userId);
       if (!userCostumes.some(uc => uc.costumeId === costumeId)) {
         return res.status(400).json({ error: "You don't own this costume" });
       }
 
-      const equipped = await storage.equipCostume(USER_ID, costumeId);
+      const equipped = await storage.equipCostume(userId, costumeId);
       res.json(equipped);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to equip costume" });
@@ -566,7 +583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Costume ID required" });
       }
 
-      const unequipped = await storage.unequipCostume(USER_ID, costumeId);
+      const userId = getUserId(req);
+      const unequipped = await storage.unequipCostume(userId, costumeId);
       res.json(unequipped);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to unequip costume" });
@@ -575,7 +593,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/costumes/equipped", async (req, res) => {
     try {
-      const equipped = await storage.getEquippedCostumes(USER_ID);
+      const userId = getUserId(req);
+      const equipped = await storage.getEquippedCostumes(userId);
       res.json(equipped);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch equipped costumes" });
@@ -585,7 +604,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Points Routes
   app.get("/api/points", async (req, res) => {
     try {
-      const points = await storage.getUserPoints(USER_ID);
+      const userId = getUserId(req);
+      const points = await storage.getUserPoints(userId);
       res.json(points);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch points" });
@@ -595,7 +615,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Alias for user points
   app.get("/api/user-points", async (req, res) => {
     try {
-      const points = await storage.getUserPoints(USER_ID);
+      const userId = getUserId(req);
+      const points = await storage.getUserPoints(userId);
       res.json(points);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch points" });
@@ -604,7 +625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/points/transactions", async (req, res) => {
     try {
-      const transactions = await storage.getPointTransactions(USER_ID);
+      const userId = getUserId(req);
+      const transactions = await storage.getPointTransactions(userId);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch transactions" });
@@ -613,7 +635,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/todos", async (req, res) => {
     try {
-      const todos = await storage.getTodos(USER_ID);
+      const userId = getUserId(req);
+      const todos = await storage.getTodos(userId);
       res.json(todos);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch todos" });
@@ -635,7 +658,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/todos", async (req, res) => {
     try {
-      const validated = insertTodoSchema.parse({ ...req.body, userId: USER_ID });
+      const userId = getUserId(req);
+      const validated = insertTodoSchema.parse({ ...req.body, userId });
       const todo = await storage.createTodo(validated);
       res.status(201).json(todo);
     } catch (error: any) {

@@ -4,19 +4,24 @@ import { Badge } from "@/components/ui/badge";
 import { Coins } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserPoints } from "@shared/schema";
+import { useSession } from "@/hooks/use-session";
 
 interface DashboardHeaderProps {
   userName?: string;
 }
 
-export function DashboardHeader({ userName = "User" }: DashboardHeaderProps) {
+export function DashboardHeader({ userName }: DashboardHeaderProps) {
   const greeting = getGreeting();
   const today = formatDate(new Date());
-  
+
   const { data: points } = useQuery<UserPoints>({
     queryKey: ["/api/points"],
   });
-  
+
+  const { data: session } = useSession();
+  const resolvedName = (userName ?? session?.user?.username ?? "User").trim() || "User";
+  const avatarInitials = resolvedName.slice(0, 2).toUpperCase();
+
   return (
     <header
       className="sticky top-0 z-40 h-14 bg-background/95 backdrop-blur border-b flex items-center justify-between px-4"
@@ -24,7 +29,7 @@ export function DashboardHeader({ userName = "User" }: DashboardHeaderProps) {
     >
       <div className="flex flex-col">
         <h1 className="text-lg font-semibold" data-testid="greeting-text">
-          {greeting}, {userName}
+          {greeting}, {resolvedName}
         </h1>
         <p className="text-xs text-muted-foreground" data-testid="current-date">
           {today}
@@ -39,7 +44,7 @@ export function DashboardHeader({ userName = "User" }: DashboardHeaderProps) {
         
         <Avatar className="w-10 h-10" data-testid="user-avatar">
           <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-            {userName.slice(0, 2).toUpperCase()}
+            {avatarInitials}
           </AvatarFallback>
         </Avatar>
       </div>

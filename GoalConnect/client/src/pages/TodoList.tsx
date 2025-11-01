@@ -56,7 +56,7 @@ export default function TodoList() {
   if (todosLoading) {
     return (
       <div className="min-h-screen pb-20">
-        <DashboardHeader userName="Alex" />
+        <DashboardHeader />
         <main className="max-w-4xl mx-auto p-4 space-y-6">
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
@@ -77,7 +77,7 @@ export default function TodoList() {
   if (todos.length === 0) {
     return (
       <div className="min-h-screen pb-20">
-        <DashboardHeader userName="Alex" />
+        <DashboardHeader />
         <main className="max-w-4xl mx-auto p-4">
           <EmptyState
             icon={ListTodo}
@@ -187,7 +187,7 @@ export default function TodoList() {
 
   return (
     <div className="min-h-screen pb-20">
-      <DashboardHeader userName="Alex" />
+      <DashboardHeader />
 
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         {activeTodos.length > 0 && (

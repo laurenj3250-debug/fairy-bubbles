@@ -2,7 +2,9 @@
 
 ## Summary
 
-Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! Once you copy the Neon credentials into a local `.env` file (see `DATABASE_SETUP.md`), the app will use the hosted database so your progress persists across restarts and devices.
+Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! Once you copy the Neon credentials into a local `.env` file (see `DATABASE_SETUP.md`) or run the new `./scripts/bootstrap-neon.sh` helper, the app will use the hosted database so your progress persists across restarts and devices.
+
+If you just want to explore locally first, you can skip Neon entirely—run `npm run dev`, sign in with **demo / demo1234**, and everything will work using the built-in in-memory store (data resets on restart). Prefer to bypass the login screen altogether while experimenting? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
 
 ## What Was Set Up
 
@@ -63,6 +65,7 @@ All goals have a deadline of **November 30, 2025** and start at **0 progress**.
 - **Points Available**: 250 points to spend on costumes
 - **Dark Mode**: Enabled
 - **Notifications**: Enabled
+- **Login**: Defaults to `demo / demo1234` unless you override `APP_USERNAME` / `APP_PASSWORD`
 
 ---
 
@@ -70,10 +73,11 @@ All goals have a deadline of **November 30, 2025** and start at **0 progress**.
 
 ```bash
 cd /home/user/fairy-bubbles/GoalConnect
+# optional: ./scripts/bootstrap-neon.sh   # runs the env/migration/seed flow for you
 npm run dev
 ```
 
-The app will start in development mode. Your November goals and habits will be automatically loaded!
+The app will start in development mode. Sign in with the credentials from your `.env` (defaults are demo / demo1234) and your November goals and habits will be ready to go!
 
 ---
 
@@ -81,24 +85,24 @@ The app will start in development mode. Your November goals and habits will be a
 
 ### Changes Made
 
-1. **Enabled Neon database storage by default** (`GoalConnect/server/storage.ts:552`)
-   - `storage` now instantiates `new DbStorage()` so API requests read/write through Neon once `.env` is configured
-   - The `MemStorage` implementation remains in the file if you ever want an offline demo mode
+1. **Automatic storage selection** (`GoalConnect/server/storage.ts`)
+   - Uses Neon (`DbStorage`) when `DATABASE_URL` is set
+   - Falls back to the seeded in-memory store for quick demos without any setup
 
 2. **Customized seed data** (`GoalConnect/server/storage.ts:105-178`)
    - Replaced demo habits with your 10 weekly habits
    - Replaced demo goals with your 15 monthly goals
    - Kept all other features (virtual pet, costumes, points system)
 
-3. **Added missing MemStorage methods** (`GoalConnect/server/storage.ts:388-410`)
-   - Added `equipCostume()`, `unequipCostume()`, and `getEquippedCostumes()` methods
-   - Fixed interface implementation errors
+3. **Added simple username/password auth** (`GoalConnect/server/auth.ts`)
+   - Express session + Passport local strategy protect all `/api` routes (unless you set `AUTH_DISABLED=true` for local dev)
+   - Credentials come from `APP_USERNAME` / `APP_PASSWORD` with safe defaults
 
 ### Data Persistence Note
 
 ✅ **With the Neon credentials in `.env`, your data now lives in the hosted database.** Run through the four setup steps in `DATABASE_SETUP.md` to apply migrations and seed everything once.
 
-Want a temporary offline demo? Swap `DbStorage` for `MemStorage` in `server/storage.ts`, but remember that progress will reset whenever the server restarts.
+Want a temporary offline demo? Just leave `DATABASE_URL` empty. The app will automatically use the seeded in-memory store (progress resets whenever the server restarts).
 
 ---
 

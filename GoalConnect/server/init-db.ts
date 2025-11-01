@@ -1,4 +1,4 @@
-import { db } from './db';
+import { getDb } from './db';
 import {
   users,
   goals,
@@ -17,6 +17,7 @@ const NOVEMBER_DEADLINE = '2025-11-30';
  */
 export async function isDatabaseSeeded(): Promise<boolean> {
   try {
+    const db = getDb();
     const result = await db.select().from(users).limit(1);
     return result.length > 0;
   } catch (error) {
@@ -39,6 +40,7 @@ export async function initializeDatabase() {
   }
 
   try {
+    const db = getDb();
     // Create User
     const [user] = await db
       .insert(users)
