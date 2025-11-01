@@ -168,7 +168,12 @@ export default function MagicalForest() {
         height: '100vh',
         zIndex: -1,
         overflow: 'hidden',
-        background: 'linear-gradient(to bottom, #0a0e1a 0%, #1a1f3a 50%, #0f1828 100%)'
+        background: `
+          linear-gradient(180deg, rgba(10, 14, 26, 0.95) 0%, rgba(26, 31, 58, 0.9) 50%, rgba(15, 24, 40, 0.95) 100%),
+          url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxYTFmM2EiLz48ZyBvcGFjaXR5PSIwLjMiPjxlbGxpcHNlIGN4PSI0MDAiIGN5PSI3MDAiIHJ4PSI0MDAiIHJ5PSI2MDAiIGZpbGw9IiMyZDFiNGUiLz48ZWxsaXBzZSBjeD0iMTQwMCIgY3k9IjYwMCIgcng9IjUwMCIgcnk9IjcwMCIgZmlsbD0iIzFmM2Q0YSIvPjxlbGxpcHNlIGN4PSI5NjAiIGN5PSI4MDAiIHJ4PSI2MDAiIHJ5PSI1MDAiIGZpbGw9IiMyYTRhM2EiLz48L2c+PC9zdmc+')
+        `,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
       }}
     >
       <img
@@ -182,8 +187,16 @@ export default function MagicalForest() {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          opacity: 1,
-          pointerEvents: 'none'
+          opacity: 0.6,
+          pointerEvents: 'none',
+          mixBlendMode: 'overlay'
+        }}
+        onError={(e) => {
+          console.error('Failed to load forest background image');
+          e.currentTarget.style.display = 'none';
+        }}
+        onLoad={() => {
+          console.log('Forest background image loaded successfully');
         }}
       />
       <canvas
