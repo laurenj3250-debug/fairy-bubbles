@@ -2,16 +2,28 @@
 
 Your Neon database is configured but needs to be set up from your **local machine** or **deployment environment** (this coding environment doesn't have network access to external databases).
 
-## Quick Setup (3 Steps)
+## Quick Setup (4 Steps)
 
-### Step 1: Install Dependencies
+### Step 1: Create Your `.env`
+
+Copy the provided Neon credentials into a new `.env` file so the server and
+Drizzle migrations can connect to your database:
 
 ```bash
 cd GoalConnect
+cp .env.example .env
+# (Optional) open .env and verify the values match the ones below
+```
+
+### Step 2: Install Dependencies
+
+Run this from the `GoalConnect` directory (Step 1 already moved you there):
+
+```bash
 npm install
 ```
 
-### Step 2: Run Database Migrations
+### Step 3: Run Database Migrations
 
 This creates all the tables (users, goals, habits, virtual_pets, costumes, etc.):
 
@@ -25,7 +37,7 @@ You should see:
 ✓ Changes applied
 ```
 
-### Step 3: Seed Your November Data
+### Step 4: Seed Your November Data
 
 This populates your database with:
 - Your user account (Lauren)
@@ -59,7 +71,7 @@ You should see:
 🎉 Database setup complete!
 ```
 
-### Step 4: Start the App!
+### Start the App!
 
 ```bash
 npm run dev
@@ -74,7 +86,7 @@ Your data will now **persist** across:
 
 ## What's Already Configured
 
-✅ `.env` file created with your Neon DATABASE_URL
+✅ `.env.example` filled with your Neon connection strings
 ✅ Database storage enabled in `server/storage.ts`
 ✅ Complete seed script with all your November goals and habits
 
@@ -82,14 +94,23 @@ Your data will now **persist** across:
 
 ## Your Database Connection
 
-```
-Host: ep-divine-surf-a4pmuu98-pooler.us-east-1.aws.neon.tech
-Database: neondb
-User: neondb_owner
-Region: us-east-1 (AWS)
+Your `.env` should contain the following values:
+
+```env
+DATABASE_URL="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL_UNPOOLED="postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 ```
 
-The connection string is securely stored in `.env` (this file is gitignored and won't be committed).
+Reference details:
+
+- **Pooled host (app + migrations):** `ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech`
+- **Direct host (optional tools):** `ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech`
+- **Database:** `neondb`
+- **User:** `neondb_owner`
+- **Password:** `npg_JGAL7QpaKHc6`
+- **Region:** `us-east-1` (AWS)
+
+The `.env` file you created is gitignored, so your credentials stay local to your machine.
 
 ---
 
@@ -101,12 +122,12 @@ The connection string is securely stored in `.env` (this file is gitignored and 
 - Verify the DATABASE_URL in `.env` is correct
 
 ### "Table already exists"
-- You've already run migrations! Skip step 2
+- You've already run migrations! Skip Step 3
 - If you need to reset, use Neon's dashboard to drop/recreate tables
 
 ### "User already exists" (when running seed script)
 - Your database is already seeded!
-- To re-seed: Drop all data from Neon dashboard and re-run steps 2-3
+- To re-seed: Drop all data from Neon dashboard and re-run Steps 3-4
 - Or just keep your existing data
 
 ---
@@ -175,7 +196,7 @@ All goals have deadline: **November 30, 2025**
 
 ## Files Modified
 
-- ✅ `.env` - Contains your DATABASE_URL
+- ✅ `.env.example` - Copy to `.env` for your DATABASE_URL values
 - ✅ `server/storage.ts` - Switched to DbStorage
 - ✅ `server/setup-november-goals.ts` - Complete seed script
 
@@ -184,7 +205,7 @@ All goals have deadline: **November 30, 2025**
 ## Next Steps After Setup
 
 1. ✅ Clone/pull this branch to your local machine
-2. ✅ Run the 3 setup steps above
+2. ✅ Run the 4 setup steps above
 3. ✅ Start the app with `npm run dev`
 4. 🎉 Your data now persists forever!
 5. 📱 Access from any device (same data everywhere)
