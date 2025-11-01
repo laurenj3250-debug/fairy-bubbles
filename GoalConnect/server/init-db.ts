@@ -7,9 +7,8 @@ import {
   userSettings,
   userPoints,
   costumes,
-} from '../shared/schema';
+} from "../shared/schema";
 
-const USER_ID = 1;
 const NOVEMBER_DEADLINE = '2025-11-30';
 
 /**
@@ -29,6 +28,11 @@ export async function isDatabaseSeeded(): Promise<boolean> {
  * Initialize database with default data
  */
 export async function initializeDatabase() {
+  const configuredUsername = process.env.APP_USERNAME?.trim() || "laurenj3250";
+  const configuredName = process.env.APP_USER_NAME?.trim() || "Lauren";
+  const configuredEmail =
+    process.env.APP_USER_EMAIL?.trim() || `${configuredUsername.toLowerCase()}@goalconnect.local`;
+
   // Check if already seeded
   const alreadySeeded = await isDatabaseSeeded();
   if (alreadySeeded) {
@@ -45,8 +49,8 @@ export async function initializeDatabase() {
     const [user] = await db
       .insert(users)
       .values({
-        name: 'Lauren',
-        email: 'lauren@fairybubbles.com',
+        name: configuredName,
+        email: configuredEmail,
       })
       .returning();
 

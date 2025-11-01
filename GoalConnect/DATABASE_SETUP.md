@@ -71,7 +71,7 @@ You should see:
 #### Step 4: Seed Your November Data
 
 This populates your database with:
-- Your user account (Lauren)
+- Your GoalConnect account (`laurenj3250`)
 - 15 monthly goals
 - 10 weekly habits
 - Virtual pet (Forest Friend)
@@ -82,11 +82,11 @@ This populates your database with:
 npm exec tsx server/setup-november-goals.ts
 ```
 
-You should see:
+You should see output similar to:
 ```
 🎯 Setting up complete database with November goals and habits...
-👤 Creating user...
-✅ Created user: Lauren (lauren@fairybubbles.com)
+👤 Ensuring user exists for laurenj3250...
+✅ Created user: Lauren (laurenj3250@goalconnect.local)
 📋 Inserting monthly goals...
 ✅ Created 15 monthly goals
 🔄 Inserting weekly habits...
@@ -101,6 +101,7 @@ You should see:
 ✅ Created 10 costumes
 🎉 Database setup complete!
 ```
+If you already seeded the database you'll see `✅ Reusing existing user...` before the inserts—the script automatically clears the old data for that account and rebuilds it.
 
 ### Start the App!
 
@@ -178,8 +179,8 @@ The `.env` file you created is gitignored, so your credentials stay local to you
 
 ### User Account
 - Name: Lauren
-- Email: lauren@fairybubbles.com
-- User ID: 1
+- Email: laurenj3250@goalconnect.local
+- User ID: whichever your database assigned (typically 1)
 
 ### Monthly Goals (15)
 1. Pimsleur: Complete 16 Lessons
