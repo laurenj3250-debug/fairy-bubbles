@@ -528,6 +528,18 @@
     100% { transform: scale(1); }
   }
 
+  /* Bounce Animation - triggered on task completion */
+  .bounce {
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-20px); }
+    50% { transform: translateY(-10px); }
+    75% { transform: translateY(-15px); }
+  }
+
   /* Twinkle Stars */
   .twinkle {
     animation: twinkle 3s infinite;
