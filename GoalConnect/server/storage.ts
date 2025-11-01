@@ -547,5 +547,6 @@ export class MemStorage implements IStorage {
 
 import { DbStorage } from "./db-storage";
 
-// Use in-memory storage with November goals and habits
-export const storage = new MemStorage();
+// Use database storage for persistent data across devices and restarts
+// To set up: Add DATABASE_URL to .env, run migrations, then run the seed script
+export const storage = new DbStorage();
