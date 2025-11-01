@@ -6,3 +6,4 @@ node_modules
 *.md
 !README.md
 client/src
+api/index.ts
