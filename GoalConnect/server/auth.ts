@@ -10,6 +10,8 @@ const FALLBACK_USERNAME = "demo";
 const FALLBACK_PASSWORD = "demo1234";
 const FALLBACK_SECRET = "goalconnect-session-secret";
 
+const authDisabled = process.env.AUTH_DISABLED?.trim()?.toLowerCase() === "true";
+
 const configuredUsername = process.env.APP_USERNAME?.trim() || FALLBACK_USERNAME;
 const configuredPassword = process.env.APP_PASSWORD?.trim() || FALLBACK_PASSWORD;
 
@@ -62,6 +64,10 @@ passport.deserializeUser((id: number, done) => {
 });
 
 function authenticateRequest(req: Request, res: Response, next: NextFunction) {
+  if (authDisabled) {
+    return next();
+  }
+
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -70,6 +76,35 @@ function authenticateRequest(req: Request, res: Response, next: NextFunction) {
 }
 
 export function configureAuth(app: Express) {
+  if (authDisabled) {
+    console.log(
+      "[auth] AUTH_DISABLED=true – all API requests are treated as authenticated. Update APP_USERNAME/APP_PASSWORD in your .env when you're ready to require sign-in.",
+    );
+
+    app.use((req, _res, next) => {
+      req.user = AUTHENTICATED_USER;
+      next();
+    });
+
+    app.post("/api/auth/login", (_req, res) => {
+      res.json({ authenticated: true, user: { username: configuredUsername } });
+    });
+
+    app.post("/api/auth/logout", (_req, res) => {
+      res.json({ authenticated: false });
+    });
+
+    app.get("/api/auth/session", (_req, res) => {
+      res.json({ authenticated: true, user: { username: configuredUsername } });
+    });
+
+    return;
+  }
+
+  console.log(
+    `[auth] Using APP_USERNAME='${configuredUsername}'. Change APP_USERNAME/APP_PASSWORD in your .env to customize the login.`,
+  );
+
   app.use(
     session({
       secret: sessionSecret,
@@ -141,6 +176,10 @@ export function configureAuth(app: Express) {
 }
 
 export function requireUser(req: Request): AuthenticatedUser {
+  if (authDisabled) {
+    return AUTHENTICATED_USER;
+  }
+
   if (!req.user || !req.isAuthenticated()) {
     throw new Error("Missing authenticated user");
   }

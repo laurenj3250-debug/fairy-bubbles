@@ -4,7 +4,7 @@
 
 Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! Once you copy the Neon credentials into a local `.env` file (see `DATABASE_SETUP.md`) or run the new `./scripts/bootstrap-neon.sh` helper, the app will use the hosted database so your progress persists across restarts and devices.
 
-If you just want to explore locally first, you can skip Neon entirely—run `npm run dev`, sign in with **demo / demo1234**, and everything will work using the built-in in-memory store (data resets on restart).
+If you just want to explore locally first, you can skip Neon entirely—run `npm run dev`, sign in with **demo / demo1234**, and everything will work using the built-in in-memory store (data resets on restart). Prefer to bypass the login screen altogether while experimenting? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
 
 ## What Was Set Up
 
@@ -95,7 +95,7 @@ The app will start in development mode. Sign in with the credentials from your `
    - Kept all other features (virtual pet, costumes, points system)
 
 3. **Added simple username/password auth** (`GoalConnect/server/auth.ts`)
-   - Express session + Passport local strategy protect all `/api` routes
+   - Express session + Passport local strategy protect all `/api` routes (unless you set `AUTH_DISABLED=true` for local dev)
    - Credentials come from `APP_USERNAME` / `APP_PASSWORD` with safe defaults
 
 ### Data Persistence Note

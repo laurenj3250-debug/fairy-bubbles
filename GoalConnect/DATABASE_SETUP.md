@@ -11,6 +11,7 @@ If you just want to explore GoalConnect locally without provisioning the hosted 
 1. Run `npm install` and then `npm run dev` inside `GoalConnect/`.
 2. Sign in with the default credentials **demo / demo1234**.
 3. Update `APP_USERNAME`, `APP_PASSWORD`, and `SESSION_SECRET` in `.env` whenever you want to change them.
+4. Want to skip the login screen entirely while you experiment? Set `AUTH_DISABLED=true` in `.env` and restart the dev server.
 
 This mode uses the in-memory storage so data resets on server restart. Follow the Neon steps below when you're ready for long-term persistence.
 
@@ -138,6 +139,8 @@ Optional additions for local auth:
 APP_USERNAME="your-username"
 APP_PASSWORD="choose-a-strong-password"
 SESSION_SECRET="unique-random-string"
+# Toggle this on only for local development if you want to bypass the login screen.
+AUTH_DISABLED="true"
 ```
 
 Reference details:
