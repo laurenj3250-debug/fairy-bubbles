@@ -2,7 +2,7 @@
 
 ## Summary
 
-Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! The app is now using in-memory storage with your personalized data pre-loaded.
+Your November goals and weekly habits have been successfully configured in the Fairy Bubbles (GoalConnect) app! Once you copy the Neon credentials into a local `.env` file (see `DATABASE_SETUP.md`), the app will use the hosted database so your progress persists across restarts and devices.
 
 ## What Was Set Up
 
@@ -81,9 +81,9 @@ The app will start in development mode. Your November goals and habits will be a
 
 ### Changes Made
 
-1. **Switched storage from database to in-memory** (`GoalConnect/server/storage.ts:514`)
-   - Changed from `new DbStorage()` to `new MemStorage()`
-   - This allows the app to run without requiring a PostgreSQL database connection
+1. **Enabled Neon database storage by default** (`GoalConnect/server/storage.ts:552`)
+   - `storage` now instantiates `new DbStorage()` so API requests read/write through Neon once `.env` is configured
+   - The `MemStorage` implementation remains in the file if you ever want an offline demo mode
 
 2. **Customized seed data** (`GoalConnect/server/storage.ts:105-178`)
    - Replaced demo habits with your 10 weekly habits
@@ -96,12 +96,9 @@ The app will start in development mode. Your November goals and habits will be a
 
 ### Data Persistence Note
 
-⚠️ **Important**: Since we're using in-memory storage, your data will be reset to the initial state each time you restart the app. To persist data permanently, you would need to:
-- Set up a PostgreSQL database (Neon)
-- Add a `DATABASE_URL` environment variable
-- Switch back to `DbStorage` in `storage.ts`
+✅ **With the Neon credentials in `.env`, your data now lives in the hosted database.** Run through the four setup steps in `DATABASE_SETUP.md` to apply migrations and seed everything once.
 
-For now, in-memory storage is perfect for testing and getting started!
+Want a temporary offline demo? Swap `DbStorage` for `MemStorage` in `server/storage.ts`, but remember that progress will reset whenever the server restarts.
 
 ---
 
