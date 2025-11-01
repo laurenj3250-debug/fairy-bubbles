@@ -1,8 +1,8 @@
 import { db } from "./db";
-import { goals, habits } from "../shared/schema";
+import { users, goals, habits, virtualPets, userSettings, userPoints, costumes } from "../shared/schema";
 
 /**
- * Setup November goals and weekly habits for user
+ * Complete database setup with user, goals, habits, and all necessary data
  * Run with: npm exec tsx server/setup-november-goals.ts
  */
 
@@ -10,7 +10,15 @@ const USER_ID = 1;
 const NOVEMBER_DEADLINE = "2025-11-30";
 
 async function setupNovemberGoals() {
-  console.log("🎯 Setting up November goals and habits...\n");
+  console.log("🎯 Setting up complete database with November goals and habits...\n");
+
+  // Create User
+  console.log("👤 Creating user...");
+  const [user] = await db.insert(users).values({
+    name: "Lauren",
+    email: "lauren@fairybubbles.com",
+  }).returning();
+  console.log(`✅ Created user: ${user.name} (${user.email})\n`);
 
   // Monthly Goals
   const monthlyGoals = [
@@ -261,16 +269,67 @@ async function setupNovemberGoals() {
     const insertedHabits = await db.insert(habits).values(weeklyHabits).returning();
     console.log(`✅ Created ${insertedHabits.length} weekly habits\n`);
 
-    console.log("🎉 November setup complete!\n");
+    // Create virtual pet
+    console.log("🐾 Creating virtual pet...");
+    const [pet] = await db.insert(virtualPets).values({
+      userId: user.id,
+      name: "Forest Friend",
+      species: "Gremlin",
+      level: 1,
+      experience: 0,
+      evolution: "seed",
+    }).returning();
+    console.log(`✅ Created virtual pet: ${pet.name}\n`);
+
+    // Create user settings
+    console.log("⚙️ Creating user settings...");
+    await db.insert(userSettings).values({
+      userId: user.id,
+      darkMode: true,
+      notifications: true,
+    });
+    console.log(`✅ Created user settings\n`);
+
+    // Initialize user points
+    console.log("💰 Initializing points...");
+    await db.insert(userPoints).values({
+      userId: user.id,
+      totalEarned: 250,
+      totalSpent: 0,
+      available: 250,
+    });
+    console.log(`✅ Starting with 250 points\n`);
+
+    // Create costumes
+    console.log("👔 Creating costume shop...");
+    const costumeData = [
+      { name: "Party Hat", description: "A festive party hat", category: "hat" as const, price: 50, imageUrl: "🎉", rarity: "common" as const },
+      { name: "Crown", description: "Royal crown fit for a king", category: "hat" as const, price: 200, imageUrl: "👑", rarity: "rare" as const },
+      { name: "Wizard Hat", description: "Magical wizard hat", category: "hat" as const, price: 150, imageUrl: "🧙", rarity: "rare" as const },
+      { name: "Superhero Cape", description: "Feel like a superhero", category: "outfit" as const, price: 100, imageUrl: "🦸", rarity: "common" as const },
+      { name: "Ninja Outfit", description: "Stealth mode activated", category: "outfit" as const, price: 250, imageUrl: "🥷", rarity: "epic" as const },
+      { name: "Sunglasses", description: "Cool shades", category: "accessory" as const, price: 75, imageUrl: "😎", rarity: "common" as const },
+      { name: "Gold Medal", description: "Achievement unlocked", category: "accessory" as const, price: 300, imageUrl: "🏅", rarity: "epic" as const },
+      { name: "Space Background", description: "Explore the cosmos", category: "background" as const, price: 400, imageUrl: "🌌", rarity: "legendary" as const },
+      { name: "Forest Background", description: "Nature vibes", category: "background" as const, price: 150, imageUrl: "🌲", rarity: "rare" as const },
+      { name: "Rainbow Background", description: "Bright and cheerful", category: "background" as const, price: 100, imageUrl: "🌈", rarity: "common" as const },
+    ];
+    const insertedCostumes = await db.insert(costumes).values(costumeData).returning();
+    console.log(`✅ Created ${insertedCostumes.length} costumes\n`);
+
+    console.log("🎉 Database setup complete!\n");
     console.log("Summary:");
+    console.log(`  - User: ${user.name}`);
     console.log(`  - ${insertedGoals.length} monthly goals`);
     console.log(`  - ${insertedHabits.length} weekly habits`);
-    console.log(`  - User ID: ${USER_ID}`);
+    console.log(`  - Virtual pet: ${pet.name}`);
+    console.log(`  - ${insertedCostumes.length} costumes available`);
+    console.log(`  - Starting points: 250`);
     console.log(`  - Deadline: ${NOVEMBER_DEADLINE}`);
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error setting up November goals:", error);
+    console.error("❌ Error setting up database:", error);
     process.exit(1);
   }
 }
