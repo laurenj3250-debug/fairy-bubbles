@@ -2,16 +2,48 @@
 
 Your Neon database is configured but needs to be set up from your **local machine** or **deployment environment** (this coding environment doesn't have network access to external databases).
 
-## Quick Setup (3 Steps)
+## Quick Setup (Pick Your Style)
 
-### Step 1: Install Dependencies
+### Option A — One Command (Recommended)
+
+From the `GoalConnect` directory run:
+
+```bash
+./scripts/bootstrap-neon.sh
+```
+
+The script will:
+
+1. Create `.env` from `.env.example` if it doesn't exist yet
+2. Install npm dependencies
+3. Push the latest Drizzle migrations to Neon
+4. Seed all November data (user, goals, habits, pet, costumes, starting points)
+
+It prints each step so you can watch the progress and flags anything that needs your attention (for example, reviewing the `.env`).
+
+### Option B — Manual 4-Step Flow
+
+If you prefer to run the commands yourself, follow the steps below.
+
+#### Step 1: Review Your `.env`
+
+A ready-to-use `.env` file is already committed with your Neon credentials and auth defaults. Open it to confirm nothing has
+changed, or duplicate it if you want an alternate configuration:
 
 ```bash
 cd GoalConnect
+nano .env   # or use your editor of choice
+```
+
+#### Step 2: Install Dependencies
+
+Run this from the `GoalConnect` directory (Step 1 already moved you there):
+
+```bash
 npm install
 ```
 
-### Step 2: Run Database Migrations
+#### Step 3: Run Database Migrations
 
 This creates all the tables (users, goals, habits, virtual_pets, costumes, etc.):
 
@@ -25,10 +57,10 @@ You should see:
 ✓ Changes applied
 ```
 
-### Step 3: Seed Your November Data
+#### Step 4: Seed Your November Data
 
 This populates your database with:
-- Your user account (Lauren)
+- Your GoalConnect account (`laurenj3250`)
 - 15 monthly goals
 - 10 weekly habits
 - Virtual pet (Forest Friend)
@@ -39,11 +71,11 @@ This populates your database with:
 npm exec tsx server/setup-november-goals.ts
 ```
 
-You should see:
+You should see output similar to:
 ```
 🎯 Setting up complete database with November goals and habits...
-👤 Creating user...
-✅ Created user: Lauren (lauren@fairybubbles.com)
+👤 Ensuring user exists for laurenj3250...
+✅ Created user: Lauren (laurenj3250@goalconnect.local)
 📋 Inserting monthly goals...
 ✅ Created 15 monthly goals
 🔄 Inserting weekly habits...
@@ -58,8 +90,9 @@ You should see:
 ✅ Created 10 costumes
 🎉 Database setup complete!
 ```
+If you already seeded the database you'll see `✅ Reusing existing user...` before the inserts—the script automatically clears the old data for that account and rebuilds it.
 
-### Step 4: Start the App!
+### Start the App!
 
 ```bash
 npm run dev
@@ -74,22 +107,40 @@ Your data will now **persist** across:
 
 ## What's Already Configured
 
-✅ `.env` file created with your Neon DATABASE_URL
-✅ Database storage enabled in `server/storage.ts`
+✅ `.env.example` filled with your Neon connection strings
+✅ Database storage always uses Neon (`DbStorage`) so progress is persistent
+✅ Simple username/password auth via `APP_USERNAME` and `APP_PASSWORD`
+✅ Login is disabled by default (`AUTH_DISABLED=true`) so the dashboard loads instantly
 ✅ Complete seed script with all your November goals and habits
 
 ---
 
 ## Your Database Connection
 
-```
-Host: ep-divine-surf-a4pmuu98-pooler.us-east-1.aws.neon.tech
-Database: neondb
-User: neondb_owner
-Region: us-east-1 (AWS)
+Your `.env` should contain the following values:
+
+```env
+DATABASE_URL=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_JGAL7QpaKHc6@ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-The connection string is securely stored in `.env` (this file is gitignored and won't be committed).
+Required login credentials (update these whenever you rotate them):
+
+```env
+APP_USERNAME=laurenj3250
+APP_PASSWORD=Crumpet11!!
+SESSION_SECRET=goalconnect-session-secret
+AUTH_DISABLED=true
+```
+
+Reference details:
+
+- **Pooled host (app + migrations):** `ep-odd-math-adxm5eam-pooler.c-2.us-east-1.aws.neon.tech`
+- **Direct host (optional tools):** `ep-odd-math-adxm5eam.c-2.us-east-1.aws.neon.tech`
+- **Database:** `neondb`
+- **User:** `neondb_owner`
+- **Password:** `npg_JGAL7QpaKHc6`
+- **Region:** `us-east-1` (AWS)
 
 ---
 
@@ -101,13 +152,11 @@ The connection string is securely stored in `.env` (this file is gitignored and 
 - Verify the DATABASE_URL in `.env` is correct
 
 ### "Table already exists"
-- You've already run migrations! Skip step 2
+- You've already run migrations! Skip Step 3
 - If you need to reset, use Neon's dashboard to drop/recreate tables
 
 ### "User already exists" (when running seed script)
-- Your database is already seeded!
-- To re-seed: Drop all data from Neon dashboard and re-run steps 2-3
-- Or just keep your existing data
+- This warning shouldn't appear anymore. The script reuses the `laurenj3250` account automatically and refreshes all of its data each time you run it.
 
 ---
 
@@ -115,8 +164,8 @@ The connection string is securely stored in `.env` (this file is gitignored and 
 
 ### User Account
 - Name: Lauren
-- Email: lauren@fairybubbles.com
-- User ID: 1
+- Email: laurenj3250@goalconnect.local
+- User ID: whichever your database assigned (typically 1)
 
 ### Monthly Goals (15)
 1. Pimsleur: Complete 16 Lessons
@@ -175,7 +224,7 @@ All goals have deadline: **November 30, 2025**
 
 ## Files Modified
 
-- ✅ `.env` - Contains your DATABASE_URL
+- ✅ `.env.example` - Copy to `.env` for your DATABASE_URL values
 - ✅ `server/storage.ts` - Switched to DbStorage
 - ✅ `server/setup-november-goals.ts` - Complete seed script
 
@@ -184,7 +233,7 @@ All goals have deadline: **November 30, 2025**
 ## Next Steps After Setup
 
 1. ✅ Clone/pull this branch to your local machine
-2. ✅ Run the 3 setup steps above
+2. ✅ Run the 4 setup steps above
 3. ✅ Start the app with `npm run dev`
 4. 🎉 Your data now persists forever!
 5. 📱 Access from any device (same data everywhere)

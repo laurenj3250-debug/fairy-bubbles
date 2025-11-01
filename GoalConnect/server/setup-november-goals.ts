@@ -1,24 +1,79 @@
-import { db } from "./db";
-import { users, goals, habits, virtualPets, userSettings, userPoints, costumes } from "../shared/schema";
+import "./load-env.js";
+import { eq } from "drizzle-orm";
+import { getDb } from "./db";
+import {
+  users,
+  goals,
+  habits,
+  virtualPets,
+  userSettings,
+  userPoints,
+  costumes,
+  goalUpdates,
+  habitLogs,
+  pointTransactions,
+  userCostumes,
+  todos,
+} from "../shared/schema";
 
 /**
  * Complete database setup with user, goals, habits, and all necessary data
  * Run with: npm exec tsx server/setup-november-goals.ts
  */
 
-const USER_ID = 1;
 const NOVEMBER_DEADLINE = "2025-11-30";
 
 async function setupNovemberGoals() {
   console.log("🎯 Setting up complete database with November goals and habits...\n");
+  const db = getDb();
 
-  // Create User
-  console.log("👤 Creating user...");
-  const [user] = await db.insert(users).values({
-    name: "Lauren",
-    email: "lauren@fairybubbles.com",
-  }).returning();
-  console.log(`✅ Created user: ${user.name} (${user.email})\n`);
+  const configuredUsername = process.env.APP_USERNAME?.trim() || "laurenj3250";
+  const configuredName = process.env.APP_USER_NAME?.trim() || "Lauren";
+  const configuredEmail =
+    process.env.APP_USER_EMAIL?.trim() || `${configuredUsername.toLowerCase()}@goalconnect.local`;
+
+  console.log(`👤 Ensuring user exists for ${configuredUsername}...`);
+  const existingUsers = await db.select().from(users).where(eq(users.email, configuredEmail));
+
+  let user = existingUsers[0];
+  if (!user) {
+    const [createdUser] = await db
+      .insert(users)
+      .values({
+        name: configuredName,
+        email: configuredEmail,
+      })
+      .returning();
+
+    user = createdUser;
+    console.log(`✅ Created user: ${user.name} (${user.email})\n`);
+  } else {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ name: configuredName })
+      .where(eq(users.id, user.id))
+      .returning();
+
+    user = updatedUser ?? user;
+    console.log(`✅ Reusing existing user: ${user.name} (${user.email})\n`);
+  }
+
+  const USER_ID = user.id;
+
+  console.log("🧹 Clearing existing data for this user...\n");
+  await db.delete(goalUpdates).where(eq(goalUpdates.userId, USER_ID));
+  await db.delete(pointTransactions).where(eq(pointTransactions.userId, USER_ID));
+  await db.delete(habitLogs).where(eq(habitLogs.userId, USER_ID));
+  await db.delete(todos).where(eq(todos.userId, USER_ID));
+  await db.delete(userCostumes).where(eq(userCostumes.userId, USER_ID));
+  await db.delete(habits).where(eq(habits.userId, USER_ID));
+  await db.delete(goals).where(eq(goals.userId, USER_ID));
+  await db.delete(userSettings).where(eq(userSettings.userId, USER_ID));
+  await db.delete(userPoints).where(eq(userPoints.userId, USER_ID));
+  await db.delete(virtualPets).where(eq(virtualPets.userId, USER_ID));
+
+  console.log("🧽 Resetting shared resources...\n");
+  await db.delete(costumes);
 
   // Monthly Goals
   const monthlyGoals = [
@@ -272,7 +327,7 @@ async function setupNovemberGoals() {
     // Create virtual pet
     console.log("🐾 Creating virtual pet...");
     const [pet] = await db.insert(virtualPets).values({
-      userId: user.id,
+      userId: USER_ID,
       name: "Forest Friend",
       species: "Gremlin",
       level: 1,
@@ -284,7 +339,7 @@ async function setupNovemberGoals() {
     // Create user settings
     console.log("⚙️ Creating user settings...");
     await db.insert(userSettings).values({
-      userId: user.id,
+      userId: USER_ID,
       darkMode: true,
       notifications: true,
     });
@@ -293,7 +348,7 @@ async function setupNovemberGoals() {
     // Initialize user points
     console.log("💰 Initializing points...");
     await db.insert(userPoints).values({
-      userId: user.id,
+      userId: USER_ID,
       totalEarned: 250,
       totalSpent: 0,
       available: 250,

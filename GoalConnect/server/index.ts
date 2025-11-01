@@ -1,6 +1,8 @@
+import "./load-env.js";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { configureAuth } from "./auth";
 
 const app = express();
 
@@ -15,6 +17,8 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+configureAuth(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
