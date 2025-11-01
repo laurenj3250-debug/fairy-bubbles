@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, TrendingUp } from "lucide-react";
-import type { VirtualPet as VirtualPetType, UserCostume, Costume } from "@shared/schema";
+import { Sparkles, TrendingUp, Coins } from "lucide-react";
+import type { VirtualPet as VirtualPetType, UserCostume, Costume, UserPoints } from "@shared/schema";
+import { useState, useEffect } from "react";
 import catImage from "@assets/3d ish crumpet.png";
 
 // Evolution configurations
@@ -93,6 +94,8 @@ function PetAvatar({
 }
 
 export function VirtualPet() {
+  const [isBouncing, setIsBouncing] = useState(false);
+
   const { data: pet, isLoading } = useQuery<VirtualPetType>({
     queryKey: ["/api/pet"],
   });
@@ -104,6 +107,19 @@ export function VirtualPet() {
   const { data: equippedCostumes = [] } = useQuery<Array<UserCostume & { costume: Costume }>>({
     queryKey: ["/api/costumes/equipped"],
   });
+
+  const { data: userPoints } = useQuery<UserPoints>({
+    queryKey: ["/api/points"],
+  });
+
+  // Trigger bounce animation when points change
+  useEffect(() => {
+    if (userPoints) {
+      setIsBouncing(true);
+      const timer = setTimeout(() => setIsBouncing(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [userPoints?.totalEarned]);
 
   if (isLoading || !pet) {
     return (
@@ -117,7 +133,8 @@ export function VirtualPet() {
 
   const config = EVOLUTION_CONFIG[pet.evolution];
   const currentStreak = stats?.currentStreak || 0;
-  const weeklyCompletion = stats?.weeklyCompletion || Math.round(pet.happiness);
+  const availablePoints = userPoints?.available || 0;
+  const weeklyCompletion = stats?.weeklyCompletion || 0;
 
   return (
     <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow">
@@ -131,8 +148,8 @@ export function VirtualPet() {
       </div>
 
       <div className="relative z-10">
-        {/* Pet Avatar with evolution */}
-        <div className="mb-6">
+        {/* Pet Avatar with evolution and bounce animation */}
+        <div className={`mb-6 ${isBouncing ? 'bounce' : ''}`}>
           <PetAvatar evolution={pet.evolution} size={config.size} equippedCostumes={equippedCostumes} />
         </div>
 
@@ -163,10 +180,10 @@ export function VirtualPet() {
 
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <span className="text-2xl">😊</span>
+              <Coins className="w-6 h-6 text-yellow-400" />
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{weeklyCompletion}%</div>
-            <div className="text-xs text-white/80">Happiness</div>
+            <div className="text-2xl font-bold text-white mb-1">{availablePoints}</div>
+            <div className="text-xs text-white/80">Points</div>
           </div>
         </div>
 
