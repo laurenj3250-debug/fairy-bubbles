@@ -1,4 +1,5 @@
 import {
+  type User,
   type Habit,
   type InsertHabit,
   type HabitLog,
@@ -84,6 +85,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User> = new Map();
   private habits: Map<number, Habit> = new Map();
   private habitLogs: Map<number, HabitLog> = new Map();
   private goals: Map<number, Goal> = new Map();
@@ -95,7 +97,7 @@ export class MemStorage implements IStorage {
   private pointTransactions: Map<number, PointTransaction> = new Map();
   private userPoints: Map<number, UserPoints> = new Map();
   private todos: Map<number, Todo> = new Map();
-  
+
   private nextId = 1;
 
   constructor() {
@@ -103,6 +105,16 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
+    // Create User (ID: 1)
+    const user: User = {
+      id: 1,
+      name: "Lauren",
+      email: "lauren@fairybubbles.com",
+      createdAt: new Date(),
+    };
+    this.users.set(1, user);
+    this.nextId = 2; // Start other IDs from 2
+
     // November 2025 Weekly Habits
     const habits = [
       { userId: 1, title: "Pimsleur (4 lessons/week)", description: "Complete 4 Pimsleur lessons this week (~1 full lesson + short sessions)", icon: "Languages", color: "#8B5CF6", cadence: "weekly" as const },
