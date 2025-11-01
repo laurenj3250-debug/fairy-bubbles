@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:vercel",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
@@ -11,18 +11,8 @@
       "destination": "/api/index"
     },
     {
-      "source": "/attached_assets/:path*",
-      "destination": "/attached_assets/:path*"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/attached_assets/(.*)",
-      "dest": "/attached_assets/$1"
     }
   ],
   "functions": {
