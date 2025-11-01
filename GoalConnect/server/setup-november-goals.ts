@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { getDb } from "./db";
 import { users, goals, habits, virtualPets, userSettings, userPoints, costumes } from "../shared/schema";
 
 /**
@@ -11,6 +11,7 @@ const NOVEMBER_DEADLINE = "2025-11-30";
 
 async function setupNovemberGoals() {
   console.log("🎯 Setting up complete database with November goals and habits...\n");
+  const db = getDb();
 
   // Create User
   console.log("👤 Creating user...");

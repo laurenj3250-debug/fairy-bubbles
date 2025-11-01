@@ -1,7 +1,8 @@
-import { db } from "./db";
+import { getDb } from "./db";
 import * as schema from "@shared/schema";
 
 async function seed() {
+  const db = getDb();
   console.log("Starting database seed...");
 
   // Create default user

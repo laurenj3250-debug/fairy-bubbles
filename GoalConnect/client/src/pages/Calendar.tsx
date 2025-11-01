@@ -4,7 +4,7 @@ import { CalendarView } from "@/components/CalendarView";
 export default function Calendar() {
   return (
     <div className="min-h-screen pb-20">
-      <DashboardHeader userName="Alex" />
+      <DashboardHeader />
       
       <main className="max-w-7xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">

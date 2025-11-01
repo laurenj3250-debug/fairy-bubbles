@@ -20,6 +20,7 @@ import {
   type Todo,
   type InsertTodo,
 } from "@shared/schema";
+import { DbStorage } from "./db-storage";
 
 export interface GoalUpdateResult {
   update: GoalUpdate;
@@ -106,10 +107,15 @@ export class MemStorage implements IStorage {
 
   private seedData() {
     // Create User (ID: 1)
+    const configuredName = process.env.APP_USER_NAME?.trim() || process.env.APP_USERNAME?.trim();
+    const userName = configuredName && configuredName.length > 0 ? configuredName : "Lauren";
+    const userEmail =
+      process.env.APP_USER_EMAIL?.trim() || `${userName.toLowerCase().replace(/\s+/g, "") || "user"}@goalconnect.local`;
+
     const user: User = {
       id: 1,
-      name: "Lauren",
-      email: "lauren@fairybubbles.com",
+      name: userName,
+      email: userEmail,
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -199,7 +205,15 @@ export class MemStorage implements IStorage {
 
   async createHabit(habit: InsertHabit): Promise<Habit> {
     const id = this.nextId++;
-    const newHabit: Habit = { id, ...habit };
+    const newHabit: Habit = {
+      id,
+      userId: habit.userId,
+      title: habit.title,
+      description: habit.description ?? "",
+      icon: habit.icon,
+      color: habit.color,
+      cadence: habit.cadence as Habit['cadence'],
+    };
     this.habits.set(id, newHabit);
     return newHabit;
   }
@@ -207,8 +221,13 @@ export class MemStorage implements IStorage {
   async updateHabit(id: number, habit: Partial<InsertHabit>): Promise<Habit | undefined> {
     const existing = this.habits.get(id);
     if (!existing) return undefined;
-    
-    const updated: Habit = { ...existing, ...habit };
+
+    const updated: Habit = {
+      ...existing,
+      ...habit,
+      description: habit.description ?? existing.description,
+      cadence: (habit.cadence ?? existing.cadence) as Habit['cadence'],
+    };
     this.habits.set(id, updated);
     return updated;
   }
@@ -237,7 +256,14 @@ export class MemStorage implements IStorage {
 
   async createHabitLog(log: InsertHabitLog): Promise<HabitLog> {
     const id = this.nextId++;
-    const newLog: HabitLog = { id, ...log, note: log.note || null };
+    const newLog: HabitLog = {
+      id,
+      habitId: log.habitId,
+      userId: log.userId,
+      date: log.date,
+      completed: log.completed ?? false,
+      note: log.note ?? null,
+    };
     this.habitLogs.set(id, newLog);
     return newLog;
   }
@@ -245,8 +271,13 @@ export class MemStorage implements IStorage {
   async updateHabitLog(id: number, log: Partial<InsertHabitLog>): Promise<HabitLog | undefined> {
     const existing = this.habitLogs.get(id);
     if (!existing) return undefined;
-    
-    const updated: HabitLog = { ...existing, ...log };
+
+    const updated: HabitLog = {
+      ...existing,
+      ...log,
+      completed: log.completed ?? existing.completed,
+      note: log.note ?? existing.note,
+    };
     this.habitLogs.set(id, updated);
     return updated;
   }
@@ -265,7 +296,17 @@ export class MemStorage implements IStorage {
 
   async createGoal(goal: InsertGoal): Promise<Goal> {
     const id = this.nextId++;
-    const newGoal: Goal = { id, ...goal };
+    const newGoal: Goal = {
+      id,
+      userId: goal.userId,
+      title: goal.title,
+      description: goal.description ?? "",
+      targetValue: goal.targetValue,
+      currentValue: goal.currentValue ?? 0,
+      unit: goal.unit,
+      deadline: goal.deadline,
+      category: goal.category,
+    };
     this.goals.set(id, newGoal);
     return newGoal;
   }
@@ -273,8 +314,13 @@ export class MemStorage implements IStorage {
   async updateGoal(id: number, goal: Partial<InsertGoal>): Promise<Goal | undefined> {
     const existing = this.goals.get(id);
     if (!existing) return undefined;
-    
-    const updated: Goal = { ...existing, ...goal };
+
+    const updated: Goal = {
+      ...existing,
+      ...goal,
+      description: goal.description ?? existing.description,
+      currentValue: goal.currentValue ?? existing.currentValue,
+    };
     this.goals.set(id, updated);
     return updated;
   }
@@ -293,7 +339,14 @@ export class MemStorage implements IStorage {
 
   async createGoalUpdate(update: InsertGoalUpdate): Promise<GoalUpdateResult> {
     const id = this.nextId++;
-    const newUpdate: GoalUpdate = { id, ...update, note: update.note || null };
+    const newUpdate: GoalUpdate = {
+      id,
+      goalId: update.goalId,
+      userId: update.userId,
+      date: update.date,
+      value: update.value,
+      note: update.note ?? null,
+    };
     this.goalUpdates.set(id, newUpdate);
     
     const goal = this.goals.get(update.goalId);
@@ -331,8 +384,13 @@ export class MemStorage implements IStorage {
   }
 
   async updateUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
-    this.userSettings.set(settings.userId, settings);
-    return settings;
+    const stored: UserSettings = {
+      userId: settings.userId,
+      darkMode: settings.darkMode ?? true,
+      notifications: settings.notifications ?? true,
+    };
+    this.userSettings.set(settings.userId, stored);
+    return stored;
   }
 
   async getVirtualPet(userId: number): Promise<VirtualPet | undefined> {
@@ -341,10 +399,19 @@ export class MemStorage implements IStorage {
 
   async createVirtualPet(pet: InsertVirtualPet): Promise<VirtualPet> {
     const id = this.nextId++;
-    const newPet: VirtualPet = { 
-      id, 
-      ...pet,
-      currentCostumeId: pet.currentCostumeId || null,
+    const newPet: VirtualPet = {
+      id,
+      userId: pet.userId,
+      name: pet.name ?? "Forest Friend",
+      species: (pet.species ?? "Gremlin") as VirtualPet['species'],
+      happiness: pet.happiness ?? 50,
+      health: pet.health ?? 100,
+      level: pet.level ?? 1,
+      experience: pet.experience ?? 0,
+      evolution: (pet.evolution ?? "seed") as VirtualPet['evolution'],
+      currentCostumeId: pet.currentCostumeId ?? null,
+      createdAt: pet.createdAt ?? new Date(),
+      lastFed: pet.lastFed ?? null,
     };
     this.virtualPets.set(id, newPet);
     return newPet;
@@ -353,8 +420,13 @@ export class MemStorage implements IStorage {
   async updateVirtualPet(id: number, pet: Partial<VirtualPet>): Promise<VirtualPet | undefined> {
     const existing = this.virtualPets.get(id);
     if (!existing) return undefined;
-    
-    const updated: VirtualPet = { ...existing, ...pet };
+
+    const updated: VirtualPet = {
+      ...existing,
+      ...pet,
+      currentCostumeId: pet.currentCostumeId ?? existing.currentCostumeId,
+      lastFed: pet.lastFed ?? existing.lastFed,
+    };
     this.virtualPets.set(id, updated);
     return updated;
   }
@@ -391,7 +463,8 @@ export class MemStorage implements IStorage {
       id,
       userId,
       costumeId,
-      purchasedAt: new Date().toISOString(),
+      purchasedAt: new Date(),
+      isEquipped: false,
     };
     this.userCostumes.set(id, newUserCostume);
     return newUserCostume;
@@ -402,7 +475,9 @@ export class MemStorage implements IStorage {
       uc => uc.userId === userId && uc.costumeId === costumeId
     );
     if (!userCostume) throw new Error("Costume not owned");
-    return userCostume;
+    const updated: UserCostume = { ...userCostume, isEquipped: true };
+    this.userCostumes.set(userCostume.id, updated);
+    return updated;
   }
 
   async unequipCostume(userId: number, costumeId: number): Promise<UserCostume> {
@@ -410,12 +485,14 @@ export class MemStorage implements IStorage {
       uc => uc.userId === userId && uc.costumeId === costumeId
     );
     if (!userCostume) throw new Error("Costume not owned");
-    return userCostume;
+    const updated: UserCostume = { ...userCostume, isEquipped: false };
+    this.userCostumes.set(userCostume.id, updated);
+    return updated;
   }
 
   async getEquippedCostumes(userId: number): Promise<Array<UserCostume & { costume: Costume }>> {
     const userCostumes = await this.getUserCostumes(userId);
-    return userCostumes.map(uc => {
+    return userCostumes.filter(uc => uc.isEquipped).map(uc => {
       const costume = this.costumes.get(uc.costumeId);
       return { ...uc, costume: costume! };
     }).filter(uc => uc.costume);
@@ -439,7 +516,7 @@ export class MemStorage implements IStorage {
       type,
       relatedId,
       description,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
     };
     this.pointTransactions.set(id, transaction);
 
@@ -463,7 +540,7 @@ export class MemStorage implements IStorage {
       type: "costume_purchase",
       relatedId: null,
       description,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
     };
     this.pointTransactions.set(id, transaction);
 
@@ -500,7 +577,11 @@ export class MemStorage implements IStorage {
     const id = this.nextId++;
     const newTodo: Todo = {
       id,
-      ...todo,
+      userId: todo.userId,
+      title: todo.title,
+      description: todo.description ?? "",
+      dueDate: todo.dueDate ?? null,
+      points: todo.points ?? 10,
       completed: false,
       completedAt: null,
       createdAt: new Date(),
@@ -513,7 +594,14 @@ export class MemStorage implements IStorage {
     const todo = this.todos.get(id);
     if (!todo) return undefined;
 
-    const updated = { ...todo, ...update };
+    const updated: Todo = {
+      ...todo,
+      ...update,
+      description: update.description ?? todo.description,
+      dueDate: update.dueDate ?? todo.dueDate,
+      points: update.points ?? todo.points,
+      completedAt: update.completedAt ?? todo.completedAt,
+    };
     this.todos.set(id, updated);
     return updated;
   }
@@ -545,8 +633,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { DbStorage } from "./db-storage";
+// Use database storage when DATABASE_URL is configured; otherwise fall back to the in-memory store
+// so the app works out of the box without Neon.
+const storageImplementation: IStorage = process.env.DATABASE_URL ? new DbStorage() : new MemStorage();
 
-// Use database storage for persistent data across devices and restarts
-// To set up: Add DATABASE_URL to .env, run migrations, then run the seed script
-export const storage = new DbStorage();
+export const storage = storageImplementation;
