@@ -18,7 +18,9 @@ export function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!session.data?.authenticated) {
-    return <LoginPage onSuccess={() => session.refetch()} />;
+    return <LoginPage onSuccess={async () => {
+      await session.refetch();
+    }} />;
   }
 
   return <>{children}</>;

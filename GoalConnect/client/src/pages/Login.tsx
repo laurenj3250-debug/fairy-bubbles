@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { login } from "@/lib/auth";
 
 interface LoginPageProps {
-  onSuccess: () => void;
+  onSuccess: () => Promise<void> | void;
 }
 
 export default function LoginPage({ onSuccess }: LoginPageProps) {
@@ -14,6 +14,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const usernameRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    usernameRef.current?.focus();
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,7 +27,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
 
     try {
       await login(username, password);
-      onSuccess();
+      await onSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to sign in";
       setError(message);
@@ -32,8 +37,9 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-sm border-border/60 shadow-lg">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
+      <div className="pointer-events-none absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <Card className="relative z-10 w-full max-w-sm border-border/60 shadow-lg">
         <CardHeader>
           <CardTitle className="text-center text-2xl">Sign in to GoalConnect</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
@@ -47,6 +53,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               <Input
                 id="username"
                 autoComplete="username"
+                ref={usernameRef}
                 value={username}
                 onChange={event => setUsername(event.target.value)}
                 required
