@@ -130,6 +130,16 @@ app.get('/init-database', async (_req, res) => {
         completed_at TIMESTAMPTZ DEFAULT NOW(),
         notes TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS todos (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        title TEXT NOT NULL,
+        description TEXT,
+        due_date TIMESTAMPTZ,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
 
     // Insert user
@@ -313,6 +323,184 @@ app.post('/habit-logs', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
     console.error('Error creating habit log:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete habit
+app.delete('/habits/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await queryDb('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, USER_ID]);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error deleting habit:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Patch habit
+app.patch('/habits/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, frequency, target_count } = req.body;
+    const result = await queryDb(
+      `UPDATE habits SET name = $1, description = $2, frequency = $3, target_count = $4
+       WHERE id = $5 AND user_id = $6 RETURNING *`,
+      [name, description, frequency, target_count, id, USER_ID]
+    );
+    res.json(result.rows[0] || {});
+  } catch (error: any) {
+    console.error('Error updating habit:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete goal
+app.delete('/goals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await queryDb('DELETE FROM goals WHERE id = $1 AND user_id = $2', [id, USER_ID]);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error deleting goal:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// TODOS API
+// ============================================================================
+
+app.get('/todos', async (_req, res) => {
+  try {
+    const result = await queryDb(
+      'SELECT * FROM todos WHERE user_id = $1 ORDER BY due_date ASC NULLS LAST, created_at DESC',
+      [USER_ID]
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    console.error('Error fetching todos:', error);
+    // If table doesn't exist yet, return empty array
+    res.json([]);
+  }
+});
+
+app.post('/todos', async (req, res) => {
+  try {
+    const { title, description, due_date } = req.body;
+    const result = await queryDb(
+      `INSERT INTO todos (user_id, title, description, due_date, completed)
+       VALUES ($1, $2, $3, $4, false)
+       RETURNING *`,
+      [USER_ID, title, description || '', due_date || null]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error creating todo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/todos/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await queryDb(
+      `UPDATE todos SET completed = true WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [id, USER_ID]
+    );
+    res.json(result.rows[0] || {});
+  } catch (error: any) {
+    console.error('Error completing todo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/todos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await queryDb('DELETE FROM todos WHERE id = $1 AND user_id = $2', [id, USER_ID]);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error deleting todo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// PET & GAMIFICATION API
+// ============================================================================
+
+app.get('/pet', async (_req, res) => {
+  // Return default pet
+  res.json({
+    id: 1,
+    user_id: USER_ID,
+    name: 'Forest Friend',
+    species: 'Gremlin',
+    happiness: 75,
+    health: 100,
+    level: 1,
+    experience: 0,
+    evolution: 'seed'
+  });
+});
+
+app.get('/points', async (_req, res) => {
+  // Return default points
+  res.json({
+    user_id: USER_ID,
+    total_points: 250
+  });
+});
+
+app.get('/user-points', async (_req, res) => {
+  // Return default points
+  res.json({
+    user_id: USER_ID,
+    total_points: 250
+  });
+});
+
+app.get('/stats', async (_req, res) => {
+  // Return basic stats
+  res.json({
+    totalHabits: 0,
+    totalGoals: 0,
+    completedToday: 0
+  });
+});
+
+app.get('/costumes', async (_req, res) => {
+  // Return empty costumes list
+  res.json([]);
+});
+
+app.get('/user-costumes', async (_req, res) => {
+  // Return empty user costumes
+  res.json([]);
+});
+
+app.get('/costumes/equipped', async (_req, res) => {
+  // Return no equipped costumes
+  res.json([]);
+});
+
+app.post('/costumes/purchase', async (_req, res) => {
+  res.json({ success: false, message: 'Costumes not yet implemented' });
+});
+
+app.post('/goal-updates', async (req, res) => {
+  try {
+    const { goalId, value, notes } = req.body;
+    // Just update the goal's current_value
+    const result = await queryDb(
+      `UPDATE goals SET current_value = current_value + $1 WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [value || 1, goalId, USER_ID]
+    );
+    res.status(201).json(result.rows[0] || {});
+  } catch (error: any) {
+    console.error('Error updating goal:', error);
     res.status(500).json({ error: error.message });
   }
 });
