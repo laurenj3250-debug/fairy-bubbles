@@ -18,10 +18,21 @@ function getPool() {
   if (!process.env.DATABASE_URL) {
     return null;
   }
-  return new Pool({
+
+  // Supabase pooler requires this SSL config
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: {
+      rejectUnauthorized: false
+    }
   });
+
+  // Handle connection errors gracefully
+  pool.on('error', (err) => {
+    console.error('Unexpected pool error:', err);
+  });
+
+  return pool;
 }
 
 // Auth routes - ALWAYS return authenticated
@@ -39,14 +50,22 @@ app.get('/auth/session', (_req, res) => {
 
 // Initialize database
 app.get('/init-database', async (_req, res) => {
-  const pool = getPool();
+  // Try unpooled URL first (better for DDL operations)
+  const dbUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 
-  if (!pool) {
+  if (!dbUrl) {
     return res.json({
       success: false,
       message: 'No DATABASE_URL set - using in-memory storage'
     });
   }
+
+  const pool = new Pool({
+    connectionString: dbUrl,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
 
   try {
     // Create tables
