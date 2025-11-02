@@ -3,8 +3,7 @@ import { HabitToggleRow } from "@/components/HabitToggleRow";
 import { VirtualPet } from "@/components/VirtualPet";
 import { EmptyState } from "@/components/EmptyState";
 import { FAB } from "@/components/FAB";
-import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Star, Crown } from "lucide-react";
-import * as Icons from "lucide-react";
+import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -81,14 +80,15 @@ export default function Dashboard() {
   
   const { data: session } = useSession();
   const userName = session?.user?.name?.trim() || session?.user?.email?.split("@")[0] || "User";
+  const today = getToday();
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
   });
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
-    queryKey: ["/api/habit-logs", getToday()],
-    queryFn: () => fetch(`/api/habit-logs?date=${getToday()}`).then(res => res.json()),
+    queryKey: ["/api/habit-logs", today],
+    queryFn: () => fetch(`/api/habit-logs?date=${today}`).then(res => res.json()),
   });
 
   const toggleHabitMutation = useMutation({
@@ -102,13 +102,14 @@ export default function Dashboard() {
       } else {
         return apiRequest("/api/habit-logs", "POST", {
           habitId,
-          date: getToday(),
+          date: today,
           completed: true,
           note: null,
         });
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
     },
@@ -378,39 +379,27 @@ export default function Dashboard() {
                     <Sparkles className="w-6 h-6 text-yellow-400" style={{filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))'}} />
                   </div>
                   <div className="space-y-3">
-                    {todayHabits.map(habit => (
-                      <div
-                        key={habit.id}
-                        className={cn(
-                          "bg-white/10 backdrop-blur-xl rounded-2xl p-5 flex items-center gap-4 cursor-pointer transition-all duration-300 border-2 relative overflow-hidden group",
-                          habit.completed
-                            ? "bg-green-500/30 border-green-500/50 shadow-lg shadow-green-500/20"
-                            : "border-white/10 hover:border-green-500/40 hover:translate-x-2 hover:scale-[1.02]"
-                        )}
-                        onClick={() => handleToggleHabit(habit.id, habit.completed)}
-                      >
-                        <div className={cn(
-                          "w-8 h-8 rounded-full border-3 flex items-center justify-center flex-shrink-0 transition-all duration-300",
-                          habit.completed
-                            ? "bg-gradient-to-br from-green-500 to-emerald-600 border-green-500 shadow-lg"
-                            : "bg-white/5 border-white/30"
-                        )}>
-                          {habit.completed && <span className="text-white font-bold pop">?</span>}
-                        </div>
-                        <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center" style={{filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)', color: habit.color}}>
-                          {(() => {
-                            const IconComponent = (Icons as any)[habit.icon] || Icons.Sparkles;
-                            return <IconComponent className="w-6 h-6" />;
-                          })()}
-                        </div>
-                        <div className={cn(
-                          "flex-1 font-medium text-base",
-                          habit.completed ? "line-through text-white/60" : "text-white"
-                        )}>
-                          {habit.title}
-                        </div>
+                    {todayHabits.length === 0 ? (
+                      <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 text-center border-2 border-white/10 text-white/70">
+                        No habits scheduled for today yet. Create or assign one to see it here.
                       </div>
-                    ))}
+                    ) : (
+                      todayHabits.map(habit => (
+                        <HabitToggleRow
+                          key={habit.id}
+                          title={habit.title}
+                          icon={habit.icon}
+                          color={habit.color}
+                          completed={habit.completed}
+                          onToggle={() => handleToggleHabit(habit.id, habit.completed)}
+                          onLongPress={() => handleLongPress(habit)}
+                          className={cn(
+                            "border-white/10 hover:border-green-500/40",
+                            habit.completed && "border-green-500/50 bg-green-500/30"
+                          )}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
 

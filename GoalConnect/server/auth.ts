@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 
 import { getDb } from "./db";
 import { users } from "@shared/schema";
+import { ensureDatabaseInitialized } from "./init-db";
 
 const MemoryStore = memorystore(session);
 
@@ -77,6 +78,8 @@ async function findUserByEmail(email: string) {
 let cachedDefaultUser: AuthenticatedUser | null = null;
 
 async function resolveDefaultUser(): Promise<AuthenticatedUser> {
+  await ensureDatabaseInitialized();
+
   if (cachedDefaultUser) {
     return cachedDefaultUser;
   }
