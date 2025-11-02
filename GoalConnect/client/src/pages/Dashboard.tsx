@@ -19,6 +19,8 @@ import { GoalDialog } from "@/components/GoalDialog";
 import { HabitLogDialog } from "@/components/HabitLogDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { CalendarView } from "@/components/CalendarView";
+import { useSession } from "@/hooks/use-session";
 
 type TabType = "today" | "calendar" | "todos";
 
@@ -76,6 +78,9 @@ export default function Dashboard() {
   const [habitLogDialogOpen, setHabitLogDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [quickActionOpen, setQuickActionOpen] = useState(false);
+  
+  const { data: session } = useSession();
+  const userName = session?.user?.name?.trim() || session?.user?.email?.split("@")[0] || "User";
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -204,7 +209,7 @@ export default function Dashboard() {
               <div className="relative float-animation">
                 <Avatar className="w-14 h-14 border-3 border-white/30 shadow-lg relative">
                   <AvatarFallback className="text-lg font-bold bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                    AL
+                    {userName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center border-2 border-white/50 pulse-animation shadow-lg">
@@ -217,10 +222,10 @@ export default function Dashboard() {
                   style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(167, 139, 250, 0.8)' }}
                   data-testid="greeting-text"
                 >
-                  {getGreeting()}, Alex ✨
+                  {getGreeting()}, {userName} ?
                 </h1>
                 <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                  {formatDate()} • Keep growing! 🌱
+                  {formatDate()} ? Keep growing! ??
                 </p>
               </div>
             </div>
@@ -250,11 +255,11 @@ export default function Dashboard() {
             <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow">
               {/* Floating Sparkles */}
               <div className="absolute inset-0 pointer-events-none">
-                <span className="absolute top-5 left-5 text-xl float-sparkle">✨</span>
-                <span className="absolute top-8 right-8 text-xl float-sparkle" style={{animationDelay: '1s'}}>🌟</span>
-                <span className="absolute top-5 right-4 text-xl float-sparkle" style={{animationDelay: '0.5s'}}>💫</span>
-                <span className="absolute bottom-8 left-6 text-xl float-sparkle" style={{animationDelay: '1.5s'}}>⭐</span>
-                <span className="absolute bottom-10 right-9 text-xl float-sparkle" style={{animationDelay: '0.8s'}}>✨</span>
+                <span className="absolute top-5 left-5 text-xl float-sparkle">?</span>
+                <span className="absolute top-8 right-8 text-xl float-sparkle" style={{animationDelay: '1s'}}>??</span>
+                <span className="absolute top-5 right-4 text-xl float-sparkle" style={{animationDelay: '0.5s'}}>??</span>
+                <span className="absolute bottom-8 left-6 text-xl float-sparkle" style={{animationDelay: '1.5s'}}>?</span>
+                <span className="absolute bottom-10 right-9 text-xl float-sparkle" style={{animationDelay: '0.8s'}}>?</span>
               </div>
 
               <div className="relative z-10">
@@ -266,15 +271,15 @@ export default function Dashboard() {
                   Your Forest Friend
                 </h3>
                 <Badge className="rounded-full px-5 py-2 text-sm font-semibold bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 text-green-200 backdrop-blur-xl mb-6 shadow-lg">
-                  🌱 Growing Steadily 🌱
+                  ?? Growing Steadily ??
                 </Badge>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">⚡ {currentStreak}</div>
+                    <div className="text-2xl font-bold text-white mb-1">? {currentStreak}</div>
                     <div className="text-xs text-white/80">Day Streak</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">⭐ {Math.round((completedCount / totalCount) * 100)}%</div>
+                    <div className="text-2xl font-bold text-white mb-1">? {Math.round((completedCount / totalCount) * 100)}%</div>
                     <div className="text-xs text-white/80">This Week</div>
                   </div>
                 </div>
@@ -390,7 +395,7 @@ export default function Dashboard() {
                             ? "bg-gradient-to-br from-green-500 to-emerald-600 border-green-500 shadow-lg"
                             : "bg-white/5 border-white/30"
                         )}>
-                          {habit.completed && <span className="text-white font-bold pop">✓</span>}
+                          {habit.completed && <span className="text-white font-bold pop">?</span>}
                         </div>
                         <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center" style={{filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)', color: habit.color}}>
                           {(() => {
@@ -415,7 +420,7 @@ export default function Dashboard() {
                     className="text-lg font-bold text-white mb-6 flex items-center gap-2"
                     style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                   >
-                    This Week's Progress 🌿
+                    This Week's Progress ??
                   </h3>
                   <div className="grid grid-cols-7 gap-3">
                     {[6, 5, 4, 3, 2, 1, 0].map((daysAgo, idx) => {
@@ -442,14 +447,8 @@ export default function Dashboard() {
             )}
 
             {activeTab === "calendar" && (
-              <div className="glass-card rounded-3xl p-16 text-center fade-in">
-                <h2
-                  className="text-3xl font-bold text-white mb-4"
-                  style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
-                >
-                  📅 Calendar View
-                </h2>
-                <p className="text-white/70">Your magical calendar and streaks will appear here</p>
+              <div className="fade-in" data-testid="calendar-panel">
+                <CalendarView />
               </div>
             )}
 
@@ -459,7 +458,7 @@ export default function Dashboard() {
                   className="text-3xl font-bold text-white mb-4"
                   style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                 >
-                  ✅ To-Do List
+                  ? To-Do List
                 </h2>
                 <p className="text-white/70">Your enchanted tasks will appear here</p>
               </div>

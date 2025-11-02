@@ -16,7 +16,16 @@ export function CalendarView() {
   });
 
   const { data: habitLogs = [] } = useQuery<HabitLog[]>({
-    queryKey: ["/api/habit-logs"],
+    queryKey: ["/api/habit-logs/all"],
+    queryFn: async () => {
+      if (habits.length === 0) return [];
+      const logsPromises = habits.map(h =>
+        fetch(`/api/habit-logs?habitId=${h.id}`).then(res => res.json())
+      );
+      const logsArrays = await Promise.all(logsPromises);
+      return logsArrays.flat();
+    },
+    enabled: habits.length > 0,
   });
 
   const { data: goals = [] } = useQuery<Goal[]>({
@@ -43,7 +52,7 @@ export function CalendarView() {
     const dateString = format(date, "yyyy-MM-dd");
     
     const completedHabits = habitLogs.filter(log => 
-      format(new Date(log.date), "yyyy-MM-dd") === dateString
+      log.completed && format(new Date(log.date), "yyyy-MM-dd") === dateString
     );
 
     const todosForDate = todos.filter(todo => 
