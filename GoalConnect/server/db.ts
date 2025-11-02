@@ -9,10 +9,13 @@ let cachedDb: Database | null = null;
 let pool: pkg.Pool | null = null;
 
 export function getDb(): Database {
-  const connectionString = process.env.DATABASE_URL;
+  // Use unpooled connection for persistent connections
+  // Supabase's pooler (port 6543) terminates connections after transactions
+  // Direct connection (port 5432) allows persistent connection pooling
+  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is required");
+    throw new Error("DATABASE_URL or DATABASE_URL_UNPOOLED environment variable is required");
   }
 
   if (!cachedDb || !pool) {
