@@ -9,18 +9,19 @@ import { users } from "@shared/schema";
 
 const MemoryStore = memorystore(session);
 
-const FALLBACK_USERNAME = "demo";
+const FALLBACK_USERNAME = "laurenj3250";
 const FALLBACK_PASSWORD = "demo1234";
+const FALLBACK_NAME = "Lauren";
+const FALLBACK_EMAIL = `${FALLBACK_USERNAME.toLowerCase()}@goalconnect.local`;
 const FALLBACK_SECRET = "goalconnect-session-secret";
 
-const authDisabled = process.env.AUTH_DISABLED?.trim()?.toLowerCase() === "true";
+const authDisabledEnv = process.env.AUTH_DISABLED?.trim()?.toLowerCase();
+const authDisabled = authDisabledEnv !== "false" && authDisabledEnv !== "0";
 
 const configuredUsername = process.env.APP_USERNAME?.trim() || FALLBACK_USERNAME;
 const configuredPassword = process.env.APP_PASSWORD?.trim() || FALLBACK_PASSWORD;
-const configuredName = process.env.APP_USER_NAME?.trim() || configuredUsername;
-const configuredEmail =
-  process.env.APP_USER_EMAIL?.trim() ||
-  `${configuredUsername.toLowerCase().replace(/\s+/g, "") || "user"}@goalconnect.local`;
+const configuredName = process.env.APP_USER_NAME?.trim() || FALLBACK_NAME;
+const configuredEmail = process.env.APP_USER_EMAIL?.trim() || FALLBACK_EMAIL;
 
 const sessionSecret = process.env.SESSION_SECRET?.trim() || FALLBACK_SECRET;
 
@@ -41,12 +42,6 @@ type SupabaseSessionTokens = {
   accessToken: string;
   refreshToken: string | null;
   expiresAt: number | null;
-};
-
-const DEFAULT_AUTHENTICATED_USER: AuthenticatedUser = {
-  id: 1,
-  email: configuredEmail,
-  name: configuredName,
 };
 
 declare module "express-session" {
@@ -77,6 +72,61 @@ async function findUserByEmail(email: string) {
   const db = getDb();
   const [dbUser] = await db.select().from(users).where(eq(users.email, email));
   return dbUser;
+}
+
+let cachedDefaultUser: AuthenticatedUser | null = null;
+
+async function resolveDefaultUser(): Promise<AuthenticatedUser> {
+  if (cachedDefaultUser) {
+    return cachedDefaultUser;
+  }
+
+  try {
+    const dbUser = await findUserByEmail(configuredEmail);
+    if (dbUser) {
+      cachedDefaultUser = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+      };
+      return cachedDefaultUser;
+    }
+  } catch (error) {
+    console.error("[auth] Failed to look up default user by email:", error);
+  }
+
+  try {
+    const db = getDb();
+    const [firstUser] = await db.select().from(users).limit(1);
+    if (firstUser) {
+      if (firstUser.email.toLowerCase() !== configuredEmail.toLowerCase()) {
+        console.warn(
+          `[auth] Default email ${configuredEmail} not found. Using ${firstUser.email} instead.`,
+        );
+      }
+
+      cachedDefaultUser = {
+        id: firstUser.id,
+        email: firstUser.email,
+        name: firstUser.name,
+      };
+      return cachedDefaultUser;
+    }
+  } catch (error) {
+    console.error("[auth] Failed to load fallback user:", error);
+  }
+
+  throw new Error(
+    "No default user available. Seed the database or configure APP_USER_EMAIL/APP_USER_NAME.",
+  );
+}
+
+function getCachedDefaultUser(): AuthenticatedUser {
+  if (!cachedDefaultUser) {
+    throw new Error("Default user has not been resolved yet");
+  }
+
+  return cachedDefaultUser;
 }
 
 function regenerateSession(req: Request): Promise<void> {
@@ -166,10 +216,12 @@ async function handleLocalLogin(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  const defaultUser = await resolveDefaultUser();
+
   await regenerateSession(req);
 
   const authenticatedUser: AuthenticatedUser = {
-    ...DEFAULT_AUTHENTICATED_USER,
+    ...defaultUser,
     supabaseUserId: undefined,
   };
 
@@ -213,7 +265,7 @@ function authenticateRequest(req: Request, res: Response, next: NextFunction) {
     return next();
   }
 
-  const user = req.session?.user;
+  const user = req.user ?? req.session?.user;
   if (!user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -225,24 +277,47 @@ function authenticateRequest(req: Request, res: Response, next: NextFunction) {
 export function configureAuth(app: Express) {
   if (authDisabled) {
     console.log(
-      "[auth] AUTH_DISABLED=true – all API requests are treated as authenticated. Update your Supabase or .env credentials when you're ready to require sign-in.",
+      "[auth] Authentication is disabled – all API requests will use the configured fallback user.",
     );
 
-    app.use((req, _res, next) => {
-      req.user = DEFAULT_AUTHENTICATED_USER;
-      next();
+    void resolveDefaultUser()
+      .then(user => {
+        console.log(`[auth] Defaulting all requests to ${user.email} (userId=${user.id}).`);
+      })
+      .catch(error => {
+        console.error("[auth] Unable to resolve default user during startup:", error);
+      });
+
+    app.use(async (req, _res, next) => {
+      try {
+        const defaultUser = await resolveDefaultUser();
+        req.user = defaultUser;
+        next();
+      } catch (error) {
+        next(error);
+      }
     });
 
-    app.post("/api/auth/login", (_req, res) => {
-      res.json({ authenticated: true, user: formatUserForResponse(DEFAULT_AUTHENTICATED_USER) });
+    app.post("/api/auth/login", async (_req, res, next) => {
+      try {
+        const defaultUser = await resolveDefaultUser();
+        res.json({ authenticated: true, user: formatUserForResponse(defaultUser) });
+      } catch (error) {
+        next(error);
+      }
     });
 
     app.post("/api/auth/logout", (_req, res) => {
       res.json({ authenticated: false });
     });
 
-    app.get("/api/auth/session", (_req, res) => {
-      res.json({ authenticated: true, user: formatUserForResponse(DEFAULT_AUTHENTICATED_USER) });
+    app.get("/api/auth/session", async (_req, res, next) => {
+      try {
+        const defaultUser = await resolveDefaultUser();
+        res.json({ authenticated: true, user: formatUserForResponse(defaultUser) });
+      } catch (error) {
+        next(error);
+      }
     });
 
     return;
@@ -310,10 +385,14 @@ export function configureAuth(app: Express) {
 
 export function requireUser(req: Request): AuthenticatedUser {
   if (authDisabled) {
-    return DEFAULT_AUTHENTICATED_USER;
+    if (req.user) {
+      return req.user;
+    }
+
+    return getCachedDefaultUser();
   }
 
-  const user = req.session?.user ?? req.user;
+  const user = req.user ?? req.session?.user;
   if (!user) {
     throw new Error("Missing authenticated user");
   }

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { useSession } from "@/hooks/use-session";
-import LoginPage from "@/pages/Login";
 
 interface AuthGateProps {
   children: ReactNode;
@@ -17,10 +16,8 @@ export function AuthGate({ children }: AuthGateProps) {
     );
   }
 
-  if (!session.data?.authenticated) {
-    return <LoginPage onSuccess={async () => {
-      await session.refetch();
-    }} />;
+  if (session.isError) {
+    console.error("Failed to load session", session.error);
   }
 
   return <>{children}</>;
