@@ -24,19 +24,35 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  const connectionString = process.env.DATABASE_URL;
+  // Try non-pooled URL first, then fall back to regular DATABASE_URL
+  const connectionString =
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED ||
+    process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // Simple connection - let the connection string handle SSL via sslmode=require
-  const client = new Pool({
-    connectionString,
-    max: 1, // Vercel serverless: keep connections minimal
+  // Parse the connection string to add SSL config if needed
+  const url = new URL(connectionString);
+  const config: any = {
+    host: url.hostname,
+    port: parseInt(url.port) || 5432,
+    user: url.username,
+    password: url.password,
+    database: url.pathname.slice(1).split('?')[0],
+    max: 1,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-  });
+  };
+
+  // Only add SSL if not localhost
+  if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
+    config.ssl = { rejectUnauthorized: false };
+  }
+
+  const client = new Pool(config);
 
   try {
     const result = await client.query(sql, params);
@@ -302,7 +318,7 @@ app.post('/habit-logs', async (req, res) => {
 });
 
 // ============================================================================
-// HEALTH CHECK
+// HEALTH CHECK & DEBUG
 // ============================================================================
 
 app.get('/health', (_req, res) => {
@@ -311,6 +327,37 @@ app.get('/health', (_req, res) => {
     message: 'API is running',
     timestamp: new Date().toISOString()
   });
+});
+
+app.get('/debug/db-config', (_req, res) => {
+  const hasDbUrl = !!process.env.DATABASE_URL;
+  const hasUnpooled = !!process.env.POSTGRES_URL_NON_POOLING;
+  const dbUrlPreview = process.env.DATABASE_URL
+    ? process.env.DATABASE_URL.substring(0, 30) + '...'
+    : 'NOT SET';
+
+  res.json({
+    DATABASE_URL_configured: hasDbUrl,
+    POSTGRES_URL_NON_POOLING_configured: hasUnpooled,
+    preview: dbUrlPreview
+  });
+});
+
+app.get('/debug/test-connection', async (_req, res) => {
+  try {
+    const result = await queryDb('SELECT NOW() as current_time');
+    res.json({
+      success: true,
+      message: 'Database connection successful!',
+      timestamp: result.rows[0]?.current_time
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code
+    });
+  }
 });
 
 // Catch all
