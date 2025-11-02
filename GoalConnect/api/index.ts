@@ -8,31 +8,29 @@ app.use(express.json());
 
 const USER_ID = 1;
 
-// Simple in-memory storage as fallback
+// Simple in-memory storage with November goals pre-loaded
 let inMemoryUser = { id: 1, email: 'laurenj3250@goalconnect.local', name: 'Lauren' };
-let habits: any[] = [];
-let goals: any[] = [];
 
-// Database helper
+let habits: any[] = [
+  { id: 1, user_id: 1, name: 'Pimsleur', description: 'Do 1 Pimsleur lesson', frequency: 'weekly', target_count: 4 },
+  { id: 2, user_id: 1, name: 'Duolingo', description: 'Complete Duolingo session', frequency: 'weekly', target_count: 5 },
+  { id: 3, user_id: 1, name: 'Gym', description: 'Go to the gym', frequency: 'weekly', target_count: 4 },
+  { id: 4, user_id: 1, name: 'Piano', description: 'Practice piano', frequency: 'weekly', target_count: 3 }
+];
+
+let goals: any[] = [
+  { id: 1, user_id: 1, title: 'Pimsleur: 16 lessons', description: 'Complete 16 Pimsleur lessons', category: 'Language learning', target_value: 16, current_value: 0, deadline: '2025-11-30' },
+  { id: 2, user_id: 1, title: 'Duolingo: 1 unit', description: 'Complete 1 Duolingo unit', category: 'Language learning', target_value: 1, current_value: 0, deadline: '2025-11-30' },
+  { id: 3, user_id: 1, title: 'Complete 16 Gym Sessions', description: 'Go to the gym 16 times', category: 'Fitness', target_value: 16, current_value: 0, deadline: '2025-11-30' },
+  { id: 4, user_id: 1, title: 'Play Piano 12 times', description: 'Practice piano 12 times', category: 'Hobbies', target_value: 12, current_value: 0, deadline: '2025-11-30' },
+  { id: 5, user_id: 1, title: 'Ship 1 App Feature', description: 'Complete and ship one app feature', category: 'Projects', target_value: 1, current_value: 0, deadline: '2025-11-30' }
+];
+
+// Database helper - DISABLED for now due to SSL issues
 function getPool() {
-  if (!process.env.DATABASE_URL) {
-    return null;
-  }
-
-  // Supabase pooler requires this SSL config
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
-
-  // Handle connection errors gracefully
-  pool.on('error', (err) => {
-    console.error('Unexpected pool error:', err);
-  });
-
-  return pool;
+  // TODO: Fix SSL certificate issues with Supabase
+  // For now, just use in-memory storage
+  return null;
 }
 
 // Auth routes - ALWAYS return authenticated
@@ -48,111 +46,13 @@ app.get('/auth/session', (_req, res) => {
   res.json({ authenticated: true, user: inMemoryUser });
 });
 
-// Initialize database
+// Initialize database - currently using in-memory storage
 app.get('/init-database', async (_req, res) => {
-  // Try unpooled URL first (better for DDL operations)
-  const dbUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
-
-  if (!dbUrl) {
-    return res.json({
-      success: false,
-      message: 'No DATABASE_URL set - using in-memory storage'
-    });
-  }
-
-  const pool = new Pool({
-    connectionString: dbUrl,
-    ssl: {
-      rejectUnauthorized: false
-    }
+  res.json({
+    success: true,
+    message: 'Using in-memory storage with November goals pre-loaded! Your data is ready.',
+    note: 'Database persistence temporarily disabled due to SSL issues. Working on fix.'
   });
-
-  try {
-    // Create tables
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS habits (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        description TEXT,
-        frequency TEXT NOT NULL,
-        target_count INTEGER,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS goals (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        description TEXT,
-        category TEXT,
-        target_value INTEGER,
-        current_value INTEGER DEFAULT 0,
-        deadline TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    // Insert user if doesn't exist
-    await pool.query(`
-      INSERT INTO users (id, email, name)
-      VALUES (1, 'laurenj3250@goalconnect.local', 'Lauren')
-      ON CONFLICT (email) DO NOTHING
-    `);
-
-    // Insert some November goals
-    const novemberGoals = [
-      ['Pimsleur: 16 lessons', 'Language learning', 16, '2025-11-30'],
-      ['Duolingo: 1 unit', 'Language learning', 1, '2025-11-30'],
-      ['Complete 16 Gym Sessions', 'Fitness', 16, '2025-11-30'],
-      ['Play Piano 12 times', 'Hobbies', 12, '2025-11-30'],
-      ['Ship 1 App Feature', 'Projects', 1, '2025-11-30']
-    ];
-
-    for (const [title, category, target, deadline] of novemberGoals) {
-      await pool.query(`
-        INSERT INTO goals (user_id, title, category, target_value, current_value, deadline)
-        VALUES ($1, $2, $3, $4, 0, $5)
-        ON CONFLICT DO NOTHING
-      `, [USER_ID, title, category, target, deadline]);
-    }
-
-    // Insert some habits
-    const novemberHabits = [
-      ['Pimsleur', 'Do 1 Pimsleur lesson', 'weekly', 4],
-      ['Duolingo', 'Complete Duolingo session', 'weekly', 5],
-      ['Gym', 'Go to the gym', 'weekly', 4],
-      ['Piano', 'Practice piano', 'weekly', 3]
-    ];
-
-    for (const [name, description, frequency, target] of novemberHabits) {
-      await pool.query(`
-        INSERT INTO habits (user_id, name, description, frequency, target_count)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT DO NOTHING
-      `, [USER_ID, name, description, frequency, target]);
-    }
-
-    await pool.end();
-
-    res.json({
-      success: true,
-      message: 'Database initialized with November goals and habits!'
-    });
-  } catch (error: any) {
-    console.error('Database init error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
 });
 
 // Get habits
