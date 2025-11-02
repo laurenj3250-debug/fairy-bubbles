@@ -30,31 +30,36 @@ async function queryDb(sql: string, params: any[] = []) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // For Supabase: Change pooler port 6543 to direct connection port 5432
-  // Keep the same hostname but use port 5432 which typically has better SSL support
-  let directConnectionString = connectionString
-    .replace(':6543/', ':5432/')
-    .replace('?sslmode=require', ''); // Remove sslmode param, we'll handle SSL in pool config
+  // For Vercel serverless: Use Supabase's transaction pooler (port 6543)
+  // The transaction pooler is designed for serverless and handles connection lifecycle
+  // Do NOT convert to port 5432 - that's for persistent connections only
 
-  // For Supabase, we need SSL but with rejectUnauthorized: false
-  const client = new Pool({
-    connectionString: directConnectionString,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-    max: 1,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+  const needsSSL = !connectionString.includes('localhost') &&
+                   !connectionString.includes('127.0.0.1');
+
+  // Use a single client instead of a pool for serverless
+  const { Client } = pkg;
+  const client = new Client({
+    connectionString,
+    ...(needsSSL ? {
+      ssl: {
+        rejectUnauthorized: false,
+      }
+    } : {})
   });
 
   try {
+    await client.connect();
     const result = await client.query(sql, params);
     await client.end();
     return result;
   } catch (error) {
     console.error('Database query error:', error);
-    console.error('Connection string used:', directConnectionString.replace(/:[^:]+@/, ':****@')); // Log without password
-    await client.end();
+    try {
+      await client.end();
+    } catch (e) {
+      // Ignore end errors
+    }
     throw error;
   }
 }
