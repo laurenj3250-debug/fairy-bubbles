@@ -34,18 +34,18 @@ async function queryDb(sql: string, params: any[] = []) {
   // The transaction pooler is designed for serverless and handles connection lifecycle
   // Do NOT convert to port 5432 - that's for persistent connections only
 
-  const needsSSL = !connectionString.includes('localhost') &&
-                   !connectionString.includes('127.0.0.1');
+  const isLocalhost = connectionString.includes('localhost') ||
+                      connectionString.includes('127.0.0.1');
 
   // Use a single client instead of a pool for serverless
   const { Client } = pkg;
+
+  // Always configure SSL properly for Supabase
   const client = new Client({
     connectionString,
-    ...(needsSSL ? {
-      ssl: {
-        rejectUnauthorized: false,
-      }
-    } : {})
+    ssl: isLocalhost ? false : {
+      rejectUnauthorized: false,
+    }
   });
 
   try {
