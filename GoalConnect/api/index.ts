@@ -24,20 +24,25 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  // Vercel Postgres provides POSTGRES_URL automatically when you add the integration
-  // Fall back to other env vars for compatibility
-  const connectionString =
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL;
+  // For Supabase: Use the direct (non-pooled) connection on port 5432
+  // This avoids SSL issues with the pooler on port 6543
+  const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error('No database configured. Add Vercel Postgres in your dashboard.');
+    throw new Error('DATABASE_URL not configured');
   }
 
-  // Simple, clean connection - Vercel Postgres handles SSL automatically
+  // Replace pooler port (6543) with direct port (5432) to avoid SSL issues
+  const directConnectionString = connectionString
+    .replace(':6543/', ':5432/')
+    .replace('pooler.supabase.com', 'supabase.com');
+
+  // For Supabase, we need SSL but with rejectUnauthorized: false
   const client = new Pool({
-    connectionString,
+    connectionString: directConnectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
     max: 1, // Single connection for serverless
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
@@ -48,6 +53,7 @@ async function queryDb(sql: string, params: any[] = []) {
     await client.end();
     return result;
   } catch (error) {
+    console.error('Database query error:', error);
     await client.end();
     throw error;
   }
