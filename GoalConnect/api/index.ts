@@ -1,6 +1,6 @@
 import '../server/load-env';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import { storage } from '../server/storage';
 import { initializeDatabase } from '../server/init-db';
 import {
@@ -20,9 +20,97 @@ import {
 
 const USER_ID = 1;
 
+const FALLBACK_USERNAME = 'demo';
+const FALLBACK_PASSWORD = 'demo1234';
+
+const authDisabled = process.env.AUTH_DISABLED?.trim()?.toLowerCase() === 'true';
+
+const configuredUsername = process.env.APP_USERNAME?.trim() || FALLBACK_USERNAME;
+const configuredPassword = process.env.APP_PASSWORD?.trim() || FALLBACK_PASSWORD;
+const configuredName = process.env.APP_USER_NAME?.trim() || configuredUsername;
+const configuredEmail =
+  process.env.APP_USER_EMAIL?.trim() ||
+  `${configuredUsername.toLowerCase().replace(/\s+/g, '') || 'user'}@goalconnect.local`;
+
+const SESSION_COOKIE_NAME = 'goalconnect-auth';
+const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const useSecureCookies = process.env.NODE_ENV === 'production';
+
+const DEFAULT_AUTHENTICATED_USER = {
+  id: USER_ID,
+  email: configuredEmail,
+  name: configuredName,
+};
+
+function buildCookie(value: string, maxAgeSeconds: number) {
+  const parts = [
+    `${SESSION_COOKIE_NAME}=${value}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSeconds}`,
+  ];
+
+  if (useSecureCookies) {
+    parts.push('Secure');
+  }
+
+  return parts.join('; ');
+}
+
+function setAuthCookie(res: Response) {
+  res.setHeader('Set-Cookie', buildCookie('active', SESSION_MAX_AGE_SECONDS));
+}
+
+function clearAuthCookie(res: Response) {
+  res.setHeader('Set-Cookie', buildCookie('', 0));
+}
+
+function hasAuthCookie(req: Request) {
+  const header = req.headers.cookie;
+  if (!header) return false;
+
+  return header.split(';').some(part => part.trim().startsWith(`${SESSION_COOKIE_NAME}=`));
+}
+
 // Create Express app
 const app = express();
 app.use(express.json());
+
+// Authentication routes (stateless cookie-based for serverless deployment)
+app.post('/auth/login', (req, res) => {
+  if (authDisabled) {
+    setAuthCookie(res);
+    return res.json({ authenticated: true, user: DEFAULT_AUTHENTICATED_USER });
+  }
+
+  const identifier = (req.body?.username ?? req.body?.email ?? '').toString().trim();
+  const password = (req.body?.password ?? '').toString();
+
+  const identifierMatches = Boolean(identifier) &&
+    (identifier.toLowerCase() === configuredUsername.toLowerCase() ||
+      identifier.toLowerCase() === configuredEmail.toLowerCase());
+
+  if (!identifierMatches || password !== configuredPassword) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  setAuthCookie(res);
+  return res.json({ authenticated: true, user: DEFAULT_AUTHENTICATED_USER });
+});
+
+app.post('/auth/logout', (_req, res) => {
+  clearAuthCookie(res);
+  res.json({ authenticated: false });
+});
+
+app.get('/auth/session', (req, res) => {
+  if (authDisabled || hasAuthCookie(req)) {
+    return res.json({ authenticated: true, user: DEFAULT_AUTHENTICATED_USER });
+  }
+
+  res.json({ authenticated: false });
+});
 
 // Helper function to update pet stats
 async function updatePetFromHabits(userId: number) {
