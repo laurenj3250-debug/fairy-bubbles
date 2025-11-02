@@ -1,4 +1,4 @@
-import '../server/load-env';
+// Note: load-env not needed on Vercel - env vars come from dashboard
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import express, { type Request, type Response } from 'express';
 import { storage } from '../server/storage';
