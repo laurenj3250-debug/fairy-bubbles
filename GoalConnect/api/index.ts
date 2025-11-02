@@ -24,35 +24,24 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  // Try non-pooled URL first, then fall back to regular DATABASE_URL
+  // Vercel Postgres provides POSTGRES_URL automatically when you add the integration
+  // Fall back to other env vars for compatibility
   const connectionString =
+    process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL_UNPOOLED ||
     process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error('DATABASE_URL not configured');
+    throw new Error('No database configured. Add Vercel Postgres in your dashboard.');
   }
 
-  // Parse the connection string to add SSL config if needed
-  const url = new URL(connectionString);
-  const config: any = {
-    host: url.hostname,
-    port: parseInt(url.port) || 5432,
-    user: url.username,
-    password: url.password,
-    database: url.pathname.slice(1).split('?')[0],
-    max: 1,
+  // Simple, clean connection - Vercel Postgres handles SSL automatically
+  const client = new Pool({
+    connectionString,
+    max: 1, // Single connection for serverless
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-  };
-
-  // Only add SSL if not localhost
-  if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
-    config.ssl = { rejectUnauthorized: false };
-  }
-
-  const client = new Pool(config);
+  });
 
   try {
     const result = await client.query(sql, params);
@@ -543,16 +532,18 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/debug/db-config', (_req, res) => {
-  const hasDbUrl = !!process.env.DATABASE_URL;
-  const hasUnpooled = !!process.env.POSTGRES_URL_NON_POOLING;
-  const dbUrlPreview = process.env.DATABASE_URL
-    ? process.env.DATABASE_URL.substring(0, 30) + '...'
+  const hasVercelPostgres = !!process.env.POSTGRES_URL;
+  const hasSupabase = !!process.env.DATABASE_URL;
+  const activeUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || 'NOT SET';
+  const preview = activeUrl !== 'NOT SET'
+    ? activeUrl.substring(0, 30) + '...'
     : 'NOT SET';
 
   res.json({
-    DATABASE_URL_configured: hasDbUrl,
-    POSTGRES_URL_NON_POOLING_configured: hasUnpooled,
-    preview: dbUrlPreview
+    vercel_postgres_configured: hasVercelPostgres,
+    supabase_configured: hasSupabase,
+    active_connection: preview,
+    using: hasVercelPostgres ? 'Vercel Postgres' : (hasSupabase ? 'Supabase' : 'None')
   });
 });
 
