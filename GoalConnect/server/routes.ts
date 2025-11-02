@@ -1,6 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { ensureDatabaseInitialized } from "./init-db";
 import {
   insertHabitSchema,
   insertHabitLogSchema,
@@ -60,6 +61,12 @@ async function updatePetFromHabits(userId: number) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  try {
+    await ensureDatabaseInitialized();
+  } catch (error) {
+    console.error("[routes] Database initialization check failed:", error);
+  }
+
   app.get("/api/habits", async (req, res) => {
     try {
       const userId = getUserId(req);
