@@ -8,14 +8,18 @@ type Database = ReturnType<typeof drizzle<typeof schema>>;
 let cachedDb: Database | null = null;
 let pool: pkg.Pool | null = null;
 
+// Detect if running in serverless environment (Vercel, AWS Lambda, etc.)
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
 export function getDb(): Database {
-  // Use unpooled connection for persistent connections
-  // Supabase's pooler (port 6543) terminates connections after transactions
-  // Direct connection (port 5432) allows persistent connection pooling
-  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  // For serverless: use transaction pooler (port 6543)
+  // For traditional servers: use direct connection (port 5432)
+  const connectionString = isServerless
+    ? process.env.DATABASE_URL  // Transaction pooler for serverless
+    : (process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL); // Direct for servers
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL or DATABASE_URL_UNPOOLED environment variable is required");
+    throw new Error("DATABASE_URL environment variable is required");
   }
 
   if (!cachedDb || !pool) {
@@ -31,17 +35,19 @@ export function getDb(): Database {
     pool = new Pool({
       connectionString,
       ...(needsSSL ? { ssl: { rejectUnauthorized: false } } : {}),
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection cannot be established
-      maxUses: 7500, // Close (and replace) a connection after it has been used 7500 times
+      // Serverless-optimized settings
+      max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
+      idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
+      connectionTimeoutMillis: 10000,
+      allowExitOnIdle: true, // Allow process to exit when connections are idle
     });
 
-    // Handle pool errors
+    // Handle pool errors gracefully
     pool.on('error', (err) => {
-      console.error('Unexpected database pool error:', err);
+      console.error('Database pool error:', err.message);
       // Reset the cached db so it will be recreated on next request
       cachedDb = null;
+      pool = null;
     });
 
     cachedDb = drizzle(pool, { schema });
