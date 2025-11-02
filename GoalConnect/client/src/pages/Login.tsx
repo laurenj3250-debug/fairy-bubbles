@@ -43,18 +43,17 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <CardHeader>
           <CardTitle className="text-center text-2xl">Sign in to GoalConnect</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            Use the email and password from your Supabase Auth account. For the local fallback, defaults are{" "}
-            <strong>demo@goalconnect.local</strong> / <strong>demo1234</strong>.
+            Enter your username and password to continue
           </p>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Username or Email</Label>
               <Input
                 id="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 ref={emailRef}
                 value={email}
                 onChange={event => setEmail(event.target.value)}
