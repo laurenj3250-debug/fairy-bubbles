@@ -431,3 +431,26 @@ export async function initializeDatabase() {
     };
   }
 }
+
+let initializationPromise: Promise<void> | null = null;
+
+export function ensureDatabaseInitialized(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    return Promise.resolve();
+  }
+
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase()
+      .then(result => {
+        if (!result.success && !result.alreadySeeded) {
+          throw new Error(result.message ?? 'Database initialization failed');
+        }
+      })
+      .catch(error => {
+        initializationPromise = null;
+        throw error;
+      });
+  }
+
+  return initializationPromise;
+}
