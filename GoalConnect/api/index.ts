@@ -90,6 +90,31 @@ app.post('/auth/logout', (_req, res) => {
 // DATABASE INITIALIZATION
 // ============================================================================
 
+app.get('/reset-database', async (_req, res) => {
+  try {
+    // DROP all tables and recreate from scratch
+    await queryDb(`
+      DROP TABLE IF EXISTS habit_logs CASCADE;
+      DROP TABLE IF EXISTS todos CASCADE;
+      DROP TABLE IF EXISTS goals CASCADE;
+      DROP TABLE IF EXISTS habits CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
+    `);
+
+    res.json({
+      success: true,
+      message: 'All tables dropped! Now visit /api/init-database to recreate them.'
+    });
+  } catch (error: any) {
+    console.error('Database reset error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset database',
+      error: error.message
+    });
+  }
+});
+
 app.get('/init-database', async (_req, res) => {
   try {
     // Create tables
