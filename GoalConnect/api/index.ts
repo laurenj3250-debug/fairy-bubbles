@@ -24,18 +24,32 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  // For Supabase: Use the direct (non-pooled) connection on port 5432
-  // This avoids SSL issues with the pooler on port 6543
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // Replace pooler port (6543) with direct port (5432) to avoid SSL issues
-  const directConnectionString = connectionString
-    .replace(':6543/', ':5432/')
-    .replace('pooler.supabase.com', 'supabase.com');
+  // Extract project reference from URL like:
+  // postgres://user:pass@aws-1-us-east-1.pooler.supabase.com:6543/postgres
+  // Should become: postgres://user:pass@db.PROJECT_REF.supabase.co:5432/postgres
+
+  const match = connectionString.match(/postgres:\/\/([^:]+):([^@]+)@[^.]+\.pooler\.supabase\.com:(\d+)\/(.+)/);
+
+  let directConnectionString = connectionString;
+
+  if (match) {
+    const username = match[1]; // e.g., postgres.ssvuyqtxwsidsfcdcpmo
+    const password = match[2];
+    const database = match[4].split('?')[0]; // Remove query params
+
+    // Extract project reference from username (format: postgres.PROJECT_REF)
+    const projectRefMatch = username.match(/postgres\.([a-z0-9]+)/);
+    const projectRef = projectRefMatch ? projectRefMatch[1] : 'ssvuyqtxwsidsfcdcpmo';
+
+    // Build direct connection URL using db.PROJECT_REF.supabase.co:5432
+    directConnectionString = `postgres://${username}:${password}@db.${projectRef}.supabase.co:5432/${database}`;
+  }
 
   // For Supabase, we need SSL but with rejectUnauthorized: false
   const client = new Pool({
@@ -43,7 +57,7 @@ async function queryDb(sql: string, params: any[] = []) {
     ssl: {
       rejectUnauthorized: false,
     },
-    max: 1, // Single connection for serverless
+    max: 1,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });
@@ -54,6 +68,7 @@ async function queryDb(sql: string, params: any[] = []) {
     return result;
   } catch (error) {
     console.error('Database query error:', error);
+    console.error('Connection string used:', directConnectionString.replace(/:[^:]+@/, ':****@')); // Log without password
     await client.end();
     throw error;
   }
