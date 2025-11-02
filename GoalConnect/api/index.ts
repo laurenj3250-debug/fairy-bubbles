@@ -30,26 +30,11 @@ async function queryDb(sql: string, params: any[] = []) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // Extract project reference from URL like:
-  // postgres://user:pass@aws-1-us-east-1.pooler.supabase.com:6543/postgres
-  // Should become: postgres://user:pass@db.PROJECT_REF.supabase.co:5432/postgres
-
-  const match = connectionString.match(/postgres:\/\/([^:]+):([^@]+)@[^.]+\.pooler\.supabase\.com:(\d+)\/(.+)/);
-
-  let directConnectionString = connectionString;
-
-  if (match) {
-    const username = match[1]; // e.g., postgres.ssvuyqtxwsidsfcdcpmo
-    const password = match[2];
-    const database = match[4].split('?')[0]; // Remove query params
-
-    // Extract project reference from username (format: postgres.PROJECT_REF)
-    const projectRefMatch = username.match(/postgres\.([a-z0-9]+)/);
-    const projectRef = projectRefMatch ? projectRefMatch[1] : 'ssvuyqtxwsidsfcdcpmo';
-
-    // Build direct connection URL using db.PROJECT_REF.supabase.co:5432
-    directConnectionString = `postgres://${username}:${password}@db.${projectRef}.supabase.co:5432/${database}`;
-  }
+  // For Supabase: Change pooler port 6543 to direct connection port 5432
+  // Keep the same hostname but use port 5432 which typically has better SSL support
+  let directConnectionString = connectionString
+    .replace(':6543/', ':5432/')
+    .replace('?sslmode=require', ''); // Remove sslmode param, we'll handle SSL in pool config
 
   // For Supabase, we need SSL but with rejectUnauthorized: false
   const client = new Pool({
