@@ -375,7 +375,11 @@ export function configureAuth(app: Express) {
   });
 
   app.use((req, res, next) => {
-    if (!req.path.startsWith("/api") || req.path.startsWith("/api/auth")) {
+    // Allow these paths without authentication
+    const publicPaths = ["/api/auth", "/api/init-database", "/api/database-status"];
+    const isPublicPath = publicPaths.some(path => req.path.startsWith(path));
+
+    if (!req.path.startsWith("/api") || isPublicPath) {
       return next();
     }
 
