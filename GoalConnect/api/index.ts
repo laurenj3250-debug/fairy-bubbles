@@ -23,7 +23,8 @@ const USER_ID = 1;
 const FALLBACK_USERNAME = 'demo';
 const FALLBACK_PASSWORD = 'demo1234';
 
-const authDisabled = process.env.AUTH_DISABLED?.trim()?.toLowerCase() === 'true';
+// TEMPORARY: Force auth disabled to let user initialize database
+const authDisabled = true;
 
 const configuredUsername = process.env.APP_USERNAME?.trim() || FALLBACK_USERNAME;
 const configuredPassword = process.env.APP_PASSWORD?.trim() || FALLBACK_PASSWORD;
