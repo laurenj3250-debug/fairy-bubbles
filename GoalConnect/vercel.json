@@ -1,14 +1,18 @@
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist/public",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/index"
+      "src": "/api/(.*)",
+      "dest": "/api/index"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "methods": ["GET", "HEAD"]
     }
   ]
 }
