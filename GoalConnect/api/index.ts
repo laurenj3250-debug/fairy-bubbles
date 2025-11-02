@@ -30,31 +30,36 @@ async function queryDb(sql: string, params: any[] = []) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // For Supabase: Change pooler port 6543 to direct connection port 5432
-  // Keep the same hostname but use port 5432 which typically has better SSL support
-  let directConnectionString = connectionString
-    .replace(':6543/', ':5432/')
-    .replace('?sslmode=require', ''); // Remove sslmode param, we'll handle SSL in pool config
+  // For Vercel serverless: Use Supabase's transaction pooler (port 6543)
+  // The transaction pooler is designed for serverless and handles connection lifecycle
+  // Do NOT convert to port 5432 - that's for persistent connections only
 
-  // For Supabase, we need SSL but with rejectUnauthorized: false
-  const client = new Pool({
-    connectionString: directConnectionString,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-    max: 1,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+  const needsSSL = !connectionString.includes('localhost') &&
+                   !connectionString.includes('127.0.0.1');
+
+  // Use a single client instead of a pool for serverless
+  const { Client } = pkg;
+  const client = new Client({
+    connectionString,
+    ...(needsSSL ? {
+      ssl: {
+        rejectUnauthorized: false,
+      }
+    } : {})
   });
 
   try {
+    await client.connect();
     const result = await client.query(sql, params);
     await client.end();
     return result;
   } catch (error) {
     console.error('Database query error:', error);
-    console.error('Connection string used:', directConnectionString.replace(/:[^:]+@/, ':****@')); // Log without password
-    await client.end();
+    try {
+      await client.end();
+    } catch (e) {
+      // Ignore end errors
+    }
     throw error;
   }
 }
@@ -112,100 +117,152 @@ app.get('/reset-database', async (_req, res) => {
 
 app.get('/init-database', async (_req, res) => {
   try {
-    // Create tables
+    // Create tables matching the actual Drizzle schema
     await queryDb(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        email TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS habits (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        name TEXT NOT NULL,
-        description TEXT,
-        frequency TEXT NOT NULL DEFAULT 'weekly',
-        target_count INTEGER DEFAULT 4,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS goals (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
+        user_id INTEGER NOT NULL REFERENCES users(id),
         title TEXT NOT NULL,
-        description TEXT,
-        category TEXT,
-        target_value INTEGER DEFAULT 1,
-        current_value INTEGER DEFAULT 0,
-        deadline TIMESTAMPTZ,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        description TEXT NOT NULL DEFAULT '',
+        icon TEXT NOT NULL,
+        color VARCHAR(7) NOT NULL,
+        cadence VARCHAR(10) NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS habit_logs (
         id SERIAL PRIMARY KEY,
-        habit_id INTEGER REFERENCES habits(id) ON DELETE CASCADE,
-        user_id INTEGER REFERENCES users(id),
-        completed_at TIMESTAMPTZ DEFAULT NOW(),
-        notes TEXT
+        habit_id INTEGER NOT NULL REFERENCES habits(id),
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        date VARCHAR(10) NOT NULL,
+        completed BOOLEAN NOT NULL DEFAULT false,
+        note TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS goals (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        target_value INTEGER NOT NULL,
+        current_value INTEGER NOT NULL DEFAULT 0,
+        unit TEXT NOT NULL,
+        deadline VARCHAR(10) NOT NULL,
+        category TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS goal_updates (
+        id SERIAL PRIMARY KEY,
+        goal_id INTEGER NOT NULL REFERENCES goals(id),
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        date VARCHAR(10) NOT NULL,
+        value INTEGER NOT NULL,
+        note TEXT
       );
 
       CREATE TABLE IF NOT EXISTS todos (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
+        user_id INTEGER NOT NULL REFERENCES users(id),
         title TEXT NOT NULL,
-        description TEXT,
-        due_date TIMESTAMPTZ,
-        completed BOOLEAN DEFAULT false,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        description TEXT NOT NULL DEFAULT '',
+        due_date VARCHAR(10),
+        completed BOOLEAN NOT NULL DEFAULT false,
+        completed_at TIMESTAMPTZ,
+        points INTEGER NOT NULL DEFAULT 10,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS virtual_pets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+        name TEXT NOT NULL DEFAULT 'Forest Friend',
+        species VARCHAR(50) NOT NULL DEFAULT 'Gremlin',
+        happiness INTEGER NOT NULL DEFAULT 50,
+        health INTEGER NOT NULL DEFAULT 100,
+        level INTEGER NOT NULL DEFAULT 1,
+        experience INTEGER NOT NULL DEFAULT 0,
+        evolution VARCHAR(20) NOT NULL DEFAULT 'seed',
+        current_costume_id INTEGER,
+        last_fed TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS user_points (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id),
+        total_earned INTEGER NOT NULL DEFAULT 0,
+        total_spent INTEGER NOT NULL DEFAULT 0,
+        available INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE TABLE IF NOT EXISTS point_transactions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        amount INTEGER NOT NULL,
+        type VARCHAR(30) NOT NULL,
+        related_id INTEGER,
+        description TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
       );
     `);
 
     // Insert user
     await queryDb(
-      `INSERT INTO users (id, email, name)
+      `INSERT INTO users (id, name, email)
        VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name`,
-      [USER_ID, `${USERNAME}@goalconnect.local`, 'Lauren']
+      [USER_ID, 'Lauren', `${USERNAME}@goalconnect.local`]
     );
 
-    // Insert November goals (only if they don't exist)
+    // Initialize user points
+    await queryDb(
+      `INSERT INTO user_points (user_id, total_earned, total_spent, available)
+       VALUES ($1, 0, 0, 0)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [USER_ID]
+    );
+
+    // Insert November goals with proper schema (only if they don't exist)
     const goals = [
-      ['Pimsleur: 16 lessons', 'Complete 16 Pimsleur lessons for language learning', 'Language', 16],
-      ['Duolingo: 1 unit', 'Complete 1 full Duolingo unit', 'Language', 1],
-      ['Complete 16 Gym Sessions', 'Hit the gym 16 times this month', 'Fitness', 16],
-      ['Play Piano 12 times', 'Practice piano 12 sessions', 'Hobbies', 12],
-      ['Ship 1 App Feature', 'Complete and deploy one app feature', 'Projects', 1]
+      ['Pimsleur: 16 lessons', 'Complete 16 Pimsleur lessons for language learning', 'Language learning', 16, 'lessons', '2025-11-30'],
+      ['Duolingo: 1 unit', 'Complete 1 full Duolingo unit', 'Language learning', 1, 'unit', '2025-11-30'],
+      ['Complete 16 Gym Sessions', 'Hit the gym 16 times this month', 'Fitness', 16, 'sessions', '2025-11-30'],
+      ['Play Piano 12 times', 'Practice piano 12 sessions', 'Hobbies', 12, 'times', '2025-11-30'],
+      ['Ship 1 App Feature', 'Complete and deploy one app feature', 'Projects', 1, 'feature', '2025-11-30']
     ];
 
-    for (const [title, description, category, target] of goals) {
+    for (const [title, description, category, target, unit, deadline] of goals) {
       await queryDb(
-        `INSERT INTO goals (user_id, title, description, category, target_value, current_value, deadline)
-         SELECT $1, $2, $3, $4, $5, 0, $6
+        `INSERT INTO goals (user_id, title, description, category, target_value, current_value, unit, deadline)
+         SELECT $1, $2, $3, $4, $5, 0, $6, $7
          WHERE NOT EXISTS (
            SELECT 1 FROM goals WHERE user_id = $1 AND title = $2
          )`,
-        [USER_ID, title, description, category, target, '2025-11-30']
+        [USER_ID, title, description, category, target, unit, deadline]
       );
     }
 
-    // Insert weekly habits (only if they don't exist)
+    // Insert weekly habits with proper schema (only if they don't exist)
     const habits = [
-      ['Pimsleur', 'Complete 1 Pimsleur lesson', 'weekly', 4],
-      ['Duolingo', 'Do Duolingo practice', 'weekly', 5],
-      ['Gym', 'Go to the gym', 'weekly', 4],
-      ['Piano', 'Practice piano', 'weekly', 3]
+      ['Pimsleur', 'Complete 1 Pimsleur lesson', 'BookOpen', '#10B981', 'weekly'],
+      ['Duolingo', 'Do Duolingo practice', 'Languages', '#3B82F6', 'daily'],
+      ['Gym', 'Go to the gym', 'Dumbbell', '#EF4444', 'weekly'],
+      ['Piano', 'Practice piano', 'Music', '#8B5CF6', 'weekly']
     ];
 
-    for (const [name, description, frequency, target] of habits) {
+    for (const [title, description, icon, color, cadence] of habits) {
       await queryDb(
-        `INSERT INTO habits (user_id, name, description, frequency, target_count)
-         SELECT $1, $2, $3, $4, $5
+        `INSERT INTO habits (user_id, title, description, icon, color, cadence)
+         SELECT $1, $2, $3, $4, $5, $6
          WHERE NOT EXISTS (
-           SELECT 1 FROM habits WHERE user_id = $1 AND name = $2
+           SELECT 1 FROM habits WHERE user_id = $1 AND title = $2
          )`,
-        [USER_ID, name, description, frequency, target]
+        [USER_ID, title, description, icon, color, cadence]
       );
     }
 
@@ -232,7 +289,7 @@ app.get('/init-database', async (_req, res) => {
 app.get('/habits', async (_req, res) => {
   try {
     const result = await queryDb(
-      'SELECT * FROM habits WHERE user_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM habits WHERE user_id = $1',
       [USER_ID]
     );
     res.json(result.rows);
@@ -244,12 +301,12 @@ app.get('/habits', async (_req, res) => {
 
 app.post('/habits', async (req, res) => {
   try {
-    const { name, description, frequency, target_count } = req.body;
+    const { title, description, icon, color, cadence } = req.body;
     const result = await queryDb(
-      `INSERT INTO habits (user_id, name, description, frequency, target_count)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO habits (user_id, title, description, icon, color, cadence)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [USER_ID, name, description || '', frequency || 'weekly', target_count || 4]
+      [USER_ID, title, description || '', icon, color, cadence]
     );
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
@@ -265,7 +322,7 @@ app.post('/habits', async (req, res) => {
 app.get('/goals', async (_req, res) => {
   try {
     const result = await queryDb(
-      'SELECT * FROM goals WHERE user_id = $1 ORDER BY deadline ASC, created_at DESC',
+      'SELECT * FROM goals WHERE user_id = $1 ORDER BY deadline ASC',
       [USER_ID]
     );
     res.json(result.rows);
@@ -277,12 +334,12 @@ app.get('/goals', async (_req, res) => {
 
 app.post('/goals', async (req, res) => {
   try {
-    const { title, description, category, target_value, deadline } = req.body;
+    const { title, description, category, targetValue, unit, deadline } = req.body;
     const result = await queryDb(
-      `INSERT INTO goals (user_id, title, description, category, target_value, current_value, deadline)
-       VALUES ($1, $2, $3, $4, $5, 0, $6)
+      `INSERT INTO goals (user_id, title, description, category, target_value, current_value, unit, deadline)
+       VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
        RETURNING *`,
-      [USER_ID, title, description || '', category || '', target_value || 1, deadline || null]
+      [USER_ID, title, description || '', category || '', targetValue || 1, unit || '', deadline || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
@@ -294,10 +351,10 @@ app.post('/goals', async (req, res) => {
 app.patch('/goals/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { current_value } = req.body;
+    const { currentValue } = req.body;
     const result = await queryDb(
       `UPDATE goals SET current_value = $1 WHERE id = $2 AND user_id = $3 RETURNING *`,
-      [current_value, id, USER_ID]
+      [currentValue, id, USER_ID]
     );
     res.json(result.rows[0] || {});
   } catch (error: any) {
@@ -317,11 +374,11 @@ app.get('/habit-logs', async (req, res) => {
     const params: any[] = [USER_ID];
 
     if (date) {
-      query += ` AND DATE(completed_at) = $2`;
+      query += ` AND date = $2`;
       params.push(date);
     }
 
-    query += ' ORDER BY completed_at DESC';
+    query += ' ORDER BY date DESC';
 
     const result = await queryDb(query, params);
     res.json(result.rows);
@@ -333,16 +390,43 @@ app.get('/habit-logs', async (req, res) => {
 
 app.post('/habit-logs', async (req, res) => {
   try {
-    const { habit_id, notes } = req.body;
+    const { habitId, date, completed, note } = req.body;
     const result = await queryDb(
-      `INSERT INTO habit_logs (habit_id, user_id, notes, completed_at)
-       VALUES ($1, $2, $3, NOW())
+      `INSERT INTO habit_logs (habit_id, user_id, date, completed, note)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [habit_id, USER_ID, notes || '']
+      [habitId, USER_ID, date, completed !== false, note || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
     console.error('Error creating habit log:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/habit-logs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completed, note } = req.body;
+    const result = await queryDb(
+      `UPDATE habit_logs SET completed = $1, note = $2
+       WHERE id = $3 AND user_id = $4 RETURNING *`,
+      [completed, note, id, USER_ID]
+    );
+    res.json(result.rows[0] || {});
+  } catch (error: any) {
+    console.error('Error updating habit log:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/habit-logs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await queryDb('DELETE FROM habit_logs WHERE id = $1 AND user_id = $2', [id, USER_ID]);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error deleting habit log:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -363,11 +447,11 @@ app.delete('/habits/:id', async (req, res) => {
 app.patch('/habits/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, frequency, target_count } = req.body;
+    const { title, description, icon, color, cadence } = req.body;
     const result = await queryDb(
-      `UPDATE habits SET name = $1, description = $2, frequency = $3, target_count = $4
-       WHERE id = $5 AND user_id = $6 RETURNING *`,
-      [name, description, frequency, target_count, id, USER_ID]
+      `UPDATE habits SET title = $1, description = $2, icon = $3, color = $4, cadence = $5
+       WHERE id = $6 AND user_id = $7 RETURNING *`,
+      [title, description, icon, color, cadence, id, USER_ID]
     );
     res.json(result.rows[0] || {});
   } catch (error: any) {
@@ -408,12 +492,12 @@ app.get('/todos', async (_req, res) => {
 
 app.post('/todos', async (req, res) => {
   try {
-    const { title, description, due_date } = req.body;
+    const { title, description, dueDate, points } = req.body;
     const result = await queryDb(
-      `INSERT INTO todos (user_id, title, description, due_date, completed)
-       VALUES ($1, $2, $3, $4, false)
+      `INSERT INTO todos (user_id, title, description, due_date, completed, points)
+       VALUES ($1, $2, $3, $4, false, $5)
        RETURNING *`,
-      [USER_ID, title, description || '', due_date || null]
+      [USER_ID, title, description || '', dueDate || null, points || 10]
     );
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
@@ -422,11 +506,57 @@ app.post('/todos', async (req, res) => {
   }
 });
 
+app.patch('/todos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, dueDate, completed } = req.body;
+
+    let query = 'UPDATE todos SET';
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (title !== undefined) {
+      updates.push(`title = $${paramIndex++}`);
+      params.push(title);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      params.push(description);
+    }
+    if (dueDate !== undefined) {
+      updates.push(`due_date = $${paramIndex++}`);
+      params.push(dueDate);
+    }
+    if (completed !== undefined) {
+      updates.push(`completed = $${paramIndex++}`);
+      params.push(completed);
+      if (completed) {
+        updates.push(`completed_at = NOW()`);
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    query += ' ' + updates.join(', ');
+    query += ` WHERE id = $${paramIndex++} AND user_id = $${paramIndex} RETURNING *`;
+    params.push(id, USER_ID);
+
+    const result = await queryDb(query, params);
+    res.json(result.rows[0] || {});
+  } catch (error: any) {
+    console.error('Error updating todo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/todos/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await queryDb(
-      `UPDATE todos SET completed = true WHERE id = $1 AND user_id = $2 RETURNING *`,
+      `UPDATE todos SET completed = true, completed_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
       [id, USER_ID]
     );
     res.json(result.rows[0] || {});
