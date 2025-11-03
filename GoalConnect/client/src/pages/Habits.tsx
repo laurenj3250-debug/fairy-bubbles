@@ -4,7 +4,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { FAB } from "@/components/FAB";
 import { StreakPill } from "@/components/StreakPill";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Trash2 } from "lucide-react";
+import { CheckCircle, Trash2, Pencil } from "lucide-react";
 import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -16,6 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
 
 export default function Habits() {
+  const [habitDialogOpen, setHabitDialogOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
+
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
   });
@@ -41,20 +44,24 @@ export default function Habits() {
     },
   });
 
-  const [habitDialogOpen, setHabitDialogOpen] = useState(false);
-
   const habitsWithStats = useMemo(() => {
     return habits.map(habit => {
       const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
       const dates = habitLogs.map(log => log.date);
       const streak = calculateStreak(dates);
       const totalCompletions = habitLogs.length;
-      
+
       return { ...habit, streak, totalCompletions };
     });
   }, [habits, allLogs]);
 
   const handleFabClick = () => {
+    setEditingHabit(undefined);
+    setHabitDialogOpen(true);
+  };
+
+  const handleEditHabit = (habit: Habit) => {
+    setEditingHabit(habit);
     setHabitDialogOpen(true);
   };
 
@@ -140,15 +147,26 @@ export default function Habits() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="flex-shrink-0 w-8 h-8"
-                    onClick={() => handleDeleteHabit(habit.id)}
-                    data-testid={`button-delete-habit-${habit.id}`}
-                  >
-                    <Trash2 className="w-4 h-4 text-muted-foreground" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="flex-shrink-0 w-8 h-8"
+                      onClick={() => handleEditHabit(habit)}
+                      data-testid={`button-edit-habit-${habit.id}`}
+                    >
+                      <Pencil className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="flex-shrink-0 w-8 h-8"
+                      onClick={() => handleDeleteHabit(habit.id)}
+                      data-testid={`button-delete-habit-${habit.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -175,7 +193,14 @@ export default function Habits() {
       </main>
       
       <FAB onClick={handleFabClick} />
-      <HabitDialog open={habitDialogOpen} onOpenChange={setHabitDialogOpen} />
+      <HabitDialog
+        open={habitDialogOpen}
+        onOpenChange={(open) => {
+          setHabitDialogOpen(open);
+          if (!open) setEditingHabit(undefined);
+        }}
+        habit={editingHabit}
+      />
     </div>
   );
 }
