@@ -52,6 +52,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
       icon: habit.icon,
       color: habit.color,
       cadence: habit.cadence,
+      targetPerWeek: habit.targetPerWeek,
     } : {
       userId: 1,
       title: "",
@@ -59,6 +60,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
       icon: "Sparkles",
       color: "#8B5CF6",
       cadence: "daily",
+      targetPerWeek: null,
     },
   });
 
@@ -97,6 +99,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
 
   const selectedIcon = form.watch("icon");
   const selectedColor = form.watch("color");
+  const selectedCadence = form.watch("cadence");
   const IconComponent = (Icons as any)[selectedIcon] || Icons.Sparkles;
 
   return (
@@ -199,6 +202,39 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                 )}
               />
             </div>
+
+            {selectedCadence === "weekly" && (
+              <FormField
+                control={form.control}
+                name="targetPerWeek"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weekly Target (optional)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                      value={field.value?.toString() || ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger data-testid="select-habit-target">
+                          <SelectValue placeholder="Select times per week" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">No target</SelectItem>
+                        <SelectItem value="1">1 time per week</SelectItem>
+                        <SelectItem value="2">2 times per week</SelectItem>
+                        <SelectItem value="3">3 times per week</SelectItem>
+                        <SelectItem value="4">4 times per week</SelectItem>
+                        <SelectItem value="5">5 times per week</SelectItem>
+                        <SelectItem value="6">6 times per week</SelectItem>
+                        <SelectItem value="7">7 times per week</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

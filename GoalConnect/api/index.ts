@@ -132,7 +132,8 @@ app.get('/init-database', async (_req, res) => {
         description TEXT NOT NULL DEFAULT '',
         icon TEXT NOT NULL,
         color VARCHAR(7) NOT NULL,
-        cadence VARCHAR(10) NOT NULL
+        cadence VARCHAR(10) NOT NULL,
+        target_per_week INTEGER DEFAULT NULL
       );
 
       CREATE TABLE IF NOT EXISTS habit_logs (
@@ -267,20 +268,20 @@ app.get('/init-database', async (_req, res) => {
 
     // Insert weekly habits with proper schema (only if they don't exist)
     const habits = [
-      ['Pimsleur', 'Complete 1 Pimsleur lesson', 'BookOpen', '#10B981', 'weekly'],
-      ['Duolingo', 'Do Duolingo practice', 'Languages', '#3B82F6', 'daily'],
-      ['Gym', 'Go to the gym', 'Dumbbell', '#EF4444', 'weekly'],
-      ['Piano', 'Practice piano', 'Music', '#8B5CF6', 'weekly']
+      ['Pimsleur', 'Complete 1 Pimsleur lesson', 'BookOpen', '#10B981', 'weekly', 4],
+      ['Duolingo', 'Do Duolingo practice', 'Languages', '#3B82F6', 'daily', 7],
+      ['Gym', 'Go to the gym', 'Dumbbell', '#EF4444', 'weekly', 3],
+      ['Piano', 'Practice piano', 'Music', '#8B5CF6', 'weekly', 3]
     ];
 
-    for (const [title, description, icon, color, cadence] of habits) {
+    for (const [title, description, icon, color, cadence, targetPerWeek] of habits) {
       await queryDb(
-        `INSERT INTO habits (user_id, title, description, icon, color, cadence)
-         SELECT $1, $2, $3, $4, $5, $6
+        `INSERT INTO habits (user_id, title, description, icon, color, cadence, target_per_week)
+         SELECT $1, $2, $3, $4, $5, $6, $7
          WHERE NOT EXISTS (
            SELECT 1 FROM habits WHERE user_id = $1 AND title = $2
          )`,
-        [USER_ID, title, description, icon, color, cadence]
+        [USER_ID, title, description, icon, color, cadence, targetPerWeek]
       );
     }
 
@@ -355,12 +356,12 @@ app.get('/habits', async (_req, res) => {
 
 app.post('/habits', async (req, res) => {
   try {
-    const { title, description, icon, color, cadence } = req.body;
+    const { title, description, icon, color, cadence, targetPerWeek } = req.body;
     const result = await queryDb(
-      `INSERT INTO habits (user_id, title, description, icon, color, cadence)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO habits (user_id, title, description, icon, color, cadence, target_per_week)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [USER_ID, title, description || '', icon, color, cadence]
+      [USER_ID, title, description || '', icon, color, cadence, targetPerWeek]
     );
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
@@ -582,11 +583,11 @@ app.delete('/habits/:id', async (req, res) => {
 app.patch('/habits/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, icon, color, cadence } = req.body;
+    const { title, description, icon, color, cadence, targetPerWeek } = req.body;
     const result = await queryDb(
-      `UPDATE habits SET title = $1, description = $2, icon = $3, color = $4, cadence = $5
-       WHERE id = $6 AND user_id = $7 RETURNING *`,
-      [title, description, icon, color, cadence, id, USER_ID]
+      `UPDATE habits SET title = $1, description = $2, icon = $3, color = $4, cadence = $5, target_per_week = $6
+       WHERE id = $7 AND user_id = $8 RETURNING *`,
+      [title, description, icon, color, cadence, targetPerWeek, id, USER_ID]
     );
     res.json(result.rows[0] || {});
   } catch (error: any) {

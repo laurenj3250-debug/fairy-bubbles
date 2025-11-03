@@ -17,6 +17,7 @@ export const habits = pgTable("habits", {
   icon: text("icon").notNull(),
   color: varchar("color", { length: 7 }).notNull(),
   cadence: varchar("cadence", { length: 10 }).notNull().$type<"daily" | "weekly">(),
+  targetPerWeek: integer("target_per_week"),
 });
 
 export const habitLogs = pgTable("habit_logs", {
