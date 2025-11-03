@@ -98,25 +98,37 @@ export default function Dashboard() {
 
   const toggleHabitMutation = useMutation({
     mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
+      console.log('🔄 Toggle clicked:', { habitId, completed, today });
       const existingLog = todayLogs.find(log => log.habitId === habitId);
+      console.log('📝 Existing log:', existingLog);
 
       if (existingLog) {
-        return apiRequest(`/api/habit-logs/${existingLog.id}`, "PATCH", {
+        console.log('✏️ Updating log:', existingLog.id);
+        const result = await apiRequest(`/api/habit-logs/${existingLog.id}`, "PATCH", {
           completed: !existingLog.completed,
         });
+        console.log('✅ Update result:', result);
+        return result;
       } else {
-        return apiRequest("/api/habit-logs", "POST", {
+        console.log('➕ Creating new log');
+        const result = await apiRequest("/api/habit-logs", "POST", {
           habitId,
           date: today,
           completed: true,
           note: null,
         });
+        console.log('✅ Create result:', result);
+        return result;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🎉 Toggle success!', data);
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
+    },
+    onError: (error) => {
+      console.error('❌ Toggle error:', error);
     },
   });
 
