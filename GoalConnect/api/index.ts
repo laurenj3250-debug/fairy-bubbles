@@ -646,6 +646,18 @@ app.patch('/todos/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, dueDate, completed } = req.body;
 
+    // Get current state to check if completion status changed
+    const currentTodo = await queryDb(
+      `SELECT * FROM todos WHERE id = $1 AND user_id = $2`,
+      [id, USER_ID]
+    );
+
+    if (currentTodo.rows.length === 0) {
+      return res.status(404).json({ error: 'Todo not found' });
+    }
+
+    const wasCompleted = currentTodo.rows[0].completed;
+
     let query = 'UPDATE todos SET';
     const updates: string[] = [];
     const params: any[] = [];
@@ -680,6 +692,43 @@ app.patch('/todos/:id', async (req, res) => {
     params.push(id, USER_ID);
 
     const result = await queryDb(query, params);
+
+    // Award points if todo was just completed
+    if (completed !== undefined && completed && !wasCompleted) {
+      const TODO_POINTS = 15;
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = total_earned + $1, available = available + $1
+         WHERE user_id = $2`,
+        [TODO_POINTS, USER_ID]
+      );
+
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'todo_completion', $3, $4)`,
+        [USER_ID, TODO_POINTS, id, `Completed: ${currentTodo.rows[0].title}`]
+      );
+    }
+
+    // Deduct points if uncompleted
+    if (completed !== undefined && !completed && wasCompleted) {
+      const TODO_POINTS = 15;
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_spent = total_spent + $1, available = available - $1
+         WHERE user_id = $2`,
+        [TODO_POINTS, USER_ID]
+      );
+
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'todo_undo', $3, $4)`,
+        [USER_ID, TODO_POINTS, id, `Uncompleted: ${currentTodo.rows[0].title}`]
+      );
+    }
+
     res.json(result.rows[0] || {});
   } catch (error: any) {
     console.error('Error updating todo:', error);
@@ -690,10 +739,42 @@ app.patch('/todos/:id', async (req, res) => {
 app.post('/todos/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Get todo before completion
+    const todoBefore = await queryDb(
+      `SELECT * FROM todos WHERE id = $1 AND user_id = $2`,
+      [id, USER_ID]
+    );
+
+    if (todoBefore.rows.length === 0) {
+      return res.status(404).json({ error: 'Todo not found' });
+    }
+
+    const wasCompleted = todoBefore.rows[0].completed;
+
     const result = await queryDb(
       `UPDATE todos SET completed = true, completed_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
       [id, USER_ID]
     );
+
+    // Award points if not already completed
+    if (!wasCompleted) {
+      const TODO_POINTS = 15;
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = total_earned + $1, available = available + $1
+         WHERE user_id = $2`,
+        [TODO_POINTS, USER_ID]
+      );
+
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'todo_completion', $3, $4)`,
+        [USER_ID, TODO_POINTS, id, `Completed: ${todoBefore.rows[0].title}`]
+      );
+    }
+
     res.json(result.rows[0] || {});
   } catch (error: any) {
     console.error('Error completing todo:', error);
@@ -929,11 +1010,64 @@ app.post('/reset-costumes', async (_req, res) => {
 app.post('/goal-updates', async (req, res) => {
   try {
     const { goalId, value, notes } = req.body;
-    // Just update the goal's current_value
+
+    // Get goal before update
+    const goalBefore = await queryDb(
+      `SELECT * FROM goals WHERE id = $1 AND user_id = $2`,
+      [goalId, USER_ID]
+    );
+
+    if (goalBefore.rows.length === 0) {
+      return res.status(404).json({ error: 'Goal not found' });
+    }
+
+    const goal = goalBefore.rows[0];
+    const progressBefore = (goal.current_value / goal.target_value) * 100;
+
+    // Update the goal's current_value
     const result = await queryDb(
       `UPDATE goals SET current_value = current_value + $1 WHERE id = $2 AND user_id = $3 RETURNING *`,
       [value || 1, goalId, USER_ID]
     );
+
+    const updatedGoal = result.rows[0];
+    const progressAfter = (updatedGoal.current_value / updatedGoal.target_value) * 100;
+
+    // Award points for progress
+    const BASE_POINTS = 5;
+    let totalPoints = BASE_POINTS;
+    const milestones = [25, 50, 75, 100];
+    const bonusAmount = 25;
+
+    // Check if crossed any milestone thresholds
+    for (const milestone of milestones) {
+      if (progressBefore < milestone && progressAfter >= milestone) {
+        totalPoints += bonusAmount;
+
+        // Log milestone achievement
+        await queryDb(
+          `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+           VALUES ($1, $2, 'goal_milestone', $3, $4)`,
+          [USER_ID, bonusAmount, goalId, `Reached ${milestone}% milestone on ${goal.title}`]
+        );
+      }
+    }
+
+    // Award points
+    await queryDb(
+      `UPDATE user_points
+       SET total_earned = total_earned + $1, available = available + $1
+       WHERE user_id = $2`,
+      [totalPoints, USER_ID]
+    );
+
+    // Log base progress transaction
+    await queryDb(
+      `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+       VALUES ($1, $2, 'goal_progress', $3, $4)`,
+      [USER_ID, BASE_POINTS, goalId, `Progress on ${goal.title}`]
+    );
+
     res.status(201).json(result.rows[0] || {});
   } catch (error: any) {
     console.error('Error updating goal:', error);
