@@ -96,7 +96,8 @@ export default function Dashboard() {
       return res.json();
     }),
     staleTime: 0,
-    refetchInterval: 1000,
+    // Removed refetchInterval - optimistic updates handle instant UI feedback
+    refetchOnWindowFocus: true,
   });
 
   const toggleHabitMutation = useMutation({
