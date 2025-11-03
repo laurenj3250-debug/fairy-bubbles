@@ -401,6 +401,25 @@ app.post('/habit-logs', async (req, res) => {
        RETURNING *`,
       [habitId, USER_ID, date, completed !== false, note || null]
     );
+
+    // Award points if habit is completed
+    if (completed !== false) {
+      const POINTS_PER_HABIT = 10;
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = total_earned + $1, available = available + $1
+         WHERE user_id = $2`,
+        [POINTS_PER_HABIT, USER_ID]
+      );
+
+      // Log the transaction
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'habit_completion', $3, $4)`,
+        [USER_ID, POINTS_PER_HABIT, habitId, 'Completed habit']
+      );
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
     console.error('Error creating habit log:', error);
@@ -412,6 +431,18 @@ app.patch('/habit-logs/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { completed, note } = req.body;
+
+    // Get the current state before updating
+    const currentLog = await queryDb(
+      `SELECT * FROM habit_logs WHERE id = $1 AND user_id = $2`,
+      [id, USER_ID]
+    );
+
+    if (currentLog.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit log not found' });
+    }
+
+    const wasCompleted = currentLog.rows[0].completed;
 
     // Build dynamic update query to only update provided fields
     const updates: string[] = [];
@@ -440,8 +471,26 @@ app.patch('/habit-logs/:id', async (req, res) => {
       params
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Habit log not found' });
+    // Handle points if completion status changed
+    if (completed !== undefined && completed !== wasCompleted) {
+      const POINTS_PER_HABIT = 10;
+      const pointChange = completed ? POINTS_PER_HABIT : -POINTS_PER_HABIT;
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = CASE WHEN $1 > 0 THEN total_earned + $1 ELSE total_earned END,
+             total_spent = CASE WHEN $1 < 0 THEN total_spent + ABS($1) ELSE total_spent END,
+             available = available + $1
+         WHERE user_id = $2`,
+        [pointChange, USER_ID]
+      );
+
+      // Log the transaction
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [USER_ID, Math.abs(pointChange), completed ? 'habit_completion' : 'habit_undo', currentLog.rows[0].habit_id, completed ? 'Completed habit' : 'Unchecked habit']
+      );
     }
 
     res.json(result.rows[0]);
@@ -628,19 +677,49 @@ app.get('/pet', async (_req, res) => {
 });
 
 app.get('/points', async (_req, res) => {
-  // Return default points
-  res.json({
-    user_id: USER_ID,
-    total_points: 250
-  });
+  try {
+    const result = await queryDb(
+      `SELECT * FROM user_points WHERE user_id = $1`,
+      [USER_ID]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        userId: USER_ID,
+        totalEarned: 0,
+        totalSpent: 0,
+        available: 0
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error fetching points:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/user-points', async (_req, res) => {
-  // Return default points
-  res.json({
-    user_id: USER_ID,
-    total_points: 250
-  });
+  try {
+    const result = await queryDb(
+      `SELECT * FROM user_points WHERE user_id = $1`,
+      [USER_ID]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        userId: USER_ID,
+        totalEarned: 0,
+        totalSpent: 0,
+        available: 0
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error fetching user points:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/stats', async (_req, res) => {
