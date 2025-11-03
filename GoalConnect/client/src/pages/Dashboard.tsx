@@ -124,13 +124,51 @@ export default function Dashboard() {
         return result;
       }
     },
-    onSuccess: async (data) => {
-      console.log('🎉 Toggle success!', data);
-      // Force immediate refetch
-      await queryClient.refetchQueries({ queryKey: ["/api/habit-logs", today] });
+    // Optimistic update - update UI immediately before server responds
+    onMutate: async ({ habitId, completed }) => {
+      console.log('⚡ Optimistic update!');
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/habit-logs", today] });
+
+      // Snapshot the previous value
+      const previousLogs = queryClient.getQueryData<HabitLog[]>(["/api/habit-logs", today]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<HabitLog[]>(["/api/habit-logs", today], (old = []) => {
+        const existingLog = old.find(log => log.habitId === habitId);
+
+        if (existingLog) {
+          // Toggle existing log
+          return old.map(log =>
+            log.habitId === habitId
+              ? { ...log, completed: !log.completed }
+              : log
+          );
+        } else {
+          // Add new log
+          return [...old, {
+            id: Date.now(), // temporary ID
+            habitId,
+            userId: 1,
+            date: today,
+            completed: true,
+            note: null
+          } as HabitLog];
+        }
+      });
+
+      return { previousLogs };
     },
-    onError: (error) => {
-      console.error('❌ Toggle error:', error);
+    onError: (err, variables, context) => {
+      console.error('❌ Toggle error:', err);
+      // Rollback on error
+      if (context?.previousLogs) {
+        queryClient.setQueryData(["/api/habit-logs", today], context.previousLogs);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to sync with server
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
     },
   });
 
