@@ -286,18 +286,27 @@ app.get('/init-database', async (_req, res) => {
 
     // Insert default costumes (only if they don't exist)
     const costumes = [
-      ['Wizard Hat', 'A mystical hat for the wise gremlin', 'hat', 'rare', 50, '🎩'],
-      ['Crown', 'Royal headwear fit for a king', 'hat', 'legendary', 150, '👑'],
-      ['Chef Hat', 'Perfect for culinary adventures', 'hat', 'common', 20, '👨‍🍳'],
-      ['Party Hat', 'Celebrate in style', 'hat', 'common', 25, '🎉'],
-      ['Space Suit', 'Explore the cosmos', 'outfit', 'epic', 100, '🚀'],
-      ['Knight Armor', 'Defend your habits bravely', 'outfit', 'epic', 120, '🛡️'],
-      ['Superhero Cape', 'For the ultimate habit hero', 'outfit', 'legendary', 200, '🦸'],
-      ['Sunglasses', 'Look cool while completing tasks', 'accessory', 'common', 15, '😎'],
-      ['Scarf', 'Stay cozy during your journey', 'accessory', 'common', 10, '🧣'],
-      ['Star Background', 'A stellar backdrop', 'background', 'rare', 75, '⭐'],
-      ['Forest Background', 'Nature-themed scenery', 'background', 'rare', 60, '🌲'],
-      ['Rainbow Background', 'Colorful and cheerful', 'background', 'epic', 90, '🌈']
+      // Popular character-inspired costumes
+      ['Pirate Captain', 'Inspired by Jack Sparrow - Adventure awaits!', 'outfit', 'legendary', 150, 'https://api.dicebear.com/7.x/avataaars/svg?seed=pirate&clothing=blazerShirt&clothingColor=262E33&accessories=eyepatch'],
+      ['Monster Inc Employee', 'Inspired by Mike Wazowski - Scare up some habits!', 'outfit', 'epic', 120, 'https://api.dicebear.com/7.x/bottts/svg?seed=monster&backgroundColor=b6e3f4'],
+      ['Superhero Suit', 'Classic hero outfit with cape', 'outfit', 'legendary', 200, 'https://api.dicebear.com/7.x/avataaars/svg?seed=hero&top=shortHairDreads01&clothing=overall&facialHair=blank'],
+      ['Wizard Robes', 'Magical robes for the wise', 'outfit', 'epic', 100, 'https://api.dicebear.com/7.x/avataaars/svg?seed=wizard&top=longHairBigHair&clothing=graphicShirt&accessories=prescription02'],
+      ['Space Explorer', 'Astronaut gear for cosmic adventures', 'outfit', 'epic', 110, 'https://api.dicebear.com/7.x/avataaars/svg?seed=space&top=shortHairShortFlat&clothing=overall&backgroundColor=ffdfbf'],
+      ['Knight Armor', 'Defend your habits with honor', 'outfit', 'rare', 80, 'https://api.dicebear.com/7.x/avataaars/svg?seed=knight&clothing=hoodie&clothingColor=3c4f5c'],
+
+      // Hats
+      ['Pirate Hat', 'Classic tricorn hat', 'hat', 'rare', 50, 'https://api.dicebear.com/7.x/avataaars/svg?seed=piratehat&top=hat'],
+      ['Crown', 'Royal headwear', 'hat', 'legendary', 150, 'https://api.dicebear.com/7.x/avataaars/svg?seed=crown&top=hijab&backgroundColor=ffd700'],
+      ['Chef Hat', 'For culinary masters', 'hat', 'common', 20, 'https://api.dicebear.com/7.x/avataaars/svg?seed=chef&top=winterHat2'],
+
+      // Accessories
+      ['Cool Shades', 'Stylish sunglasses', 'accessory', 'common', 15, 'https://api.dicebear.com/7.x/avataaars/svg?seed=shades&accessories=sunglasses'],
+      ['Eye Patch', 'Pirate essential', 'accessory', 'common', 10, 'https://api.dicebear.com/7.x/avataaars/svg?seed=eyepatch&accessories=eyepatch'],
+
+      // Backgrounds
+      ['Ocean Waves', 'Pirate ship backdrop', 'background', 'rare', 60, 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=400&fit=crop'],
+      ['Space Galaxy', 'Cosmic background', 'background', 'epic', 90, 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop'],
+      ['Magical Forest', 'Enchanted woodland', 'background', 'rare', 75, 'https://images.unsplash.com/photo-1511497584788-876760111969?w=400&h=400&fit=crop']
     ];
 
     for (const [name, description, category, rarity, price, imageUrl] of costumes) {
@@ -895,6 +904,24 @@ app.post('/costumes/purchase', async (req, res) => {
     res.json({ success: true, message: 'Costume purchased!' });
   } catch (error: any) {
     console.error('Error purchasing costume:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/reset-costumes', async (_req, res) => {
+  try {
+    // Delete all user costumes
+    await queryDb('DELETE FROM user_costumes');
+
+    // Delete all costumes
+    await queryDb('DELETE FROM costumes');
+
+    res.json({
+      success: true,
+      message: 'All costumes reset! Now visit /api/init-database to load new costumes.'
+    });
+  } catch (error: any) {
+    console.error('Error resetting costumes:', error);
     res.status(500).json({ error: error.message });
   }
 });
