@@ -208,6 +208,25 @@ app.get('/init-database', async (_req, res) => {
         description TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS costumes (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        category VARCHAR(50) NOT NULL,
+        rarity VARCHAR(20) NOT NULL,
+        price INTEGER NOT NULL,
+        image_url TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS user_costumes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        costume_id INTEGER NOT NULL REFERENCES costumes(id),
+        equipped BOOLEAN DEFAULT false,
+        purchased_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        UNIQUE(user_id, costume_id)
+      );
     `);
 
     // Insert user
@@ -262,6 +281,33 @@ app.get('/init-database', async (_req, res) => {
            SELECT 1 FROM habits WHERE user_id = $1 AND title = $2
          )`,
         [USER_ID, title, description, icon, color, cadence]
+      );
+    }
+
+    // Insert default costumes (only if they don't exist)
+    const costumes = [
+      ['Wizard Hat', 'A mystical hat for the wise gremlin', 'hat', 'rare', 50, '🎩'],
+      ['Crown', 'Royal headwear fit for a king', 'hat', 'legendary', 150, '👑'],
+      ['Chef Hat', 'Perfect for culinary adventures', 'hat', 'common', 20, '👨‍🍳'],
+      ['Party Hat', 'Celebrate in style', 'hat', 'common', 25, '🎉'],
+      ['Space Suit', 'Explore the cosmos', 'outfit', 'epic', 100, '🚀'],
+      ['Knight Armor', 'Defend your habits bravely', 'outfit', 'epic', 120, '🛡️'],
+      ['Superhero Cape', 'For the ultimate habit hero', 'outfit', 'legendary', 200, '🦸'],
+      ['Sunglasses', 'Look cool while completing tasks', 'accessory', 'common', 15, '😎'],
+      ['Scarf', 'Stay cozy during your journey', 'accessory', 'common', 10, '🧣'],
+      ['Star Background', 'A stellar backdrop', 'background', 'rare', 75, '⭐'],
+      ['Forest Background', 'Nature-themed scenery', 'background', 'rare', 60, '🌲'],
+      ['Rainbow Background', 'Colorful and cheerful', 'background', 'epic', 90, '🌈']
+    ];
+
+    for (const [name, description, category, rarity, price, imageUrl] of costumes) {
+      await queryDb(
+        `INSERT INTO costumes (name, description, category, rarity, price, image_url)
+         SELECT $1, $2, $3, $4, $5, $6
+         WHERE NOT EXISTS (
+           SELECT 1 FROM costumes WHERE name = $1
+         )`,
+        [name, description, category, rarity, price, imageUrl]
       );
     }
 
@@ -732,22 +778,125 @@ app.get('/stats', async (_req, res) => {
 });
 
 app.get('/costumes', async (_req, res) => {
-  // Return empty costumes list
-  res.json([]);
+  try {
+    const result = await queryDb('SELECT * FROM costumes ORDER BY price ASC');
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      rarity: row.rarity,
+      price: row.price,
+      imageUrl: row.image_url
+    })));
+  } catch (error: any) {
+    console.error('Error fetching costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/user-costumes', async (_req, res) => {
-  // Return empty user costumes
-  res.json([]);
+  try {
+    const result = await queryDb(
+      'SELECT * FROM user_costumes WHERE user_id = $1',
+      [USER_ID]
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      costumeId: row.costume_id,
+      equipped: row.equipped,
+      purchasedAt: row.purchased_at
+    })));
+  } catch (error: any) {
+    console.error('Error fetching user costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/costumes/equipped', async (_req, res) => {
-  // Return no equipped costumes
-  res.json([]);
+  try {
+    const result = await queryDb(
+      `SELECT c.* FROM costumes c
+       JOIN user_costumes uc ON c.id = uc.costume_id
+       WHERE uc.user_id = $1 AND uc.equipped = true`,
+      [USER_ID]
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      imageUrl: row.image_url
+    })));
+  } catch (error: any) {
+    console.error('Error fetching equipped costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/costumes/purchase', async (_req, res) => {
-  res.json({ success: false, message: 'Costumes not yet implemented' });
+app.post('/costumes/purchase', async (req, res) => {
+  try {
+    const { costumeId } = req.body;
+
+    // Get costume details
+    const costume = await queryDb(
+      'SELECT * FROM costumes WHERE id = $1',
+      [costumeId]
+    );
+
+    if (costume.rows.length === 0) {
+      return res.status(404).json({ error: 'Costume not found' });
+    }
+
+    const price = costume.rows[0].price;
+
+    // Check if user already owns it
+    const existing = await queryDb(
+      'SELECT * FROM user_costumes WHERE user_id = $1 AND costume_id = $2',
+      [USER_ID, costumeId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Already owned' });
+    }
+
+    // Check if user has enough points
+    const points = await queryDb(
+      'SELECT * FROM user_points WHERE user_id = $1',
+      [USER_ID]
+    );
+
+    if (points.rows.length === 0 || points.rows[0].available < price) {
+      return res.status(400).json({ error: 'Insufficient points' });
+    }
+
+    // Deduct points
+    await queryDb(
+      `UPDATE user_points
+       SET total_spent = total_spent + $1, available = available - $1
+       WHERE user_id = $2`,
+      [price, USER_ID]
+    );
+
+    // Add costume to user's collection
+    await queryDb(
+      `INSERT INTO user_costumes (user_id, costume_id)
+       VALUES ($1, $2)`,
+      [USER_ID, costumeId]
+    );
+
+    // Log transaction
+    await queryDb(
+      `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+       VALUES ($1, $2, 'costume_purchase', $3, $4)`,
+      [USER_ID, price, costumeId, `Purchased ${costume.rows[0].name}`]
+    );
+
+    res.json({ success: true, message: 'Costume purchased!' });
+  } catch (error: any) {
+    console.error('Error purchasing costume:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/goal-updates', async (req, res) => {
