@@ -24,28 +24,27 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  const connectionString = process.env.DATABASE_URL;
+  let connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // For Vercel serverless: Use Supabase's transaction pooler (port 6543)
-  // The transaction pooler is designed for serverless and handles connection lifecycle
-  // Do NOT convert to port 5432 - that's for persistent connections only
+  // NUCLEAR OPTION: Completely disable SSL verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-  const needsSSL = !connectionString.includes('localhost') &&
-                   !connectionString.includes('127.0.0.1');
+  // Remove any sslmode parameter that might conflict
+  connectionString = connectionString.replace(/[?&]sslmode=[^&]+/, '');
+
+  const isLocalhost = connectionString.includes('localhost') ||
+                      connectionString.includes('127.0.0.1');
 
   // Use a single client instead of a pool for serverless
   const { Client } = pkg;
+
   const client = new Client({
     connectionString,
-    ...(needsSSL ? {
-      ssl: {
-        rejectUnauthorized: false,
-      }
-    } : {})
+    ssl: !isLocalhost,
   });
 
   try {
@@ -209,6 +208,25 @@ app.get('/init-database', async (_req, res) => {
         description TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS costumes (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        category VARCHAR(50) NOT NULL,
+        rarity VARCHAR(20) NOT NULL,
+        price INTEGER NOT NULL,
+        image_url TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS user_costumes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        costume_id INTEGER NOT NULL REFERENCES costumes(id),
+        equipped BOOLEAN DEFAULT false,
+        purchased_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        UNIQUE(user_id, costume_id)
+      );
     `);
 
     // Insert user
@@ -263,6 +281,42 @@ app.get('/init-database', async (_req, res) => {
            SELECT 1 FROM habits WHERE user_id = $1 AND title = $2
          )`,
         [USER_ID, title, description, icon, color, cadence]
+      );
+    }
+
+    // Insert default costumes (only if they don't exist)
+    const costumes = [
+      // Popular character-inspired costumes
+      ['Pirate Captain', 'Inspired by Jack Sparrow - Adventure awaits!', 'outfit', 'legendary', 150, 'https://api.dicebear.com/7.x/avataaars/svg?seed=pirate&clothing=blazerShirt&clothingColor=262E33&accessories=eyepatch'],
+      ['Monster Inc Employee', 'Inspired by Mike Wazowski - Scare up some habits!', 'outfit', 'epic', 120, 'https://api.dicebear.com/7.x/bottts/svg?seed=monster&backgroundColor=b6e3f4'],
+      ['Superhero Suit', 'Classic hero outfit with cape', 'outfit', 'legendary', 200, 'https://api.dicebear.com/7.x/avataaars/svg?seed=hero&top=shortHairDreads01&clothing=overall&facialHair=blank'],
+      ['Wizard Robes', 'Magical robes for the wise', 'outfit', 'epic', 100, 'https://api.dicebear.com/7.x/avataaars/svg?seed=wizard&top=longHairBigHair&clothing=graphicShirt&accessories=prescription02'],
+      ['Space Explorer', 'Astronaut gear for cosmic adventures', 'outfit', 'epic', 110, 'https://api.dicebear.com/7.x/avataaars/svg?seed=space&top=shortHairShortFlat&clothing=overall&backgroundColor=ffdfbf'],
+      ['Knight Armor', 'Defend your habits with honor', 'outfit', 'rare', 80, 'https://api.dicebear.com/7.x/avataaars/svg?seed=knight&clothing=hoodie&clothingColor=3c4f5c'],
+
+      // Hats
+      ['Pirate Hat', 'Classic tricorn hat', 'hat', 'rare', 50, 'https://api.dicebear.com/7.x/avataaars/svg?seed=piratehat&top=hat'],
+      ['Crown', 'Royal headwear', 'hat', 'legendary', 150, 'https://api.dicebear.com/7.x/avataaars/svg?seed=crown&top=hijab&backgroundColor=ffd700'],
+      ['Chef Hat', 'For culinary masters', 'hat', 'common', 20, 'https://api.dicebear.com/7.x/avataaars/svg?seed=chef&top=winterHat2'],
+
+      // Accessories
+      ['Cool Shades', 'Stylish sunglasses', 'accessory', 'common', 15, 'https://api.dicebear.com/7.x/avataaars/svg?seed=shades&accessories=sunglasses'],
+      ['Eye Patch', 'Pirate essential', 'accessory', 'common', 10, 'https://api.dicebear.com/7.x/avataaars/svg?seed=eyepatch&accessories=eyepatch'],
+
+      // Backgrounds
+      ['Ocean Waves', 'Pirate ship backdrop', 'background', 'rare', 60, 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=400&fit=crop'],
+      ['Space Galaxy', 'Cosmic background', 'background', 'epic', 90, 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop'],
+      ['Magical Forest', 'Enchanted woodland', 'background', 'rare', 75, 'https://images.unsplash.com/photo-1511497584788-876760111969?w=400&h=400&fit=crop']
+    ];
+
+    for (const [name, description, category, rarity, price, imageUrl] of costumes) {
+      await queryDb(
+        `INSERT INTO costumes (name, description, category, rarity, price, image_url)
+         SELECT $1, $2, $3, $4, $5, $6
+         WHERE NOT EXISTS (
+           SELECT 1 FROM costumes WHERE name = $1
+         )`,
+        [name, description, category, rarity, price, imageUrl]
       );
     }
 
@@ -369,13 +423,18 @@ app.patch('/goals/:id', async (req, res) => {
 
 app.get('/habit-logs', async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, habitId } = req.query;
     let query = 'SELECT * FROM habit_logs WHERE user_id = $1';
     const params: any[] = [USER_ID];
 
     if (date) {
-      query += ` AND date = $2`;
+      query += ` AND date = $${params.length + 1}`;
       params.push(date);
+    }
+
+    if (habitId) {
+      query += ` AND habit_id = $${params.length + 1}`;
+      params.push(habitId);
     }
 
     query += ' ORDER BY date DESC';
@@ -397,6 +456,25 @@ app.post('/habit-logs', async (req, res) => {
        RETURNING *`,
       [habitId, USER_ID, date, completed !== false, note || null]
     );
+
+    // Award points if habit is completed
+    if (completed !== false) {
+      const POINTS_PER_HABIT = 10;
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = total_earned + $1, available = available + $1
+         WHERE user_id = $2`,
+        [POINTS_PER_HABIT, USER_ID]
+      );
+
+      // Log the transaction
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'habit_completion', $3, $4)`,
+        [USER_ID, POINTS_PER_HABIT, habitId, 'Completed habit']
+      );
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
     console.error('Error creating habit log:', error);
@@ -408,12 +486,69 @@ app.patch('/habit-logs/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { completed, note } = req.body;
-    const result = await queryDb(
-      `UPDATE habit_logs SET completed = $1, note = $2
-       WHERE id = $3 AND user_id = $4 RETURNING *`,
-      [completed, note, id, USER_ID]
+
+    // Get the current state before updating
+    const currentLog = await queryDb(
+      `SELECT * FROM habit_logs WHERE id = $1 AND user_id = $2`,
+      [id, USER_ID]
     );
-    res.json(result.rows[0] || {});
+
+    if (currentLog.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit log not found' });
+    }
+
+    const wasCompleted = currentLog.rows[0].completed;
+
+    // Build dynamic update query to only update provided fields
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (completed !== undefined) {
+      updates.push(`completed = $${paramIndex++}`);
+      params.push(completed);
+    }
+
+    if (note !== undefined) {
+      updates.push(`note = $${paramIndex++}`);
+      params.push(note);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(id, USER_ID);
+
+    const result = await queryDb(
+      `UPDATE habit_logs SET ${updates.join(', ')}
+       WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1} RETURNING *`,
+      params
+    );
+
+    // Handle points if completion status changed
+    if (completed !== undefined && completed !== wasCompleted) {
+      const POINTS_PER_HABIT = 10;
+      const pointChange = completed ? POINTS_PER_HABIT : -POINTS_PER_HABIT;
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = CASE WHEN $1 > 0 THEN total_earned + $1 ELSE total_earned END,
+             total_spent = CASE WHEN $1 < 0 THEN total_spent + ABS($1) ELSE total_spent END,
+             available = available + $1
+         WHERE user_id = $2`,
+        [pointChange, USER_ID]
+      );
+
+      // Log the transaction
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [USER_ID, Math.abs(pointChange), completed ? 'habit_completion' : 'habit_undo', currentLog.rows[0].habit_id, completed ? 'Completed habit' : 'Unchecked habit']
+      );
+    }
+
+    res.json(result.rows[0]);
   } catch (error: any) {
     console.error('Error updating habit log:', error);
     res.status(500).json({ error: error.message });
@@ -597,19 +732,49 @@ app.get('/pet', async (_req, res) => {
 });
 
 app.get('/points', async (_req, res) => {
-  // Return default points
-  res.json({
-    user_id: USER_ID,
-    total_points: 250
-  });
+  try {
+    const result = await queryDb(
+      `SELECT * FROM user_points WHERE user_id = $1`,
+      [USER_ID]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        userId: USER_ID,
+        totalEarned: 0,
+        totalSpent: 0,
+        available: 0
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error fetching points:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/user-points', async (_req, res) => {
-  // Return default points
-  res.json({
-    user_id: USER_ID,
-    total_points: 250
-  });
+  try {
+    const result = await queryDb(
+      `SELECT * FROM user_points WHERE user_id = $1`,
+      [USER_ID]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        userId: USER_ID,
+        totalEarned: 0,
+        totalSpent: 0,
+        available: 0
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error fetching user points:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/stats', async (_req, res) => {
@@ -622,22 +787,143 @@ app.get('/stats', async (_req, res) => {
 });
 
 app.get('/costumes', async (_req, res) => {
-  // Return empty costumes list
-  res.json([]);
+  try {
+    const result = await queryDb('SELECT * FROM costumes ORDER BY price ASC');
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      rarity: row.rarity,
+      price: row.price,
+      imageUrl: row.image_url
+    })));
+  } catch (error: any) {
+    console.error('Error fetching costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/user-costumes', async (_req, res) => {
-  // Return empty user costumes
-  res.json([]);
+  try {
+    const result = await queryDb(
+      'SELECT * FROM user_costumes WHERE user_id = $1',
+      [USER_ID]
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      costumeId: row.costume_id,
+      equipped: row.equipped,
+      purchasedAt: row.purchased_at
+    })));
+  } catch (error: any) {
+    console.error('Error fetching user costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/costumes/equipped', async (_req, res) => {
-  // Return no equipped costumes
-  res.json([]);
+  try {
+    const result = await queryDb(
+      `SELECT c.* FROM costumes c
+       JOIN user_costumes uc ON c.id = uc.costume_id
+       WHERE uc.user_id = $1 AND uc.equipped = true`,
+      [USER_ID]
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      imageUrl: row.image_url
+    })));
+  } catch (error: any) {
+    console.error('Error fetching equipped costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/costumes/purchase', async (_req, res) => {
-  res.json({ success: false, message: 'Costumes not yet implemented' });
+app.post('/costumes/purchase', async (req, res) => {
+  try {
+    const { costumeId } = req.body;
+
+    // Get costume details
+    const costume = await queryDb(
+      'SELECT * FROM costumes WHERE id = $1',
+      [costumeId]
+    );
+
+    if (costume.rows.length === 0) {
+      return res.status(404).json({ error: 'Costume not found' });
+    }
+
+    const price = costume.rows[0].price;
+
+    // Check if user already owns it
+    const existing = await queryDb(
+      'SELECT * FROM user_costumes WHERE user_id = $1 AND costume_id = $2',
+      [USER_ID, costumeId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Already owned' });
+    }
+
+    // Check if user has enough points
+    const points = await queryDb(
+      'SELECT * FROM user_points WHERE user_id = $1',
+      [USER_ID]
+    );
+
+    if (points.rows.length === 0 || points.rows[0].available < price) {
+      return res.status(400).json({ error: 'Insufficient points' });
+    }
+
+    // Deduct points
+    await queryDb(
+      `UPDATE user_points
+       SET total_spent = total_spent + $1, available = available - $1
+       WHERE user_id = $2`,
+      [price, USER_ID]
+    );
+
+    // Add costume to user's collection
+    await queryDb(
+      `INSERT INTO user_costumes (user_id, costume_id)
+       VALUES ($1, $2)`,
+      [USER_ID, costumeId]
+    );
+
+    // Log transaction
+    await queryDb(
+      `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+       VALUES ($1, $2, 'costume_purchase', $3, $4)`,
+      [USER_ID, price, costumeId, `Purchased ${costume.rows[0].name}`]
+    );
+
+    res.json({ success: true, message: 'Costume purchased!' });
+  } catch (error: any) {
+    console.error('Error purchasing costume:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/reset-costumes', async (_req, res) => {
+  try {
+    // Delete all user costumes
+    await queryDb('DELETE FROM user_costumes');
+
+    // Delete all costumes
+    await queryDb('DELETE FROM costumes');
+
+    res.json({
+      success: true,
+      message: 'All costumes reset! Now visit /api/init-database to load new costumes.'
+    });
+  } catch (error: any) {
+    console.error('Error resetting costumes:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/goal-updates', async (req, res) => {

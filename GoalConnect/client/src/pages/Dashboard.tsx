@@ -88,36 +88,95 @@ export default function Dashboard() {
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", today],
-    queryFn: () => fetch(`/api/habit-logs?date=${today}`, {
-      credentials: "include"
-    }).then(res => {
-      if (!res.ok) throw new Error(`Failed to fetch logs: ${res.status}`);
-      return res.json();
-    }),
   });
 
   const toggleHabitMutation = useMutation({
     mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
+      console.log('🔄 Toggle clicked:', { habitId, completed, today });
       const existingLog = todayLogs.find(log => log.habitId === habitId);
+      console.log('📝 Existing log:', existingLog);
 
       if (existingLog) {
-        return apiRequest(`/api/habit-logs/${existingLog.id}`, "PATCH", {
+        console.log('✏️ Updating log:', existingLog.id);
+        const result = await apiRequest(`/api/habit-logs/${existingLog.id}`, "PATCH", {
           completed: !existingLog.completed,
         });
+        console.log('✅ Update result:', result);
+        return result;
       } else {
-        return apiRequest("/api/habit-logs", "POST", {
+        console.log('➕ Creating new log');
+        const result = await apiRequest("/api/habit-logs", "POST", {
           habitId,
           date: today,
           completed: true,
           note: null,
         });
+        console.log('✅ Create result:', result);
+        return result;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
+    // Optimistic update - update UI immediately before server responds
+    onMutate: async ({ habitId, completed }) => {
+      console.log('⚡ Optimistic update!');
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/habit-logs", today] });
+
+      // Snapshot the previous value
+      const previousLogs = queryClient.getQueryData<HabitLog[]>(["/api/habit-logs", today]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<HabitLog[]>(["/api/habit-logs", today], (old = []) => {
+        const existingLog = old.find(log => log.habitId === habitId);
+
+        if (existingLog) {
+          // Toggle existing log
+          return old.map(log =>
+            log.habitId === habitId
+              ? { ...log, completed: !log.completed }
+              : log
+          );
+        } else {
+          // Add new log
+          return [...old, {
+            id: Date.now(), // temporary ID
+            habitId,
+            userId: 1,
+            date: today,
+            completed: true,
+            note: null
+          } as HabitLog];
+        }
+      });
+
+      return { previousLogs };
     },
+    onError: (err, variables, context) => {
+      console.error('❌ Toggle error:', err);
+      // Rollback on error
+      if (context?.previousLogs) {
+        queryClient.setQueryData(["/api/habit-logs", today], context.previousLogs);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to sync with server
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+      // Also invalidate the "all" query used by CalendarView
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+    },
+  });
+
+  // Fetch all habit logs for streak calculation
+  const { data: allHabitLogs = [] } = useQuery<HabitLog[]>({
+    queryKey: ["/api/habit-logs/all"],
+    queryFn: async () => {
+      if (habits.length === 0) return [];
+      const logsPromises = habits.map(h =>
+        fetch(`/api/habit-logs?habitId=${h.id}`).then(res => res.json())
+      );
+      const logsArrays = await Promise.all(logsPromises);
+      return logsArrays.flat();
+    },
+    enabled: habits.length > 0,
   });
 
   const todayHabits = useMemo(() => {
@@ -127,11 +186,39 @@ export default function Dashboard() {
     });
   }, [habits, todayLogs]);
 
+  // Calculate real streak based on consecutive days with ALL habits completed
   const currentStreak = useMemo(() => {
-    const completedToday = todayHabits.filter(h => h.completed).length;
-    if (completedToday === 0) return 0;
-    return 1; // Simplified for now
-  }, [todayHabits]);
+    if (habits.length === 0) return 0;
+
+    let streak = 0;
+    let checkDate = new Date();
+
+    // Start from today and go backwards
+    while (true) {
+      const dateString = checkDate.toISOString().split('T')[0];
+      const logsForDate = allHabitLogs.filter(log => log.date === dateString && log.completed);
+
+      // Check if all habits were completed on this date
+      const allCompleted = logsForDate.length === habits.length;
+
+      if (!allCompleted) {
+        // If it's today and nothing completed, streak is still 0 but don't break yet
+        if (streak === 0 && dateString === today) {
+          checkDate.setDate(checkDate.getDate() - 1);
+          continue;
+        }
+        break;
+      }
+
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+
+      // Safety limit to prevent infinite loop
+      if (streak > 365) break;
+    }
+
+    return streak;
+  }, [habits, allHabitLogs, today]);
 
   const completedCount = todayHabits.filter(h => h.completed).length;
   const totalCount = todayHabits.length;
@@ -228,21 +315,39 @@ export default function Dashboard() {
                   style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(167, 139, 250, 0.8)' }}
                   data-testid="greeting-text"
                 >
-                  {getGreeting()}, {userName} ?
+                  {getGreeting()}, {userName}
                 </h1>
                 <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                  {formatDate()} ? Keep growing! ??
+                  {formatDate()} - Keep growing!
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Badge
-                className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400/40 text-yellow-100 backdrop-blur-xl shadow-lg"
-                data-testid="streak-badge"
-              >
-                <Zap className="w-4 h-4" />
-                <span>{currentStreak} day streak</span>
-              </Badge>
+              {/* Streak Ladder */}
+              <div className="flex items-center gap-2">
+                <Badge
+                  className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400/40 text-yellow-100 backdrop-blur-xl shadow-lg"
+                  data-testid="streak-badge"
+                >
+                  <Zap className="w-4 h-4" />
+                  <span>{currentStreak} day{currentStreak !== 1 ? 's' : ''}</span>
+                </Badge>
+                {/* Climbing ladder visualization */}
+                {currentStreak > 0 && (
+                  <div className="flex flex-col-reverse gap-0.5" title={`You've climbed ${currentStreak} rungs!`}>
+                    {Array.from({ length: Math.min(currentStreak, 7) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-6 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full shadow-lg shadow-yellow-400/50 animate-pulse"
+                        style={{
+                          animationDelay: `${i * 100}ms`,
+                          opacity: 1 - (i * 0.1)
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
               <Badge
                 className="rounded-full px-6 py-2 text-lg font-bold flex-1 sm:flex-initial justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white border-2 border-white/30 shadow-lg"
                 data-testid="completion-badge"
@@ -259,15 +364,6 @@ export default function Dashboard() {
           <div className="flex flex-col gap-6">
             {/* Enchanted Pet Card */}
             <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow">
-              {/* Floating Sparkles */}
-              <div className="absolute inset-0 pointer-events-none">
-                <span className="absolute top-5 left-5 text-xl float-sparkle">?</span>
-                <span className="absolute top-8 right-8 text-xl float-sparkle" style={{animationDelay: '1s'}}>??</span>
-                <span className="absolute top-5 right-4 text-xl float-sparkle" style={{animationDelay: '0.5s'}}>??</span>
-                <span className="absolute bottom-8 left-6 text-xl float-sparkle" style={{animationDelay: '1.5s'}}>?</span>
-                <span className="absolute bottom-10 right-9 text-xl float-sparkle" style={{animationDelay: '0.8s'}}>?</span>
-              </div>
-
               <div className="relative z-10">
                 <VirtualPet />
                 <h3
@@ -277,15 +373,15 @@ export default function Dashboard() {
                   Your Forest Friend
                 </h3>
                 <Badge className="rounded-full px-5 py-2 text-sm font-semibold bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 text-green-200 backdrop-blur-xl mb-6 shadow-lg">
-                  ?? Growing Steadily ??
+                  Growing Steadily
                 </Badge>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">? {currentStreak}</div>
+                    <div className="text-2xl font-bold text-white mb-1">{currentStreak}</div>
                     <div className="text-xs text-white/80">Day Streak</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">? {Math.round((completedCount / totalCount) * 100)}%</div>
+                    <div className="text-2xl font-bold text-white mb-1">{Math.round((completedCount / totalCount) * 100)}%</div>
                     <div className="text-xs text-white/80">This Week</div>
                   </div>
                 </div>
@@ -414,7 +510,7 @@ export default function Dashboard() {
                     className="text-lg font-bold text-white mb-6 flex items-center gap-2"
                     style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                   >
-                    This Week's Progress ??
+                    This Week's Progress
                   </h3>
                   <div className="grid grid-cols-7 gap-3">
                     {[6, 5, 4, 3, 2, 1, 0].map((daysAgo, idx) => {
@@ -452,7 +548,7 @@ export default function Dashboard() {
                   className="text-3xl font-bold text-white mb-4"
                   style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                 >
-                  ? To-Do List
+                  To-Do List
                 </h2>
                 <p className="text-white/70">Your enchanted tasks will appear here</p>
               </div>

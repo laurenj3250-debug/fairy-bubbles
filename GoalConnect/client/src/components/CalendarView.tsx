@@ -50,9 +50,9 @@ export function CalendarView() {
 
   const getItemsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
-    
-    const completedHabits = habitLogs.filter(log => 
-      log.completed && format(new Date(log.date), "yyyy-MM-dd") === dateString
+
+    const completedHabits = habitLogs.filter(log =>
+      log.completed && log.date === dateString
     );
 
     const todosForDate = todos.filter(todo => 
