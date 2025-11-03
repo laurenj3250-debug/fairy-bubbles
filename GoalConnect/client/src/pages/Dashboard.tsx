@@ -165,6 +165,20 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch all habit logs for streak calculation
+  const { data: allHabitLogs = [] } = useQuery<HabitLog[]>({
+    queryKey: ["/api/habit-logs/all"],
+    queryFn: async () => {
+      if (habits.length === 0) return [];
+      const logsPromises = habits.map(h =>
+        fetch(`/api/habit-logs?habitId=${h.id}`).then(res => res.json())
+      );
+      const logsArrays = await Promise.all(logsPromises);
+      return logsArrays.flat();
+    },
+    enabled: habits.length > 0,
+  });
+
   const todayHabits = useMemo(() => {
     return habits.map(habit => {
       const log = todayLogs.find(l => l.habitId === habit.id);
@@ -172,11 +186,39 @@ export default function Dashboard() {
     });
   }, [habits, todayLogs]);
 
+  // Calculate real streak based on consecutive days with ALL habits completed
   const currentStreak = useMemo(() => {
-    const completedToday = todayHabits.filter(h => h.completed).length;
-    if (completedToday === 0) return 0;
-    return 1; // Simplified for now
-  }, [todayHabits]);
+    if (habits.length === 0) return 0;
+
+    let streak = 0;
+    let checkDate = new Date();
+
+    // Start from today and go backwards
+    while (true) {
+      const dateString = checkDate.toISOString().split('T')[0];
+      const logsForDate = allHabitLogs.filter(log => log.date === dateString && log.completed);
+
+      // Check if all habits were completed on this date
+      const allCompleted = logsForDate.length === habits.length;
+
+      if (!allCompleted) {
+        // If it's today and nothing completed, streak is still 0 but don't break yet
+        if (streak === 0 && dateString === today) {
+          checkDate.setDate(checkDate.getDate() - 1);
+          continue;
+        }
+        break;
+      }
+
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+
+      // Safety limit to prevent infinite loop
+      if (streak > 365) break;
+    }
+
+    return streak;
+  }, [habits, allHabitLogs, today]);
 
   const completedCount = todayHabits.filter(h => h.completed).length;
   const totalCount = todayHabits.length;
@@ -281,13 +323,31 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Badge
-                className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400/40 text-yellow-100 backdrop-blur-xl shadow-lg"
-                data-testid="streak-badge"
-              >
-                <Zap className="w-4 h-4" />
-                <span>{currentStreak} day streak</span>
-              </Badge>
+              {/* Streak Ladder */}
+              <div className="flex items-center gap-2">
+                <Badge
+                  className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400/40 text-yellow-100 backdrop-blur-xl shadow-lg"
+                  data-testid="streak-badge"
+                >
+                  <Zap className="w-4 h-4" />
+                  <span>{currentStreak} day{currentStreak !== 1 ? 's' : ''}</span>
+                </Badge>
+                {/* Climbing ladder visualization */}
+                {currentStreak > 0 && (
+                  <div className="flex flex-col-reverse gap-0.5" title={`You've climbed ${currentStreak} rungs!`}>
+                    {Array.from({ length: Math.min(currentStreak, 7) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-6 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full shadow-lg shadow-yellow-400/50 animate-pulse"
+                        style={{
+                          animationDelay: `${i * 100}ms`,
+                          opacity: 1 - (i * 0.1)
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
               <Badge
                 className="rounded-full px-6 py-2 text-lg font-bold flex-1 sm:flex-initial justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white border-2 border-white/30 shadow-lg"
                 data-testid="completion-badge"

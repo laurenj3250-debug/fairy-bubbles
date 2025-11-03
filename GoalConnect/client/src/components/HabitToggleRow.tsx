@@ -48,13 +48,18 @@ export function HabitToggleRow({
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
       className={cn(
-        "flex items-center gap-3 w-full min-h-14 px-4 py-3 rounded-2xl transition-all border-2",
-        completed 
-          ? "bg-muted border-muted" 
+        "flex items-center gap-3 w-full min-h-14 px-4 py-3 rounded-2xl transition-all border-2 relative overflow-hidden",
+        completed
+          ? "bg-muted border-muted"
           : "bg-card border-transparent hover-elevate active-elevate-2",
         className
       )}
       data-testid={`habit-toggle-${title.toLowerCase().replace(/\s+/g, "-")}`}
+      style={{
+        background: completed
+          ? `radial-gradient(circle at left, ${color}15 0%, ${color}08 50%, transparent 100%)`
+          : undefined
+      }}
     >
       {/* Circular Checkbox - Left Side */}
       <div

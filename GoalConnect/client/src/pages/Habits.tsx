@@ -3,14 +3,15 @@ import { EmptyState } from "@/components/EmptyState";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { FAB } from "@/components/FAB";
 import { StreakPill } from "@/components/StreakPill";
+import { StreakTrail } from "@/components/StreakTrail";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Trash2, Pencil } from "lucide-react";
+import { CheckCircle, Trash2, Pencil, TrendingUp } from "lucide-react";
 import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
-import { calculateStreak } from "@/lib/utils";
+import { calculateStreak, getToday } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
@@ -45,15 +46,24 @@ export default function Habits() {
   });
 
   const habitsWithStats = useMemo(() => {
+    const today = getToday();
     return habits.map(habit => {
       const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
       const dates = habitLogs.map(log => log.date);
       const streak = calculateStreak(dates);
       const totalCompletions = habitLogs.length;
+      const completedToday = dates.includes(today);
 
-      return { ...habit, streak, totalCompletions };
+      return { ...habit, streak, totalCompletions, completedDates: dates, completedToday };
     });
   }, [habits, allLogs]);
+
+  const todayStats = useMemo(() => {
+    const completed = habitsWithStats.filter(h => h.completedToday).length;
+    const total = habitsWithStats.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { completed, total, percentage };
+  }, [habitsWithStats]);
 
   const handleFabClick = () => {
     setEditingHabit(undefined);
@@ -117,6 +127,35 @@ export default function Habits() {
       <DashboardHeader />
       
       <main className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Daily Snapshot Card */}
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10">
+                  <TrendingUp className="w-7 h-7 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Today's Progress</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {todayStats.completed === todayStats.total && todayStats.total > 0
+                      ? "Perfect day! All habits completed!"
+                      : todayStats.completed > 0
+                      ? "Great work! Keep the momentum going!"
+                      : "Ready to start your day?"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-4xl font-bold text-primary">
+                  {todayStats.completed}/{todayStats.total}
+                </div>
+                <div className="text-sm text-muted-foreground">{todayStats.percentage}% complete</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold tracking-tight">Your Habits</h2>
           <span className="text-sm text-muted-foreground">{habits.length} habits</span>
@@ -184,6 +223,13 @@ export default function Habits() {
                     <span className="text-sm font-semibold tabular-nums">
                       {habit.totalCompletions} completions
                     </span>
+                  </div>
+                  {/* Streak Trail */}
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground">Last 14 days</span>
+                    </div>
+                    <StreakTrail dates={habit.completedDates} daysToShow={14} />
                   </div>
                 </CardContent>
               </Card>
