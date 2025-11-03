@@ -124,11 +124,10 @@ export default function Dashboard() {
         return result;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('🎉 Toggle success!', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
+      // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ["/api/habit-logs", today] });
     },
     onError: (error) => {
       console.error('❌ Toggle error:', error);
