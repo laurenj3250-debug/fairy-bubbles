@@ -412,12 +412,39 @@ app.patch('/habit-logs/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { completed, note } = req.body;
+
+    // Build dynamic update query to only update provided fields
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (completed !== undefined) {
+      updates.push(`completed = $${paramIndex++}`);
+      params.push(completed);
+    }
+
+    if (note !== undefined) {
+      updates.push(`note = $${paramIndex++}`);
+      params.push(note);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(id, USER_ID);
+
     const result = await queryDb(
-      `UPDATE habit_logs SET completed = $1, note = $2
-       WHERE id = $3 AND user_id = $4 RETURNING *`,
-      [completed, note, id, USER_ID]
+      `UPDATE habit_logs SET ${updates.join(', ')}
+       WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1} RETURNING *`,
+      params
     );
-    res.json(result.rows[0] || {});
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Habit log not found' });
+    }
+
+    res.json(result.rows[0]);
   } catch (error: any) {
     console.error('Error updating habit log:', error);
     res.status(500).json({ error: error.message });
