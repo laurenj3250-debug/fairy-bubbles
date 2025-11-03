@@ -24,12 +24,14 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  // Use UNPOOLED connection (port 5432) which has better SSL support than pooler
-  let connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  let connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
   }
+
+  // NUCLEAR OPTION: Completely disable SSL verification
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   // Remove any sslmode parameter that might conflict
   connectionString = connectionString.replace(/[?&]sslmode=[^&]+/, '');
@@ -40,13 +42,9 @@ async function queryDb(sql: string, params: any[] = []) {
   // Use a single client instead of a pool for serverless
   const { Client } = pkg;
 
-  // Force SSL settings that work with Supabase
   const client = new Client({
     connectionString,
-    ssl: isLocalhost ? false : {
-      rejectUnauthorized: false,
-      checkServerIdentity: () => undefined,
-    }
+    ssl: !isLocalhost,
   });
 
   try {
