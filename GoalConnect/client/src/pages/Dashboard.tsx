@@ -5,6 +5,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { FAB } from "@/components/FAB";
 import { AchievementSpotlight } from "@/components/AchievementSpotlight";
 import { WeekAtAGlance } from "@/components/WeekAtAGlance";
+import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
+import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -492,10 +494,16 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Monthly Goals Widget */}
+            <MonthlyGoalsWidget />
           </div>
 
           {/* Right Content Area */}
           <div className="flex flex-col gap-6 pb-20 md:pb-0">
+            {/* Weekly Goals Widget */}
+            <WeeklyGoalsWidget />
+
             {/* Magical Tabs */}
             <div className="glass-card rounded-3xl p-2 flex gap-2">
               <Button
