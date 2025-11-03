@@ -4,6 +4,7 @@ import { VirtualPet } from "@/components/VirtualPet";
 import { EmptyState } from "@/components/EmptyState";
 import { FAB } from "@/components/FAB";
 import { AchievementSpotlight } from "@/components/AchievementSpotlight";
+import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -430,6 +431,11 @@ export default function Dashboard() {
         {/* Achievement Spotlight */}
         <div className="mb-6">
           <AchievementSpotlight achievements={achievements} autoRotate={true} intervalMs={6000} />
+        </div>
+
+        {/* Week at a Glance */}
+        <div className="mb-6">
+          <WeekAtAGlance />
         </div>
 
         {/* Main Grid */}
