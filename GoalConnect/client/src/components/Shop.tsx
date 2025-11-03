@@ -82,16 +82,22 @@ export function Shop() {
         <CardContent>
           <div className="flex items-center justify-center p-6 bg-gradient-to-b from-muted to-muted/50 rounded-md min-h-[160px]">
             {costume.imageUrl.startsWith('/') || costume.imageUrl.startsWith('http') || costume.imageUrl.includes('generated_images') ? (
-              <img 
+              <img
                 src={costume.imageUrl}
                 alt={costume.name}
                 className="max-w-full max-h-32 object-contain drop-shadow-lg"
                 data-testid={`img-costume-${costume.id}`}
               />
             ) : (
-              <div className="text-6xl" data-testid={`text-costume-${costume.id}`}>
+              <span
+                className="text-8xl leading-none"
+                style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}
+                data-testid={`text-costume-${costume.id}`}
+                role="img"
+                aria-label={costume.name}
+              >
                 {costume.imageUrl}
-              </div>
+              </span>
             )}
           </div>
         </CardContent>
