@@ -24,7 +24,8 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  let connectionString = process.env.DATABASE_URL;
+  // Use UNPOOLED connection (port 5432) which has better SSL support than pooler
+  let connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
