@@ -24,15 +24,14 @@ const USERNAME = 'laurenj3250';
 // ============================================================================
 
 async function queryDb(sql: string, params: any[] = []) {
-  const connectionString = process.env.DATABASE_URL;
+  let connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('DATABASE_URL not configured');
   }
 
-  // For Vercel serverless: Use Supabase's transaction pooler (port 6543)
-  // The transaction pooler is designed for serverless and handles connection lifecycle
-  // Do NOT convert to port 5432 - that's for persistent connections only
+  // Remove any sslmode parameter that might conflict
+  connectionString = connectionString.replace(/[?&]sslmode=[^&]+/, '');
 
   const isLocalhost = connectionString.includes('localhost') ||
                       connectionString.includes('127.0.0.1');
@@ -40,11 +39,12 @@ async function queryDb(sql: string, params: any[] = []) {
   // Use a single client instead of a pool for serverless
   const { Client } = pkg;
 
-  // Always configure SSL properly for Supabase
+  // Force SSL settings that work with Supabase
   const client = new Client({
     connectionString,
     ssl: isLocalhost ? false : {
       rejectUnauthorized: false,
+      checkServerIdentity: () => undefined,
     }
   });
 
