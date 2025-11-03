@@ -3,6 +3,7 @@ import { HabitToggleRow } from "@/components/HabitToggleRow";
 import { VirtualPet } from "@/components/VirtualPet";
 import { EmptyState } from "@/components/EmptyState";
 import { FAB } from "@/components/FAB";
+import { AchievementSpotlight } from "@/components/AchievementSpotlight";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -223,6 +224,74 @@ export default function Dashboard() {
   const completedCount = todayHabits.filter(h => h.completed).length;
   const totalCount = todayHabits.length;
 
+  // Calculate achievements for spotlight
+  const achievements = useMemo(() => {
+    const achs = [];
+
+    // Perfect day achievement
+    if (completedCount === totalCount && totalCount > 0) {
+      achs.push({
+        id: "perfect-day",
+        icon: "star" as const,
+        title: "Perfect Day!",
+        description: "All habits completed today",
+        color: "bg-gradient-to-br from-yellow-400 to-orange-500",
+      });
+    }
+
+    // Streak milestones
+    if (currentStreak >= 7) {
+      achs.push({
+        id: "week-streak",
+        icon: "flame" as const,
+        title: `${currentStreak} Day Streak!`,
+        description: "You're on fire! Keep it going!",
+        color: "bg-gradient-to-br from-orange-500 to-red-500",
+      });
+    } else if (currentStreak >= 3) {
+      achs.push({
+        id: "mini-streak",
+        icon: "flame" as const,
+        title: `${currentStreak} Days Strong`,
+        description: "Building momentum!",
+        color: "bg-gradient-to-br from-orange-400 to-orange-600",
+      });
+    }
+
+    // Habit completion milestone
+    const totalCompletions = allHabitLogs.filter(log => log.completed).length;
+    if (totalCompletions >= 100) {
+      achs.push({
+        id: "century",
+        icon: "trophy" as const,
+        title: "Century Club",
+        description: `${totalCompletions} total habit completions!`,
+        color: "bg-gradient-to-br from-purple-500 to-pink-500",
+      });
+    } else if (totalCompletions >= 50) {
+      achs.push({
+        id: "half-century",
+        icon: "target" as const,
+        title: "Halfway Hero",
+        description: `${totalCompletions} completions and counting`,
+        color: "bg-gradient-to-br from-blue-500 to-indigo-500",
+      });
+    }
+
+    // Default encouragement if no achievements yet
+    if (achs.length === 0) {
+      achs.push({
+        id: "getting-started",
+        icon: "star" as const,
+        title: "Let's Get Started!",
+        description: "Complete your first habit today",
+        color: "bg-gradient-to-br from-green-400 to-emerald-500",
+      });
+    }
+
+    return achs;
+  }, [completedCount, totalCount, currentStreak, allHabitLogs]);
+
   const handleToggleHabit = (habitId: number, completed: boolean) => {
     toggleHabitMutation.mutate({ habitId, completed });
   };
@@ -356,6 +425,11 @@ export default function Dashboard() {
               </Badge>
             </div>
           </div>
+        </div>
+
+        {/* Achievement Spotlight */}
+        <div className="mb-6">
+          <AchievementSpotlight achievements={achievements} autoRotate={true} intervalMs={6000} />
         </div>
 
         {/* Main Grid */}
