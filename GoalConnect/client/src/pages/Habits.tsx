@@ -47,6 +47,15 @@ export default function Habits() {
 
   const habitsWithStats = useMemo(() => {
     const today = getToday();
+
+    // Get current week's start (Monday) and end (Sunday)
+    const currentDate = new Date();
+    const dayOfWeek = currentDate.getDay();
+    const diff = currentDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust when day is Sunday
+    const weekStart = new Date(currentDate.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
     return habits.map(habit => {
       const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
       const dates = habitLogs.map(log => log.date);
@@ -54,7 +63,17 @@ export default function Habits() {
       const totalCompletions = habitLogs.length;
       const completedToday = dates.includes(today);
 
-      return { ...habit, streak, totalCompletions, completedDates: dates, completedToday };
+      // Calculate this week's completions
+      const weekCompletions = dates.filter(date => date >= weekStartStr).length;
+
+      return {
+        ...habit,
+        streak,
+        totalCompletions,
+        completedDates: dates,
+        completedToday,
+        weekCompletions
+      };
     });
   }, [habits, allLogs]);
 
@@ -218,6 +237,16 @@ export default function Habits() {
                       {habit.cadence}
                     </Badge>
                   </div>
+                  {habit.targetPerWeek && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">This Week</span>
+                      <span className={`text-sm font-semibold tabular-nums ${
+                        habit.weekCompletions >= habit.targetPerWeek ? 'text-green-600' : ''
+                      }`}>
+                        {habit.weekCompletions}/{habit.targetPerWeek}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Total</span>
                     <span className="text-sm font-semibold tabular-nums">
