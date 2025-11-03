@@ -368,13 +368,18 @@ app.patch('/goals/:id', async (req, res) => {
 
 app.get('/habit-logs', async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, habitId } = req.query;
     let query = 'SELECT * FROM habit_logs WHERE user_id = $1';
     const params: any[] = [USER_ID];
 
     if (date) {
-      query += ` AND date = $2`;
+      query += ` AND date = $${params.length + 1}`;
       params.push(date);
+    }
+
+    if (habitId) {
+      query += ` AND habit_id = $${params.length + 1}`;
+      params.push(habitId);
     }
 
     query += ' ORDER BY date DESC';
