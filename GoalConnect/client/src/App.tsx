@@ -10,6 +10,7 @@ import Habits from "@/pages/Habits";
 import Goals from "@/pages/Goals";
 import TodoList from "@/pages/TodoList";
 import Calendar from "@/pages/Calendar";
+import Planner from "@/pages/Planner";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Settings from "@/pages/Settings";
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/habits" component={Habits} />
         <Route path="/goals" component={Goals} />
         <Route path="/todos" component={TodoList} />
+        <Route path="/planner" component={Planner} />
         <Route path="/calendar" component={Calendar} />
         <Route path="/pet" component={Pet} />
         <Route path="/shop" component={ShopPage} />
