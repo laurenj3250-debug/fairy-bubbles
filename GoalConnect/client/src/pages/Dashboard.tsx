@@ -92,6 +92,11 @@ export default function Dashboard() {
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", today],
+    queryFn: async () => {
+      const res = await fetch(`/api/habit-logs?date=${today}`, { credentials: "include" });
+      if (!res.ok) throw new Error('Failed to fetch logs');
+      return await res.json();
+    },
   });
 
   const toggleHabitMutation = useMutation({
@@ -149,6 +154,7 @@ export default function Dashboard() {
     onSettled: () => {
       // Always refetch after error or success to sync with server
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
       // Also invalidate the "all" query used by CalendarView
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
     },
