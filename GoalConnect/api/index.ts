@@ -236,39 +236,54 @@ app.get('/init-database', async (_req, res) => {
     // Migrate existing tables - Check first, then add (works on ALL PostgreSQL versions)
 
     // Check and add target_per_week column
-    const targetPerWeekExists = await queryDb(`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_name = 'habits' AND column_name = 'target_per_week'
-    `);
-    if (targetPerWeekExists.rows.length === 0) {
-      await queryDb(`ALTER TABLE habits ADD COLUMN target_per_week INTEGER DEFAULT NULL`);
-      console.log('✅ Added target_per_week column');
-    } else {
-      console.log('⏭️  target_per_week column already exists');
+    try {
+      const targetPerWeekExists = await queryDb(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'habits' AND column_name = 'target_per_week'
+      `);
+      if (targetPerWeekExists.rows.length === 0) {
+        await queryDb(`ALTER TABLE habits ADD COLUMN target_per_week INTEGER DEFAULT NULL`);
+        console.log('✅ Added target_per_week column');
+      } else {
+        console.log('⏭️  target_per_week column already exists');
+      }
+    } catch (e: any) {
+      console.error('❌ ERROR adding target_per_week column:', e.message);
+      throw e; // Re-throw to stop execution
     }
 
     // Check and add mood column
-    const moodExists = await queryDb(`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_name = 'habit_logs' AND column_name = 'mood'
-    `);
-    if (moodExists.rows.length === 0) {
-      await queryDb(`ALTER TABLE habit_logs ADD COLUMN mood INTEGER`);
-      console.log('✅ Added mood column');
-    } else {
-      console.log('⏭️  mood column already exists');
+    try {
+      const moodExists = await queryDb(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'habit_logs' AND column_name = 'mood'
+      `);
+      if (moodExists.rows.length === 0) {
+        await queryDb(`ALTER TABLE habit_logs ADD COLUMN mood INTEGER`);
+        console.log('✅ Added mood column');
+      } else {
+        console.log('⏭️  mood column already exists');
+      }
+    } catch (e: any) {
+      console.error('❌ ERROR adding mood column:', e.message);
+      throw e; // Re-throw to stop execution
     }
 
     // Check and add energy_level column
-    const energyExists = await queryDb(`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_name = 'habit_logs' AND column_name = 'energy_level'
-    `);
-    if (energyExists.rows.length === 0) {
-      await queryDb(`ALTER TABLE habit_logs ADD COLUMN energy_level INTEGER`);
-      console.log('✅ Added energy_level column');
-    } else {
-      console.log('⏭️  energy_level column already exists');
+    try {
+      const energyExists = await queryDb(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'habit_logs' AND column_name = 'energy_level'
+      `);
+      if (energyExists.rows.length === 0) {
+        await queryDb(`ALTER TABLE habit_logs ADD COLUMN energy_level INTEGER`);
+        console.log('✅ Added energy_level column');
+      } else {
+        console.log('⏭️  energy_level column already exists');
+      }
+    } catch (e: any) {
+      console.error('❌ ERROR adding energy_level column:', e.message);
+      throw e; // Re-throw to stop execution
     }
 
     // Check and add UNIQUE constraint
