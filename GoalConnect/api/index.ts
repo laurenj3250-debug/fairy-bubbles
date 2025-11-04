@@ -497,6 +497,7 @@ app.patch('/goals/:id', async (req, res) => {
 app.get('/habit-logs', async (req, res) => {
   try {
     const { date, habitId } = req.query;
+    console.log('📥 GET habit-logs:', { date, habitId, userId: USER_ID });
     let query = 'SELECT * FROM habit_logs WHERE user_id = $1';
     const params: any[] = [USER_ID];
 
@@ -513,6 +514,7 @@ app.get('/habit-logs', async (req, res) => {
     query += ' ORDER BY date DESC';
 
     const result = await queryDb(query, params);
+    console.log('📊 Found', result.rows.length, 'habit logs for filters:', { date, habitId });
     res.json(result.rows);
   } catch (error: any) {
     console.error('Error fetching habit logs:', error);
@@ -577,12 +579,14 @@ app.post('/habit-logs', async (req, res) => {
 app.post('/habit-logs/toggle', async (req, res) => {
   try {
     const { habitId, date } = req.body;
+    console.log('🔄 TOGGLE REQUEST:', { habitId, date, userId: USER_ID });
 
     // Find existing log for this habit on this date
     const existingLog = await queryDb(
       `SELECT * FROM habit_logs WHERE habit_id = $1 AND user_id = $2 AND date = $3`,
       [habitId, USER_ID, date]
     );
+    console.log('🔍 Existing log search result:', existingLog.rows.length, 'rows');
 
     let result;
     let pointsAwarded = false;
@@ -591,11 +595,13 @@ app.post('/habit-logs/toggle', async (req, res) => {
       // Toggle existing log
       const log = existingLog.rows[0];
       const newCompleted = !log.completed;
+      console.log('🔀 TOGGLING existing log:', { logId: log.id, oldCompleted: log.completed, newCompleted });
 
       result = await queryDb(
         `UPDATE habit_logs SET completed = $1 WHERE id = $2 RETURNING *`,
         [newCompleted, log.id]
       );
+      console.log('✅ Updated log:', result.rows[0]);
 
       // Award or deduct points
       if (newCompleted && !log.completed) {
@@ -638,12 +644,14 @@ app.post('/habit-logs/toggle', async (req, res) => {
       }
     } else {
       // Create new log as completed
+      console.log('➕ CREATING new log:', { habitId, userId: USER_ID, date, completed: true });
       result = await queryDb(
         `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
          VALUES ($1, $2, $3, true, null, null, null)
          RETURNING *`,
         [habitId, USER_ID, date]
       );
+      console.log('✅ Created log:', result.rows[0]);
 
       // Award points
       const POINTS_PER_HABIT = 10;
@@ -671,9 +679,10 @@ app.post('/habit-logs/toggle', async (req, res) => {
       pointsAwarded = true;
     }
 
+    console.log('📤 SENDING RESPONSE:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error: any) {
-    console.error('Error toggling habit log:', error);
+    console.error('❌ ERROR toggling habit log:', error);
     res.status(500).json({ error: error.message });
   }
 });
