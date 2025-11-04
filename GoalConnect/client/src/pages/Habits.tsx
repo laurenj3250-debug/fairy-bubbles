@@ -5,13 +5,13 @@ import { FAB } from "@/components/FAB";
 import { StreakPill } from "@/components/StreakPill";
 import { StreakTrail } from "@/components/StreakTrail";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Trash2, Pencil, TrendingUp } from "lucide-react";
+import { CheckCircle, Trash2, Pencil, TrendingUp, Check } from "lucide-react";
 import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
-import { calculateStreak, getToday } from "@/lib/utils";
+import { calculateStreak, getToday, cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
@@ -35,6 +35,20 @@ export default function Habits() {
       return logsArrays.flat();
     },
     enabled: habits.length > 0,
+  });
+
+  const toggleHabitMutation = useMutation({
+    mutationFn: async ({ habitId }: { habitId: number }) => {
+      const today = getToday();
+      return await apiRequest("/api/habit-logs/toggle", "POST", {
+        habitId,
+        date: today,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
+    },
   });
 
   const deleteHabitMutation = useMutation({
@@ -92,6 +106,10 @@ export default function Habits() {
   const handleEditHabit = (habit: Habit) => {
     setEditingHabit(habit);
     setHabitDialogOpen(true);
+  };
+
+  const handleToggleHabit = (habitId: number) => {
+    toggleHabitMutation.mutate({ habitId });
   };
 
   const handleDeleteHabit = (id: number) => {
@@ -227,6 +245,34 @@ export default function Habits() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Today's Status Toggle */}
+                  <button
+                    onClick={() => handleToggleHabit(habit.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all",
+                      habit.completedToday
+                        ? "bg-green-500/10 border-green-500/50"
+                        : "bg-muted/50 border-muted hover:border-primary/30"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all flex-shrink-0",
+                        habit.completedToday
+                          ? "bg-green-500 border-green-500"
+                          : "border-muted-foreground/30"
+                      )}
+                    >
+                      {habit.completedToday && <Check className="w-4 h-4 text-white stroke-[3]" />}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      habit.completedToday ? "text-green-600" : "text-muted-foreground"
+                    )}>
+                      {habit.completedToday ? "Completed today" : "Mark as complete"}
+                    </span>
+                  </button>
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Streak</span>
                     <StreakPill streak={habit.streak} />
