@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
-import MagicalForest from "@/components/MagicalForest";
+import { EnchantedForestBackground } from "@/components/EnchantedForestBackground";
 import Dashboard from "@/pages/Dashboard";
 import Habits from "@/pages/Habits";
 import Goals from "@/pages/Goals";
@@ -42,7 +42,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <MagicalForest />
+        <EnchantedForestBackground />
         <Toaster />
         <AuthGate>
           <Router />

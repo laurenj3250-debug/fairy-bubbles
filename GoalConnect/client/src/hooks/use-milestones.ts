@@ -13,21 +13,21 @@ export interface Milestone {
 }
 
 const STREAK_MILESTONES = [
-  { value: 7, title: "Week Warrior", description: "7 day streak achieved!", icon: "🔥" },
-  { value: 14, title: "Two Week Titan", description: "14 day streak achieved!", icon: "💪" },
-  { value: 30, title: "Month Master", description: "30 day streak achieved!", icon: "🏆" },
-  { value: 60, title: "Two Month Legend", description: "60 day streak achieved!", icon: "⭐" },
-  { value: 90, title: "Quarter Champion", description: "90 day streak achieved!", icon: "👑" },
-  { value: 180, title: "Half Year Hero", description: "180 day streak achieved!", icon: "💎" },
-  { value: 365, title: "Year of Excellence", description: "365 day streak achieved!", icon: "🌟" },
+  { value: 7, title: "Week Warrior", description: "7 day streak achieved!", icon: "flame" },
+  { value: 14, title: "Two Week Titan", description: "14 day streak achieved!", icon: "zap" },
+  { value: 30, title: "Month Master", description: "30 day streak achieved!", icon: "trophy" },
+  { value: 60, title: "Two Month Legend", description: "60 day streak achieved!", icon: "star" },
+  { value: 90, title: "Quarter Champion", description: "90 day streak achieved!", icon: "crown" },
+  { value: 180, title: "Half Year Hero", description: "180 day streak achieved!", icon: "gem" },
+  { value: 365, title: "Year of Excellence", description: "365 day streak achieved!", icon: "sparkles" },
 ];
 
 const COMPLETION_MILESTONES = [
-  { value: 50, title: "Getting Started", description: "50 total completions!", icon: "🎯" },
-  { value: 100, title: "Century Club", description: "100 total completions!", icon: "💯" },
-  { value: 250, title: "Quarter Thousand", description: "250 total completions!", icon: "✨" },
-  { value: 500, title: "Half Grand", description: "500 total completions!", icon: "💎" },
-  { value: 1000, title: "Millennium Master", description: "1000 total completions!", icon: "🏆" },
+  { value: 50, title: "Getting Started", description: "50 total completions!", icon: "target" },
+  { value: 100, title: "Century Club", description: "100 total completions!", icon: "award" },
+  { value: 250, title: "Quarter Thousand", description: "250 total completions!", icon: "sparkles" },
+  { value: 500, title: "Half Grand", description: "500 total completions!", icon: "gem" },
+  { value: 1000, title: "Millennium Master", description: "1000 total completions!", icon: "trophy" },
 ];
 
 export function useMilestones(currentStreak: number, totalCompletions: number) {

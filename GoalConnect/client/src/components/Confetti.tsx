@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Flame, Zap, Trophy, Star, Crown, Gem, Sparkles, Target, Award } from "lucide-react";
+import * as Icons from "lucide-react";
 
 interface ConfettiProps {
   active: boolean;
@@ -78,10 +80,10 @@ interface CelebrationModalProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  icon?: string;
+  iconName?: string;
 }
 
-export function CelebrationModal({ open, onOpenChange, title, description, icon = "🎉" }: CelebrationModalProps) {
+export function CelebrationModal({ open, onOpenChange, title, description, iconName = "sparkles" }: CelebrationModalProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -91,6 +93,9 @@ export function CelebrationModal({ open, onOpenChange, title, description, icon 
   }, [open]);
 
   if (!open) return null;
+
+  // Get the icon component
+  const IconComponent = (Icons as any)[iconName.charAt(0).toUpperCase() + iconName.slice(1)] || Sparkles;
 
   return (
     <>
@@ -104,16 +109,18 @@ export function CelebrationModal({ open, onOpenChange, title, description, icon 
         />
 
         {/* Modal */}
-        <div className="relative z-10 bg-card border-2 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="relative z-10 enchanted-card p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
           <div className="text-center">
-            <div className="text-8xl mb-4 animate-bounce">{icon}</div>
-            <h2 className="text-3xl font-bold mb-3">{title}</h2>
+            <div className="mb-6 inline-block glow-gold animate-bounce">
+              <IconComponent className="w-24 h-24 text-lantern-warm" style={{ filter: 'drop-shadow(0 0 20px var(--lantern-warm))' }} />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 enchanted-title text-enchanted">{title}</h2>
             <p className="text-lg text-muted-foreground mb-6">{description}</p>
             <button
               onClick={() => onOpenChange(false)}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all hover-elevate"
+              className="enchanted-button"
             >
-              Awesome!
+              Wonderful!
             </button>
           </div>
         </div>

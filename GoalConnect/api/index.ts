@@ -583,6 +583,9 @@ app.delete('/habit-logs/:id', async (req, res) => {
 app.delete('/habits/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    // Delete related habit logs first to avoid foreign key constraint
+    await queryDb('DELETE FROM habit_logs WHERE habit_id = $1 AND user_id = $2', [id, USER_ID]);
+    // Then delete the habit
     await queryDb('DELETE FROM habits WHERE id = $1 AND user_id = $2', [id, USER_ID]);
     res.status(204).send();
   } catch (error: any) {
