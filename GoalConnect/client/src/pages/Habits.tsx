@@ -241,9 +241,9 @@ export default function Habits() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">This Week</span>
                       <span className={`text-sm font-semibold tabular-nums ${
-                        habit.weekCompletions >= habit.targetPerWeek ? 'text-green-600' : ''
+                        (habit.weekCompletions ?? 0) >= habit.targetPerWeek ? 'text-green-600' : ''
                       }`}>
-                        {habit.weekCompletions}/{habit.targetPerWeek}
+                        {habit.weekCompletions ?? 0}/{habit.targetPerWeek}
                       </span>
                     </div>
                   )}
