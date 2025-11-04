@@ -95,29 +95,14 @@ export default function Dashboard() {
   });
 
   const toggleHabitMutation = useMutation({
-    mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
-      console.log('🔄 Toggle clicked:', { habitId, completed, today });
-      const existingLog = todayLogs.find(log => log.habitId === habitId);
-      console.log('📝 Existing log:', existingLog);
-
-      if (existingLog) {
-        console.log('✏️ Updating log:', existingLog.id);
-        const result = await apiRequest(`/api/habit-logs/${existingLog.id}`, "PATCH", {
-          completed: !existingLog.completed,
-        });
-        console.log('✅ Update result:', result);
-        return result;
-      } else {
-        console.log('➕ Creating new log');
-        const result = await apiRequest("/api/habit-logs", "POST", {
-          habitId,
-          date: today,
-          completed: true,
-          note: null,
-        });
-        console.log('✅ Create result:', result);
-        return result;
-      }
+    mutationFn: async ({ habitId }: { habitId: number; completed: boolean }) => {
+      console.log('🔄 Toggle clicked:', { habitId, today });
+      const result = await apiRequest("/api/habit-logs/toggle", "POST", {
+        habitId,
+        date: today,
+      });
+      console.log('✅ Toggle result:', result);
+      return result;
     },
     // Optimistic update - update UI immediately before server responds
     onMutate: async ({ habitId, completed }) => {
