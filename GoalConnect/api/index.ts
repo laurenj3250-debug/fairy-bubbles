@@ -233,53 +233,71 @@ app.get('/init-database', async (_req, res) => {
       );
     `);
 
-    // Migrate existing tables to add missing columns
-    await queryDb(`
-      -- Add target_per_week to habits table if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name = 'habits' AND column_name = 'target_per_week'
-        ) THEN
-          ALTER TABLE habits ADD COLUMN target_per_week INTEGER DEFAULT NULL;
-        END IF;
-      END $$;
+    // Migrate existing tables to add missing columns - RUN EACH SEPARATELY
+    try {
+      await queryDb(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'habits' AND column_name = 'target_per_week'
+          ) THEN
+            ALTER TABLE habits ADD COLUMN target_per_week INTEGER DEFAULT NULL;
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.log('target_per_week column already exists or could not be added');
+    }
 
-      -- Add mood to habit_logs table if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name = 'habit_logs' AND column_name = 'mood'
-        ) THEN
-          ALTER TABLE habit_logs ADD COLUMN mood INTEGER;
-        END IF;
-      END $$;
+    try {
+      await queryDb(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'habit_logs' AND column_name = 'mood'
+          ) THEN
+            ALTER TABLE habit_logs ADD COLUMN mood INTEGER;
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.log('mood column already exists or could not be added');
+    }
 
-      -- Add energy_level to habit_logs table if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name = 'habit_logs' AND column_name = 'energy_level'
-        ) THEN
-          ALTER TABLE habit_logs ADD COLUMN energy_level INTEGER;
-        END IF;
-      END $$;
+    try {
+      await queryDb(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'habit_logs' AND column_name = 'energy_level'
+          ) THEN
+            ALTER TABLE habit_logs ADD COLUMN energy_level INTEGER;
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.log('energy_level column already exists or could not be added');
+    }
 
-      -- Add UNIQUE constraint to habit_logs if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint
-          WHERE conname = 'habit_logs_habit_id_user_id_date_key'
-        ) THEN
-          ALTER TABLE habit_logs ADD CONSTRAINT habit_logs_habit_id_user_id_date_key
-          UNIQUE (habit_id, user_id, date);
-        END IF;
-      END $$;
-    `);
+    try {
+      await queryDb(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'habit_logs_habit_id_user_id_date_key'
+          ) THEN
+            ALTER TABLE habit_logs ADD CONSTRAINT habit_logs_habit_id_user_id_date_key
+            UNIQUE (habit_id, user_id, date);
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.log('UNIQUE constraint already exists or could not be added');
+    }
 
     // Insert user
     await queryDb(
