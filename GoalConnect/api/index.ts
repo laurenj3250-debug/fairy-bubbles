@@ -86,6 +86,67 @@ app.post('/auth/logout', (_req, res) => {
 });
 
 // ============================================================================
+// DEBUG ENDPOINT - Shows exact database state
+// ============================================================================
+
+app.get('/debug', async (_req, res) => {
+  try {
+    const habits = await queryDb('SELECT * FROM habits WHERE user_id = $1', [USER_ID]);
+    const habitLogs = await queryDb('SELECT * FROM habit_logs WHERE user_id = $1 ORDER BY date DESC', [USER_ID]);
+    const users = await queryDb('SELECT * FROM users WHERE id = $1', [USER_ID]);
+
+    // Check if tables exist
+    const tablesCheck = await queryDb(`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+
+    // Check if columns exist in habit_logs
+    const habitLogsColumns = await queryDb(`
+      SELECT column_name, data_type FROM information_schema.columns
+      WHERE table_name = 'habit_logs'
+      ORDER BY ordinal_position
+    `);
+
+    // Check if columns exist in habits
+    const habitsColumns = await queryDb(`
+      SELECT column_name, data_type FROM information_schema.columns
+      WHERE table_name = 'habits'
+      ORDER BY ordinal_position
+    `);
+
+    res.json({
+      success: true,
+      environment: {
+        USERNAME,
+        USER_ID,
+        DATABASE_URL_exists: !!process.env.DATABASE_URL,
+      },
+      tables: tablesCheck.rows.map(r => r.table_name),
+      habits: {
+        count: habits.rows.length,
+        columns: habitsColumns.rows,
+        data: habits.rows
+      },
+      habitLogs: {
+        count: habitLogs.rows.length,
+        columns: habitLogsColumns.rows,
+        data: habitLogs.rows.slice(0, 20) // Show latest 20
+      },
+      users: users.rows
+    });
+  } catch (error: any) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
+// ============================================================================
 // DATABASE INITIALIZATION
 // ============================================================================
 
