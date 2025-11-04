@@ -233,37 +233,58 @@ app.get('/init-database', async (_req, res) => {
       );
     `);
 
-    // Migrate existing tables - Use PostgreSQL's IF NOT EXISTS syntax
-    // Add target_per_week column
-    try {
-      await queryDb(`ALTER TABLE habits ADD COLUMN IF NOT EXISTS target_per_week INTEGER DEFAULT NULL`);
+    // Migrate existing tables - Check first, then add (works on ALL PostgreSQL versions)
+
+    // Check and add target_per_week column
+    const targetPerWeekExists = await queryDb(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'habits' AND column_name = 'target_per_week'
+    `);
+    if (targetPerWeekExists.rows.length === 0) {
+      await queryDb(`ALTER TABLE habits ADD COLUMN target_per_week INTEGER DEFAULT NULL`);
       console.log('✅ Added target_per_week column');
-    } catch (e: any) {
-      console.log('⚠️ target_per_week column issue:', e.message);
+    } else {
+      console.log('⏭️  target_per_week column already exists');
     }
 
-    // Add mood column
-    try {
-      await queryDb(`ALTER TABLE habit_logs ADD COLUMN IF NOT EXISTS mood INTEGER`);
+    // Check and add mood column
+    const moodExists = await queryDb(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'habit_logs' AND column_name = 'mood'
+    `);
+    if (moodExists.rows.length === 0) {
+      await queryDb(`ALTER TABLE habit_logs ADD COLUMN mood INTEGER`);
       console.log('✅ Added mood column');
-    } catch (e: any) {
-      console.log('⚠️ mood column issue:', e.message);
+    } else {
+      console.log('⏭️  mood column already exists');
     }
 
-    // Add energy_level column
-    try {
-      await queryDb(`ALTER TABLE habit_logs ADD COLUMN IF NOT EXISTS energy_level INTEGER`);
+    // Check and add energy_level column
+    const energyExists = await queryDb(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'habit_logs' AND column_name = 'energy_level'
+    `);
+    if (energyExists.rows.length === 0) {
+      await queryDb(`ALTER TABLE habit_logs ADD COLUMN energy_level INTEGER`);
       console.log('✅ Added energy_level column');
-    } catch (e: any) {
-      console.log('⚠️ energy_level column issue:', e.message);
+    } else {
+      console.log('⏭️  energy_level column already exists');
     }
 
-    // Add UNIQUE constraint
-    try {
-      await queryDb(`ALTER TABLE habit_logs ADD CONSTRAINT habit_logs_habit_id_user_id_date_key UNIQUE (habit_id, user_id, date)`);
-      console.log('✅ Added UNIQUE constraint');
-    } catch (e: any) {
-      console.log('⚠️ UNIQUE constraint issue:', e.message);
+    // Check and add UNIQUE constraint
+    const constraintExists = await queryDb(`
+      SELECT constraint_name FROM information_schema.table_constraints
+      WHERE table_name = 'habit_logs' AND constraint_name = 'habit_logs_habit_id_user_id_date_key'
+    `);
+    if (constraintExists.rows.length === 0) {
+      try {
+        await queryDb(`ALTER TABLE habit_logs ADD CONSTRAINT habit_logs_habit_id_user_id_date_key UNIQUE (habit_id, user_id, date)`);
+        console.log('✅ Added UNIQUE constraint');
+      } catch (e: any) {
+        console.log('⚠️  UNIQUE constraint issue (may have duplicate data):', e.message);
+      }
+    } else {
+      console.log('⏭️  UNIQUE constraint already exists');
     }
 
     // Insert user
