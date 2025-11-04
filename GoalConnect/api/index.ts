@@ -501,20 +501,18 @@ app.get('/habit-logs', async (req, res) => {
 
 app.post('/habit-logs', async (req, res) => {
   try {
-    const { habitId, date, completed, note, mood, energyLevel } = req.body;
+    const { habitId, date, completed, note } = req.body;
 
     // Use UPSERT to handle duplicate (habit_id, user_id, date) gracefully
     const result = await queryDb(
-      `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO habit_logs (habit_id, user_id, date, completed, note)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (habit_id, user_id, date)
        DO UPDATE SET
          completed = EXCLUDED.completed,
-         note = COALESCE(EXCLUDED.note, habit_logs.note),
-         mood = COALESCE(EXCLUDED.mood, habit_logs.mood),
-         energy_level = COALESCE(EXCLUDED.energy_level, habit_logs.energy_level)
+         note = COALESCE(EXCLUDED.note, habit_logs.note)
        RETURNING *`,
-      [habitId, USER_ID, date, completed !== false, note || null, mood || null, energyLevel || null]
+      [habitId, USER_ID, date, completed !== false, note || null]
     );
 
     // Award points if habit is completed and wasn't already completed
@@ -616,10 +614,10 @@ app.post('/habit-logs/toggle', async (req, res) => {
         pointsAwarded = false;
       }
     } else {
-      // Create new log as completed
+      // Create new log as completed (without optional mood/energy_level columns)
       result = await queryDb(
-        `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
-         VALUES ($1, $2, $3, true, null, null, null)
+        `INSERT INTO habit_logs (habit_id, user_id, date, completed, note)
+         VALUES ($1, $2, $3, true, null)
          RETURNING *`,
         [habitId, USER_ID, date]
       );
@@ -1083,7 +1081,7 @@ app.get('/user-costumes', async (_req, res) => {
       id: row.id,
       userId: row.user_id,
       costumeId: row.costume_id,
-      equipped: row.equipped,
+      equipped: row.is_equipped,
       purchasedAt: row.purchased_at
     })));
   } catch (error: any) {
@@ -1097,7 +1095,7 @@ app.get('/costumes/equipped', async (_req, res) => {
     const result = await queryDb(
       `SELECT c.* FROM costumes c
        JOIN user_costumes uc ON c.id = uc.costume_id
-       WHERE uc.user_id = $1 AND uc.equipped = true`,
+       WHERE uc.user_id = $1 AND uc.is_equipped = true`,
       [USER_ID]
     );
     res.json(result.rows.map(row => ({

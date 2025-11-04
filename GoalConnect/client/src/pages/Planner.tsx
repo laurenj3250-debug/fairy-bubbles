@@ -268,7 +268,7 @@ export default function Planner() {
               <div className="space-y-4">
                 {habitsWithWeekData.map(habit => {
                   const IconComponent = (Icons as any)[habit.icon] || Icons.CheckCircle2;
-                  const targetMet = habit.targetPerWeek ? habit.weekCompletions >= habit.targetPerWeek : false;
+                  const targetMet = habit.targetPerWeek ? (habit.weekCompletions ?? 0) >= habit.targetPerWeek : false;
 
                   return (
                     <div
@@ -290,7 +290,7 @@ export default function Planner() {
                                 "text-sm font-medium",
                                 targetMet ? "text-green-600" : "text-muted-foreground"
                               )}>
-                                {habit.weekCompletions}/{habit.targetPerWeek} completed
+                                {habit.weekCompletions ?? 0}/{habit.targetPerWeek} completed
                                 {targetMet && " ✓"}
                               </p>
                             )}

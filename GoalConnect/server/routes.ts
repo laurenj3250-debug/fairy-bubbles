@@ -223,6 +223,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle habit completion endpoint
+  app.post("/api/habit-logs/toggle", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { habitId, date } = req.body;
+
+      if (!habitId || !date) {
+        return res.status(400).json({ error: "habitId and date are required" });
+      }
+
+      // Find existing log for this habit on this date
+      const existingLogs = await storage.getHabitLogsByDate(userId, date);
+      const existingLog = existingLogs.find(log => log.habitId === habitId);
+
+      let result;
+
+      if (existingLog) {
+        // Toggle existing log
+        const newCompleted = !existingLog.completed;
+        result = await storage.updateHabitLog(existingLog.id, {
+          completed: newCompleted
+        });
+
+        // If uncompleting, deduct points
+        if (!newCompleted && existingLog.completed) {
+          // Deduct the points that were awarded
+          await storage.spendPoints(userId, 10, `Uncompleted habit`);
+        }
+        // If completing, points are awarded by the updateHabitLog logic
+      } else {
+        // Create new log as completed
+        const validated = insertHabitLogSchema.parse({
+          habitId,
+          userId,
+          date,
+          completed: true,
+          note: null
+        });
+        result = await storage.createHabitLog(validated);
+
+        // Award points for completing a habit
+        const habit = await storage.getHabit(habitId);
+        if (habit) {
+          const allLogs = await storage.getAllHabitLogs(userId);
+          const currentStreak = calculateStreak(allLogs);
+          const coins = calculateCoinsEarned(habit, currentStreak);
+
+          await storage.addPoints(
+            userId,
+            coins,
+            "habit_complete",
+            result.id,
+            `Completed "${habit.title}"`
+          );
+        }
+      }
+
+      // Auto-update pet stats
+      const petUpdate = await updatePetFromHabits(userId);
+
+      res.json({
+        ...result,
+        petUpdate: petUpdate ? {
+          leveledUp: petUpdate.leveledUp,
+          evolved: petUpdate.evolved,
+        } : null,
+      });
+    } catch (error: any) {
+      console.error('Error toggling habit log:', error);
+      res.status(500).json({ error: error.message || "Failed to toggle habit log" });
+    }
+  });
+
   app.get("/api/goals", async (req, res) => {
     try {
       const userId = getUserId(req);
