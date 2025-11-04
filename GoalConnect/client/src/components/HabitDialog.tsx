@@ -72,8 +72,13 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
       onOpenChange(false);
       form.reset();
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create habit", variant: "destructive" });
+    onError: (error: any) => {
+      console.error('❌ Error creating habit:', error);
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to create habit", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -90,6 +95,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   });
 
   const onSubmit = (data: InsertHabit) => {
+    console.log('📝 Submitting habit:', data);
     if (isEdit) {
       updateMutation.mutate(data);
     } else {
