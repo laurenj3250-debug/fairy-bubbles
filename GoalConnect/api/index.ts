@@ -227,7 +227,7 @@ app.get('/init-database', async (_req, res) => {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
         costume_id INTEGER NOT NULL REFERENCES costumes(id),
-        equipped BOOLEAN DEFAULT false,
+        is_equipped BOOLEAN NOT NULL DEFAULT false,
         purchased_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
         UNIQUE(user_id, costume_id)
       );
@@ -1104,7 +1104,7 @@ app.get('/user-costumes', async (_req, res) => {
       id: row.id,
       userId: row.user_id,
       costumeId: row.costume_id,
-      equipped: row.equipped,
+      equipped: row.is_equipped,
       purchasedAt: row.purchased_at
     })));
   } catch (error: any) {
@@ -1118,7 +1118,7 @@ app.get('/costumes/equipped', async (_req, res) => {
     const result = await queryDb(
       `SELECT c.* FROM costumes c
        JOIN user_costumes uc ON c.id = uc.costume_id
-       WHERE uc.user_id = $1 AND uc.equipped = true`,
+       WHERE uc.user_id = $1 AND uc.is_equipped = true`,
       [USER_ID]
     );
     res.json(result.rows.map(row => ({

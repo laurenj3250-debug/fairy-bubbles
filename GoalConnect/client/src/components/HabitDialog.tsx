@@ -12,6 +12,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import * as Icons from "lucide-react";
+import { useEffect } from "react";
 
 const iconOptions = [
   { value: "Dumbbell", label: "Dumbbell" },
@@ -101,6 +102,29 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   const selectedColor = form.watch("color");
   const selectedCadence = form.watch("cadence");
   const IconComponent = (Icons as any)[selectedIcon] || Icons.Sparkles;
+
+  // Reset form when dialog opens or habit changes
+  useEffect(() => {
+    if (open) {
+      form.reset(habit ? {
+        userId: habit.userId,
+        title: habit.title,
+        description: habit.description,
+        icon: habit.icon,
+        color: habit.color,
+        cadence: habit.cadence,
+        targetPerWeek: habit.targetPerWeek ?? null,
+      } : {
+        userId: 1,
+        title: "",
+        description: "",
+        icon: "Sparkles",
+        color: "#8B5CF6",
+        cadence: "daily",
+        targetPerWeek: null,
+      });
+    }
+  }, [open, habit, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
