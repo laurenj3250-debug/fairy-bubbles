@@ -51,18 +51,18 @@ export function EnchantedForestBackground() {
         {/* Layer 1: Distant misty trees */}
         <div className="forest-layer layer-distant">
           <svg className="tree-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M10,90 Q15,60 20,50 Q25,40 20,30 Q15,20 20,10 L25,10 Q30,20 25,30 Q20,40 25,50 Q30,60 35,90 Z" fill="rgba(167, 139, 250, 0.15)" />
-            <path d="M40,90 Q45,55 50,45 Q55,35 50,25 Q45,15 50,5 L55,5 Q60,15 55,25 Q50,35 55,45 Q60,55 65,90 Z" fill="rgba(181, 101, 216, 0.15)" />
-            <path d="M70,90 Q75,65 80,55 Q85,45 80,35 Q75,25 80,15 L85,15 Q90,25 85,35 Q80,45 85,55 Q90,65 95,90 Z" fill="rgba(249, 168, 212, 0.15)" />
+            <path d="M10,90 Q15,60 20,50 Q25,40 20,30 Q15,20 20,10 L25,10 Q30,20 25,30 Q20,40 25,50 Q30,60 35,90 Z" fill="rgba(20, 30, 48, 0.3)" />
+            <path d="M40,90 Q45,55 50,45 Q55,35 50,25 Q45,15 50,5 L55,5 Q60,15 55,25 Q50,35 55,45 Q60,55 65,90 Z" fill="rgba(26, 26, 64, 0.3)" />
+            <path d="M70,90 Q75,65 80,55 Q85,45 80,35 Q75,25 80,15 L85,15 Q90,25 85,35 Q80,45 85,55 Q90,65 95,90 Z" fill="rgba(30, 58, 58, 0.3)" />
           </svg>
         </div>
 
         {/* Layer 2: Mid-distance trees */}
         <div className="forest-layer layer-mid">
           <svg className="tree-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M5,90 Q10,65 15,55 Q20,45 15,35 Q10,25 15,15 L20,15 Q25,25 20,35 Q15,45 20,55 Q25,65 30,90 Z" fill="rgba(192, 132, 252, 0.2)" />
-            <path d="M35,90 Q40,60 45,50 Q50,40 45,30 Q40,20 45,10 L50,10 Q55,20 50,30 Q45,40 50,50 Q55,60 60,90 Z" fill="rgba(249, 168, 212, 0.2)" />
-            <path d="M65,90 Q70,70 75,60 Q80,50 75,40 Q70,30 75,20 L80,20 Q85,30 80,40 Q75,50 80,60 Q85,70 90,90 Z" fill="rgba(253, 211, 77, 0.2)" />
+            <path d="M5,90 Q10,65 15,55 Q20,45 15,35 Q10,25 15,15 L20,15 Q25,25 20,35 Q15,45 20,55 Q25,65 30,90 Z" fill="rgba(45, 27, 78, 0.4)" />
+            <path d="M35,90 Q40,60 45,50 Q50,40 45,30 Q40,20 45,10 L50,10 Q55,20 50,30 Q45,40 50,50 Q55,60 60,90 Z" fill="rgba(15, 32, 39, 0.4)" />
+            <path d="M65,90 Q70,70 75,60 Q80,50 75,40 Q70,30 75,20 L80,20 Q85,30 80,40 Q75,50 80,60 Q85,70 90,90 Z" fill="rgba(26, 46, 64, 0.4)" />
           </svg>
         </div>
 
@@ -90,10 +90,11 @@ export function EnchantedForestBackground() {
           pointer-events: none;
           z-index: 0;
           background: linear-gradient(180deg,
-            #7CB9E8 0%,
-            #B565D8 30%,
-            #F9A8D4 60%,
-            #FCD34D 100%
+            #0a0e27 0%,
+            #1a1a40 25%,
+            #2d1b4e 50%,
+            #1e3a3a 75%,
+            #0f2027 100%
           );
         }
 
@@ -124,15 +125,15 @@ export function EnchantedForestBackground() {
           height: 100%;
         }
 
-        /* Hanging magical ribbons */
+        /* Hanging magical ribbons - darker, more mysterious */
         .vine {
           position: absolute;
           top: -50px;
           width: 4px;
           height: 30vh;
           background: linear-gradient(to bottom,
-            rgba(192, 132, 252, 0.5),
-            rgba(249, 168, 212, 0.3),
+            rgba(75, 85, 99, 0.4),
+            rgba(45, 55, 72, 0.3),
             transparent
           );
           border-radius: 2px;
@@ -150,14 +151,14 @@ export function EnchantedForestBackground() {
           75% { transform: translateX(-10px) rotate(-2deg); }
         }
 
-        /* Fireflies */
+        /* Fireflies - eerie blue-green glow */
         .firefly {
           position: absolute;
           width: 3px;
           height: 3px;
           border-radius: 50%;
-          background: #FEF08A;
-          box-shadow: 0 0 10px 2px #FCD34D, 0 0 20px 4px rgba(252, 211, 77, 0.4);
+          background: #7dd3c0;
+          box-shadow: 0 0 10px 2px #5eead4, 0 0 20px 4px rgba(94, 234, 212, 0.3);
           animation: firefly-float 8s ease-in-out infinite;
         }
 
@@ -173,14 +174,14 @@ export function EnchantedForestBackground() {
           }
         }
 
-        /* Fairy dust particles */
+        /* Fairy dust particles - mystical purple */
         .fairy-dust {
           position: absolute;
           width: 2px;
           height: 2px;
           border-radius: 50%;
-          background: rgba(251, 191, 36, 0.8);
-          box-shadow: 0 0 4px 1px rgba(251, 191, 36, 0.5);
+          background: rgba(167, 139, 250, 0.6);
+          box-shadow: 0 0 4px 1px rgba(139, 92, 246, 0.4);
           animation: dust-rise 15s linear infinite;
         }
 
@@ -202,15 +203,15 @@ export function EnchantedForestBackground() {
           }
         }
 
-        /* Falling petals */
+        /* Falling leaves - dark, gothic */
         .falling-leaf {
           position: absolute;
           width: 12px;
           height: 12px;
-          background: linear-gradient(135deg, #F9A8D4 0%, #FDA4AF 100%);
+          background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
           clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
           animation: leaf-fall 20s linear infinite;
-          opacity: 0.7;
+          opacity: 0.5;
         }
 
         @keyframes leaf-fall {
