@@ -127,6 +127,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET habit logs by date (path parameter) - for React Query default queryFn
+  app.get("/api/habit-logs/:date", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { date } = req.params;
+      const logs = await storage.getHabitLogsByDate(userId, date);
+      res.json(logs);
+    } catch (error: any) {
+      console.error('Error fetching habit logs by date:', error);
+      res.status(500).json({ error: error.message || "Failed to fetch habit logs by date" });
+    }
+  });
+
   app.get("/api/habit-logs", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -142,9 +155,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(logs);
       }
       
-      res.status(400).json({ error: "habitId or date parameter required" });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch habit logs" });
+      // Return all logs if no filter specified
+      const allLogs = await storage.getAllHabitLogs(userId);
+      res.json(allLogs);
+    } catch (error: any) {
+      console.error('Error fetching habit logs:', error);
+      res.status(500).json({ error: error.message || "Failed to fetch habit logs" });
     }
   });
 
