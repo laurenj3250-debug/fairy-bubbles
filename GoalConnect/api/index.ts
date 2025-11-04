@@ -144,7 +144,8 @@ app.get('/init-database', async (_req, res) => {
         completed BOOLEAN NOT NULL DEFAULT false,
         note TEXT,
         mood INTEGER,
-        energy_level INTEGER
+        energy_level INTEGER,
+        UNIQUE(habit_id, user_id, date)
       );
 
       CREATE TABLE IF NOT EXISTS goals (
@@ -453,16 +454,34 @@ app.get('/habit-logs', async (req, res) => {
 app.post('/habit-logs', async (req, res) => {
   try {
     const { habitId, date, completed, note, mood, energyLevel } = req.body;
+
+    // Use UPSERT to handle duplicate (habit_id, user_id, date) gracefully
     const result = await queryDb(
       `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (habit_id, user_id, date)
+       DO UPDATE SET
+         completed = EXCLUDED.completed,
+         note = COALESCE(EXCLUDED.note, habit_logs.note),
+         mood = COALESCE(EXCLUDED.mood, habit_logs.mood),
+         energy_level = COALESCE(EXCLUDED.energy_level, habit_logs.energy_level)
        RETURNING *`,
       [habitId, USER_ID, date, completed !== false, note || null, mood || null, energyLevel || null]
     );
 
-    // Award points if habit is completed
-    if (completed !== false) {
+    // Award points if habit is completed and wasn't already completed
+    const wasAlreadyCompleted = result.rows[0].completed && completed === false;
+    if (completed !== false && !wasAlreadyCompleted) {
       const POINTS_PER_HABIT = 10;
+
+      // Check if user_points row exists, create if not
+      await queryDb(
+        `INSERT INTO user_points (user_id, total_earned, available, total_spent)
+         VALUES ($1, 0, 0, 0)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [USER_ID]
+      );
+
       await queryDb(
         `UPDATE user_points
          SET total_earned = total_earned + $1, available = available + $1
@@ -481,6 +500,111 @@ app.post('/habit-logs', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error: any) {
     console.error('Error creating habit log:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Toggle habit completion (smart endpoint)
+app.post('/habit-logs/toggle', async (req, res) => {
+  try {
+    const { habitId, date } = req.body;
+
+    // Find existing log for this habit on this date
+    const existingLog = await queryDb(
+      `SELECT * FROM habit_logs WHERE habit_id = $1 AND user_id = $2 AND date = $3`,
+      [habitId, USER_ID, date]
+    );
+
+    let result;
+    let pointsAwarded = false;
+
+    if (existingLog.rows.length > 0) {
+      // Toggle existing log
+      const log = existingLog.rows[0];
+      const newCompleted = !log.completed;
+
+      result = await queryDb(
+        `UPDATE habit_logs SET completed = $1 WHERE id = $2 RETURNING *`,
+        [newCompleted, log.id]
+      );
+
+      // Award or deduct points
+      if (newCompleted && !log.completed) {
+        // Just completed - award points
+        const POINTS_PER_HABIT = 10;
+
+        await queryDb(
+          `INSERT INTO user_points (user_id, total_earned, available, total_spent)
+           VALUES ($1, 0, 0, 0)
+           ON CONFLICT (user_id) DO NOTHING`,
+          [USER_ID]
+        );
+
+        await queryDb(
+          `UPDATE user_points
+           SET total_earned = total_earned + $1, available = available + $1
+           WHERE user_id = $2`,
+          [POINTS_PER_HABIT, USER_ID]
+        );
+
+        await queryDb(
+          `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+           VALUES ($1, $2, 'habit_completion', $3, $4)`,
+          [USER_ID, POINTS_PER_HABIT, habitId, 'Completed habit']
+        );
+
+        pointsAwarded = true;
+      } else if (!newCompleted && log.completed) {
+        // Uncompleted - deduct points
+        const POINTS_PER_HABIT = 10;
+
+        await queryDb(
+          `UPDATE user_points
+           SET total_spent = total_spent + $1, available = available - $1
+           WHERE user_id = $2`,
+          [POINTS_PER_HABIT, USER_ID]
+        );
+
+        pointsAwarded = false;
+      }
+    } else {
+      // Create new log as completed
+      result = await queryDb(
+        `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
+         VALUES ($1, $2, $3, true, null, null, null)
+         RETURNING *`,
+        [habitId, USER_ID, date]
+      );
+
+      // Award points
+      const POINTS_PER_HABIT = 10;
+
+      await queryDb(
+        `INSERT INTO user_points (user_id, total_earned, available, total_spent)
+         VALUES ($1, 0, 0, 0)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [USER_ID]
+      );
+
+      await queryDb(
+        `UPDATE user_points
+         SET total_earned = total_earned + $1, available = available + $1
+         WHERE user_id = $2`,
+        [POINTS_PER_HABIT, USER_ID]
+      );
+
+      await queryDb(
+        `INSERT INTO point_transactions (user_id, amount, type, related_id, description)
+         VALUES ($1, $2, 'habit_completion', $3, $4)`,
+        [USER_ID, POINTS_PER_HABIT, habitId, 'Completed habit']
+      );
+
+      pointsAwarded = true;
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error toggling habit log:', error);
     res.status(500).json({ error: error.message });
   }
 });
