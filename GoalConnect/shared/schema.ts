@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, varchar, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -29,6 +29,10 @@ export const habitLogs = pgTable("habit_logs", {
   note: text("note"),
   mood: integer("mood"), // 1-5 scale
   energyLevel: integer("energy_level"), // 1-5 scale
+}, (table) => {
+  return {
+    habitUserDateIdx: uniqueIndex("habit_logs_habit_id_user_id_date_key").on(table.habitId, table.userId, table.date),
+  };
 });
 
 export const goals = pgTable("goals", {
