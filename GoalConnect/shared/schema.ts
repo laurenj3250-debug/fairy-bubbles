@@ -27,6 +27,8 @@ export const habitLogs = pgTable("habit_logs", {
   date: varchar("date", { length: 10 }).notNull(),
   completed: boolean("completed").notNull().default(false),
   note: text("note"),
+  mood: integer("mood"), // 1-5 scale
+  energyLevel: integer("energy_level"), // 1-5 scale
 });
 
 export const goals = pgTable("goals", {

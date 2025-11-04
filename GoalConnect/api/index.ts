@@ -142,7 +142,9 @@ app.get('/init-database', async (_req, res) => {
         user_id INTEGER NOT NULL REFERENCES users(id),
         date VARCHAR(10) NOT NULL,
         completed BOOLEAN NOT NULL DEFAULT false,
-        note TEXT
+        note TEXT,
+        mood INTEGER,
+        energy_level INTEGER
       );
 
       CREATE TABLE IF NOT EXISTS goals (
@@ -450,12 +452,12 @@ app.get('/habit-logs', async (req, res) => {
 
 app.post('/habit-logs', async (req, res) => {
   try {
-    const { habitId, date, completed, note } = req.body;
+    const { habitId, date, completed, note, mood, energyLevel } = req.body;
     const result = await queryDb(
-      `INSERT INTO habit_logs (habit_id, user_id, date, completed, note)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO habit_logs (habit_id, user_id, date, completed, note, mood, energy_level)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [habitId, USER_ID, date, completed !== false, note || null]
+      [habitId, USER_ID, date, completed !== false, note || null, mood || null, energyLevel || null]
     );
 
     // Award points if habit is completed
@@ -486,7 +488,7 @@ app.post('/habit-logs', async (req, res) => {
 app.patch('/habit-logs/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { completed, note } = req.body;
+    const { completed, note, mood, energyLevel } = req.body;
 
     // Get the current state before updating
     const currentLog = await queryDb(
@@ -513,6 +515,16 @@ app.patch('/habit-logs/:id', async (req, res) => {
     if (note !== undefined) {
       updates.push(`note = $${paramIndex++}`);
       params.push(note);
+    }
+
+    if (mood !== undefined) {
+      updates.push(`mood = $${paramIndex++}`);
+      params.push(mood);
+    }
+
+    if (energyLevel !== undefined) {
+      updates.push(`energy_level = $${paramIndex++}`);
+      params.push(energyLevel);
     }
 
     if (updates.length === 0) {
