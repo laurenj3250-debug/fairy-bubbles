@@ -65,15 +65,27 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertHabit) => apiRequest("/api/habits", "POST", data),
+    mutationFn: async (data: InsertHabit) => {
+      console.log('📝 Creating habit with data:', data);
+      try {
+        const result = await apiRequest("/api/habits", "POST", data);
+        console.log('✅ Habit created successfully:', result);
+        return result;
+      } catch (err) {
+        console.error('❌ API request failed:', err);
+        throw err;
+      }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
+      console.log('🎉 onSuccess called - invalidating queries');
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
       toast({ title: "Habit created", description: "Your new habit has been added" });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: any) => {
-      console.error('❌ Error creating habit:', error);
+      console.error('❌ Error creating habit (onError):', error);
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to create habit", 
