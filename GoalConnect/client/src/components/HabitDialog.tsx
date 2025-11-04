@@ -211,8 +211,8 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                   <FormItem>
                     <FormLabel>Weekly Target (optional)</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
-                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => field.onChange(value && value !== "" ? parseInt(value) : null)}
+                      value={field.value !== null && field.value !== undefined ? field.value.toString() : ""}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="select-habit-target">
