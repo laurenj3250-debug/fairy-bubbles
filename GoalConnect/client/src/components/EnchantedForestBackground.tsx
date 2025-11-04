@@ -51,18 +51,18 @@ export function EnchantedForestBackground() {
         {/* Layer 1: Distant misty trees */}
         <div className="forest-layer layer-distant">
           <svg className="tree-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M10,90 Q15,60 20,50 Q25,40 20,30 Q15,20 20,10 L25,10 Q30,20 25,30 Q20,40 25,50 Q30,60 35,90 Z" fill="rgba(45, 80, 22, 0.2)" />
-            <path d="M40,90 Q45,55 50,45 Q55,35 50,25 Q45,15 50,5 L55,5 Q60,15 55,25 Q50,35 55,45 Q60,55 65,90 Z" fill="rgba(45, 80, 22, 0.2)" />
-            <path d="M70,90 Q75,65 80,55 Q85,45 80,35 Q75,25 80,15 L85,15 Q90,25 85,35 Q80,45 85,55 Q90,65 95,90 Z" fill="rgba(45, 80, 22, 0.2)" />
+            <path d="M10,90 Q15,60 20,50 Q25,40 20,30 Q15,20 20,10 L25,10 Q30,20 25,30 Q20,40 25,50 Q30,60 35,90 Z" fill="rgba(167, 139, 250, 0.15)" />
+            <path d="M40,90 Q45,55 50,45 Q55,35 50,25 Q45,15 50,5 L55,5 Q60,15 55,25 Q50,35 55,45 Q60,55 65,90 Z" fill="rgba(181, 101, 216, 0.15)" />
+            <path d="M70,90 Q75,65 80,55 Q85,45 80,35 Q75,25 80,15 L85,15 Q90,25 85,35 Q80,45 85,55 Q90,65 95,90 Z" fill="rgba(249, 168, 212, 0.15)" />
           </svg>
         </div>
 
         {/* Layer 2: Mid-distance trees */}
         <div className="forest-layer layer-mid">
           <svg className="tree-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M5,90 Q10,65 15,55 Q20,45 15,35 Q10,25 15,15 L20,15 Q25,25 20,35 Q15,45 20,55 Q25,65 30,90 Z" fill="rgba(45, 80, 22, 0.3)" />
-            <path d="M35,90 Q40,60 45,50 Q50,40 45,30 Q40,20 45,10 L50,10 Q55,20 50,30 Q45,40 50,50 Q55,60 60,90 Z" fill="rgba(45, 80, 22, 0.3)" />
-            <path d="M65,90 Q70,70 75,60 Q80,50 75,40 Q70,30 75,20 L80,20 Q85,30 80,40 Q75,50 80,60 Q85,70 90,90 Z" fill="rgba(45, 80, 22, 0.3)" />
+            <path d="M5,90 Q10,65 15,55 Q20,45 15,35 Q10,25 15,15 L20,15 Q25,25 20,35 Q15,45 20,55 Q25,65 30,90 Z" fill="rgba(192, 132, 252, 0.2)" />
+            <path d="M35,90 Q40,60 45,50 Q50,40 45,30 Q40,20 45,10 L50,10 Q55,20 50,30 Q45,40 50,50 Q55,60 60,90 Z" fill="rgba(249, 168, 212, 0.2)" />
+            <path d="M65,90 Q70,70 75,60 Q80,50 75,40 Q70,30 75,20 L80,20 Q85,30 80,40 Q75,50 80,60 Q85,70 90,90 Z" fill="rgba(253, 211, 77, 0.2)" />
           </svg>
         </div>
 
@@ -90,10 +90,10 @@ export function EnchantedForestBackground() {
           pointer-events: none;
           z-index: 0;
           background: linear-gradient(180deg,
-            #0f172a 0%,
-            #1e293b 20%,
-            #2D5016 60%,
-            #1B4D3E 100%
+            #7CB9E8 0%,
+            #B565D8 30%,
+            #F9A8D4 60%,
+            #FCD34D 100%
           );
         }
 
@@ -124,15 +124,15 @@ export function EnchantedForestBackground() {
           height: 100%;
         }
 
-        /* Hanging vines */
+        /* Hanging magical ribbons */
         .vine {
           position: absolute;
           top: -50px;
           width: 4px;
           height: 30vh;
           background: linear-gradient(to bottom,
-            rgba(74, 124, 89, 0.6),
-            rgba(74, 124, 89, 0.3),
+            rgba(192, 132, 252, 0.5),
+            rgba(249, 168, 212, 0.3),
             transparent
           );
           border-radius: 2px;
@@ -156,8 +156,8 @@ export function EnchantedForestBackground() {
           width: 3px;
           height: 3px;
           border-radius: 50%;
-          background: #A3E635;
-          box-shadow: 0 0 10px 2px #A3E635, 0 0 20px 4px rgba(163, 230, 53, 0.3);
+          background: #FEF08A;
+          box-shadow: 0 0 10px 2px #FCD34D, 0 0 20px 4px rgba(252, 211, 77, 0.4);
           animation: firefly-float 8s ease-in-out infinite;
         }
 
@@ -202,15 +202,15 @@ export function EnchantedForestBackground() {
           }
         }
 
-        /* Falling leaves */
+        /* Falling petals */
         .falling-leaf {
           position: absolute;
           width: 12px;
           height: 12px;
-          background: linear-gradient(135deg, #4A7C59 0%, #2D5016 100%);
+          background: linear-gradient(135deg, #F9A8D4 0%, #FDA4AF 100%);
           clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
           animation: leaf-fall 20s linear infinite;
-          opacity: 0.6;
+          opacity: 0.7;
         }
 
         @keyframes leaf-fall {
@@ -219,10 +219,10 @@ export function EnchantedForestBackground() {
             opacity: 0;
           }
           10% {
-            opacity: 0.6;
+            opacity: 0.7;
           }
           90% {
-            opacity: 0.6;
+            opacity: 0.7;
           }
           100% {
             transform: translateY(110vh) translateX(100px) rotate(720deg);

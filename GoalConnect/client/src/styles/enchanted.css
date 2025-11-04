@@ -8,35 +8,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ===== ENCHANTED FOREST PALETTE ===== */
-  --enchanted-moss: #2D5016;
-  --fairy-green: #4A7C59;
-  --mystic-teal: #1B4D3E;
-  --deep-forest: #0f172a;
-  --twilight-blue: #1e293b;
+  /* ===== ALICE IN WONDERLAND PALETTE ===== */
+  --alice-blue: #7CB9E8;
+  --cheshire-purple: #B565D8;
+  --mad-hatter-orange: #FF9F40;
+  --queen-red: #E63946;
+  --white-rabbit: #F8F9FA;
+  --dreamy-lavender: #D8B5FF;
 
-  /* ===== MAGICAL MUSHROOMS ===== */
-  --toadstool-red: #C73E1D;
-  --fairy-purple: #8B5CF6;
-  --glow-blue: #60A5FA;
-  --mushroom-brown: #8B4513;
+  /* ===== TANGLED MAGIC ===== */
+  --rapunzel-purple: #A78BFA;
+  --lantern-gold: #FCD34D;
+  --sun-glow: #FBBF24;
+  --magical-pink: #F9A8D4;
+  --tower-stone: #94A3B8;
+  --kingdom-blue: #93C5FD;
 
-  /* ===== WONDERLAND ACCENTS ===== */
-  --golden-hour: #F59E0B;
-  --rose-garden: #F472B6;
-  --teacup-white: #F8FAFC;
-  --moonlight: #E0E7FF;
+  /* ===== ENCHANTED MUSHROOMS ===== */
+  --toadstool-red: #EF4444;
+  --fairy-ring-purple: #C084FC;
+  --mushroom-cap: #DC2626;
+  --spore-glow: #E9D5FF;
 
-  /* ===== TANGLED LIGHTS ===== */
-  --lantern-warm: #FBBF24;
-  --firefly-glow: #A3E635;
-  --starlight: #FEF3C7;
+  /* ===== WONDERLAND TEA PARTY ===== */
+  --teacup-gold: #FDE047;
+  --rose-pink: #FDA4AF;
+  --garden-green: #86EFAC;
+  --clockwork-bronze: #D4A574;
 
-  /* ===== MAGICAL EFFECTS ===== */
-  --glow-green: rgba(163, 230, 53, 0.4);
-  --glow-gold: rgba(251, 191, 36, 0.4);
-  --glow-purple: rgba(139, 92, 246, 0.4);
-  --mist: rgba(248, 250, 252, 0.1);
+  /* ===== MAGICAL GLOWS ===== */
+  --firefly-yellow: #FEF08A;
+  --pixie-dust: #E0E7FF;
+  --fairy-sparkle: #FDF4FF;
+  --moonbeam: #DBEAFE;
+
+  /* ===== EFFECT COLORS ===== */
+  --glow-purple: rgba(167, 139, 250, 0.5);
+  --glow-gold: rgba(252, 211, 77, 0.5);
+  --glow-pink: rgba(249, 168, 212, 0.5);
+  --glow-blue: rgba(147, 197, 253, 0.5);
+  --shimmer: rgba(253, 244, 255, 0.2);
 }
 
 /* ===== TYPOGRAPHY ===== */
@@ -64,38 +75,38 @@ body, p, span, div {
 
 /* ===== GRADIENT UTILITIES ===== */
 
-/* Sunset gradient (Tangled sky) */
+/* Tangled sunset gradient */
 .gradient-sunset {
   background: linear-gradient(135deg,
-    #F59E0B 0%,
-    #F472B6 50%,
-    #8B5CF6 100%
+    var(--lantern-gold) 0%,
+    var(--magical-pink) 50%,
+    var(--rapunzel-purple) 100%
   );
 }
 
-/* Forest mist gradient */
+/* Wonderland dream gradient */
 .gradient-mist {
   background: linear-gradient(180deg,
-    rgba(248, 250, 252, 0.05) 0%,
-    rgba(74, 124, 89, 0.1) 50%,
-    rgba(45, 80, 22, 0.15) 100%
+    var(--fairy-sparkle) 0%,
+    var(--pixie-dust) 50%,
+    var(--spore-glow) 100%
   );
 }
 
-/* Moonlight gradient */
+/* Alice's blue gradient */
 .gradient-moonlight {
   background: linear-gradient(135deg,
-    #E0E7FF 0%,
-    #60A5FA 50%,
-    #8B5CF6 100%
+    var(--alice-blue) 0%,
+    var(--kingdom-blue) 50%,
+    var(--rapunzel-purple) 100%
   );
 }
 
 /* Firefly glow gradient */
 .gradient-firefly {
   background: radial-gradient(circle,
-    #A3E635 0%,
-    rgba(163, 230, 53, 0.4) 50%,
+    var(--firefly-yellow) 0%,
+    var(--lantern-gold) 50%,
     transparent 100%
   );
 }
@@ -103,27 +114,27 @@ body, p, span, div {
 /* Mushroom cap gradient */
 .gradient-mushroom {
   background: linear-gradient(135deg,
-    #C73E1D 0%,
-    #8B4513 100%
+    var(--mushroom-cap) 0%,
+    var(--toadstool-red) 100%
   );
 }
 
 /* Lantern glow gradient */
 .gradient-lantern {
   background: radial-gradient(circle,
-    #FBBF24 0%,
-    #F59E0B 50%,
-    rgba(245, 158, 11, 0) 100%
+    var(--sun-glow) 0%,
+    var(--lantern-gold) 50%,
+    transparent 100%
   );
 }
 
 /* ===== MAGICAL GLOW EFFECTS ===== */
 
-.glow-green {
+.glow-purple {
   box-shadow:
-    0 0 10px var(--glow-green),
-    0 0 20px var(--glow-green),
-    0 0 30px var(--glow-green);
+    0 0 10px var(--glow-purple),
+    0 0 20px var(--glow-purple),
+    0 0 30px var(--glow-purple);
 }
 
 .glow-gold {
@@ -133,11 +144,18 @@ body, p, span, div {
     0 0 30px var(--glow-gold);
 }
 
-.glow-purple {
+.glow-pink {
   box-shadow:
-    0 0 10px var(--glow-purple),
-    0 0 20px var(--glow-purple),
-    0 0 30px var(--glow-purple);
+    0 0 10px var(--glow-pink),
+    0 0 20px var(--glow-pink),
+    0 0 30px var(--glow-pink);
+}
+
+.glow-blue {
+  box-shadow:
+    0 0 10px var(--glow-blue),
+    0 0 20px var(--glow-blue),
+    0 0 30px var(--glow-blue);
 }
 
 /* Pulsing glow animation */
@@ -163,37 +181,39 @@ body, p, span, div {
 
 .enchanted-card {
   background: linear-gradient(135deg,
-    rgba(248, 250, 252, 0.05) 0%,
-    rgba(74, 124, 89, 0.08) 100%
+    rgba(253, 244, 255, 0.15) 0%,
+    rgba(224, 231, 255, 0.15) 100%
   );
-  backdrop-filter: blur(12px);
-  border: 2px solid rgba(74, 124, 89, 0.3);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(167, 139, 250, 0.3);
   border-radius: 24px;
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.3),
-    0 0 40px rgba(163, 230, 53, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    0 0 40px var(--glow-purple),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
 
 .enchanted-card:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.4),
-    0 0 60px var(--glow-green),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 8px 30px rgba(139, 92, 246, 0.3),
+    0 0 60px var(--glow-purple),
+    0 0 40px var(--glow-pink),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Playing card aesthetic */
 .wonderland-card {
   background: linear-gradient(135deg,
-    rgba(248, 250, 252, 0.9) 0%,
-    rgba(224, 231, 255, 0.9) 100%
+    rgba(248, 249, 250, 0.95) 0%,
+    rgba(224, 231, 255, 0.95) 100%
   );
-  border: 3px solid var(--fairy-purple);
+  border: 3px solid var(--rapunzel-purple);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.3);
 }
 
 .wonderland-card::before {
@@ -203,16 +223,16 @@ body, p, span, div {
   left: 8px;
   right: 8px;
   bottom: 8px;
-  border: 1px solid var(--fairy-purple);
+  border: 1px solid var(--cheshire-purple);
   border-radius: 12px;
   pointer-events: none;
-  opacity: 0.3;
+  opacity: 0.4;
 }
 
 /* ===== BUTTON ENCHANTMENTS ===== */
 
 .enchanted-button {
-  background: linear-gradient(135deg, var(--fairy-purple) 0%, var(--glow-blue) 100%);
+  background: linear-gradient(135deg, var(--rapunzel-purple) 0%, var(--magical-pink) 100%);
   border: none;
   border-radius: 16px;
   padding: 12px 24px;
@@ -221,8 +241,8 @@ body, p, span, div {
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   box-shadow:
-    0 4px 15px rgba(139, 92, 246, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 4px 15px var(--glow-purple),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -230,25 +250,26 @@ body, p, span, div {
 .enchanted-button:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 6px 25px rgba(139, 92, 246, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 6px 25px var(--glow-purple),
+    0 0 30px var(--glow-pink),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .enchanted-button:active {
   transform: translateY(0);
   box-shadow:
-    0 2px 10px rgba(139, 92, 246, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 2px 10px var(--glow-purple),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* ===== PROGRESS INDICATORS ===== */
 
-/* Mushroom ring progress */
+/* Wonderland progress bar */
 .mushroom-progress {
   position: relative;
   width: 100%;
   height: 8px;
-  background: rgba(45, 80, 22, 0.2);
+  background: var(--pixie-dust);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -256,12 +277,12 @@ body, p, span, div {
 .mushroom-progress-fill {
   height: 100%;
   background: linear-gradient(90deg,
-    #4A7C59 0%,
-    #A3E635 50%,
-    #FBBF24 100%
+    var(--cheshire-purple) 0%,
+    var(--magical-pink) 50%,
+    var(--lantern-gold) 100%
   );
   border-radius: 12px;
-  box-shadow: 0 0 10px var(--glow-green);
+  box-shadow: 0 0 15px var(--glow-purple);
   transition: width 0.5s ease;
 }
 
@@ -271,12 +292,12 @@ body, p, span, div {
   width: 60px;
   height: 80px;
   background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.2) 0%,
-    rgba(245, 158, 11, 0.4) 100%
+    rgba(252, 211, 77, 0.3) 0%,
+    rgba(251, 191, 36, 0.5) 100%
   );
   border-radius: 8px 8px 20px 20px;
-  border: 2px solid var(--lantern-warm);
-  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  border: 2px solid var(--lantern-gold);
+  box-shadow: 0 0 20px var(--glow-gold);
 }
 
 .lantern-glow {
@@ -286,7 +307,7 @@ body, p, span, div {
   transform: translateX(-50%);
   width: 30px;
   height: 30px;
-  background: radial-gradient(circle, #FBBF24 0%, transparent 70%);
+  background: radial-gradient(circle, var(--sun-glow) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -374,18 +395,19 @@ body, p, span, div {
 /* ===== UTILITY CLASSES ===== */
 
 .text-enchanted {
-  background: linear-gradient(135deg, var(--fairy-purple), var(--glow-blue), var(--firefly-glow));
+  background: linear-gradient(135deg, var(--cheshire-purple), var(--magical-pink), var(--lantern-gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .border-enchanted {
-  border-image: linear-gradient(135deg, var(--fairy-purple), var(--glow-blue)) 1;
+  border-image: linear-gradient(135deg, var(--rapunzel-purple), var(--alice-blue)) 1;
 }
 
 .shadow-enchanted {
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.3),
-    0 0 40px var(--glow-green);
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    0 0 40px var(--glow-purple),
+    0 0 20px var(--glow-pink);
 }
