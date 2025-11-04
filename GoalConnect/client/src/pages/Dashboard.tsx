@@ -92,11 +92,6 @@ export default function Dashboard() {
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", today],
-    queryFn: async () => {
-      const res = await fetch(`/api/habit-logs?date=${today}`, { credentials: "include" });
-      if (!res.ok) throw new Error('Failed to fetch logs');
-      return await res.json();
-    },
   });
 
   const toggleHabitMutation = useMutation({

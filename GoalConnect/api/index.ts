@@ -473,6 +473,22 @@ app.patch('/goals/:id', async (req, res) => {
 // HABIT LOGS API
 // ============================================================================
 
+// GET habit logs by date (path parameter) - for React Query default queryFn
+app.get('/habit-logs/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const result = await queryDb(
+      'SELECT * FROM habit_logs WHERE user_id = $1 AND date = $2 ORDER BY date DESC',
+      [USER_ID, date]
+    );
+    res.json(result.rows);
+  } catch (error: any) {
+    console.error('Error fetching habit logs by date:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET habit logs with query parameters
 app.get('/habit-logs', async (req, res) => {
   try {
     const { date, habitId } = req.query;
