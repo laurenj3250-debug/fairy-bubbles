@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import LoginPage from "@/pages/Login";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
@@ -52,11 +53,19 @@ function SetupRequired() {
 
 export function AuthGate({ children }: AuthGateProps) {
   const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Show setup message if Supabase is not configured
   if (!isSupabaseConfigured) {
     return <SetupRequired />;
   }
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/login");
+    }
+  }, [loading, user, setLocation]);
 
   if (loading) {
     return (
@@ -67,7 +76,12 @@ export function AuthGate({ children }: AuthGateProps) {
   }
 
   if (!user) {
-    return <LoginPage />;
+    // Show loading while redirecting
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   return <>{children}</>;

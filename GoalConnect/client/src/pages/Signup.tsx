@@ -16,7 +16,14 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement | null>(null);
   const [, setLocation] = useLocation();
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   useEffect(() => {
     nameRef.current?.focus();

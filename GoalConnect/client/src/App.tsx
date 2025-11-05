@@ -16,13 +16,14 @@ import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
+import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { AuthGate } from "@/components/AuthGate";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-function Router() {
+function ProtectedRoutes() {
   return (
-    <>
+    <AuthGate>
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/habits" component={Habits} />
@@ -34,10 +35,10 @@ function Router() {
         <Route path="/pet" component={Pet} />
         <Route path="/shop" component={ShopPage} />
         <Route path="/settings" component={Settings} />
-        <Route path="/signup" component={SignupPage} />
         <Route component={NotFound} />
       </Switch>
-    </>
+      <BottomNav />
+    </AuthGate>
   );
 }
 
@@ -48,10 +49,16 @@ function App() {
         <TooltipProvider>
           <EnchantedForestBackground />
           <Toaster />
-          <AuthGate>
-            <Router />
-            <BottomNav />
-          </AuthGate>
+          <Switch>
+            {/* Public routes - no auth required */}
+            <Route path="/login" component={LoginPage} />
+            <Route path="/signup" component={SignupPage} />
+
+            {/* All other routes require authentication */}
+            <Route path="/:rest*">
+              <ProtectedRoutes />
+            </Route>
+          </Switch>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
