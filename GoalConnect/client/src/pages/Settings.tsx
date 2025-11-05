@@ -9,14 +9,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { UserSettings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "@/hooks/use-session";
-import { logout } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Settings() {
   const { toast } = useToast();
-  const sessionQuery = useSession();
-  const accountName = sessionQuery.data?.user?.name ?? "GoalConnect user";
-  const accountEmail = sessionQuery.data?.user?.email ?? "unknown@goalconnect.local";
+  const { user, signOut } = useAuth();
+  const accountName = user?.user_metadata?.name ?? "GoalConnect user";
+  const accountEmail = user?.email ?? "unknown@goalconnect.local";
 
   const { data: settings, isLoading } = useQuery<UserSettings>({
     queryKey: ["/api/settings"],
@@ -35,10 +34,9 @@ export default function Settings() {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: signOut,
     onSuccess: async () => {
-      queryClient.removeQueries({ predicate: query => query.queryKey[0] !== "session" });
-      await sessionQuery.refetch();
+      queryClient.clear();
       toast({
         title: "Signed out",
         description: "You have been logged out.",

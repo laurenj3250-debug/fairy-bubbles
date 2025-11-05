@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Coins } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserPoints } from "@shared/schema";
-import { useSession } from "@/hooks/use-session";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardHeaderProps {
   userName?: string;
@@ -18,9 +18,9 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
     queryKey: ["/api/points"],
   });
 
-  const { data: session } = useSession();
-  const sessionName = session?.user?.name?.trim();
-  const sessionEmail = session?.user?.email ?? "";
+  const { user } = useAuth();
+  const sessionName = user?.user_metadata?.name?.trim();
+  const sessionEmail = user?.email ?? "";
   const resolvedName = (userName ?? sessionName ?? sessionEmail ?? "User").trim() || "User";
   const avatarInitials = (resolvedName || sessionEmail || "U").slice(0, 2).toUpperCase();
 

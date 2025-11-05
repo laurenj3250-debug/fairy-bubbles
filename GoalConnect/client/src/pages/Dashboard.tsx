@@ -23,7 +23,7 @@ import { HabitLogDialog } from "@/components/HabitLogDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { CalendarView } from "@/components/CalendarView";
-import { useSession } from "@/hooks/use-session";
+import { useAuth } from "@/contexts/AuthContext";
 
 type TabType = "today" | "calendar" | "todos";
 
@@ -81,9 +81,9 @@ export default function Dashboard() {
   const [habitLogDialogOpen, setHabitLogDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [quickActionOpen, setQuickActionOpen] = useState(false);
-  
-  const { data: session } = useSession();
-  const userName = session?.user?.name?.trim() || session?.user?.email?.split("@")[0] || "User";
+
+  const { user } = useAuth();
+  const userName = user?.user_metadata?.name?.trim() || user?.email?.split("@")[0] || "User";
   const today = getToday();
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
