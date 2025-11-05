@@ -19,7 +19,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
   });
 
   const { user } = useAuth();
-  const sessionName = user?.user_metadata?.name?.trim();
+  const sessionName = user?.name?.trim();
   const sessionEmail = user?.email ?? "";
   const resolvedName = (userName ?? sessionName ?? sessionEmail ?? "User").trim() || "User";
   const avatarInitials = (resolvedName || sessionEmail || "U").slice(0, 2).toUpperCase();

@@ -49,23 +49,15 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const { user, error } = await signUp(email, password, name);
+      const { error } = await signUp(email, password, name);
 
       if (error) {
-        setError(error.message);
+        setError(error);
         return;
       }
 
-      if (user) {
-        // Check if email confirmation is required
-        if (user.identities && user.identities.length === 0) {
-          setSuccess(true);
-          setError("Please check your email to confirm your account before signing in.");
-        } else {
-          // Auto-login successful - redirect to app
-          setLocation("/");
-        }
-      }
+      // Auto-login successful - redirect to app
+      setLocation("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to create account";
       setError(message);

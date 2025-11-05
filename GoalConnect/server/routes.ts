@@ -18,7 +18,7 @@ import {
   calculateWeeklyCompletion,
   calculateCoinsEarned,
 } from "./pet-utils";
-import { requireUser } from "./jwt-auth";
+import { requireUser } from "./simple-auth";
 
 const getUserId = (req: Request) => requireUser(req).id;
 

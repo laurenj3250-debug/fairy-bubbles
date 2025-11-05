@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function Settings() {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
-  const accountName = user?.user_metadata?.name ?? "GoalConnect user";
+  const accountName = user?.name ?? "GoalConnect user";
   const accountEmail = user?.email ?? "unknown@goalconnect.local";
 
   const { data: settings, isLoading } = useQuery<UserSettings>({

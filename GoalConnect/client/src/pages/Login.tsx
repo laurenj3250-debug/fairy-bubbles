@@ -35,7 +35,7 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
 
       if (error) {
-        setError(error.message);
+        setError(error);
         return;
       }
 

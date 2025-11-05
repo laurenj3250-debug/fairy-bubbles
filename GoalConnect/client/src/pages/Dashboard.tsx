@@ -83,7 +83,7 @@ export default function Dashboard() {
   const [quickActionOpen, setQuickActionOpen] = useState(false);
 
   const { user } = useAuth();
-  const userName = user?.user_metadata?.name?.trim() || user?.email?.split("@")[0] || "User";
+  const userName = user?.name?.trim() || user?.email?.split("@")[0] || "User";
   const today = getToday();
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({

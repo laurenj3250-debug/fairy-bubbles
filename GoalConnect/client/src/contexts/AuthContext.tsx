@@ -1,116 +1,122 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session, AuthError } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ user: User | null; error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
-  getAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check session on mount
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    checkSession();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-        },
-      },
-    });
-
-    if (!error && data.user) {
-      // Sync user with backend
-      await syncUserWithBackend(data.user, name);
-    }
-
-    return { user: data.user, error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (!error && data.user) {
-      // Sync user with backend
-      await syncUserWithBackend(data.user, data.user.user_metadata?.name || email.split("@")[0]);
-    }
-
-    return { user: data.user, error };
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const getAccessToken = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  };
-
-  const syncUserWithBackend = async (user: User, name: string) => {
+  async function checkSession() {
     try {
-      const token = await getAccessToken();
-      if (!token) return;
+      const response = await fetch("/api/auth/session", {
+        credentials: "include",
+      });
 
-      await fetch("/api/auth/sync", {
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check session:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const signUp = async (email: string, password: string, name: string) => {
+    try {
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          supabaseUserId: user.id,
-          email: user.email!,
-          name,
-        }),
+        body: JSON.stringify({ email, password, name }),
+        credentials: "include",
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || "Failed to create account" };
+      }
+
+      if (data.user) {
+        setUser(data.user);
+      }
+
+      return {};
     } catch (error) {
-      console.error("Failed to sync user with backend:", error);
+      return { error: error instanceof Error ? error.message : "Failed to create account" };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || "Invalid email or password" };
+      }
+
+      if (data.user) {
+        setUser(data.user);
+      }
+
+      return {};
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to sign in" };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      setUser(null);
+    } catch (error) {
+      console.error("Failed to sign out:", error);
     }
   };
 
   const value = {
     user,
-    session,
     loading,
     signUp,
     signIn,
     signOut,
-    getAccessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

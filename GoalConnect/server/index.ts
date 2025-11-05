@@ -2,7 +2,7 @@ import "./load-env";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { configureJWTAuth } from "./jwt-auth";
+import { configureSimpleAuth } from "./simple-auth";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
@@ -29,7 +29,7 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
-configureJWTAuth(app);
+configureSimpleAuth(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
