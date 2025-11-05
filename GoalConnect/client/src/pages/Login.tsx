@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Link, useLocation } from "wouter";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { login } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface LoginPageProps {
-  onSuccess: () => Promise<void> | void;
-}
-
-export default function LoginPage({ onSuccess }: LoginPageProps) {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emailRef = useRef<HTMLInputElement | null>(null);
+  const [, setLocation] = useLocation();
+  const { signIn } = useAuth();
 
   useEffect(() => {
     emailRef.current?.focus();
@@ -26,8 +25,15 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
-      await onSuccess();
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Success - redirect to app
+      setLocation("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to sign in";
       setError(message);
@@ -43,17 +49,17 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <CardHeader>
           <CardTitle className="text-center text-2xl">Sign in to GoalConnect</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            Enter your username and password to continue
+            Enter your email and password to continue
           </p>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Username or Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                type="text"
-                autoComplete="username"
+                type="email"
+                autoComplete="email"
                 ref={emailRef}
                 value={email}
                 onChange={event => setEmail(event.target.value)}
@@ -79,6 +85,14 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-primary hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

@@ -15,8 +15,10 @@ import Analytics from "@/pages/Analytics";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Settings from "@/pages/Settings";
+import SignupPage from "@/pages/Signup";
 import NotFound from "@/pages/not-found";
 import { AuthGate } from "@/components/AuthGate";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function Router() {
   return (
@@ -32,6 +34,7 @@ function Router() {
         <Route path="/pet" component={Pet} />
         <Route path="/shop" component={ShopPage} />
         <Route path="/settings" component={Settings} />
+        <Route path="/signup" component={SignupPage} />
         <Route component={NotFound} />
       </Switch>
     </>
@@ -41,14 +44,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <EnchantedForestBackground />
-        <Toaster />
-        <AuthGate>
-          <Router />
-          <BottomNav />
-        </AuthGate>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <EnchantedForestBackground />
+          <Toaster />
+          <AuthGate>
+            <Router />
+            <BottomNav />
+          </AuthGate>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

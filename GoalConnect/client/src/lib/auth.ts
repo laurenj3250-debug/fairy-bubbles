@@ -1,53 +1,33 @@
-export interface SessionUser {
+import { supabase } from "./supabase";
+
+export interface LocalUser {
   id: number;
   email: string;
   name: string;
+  supabaseUserId: string;
 }
 
-export interface SessionResponse {
-  authenticated: boolean;
-  user?: SessionUser;
+/**
+ * Get the current JWT access token from Supabase
+ */
+export async function getAccessToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
 }
 
-export async function fetchSession(): Promise<SessionResponse> {
-  const response = await fetch("/api/auth/session", { credentials: "include" });
+/**
+ * Make an authenticated API request with JWT token
+ */
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = await getAccessToken();
 
-  if (!response.ok) {
-    throw new Error("Failed to load session");
+  const headers = new Headers(options.headers);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
-  return await response.json();
-}
-
-export async function login(email: string, password: string): Promise<SessionResponse> {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-    credentials: "include",
+  return fetch(url, {
+    ...options,
+    headers,
   });
-
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = (payload as { error?: string }).error;
-    throw new Error(error || "Invalid email or password");
-  }
-
-  return payload as SessionResponse;
-}
-
-export async function logout(): Promise<void> {
-  const response = await fetch("/api/auth/logout", {
-    method: "POST",
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    const error = (payload as { error?: string }).error;
-    throw new Error(error || "Failed to log out");
-  }
 }

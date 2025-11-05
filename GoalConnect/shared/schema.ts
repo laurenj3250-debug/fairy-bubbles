@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  supabaseUserId: text("supabase_user_id").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -126,6 +127,7 @@ export const todos = pgTable("todos", {
 
 // TypeScript types inferred from tables
 export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Habit = typeof habits.$inferSelect;
 export type HabitLog = typeof habitLogs.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
