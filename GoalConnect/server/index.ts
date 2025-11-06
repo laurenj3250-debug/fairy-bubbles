@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
+import { runMigrations } from "./migrate";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
@@ -62,6 +63,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run database migrations before starting the server
+  if (process.env.DATABASE_URL) {
+    try {
+      await runMigrations();
+    } catch (error) {
+      console.error('[startup] Failed to run migrations:', error);
+      // Continue anyway - the app might still work with existing schema
+    }
+  }
+
   const server = await registerRoutes(app);
 
   // Serve attached assets (costume images, etc.) as static files

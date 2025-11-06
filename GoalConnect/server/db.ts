@@ -23,9 +23,11 @@ export function getDb(): Database {
   }
 
   if (!cachedDb || !pool) {
-    const needsSSL =
-      !/localhost|127\.0\.0\.1/.test(connectionString) &&
-      !connectionString.toLowerCase().includes("sslmode=disable");
+    const isLocalhost = /localhost|127\.0\.0\.1/.test(connectionString);
+    const hasSSLDisabled = connectionString.toLowerCase().includes("sslmode=disable");
+
+    // Railway and most cloud providers require SSL with self-signed certs
+    const needsSSL = !isLocalhost && !hasSSLDisabled;
 
     // Close existing pool if it exists
     if (pool) {
@@ -34,7 +36,12 @@ export function getDb(): Database {
 
     pool = new Pool({
       connectionString,
-      ...(needsSSL ? { ssl: { rejectUnauthorized: false } } : {}),
+      // Railway requires SSL but uses self-signed certificates
+      ssl: needsSSL ? {
+        rejectUnauthorized: false,
+        // Explicitly disable certificate verification for Railway
+        checkServerIdentity: () => undefined,
+      } : false,
       // Serverless-optimized settings
       max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
       idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
