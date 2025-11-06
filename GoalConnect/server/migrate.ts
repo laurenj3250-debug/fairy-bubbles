@@ -11,15 +11,29 @@ export async function runMigrations() {
   try {
     const db = getDb();
 
-    // Check if tables already exist
-    const checkResult = await db.execute(sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_name = 'users'
-      ) as users_exists
-    `);
+    // Add retry logic for Railway's slow startup
+    let retries = 5;
+    let checkResult;
 
-    const tablesExist = checkResult.rows[0]?.users_exists;
+    while (retries > 0) {
+      try {
+        // Check if tables already exist
+        checkResult = await db.execute(sql`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_name = 'users'
+          ) as users_exists
+        `);
+        break; // Success, exit retry loop
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        console.log(`[migrate] Database not ready, retrying... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      }
+    }
+
+    const tablesExist = checkResult?.rows[0]?.users_exists;
 
     if (tablesExist) {
       console.log('[migrate] ✅ Tables already exist, skipping creation');

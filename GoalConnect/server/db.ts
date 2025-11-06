@@ -34,19 +34,24 @@ export function getDb(): Database {
     const hasSSLDisabled = connectionString.toLowerCase().includes("sslmode=disable");
     const needsSSL = !isLocalhost && !hasSSLDisabled;
 
+    // Railway-optimized connection settings
+    const isRailway = connectionString.includes('railway.internal');
+
     pool = new Pool({
       connectionString,
-      // SSL is handled by NODE_TLS_REJECT_UNAUTHORIZED env var set in index.ts
-      // This is necessary for Railway's self-signed certificates
+      // SSL configuration
       ssl: needsSSL ? { rejectUnauthorized: false } : false,
-      // Connection settings
-      max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
-      min: 0, // Minimum connections
-      idleTimeoutMillis: isServerless ? 0 : 30000, // Close idle connections
-      connectionTimeoutMillis: 30000, // 30 seconds to establish connection (Railway can be slow)
-      statement_timeout: 60000, // 60 seconds for queries to complete
-      query_timeout: 60000, // 60 seconds for queries
+      // Connection pool settings - more conservative for Railway
+      max: isServerless ? 1 : (isRailway ? 5 : 10), // Fewer connections for Railway
+      min: 0, // No minimum connections
+      idleTimeoutMillis: 10000, // Close idle connections after 10s
+      connectionTimeoutMillis: 60000, // 60 seconds to connect (Railway can be very slow)
+      statement_timeout: 30000, // 30 seconds for queries
+      query_timeout: 30000, // 30 seconds for queries
       allowExitOnIdle: true, // Allow process to exit when connections are idle
+      // Railway-specific: Keep connections alive
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     });
 
     // Handle pool errors gracefully
