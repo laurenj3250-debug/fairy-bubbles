@@ -112,6 +112,10 @@ async function handleRegister(req: Request, res: Response) {
     };
     req.user = req.session.user;
 
+    console.log('[auth] ✅ User registered successfully:', newUser.email);
+    console.log('[auth] Session ID:', req.sessionID);
+    console.log('[auth] Session user:', req.session.user);
+
     return res.status(201).json({
       authenticated: true,
       user: {
@@ -157,6 +161,10 @@ async function handleLogin(req: Request, res: Response) {
     };
     req.user = req.session.user;
 
+    console.log('[auth] ✅ User logged in successfully:', user.email);
+    console.log('[auth] Session ID:', req.sessionID);
+    console.log('[auth] Session user:', req.session.user);
+
     return res.json({
       authenticated: true,
       user: {
@@ -190,10 +198,16 @@ function handleLogout(req: Request, res: Response) {
  * Get current session
  */
 function handleSession(req: Request, res: Response) {
+  console.log('[auth] Session check - Session ID:', req.sessionID);
+  console.log('[auth] Session check - Session user:', req.session.user);
+  console.log('[auth] Session check - Cookie:', req.headers.cookie);
+
   if (!req.session.user) {
+    console.log('[auth] ❌ No user in session');
     return res.json({ authenticated: false });
   }
 
+  console.log('[auth] ✅ User authenticated:', req.session.user.email);
   return res.json({
     authenticated: true,
     user: req.session.user,

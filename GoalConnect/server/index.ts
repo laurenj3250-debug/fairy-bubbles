@@ -27,6 +27,13 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
+// CRITICAL: Trust proxy for Railway deployment
+// Railway runs the app behind a proxy, and we need to trust it for:
+// - Secure cookies to work correctly
+// - req.ip to be accurate
+// - req.protocol to be accurate (http vs https)
+app.set('trust proxy', 1);
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
