@@ -1,289 +1,217 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertHabitSchema, type InsertHabit, type Habit } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import * as Icons from "lucide-react";
+import type { Habit } from "@shared/schema";
 
 interface HabitDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   habit?: Habit;
 }
 
-const iconOptions = [
-  { value: "Dumbbell", label: "Dumbbell" },
-  { value: "BookOpen", label: "Book" },
-  { value: "Brain", label: "Brain" },
-  { value: "Coffee", label: "Coffee" },
-  { value: "Droplets", label: "Water" },
-  { value: "Moon", label: "Sleep" },
-  { value: "Heart", label: "Heart" },
-  { value: "Music", label: "Music" },
-  { value: "Pencil", label: "Writing" },
-  { value: "Code", label: "Code" },
-  { value: "Sparkles", label: "Sparkles" },
-];
-
-const colorOptions = [
-  "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B", "#EF4444",
-  "#EC4899", "#6366F1", "#14B8A6", "#F97316", "#84CC16"
-];
-
-export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
+export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { toast } = useToast();
-  const isEdit = !!habit;
+  const [title, setTitle] = useState(habit?.title || "");
+  const [description, setDescription] = useState(habit?.description || "");
+  const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
+  const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm<InsertHabit>({
-    resolver: zodResolver(insertHabitSchema),
-    defaultValues: habit || {
-      userId: 1,
-      title: "",
-      description: "",
-      icon: "Sparkles",
-      color: "#8B5CF6",
-      cadence: "daily",
-      targetPerWeek: null,
-    },
-  });
+  if (!open) return null;
 
-  const createMutation = useMutation({
-    mutationFn: (data: InsertHabit) => apiRequest("/api/habits", "POST", data),
-    onSuccess: () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const data = {
+        userId: 1,
+        title,
+        description,
+        icon: "Sparkles",
+        color: "#8B5CF6",
+        cadence,
+        targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
+      };
+
+      if (habit) {
+        await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
+        toast({ title: "Updated!", description: "Habit updated successfully" });
+      } else {
+        await apiRequest("/api/habits", "POST", data);
+        toast({ title: "Created!", description: "Habit created successfully" });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
-      toast({ title: "Habit created!", description: "Your new habit has been added" });
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create habit", variant: "destructive" });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data: InsertHabit) => apiRequest(`/api/habits/${habit?.id}`, "PATCH", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
-      toast({ title: "Habit updated!", description: "Your habit has been updated" });
-      onOpenChange(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update habit", variant: "destructive" });
-    },
-  });
-
-  const onSubmit = (data: InsertHabit) => {
-    if (isEdit) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
+      onClose();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save habit", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const selectedIcon = form.watch("icon");
-  const selectedColor = form.watch("color");
-  const selectedCadence = form.watch("cadence");
-  const IconComponent = (Icons as any)[selectedIcon] || Icons.Sparkles;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Habit" : "Create New Habit"}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Morning Exercise" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          zIndex: 9998,
+        }}
+      />
+
+      {/* Modal */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          padding: "32px",
+          maxWidth: "500px",
+          width: "90%",
+          maxHeight: "90vh",
+          overflow: "auto",
+          zIndex: 9999,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#000" }}>
+          {habit ? "Edit Habit" : "Create New Habit"}
+        </h2>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Morning Exercise"
+              required
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="30 minutes of cardio or strength training"
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g., 30 minutes of cardio"
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+                resize: "vertical",
+              }}
             />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icon</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {iconOptions.map(icon => {
-                          const Icon = (Icons as any)[icon.value];
-                          return (
-                            <SelectItem key={icon.value} value={icon.value}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="w-4 h-4" />
-                                {icon.label}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Cadence
+            </label>
+            <select
+              value={cadence}
+              onChange={(e) => setCadence(e.target.value as "daily" | "weekly")}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
 
-              <FormField
-                control={form.control}
-                name="cadence"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cadence</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {selectedCadence === "weekly" && (
-              <FormField
-                control={form.control}
-                name="targetPerWeek"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Weekly Target</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
-                      value={field.value?.toString() || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select times per week" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">No target</SelectItem>
-                        <SelectItem value="1">1 time per week</SelectItem>
-                        <SelectItem value="2">2 times per week</SelectItem>
-                        <SelectItem value="3">3 times per week</SelectItem>
-                        <SelectItem value="4">4 times per week</SelectItem>
-                        <SelectItem value="5">5 times per week</SelectItem>
-                        <SelectItem value="6">6 times per week</SelectItem>
-                        <SelectItem value="7">7 times per week</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <div className="flex gap-2 flex-wrap">
-                    {colorOptions.map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => field.onChange(color)}
-                        className="w-10 h-10 rounded-lg border-2 transition-all"
-                        style={{
-                          backgroundColor: color,
-                          borderColor: selectedColor === color ? "#fff" : "transparent",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="pt-4 border-t flex items-center gap-3">
-              <div
-                className="flex items-center justify-center w-12 h-12 rounded-lg"
-                style={{ backgroundColor: `${selectedColor}20`, color: selectedColor }}
+          {cadence === "weekly" && (
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+                Times per week
+              </label>
+              <select
+                value={targetPerWeek || ""}
+                onChange={(e) => setTargetPerWeek(e.target.value ? parseInt(e.target.value) : null)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                }}
               >
-                <IconComponent className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Preview</p>
-                <p className="text-xs text-muted-foreground">
-                  {form.watch("title") || "Your habit title"}
-                </p>
-              </div>
+                <option value="">No target</option>
+                <option value="1">1 time per week</option>
+                <option value="2">2 times per week</option>
+                <option value="3">3 times per week</option>
+                <option value="4">4 times per week</option>
+                <option value="5">5 times per week</option>
+                <option value="6">6 times per week</option>
+                <option value="7">7 times per week</option>
+              </select>
             </div>
+          )}
 
-            <div className="flex gap-2 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {isEdit ? "Update" : "Create"} Habit
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: "12px 24px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                background: "white",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "500",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                borderRadius: "8px",
+                background: "#8B5CF6",
+                color: "white",
+                cursor: submitting ? "not-allowed" : "pointer",
+                fontSize: "16px",
+                fontWeight: "500",
+                opacity: submitting ? 0.6 : 1,
+              }}
+            >
+              {submitting ? "Saving..." : habit ? "Update" : "Create"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

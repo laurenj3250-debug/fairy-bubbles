@@ -12,19 +12,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { calculateStreak, getToday, cn } from "@/lib/utils";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
-import { SimpleModal } from "@/components/SimpleModal";
 
 export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
-
-  // Debug logging for dialog state
-  useEffect(() => {
-    console.log('🔴 habitDialogOpen state changed to:', habitDialogOpen);
-  }, [habitDialogOpen]);
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -105,11 +99,8 @@ export default function Habits() {
   }, [habitsWithStats]);
 
   const handleFabClick = () => {
-    console.log('🔵 FAB CLICKED! Opening habit dialog...');
-    console.log('Current habitDialogOpen state:', habitDialogOpen);
     setEditingHabit(undefined);
     setHabitDialogOpen(true);
-    console.log('Set habitDialogOpen to TRUE');
   };
 
   const handleEditHabit = (habit: Habit) => {
@@ -324,33 +315,14 @@ export default function Habits() {
       
       <FAB onClick={handleFabClick} />
 
-      <SimpleModal
+      <HabitDialog
         open={habitDialogOpen}
         onClose={() => {
           setHabitDialogOpen(false);
           setEditingHabit(undefined);
         }}
-        title="Create New Habit"
-      >
-        <div style={{ padding: "20px", textAlign: "center" }}>
-          <p style={{ fontSize: "18px", marginBottom: "20px" }}>
-            IT WORKS! THE MODAL IS SHOWING!
-          </p>
-          <button
-            onClick={() => setHabitDialogOpen(false)}
-            style={{
-              padding: "10px 20px",
-              background: "#8B5CF6",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            Close
-          </button>
-        </div>
-      </SimpleModal>
+        habit={editingHabit}
+      />
     </div>
   );
 }
