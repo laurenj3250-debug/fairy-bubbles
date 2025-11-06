@@ -99,8 +99,11 @@ export default function Habits() {
   }, [habitsWithStats]);
 
   const handleFabClick = () => {
+    console.log('🔵 FAB CLICKED! Opening habit dialog...');
+    console.log('Current habitDialogOpen state:', habitDialogOpen);
     setEditingHabit(undefined);
     setHabitDialogOpen(true);
+    console.log('Set habitDialogOpen to TRUE');
   };
 
   const handleEditHabit = (habit: Habit) => {

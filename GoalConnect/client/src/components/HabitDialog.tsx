@@ -40,6 +40,7 @@ interface HabitDialogProps {
 }
 
 export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
+  console.log('🟢 HabitDialog RENDERED - open:', open, 'habit:', habit);
   const { toast } = useToast();
   const isEdit = !!habit;
 
