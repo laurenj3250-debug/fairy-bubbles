@@ -1,12 +1,14 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { users } from "@shared/schema";
 
 const PgSession = connectPgSimple(session);
+const MemoryStore = createMemoryStore(session);
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "railway-goalconnect-secret-change-in-production";
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -219,29 +221,40 @@ export function requireUser(req: Request): AuthenticatedUser {
  * Configure simple session-based authentication
  */
 export function configureSimpleAuth(app: Express) {
-  console.log("[auth] Configuring simple session-based authentication for Railway");
+  console.log("[auth] Configuring simple session-based authentication");
 
-  // Set up session middleware
-  const db = getDb();
+  // Set up session middleware with appropriate store
+  let sessionConfig: any = {
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: SESSION_MAX_AGE,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    },
+  };
 
-  app.use(
-    session({
-      store: new PgSession({
-        pool: (db as any).pool, // Use the database connection pool
-        tableName: "session", // Table will be created automatically
-        createTableIfMissing: true,
-      }),
-      secret: SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: SESSION_MAX_AGE,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-      },
-    })
-  );
+  // Use PostgreSQL session store if DATABASE_URL is available
+  if (process.env.DATABASE_URL) {
+    console.log("[auth] Using PostgreSQL session store");
+    const db = getDb();
+    sessionConfig.store = new PgSession({
+      pool: (db as any).pool,
+      tableName: "session",
+      createTableIfMissing: true,
+    });
+  } else {
+    // Fall back to in-memory session store for development
+    console.log("[auth] Using in-memory session store (development mode)");
+    // MemoryStore is already imported and created at the top of the file
+    sessionConfig.store = new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
+  }
+
+  app.use(session(sessionConfig));
 
   // Attach user to request if session exists
   app.use((req, _res, next) => {
