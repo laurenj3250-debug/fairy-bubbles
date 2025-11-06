@@ -53,9 +53,14 @@ async function comparePassword(password: string, hash: string): Promise<boolean>
  * Find user by email
  */
 async function findUserByEmail(email: string) {
-  const db = getDb();
-  const [user] = await db.select().from(users).where(eq(users.email, email));
-  return user;
+  try {
+    const db = getDb();
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  } catch (error) {
+    console.error('[auth] Database error in findUserByEmail:', error);
+    throw new Error('Database unavailable');
+  }
 }
 
 /**
@@ -238,13 +243,22 @@ export function configureSimpleAuth(app: Express) {
 
   // Use PostgreSQL session store if DATABASE_URL is available
   if (process.env.DATABASE_URL) {
-    console.log("[auth] Using PostgreSQL session store");
-    const db = getDb();
-    sessionConfig.store = new PgSession({
-      pool: (db as any).pool,
-      tableName: "session",
-      createTableIfMissing: true,
-    });
+    try {
+      console.log("[auth] Attempting PostgreSQL session store");
+      const db = getDb();
+      sessionConfig.store = new PgSession({
+        pool: (db as any).pool,
+        tableName: "session",
+        createTableIfMissing: true,
+      });
+      console.log("[auth] ✅ PostgreSQL session store configured");
+    } catch (error) {
+      console.error("[auth] ⚠️  PostgreSQL session store failed, using memory store:", error instanceof Error ? error.message : error);
+      // Fall back to memory store if PG fails
+      sessionConfig.store = new MemoryStore({
+        checkPeriod: 86400000,
+      });
+    }
   } else {
     // Fall back to in-memory session store for development
     console.log("[auth] Using in-memory session store (development mode)");
