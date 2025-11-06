@@ -322,6 +322,24 @@ export default function Habits() {
       </main>
       
       <FAB onClick={handleFabClick} />
+
+      {/* SIMPLE TEST - Does ANYTHING render? */}
+      {habitDialogOpen && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'red',
+          color: 'white',
+          padding: '20px',
+          zIndex: 99999,
+          fontSize: '24px'
+        }}>
+          TEST - IF YOU SEE THIS, REACT IS WORKING
+        </div>
+      )}
+
       <HabitDialog
         open={habitDialogOpen}
         onOpenChange={(open) => {
