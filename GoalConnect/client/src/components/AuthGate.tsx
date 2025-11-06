@@ -9,11 +9,15 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  console.log("AuthGate render:", { loading, user: user?.email, location });
 
   // Redirect to login if not authenticated
   useEffect(() => {
+    console.log("AuthGate useEffect:", { loading, user: user?.email, willRedirect: !loading && !user });
     if (!loading && !user) {
+      console.log("AuthGate redirecting to /login");
       setLocation("/login");
     }
   }, [loading, user, setLocation]);

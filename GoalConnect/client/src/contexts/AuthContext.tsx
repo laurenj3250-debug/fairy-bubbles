@@ -26,20 +26,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function checkSession() {
+    console.log("checkSession starting...");
     try {
       const response = await fetch("/api/auth/session", {
         credentials: "include",
       });
 
+      console.log("checkSession response:", { ok: response.ok, status: response.status });
+
       if (response.ok) {
         const data = await response.json();
+        console.log("checkSession data:", data);
         if (data.authenticated && data.user) {
           setUser(data.user);
+          console.log("checkSession: user authenticated:", data.user.email);
+        } else {
+          console.log("checkSession: no user authenticated");
         }
+      } else {
+        console.log("checkSession: response not ok");
       }
     } catch (error) {
       console.error("Failed to check session:", error);
     } finally {
+      console.log("checkSession complete, setting loading=false");
       setLoading(false);
     }
   }

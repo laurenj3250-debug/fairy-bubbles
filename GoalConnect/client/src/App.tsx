@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,9 +19,10 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { AuthGate } from "@/components/AuthGate";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 function ProtectedRoutes() {
+  console.log("ProtectedRoutes rendering");
   return (
     <AuthGate>
       <Switch>
@@ -42,12 +43,36 @@ function ProtectedRoutes() {
   );
 }
 
+function DebugInfo() {
+  const [location] = useLocation();
+  const { user, loading } = useAuth();
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      background: "rgba(255, 0, 0, 0.9)",
+      color: "white",
+      padding: "10px",
+      zIndex: 99999,
+      fontSize: "14px",
+      fontFamily: "monospace"
+    }}>
+      Route: {location} | Loading: {loading ? "true" : "false"} | User: {user ? user.email : "null"}
+    </div>
+  );
+}
+
 function App() {
+  console.log("App rendering");
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <EnchantedForestBackground />
+          <DebugInfo />
           <Toaster />
           <Switch>
             {/* Public routes - no auth required */}
