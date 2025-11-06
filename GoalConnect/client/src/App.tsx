@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,72 +18,131 @@ import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
-import { AuthGate } from "@/components/AuthGate";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
-function ProtectedRoutes() {
-  console.log("ProtectedRoutes rendering");
-  return (
-    <AuthGate>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/habits" component={Habits} />
-        <Route path="/goals" component={Goals} />
-        <Route path="/todos" component={TodoList} />
-        <Route path="/planner" component={Planner} />
-        <Route path="/analytics" component={Analytics} />
-        <Route path="/calendar" component={Calendar} />
-        <Route path="/pet" component={Pet} />
-        <Route path="/shop" component={ShopPage} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-      <BottomNav />
-    </AuthGate>
-  );
-}
-
-function DebugInfo() {
-  const [location] = useLocation();
+// Component that requires authentication
+function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10
+      }}>
+        <div style={{
+          width: "32px",
+          height: "32px",
+          border: "4px solid rgba(94, 234, 212, 0.3)",
+          borderTop: "4px solid rgb(94, 234, 212)",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite"
+        }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      background: "rgba(255, 0, 0, 0.9)",
-      color: "white",
-      padding: "10px",
-      zIndex: 99999,
-      fontSize: "14px",
-      fontFamily: "monospace"
-    }}>
-      Route: {location} | Loading: {loading ? "true" : "false"} | User: {user ? user.email : "null"}
-    </div>
+    <Switch>
+      {/* Public routes */}
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
+
+      {/* Protected routes */}
+      <Route path="/">
+        <RequireAuth>
+          <Dashboard />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/habits">
+        <RequireAuth>
+          <Habits />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/goals">
+        <RequireAuth>
+          <Goals />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/todos">
+        <RequireAuth>
+          <TodoList />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/planner">
+        <RequireAuth>
+          <Planner />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/analytics">
+        <RequireAuth>
+          <Analytics />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/calendar">
+        <RequireAuth>
+          <Calendar />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/pet">
+        <RequireAuth>
+          <Pet />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/shop">
+        <RequireAuth>
+          <ShopPage />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/settings">
+        <RequireAuth>
+          <Settings />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
 function App() {
-  console.log("App rendering");
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <EnchantedForestBackground />
-          <DebugInfo />
           <Toaster />
-          <Switch>
-            {/* Public routes - no auth required */}
-            <Route path="/login" component={LoginPage} />
-            <Route path="/signup" component={SignupPage} />
-
-            {/* All other routes require authentication */}
-            <Route path="/:rest*">
-              <ProtectedRoutes />
-            </Route>
-          </Switch>
+          <AppRoutes />
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

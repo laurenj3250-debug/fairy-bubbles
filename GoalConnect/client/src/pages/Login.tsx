@@ -7,25 +7,13 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
-  console.log("LoginPage rendering");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emailRef = useRef<HTMLInputElement | null>(null);
-  const [location, setLocation] = useLocation();
-  const { signIn, user } = useAuth();
-
-  console.log("LoginPage state:", { user: user?.email, location });
-
-  // Redirect if already logged in
-  useEffect(() => {
-    console.log("LoginPage useEffect:", { user: user?.email, willRedirect: !!user });
-    if (user) {
-      console.log("LoginPage redirecting to / (user already logged in)");
-      setLocation("/");
-    }
-  }, [user, setLocation]);
+  const [, setLocation] = useLocation();
+  const { signIn } = useAuth();
 
   useEffect(() => {
     emailRef.current?.focus();
