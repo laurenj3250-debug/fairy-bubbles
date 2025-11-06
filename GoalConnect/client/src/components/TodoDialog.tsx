@@ -1,27 +1,6 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTodoSchema, type InsertTodo } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "lucide-react";
 
 interface TodoDialogProps {
   open: boolean;
@@ -30,160 +9,172 @@ interface TodoDialogProps {
 
 export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
   const { toast } = useToast();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [points, setPoints] = useState(10);
+  const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm({
-    resolver: zodResolver(insertTodoSchema.omit({ userId: true })),
-    defaultValues: {
-      title: "",
-      description: "",
-      points: 10,
-      dueDate: null,
-      completed: false,
-    },
-  });
+  if (!open) return null;
 
-  const createTodoMutation = useMutation({
-    mutationFn: (data: Omit<InsertTodo, "userId">) =>
-      apiRequest("/api/todos", "POST", data),
-    onSuccess: () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      await apiRequest("/api/todos", "POST", {
+        title,
+        description,
+        points,
+        dueDate: null,
+        completed: false,
+      });
+
+      toast({ title: "Created!", description: "Todo created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      toast({
-        title: "Todo created",
-        description: "Your new task has been added",
-      });
-      form.reset();
+      setTitle("");
+      setDescription("");
+      setPoints(10);
       onOpenChange(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create todo",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: Omit<InsertTodo, "userId">) => {
-    createTodoMutation.mutate(data);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to create todo", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="dialog-create-todo">
-        <DialogHeader>
-          <DialogTitle>Create New Todo</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Buy groceries, finish project..."
-                      data-testid="input-todo-title"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={() => onOpenChange(false)}
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          zIndex: 9998,
+        }}
+      />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      value={field.value || ""}
-                      placeholder="Add more details about this task..."
-                      rows={3}
-                      data-testid="input-todo-description"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* Modal */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          padding: "32px",
+          maxWidth: "500px",
+          width: "90%",
+          maxHeight: "90vh",
+          overflow: "auto",
+          zIndex: 9999,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#000" }}>
+          Create New Todo
+        </h2>
 
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date (Optional)</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type="date"
-                        value={
-                          field.value
-                            ? new Date(field.value).toISOString().split("T")[0]
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const date = e.target.value ? new Date(e.target.value) : undefined;
-                          field.onChange(date);
-                        }}
-                        data-testid="input-todo-due-date"
-                      />
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Buy groceries"
+              required
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="points"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Points Reward</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min={1}
-                      max={100}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 10)}
-                      data-testid="input-todo-points"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Description (optional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add more details..."
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+                resize: "vertical",
+              }}
             />
+          </div>
 
-            <div className="flex gap-2 justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel-todo"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createTodoMutation.isPending}
-                data-testid="button-submit-todo"
-              >
-                {createTodoMutation.isPending ? "Creating..." : "Create Todo"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Points Reward
+            </label>
+            <input
+              type="number"
+              value={points}
+              onChange={(e) => setPoints(parseInt(e.target.value) || 10)}
+              min={1}
+              max={100}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              style={{
+                padding: "12px 24px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                background: "white",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "500",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                borderRadius: "8px",
+                background: "#8B5CF6",
+                color: "white",
+                cursor: submitting ? "not-allowed" : "pointer",
+                fontSize: "16px",
+                fontWeight: "500",
+                opacity: submitting ? 0.6 : 1,
+              }}
+            >
+              {submitting ? "Creating..." : "Create Todo"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
