@@ -1,3 +1,12 @@
+// CRITICAL: Set this BEFORE any imports
+// Railway PostgreSQL uses self-signed certificates
+// This must be set before the pg library is loaded
+// We set it unconditionally in production since Railway is our production host
+if (process.env.NODE_ENV === 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.log('[SSL] Disabled TLS verification for production database');
+}
+
 import "./load-env";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";

@@ -2,7 +2,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from "pg";
 const { Pool } = pkg;
 import * as schema from "@shared/schema";
-import * as tls from "tls";
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -24,28 +23,22 @@ export function getDb(): Database {
   }
 
   if (!cachedDb || !pool) {
-    const isLocalhost = /localhost|127\.0\.0\.1/.test(connectionString);
-    const hasSSLDisabled = connectionString.toLowerCase().includes("sslmode=disable");
-
-    // Railway and most cloud providers require SSL with self-signed certs
-    const needsSSL = !isLocalhost && !hasSSLDisabled;
-
     // Close existing pool if it exists
     if (pool) {
       pool.end().catch(() => {});
     }
 
-    // SSL configuration for Railway
-    let sslConfig: any = false;
-    if (needsSSL) {
-      sslConfig = {
-        rejectUnauthorized: false
-      };
-    }
+    // Determine if we need SSL
+    // SSL is required for remote databases but not localhost
+    const isLocalhost = /localhost|127\.0\.0\.1/.test(connectionString);
+    const hasSSLDisabled = connectionString.toLowerCase().includes("sslmode=disable");
+    const needsSSL = !isLocalhost && !hasSSLDisabled;
 
     pool = new Pool({
       connectionString,
-      ssl: sslConfig,
+      // SSL is handled by NODE_TLS_REJECT_UNAUTHORIZED env var set in index.ts
+      // This is necessary for Railway's self-signed certificates
+      ssl: needsSSL ? { rejectUnauthorized: false } : false,
       // Serverless-optimized settings
       max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
       idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
