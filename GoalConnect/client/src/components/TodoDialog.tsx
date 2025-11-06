@@ -51,7 +51,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
           position: "fixed",
           inset: 0,
           backgroundColor: "rgba(0, 0, 0, 0.7)",
-          zIndex: 9998,
+          zIndex: 999998,
         }}
       />
 
@@ -69,7 +69,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
           width: "90%",
           maxHeight: "90vh",
           overflow: "auto",
-          zIndex: 9999,
+          zIndex: 999999,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         }}
         onClick={(e) => e.stopPropagation()}
