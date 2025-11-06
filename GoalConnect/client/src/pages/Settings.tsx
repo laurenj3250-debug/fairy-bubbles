@@ -132,10 +132,6 @@ export default function Settings() {
             >
               {logoutMutation.isPending ? "Signing out…" : "Sign out"}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Manage credentials in Supabase Auth. Ensure <code>APP_USER_EMAIL</code> (and optional name overrides) in your{" "}
-              <code>.env</code> match the Supabase account you want to use.
-            </p>
           </CardContent>
         </Card>
 
