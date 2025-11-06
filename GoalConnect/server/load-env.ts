@@ -61,3 +61,10 @@ export function loadEnv(envPath?: string) {
 }
 
 loadEnv();
+
+// Railway PostgreSQL uses self-signed certificates
+// This is safe because we're only connecting to Railway's trusted database
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway.app')) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.log('[db] Railway detected - allowing self-signed SSL certificates');
+}

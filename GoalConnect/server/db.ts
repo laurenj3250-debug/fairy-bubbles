@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from "pg";
 const { Pool } = pkg;
 import * as schema from "@shared/schema";
+import * as tls from "tls";
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -34,14 +35,17 @@ export function getDb(): Database {
       pool.end().catch(() => {});
     }
 
+    // SSL configuration for Railway
+    let sslConfig: any = false;
+    if (needsSSL) {
+      sslConfig = {
+        rejectUnauthorized: false
+      };
+    }
+
     pool = new Pool({
       connectionString,
-      // Railway requires SSL but uses self-signed certificates
-      ssl: needsSSL ? {
-        rejectUnauthorized: false,
-        // Explicitly disable certificate verification for Railway
-        checkServerIdentity: () => undefined,
-      } : false,
+      ssl: sslConfig,
       // Serverless-optimized settings
       max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
       idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
