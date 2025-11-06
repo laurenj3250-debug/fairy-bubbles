@@ -41,6 +41,9 @@ interface HabitDialogProps {
 
 export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   console.log('🟢 HabitDialog RENDERED - open:', open, 'habit:', habit);
+  console.log('🟢 Dialog component exists?', !!Dialog);
+  console.log('🟢 DialogContent component exists?', !!DialogContent);
+
   const { toast } = useToast();
   const isEdit = !!habit;
 
@@ -120,6 +123,8 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   const selectedColor = form.watch("color");
   const selectedCadence = form.watch("cadence");
   const IconComponent = (Icons as any)[selectedIcon] || Icons.Sparkles;
+
+  console.log('🟢 About to return Dialog JSX, open=', open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
