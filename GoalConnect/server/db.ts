@@ -39,10 +39,13 @@ export function getDb(): Database {
       // SSL is handled by NODE_TLS_REJECT_UNAUTHORIZED env var set in index.ts
       // This is necessary for Railway's self-signed certificates
       ssl: needsSSL ? { rejectUnauthorized: false } : false,
-      // Serverless-optimized settings
+      // Connection settings
       max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
-      idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
-      connectionTimeoutMillis: 10000,
+      min: 0, // Minimum connections
+      idleTimeoutMillis: isServerless ? 0 : 30000, // Close idle connections
+      connectionTimeoutMillis: 30000, // 30 seconds to establish connection (Railway can be slow)
+      statement_timeout: 60000, // 60 seconds for queries to complete
+      query_timeout: 60000, // 60 seconds for queries
       allowExitOnIdle: true, // Allow process to exit when connections are idle
     });
 
