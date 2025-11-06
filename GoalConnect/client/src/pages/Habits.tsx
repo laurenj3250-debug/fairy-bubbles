@@ -15,6 +15,7 @@ import { calculateStreak, getToday, cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
+import { SimpleModal } from "@/components/SimpleModal";
 
 export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
@@ -323,32 +324,33 @@ export default function Habits() {
       
       <FAB onClick={handleFabClick} />
 
-      {/* SIMPLE TEST - Does ANYTHING render? */}
-      {habitDialogOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'red',
-          color: 'white',
-          padding: '20px',
-          zIndex: 99999,
-          fontSize: '24px'
-        }}>
-          TEST - IF YOU SEE THIS, REACT IS WORKING
-        </div>
-      )}
-
-      <HabitDialog
+      <SimpleModal
         open={habitDialogOpen}
-        onOpenChange={(open) => {
-          console.log('🟡 HabitDialog onOpenChange called with:', open);
-          setHabitDialogOpen(open);
-          if (!open) setEditingHabit(undefined);
+        onClose={() => {
+          setHabitDialogOpen(false);
+          setEditingHabit(undefined);
         }}
-        habit={editingHabit}
-      />
+        title="Create New Habit"
+      >
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          <p style={{ fontSize: "18px", marginBottom: "20px" }}>
+            IT WORKS! THE MODAL IS SHOWING!
+          </p>
+          <button
+            onClick={() => setHabitDialogOpen(false)}
+            style={{
+              padding: "10px 20px",
+              background: "#8B5CF6",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </SimpleModal>
     </div>
   );
 }
