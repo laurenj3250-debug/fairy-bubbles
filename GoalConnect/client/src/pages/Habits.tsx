@@ -12,13 +12,18 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { calculateStreak, getToday, cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialog } from "@/components/HabitDialog";
 
 export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
+
+  // Debug logging for dialog state
+  useEffect(() => {
+    console.log('🔴 habitDialogOpen state changed to:', habitDialogOpen);
+  }, [habitDialogOpen]);
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -317,7 +322,6 @@ export default function Habits() {
       </main>
       
       <FAB onClick={handleFabClick} />
-      {console.log('🔴 BEFORE RENDERING HabitDialog, habitDialogOpen=', habitDialogOpen)}
       <HabitDialog
         open={habitDialogOpen}
         onOpenChange={(open) => {
@@ -327,7 +331,6 @@ export default function Habits() {
         }}
         habit={editingHabit}
       />
-      {console.log('🔴 AFTER HabitDialog JSX')}
     </div>
   );
 }
