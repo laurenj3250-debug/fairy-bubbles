@@ -123,16 +123,16 @@ export class MemStorage implements IStorage {
 
     // November 2025 Weekly Habits
     const habits = [
-      { userId: 1, title: "Pimsleur (4 lessons/week)", description: "Complete 4 Pimsleur lessons this week (~1 full lesson + short sessions)", icon: "Languages", color: "#8B5CF6", cadence: "weekly" as const },
-      { userId: 1, title: "Duolingo (5 sessions/week)", description: "Complete 5 Duolingo sessions of at least 10 minutes each", icon: "GraduationCap", color: "#10B981", cadence: "weekly" as const },
-      { userId: 1, title: "Gym (4 sessions/week)", description: "Mon/Tue + pre-shift Wed-Fri workouts", icon: "Dumbbell", color: "#EF4444", cadence: "weekly" as const },
-      { userId: 1, title: "Piano (3 sessions/week)", description: "20-30 minute practice sessions", icon: "Music", color: "#8B5CF6", cadence: "weekly" as const },
-      { userId: 1, title: "Daylight (3 times/week)", description: "≥10 min outside, minimum 2 if busy week", icon: "Sun", color: "#F59E0B", cadence: "weekly" as const },
-      { userId: 1, title: "RemNote Study (1 chapter/week)", description: "Wk 1 = Ch 6 • Wk 2 = Ch 7 + 2-3 papers per week", icon: "BookOpen", color: "#3B82F6", cadence: "weekly" as const },
-      { userId: 1, title: "Create Flashcards (2-3 papers/week)", description: "Convert 2-3 papers to flashcards weekly (finish 10 by Nov 30)", icon: "FileText", color: "#06B6D4", cadence: "weekly" as const },
-      { userId: 1, title: "MRI Video (Wks 2 & 3 only)", description: "Watch 1 MRI education video (Nov 10-23)", icon: "Video", color: "#EC4899", cadence: "weekly" as const },
-      { userId: 1, title: "Outdoor Climbing (1 session/week)", description: "One outdoor climbing session (Week 2 overnight optional)", icon: "Mountain", color: "#059669", cadence: "weekly" as const },
-      { userId: 1, title: "Run (1 time/week)", description: "One run per week on flexible day", icon: "Activity", color: "#F97316", cadence: "weekly" as const },
+      { userId: 1, title: "Pimsleur (4 lessons/week)", description: "Complete 4 Pimsleur lessons this week (~1 full lesson + short sessions)", icon: "Languages", color: "#8B5CF6", cadence: "weekly" as const, targetPerWeek: 4 },
+      { userId: 1, title: "Duolingo (5 sessions/week)", description: "Complete 5 Duolingo sessions of at least 10 minutes each", icon: "GraduationCap", color: "#10B981", cadence: "weekly" as const, targetPerWeek: 5 },
+      { userId: 1, title: "Gym (4 sessions/week)", description: "Mon/Tue + pre-shift Wed-Fri workouts", icon: "Dumbbell", color: "#EF4444", cadence: "weekly" as const, targetPerWeek: 4 },
+      { userId: 1, title: "Piano (3 sessions/week)", description: "20-30 minute practice sessions", icon: "Music", color: "#8B5CF6", cadence: "weekly" as const, targetPerWeek: 3 },
+      { userId: 1, title: "Daylight (3 times/week)", description: "≥10 min outside, minimum 2 if busy week", icon: "Sun", color: "#F59E0B", cadence: "weekly" as const, targetPerWeek: 3 },
+      { userId: 1, title: "RemNote Study (1 chapter/week)", description: "Wk 1 = Ch 6 • Wk 2 = Ch 7 + 2-3 papers per week", icon: "BookOpen", color: "#3B82F6", cadence: "weekly" as const, targetPerWeek: 1 },
+      { userId: 1, title: "Create Flashcards (2-3 papers/week)", description: "Convert 2-3 papers to flashcards weekly (finish 10 by Nov 30)", icon: "FileText", color: "#06B6D4", cadence: "weekly" as const, targetPerWeek: 3 },
+      { userId: 1, title: "MRI Video (Wks 2 & 3 only)", description: "Watch 1 MRI education video (Nov 10-23)", icon: "Video", color: "#EC4899", cadence: "weekly" as const, targetPerWeek: 1 },
+      { userId: 1, title: "Outdoor Climbing (1 session/week)", description: "One outdoor climbing session (Week 2 overnight optional)", icon: "Mountain", color: "#059669", cadence: "weekly" as const, targetPerWeek: 1 },
+      { userId: 1, title: "Run (1 time/week)", description: "One run per week on flexible day", icon: "Activity", color: "#F97316", cadence: "weekly" as const, targetPerWeek: 1 },
     ];
 
     habits.forEach(h => this.createHabit(h));
@@ -213,6 +213,7 @@ export class MemStorage implements IStorage {
       icon: habit.icon,
       color: habit.color,
       cadence: habit.cadence as Habit['cadence'],
+      targetPerWeek: habit.targetPerWeek ?? null,
     };
     this.habits.set(id, newHabit);
     return newHabit;
@@ -227,6 +228,7 @@ export class MemStorage implements IStorage {
       ...habit,
       description: habit.description ?? existing.description,
       cadence: (habit.cadence ?? existing.cadence) as Habit['cadence'],
+      targetPerWeek: habit.targetPerWeek !== undefined ? habit.targetPerWeek : existing.targetPerWeek,
     };
     this.habits.set(id, updated);
     return updated;

@@ -13,12 +13,14 @@ export async function runMigrations() {
 
     // STEP 1: Drop all existing tables (clean slate - no more old Supabase data)
     console.log('[migrate] Dropping old tables...');
+    await db.execute(sql`DROP TABLE IF EXISTS point_transactions CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS user_costumes CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS costumes CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS user_points CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS user_settings CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS virtual_pets CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS todos CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS goal_updates CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS goals CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS habit_logs CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS habits CASCADE`);
@@ -71,10 +73,14 @@ export async function runMigrations() {
         id SERIAL PRIMARY KEY,
         habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        completed_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        notes TEXT
+        date VARCHAR(10) NOT NULL,
+        completed BOOLEAN NOT NULL DEFAULT false,
+        note TEXT,
+        mood INTEGER,
+        energy_level INTEGER
       )
     `);
+    await db.execute(sql`CREATE UNIQUE INDEX habit_logs_habit_id_user_id_date_key ON habit_logs(habit_id, user_id, date)`);
 
     // Goals table
     await db.execute(sql`
@@ -82,11 +88,24 @@ export async function runMigrations() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         title TEXT NOT NULL,
-        description TEXT,
-        deadline TIMESTAMP,
-        status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'abandoned')),
-        progress INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        description TEXT NOT NULL DEFAULT '',
+        target_value INTEGER NOT NULL,
+        current_value INTEGER NOT NULL DEFAULT 0,
+        unit TEXT NOT NULL,
+        deadline VARCHAR(10) NOT NULL,
+        category TEXT NOT NULL
+      )
+    `);
+
+    // Goal updates table
+    await db.execute(sql`
+      CREATE TABLE goal_updates (
+        id SERIAL PRIMARY KEY,
+        goal_id INTEGER NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date VARCHAR(10) NOT NULL,
+        value INTEGER NOT NULL,
+        note TEXT
       )
     `);
 
@@ -96,10 +115,11 @@ export async function runMigrations() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         title TEXT NOT NULL,
-        description TEXT,
-        completed BOOLEAN NOT NULL DEFAULT FALSE,
-        priority VARCHAR(10) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
-        due_date TIMESTAMP,
+        description TEXT NOT NULL DEFAULT '',
+        due_date VARCHAR(10),
+        completed BOOLEAN NOT NULL DEFAULT false,
+        completed_at TIMESTAMP,
+        points INTEGER NOT NULL DEFAULT 10,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
@@ -109,14 +129,15 @@ export async function runMigrations() {
       CREATE TABLE virtual_pets (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-        name TEXT NOT NULL DEFAULT 'Gremlin',
+        name TEXT NOT NULL DEFAULT 'Forest Friend',
+        species VARCHAR(50) NOT NULL DEFAULT 'Gremlin',
         happiness INTEGER NOT NULL DEFAULT 50 CHECK (happiness >= 0 AND happiness <= 100),
-        health INTEGER NOT NULL DEFAULT 50 CHECK (health >= 0 AND happiness <= 100),
-        hunger INTEGER NOT NULL DEFAULT 50 CHECK (hunger >= 0 AND hunger <= 100),
+        health INTEGER NOT NULL DEFAULT 100 CHECK (health >= 0 AND health <= 100),
         level INTEGER NOT NULL DEFAULT 1,
         experience INTEGER NOT NULL DEFAULT 0,
+        evolution VARCHAR(20) NOT NULL DEFAULT 'seed' CHECK (evolution IN ('seed', 'sprout', 'sapling', 'tree', 'ancient')),
+        current_costume_id INTEGER,
         last_fed TIMESTAMP,
-        last_played TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
@@ -124,33 +145,45 @@ export async function runMigrations() {
     // User settings table
     await db.execute(sql`
       CREATE TABLE user_settings (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-        theme VARCHAR(10) DEFAULT 'light' CHECK (theme IN ('light', 'dark')),
-        notifications_enabled BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        dark_mode BOOLEAN NOT NULL DEFAULT true,
+        notifications BOOLEAN NOT NULL DEFAULT true
       )
     `);
 
     // User points table
     await db.execute(sql`
       CREATE TABLE user_points (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        total_earned INTEGER NOT NULL DEFAULT 0,
+        total_spent INTEGER NOT NULL DEFAULT 0,
+        available INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+
+    // Point transactions table
+    await db.execute(sql`
+      CREATE TABLE point_transactions (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-        total_points INTEGER NOT NULL DEFAULT 0,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        amount INTEGER NOT NULL,
+        type VARCHAR(30) NOT NULL CHECK (type IN ('habit_complete', 'goal_progress', 'costume_purchase', 'daily_login', 'todo_complete')),
+        related_id INTEGER,
+        description TEXT NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
 
-    // Costumes table
+    // Costumes table (must be created before virtual_pets foreign key)
     await db.execute(sql`
       CREATE TABLE costumes (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
-        description TEXT,
-        cost INTEGER NOT NULL DEFAULT 0,
-        image_url TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        description TEXT NOT NULL DEFAULT '',
+        category VARCHAR(20) NOT NULL CHECK (category IN ('hat', 'outfit', 'accessory', 'background')),
+        price INTEGER NOT NULL,
+        image_url TEXT NOT NULL,
+        rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary'))
       )
     `);
 
@@ -161,8 +194,16 @@ export async function runMigrations() {
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         costume_id INTEGER NOT NULL REFERENCES costumes(id) ON DELETE CASCADE,
         purchased_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        is_equipped BOOLEAN NOT NULL DEFAULT false,
         UNIQUE(user_id, costume_id)
       )
+    `);
+
+    // Now add the foreign key constraint for virtual_pets.current_costume_id
+    await db.execute(sql`
+      ALTER TABLE virtual_pets
+      ADD CONSTRAINT fk_virtual_pets_costume
+      FOREIGN KEY (current_costume_id) REFERENCES costumes(id)
     `);
 
     // Create indexes
@@ -170,8 +211,10 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_habit_logs_habit_id ON habit_logs(habit_id)`);
     await db.execute(sql`CREATE INDEX idx_habit_logs_user_id ON habit_logs(user_id)`);
     await db.execute(sql`CREATE INDEX idx_goals_user_id ON goals(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_goal_updates_goal_id ON goal_updates(goal_id)`);
     await db.execute(sql`CREATE INDEX idx_todos_user_id ON todos(user_id)`);
     await db.execute(sql`CREATE INDEX idx_user_costumes_user_id ON user_costumes(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_point_transactions_user_id ON point_transactions(user_id)`);
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');
