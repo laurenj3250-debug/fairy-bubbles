@@ -635,8 +635,39 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use database storage when DATABASE_URL is configured; otherwise fall back to the in-memory store
-// so the app works out of the box without Neon.
-const storageImplementation: IStorage = process.env.DATABASE_URL ? new DbStorage() : new MemStorage();
+// Smart storage initialization: try database first, fall back to memory if connection fails
+let storageImplementation: IStorage;
 
-export const storage = storageImplementation;
+async function initializeStorage(): Promise<IStorage> {
+  if (process.env.DATABASE_URL) {
+    try {
+      // Test the database connection
+      const testStorage = new DbStorage();
+      // Try a simple query to verify connection works
+      await testStorage.getUserSettings(999999); // Query that should return nothing but tests connection
+      console.log('[storage] ✅ Database connection successful, using DbStorage');
+      return testStorage;
+    } catch (error) {
+      console.error('[storage] ⚠️  Database connection failed, falling back to MemStorage:', error instanceof Error ? error.message : error);
+      return new MemStorage();
+    }
+  } else {
+    console.log('[storage] ℹ️  No DATABASE_URL, using MemStorage');
+    return new MemStorage();
+  }
+}
+
+// Initialize storage with connection testing
+storageImplementation = new MemStorage(); // Default fallback
+initializeStorage().then(storage => {
+  storageImplementation = storage;
+}).catch(error => {
+  console.error('[storage] Failed to initialize storage, using MemStorage:', error);
+  storageImplementation = new MemStorage();
+});
+
+export const storage = new Proxy({} as IStorage, {
+  get(_target, prop) {
+    return (storageImplementation as any)[prop];
+  }
+});
