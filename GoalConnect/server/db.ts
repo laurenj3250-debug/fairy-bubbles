@@ -41,17 +41,17 @@ export function getDb(): Database {
       connectionString,
       // SSL configuration
       ssl: needsSSL ? { rejectUnauthorized: false } : false,
-      // Connection pool settings - more conservative for Railway
-      max: isServerless ? 1 : (isRailway ? 5 : 10), // Fewer connections for Railway
-      min: 0, // No minimum connections
-      idleTimeoutMillis: 10000, // Close idle connections after 10s
-      connectionTimeoutMillis: 60000, // 60 seconds to connect (Railway can be very slow)
+      // Connection pool settings optimized for Railway
+      max: isServerless ? 1 : (isRailway ? 10 : 10),
+      min: isRailway ? 2 : 0, // Keep 2 connections alive for Railway
+      idleTimeoutMillis: 30000, // Keep idle connections for 30 seconds
+      connectionTimeoutMillis: 10000, // 10 seconds to establish new connection
       statement_timeout: 30000, // 30 seconds for queries
       query_timeout: 30000, // 30 seconds for queries
-      allowExitOnIdle: true, // Allow process to exit when connections are idle
-      // Railway-specific: Keep connections alive
+      allowExitOnIdle: false, // Don't exit while connections exist
+      // Keep connections alive
       keepAlive: true,
-      keepAliveInitialDelayMillis: 10000,
+      keepAliveInitialDelayMillis: 5000,
     });
 
     // Handle pool errors gracefully
