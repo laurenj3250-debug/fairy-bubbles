@@ -5,7 +5,7 @@ import * as path from 'path';
 
 /**
  * Run database migrations on startup for Railway PostgreSQL
- * Creates all tables from the schema file
+ * DROPS all existing tables and recreates them fresh (clean slate)
  */
 export async function runMigrations() {
   console.log('[migrate] Starting Railway database migration...');
@@ -13,7 +13,29 @@ export async function runMigrations() {
   try {
     const db = getDb();
 
-    // Read the initial schema file
+    // STEP 1: Drop all existing tables (clean slate - no more old Supabase data)
+    console.log('[migrate] Dropping old tables...');
+    const dropStatements = [
+      'DROP TABLE IF EXISTS user_costumes CASCADE',
+      'DROP TABLE IF EXISTS costumes CASCADE',
+      'DROP TABLE IF EXISTS user_points CASCADE',
+      'DROP TABLE IF EXISTS user_settings CASCADE',
+      'DROP TABLE IF EXISTS virtual_pets CASCADE',
+      'DROP TABLE IF EXISTS todos CASCADE',
+      'DROP TABLE IF EXISTS goals CASCADE',
+      'DROP TABLE IF EXISTS habit_logs CASCADE',
+      'DROP TABLE IF EXISTS habits CASCADE',
+      'DROP TABLE IF EXISTS session CASCADE',
+      'DROP TABLE IF EXISTS users CASCADE',
+    ];
+
+    for (const statement of dropStatements) {
+      await db.execute(sql.raw(statement));
+    }
+    console.log('[migrate] ✅ Old tables dropped');
+
+    // STEP 2: Create fresh tables from schema file
+    console.log('[migrate] Creating fresh tables...');
     const migrationPath = path.join(process.cwd(), 'migrations', '0000_initial_schema.sql');
 
     if (!fs.existsSync(migrationPath)) {
@@ -32,19 +54,11 @@ export async function runMigrations() {
 
     // Execute each statement
     for (const statement of statements) {
-      try {
-        await db.execute(sql.raw(statement));
-      } catch (error: any) {
-        // Ignore "already exists" errors - table/index might already be there
-        if (!error.message?.includes('already exists') &&
-            !error.message?.includes('duplicate key')) {
-          console.error('[migrate] Failed statement:', statement.substring(0, 100));
-          throw error;
-        }
-      }
+      await db.execute(sql.raw(statement));
     }
 
-    console.log('[migrate] ✅ Database schema created successfully');
+    console.log('[migrate] ✅ Fresh database schema created successfully');
+    console.log('[migrate] ✅ Ready for new user signups');
     return { success: true };
   } catch (error) {
     console.error('[migrate] ❌ Migration failed:', error);
