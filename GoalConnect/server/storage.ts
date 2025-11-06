@@ -635,56 +635,16 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Smart storage initialization: try database first, fall back to memory if connection fails
-let storageImplementation: IStorage;
+// Simple storage selection: Use database if available, otherwise in-memory
+// The pg Pool handles reconnections automatically - no need to test connection upfront
+const storageImplementation: IStorage = process.env.DATABASE_URL
+  ? (() => {
+      console.log('[storage] Using DbStorage (PostgreSQL)');
+      return new DbStorage();
+    })()
+  : (() => {
+      console.log('[storage] Using MemStorage (in-memory)');
+      return new MemStorage();
+    })();
 
-async function initializeStorage(): Promise<IStorage> {
-  if (process.env.DATABASE_URL) {
-    // Retry logic for Railway's slow startup (same as migration)
-    let retries = 10;
-    let lastError: any;
-
-    while (retries > 0) {
-      try {
-        console.log('[storage] Testing database connection...');
-        const testStorage = new DbStorage();
-        // Try a simple query to verify connection works
-        await testStorage.getUserSettings(999999);
-        console.log('[storage] ✅ Database connection successful, using DbStorage');
-        return testStorage;
-      } catch (error) {
-        lastError = error;
-        retries--;
-        if (retries === 0) {
-          console.error('[storage] ⚠️  Database connection failed after all retries, falling back to MemStorage:', error instanceof Error ? error.message : error);
-          return new MemStorage();
-        }
-        console.log(`[storage] Database not ready, retrying... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-      }
-    }
-
-    // Should never reach here
-    console.error('[storage] ⚠️  Unexpected state, falling back to MemStorage');
-    return new MemStorage();
-  } else {
-    console.log('[storage] ℹ️  No DATABASE_URL, using MemStorage');
-    return new MemStorage();
-  }
-}
-
-// Initialize storage with connection testing
-storageImplementation = new MemStorage(); // Default fallback
-initializeStorage().then(storage => {
-  storageImplementation = storage;
-  console.log('[storage] Storage layer initialized and ready');
-}).catch(error => {
-  console.error('[storage] Failed to initialize storage, using MemStorage:', error);
-  storageImplementation = new MemStorage();
-});
-
-export const storage = new Proxy({} as IStorage, {
-  get(_target, prop) {
-    return (storageImplementation as any)[prop];
-  }
-});
+export const storage = storageImplementation;
