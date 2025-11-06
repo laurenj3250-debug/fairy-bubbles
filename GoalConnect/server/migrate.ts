@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 
 /**
  * Run database migrations on startup for Railway PostgreSQL
- * DROPS all existing tables and recreates them fresh (clean slate)
+ * Creates tables if they don't exist (preserves existing data)
  */
 export async function runMigrations() {
   console.log('[migrate] Starting Railway database migration...');
@@ -11,24 +11,22 @@ export async function runMigrations() {
   try {
     const db = getDb();
 
-    // STEP 1: Drop all existing tables (clean slate - no more old Supabase data)
-    console.log('[migrate] Dropping old tables...');
-    await db.execute(sql`DROP TABLE IF EXISTS point_transactions CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS user_costumes CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS costumes CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS user_points CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS user_settings CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS virtual_pets CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS todos CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS goal_updates CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS goals CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS habit_logs CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS habits CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS session CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS users CASCADE`);
-    console.log('[migrate] ✅ Old tables dropped');
+    // Check if tables already exist
+    const checkResult = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_name = 'users'
+      ) as users_exists
+    `);
 
-    // STEP 2: Create ALL tables directly
+    const tablesExist = checkResult.rows[0]?.users_exists;
+
+    if (tablesExist) {
+      console.log('[migrate] ✅ Tables already exist, skipping creation');
+      console.log('[migrate] ℹ️  User data preserved');
+      return { success: true, skipped: true };
+    }
+
     console.log('[migrate] Creating fresh tables...');
 
     // Users table
@@ -218,7 +216,7 @@ export async function runMigrations() {
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');
-    return { success: true };
+    return { success: true, skipped: false };
   } catch (error) {
     console.error('[migrate] ❌ Migration failed:', error);
     throw error;
