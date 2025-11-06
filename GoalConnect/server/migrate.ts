@@ -36,7 +36,23 @@ export async function runMigrations() {
     const tablesExist = checkResult?.rows[0]?.users_exists;
 
     if (tablesExist) {
-      console.log('[migrate] ✅ Tables already exist, skipping creation');
+      console.log('[migrate] ✅ Tables already exist, checking critical tables...');
+
+      // Always ensure session table exists (critical for authentication)
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS session (
+            sid VARCHAR NOT NULL PRIMARY KEY,
+            sess JSON NOT NULL,
+            expire TIMESTAMP(6) NOT NULL
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)`);
+        console.log('[migrate] ✅ Session table verified/created');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to ensure session table:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
