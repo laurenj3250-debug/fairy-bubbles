@@ -1,17 +1,34 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { insertHabitSchema, type InsertHabit, type Habit } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import * as Icons from "lucide-react";
+
+interface HabitDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  habit?: Habit;
+}
 
 const iconOptions = [
   { value: "Dumbbell", label: "Dumbbell" },
@@ -25,39 +42,20 @@ const iconOptions = [
   { value: "Pencil", label: "Writing" },
   { value: "Code", label: "Code" },
   { value: "Sparkles", label: "Sparkles" },
-  { value: "ClipboardCheck", label: "Checklist" },
 ];
 
 const colorOptions = [
-  "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", 
+  "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B", "#EF4444",
   "#EC4899", "#6366F1", "#14B8A6", "#F97316", "#84CC16"
 ];
 
-interface HabitDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  habit?: Habit;
-}
-
 export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
-  console.log('🟢 HabitDialog RENDERED - open:', open, 'habit:', habit);
-  console.log('🟢 Dialog component exists?', !!Dialog);
-  console.log('🟢 DialogContent component exists?', !!DialogContent);
-
   const { toast } = useToast();
   const isEdit = !!habit;
 
   const form = useForm<InsertHabit>({
     resolver: zodResolver(insertHabitSchema),
-    defaultValues: habit ? {
-      userId: habit.userId,
-      title: habit.title,
-      description: habit.description,
-      icon: habit.icon,
-      color: habit.color,
-      cadence: habit.cadence,
-      targetPerWeek: habit.targetPerWeek,
-    } : {
+    defaultValues: habit || {
       userId: 1,
       title: "",
       description: "",
@@ -69,40 +67,24 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertHabit) => {
-      console.log('📝 Creating habit with data:', data);
-      try {
-        const result = await apiRequest("/api/habits", "POST", data);
-        console.log('✅ Habit created successfully:', result);
-        return result;
-      } catch (err) {
-        console.error('❌ API request failed:', err);
-        throw err;
-      }
-    },
+    mutationFn: (data: InsertHabit) => apiRequest("/api/habits", "POST", data),
     onSuccess: () => {
-      console.log('🎉 onSuccess called - invalidating queries');
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
-      toast({ title: "Habit created", description: "Your new habit has been added" });
-      onOpenChange(false);
+      toast({ title: "Habit created!", description: "Your new habit has been added" });
       form.reset();
+      onOpenChange(false);
     },
-    onError: (error: any) => {
-      console.error('❌ Error creating habit (onError):', error);
-      toast({ 
-        title: "Error", 
-        description: error?.message || "Failed to create habit", 
-        variant: "destructive" 
-      });
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create habit", variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: InsertHabit) => apiRequest(`/api/habits/${habit?.id}`, "PATCH", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"], exact: false });
-      toast({ title: "Habit updated", description: "Your habit has been updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      toast({ title: "Habit updated!", description: "Your habit has been updated" });
       onOpenChange(false);
     },
     onError: () => {
@@ -111,7 +93,6 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   });
 
   const onSubmit = (data: InsertHabit) => {
-    console.log('📝 Submitting habit:', data);
     if (isEdit) {
       updateMutation.mutate(data);
     } else {
@@ -124,18 +105,12 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
   const selectedCadence = form.watch("cadence");
   const IconComponent = (Icons as any)[selectedIcon] || Icons.Sparkles;
 
-  console.log('🟢 About to return Dialog JSX, open=', open);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="habit-dialog">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Habit" : "Create New Habit"}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? "Update your habit details" : "Add a new habit to track"}
-          </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -145,7 +120,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Morning Exercise" data-testid="input-habit-title" />
+                    <Input {...field} placeholder="Morning Exercise" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -162,9 +137,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                     <Textarea
                       {...field}
                       placeholder="30 minutes of cardio or strength training"
-                      className="resize-none"
                       rows={3}
-                      data-testid="input-habit-description"
                     />
                   </FormControl>
                   <FormMessage />
@@ -181,7 +154,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                     <FormLabel>Icon</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-habit-icon">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -212,7 +185,7 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                     <FormLabel>Cadence</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-habit-cadence">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -233,13 +206,13 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                 name="targetPerWeek"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Weekly Target (optional)</FormLabel>
+                    <FormLabel>Weekly Target</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value && value !== "" ? parseInt(value) : null)}
-                      value={field.value !== null && field.value !== undefined ? field.value.toString() : ""}
+                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                      value={field.value?.toString() || ""}
                     >
                       <FormControl>
-                        <SelectTrigger data-testid="select-habit-target">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select times per week" />
                         </SelectTrigger>
                       </FormControl>
@@ -272,12 +245,11 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
                         key={color}
                         type="button"
                         onClick={() => field.onChange(color)}
-                        className="w-10 h-10 rounded-lg border-2 transition-all hover-elevate"
+                        className="w-10 h-10 rounded-lg border-2 transition-all"
                         style={{
                           backgroundColor: color,
                           borderColor: selectedColor === color ? "#fff" : "transparent",
                         }}
-                        data-testid={`color-${color}`}
                       />
                     ))}
                   </div>
@@ -301,23 +273,14 @@ export function HabitDialog({ open, onOpenChange, habit }: HabitDialogProps) {
               </div>
             </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel"
-              >
+            <div className="flex gap-2 justify-end pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                data-testid="button-save-habit"
-              >
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                 {isEdit ? "Update" : "Create"} Habit
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>
