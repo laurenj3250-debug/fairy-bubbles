@@ -79,10 +79,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const habit = await storage.getHabit(id);
       if (!habit) {
         return res.status(404).json({ error: "Habit not found" });
+      }
+      // Verify ownership
+      if (habit.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(habit);
     } catch (error) {
@@ -103,11 +108,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const habit = await storage.updateHabit(id, req.body);
-      if (!habit) {
+      // Verify ownership before update
+      const existing = await storage.getHabit(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const habit = await storage.updateHabit(id, req.body);
       res.json(habit);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update habit" });
@@ -116,11 +127,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteHabit(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getHabit(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteHabit(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete habit" });
@@ -204,14 +221,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/habit-logs/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const log = await storage.updateHabitLog(id, req.body);
-      if (!log) {
+      // Verify ownership before update
+      const existing = await storage.getHabitLog(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit log not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const log = await storage.updateHabitLog(id, req.body);
 
       // Auto-update pet stats after changing a log
-      const userId = getUserId(req);
       const petUpdate = await updatePetFromHabits(userId);
 
       res.json({
@@ -228,11 +250,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/habit-logs/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteHabitLog(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getHabitLog(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit log not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteHabitLog(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete habit log" });
@@ -324,10 +352,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const goal = await storage.getGoal(id);
       if (!goal) {
         return res.status(404).json({ error: "Goal not found" });
+      }
+      // Verify ownership
+      if (goal.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(goal);
     } catch (error) {
@@ -348,11 +381,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const goal = await storage.updateGoal(id, req.body);
-      if (!goal) {
+      // Verify ownership before update
+      const existing = await storage.getGoal(id);
+      if (!existing) {
         return res.status(404).json({ error: "Goal not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const goal = await storage.updateGoal(id, req.body);
       res.json(goal);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });
@@ -361,11 +400,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteGoal(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getGoal(id);
+      if (!existing) {
         return res.status(404).json({ error: "Goal not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteGoal(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete goal" });
@@ -510,11 +555,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/pet/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const pet = await storage.updateVirtualPet(id, req.body);
-      if (!pet) {
+      // Verify ownership before update
+      const existing = await storage.getVirtualPet(userId);
+      if (!existing || existing.id !== id) {
         return res.status(404).json({ error: "Pet not found" });
       }
+      const pet = await storage.updateVirtualPet(id, req.body);
       res.json(pet);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update pet" });
@@ -741,10 +789,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const todo = await storage.getTodo(id);
       if (!todo) {
         return res.status(404).json({ error: "Todo not found" });
+      }
+      // Verify ownership
+      if (todo.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(todo);
     } catch (error) {
@@ -768,11 +821,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const updated = await storage.updateTodo(id, req.body);
-      if (!updated) {
+      // Verify ownership before update
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const updated = await storage.updateTodo(id, req.body);
       res.json(updated);
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -784,11 +843,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/todos/:id/complete", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const completed = await storage.completeTodo(id);
-      if (!completed) {
+      // Verify ownership before completing
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const completed = await storage.completeTodo(id);
       res.json(completed);
     } catch (error) {
       res.status(500).json({ error: "Failed to complete todo" });
@@ -797,11 +862,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteTodo(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteTodo(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete todo" });
