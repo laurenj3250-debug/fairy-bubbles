@@ -317,14 +317,17 @@ export default function Habits() {
       </main>
       
       <FAB onClick={handleFabClick} />
+      {console.log('🔴 BEFORE RENDERING HabitDialog, habitDialogOpen=', habitDialogOpen)}
       <HabitDialog
         open={habitDialogOpen}
         onOpenChange={(open) => {
+          console.log('🟡 HabitDialog onOpenChange called with:', open);
           setHabitDialogOpen(open);
           if (!open) setEditingHabit(undefined);
         }}
         habit={editingHabit}
       />
+      {console.log('🔴 AFTER HabitDialog JSX')}
     </div>
   );
 }
