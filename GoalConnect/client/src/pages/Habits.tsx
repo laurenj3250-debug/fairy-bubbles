@@ -79,25 +79,10 @@ export default function Habits() {
   }
 
   return (
-    <div className="min-h-screen p-6 pb-24" style={{ backgroundColor: '#fff', position: 'relative', zIndex: 1 }}>
-      {/* TEST - YOU SHOULD SEE THIS */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        background: 'red',
-        color: 'white',
-        padding: '20px',
-        zIndex: 999999,
-        fontSize: '24px',
-        fontWeight: 'bold'
-      }}>
-        🔴 HABITS PAGE LOADED - {habits.length} HABITS FOUND
-      </div>
-
+    <div className="min-h-screen p-6 pb-24" style={{ backgroundColor: '#f5f5f5', position: 'relative', zIndex: 1 }}>
       <div className="max-w-4xl mx-auto" style={{ position: 'relative', zIndex: 2 }}>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: '#000', fontSize: '32px' }}>Habits</h1>
+          <h1 className="text-3xl font-bold" style={{ color: '#000', fontSize: '32px' }}>Habits ({habits.length})</h1>
           <Button onClick={handleCreateNew}>
             <Plus className="w-4 h-4 mr-2" />
             New Habit
@@ -116,7 +101,7 @@ export default function Habits() {
             {habits.map((habit) => {
               const completed = isCompletedToday(habit.id);
               return (
-                <Card key={habit.id}>
+                <Card key={habit.id} style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -145,13 +130,13 @@ export default function Habits() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Cadence:</span>
-                      <span className="font-medium capitalize">{habit.cadence}</span>
+                      <span style={{ color: '#666' }}>Cadence:</span>
+                      <span className="font-medium capitalize" style={{ color: '#000' }}>{habit.cadence}</span>
                     </div>
                     {habit.cadence === "weekly" && habit.targetPerWeek && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Target:</span>
-                        <span className="font-medium">{habit.targetPerWeek} times per week</span>
+                        <span style={{ color: '#666' }}>Target:</span>
+                        <span className="font-medium" style={{ color: '#000' }}>{habit.targetPerWeek} times per week</span>
                       </div>
                     )}
                     <Button
