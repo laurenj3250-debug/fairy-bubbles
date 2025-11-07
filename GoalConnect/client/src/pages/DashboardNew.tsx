@@ -323,7 +323,11 @@ export default function DashboardNew() {
                         </div>
                         {todo.dueDate && (
                           <div className="text-xs text-orange-300">
-                            Due {new Date(todo.dueDate).toLocaleDateString()}
+                            Due {(() => {
+                              const [year, month, day] = todo.dueDate.split('-').map(Number);
+                              const date = new Date(year, month - 1, day);
+                              return date.toLocaleDateString();
+                            })()}
                           </div>
                         )}
                       </div>

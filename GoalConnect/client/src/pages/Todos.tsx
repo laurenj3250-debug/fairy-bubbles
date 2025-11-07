@@ -88,14 +88,17 @@ export default function Todos() {
 
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate) return null;
-    const date = new Date(dueDate);
+
+    // Parse date as YYYY-MM-DD in local timezone (avoid UTC shift)
+    const [year, month, day] = dueDate.split('-').map(Number);
+    const due = new Date(year, month - 1, day);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const due = new Date(date);
     due.setHours(0, 0, 0, 0);
 
     const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
       return { text: `${Math.abs(diffDays)} days overdue`, color: "text-red-400" };
@@ -106,7 +109,7 @@ export default function Todos() {
     } else if (diffDays <= 7) {
       return { text: `Due in ${diffDays} days`, color: "text-blue-400" };
     } else {
-      return { text: date.toLocaleDateString(), color: "text-white/60" };
+      return { text: due.toLocaleDateString(), color: "text-white/60" };
     }
   };
 

@@ -44,29 +44,46 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
   };
 
   const getDueDate = () => {
+    if (dateOption === "custom") {
+      return customDate || null;
+    }
+
+    if (dateOption === "none") {
+      return null;
+    }
+
+    // Get today's date in local timezone (avoid UTC conversion issues)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+
+    let targetDate: Date;
 
     switch (dateOption) {
       case "today":
-        return today.toISOString().split('T')[0];
+        targetDate = new Date(year, month, day);
+        break;
       case "tomorrow":
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        targetDate = new Date(year, month, day + 1);
+        break;
       case "this-week":
-        const thisWeekEnd = new Date(today);
-        thisWeekEnd.setDate(thisWeekEnd.getDate() + (7 - thisWeekEnd.getDay()));
-        return thisWeekEnd.toISOString().split('T')[0];
+        // Get end of week (Sunday)
+        const daysUntilSunday = 7 - today.getDay();
+        targetDate = new Date(year, month, day + daysUntilSunday);
+        break;
       case "next-week":
-        const nextWeek = new Date(today);
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        return nextWeek.toISOString().split('T')[0];
-      case "custom":
-        return customDate;
+        targetDate = new Date(year, month, day + 7);
+        break;
       default:
         return null;
     }
+
+    // Format as YYYY-MM-DD in local timezone
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
