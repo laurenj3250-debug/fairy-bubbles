@@ -1,6 +1,5 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import * as Icons from "lucide-react";
 import { useRef } from "react";
 
 interface HabitToggleRowProps {
@@ -22,8 +21,6 @@ export function HabitToggleRow({
   onLongPress,
   className,
 }: HabitToggleRowProps) {
-  const IconComponent = (Icons as any)[icon] || Icons.Sparkles;
-
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const handlePressStart = () => {
@@ -79,7 +76,7 @@ export function HabitToggleRow({
         className="flex items-center justify-center w-6 h-6 flex-shrink-0"
         style={{ color: color }}
       >
-        <IconComponent className="w-5 h-5" />
+        <span className="text-xl">{icon}</span>
       </div>
       
       {/* Habit Title */}

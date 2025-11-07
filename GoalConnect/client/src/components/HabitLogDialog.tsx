@@ -8,7 +8,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Habit } from "@shared/schema";
 import { getToday } from "@/lib/utils";
-import * as Icons from "lucide-react";
 
 interface HabitLogDialogProps {
   open: boolean;
@@ -49,8 +48,6 @@ export function HabitLogDialog({ open, onOpenChange, habit }: HabitLogDialogProp
 
   if (!habit) return null;
 
-  const IconComponent = (Icons as any)[habit.icon] || Icons.Sparkles;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" data-testid="habit-log-dialog">
@@ -67,7 +64,7 @@ export function HabitLogDialog({ open, onOpenChange, habit }: HabitLogDialogProp
               className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
               style={{ backgroundColor: `${habit.color}20`, color: habit.color }}
             >
-              <IconComponent className="w-5 h-5" />
+              <span className="text-xl">{habit.icon}</span>
             </div>
             <div>
               <h3 className="font-medium">{habit.title}</h3>
