@@ -11,7 +11,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [points, setPoints] = useState(10);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
@@ -24,7 +24,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
       await apiRequest("/api/todos", "POST", {
         title,
         description,
-        points,
+        difficulty,
         dueDate: null,
         completed: false,
       });
@@ -33,7 +33,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setTitle("");
       setDescription("");
-      setPoints(10);
+      setDifficulty("medium");
       onOpenChange(false);
     } catch (error) {
       toast({ title: "Error", description: "Failed to create todo", variant: "destructive" });
@@ -121,22 +121,33 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
 
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Points Reward
+              Difficulty (affects points earned)
             </label>
-            <input
-              type="number"
-              value={points}
-              onChange={(e) => setPoints(parseInt(e.target.value) || 10)}
-              min={1}
-              max={100}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "16px",
-              }}
-            />
+            <div style={{ display: "flex", gap: "12px" }}>
+              {(['easy', 'medium', 'hard'] as const).map((diff) => {
+                const points = diff === 'easy' ? 5 : diff === 'medium' ? 10 : 15;
+                return (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => setDifficulty(diff)}
+                    style={{
+                      flex: 1,
+                      padding: "16px",
+                      border: `2px solid ${difficulty === diff ? '#8B5CF6' : '#ddd'}`,
+                      borderRadius: "12px",
+                      background: difficulty === diff ? 'rgba(139, 92, 246, 0.1)' : 'white',
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      fontWeight: difficulty === diff ? "700" : "500",
+                    }}
+                  >
+                    <div style={{ fontSize: "14px", textTransform: "capitalize", color: "#000" }}>{diff}</div>
+                    <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{points} coins</div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>

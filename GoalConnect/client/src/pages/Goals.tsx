@@ -408,15 +408,23 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
       <div className="flex items-start gap-5 relative z-10">
         {/* Left side: Main content */}
         <div className="flex-1">
-          {/* Category Badge */}
-          {goal.category && (
+          {/* Category & Points Badges */}
+          <div className="flex items-center gap-2 mb-3">
+            {goal.category && (
+              <Badge
+                className={`${borderColor} bg-white/10 backdrop-blur-xl ${textColor} border-2`}
+                style={{ fontFamily: "'Quicksand', sans-serif" }}
+              >
+                {goal.category}
+              </Badge>
+            )}
             <Badge
-              className={`mb-3 ${borderColor} bg-white/10 backdrop-blur-xl ${textColor} border-2`}
+              className="bg-yellow-400/20 backdrop-blur-xl text-yellow-200 border-2 border-yellow-400/30"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
-              {goal.category}
+              🪙 {goal.difficulty === 'easy' ? 5 : goal.difficulty === 'hard' ? 15 : 10} coins
             </Badge>
-          )}
+          </div>
 
           {/* Goal Title */}
           <h3

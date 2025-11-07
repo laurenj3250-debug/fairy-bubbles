@@ -33,6 +33,7 @@ export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
       unit: goal.unit,
       deadline: goal.deadline,
       category: goal.category,
+      difficulty: goal.difficulty,
     } : {
       userId: 1,
       title: "",
@@ -42,6 +43,7 @@ export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
       unit: "",
       deadline: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
       category: "",
+      difficulty: "medium" as const,
     },
   });
 
@@ -206,6 +208,39 @@ export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
                   <FormLabel>Deadline</FormLabel>
                   <FormControl>
                     <Input {...field} type="date" data-testid="input-goal-deadline" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="difficulty"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Difficulty (affects points earned)</FormLabel>
+                  <FormControl>
+                    <div className="flex gap-2">
+                      {(['easy', 'medium', 'hard'] as const).map((diff) => {
+                        const points = diff === 'easy' ? 5 : diff === 'medium' ? 10 : 15;
+                        return (
+                          <button
+                            key={diff}
+                            type="button"
+                            onClick={() => field.onChange(diff)}
+                            className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
+                              field.value === diff
+                                ? 'border-primary bg-primary/10 font-bold'
+                                : 'border-muted hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="text-sm capitalize">{diff}</div>
+                            <div className="text-xs text-muted-foreground">{points} coins</div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

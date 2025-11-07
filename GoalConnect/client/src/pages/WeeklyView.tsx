@@ -384,16 +384,24 @@ export default function WeeklyView() {
                   To-Dos ({weeklyTodos.length})
                 </h3>
                 <div className="space-y-2">
-                  {weeklyTodos.slice(0, 5).map(todo => (
-                    <div
-                      key={todo.id}
-                      className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20"
-                    >
-                      <span className="text-white text-sm" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                        {todo.title}
-                      </span>
-                    </div>
-                  ))}
+                  {weeklyTodos.slice(0, 5).map(todo => {
+                    const points = todo.difficulty === 'easy' ? 5 : todo.difficulty === 'hard' ? 15 : 10;
+                    return (
+                      <div
+                        key={todo.id}
+                        className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-white text-sm flex-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                            {todo.title}
+                          </span>
+                          <span className="text-yellow-300 text-xs font-bold whitespace-nowrap">
+                            🪙 {points}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                   {weeklyTodos.length > 5 && (
                     <p className="text-xs text-white/60 text-center pt-1">
                       +{weeklyTodos.length - 5} more
@@ -420,6 +428,8 @@ export default function WeeklyView() {
             />
           ))}
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );
