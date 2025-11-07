@@ -314,64 +314,73 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
             </div>
           </div>
 
-          {/* Minute Target with Slider */}
+          {/* Minute Target */}
           <div style={{ marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-              <label style={{ fontSize: "13px", fontWeight: "500", color: "#666" }}>
-                DAILY TARGET
-              </label>
-              <button
-                type="button"
-                onClick={() => setTrackMinutes(!trackMinutes)}
-                style={{
-                  padding: "4px 10px",
-                  border: "none",
-                  borderRadius: "6px",
-                  background: trackMinutes ? "#8B5CF6" : "#f3f4f6",
-                  color: trackMinutes ? "white" : "#6b7280",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: "500",
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+              DAILY TARGET (OPTIONAL)
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <input
+                type="number"
+                min="0"
+                max="300"
+                step="5"
+                value={trackMinutes ? minuteTarget : ""}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  if (val > 0) {
+                    setTrackMinutes(true);
+                    setMinuteTarget(val);
+                  } else {
+                    setTrackMinutes(false);
+                  }
                 }}
-              >
-                {trackMinutes ? "✓ Minutes" : "Just track completion"}
-              </button>
-            </div>
+                placeholder="0"
+                style={{
+                  width: "100px",
+                  padding: "14px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  textAlign: "center",
+                  outline: "none",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#8B5CF6"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}
+              />
+              <span style={{ fontSize: "16px", fontWeight: "500", color: "#6b7280" }}>minutes per day</span>
 
-            {trackMinutes && (
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                  <input
-                    type="range"
-                    min="5"
-                    max="120"
-                    step="5"
-                    value={minuteTarget}
-                    onChange={(e) => setMinuteTarget(parseInt(e.target.value))}
-                    style={{
-                      flex: 1,
-                      height: "6px",
-                      borderRadius: "3px",
-                      outline: "none",
-                      background: `linear-gradient(to right, #8B5CF6 0%, #8B5CF6 ${(minuteTarget / 120) * 100}%, #e5e7eb ${(minuteTarget / 120) * 100}%, #e5e7eb 100%)`,
-                      WebkitAppearance: "none",
+              {/* Quick preset buttons */}
+              <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+                {[10, 20, 30, 60].map(mins => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => {
+                      setTrackMinutes(true);
+                      setMinuteTarget(mins);
                     }}
-                  />
-                  <div style={{
-                    padding: "8px 16px",
-                    background: "#8B5CF6",
-                    color: "white",
-                    borderRadius: "8px",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    minWidth: "80px",
-                    textAlign: "center"
-                  }}>
-                    {minuteTarget} min
-                  </div>
-                </div>
+                    style={{
+                      padding: "8px 12px",
+                      border: trackMinutes && minuteTarget === mins ? "2px solid #8B5CF6" : "2px solid #e5e7eb",
+                      borderRadius: "8px",
+                      background: trackMinutes && minuteTarget === mins ? "#faf5ff" : "white",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {mins}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px", marginLeft: "2px" }}>
+              Leave at 0 to just track completion without a time goal
+            </p>
           </div>
 
           {/* Difficulty - Visual Buttons */}
