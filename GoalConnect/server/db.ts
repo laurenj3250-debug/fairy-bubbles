@@ -42,24 +42,30 @@ export function getDb(): Database {
       // SSL configuration
       ssl: needsSSL ? { rejectUnauthorized: false } : false,
       // Connection pool settings optimized for Railway
-      max: isServerless ? 1 : (isRailway ? 10 : 10),
-      min: isRailway ? 2 : 0, // Keep 2 connections alive for Railway
-      idleTimeoutMillis: 30000, // Keep idle connections for 30 seconds
-      connectionTimeoutMillis: 10000, // 10 seconds to establish new connection
+      max: isServerless ? 1 : (isRailway ? 5 : 10), // Reduced max for Railway
+      min: 0, // Don't maintain minimum connections - let pool scale naturally
+      idleTimeoutMillis: 10000, // Release idle connections faster
+      connectionTimeoutMillis: 15000, // Increased timeout for slow connections
       statement_timeout: 30000, // 30 seconds for queries
       query_timeout: 30000, // 30 seconds for queries
-      allowExitOnIdle: false, // Don't exit while connections exist
-      // Keep connections alive
+      allowExitOnIdle: true, // Allow process to exit when idle
+      // Keep connections alive with more frequent checks
       keepAlive: true,
-      keepAliveInitialDelayMillis: 5000,
+      keepAliveInitialDelayMillis: 3000,
     });
 
     // Handle pool errors gracefully
     pool.on('error', (err) => {
-      console.error('Database pool error:', err.message);
-      // Reset the cached db so it will be recreated on next request
-      cachedDb = null;
-      pool = null;
+      console.error('Database pool error:', err);
+      // Don't immediately reset - let the pool try to recover
+      // Only reset if we get repeated errors
+    });
+
+    // Handle client errors
+    pool.on('connect', (client) => {
+      client.on('error', (err) => {
+        console.error('Database client error:', err);
+      });
     });
 
     cachedDb = drizzle(pool, { schema });

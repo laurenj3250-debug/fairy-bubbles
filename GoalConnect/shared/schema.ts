@@ -120,11 +120,11 @@ export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
-  description: text("description").notNull().default(""),
   dueDate: varchar("due_date", { length: 10 }),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
+  subtasks: text("subtasks").notNull().default("[]"), // JSON string of subtasks
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

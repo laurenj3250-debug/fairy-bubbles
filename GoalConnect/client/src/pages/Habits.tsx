@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Sparkles, Clock, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { HabitDialog } from "@/components/HabitDialog";
+import { HabitDialogNew as HabitDialog } from "@/components/HabitDialogNew";
 import { getToday, formatDateInput } from "@/lib/utils";
 
 // Magical Canvas Component (matching Dashboard)

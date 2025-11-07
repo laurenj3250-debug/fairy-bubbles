@@ -479,9 +479,12 @@ export class DbStorage implements IStorage {
       .returning();
 
     if (results[0]) {
+      // Calculate points from difficulty
+      const points = todo.difficulty === "easy" ? 5 : todo.difficulty === "hard" ? 15 : 10;
+
       await this.addPoints(
         todo.userId,
-        todo.points,
+        points,
         "todo_complete",
         id,
         `Completed: ${todo.title}`

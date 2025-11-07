@@ -55,8 +55,8 @@ export function CalendarView() {
       log.completed && log.date === dateString
     );
 
-    const todosForDate = todos.filter(todo => 
-      todo.dueDate && format(new Date(todo.dueDate), "yyyy-MM-dd") === dateString
+    const todosForDate = todos.filter(todo =>
+      todo.dueDate === dateString
     );
 
     const goalsForDate = goals.filter(goal => 

@@ -1,20 +1,90 @@
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Plus, X } from "lucide-react";
 
 interface TodoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [dateOption, setDateOption] = useState<string>("none");
+  const [customDate, setCustomDate] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
+
+  const addSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+
+    const newSubtask: Subtask = {
+      id: Date.now().toString(),
+      title: newSubtaskTitle.trim(),
+      completed: false,
+    };
+
+    setSubtasks([...subtasks, newSubtask]);
+    setNewSubtaskTitle("");
+  };
+
+  const removeSubtask = (id: string) => {
+    setSubtasks(subtasks.filter(st => st.id !== id));
+  };
+
+  const getDueDate = () => {
+    if (dateOption === "custom") {
+      return customDate || null;
+    }
+
+    if (dateOption === "none") {
+      return null;
+    }
+
+    // Get today's date in local timezone (avoid UTC conversion issues)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+
+    let targetDate: Date;
+
+    switch (dateOption) {
+      case "today":
+        targetDate = new Date(year, month, day);
+        break;
+      case "tomorrow":
+        targetDate = new Date(year, month, day + 1);
+        break;
+      case "this-week":
+        // Get end of week (Sunday)
+        const daysUntilSunday = 7 - today.getDay();
+        targetDate = new Date(year, month, day + daysUntilSunday);
+        break;
+      case "next-week":
+        targetDate = new Date(year, month, day + 7);
+        break;
+      default:
+        return null;
+    }
+
+    // Format as YYYY-MM-DD in local timezone
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,17 +93,22 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
     try {
       await apiRequest("/api/todos", "POST", {
         title,
-        description,
         difficulty,
-        dueDate: null,
+        dueDate: getDueDate(),
+        subtasks: JSON.stringify(subtasks),
         completed: false,
       });
 
       toast({ title: "Created!", description: "Todo created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+
+      // Reset form
       setTitle("");
-      setDescription("");
+      setDateOption("none");
+      setCustomDate("");
       setDifficulty("medium");
+      setSubtasks([]);
+      setNewSubtaskTitle("");
       onOpenChange(false);
     } catch (error) {
       toast({ title: "Error", description: "Failed to create todo", variant: "destructive" });
@@ -79,16 +154,18 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
         </h2>
 
         <form onSubmit={handleSubmit}>
+          {/* Title */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Title
+              What needs to be done?
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Buy groceries"
+              placeholder="e.g., Finish project proposal"
               required
+              autoFocus
               style={{
                 width: "100%",
                 padding: "12px",
@@ -99,29 +176,132 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
             />
           </div>
 
+          {/* Due Date Dropdown */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Description (optional)
+              When?
             </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
-              rows={3}
+            <select
+              value={dateOption}
+              onChange={(e) => setDateOption(e.target.value)}
               style={{
                 width: "100%",
                 padding: "12px",
                 border: "1px solid #ddd",
                 borderRadius: "8px",
                 fontSize: "16px",
-                resize: "vertical",
+                backgroundColor: "white",
               }}
-            />
+            >
+              <option value="none">No due date</option>
+              <option value="today">Today</option>
+              <option value="tomorrow">Tomorrow</option>
+              <option value="this-week">End of this week</option>
+              <option value="next-week">Next week</option>
+              <option value="custom">Pick a date...</option>
+            </select>
+
+            {dateOption === "custom" && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  marginTop: "8px",
+                }}
+              />
+            )}
           </div>
 
+          {/* Subtasks */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Difficulty (affects points earned)
+              Subtasks (optional)
+            </label>
+
+            {subtasks.length > 0 && (
+              <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {subtasks.map((subtask) => (
+                  <div
+                    key={subtask.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 12px",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <span style={{ flex: 1, color: "#000", fontSize: "14px" }}>
+                      {subtask.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeSubtask(subtask.id)}
+                      style={{
+                        padding: "4px",
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        color: "#ef4444",
+                      }}
+                    >
+                      <X style={{ width: "16px", height: "16px" }} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSubtask();
+                  }
+                }}
+                placeholder="Add a subtask..."
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                }}
+              />
+              <button
+                type="button"
+                onClick={addSubtask}
+                style={{
+                  padding: "10px 16px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: "#8B5CF6",
+                  color: "white",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                <Plus style={{ width: "16px", height: "16px" }} />
+              </button>
+            </div>
+          </div>
+
+          {/* Difficulty */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Difficulty
             </label>
             <div style={{ display: "flex", gap: "12px" }}>
               {(['easy', 'medium', 'hard'] as const).map((diff) => {
@@ -150,6 +330,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
             </div>
           </div>
 
+          {/* Actions */}
           <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
             <button
               type="button"
