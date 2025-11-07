@@ -144,6 +144,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET weekly progress for a habit
+  app.get("/api/habits/:habitId/weekly-progress", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      // Get current week's logs (Monday to Sunday)
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0 = Sunday
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      // Get all logs for this user
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const weekLogs = allLogs.filter(log => {
+        if (log.habitId !== habitId || !log.completed) return false;
+        const logDate = new Date(log.date);
+        return logDate >= monday && logDate <= sunday;
+      });
+
+      const completedDates = weekLogs.map(log => log.date);
+      const progress = completedDates.length;
+      const target = habit.targetPerWeek || 7;
+
+      res.json({
+        habitId,
+        weekStart: monday.toISOString().split('T')[0],
+        weekEnd: sunday.toISOString().split('T')[0],
+        targetPerWeek: target,
+        completedDates,
+        progress,
+        isComplete: progress >= target,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get weekly progress" });
+    }
+  });
+
+  // GET streak for a habit
+  app.get("/api/habits/:habitId/streak", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const habitLogs = allLogs
+        .filter(log => log.habitId === habitId && log.completed)
+        .sort((a, b) => b.date.localeCompare(a.date)); // Sort descending
+
+      let streak = 0;
+      const today = new Date().toISOString().split('T')[0];
+      let checkDate = new Date();
+
+      // Calculate streak going backwards from today
+      while (true) {
+        const dateString = checkDate.toISOString().split('T')[0];
+        const hasLog = habitLogs.some(log => log.date === dateString);
+
+        if (!hasLog) {
+          // If it's today and no log yet, keep checking
+          if (streak === 0 && dateString === today) {
+            checkDate.setDate(checkDate.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+
+        if (streak > 365) break; // Safety limit
+      }
+
+      res.json({ habitId, streak });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get streak" });
+    }
+  });
+
   // GET habit logs by date (path parameter) - for React Query default queryFn
   app.get("/api/habit-logs/:date", async (req, res) => {
     try {
