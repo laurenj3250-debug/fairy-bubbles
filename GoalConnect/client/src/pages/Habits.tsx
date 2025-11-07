@@ -20,6 +20,10 @@ export default function Habits() {
     queryKey: ["/api/habit-logs", getToday()],
   });
 
+  // Debug logging
+  console.log("Habits data:", habits);
+  console.log("Today logs:", todayLogs);
+
   const deleteHabitMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
     onSuccess: () => {
