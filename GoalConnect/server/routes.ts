@@ -17,6 +17,7 @@ import {
   calculateStreak,
   calculateWeeklyCompletion,
   calculateCoinsEarned,
+  getStreakMultiplier,
 } from "./pet-utils";
 import { requireUser } from "./simple-auth";
 
@@ -584,12 +585,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-update pet stats
       const petUpdate = await updatePetFromHabits(userId);
 
+      // Calculate reward details for frontend
+      let rewardDetails = null;
+      if (result.completed && !existingLog) {
+        const habit = await storage.getHabit(habitId);
+        if (habit) {
+          const allLogs = await storage.getAllHabitLogs(userId);
+          const currentStreak = calculateStreak(allLogs);
+          const coins = calculateCoinsEarned(habit, currentStreak);
+          const streakMultiplier = getStreakMultiplier(currentStreak);
+
+          rewardDetails = {
+            coinsEarned: coins,
+            baseCoins: habit.difficulty === 'easy' ? 5 : habit.difficulty === 'hard' ? 15 : 10,
+            streak: currentStreak,
+            streakMultiplier: streakMultiplier,
+            habitTitle: habit.title,
+          };
+        }
+      }
+
       res.json({
         ...result,
         petUpdate: petUpdate ? {
           leveledUp: petUpdate.leveledUp,
           evolved: petUpdate.evolved,
         } : null,
+        rewardDetails,
       });
     } catch (error: any) {
       console.error('Error toggling habit log:', error);

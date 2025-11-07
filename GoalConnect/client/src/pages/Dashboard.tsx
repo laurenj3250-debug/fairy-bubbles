@@ -25,6 +25,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { CalendarView } from "@/components/CalendarView";
 import { useAuth } from "@/contexts/AuthContext";
+import { Confetti, CelebrationModal } from "@/components/Confetti";
+import { useToast } from "@/hooks/use-toast";
 
 type TabType = "today" | "calendar" | "todos";
 
@@ -82,8 +84,16 @@ export default function Dashboard() {
   const [habitLogDialogOpen, setHabitLogDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [quickActionOpen, setQuickActionOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [celebrationModal, setCelebrationModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    iconName: string;
+  }>({ open: false, title: "", description: "", iconName: "sparkles" });
 
   const { user } = useAuth();
+  const { toast } = useToast();
   const userName = user?.name?.trim() || user?.email?.split("@")[0] || "User";
   const today = getToday();
 
@@ -140,6 +150,46 @@ export default function Dashboard() {
 
       return { previousLogs };
     },
+    onSuccess: (data: any) => {
+      // Show reward feedback
+      if (data.rewardDetails) {
+        const { coinsEarned, baseCoins, streak, streakMultiplier, habitTitle } = data.rewardDetails;
+
+        // Build toast message
+        let toastTitle = `+${coinsEarned} coins earned! 🪙`;
+        let toastDescription = `Completed "${habitTitle}"`;
+
+        if (streakMultiplier > 1.0) {
+          toastDescription += ` • ${streak} day streak (${streakMultiplier}x bonus!)`;
+        }
+
+        toast({
+          title: toastTitle,
+          description: toastDescription,
+          duration: 3000,
+        });
+      }
+
+      // Celebration for level-up
+      if (data.petUpdate?.leveledUp) {
+        setShowConfetti(true);
+        toast({
+          title: "🎉 Level Up!",
+          description: "Your pet gained a level!",
+          duration: 4000,
+        });
+      }
+
+      // Celebration for evolution
+      if (data.petUpdate?.evolved) {
+        setCelebrationModal({
+          open: true,
+          title: "✨ Pet Evolved!",
+          description: "Your pet has evolved to a new form!",
+          iconName: "sparkles",
+        });
+      }
+    },
     onError: (err, variables, context) => {
       console.error('❌ Toggle error:', err);
       // Rollback on error
@@ -153,6 +203,8 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
       // Also invalidate the "all" query used by CalendarView
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+      // Refresh points display
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
     },
   });
 
@@ -334,6 +386,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen enchanted-bg overflow-x-hidden">
       <MagicalCanvas />
+
+      {/* Celebration components */}
+      <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
+      <CelebrationModal
+        open={celebrationModal.open}
+        onOpenChange={(open) => setCelebrationModal({ ...celebrationModal, open })}
+        title={celebrationModal.title}
+        description={celebrationModal.description}
+        iconName={celebrationModal.iconName}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8">
         {/* Enchanted Header */}
