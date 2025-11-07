@@ -44,62 +44,19 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
 
       console.log("Submitting habit data:", data);
 
-      let result;
       if (habit) {
-        result = await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
-        console.log("Habit updated:", result);
+        await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
+        console.log("Habit updated!");
       } else {
-        result = await apiRequest("/api/habits", "POST", data);
-        console.log("Habit created:", result);
+        await apiRequest("/api/habits", "POST", data);
+        console.log("Habit created!");
       }
 
-      // Success - reset form
-      setTitle("");
-      setDescription("");
-      setCadence("daily");
-      setTargetPerWeek(null);
-
-      // Refresh habits list
-      try {
-        queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
-      } catch (e) {
-        console.error("Failed to invalidate queries:", e);
-      }
-
-      // Close dialog
-      try {
-        if (onClose && typeof onClose === 'function') {
-          onClose();
-        }
-      } catch (e) {
-        console.error("Failed to close dialog:", e);
-      }
-
-      // Reload page as fallback to show new habit
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Success - just reload the page to show the new habit
+      window.location.href = "/habits";
     } catch (error: any) {
       console.error("Error saving habit:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        stack: error?.stack,
-        error: error
-      });
-
-      // Try to show error toast safely
-      try {
-        if (toast && typeof toast === 'function') {
-          const errorMsg = error?.message || "Failed to save habit";
-          toast({ title: "Error", description: errorMsg, variant: "destructive" });
-        } else {
-          alert("Error: " + (error?.message || "Failed to save habit"));
-        }
-      } catch (toastError) {
-        console.error("Toast error:", toastError);
-        alert("Error: " + (error?.message || "Failed to save habit"));
-      }
-    } finally {
+      alert("Failed to save habit: " + (error?.message || "Unknown error"));
       setSubmitting(false);
     }
   };
