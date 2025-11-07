@@ -27,25 +27,34 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
       const data = {
         userId: 1,
         title,
-        description,
+        description: description || "",
         icon: "Sparkles",
         color: "#8B5CF6",
         cadence,
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
       };
 
+      console.log("Submitting habit data:", data);
+
       if (habit) {
         await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
         toast({ title: "Updated!", description: "Habit updated successfully" });
       } else {
-        await apiRequest("/api/habits", "POST", data);
+        const result = await apiRequest("/api/habits", "POST", data);
+        console.log("Habit created:", result);
         toast({ title: "Created!", description: "Habit created successfully" });
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      setTitle("");
+      setDescription("");
+      setCadence("daily");
+      setTargetPerWeek(null);
       onClose();
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to save habit", variant: "destructive" });
+    } catch (error: any) {
+      console.error("Error saving habit:", error);
+      const errorMsg = error?.message || "Failed to save habit";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
