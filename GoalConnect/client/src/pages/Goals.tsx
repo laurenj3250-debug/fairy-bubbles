@@ -3,8 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2 } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle } from "lucide-react";
 import { GoalDialog } from "@/components/GoalDialog";
+import { GoalProgressDialog } from "@/components/GoalProgressDialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +60,9 @@ type ViewType = "all" | "weekly" | "monthly";
 
 export default function Goals() {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
+  const [progressGoal, setProgressGoal] = useState<Goal | null>(null);
   const [activeView, setActiveView] = useState<ViewType>("all");
 
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
@@ -129,6 +132,11 @@ export default function Goals() {
   const handleEdit = (goal: Goal) => {
     setEditingGoal(goal);
     setGoalDialogOpen(true);
+  };
+
+  const handleAddProgress = (goal: Goal) => {
+    setProgressGoal(goal);
+    setProgressDialogOpen(true);
   };
 
   const handleDelete = (id: number) => {
@@ -302,6 +310,7 @@ export default function Goals() {
                 key={goal.id}
                 goal={goal}
                 onEdit={() => handleEdit(goal)}
+                onAddProgress={() => handleAddProgress(goal)}
                 onDelete={() => handleDelete(goal.id)}
               />
             ))}
@@ -314,14 +323,20 @@ export default function Goals() {
         onOpenChange={handleCloseDialog}
         goal={editingGoal}
       />
+      <GoalProgressDialog
+        open={progressDialogOpen}
+        onOpenChange={setProgressDialogOpen}
+        goal={progressGoal}
+      />
     </div>
   );
 }
 
 // Individual Goal Card Component
-function GoalCard({ goal, onEdit, onDelete }: {
+function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
   goal: Goal;
   onEdit: () => void;
+  onAddProgress: () => void;
   onDelete: () => void;
 }) {
   const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
@@ -473,6 +488,16 @@ function GoalCard({ goal, onEdit, onDelete }: {
           )}
 
           {/* Mini actions */}
+          {!isComplete && (
+            <button
+              onClick={onAddProgress}
+              className="text-xs text-green-400 hover:text-green-300 transition-colors px-2 py-1 flex items-center gap-1 font-semibold"
+              style={{ fontFamily: "'Quicksand', sans-serif" }}
+            >
+              <PlusCircle className="w-3 h-3" />
+              Add Progress
+            </button>
+          )}
           <button
             onClick={onEdit}
             className="text-xs text-white/60 hover:text-white/90 transition-colors px-2 py-1 flex items-center gap-1"

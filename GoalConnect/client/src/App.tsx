@@ -8,6 +8,7 @@ import { EnchantedForestBackground } from "@/components/EnchantedForestBackgroun
 import Dashboard from "@/pages/Dashboard";
 import Habits from "@/pages/Habits";
 import Goals from "@/pages/Goals";
+import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import SignupPage from "@/pages/Signup";
@@ -74,6 +75,12 @@ function AppRoutes() {
       <Route path="/goals">
         <RequireAuth>
           <Goals />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/weekly">
+        <RequireAuth>
+          <WeeklyView />
           <BottomNav />
         </RequireAuth>
       </Route>
