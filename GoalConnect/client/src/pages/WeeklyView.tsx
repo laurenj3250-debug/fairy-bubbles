@@ -73,7 +73,7 @@ export default function WeeklyView() {
       return await apiRequest("/api/habit-logs/toggle", "POST", { habitId, date });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/week"] });
     },
   });
 
