@@ -132,13 +132,13 @@ export default function Habits() {
 
   // Date navigation functions
   const goToPreviousDay = () => {
-    const date = new Date(selectedDate);
+    const date = new Date(selectedDate + 'T00:00:00');
     date.setDate(date.getDate() - 1);
     setSelectedDate(formatDateInput(date));
   };
 
   const goToNextDay = () => {
-    const date = new Date(selectedDate);
+    const date = new Date(selectedDate + 'T00:00:00');
     date.setDate(date.getDate() + 1);
     setSelectedDate(formatDateInput(date));
   };
