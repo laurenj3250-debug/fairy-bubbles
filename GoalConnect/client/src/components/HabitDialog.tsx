@@ -10,12 +10,14 @@ interface HabitDialogProps {
   habit?: Habit;
 }
 
-const ICON_OPTIONS = [
-  "💪", "🏃", "📚", "🧘", "💧", "🥗", "😴", "🎨", "✍️", "🎯",
-  "🎵", "🎮", "📱", "💻", "☕", "🌱", "🔥", "⭐", "✨", "🌈",
-  "🧗", "🏔️", "⛰️", "🇩🇪", "🥨", "🍺", "📖", "🗣️", "🎓", "🌍",
-  "🚴", "🏊", "⚽", "🎾", "🏋️", "🥾", "🎒", "🧘‍♀️", "🍎", "🥤"
-];
+const ICON_CATEGORIES = {
+  "Health": ["💪", "🏃", "🧘", "💧", "🥗", "😴", "🏋️", "🧘‍♀️", "🍎", "🥤"],
+  "Active": ["🚴", "🏊", "⚽", "🎾", "🧗", "🏔️", "⛰️", "🥾"],
+  "Learn": ["📚", "📖", "✍️", "🎓", "🗣️", "💻", "🌍"],
+  "Creative": ["🎨", "🎵", "🎮", "📱"],
+  "Goals": ["🎯", "🔥", "⭐", "✨", "🌈", "🌱"],
+  "Culture": ["🇩🇪", "🥨", "🍺", "☕"],
+};
 
 const COLOR_OPTIONS = [
   { name: "Cosmic Purple", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
@@ -28,18 +30,27 @@ const COLOR_OPTIONS = [
   { name: "Rose Quartz", gradient: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)" },
 ];
 
+const QUICK_TEMPLATES = [
+  { title: "Exercise", icon: "💪", minutes: 30, difficulty: "medium" as const },
+  { title: "Read", icon: "📚", minutes: 20, difficulty: "easy" as const },
+  { title: "Meditate", icon: "🧘", minutes: 10, difficulty: "easy" as const },
+  { title: "Learn German", icon: "🇩🇪", minutes: 15, difficulty: "medium" as const },
+  { title: "Climb", icon: "🧗", minutes: 60, difficulty: "hard" as const },
+];
+
 export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
-  const [description, setDescription] = useState(habit?.description || "");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     (habit?.difficulty as "easy" | "medium" | "hard") || "medium"
   );
   const [icon, setIcon] = useState(habit?.icon || "⭐");
   const [color, setColor] = useState(habit?.color || COLOR_OPTIONS[0].gradient);
-  const [trackMinutes, setTrackMinutes] = useState(false); // TODO: Add to schema
+  const [iconCategory, setIconCategory] = useState<keyof typeof ICON_CATEGORIES>("Health");
+  const [trackMinutes, setTrackMinutes] = useState(false);
+  const [minuteTarget, setMinuteTarget] = useState(30);
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
-  const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || null);
+  const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || 3);
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(habit?.linkedGoalId || null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,6 +61,14 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   });
 
   if (!open) return null;
+
+  const applyTemplate = (template: typeof QUICK_TEMPLATES[0]) => {
+    setTitle(template.title);
+    setIcon(template.icon);
+    setDifficulty(template.difficulty);
+    setTrackMinutes(true);
+    setMinuteTarget(template.minutes);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +81,12 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
     setSubmitting(true);
 
     try {
+      const habitDescription = trackMinutes ? `${minuteTarget} minutes` : "";
+
       const data = {
         userId: user.id,
         title,
-        description: description || "",
+        description: habitDescription,
         difficulty,
         icon,
         color,
@@ -124,69 +145,124 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#000" }}>
+        <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "12px", color: "#000" }}>
           {habit ? "Edit Habit" : "Create New Habit"}
         </h2>
 
         <form onSubmit={handleSubmit}>
+          {/* Quick Templates */}
+          {!habit && (
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+                QUICK START
+              </label>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {QUICK_TEMPLATES.map((template) => (
+                  <button
+                    key={template.title}
+                    type="button"
+                    onClick={() => applyTemplate(template)}
+                    style={{
+                      padding: "8px 12px",
+                      border: "2px solid #e5e7eb",
+                      borderRadius: "12px",
+                      background: "white",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#8B5CF6";
+                      e.currentTarget.style.background = "#faf5ff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                      e.currentTarget.style.background = "white";
+                    }}
+                  >
+                    <span style={{ fontSize: "18px" }}>{template.icon}</span>
+                    <span>{template.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Title */}
           <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Title
-            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Morning Exercise"
+              placeholder="Habit name..."
               required
               style={{
                 width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
+                padding: "14px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
                 fontSize: "16px",
+                fontWeight: "500",
+                outline: "none",
               }}
+              onFocus={(e) => e.currentTarget.style.borderColor = "#8B5CF6"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}
             />
           </div>
 
+          {/* Icon Picker with Categories */}
           <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Description
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+              ICON
             </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., 30 minutes of cardio"
-              rows={3}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "16px",
-                resize: "vertical",
-              }}
-            />
-          </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Icon
-            </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "8px" }}>
-              {ICON_OPTIONS.map((emojiIcon) => (
+            {/* Category Tabs */}
+            <div style={{ display: "flex", gap: "4px", marginBottom: "12px", overflowX: "auto" }}>
+              {Object.keys(ICON_CATEGORIES).map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setIconCategory(category as keyof typeof ICON_CATEGORIES)}
+                  style={{
+                    padding: "6px 12px",
+                    border: "none",
+                    borderRadius: "8px",
+                    background: iconCategory === category ? "#8B5CF6" : "#f3f4f6",
+                    color: iconCategory === category ? "white" : "#6b7280",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            {/* Icon Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
+              {ICON_CATEGORIES[iconCategory].map((emojiIcon) => (
                 <button
                   key={emojiIcon}
                   type="button"
                   onClick={() => setIcon(emojiIcon)}
                   style={{
-                    padding: "8px",
-                    fontSize: "24px",
-                    border: icon === emojiIcon ? "3px solid #8B5CF6" : "2px solid #ddd",
-                    borderRadius: "8px",
-                    background: icon === emojiIcon ? "#f3f4f6" : "white",
+                    padding: "14px",
+                    fontSize: "28px",
+                    border: icon === emojiIcon ? "3px solid #8B5CF6" : "2px solid #e5e7eb",
+                    borderRadius: "12px",
+                    background: icon === emojiIcon ? "#faf5ff" : "white",
                     cursor: "pointer",
                     transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   {emojiIcon}
@@ -238,148 +314,236 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
             </div>
           </div>
 
+          {/* Minute Target with Slider */}
           <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Difficulty
-            </label>
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "16px",
-              }}
-            >
-              <option value="easy">Easy - 5 coins per completion</option>
-              <option value="medium">Medium - 10 coins per completion</option>
-              <option value="hard">Hard - 15 coins per completion</option>
-            </select>
-            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
-              Coins are multiplied by your streak! (3+ days: 1.2x, 7+: 1.5x, 14+: 2x, 30+: 3x)
-            </p>
-          </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+              <label style={{ fontSize: "13px", fontWeight: "500", color: "#666" }}>
+                DAILY TARGET
+              </label>
+              <button
+                type="button"
+                onClick={() => setTrackMinutes(!trackMinutes)}
+                style={{
+                  padding: "4px 10px",
+                  border: "none",
+                  borderRadius: "6px",
+                  background: trackMinutes ? "#8B5CF6" : "#f3f4f6",
+                  color: trackMinutes ? "white" : "#6b7280",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                }}
+              >
+                {trackMinutes ? "✓ Minutes" : "Just track completion"}
+              </button>
+            </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Link to Goal (Optional)
-            </label>
-            <select
-              value={linkedGoalId || ""}
-              onChange={(e) => setLinkedGoalId(e.target.value ? parseInt(e.target.value) : null)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "16px",
-              }}
-            >
-              <option value="">No goal (standalone habit)</option>
-              {goals.map(goal => {
-                const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
-                return (
-                  <option key={goal.id} value={goal.id}>
-                    {goal.title} ({progress}% complete)
-                  </option>
-                );
-              })}
-            </select>
-            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
-              Connect this habit to a goal it helps you achieve. Each completion will count toward your goal!
-            </p>
-            {linkedGoalId && (
-              <div style={{
-                marginTop: "8px",
-                padding: "12px",
-                background: "#e3f2fd",
-                borderRadius: "8px",
-                border: "1px solid #90caf9"
-              }}>
-                <p style={{ fontSize: "14px", color: "#1976d2", margin: 0 }}>
-                  💡 Completing this habit will automatically add +1 to your goal progress!
-                </p>
+            {trackMinutes && (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                  <input
+                    type="range"
+                    min="5"
+                    max="120"
+                    step="5"
+                    value={minuteTarget}
+                    onChange={(e) => setMinuteTarget(parseInt(e.target.value))}
+                    style={{
+                      flex: 1,
+                      height: "6px",
+                      borderRadius: "3px",
+                      outline: "none",
+                      background: `linear-gradient(to right, #8B5CF6 0%, #8B5CF6 ${(minuteTarget / 120) * 100}%, #e5e7eb ${(minuteTarget / 120) * 100}%, #e5e7eb 100%)`,
+                      WebkitAppearance: "none",
+                    }}
+                  />
+                  <div style={{
+                    padding: "8px 16px",
+                    background: "#8B5CF6",
+                    color: "white",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    minWidth: "80px",
+                    textAlign: "center"
+                  }}>
+                    {minuteTarget} min
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
+          {/* Difficulty - Visual Buttons */}
           <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={trackMinutes}
-                onChange={(e) => setTrackMinutes(e.target.checked)}
-                style={{ marginRight: "8px", width: "18px", height: "18px", cursor: "pointer" }}
-              />
-              <span style={{ fontWeight: "500", color: "#000" }}>Track minutes for this habit</span>
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+              DIFFICULTY & COINS
             </label>
-            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
-              Enable a minute counter that you can adjust when completing this habit
-            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              {[
+                { value: "easy" as const, label: "Easy", coins: 5, emoji: "😊" },
+                { value: "medium" as const, label: "Medium", coins: 10, emoji: "💪" },
+                { value: "hard" as const, label: "Hard", coins: 15, emoji: "🔥" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDifficulty(option.value)}
+                  style={{
+                    padding: "12px",
+                    border: difficulty === option.value ? "3px solid #8B5CF6" : "2px solid #e5e7eb",
+                    borderRadius: "12px",
+                    background: difficulty === option.value ? "#faf5ff" : "white",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "24px", marginBottom: "4px" }}>{option.emoji}</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", marginBottom: "2px" }}>{option.label}</div>
+                  <div style={{ fontSize: "13px", color: "#f59e0b", fontWeight: "500" }}>🪙 {option.coins}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
+          {/* Cadence - Visual Buttons */}
           <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-              Cadence
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+              FREQUENCY
             </label>
-            <select
-              value={cadence}
-              onChange={(e) => setCadence(e.target.value as "daily" | "weekly")}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "16px",
-              }}
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={() => setCadence("daily")}
+                style={{
+                  padding: "12px",
+                  border: cadence === "daily" ? "3px solid #8B5CF6" : "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  background: cadence === "daily" ? "#faf5ff" : "white",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s",
+                }}
+              >
+                📅 Daily
+              </button>
+              <button
+                type="button"
+                onClick={() => setCadence("weekly")}
+                style={{
+                  padding: "12px",
+                  border: cadence === "weekly" ? "3px solid #8B5CF6" : "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  background: cadence === "weekly" ? "#faf5ff" : "white",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s",
+                }}
+              >
+                📆 Weekly
+              </button>
+            </div>
           </div>
 
           {cadence === "weekly" && (
             <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
-                Times per week
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+                TIMES PER WEEK: {targetPerWeek}x
               </label>
-              <select
-                value={targetPerWeek || ""}
-                onChange={(e) => setTargetPerWeek(e.target.value ? parseInt(e.target.value) : null)}
+              <input
+                type="range"
+                min="1"
+                max="7"
+                step="1"
+                value={targetPerWeek}
+                onChange={(e) => setTargetPerWeek(parseInt(e.target.value))}
                 style={{
                   width: "100%",
-                  padding: "12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  fontSize: "16px",
+                  height: "6px",
+                  borderRadius: "3px",
+                  outline: "none",
+                  background: `linear-gradient(to right, #8B5CF6 0%, #8B5CF6 ${((targetPerWeek || 1) / 7) * 100}%, #e5e7eb ${((targetPerWeek || 1) / 7) * 100}%, #e5e7eb 100%)`,
+                  WebkitAppearance: "none",
                 }}
-              >
-                <option value="">No target</option>
-                <option value="1">1 time per week</option>
-                <option value="2">2 times per week</option>
-                <option value="3">3 times per week</option>
-                <option value="4">4 times per week</option>
-                <option value="5">5 times per week</option>
-                <option value="6">6 times per week</option>
-                <option value="7">7 times per week</option>
-              </select>
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#9ca3af" }}>
+                <span>1</span>
+                <span>7</span>
+              </div>
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "32px" }}>
+          {/* Link to Goal */}
+          {goals.length > 0 && (
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
+                LINK TO GOAL (OPTIONAL)
+              </label>
+              <select
+                value={linkedGoalId || ""}
+                onChange={(e) => setLinkedGoalId(e.target.value ? parseInt(e.target.value) : null)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  outline: "none",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#8B5CF6"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}
+              >
+                <option value="">None - Standalone habit</option>
+                {goals.map(goal => {
+                  const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
+                  return (
+                    <option key={goal.id} value={goal.id}>
+                      {goal.title} ({progress}%)
+                    </option>
+                  );
+                })}
+              </select>
+              {linkedGoalId && (
+                <div style={{
+                  marginTop: "8px",
+                  padding: "10px 12px",
+                  background: "#eff6ff",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "#3b82f6",
+                }}>
+                  💡 Auto +1 to goal on completion
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: "12px 24px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
+                flex: 1,
+                padding: "14px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
                 background: "white",
                 cursor: "pointer",
-                fontSize: "16px",
-                fontWeight: "500",
+                fontSize: "15px",
+                fontWeight: "600",
+                color: "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f9fafb";
+                e.currentTarget.style.borderColor = "#d1d5db";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#e5e7eb";
               }}
             >
               Cancel
@@ -388,18 +552,26 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
               type="submit"
               disabled={submitting}
               style={{
-                padding: "12px 24px",
+                flex: 2,
+                padding: "14px",
                 border: "none",
-                borderRadius: "8px",
-                background: "#8B5CF6",
+                borderRadius: "12px",
+                background: submitting ? "#9ca3af" : "#8B5CF6",
                 color: "white",
                 cursor: submitting ? "not-allowed" : "pointer",
-                fontSize: "16px",
-                fontWeight: "500",
-                opacity: submitting ? 0.6 : 1,
+                fontSize: "15px",
+                fontWeight: "600",
+                transition: "all 0.2s",
+                boxShadow: submitting ? "none" : "0 4px 12px rgba(139, 92, 246, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting) e.currentTarget.style.background = "#7c3aed";
+              }}
+              onMouseLeave={(e) => {
+                if (!submitting) e.currentTarget.style.background = "#8B5CF6";
               }}
             >
-              {submitting ? "Saving..." : habit ? "Update" : "Create"}
+              {submitting ? "Saving..." : habit ? "✓ Update Habit" : "✓ Create Habit"}
             </button>
           </div>
         </form>
