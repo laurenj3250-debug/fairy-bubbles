@@ -55,14 +55,40 @@ export async function runMigrations() {
 
       // Run incremental migrations
       try {
-        // Add difficulty column if it doesn't exist
+        // Add difficulty column to habits if it doesn't exist
         await db.execute(sql`
           ALTER TABLE habits
           ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
         `);
         console.log('[migrate] ✅ Difficulty column added/verified in habits table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add difficulty column:', error);
+        console.error('[migrate] ⚠️  Failed to add difficulty column to habits:', error);
+      }
+
+      try {
+        // Add difficulty column to goals if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE goals
+          ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
+        `);
+        console.log('[migrate] ✅ Difficulty column added/verified in goals table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add difficulty column to goals:', error);
+      }
+
+      try {
+        // Add difficulty column to todos if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE todos
+          ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
+        `);
+        console.log('[migrate] ✅ Difficulty column added/verified in todos table');
+
+        // Remove old points column from todos if it exists
+        await db.execute(sql`ALTER TABLE todos DROP COLUMN IF EXISTS points`);
+        console.log('[migrate] ✅ Old points column removed from todos table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to migrate todos table:', error);
       }
 
       console.log('[migrate] ℹ️  User data preserved');
@@ -160,7 +186,7 @@ export async function runMigrations() {
         due_date VARCHAR(10),
         completed BOOLEAN NOT NULL DEFAULT false,
         completed_at TIMESTAMP,
-        points INTEGER NOT NULL DEFAULT 10,
+        difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
