@@ -161,6 +161,23 @@ export default function Habits() {
 
   return (
     <div className="min-h-screen pb-20">
+      {/* DEPLOYMENT TEST - YOU SHOULD SEE THIS RED BAR */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        background: 'red',
+        color: 'white',
+        padding: '10px',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        zIndex: 999999999,
+        fontSize: '18px'
+      }}>
+        ⚠️ NEW CODE DEPLOYED - IF YOU SEE THIS, REFRESH WORKED ⚠️
+      </div>
+
       <DashboardHeader />
       
       <main className="max-w-7xl mx-auto p-4 space-y-6">
