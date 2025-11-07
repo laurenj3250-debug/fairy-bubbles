@@ -694,16 +694,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if milestones were crossed and award points
       if (result.milestonesCrossed && result.milestonesCrossed > 0 && result.goal) {
-        const points = result.milestonesCrossed * 5; // 5 points per 10% milestone
+        // Base points per milestone
+        let points = result.milestonesCrossed * 5; // 5 points per 10% milestone
+
+        // Calculate urgency multiplier based on days until deadline
+        const today = new Date();
+        const deadline = new Date(result.goal.deadline);
+        const daysUntil = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+        let urgencyMultiplier = 1.0;
+        if (daysUntil <= 3) {
+          urgencyMultiplier = 2.5; // Last 3 days
+        } else if (daysUntil <= 7) {
+          urgencyMultiplier = 2.0; // Last week
+        } else if (daysUntil <= 14) {
+          urgencyMultiplier = 1.5; // Last 2 weeks
+        }
+
+        // Calculate priority multiplier
+        const priorityMultipliers = {
+          high: 1.5,
+          medium: 1.0,
+          low: 0.75
+        };
+        const priorityMultiplier = priorityMultipliers[result.goal.priority] || 1.0;
+
+        // Apply both multipliers
+        points = Math.round(points * urgencyMultiplier * priorityMultiplier);
+
+        // Build description with multiplier info
+        let description = `Progress on "${result.goal.title}": ${result.goal.currentValue}/${result.goal.targetValue} ${result.goal.unit}`;
+        if (urgencyMultiplier > 1.0 || priorityMultiplier !== 1.0) {
+          const multipliers = [];
+          if (urgencyMultiplier > 1.0) multipliers.push(`${urgencyMultiplier}x urgency`);
+          if (priorityMultiplier !== 1.0) multipliers.push(`${priorityMultiplier}x priority`);
+          description += ` (${multipliers.join(", ")})`;
+        }
+
         await storage.addPoints(
           userId,
           points,
           "goal_progress",
           result.update.id,
-          `Progress on "${result.goal.title}": ${result.goal.currentValue}/${result.goal.targetValue} ${result.goal.unit}`
+          description
         );
       }
-      
+
       res.status(201).json(result.update);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid goal update data" });

@@ -49,6 +49,7 @@ export const goals = pgTable("goals", {
   deadline: varchar("deadline", { length: 10 }).notNull(),
   category: text("category").notNull(),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
+  priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"high" | "medium" | "low">(),
 });
 
 export const goalUpdates = pgTable("goal_updates", {

@@ -121,7 +121,13 @@ export default function Goals() {
       );
     }
 
-    return filtered.sort((a, b) => a.deadline.localeCompare(b.deadline));
+    // Sort by priority first (high > medium > low), then by deadline
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    return filtered.sort((a, b) => {
+      const priorityDiff = priorityOrder[a.priority || "medium"] - priorityOrder[b.priority || "medium"];
+      if (priorityDiff !== 0) return priorityDiff;
+      return a.deadline.localeCompare(b.deadline);
+    });
   }, [goals, activeView, weekDates, monthDates]);
 
   const handleCreateNew = () => {
@@ -386,11 +392,24 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
     borderColor = "border-orange-400/30";
   }
 
+  // Priority styling
+  const isHighPriority = goal.priority === "high";
+  const priorityColors = {
+    high: { bg: "bg-red-500/20", border: "border-red-400/40", text: "text-red-200", icon: "🔥" },
+    medium: { bg: "bg-blue-500/20", border: "border-blue-400/40", text: "text-blue-200", icon: "⭐" },
+    low: { bg: "bg-gray-500/20", border: "border-gray-400/40", text: "text-gray-300", icon: "📌" },
+  };
+  const priorityStyle = priorityColors[goal.priority || "medium"];
+
   return (
     <div
       className={`glass-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500 hover:scale-102 ${
-        isComplete ? 'magical-glow' : ''
+        isComplete ? 'magical-glow' : isHighPriority ? 'magical-glow ring-2 ring-red-400/50' : ''
       }`}
+      style={isHighPriority ? {
+        transform: 'scale(1.02)',
+        boxShadow: '0 0 30px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)',
+      } : {}}
     >
       {/* Gradient accent bar */}
       <div
@@ -399,7 +418,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           top: 0,
           left: 0,
           right: 0,
-          height: '4px',
+          height: isHighPriority ? '6px' : '4px',
           background: `linear-gradient(to right, ${urgencyColor})`,
           boxShadow: `0 2px 10px rgba(139, 92, 246, 0.5)`,
         }}
@@ -408,8 +427,16 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
       <div className="flex items-start gap-5 relative z-10">
         {/* Left side: Main content */}
         <div className="flex-1">
-          {/* Category & Points Badges */}
-          <div className="flex items-center gap-2 mb-3">
+          {/* Priority, Category & Points Badges */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {/* Priority Badge */}
+            <Badge
+              className={`${priorityStyle.bg} backdrop-blur-xl ${priorityStyle.text} border-2 ${priorityStyle.border} font-bold uppercase text-xs`}
+              style={{ fontFamily: "'Quicksand', sans-serif" }}
+            >
+              {priorityStyle.icon} {goal.priority || "medium"} priority
+            </Badge>
+
             {goal.category && (
               <Badge
                 className={`${borderColor} bg-white/10 backdrop-blur-xl ${textColor} border-2`}

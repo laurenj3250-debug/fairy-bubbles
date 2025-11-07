@@ -4,6 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Target, Link as LinkIcon, CheckCircle, AlertCircle, PlusCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { Goal, Habit, HabitLog } from "@shared/schema";
 import { getToday } from "@/lib/utils";
+import { GoalProgressHeatmap } from "./GoalProgressHeatmap";
 
 interface GoalJourneyCardProps {
   goal: Goal;
@@ -187,6 +188,11 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
               <PlusCircle className="w-5 h-5" />
             </button>
           )}
+        </div>
+
+        {/* Progress Heatmap */}
+        <div className="mt-4 bg-white/5 rounded-2xl p-4 border border-white/10">
+          <GoalProgressHeatmap goalId={goal.id} days={30} />
         </div>
 
         {/* Linked Habits Section */}

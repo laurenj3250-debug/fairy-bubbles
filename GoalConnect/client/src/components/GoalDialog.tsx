@@ -1,285 +1,498 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertGoalSchema, type InsertGoal, type Goal } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { formatDateInput } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { X, Target, TrendingUp, AlertCircle } from "lucide-react";
+import type { Goal } from "@shared/schema";
 
 interface GoalDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   goal?: Goal;
 }
 
-export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
-  const { toast } = useToast();
+const formatDateInput = (date: Date) => {
+  return date.toISOString().split("T")[0];
+};
+
+export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
+  const { user } = useAuth();
   const isEdit = !!goal;
 
-  const form = useForm<InsertGoal>({
-    resolver: zodResolver(insertGoalSchema),
-    defaultValues: goal ? {
-      userId: goal.userId,
-      title: goal.title,
-      description: goal.description,
-      targetValue: goal.targetValue,
-      currentValue: goal.currentValue,
-      unit: goal.unit,
-      deadline: goal.deadline,
-      category: goal.category,
-      difficulty: goal.difficulty,
-    } : {
-      userId: 1,
-      title: "",
-      description: "",
-      targetValue: 100,
-      currentValue: 0,
-      unit: "",
-      deadline: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-      category: "",
-      difficulty: "medium" as const,
-    },
-  });
+  const [title, setTitle] = useState(goal?.title || "");
+  const [description, setDescription] = useState(goal?.description || "");
+  const [targetValue, setTargetValue] = useState(goal?.targetValue || 100);
+  const [currentValue, setCurrentValue] = useState(goal?.currentValue || 0);
+  const [unit, setUnit] = useState(goal?.unit || "");
+  const [deadline, setDeadline] = useState(
+    goal?.deadline || formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
+  );
+  const [category, setCategory] = useState(goal?.category || "");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    (goal?.difficulty as "easy" | "medium" | "hard") || "medium"
+  );
+  const [priority, setPriority] = useState<"high" | "medium" | "low">(
+    (goal?.priority as "high" | "medium" | "low") || "medium"
+  );
+  const [submitting, setSubmitting] = useState(false);
 
-  const createMutation = useMutation({
-    mutationFn: (data: InsertGoal) => apiRequest("/api/goals", "POST", data),
-    onSuccess: () => {
+  if (!open) return null;
+
+  const progress = targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setSubmitting(true);
+
+    try {
+      const data = {
+        userId: user.id,
+        title,
+        description,
+        targetValue,
+        currentValue,
+        unit,
+        deadline,
+        category,
+        difficulty,
+        priority,
+      };
+
+      if (isEdit) {
+        await apiRequest(`/api/goals/${goal?.id}`, "PATCH", data);
+      } else {
+        await apiRequest("/api/goals", "POST", data);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/goals"], exact: false });
-      toast({ title: "Goal created", description: "Your new goal has been added" });
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create goal", variant: "destructive" });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data: InsertGoal) => apiRequest(`/api/goals/${goal?.id}`, "PATCH", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/goals"], exact: false });
-      toast({ title: "Goal updated", description: "Your goal has been updated" });
-      onOpenChange(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update goal", variant: "destructive" });
-    },
-  });
-
-  const onSubmit = (data: InsertGoal) => {
-    if (isEdit) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
+      onClose();
+    } catch (error: any) {
+      alert("Failed to save goal: " + (error?.message || "Unknown error"));
+      setSubmitting(false);
     }
   };
 
-  const currentValue = form.watch("currentValue") ?? 0;
-  const targetValue = form.watch("targetValue") ?? 0;
-  const progress = targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="goal-dialog">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Goal" : "Create New Goal"}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? "Update your goal details" : "Set a new goal to track your progress"}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          zIndex: 999998,
+        }}
+      />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Read 12 Books This Year" data-testid="input-goal-title" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          padding: "32px",
+          maxWidth: "500px",
+          width: "90%",
+          maxHeight: "90vh",
+          overflow: "auto",
+          zIndex: 999999,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+          <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#000" }}>
+            {isEdit ? "Edit Goal" : "Create New Goal"}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "8px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              borderRadius: "8px",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#f3f4f6"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+          >
+            <X style={{ width: "20px", height: "20px", color: "#666" }} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* Title */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Goal Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Read 12 Books This Year"
+              required
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
+                fontSize: "16px",
+                outline: "none",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Read at least one book per month"
-                      className="resize-none"
-                      rows={2}
-                      data-testid="input-goal-description"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          {/* Description */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Description (optional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Read at least one book per month"
+              rows={2}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
+                fontSize: "16px",
+                outline: "none",
+                resize: "none",
+                fontFamily: "inherit",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
             />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="currentValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        data-testid="input-goal-current"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="targetValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        data-testid="input-goal-target"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          {/* Current & Target Values */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+                Current Value
+              </label>
+              <input
+                type="number"
+                value={currentValue}
+                onChange={(e) => setCurrentValue(parseFloat(e.target.value))}
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  outline: "none",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="books" data-testid="input-goal-unit" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Learning" data-testid="input-goal-category" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+                Target Value
+              </label>
+              <input
+                type="number"
+                value={targetValue}
+                onChange={(e) => setTargetValue(parseFloat(e.target.value))}
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  outline: "none",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
               />
             </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="deadline"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Deadline</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="date" data-testid="input-goal-deadline" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          {/* Unit & Category */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+                Unit
+              </label>
+              <input
+                type="text"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="books"
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  outline: "none",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+                Category
+              </label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Learning"
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  outline: "none",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+              />
+            </div>
+          </div>
+
+          {/* Deadline */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Deadline
+            </label>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
+                fontSize: "16px",
+                outline: "none",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#8B5CF6")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="difficulty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Difficulty (affects points earned)</FormLabel>
-                  <FormControl>
-                    <div className="flex gap-2">
-                      {(['easy', 'medium', 'hard'] as const).map((diff) => {
-                        const points = diff === 'easy' ? 5 : diff === 'medium' ? 10 : 15;
-                        return (
-                          <button
-                            key={diff}
-                            type="button"
-                            onClick={() => field.onChange(diff)}
-                            className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
-                              field.value === diff
-                                ? 'border-primary bg-primary/10 font-bold'
-                                : 'border-muted hover:border-primary/50'
-                            }`}
-                          >
-                            <div className="text-sm capitalize">{diff}</div>
-                            <div className="text-xs text-muted-foreground">{points} coins</div>
-                          </button>
-                        );
-                      })}
+          {/* Priority Selector */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Priority (affects point multipliers)
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              {(["high", "medium", "low"] as const).map((p) => {
+                const selected = priority === p;
+                const multiplier = p === "high" ? "1.5x" : p === "medium" ? "1.0x" : "0.75x";
+                const bgColor = p === "high" ? "#fee2e2" : p === "medium" ? "#e0e7ff" : "#f3f4f6";
+                const borderColor = p === "high" ? "#ef4444" : p === "medium" ? "#6366f1" : "#9ca3af";
+                const textColor = p === "high" ? "#991b1b" : p === "medium" ? "#3730a3" : "#4b5563";
+
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPriority(p)}
+                    style={{
+                      padding: "12px",
+                      border: `2px solid ${selected ? borderColor : "#e5e7eb"}`,
+                      borderRadius: "12px",
+                      background: selected ? bgColor : "white",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      textAlign: "center",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!selected) {
+                        e.currentTarget.style.borderColor = borderColor;
+                        e.currentTarget.style.background = bgColor;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!selected) {
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                        e.currentTarget.style.background = "white";
+                      }
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: selected ? "700" : "500",
+                        textTransform: "capitalize",
+                        color: selected ? textColor : "#666",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      {p === "high" && <TrendingUp style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} />}
+                      {p === "medium" && <Target style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} />}
+                      {p === "low" && <AlertCircle style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} />}
+                      {p}
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="pt-4 border-t">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Progress Preview</span>
-                <span className="font-semibold">{Math.round(progress)}%</span>
-              </div>
-              <div className="w-full h-2 bg-muted rounded-full mt-2 overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${Math.min(progress, 100)}%` }}
-                />
-              </div>
+                    <div style={{ fontSize: "12px", color: selected ? textColor : "#999" }}>{multiplier} points</div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                data-testid="button-save-goal"
-              >
-                {isEdit ? "Update" : "Create"} Goal
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          {/* Difficulty Selector */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Difficulty (affects points earned)
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              {(["easy", "medium", "hard"] as const).map((diff) => {
+                const points = diff === "easy" ? 5 : diff === "medium" ? 10 : 15;
+                const selected = difficulty === diff;
+                return (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => setDifficulty(diff)}
+                    style={{
+                      padding: "12px",
+                      border: `2px solid ${selected ? "#8B5CF6" : "#e5e7eb"}`,
+                      borderRadius: "12px",
+                      background: selected ? "#f5f3ff" : "white",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      textAlign: "center",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!selected) {
+                        e.currentTarget.style.borderColor = "#8B5CF6";
+                        e.currentTarget.style.background = "#faf5ff";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!selected) {
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                        e.currentTarget.style.background = "white";
+                      }
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: selected ? "700" : "500",
+                        textTransform: "capitalize",
+                        color: selected ? "#6b21a8" : "#666",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      {diff}
+                    </div>
+                    <div style={{ fontSize: "12px", color: selected ? "#7c3aed" : "#999" }}>{points} coins</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Progress Preview */}
+          <div
+            style={{
+              padding: "16px",
+              background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+              borderRadius: "12px",
+              marginBottom: "24px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+              <span style={{ fontSize: "14px", fontWeight: "500", color: "#666" }}>Progress Preview</span>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "#000" }}>{Math.round(progress)}%</span>
+            </div>
+            <div style={{ width: "100%", height: "8px", background: "#d1d5db", borderRadius: "4px", overflow: "hidden" }}>
+              <div
+                style={{
+                  height: "100%",
+                  background: "linear-gradient(90deg, #8B5CF6 0%, #6366f1 100%)",
+                  width: `${Math.min(progress, 100)}%`,
+                  transition: "width 0.3s",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Footer Buttons */}
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                flex: 1,
+                padding: "14px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "12px",
+                background: "white",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "600",
+                color: "#666",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "#9ca3af";
+                e.currentTarget.style.color = "#000";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e5e7eb";
+                e.currentTarget.style.color = "#666";
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                flex: 1,
+                padding: "14px",
+                border: "none",
+                borderRadius: "12px",
+                background: submitting ? "#9ca3af" : "linear-gradient(135deg, #8B5CF6 0%, #6366f1 100%)",
+                cursor: submitting ? "not-allowed" : "pointer",
+                fontSize: "16px",
+                fontWeight: "600",
+                color: "white",
+                transition: "all 0.2s",
+                opacity: submitting ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(139, 92, 246, 0.4)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }
+              }}
+            >
+              {submitting ? "Saving..." : isEdit ? "Update Goal" : "Create Goal"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
