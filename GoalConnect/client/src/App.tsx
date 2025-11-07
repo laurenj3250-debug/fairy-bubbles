@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { EnchantedForestBackground } from "@/components/EnchantedForestBackground";
 import Dashboard from "@/pages/Dashboard";
+import Habits from "@/pages/Habits";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import SignupPage from "@/pages/Signup";
@@ -60,6 +61,12 @@ function AppRoutes() {
       <Route path="/">
         <RequireAuth>
           <Dashboard />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/habits">
+        <RequireAuth>
+          <Habits />
           <BottomNav />
         </RequireAuth>
       </Route>
