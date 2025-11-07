@@ -87,6 +87,19 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to update color column type:', error);
       }
 
+      // Clean up old test habits (RemNote and Pimsleur) from before migration
+      try {
+        const result = await db.execute(sql`
+          DELETE FROM habits
+          WHERE title ILIKE '%remnote%' OR title ILIKE '%pimsleur%'
+        `);
+        if (result.rowCount && result.rowCount > 0) {
+          console.log(`[migrate] ✅ Cleaned up ${result.rowCount} old test habit(s)`);
+        }
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to clean up old habits:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
