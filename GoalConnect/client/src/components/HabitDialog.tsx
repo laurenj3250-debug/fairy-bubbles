@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Habit } from "@shared/schema";
 
@@ -11,7 +10,6 @@ interface HabitDialogProps {
 }
 
 export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
   const [description, setDescription] = useState(habit?.description || "");
@@ -25,7 +23,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
     e.preventDefault();
 
     if (!user) {
-      toast({ title: "Error", description: "You must be logged in", variant: "destructive" });
+      alert("You must be logged in to create habits");
       return;
     }
 
@@ -42,20 +40,14 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
       };
 
-      console.log("Submitting habit data:", data);
-
       if (habit) {
         await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
-        console.log("Habit updated!");
       } else {
         await apiRequest("/api/habits", "POST", data);
-        console.log("Habit created!");
       }
 
-      // Success - just reload the page to show the new habit
       window.location.href = "/habits";
     } catch (error: any) {
-      console.error("Error saving habit:", error);
       alert("Failed to save habit: " + (error?.message || "Unknown error"));
       setSubmitting(false);
     }

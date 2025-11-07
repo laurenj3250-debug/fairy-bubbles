@@ -20,10 +20,6 @@ export default function Habits() {
     queryKey: ["/api/habit-logs", getToday()],
   });
 
-  // Debug logging
-  console.log("Habits data:", habits);
-  console.log("Today logs:", todayLogs);
-
   const deleteHabitMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
     onSuccess: () => {
@@ -109,8 +105,8 @@ export default function Habits() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {habit.title}
+                        <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#000', fontWeight: '700' }}>
+                          {habit.title || "(No title)"}
                           {completed && (
                             <span className="text-green-600">
                               <Check className="w-5 h-5" />
@@ -118,7 +114,7 @@ export default function Habits() {
                           )}
                         </CardTitle>
                         {habit.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="text-sm mt-1" style={{ color: '#666' }}>
                             {habit.description}
                           </p>
                         )}
