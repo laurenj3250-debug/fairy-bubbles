@@ -403,12 +403,11 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
   return (
     <div
-      className={`glass-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500 hover:scale-102 ${
+      className={`glass-card rounded-3xl p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
         isComplete ? 'magical-glow' : isHighPriority ? 'magical-glow ring-2 ring-red-400/50' : ''
       }`}
       style={isHighPriority ? {
-        transform: 'scale(1.02)',
-        boxShadow: '0 0 30px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)',
+        boxShadow: '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.15)',
       } : {}}
     >
       {/* Gradient accent bar */}
@@ -424,11 +423,11 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
         }}
       />
 
-      <div className="flex items-start gap-5 relative z-10">
+      <div className="flex items-start gap-3 relative z-10">
         {/* Left side: Main content */}
         <div className="flex-1">
           {/* Priority, Category & Points Badges */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {/* Priority Badge */}
             <Badge
               className={`${priorityStyle.bg} backdrop-blur-xl ${priorityStyle.text} border-2 ${priorityStyle.border} font-bold uppercase text-xs`}
@@ -455,10 +454,10 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
           {/* Goal Title */}
           <h3
-            className="text-3xl font-extrabold text-white mb-2"
+            className="text-xl font-bold text-white mb-1.5"
             style={{
               fontFamily: "'Comfortaa', cursive",
-              textShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
+              textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
               lineHeight: '1.2',
             }}
           >
@@ -467,29 +466,29 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
           {/* Description */}
           {goal.description && (
-            <p className="text-sm text-white/70 mb-4" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+            <p className="text-sm text-white/70 mb-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
               {goal.description}
             </p>
           )}
 
           {/* Progress Info */}
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3 mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-white">{goal.currentValue}</span>
+              <span className="text-xl font-bold text-white">{goal.currentValue}</span>
               <span className="text-white/60">/</span>
-              <span className="text-xl text-white/80">{goal.targetValue}</span>
+              <span className="text-lg text-white/80">{goal.targetValue}</span>
               <span className="text-sm text-white/60">{goal.unit}</span>
             </div>
 
-            <div className={`px-4 py-2 rounded-full border-2 ${borderColor}`}
+            <div className={`px-3 py-1 rounded-full border-2 ${borderColor}`}
               style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}
             >
-              <span className="text-white font-bold text-lg">{progress}%</span>
+              <span className="text-white font-bold text-base">{progress}%</span>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden mb-4">
+          <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden mb-3">
             <div
               className={`h-full rounded-full transition-all duration-500`}
               style={{
@@ -507,7 +506,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
                 onClick={handleQuickPlusOne}
                 disabled={isAddingProgress}
                 className={cn(
-                  "w-full px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border-2",
+                  "w-full px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border-2 text-sm",
                   isAddingProgress
                     ? "bg-white/5 border-white/20 text-white/40 cursor-not-allowed"
                     : "bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40 hover:scale-102"
@@ -515,7 +514,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
                 style={{ fontFamily: "'Quicksand', sans-serif" }}
               >
                 {isAddingProgress ? "Adding..." : `+1 ${goal.unit}`}
-                <PlusCircle className="w-5 h-5" />
+                <PlusCircle className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -547,15 +546,15 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
         </div>
 
         {/* Right side: Actions */}
-        <div className="flex flex-col gap-3 items-end">
+        <div className="flex flex-col gap-2 items-end">
           {/* Status Icon */}
           {isComplete && (
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-3xl border-2 border-green-400/50"
+              className="w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 border-green-400/50"
               style={{
                 background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(16, 185, 129, 0.3) 100%)',
                 backdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 20px rgba(34, 197, 94, 0.4)'
+                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)'
               }}
             >
               🏆
