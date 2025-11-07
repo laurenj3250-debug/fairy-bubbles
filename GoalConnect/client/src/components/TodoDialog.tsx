@@ -11,6 +11,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,7 +26,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
         title,
         description,
         difficulty,
-        dueDate: null,
+        dueDate: dueDate || null,
         completed: false,
       });
 
@@ -33,6 +34,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setTitle("");
       setDescription("");
+      setDueDate("");
       setDifficulty("medium");
       onOpenChange(false);
     } catch (error) {
@@ -115,6 +117,24 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
                 borderRadius: "8px",
                 fontSize: "16px",
                 resize: "vertical",
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Due Date (optional)
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
               }}
             />
           </div>

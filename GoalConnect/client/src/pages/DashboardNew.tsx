@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { TodoDialog } from "@/components/TodoDialog";
 import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ export default function DashboardNew() {
   const { user } = useAuth();
   const today = getToday();
   const userName = user?.name?.trim() || user?.email?.split("@")[0] || "User";
+  const [todoDialogOpen, setTodoDialogOpen] = useState(false);
 
   // Fetch all data
   const { data: goals = [], isLoading: goalsLoading } = useQuery<Goal[]>({
@@ -267,9 +269,18 @@ export default function DashboardNew() {
                   <Calendar className="w-5 h-5 text-blue-300" />
                   To-Do List
                 </h3>
-                <Badge className="bg-blue-500/30 text-blue-200 font-bold">
-                  {pendingTodos.length} left
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-500/30 text-blue-200 font-bold">
+                    {pendingTodos.length} left
+                  </Badge>
+                  <button
+                    onClick={() => setTodoDialogOpen(true)}
+                    className="w-6 h-6 rounded-full bg-blue-500/30 hover:bg-blue-500/50 flex items-center justify-center text-blue-200 transition-all"
+                    title="Add Todo"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {todayTodos.length === 0 ? (
@@ -278,11 +289,12 @@ export default function DashboardNew() {
                     {todos.length === 0 ? "No todos yet" : "All caught up! 🎉"}
                   </p>
                   <Button
-                    onClick={() => window.location.href = '/habits'}
+                    onClick={() => setTodoDialogOpen(true)}
                     size="sm"
                     variant="outline"
                     className="border-white/30 text-white"
                   >
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Todo
                   </Button>
                 </div>
@@ -375,6 +387,9 @@ export default function DashboardNew() {
           </Button>
         </div>
       </div>
+
+      {/* Todo Dialog */}
+      <TodoDialog open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
     </div>
   );
 }

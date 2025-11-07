@@ -583,7 +583,7 @@ export class MemStorage implements IStorage {
       title: todo.title,
       description: todo.description ?? "",
       dueDate: todo.dueDate ?? null,
-      points: todo.points ?? 10,
+      difficulty: todo.difficulty ?? "medium",
       completed: false,
       completedAt: null,
       createdAt: new Date(),
@@ -601,7 +601,7 @@ export class MemStorage implements IStorage {
       ...update,
       description: update.description ?? todo.description,
       dueDate: update.dueDate ?? todo.dueDate,
-      points: update.points ?? todo.points,
+      difficulty: update.difficulty ?? todo.difficulty,
       completedAt: update.completedAt ?? todo.completedAt,
     };
     this.todos.set(id, updated);
@@ -623,9 +623,12 @@ export class MemStorage implements IStorage {
     };
     this.todos.set(id, updated);
 
+    // Calculate points from difficulty
+    const points = todo.difficulty === "easy" ? 5 : todo.difficulty === "hard" ? 15 : 10;
+
     await this.addPoints(
       todo.userId,
-      todo.points,
+      points,
       "todo_complete",
       id,
       `Completed: ${todo.title}`
