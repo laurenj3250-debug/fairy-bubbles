@@ -9,6 +9,22 @@ interface HabitDialogProps {
   habit?: Habit;
 }
 
+const ICON_OPTIONS = [
+  "💪", "🏃", "📚", "🧘", "💧", "🥗", "😴", "🎨", "✍️", "🎯",
+  "🎵", "🎮", "📱", "💻", "☕", "🌱", "🔥", "⭐", "✨", "🌈"
+];
+
+const COLOR_OPTIONS = [
+  { name: "Cosmic Purple", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+  { name: "Sunset Pink", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
+  { name: "Ocean Blue", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
+  { name: "Fresh Mint", gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" },
+  { name: "Peachy", gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" },
+  { name: "Deep Sea", gradient: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)" },
+  { name: "Cotton Candy", gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" },
+  { name: "Rose Quartz", gradient: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)" },
+];
+
 export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
@@ -16,6 +32,8 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     (habit?.difficulty as "easy" | "medium" | "hard") || "medium"
   );
+  const [icon, setIcon] = useState(habit?.icon || "⭐");
+  const [color, setColor] = useState(habit?.color || COLOR_OPTIONS[0].gradient);
   const [trackMinutes, setTrackMinutes] = useState(false); // TODO: Add to schema
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
   const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || null);
@@ -39,8 +57,8 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         title,
         description: description || "",
         difficulty,
-        icon: "Sparkles",
-        color: "#8B5CF6",
+        icon,
+        color,
         cadence,
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
       };
@@ -133,6 +151,75 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
                 resize: "vertical",
               }}
             />
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Icon
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "8px" }}>
+              {ICON_OPTIONS.map((emojiIcon) => (
+                <button
+                  key={emojiIcon}
+                  type="button"
+                  onClick={() => setIcon(emojiIcon)}
+                  style={{
+                    padding: "8px",
+                    fontSize: "24px",
+                    border: icon === emojiIcon ? "3px solid #8B5CF6" : "2px solid #ddd",
+                    borderRadius: "8px",
+                    background: icon === emojiIcon ? "#f3f4f6" : "white",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {emojiIcon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Color Theme
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+              {COLOR_OPTIONS.map((colorOption) => (
+                <button
+                  key={colorOption.name}
+                  type="button"
+                  onClick={() => setColor(colorOption.gradient)}
+                  style={{
+                    height: "60px",
+                    border: color === colorOption.gradient ? "4px solid #000" : "2px solid #ddd",
+                    borderRadius: "12px",
+                    background: colorOption.gradient,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  {color === colorOption.gradient && (
+                    <div style={{
+                      position: "absolute",
+                      top: "4px",
+                      right: "4px",
+                      background: "white",
+                      borderRadius: "50%",
+                      width: "20px",
+                      height: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "12px",
+                    }}>
+                      ✓
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{ marginBottom: "20px" }}>
