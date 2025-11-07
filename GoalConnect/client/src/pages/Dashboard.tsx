@@ -96,17 +96,13 @@ export default function Dashboard() {
 
   const toggleHabitMutation = useMutation({
     mutationFn: async ({ habitId }: { habitId: number; completed: boolean }) => {
-      console.log('🔄 Toggle clicked:', { habitId, today });
-      const result = await apiRequest("/api/habit-logs/toggle", "POST", {
+      return await apiRequest("/api/habit-logs/toggle", "POST", {
         habitId,
         date: today,
       });
-      console.log('✅ Toggle result:', result);
-      return result;
     },
     // Optimistic update - update UI immediately before server responds
     onMutate: async ({ habitId, completed }) => {
-      console.log('⚡ Optimistic update!');
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/habit-logs", today] });
 
