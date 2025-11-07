@@ -87,6 +87,17 @@ export async function runMigrations() {
         // Remove old points column from todos if it exists
         await db.execute(sql`ALTER TABLE todos DROP COLUMN IF EXISTS points`);
         console.log('[migrate] ✅ Old points column removed from todos table');
+
+        // Add subtasks column if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE todos
+          ADD COLUMN IF NOT EXISTS subtasks TEXT NOT NULL DEFAULT '[]'
+        `);
+        console.log('[migrate] ✅ Subtasks column added/verified in todos table');
+
+        // Remove old description column from todos if it exists
+        await db.execute(sql`ALTER TABLE todos DROP COLUMN IF EXISTS description`);
+        console.log('[migrate] ✅ Old description column removed from todos table');
       } catch (error) {
         console.error('[migrate] ⚠️  Failed to migrate todos table:', error);
       }
@@ -182,11 +193,11 @@ export async function runMigrations() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         title TEXT NOT NULL,
-        description TEXT NOT NULL DEFAULT '',
         due_date VARCHAR(10),
         completed BOOLEAN NOT NULL DEFAULT false,
         completed_at TIMESTAMP,
         difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
+        subtasks TEXT NOT NULL DEFAULT '[]',
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);

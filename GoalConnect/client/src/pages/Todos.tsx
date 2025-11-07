@@ -5,8 +5,14 @@ import type { Todo } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TodoDialog } from "@/components/TodoDialog";
-import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter } from "lucide-react";
+import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 
 export default function Todos() {
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
@@ -35,6 +41,25 @@ export default function Todos() {
   const deleteTodoMutation = useMutation({
     mutationFn: async (id: number) => {
       return await apiRequest(`/api/todos/${id}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+    },
+  });
+
+  const toggleSubtaskMutation = useMutation({
+    mutationFn: async ({ todoId, subtaskId }: { todoId: number; subtaskId: string }) => {
+      const todo = todos.find(t => t.id === todoId);
+      if (!todo) return;
+
+      const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
+      const updatedSubtasks = subtasks.map(st =>
+        st.id === subtaskId ? { ...st, completed: !st.completed } : st
+      );
+
+      return await apiRequest(`/api/todos/${todoId}`, "PATCH", {
+        subtasks: JSON.stringify(updatedSubtasks),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
@@ -175,6 +200,9 @@ export default function Todos() {
               const dueDateInfo = formatDueDate(todo.dueDate);
               const points = todo.difficulty === "easy" ? 5 : todo.difficulty === "hard" ? 15 : 10;
 
+              const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
+              const completedSubtasks = subtasks.filter(st => st.completed).length;
+
               return (
                 <div
                   key={todo.id}
@@ -208,9 +236,35 @@ export default function Todos() {
                       >
                         {todo.title}
                       </h3>
-                      {todo.description && (
-                        <p className="text-white/60 text-sm mb-2">{todo.description}</p>
+
+                      {/* Subtasks */}
+                      {subtasks.length > 0 && (
+                        <div className="mt-2 mb-2 space-y-1">
+                          {subtasks.map((subtask) => (
+                            <button
+                              key={subtask.id}
+                              onClick={() => toggleSubtaskMutation.mutate({ todoId: todo.id, subtaskId: subtask.id })}
+                              disabled={toggleSubtaskMutation.isPending}
+                              className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors w-full text-left"
+                            >
+                              {subtask.completed ? (
+                                <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+                              ) : (
+                                <Circle className="w-4 h-4 flex-shrink-0" />
+                              )}
+                              <span className={cn(subtask.completed && "line-through opacity-60")}>
+                                {subtask.title}
+                              </span>
+                            </button>
+                          ))}
+                          {subtasks.length > 0 && (
+                            <p className="text-xs text-white/50 mt-1">
+                              {completedSubtasks}/{subtasks.length} completed
+                            </p>
+                          )}
+                        </div>
                       )}
+
                       <div className="flex flex-wrap items-center gap-2">
                         {dueDateInfo && (
                           <Badge className="bg-white/10 text-white/80 border-0">
