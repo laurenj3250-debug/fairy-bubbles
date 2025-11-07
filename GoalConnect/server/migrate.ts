@@ -100,6 +100,28 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to clean up old habits:', error);
       }
 
+      // Add linked_goal_id column to todos if it doesn't exist
+      try {
+        await db.execute(sql`
+          ALTER TABLE todos
+          ADD COLUMN IF NOT EXISTS linked_goal_id INTEGER REFERENCES goals(id)
+        `);
+        console.log('[migrate] ✅ Linked goal ID column added/verified in todos table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add linked_goal_id to todos:', error);
+      }
+
+      // Add points column to todos if it doesn't exist (with default based on difficulty)
+      try {
+        await db.execute(sql`
+          ALTER TABLE todos
+          ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 10
+        `);
+        console.log('[migrate] ✅ Points column added/verified in todos table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add points to todos:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -196,6 +218,8 @@ export async function runMigrations() {
         due_date VARCHAR(10),
         completed BOOLEAN NOT NULL DEFAULT false,
         completed_at TIMESTAMP,
+        difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
+        linked_goal_id INTEGER REFERENCES goals(id),
         points INTEGER NOT NULL DEFAULT 10,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )

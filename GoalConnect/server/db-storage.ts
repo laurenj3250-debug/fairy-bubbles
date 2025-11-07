@@ -486,6 +486,28 @@ export class DbStorage implements IStorage {
         id,
         `Completed: ${todo.title}`
       );
+
+      // If linked to a goal, increment goal progress by 1
+      if (todo.linkedGoalId) {
+        const goal = await this.getGoal(todo.linkedGoalId);
+        if (goal && goal.currentValue < goal.targetValue) {
+          await this.db
+            .update(schema.goals)
+            .set({
+              currentValue: goal.currentValue + 1,
+            })
+            .where(eq(schema.goals.id, todo.linkedGoalId));
+
+          // Award goal progress points
+          await this.addPoints(
+            todo.userId,
+            5,
+            "goal_progress",
+            todo.linkedGoalId,
+            `Progress on: ${goal.title}`
+          );
+        }
+      }
     }
 
     return results[0];

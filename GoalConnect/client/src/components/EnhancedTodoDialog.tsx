@@ -4,10 +4,18 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Sparkles } from "lucide-react";
+import { Calendar, Sparkles, Target } from "lucide-react";
+import type { Goal } from "@shared/schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface EnhancedTodoDialogProps {
   open: boolean;
@@ -20,6 +28,13 @@ export function EnhancedTodoDialog({ open, onOpenChange }: EnhancedTodoDialogPro
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [linkedGoalId, setLinkedGoalId] = useState<string>("");
+
+  // Fetch goals for linking
+  const { data: goals = [] } = useQuery<Goal[]>({
+    queryKey: ["/api/goals"],
+    queryFn: () => apiRequest("/api/goals"),
+  });
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -28,6 +43,7 @@ export function EnhancedTodoDialog({ open, onOpenChange }: EnhancedTodoDialogPro
         description,
         dueDate: dueDate || null,
         difficulty,
+        linkedGoalId: linkedGoalId ? parseInt(linkedGoalId) : null,
         completed: false,
       });
     },
@@ -42,6 +58,7 @@ export function EnhancedTodoDialog({ open, onOpenChange }: EnhancedTodoDialogPro
       setDescription("");
       setDueDate("");
       setDifficulty("medium");
+      setLinkedGoalId("");
       onOpenChange(false);
     },
     onError: () => {
@@ -118,6 +135,32 @@ export function EnhancedTodoDialog({ open, onOpenChange }: EnhancedTodoDialogPro
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
+
+          {/* Link to Goal */}
+          {goals.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="linkedGoal" className="flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                Link to Goal (optional)
+              </Label>
+              <Select value={linkedGoalId} onValueChange={setLinkedGoalId}>
+                <SelectTrigger id="linkedGoal">
+                  <SelectValue placeholder="Select a goal..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No goal</SelectItem>
+                  {goals.map((goal) => (
+                    <SelectItem key={goal.id} value={goal.id.toString()}>
+                      {goal.title} ({goal.currentValue}/{goal.targetValue} {goal.unit})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Completing this task will update your goal progress
+              </p>
+            </div>
+          )}
 
           {/* Difficulty */}
           <div className="space-y-2">

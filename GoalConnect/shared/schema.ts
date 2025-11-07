@@ -125,6 +125,8 @@ export const todos = pgTable("todos", {
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
+  linkedGoalId: integer("linked_goal_id").references(() => goals.id),
+  points: integer("points").notNull().default(10),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
