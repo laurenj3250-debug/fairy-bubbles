@@ -13,6 +13,10 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
   const [description, setDescription] = useState(habit?.description || "");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    (habit?.difficulty as "easy" | "medium" | "hard") || "medium"
+  );
+  const [trackMinutes, setTrackMinutes] = useState(false); // TODO: Add to schema
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
   const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || null);
   const [submitting, setSubmitting] = useState(false);
@@ -34,6 +38,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         userId: user.id,
         title,
         description: description || "",
+        difficulty,
         icon: "Sparkles",
         color: "#8B5CF6",
         cadence,
@@ -128,6 +133,45 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
                 resize: "vertical",
               }}
             />
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Difficulty
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
+            >
+              <option value="easy">Easy - 5 coins per completion</option>
+              <option value="medium">Medium - 10 coins per completion</option>
+              <option value="hard">Hard - 15 coins per completion</option>
+            </select>
+            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
+              Coins are multiplied by your streak! (3+ days: 1.2x, 7+: 1.5x, 14+: 2x, 30+: 3x)
+            </p>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={trackMinutes}
+                onChange={(e) => setTrackMinutes(e.target.checked)}
+                style={{ marginRight: "8px", width: "18px", height: "18px", cursor: "pointer" }}
+              />
+              <span style={{ fontWeight: "500", color: "#000" }}>Track minutes for this habit</span>
+            </label>
+            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
+              Enable a minute counter that you can adjust when completing this habit
+            </p>
           </div>
 
           <div style={{ marginBottom: "20px" }}>

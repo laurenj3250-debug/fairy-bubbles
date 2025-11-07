@@ -53,6 +53,18 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to ensure session table:', error);
       }
 
+      // Run incremental migrations
+      try {
+        // Add difficulty column if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
+        `);
+        console.log('[migrate] ✅ Difficulty column added/verified in habits table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add difficulty column:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -91,6 +103,7 @@ export async function runMigrations() {
         color VARCHAR(7) NOT NULL,
         cadence VARCHAR(10) NOT NULL CHECK (cadence IN ('daily', 'weekly')),
         target_per_week INTEGER,
+        difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);

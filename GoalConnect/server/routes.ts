@@ -239,6 +239,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET completion history for a habit (last 7 days)
+  app.get("/api/habits/:habitId/history", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const habitLogs = allLogs.filter(log => log.habitId === habitId && log.completed);
+
+      // Get last 7 days (including today)
+      const history = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        const completed = habitLogs.some(log => log.date === dateString);
+        history.push({
+          date: dateString,
+          completed,
+          dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
+        });
+      }
+
+      res.json({ habitId, history });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get completion history" });
+    }
+  });
+
   // GET habit logs by date (path parameter) - for React Query default queryFn
   app.get("/api/habit-logs/:date", async (req, res) => {
     try {

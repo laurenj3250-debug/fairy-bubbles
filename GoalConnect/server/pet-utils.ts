@@ -132,17 +132,28 @@ export function calculateWeeklyCompletion(
 }
 
 /**
- * Award coins for habit completion
+ * Award coins for habit completion with difficulty and streak multipliers
  */
 export function calculateCoinsEarned(habit: Habit, streak: number): number {
-  let baseCoins = 10; // Base 10 coins per habit
+  // Base coins by difficulty
+  const difficultyCoins: Record<string, number> = {
+    'easy': 5,
+    'medium': 10,
+    'hard': 15
+  };
 
-  // Bonus coins based on streak
-  if (streak >= 30) baseCoins += 15; // 30+ day streak: +15 coins
-  else if (streak >= 14) baseCoins += 10; // 14+ day streak: +10 coins
-  else if (streak >= 7) baseCoins += 5;   // 7+ day streak: +5 coins
+  let baseCoins = difficultyCoins[habit.difficulty || 'medium'] || 10;
 
-  return baseCoins;
+  // Streak multiplier
+  let streakMultiplier = 1.0;
+  if (streak >= 30) streakMultiplier = 3.0;      // 30+ days: 3x bonus! 🔥
+  else if (streak >= 14) streakMultiplier = 2.0; // 14+ days: 2x bonus
+  else if (streak >= 7) streakMultiplier = 1.5;  // 7+ days: 1.5x bonus
+  else if (streak >= 3) streakMultiplier = 1.2;  // 3+ days: 1.2x bonus
+
+  const totalCoins = Math.round(baseCoins * streakMultiplier);
+
+  return totalCoins;
 }
 
 /**
