@@ -3,9 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Sparkles, Clock, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Sparkles, Clock, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { HabitDialog } from "@/components/HabitDialog";
-import { getToday } from "@/lib/utils";
+import { getToday, formatDateInput } from "@/lib/utils";
 
 // Magical Canvas Component (matching Dashboard)
 function MagicalCanvas() {
@@ -94,13 +94,14 @@ export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
   const [completingHabit, setCompletingHabit] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(getToday());
 
   const { data: habits = [], isLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
   });
 
   const { data: todayLogs = [] } = useQuery<HabitLog[]>({
-    queryKey: ["/api/habit-logs", getToday()],
+    queryKey: ["/api/habit-logs", selectedDate],
   });
 
   const deleteHabitMutation = useMutation({
@@ -114,7 +115,7 @@ export default function Habits() {
     mutationFn: async (habitId: number) => {
       return await apiRequest("/api/habit-logs/toggle", "POST", {
         habitId,
-        date: getToday(),
+        date: selectedDate,
       });
     },
     onMutate: (habitId) => {
@@ -127,6 +128,34 @@ export default function Habits() {
     onError: () => {
       setCompletingHabit(null);
     },
+  });
+
+  // Date navigation functions
+  const goToPreviousDay = () => {
+    const date = new Date(selectedDate);
+    date.setDate(date.getDate() - 1);
+    setSelectedDate(formatDateInput(date));
+  };
+
+  const goToNextDay = () => {
+    const date = new Date(selectedDate);
+    date.setDate(date.getDate() + 1);
+    setSelectedDate(formatDateInput(date));
+  };
+
+  const goToToday = () => {
+    setSelectedDate(getToday());
+  };
+
+  const isToday = selectedDate === getToday();
+  const isFuture = selectedDate > getToday();
+
+  // Format the selected date for display
+  const selectedDateDisplay = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
   });
 
   const handleDelete = (id: number) => {
@@ -176,25 +205,67 @@ export default function Habits() {
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Enchanted Header */}
         <div className="glass-card rounded-3xl p-6 mb-6 magical-glow shimmer-effect relative overflow-hidden">
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <h1
-                className="text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 20px rgba(167, 139, 250, 0.8)' }}
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1
+                  className="text-4xl font-bold text-white mb-2"
+                  style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 20px rgba(167, 139, 250, 0.8)' }}
+                >
+                  Your Habits
+                </h1>
+                <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  {habits.length} {habits.length === 1 ? 'habit' : 'habits'} growing strong
+                </p>
+              </div>
+              <Button
+                onClick={handleCreateNew}
+                className="rounded-full px-6 py-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
               >
-                Your Habits
-              </h1>
-              <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                {habits.length} {habits.length === 1 ? 'habit' : 'habits'} growing strong
-              </p>
+                <Plus className="w-5 h-5 mr-2" />
+                <span className="font-semibold">New Habit</span>
+              </Button>
             </div>
-            <Button
-              onClick={handleCreateNew}
-              className="rounded-full px-6 py-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              <span className="font-semibold">New Habit</span>
-            </Button>
+
+            {/* Date Navigator */}
+            <div className="flex items-center justify-between gap-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20">
+              <button
+                onClick={goToPreviousDay}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all border border-white/20"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+
+              <div className="flex-1 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-white/70" />
+                  <span className="text-lg font-bold text-white" style={{ fontFamily: "'Comfortaa', cursive" }}>
+                    {selectedDateDisplay}
+                  </span>
+                </div>
+                {!isToday && (
+                  <button
+                    onClick={goToToday}
+                    className="text-xs text-yellow-300 hover:text-yellow-200 transition-colors font-semibold"
+                    style={{ fontFamily: "'Quicksand', sans-serif" }}
+                  >
+                    Jump to Today
+                  </button>
+                )}
+                {isFuture && (
+                  <span className="text-xs text-orange-300" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                    Future Date
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={goToNextDay}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all border border-white/20"
+              >
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
         </div>
 
