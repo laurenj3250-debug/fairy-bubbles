@@ -5,6 +5,7 @@ import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight } from "lucide-react";
 import { GoalDialog } from "@/components/GoalDialog";
+import { GoalDialogNew } from "@/components/GoalDialogNew";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
 import { Badge } from "@/components/ui/badge";
 import { cn, getToday } from "@/lib/utils";
@@ -318,11 +319,19 @@ export default function Goals() {
         )}
       </div>
 
-      <GoalDialog
-        open={goalDialogOpen}
-        onOpenChange={handleCloseDialog}
-        goal={editingGoal}
-      />
+      {/* Use new dialog for creation, old dialog for editing */}
+      {editingGoal ? (
+        <GoalDialog
+          open={goalDialogOpen}
+          onOpenChange={handleCloseDialog}
+          goal={editingGoal}
+        />
+      ) : (
+        <GoalDialogNew
+          open={goalDialogOpen}
+          onOpenChange={handleCloseDialog}
+        />
+      )}
       <GoalProgressDialog
         open={progressDialogOpen}
         onOpenChange={setProgressDialogOpen}
