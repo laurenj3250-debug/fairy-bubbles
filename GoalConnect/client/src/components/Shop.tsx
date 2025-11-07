@@ -3,16 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Check, Lock } from "lucide-react";
+import { ShoppingCart, Check, Lock, Sparkles } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Costume, UserCostume, UserPoints } from "@shared/schema";
+import type { Costume, UserCostume, UserPoints, VirtualPet } from "@shared/schema";
 
 const RARITY_COLORS = {
   common: "bg-gray-500",
   rare: "bg-blue-500",
   epic: "bg-purple-500",
   legendary: "bg-orange-500",
+};
+
+const EVOLUTION_ORDER = ["seed", "sprout", "sapling", "tree", "ancient"];
+
+const EVOLUTION_NAMES = {
+  seed: "Seed",
+  sprout: "Sprout",
+  sapling: "Sapling",
+  tree: "Tree",
+  ancient: "Ancient"
 };
 
 export function Shop() {
@@ -28,6 +38,10 @@ export function Shop() {
 
   const { data: points } = useQuery<UserPoints>({
     queryKey: ["/api/user-points"],
+  });
+
+  const { data: pet } = useQuery<VirtualPet>({
+    queryKey: ["/api/virtual-pet"],
   });
 
   const purchaseMutation = useMutation({
@@ -62,25 +76,56 @@ export function Shop() {
     return points ? points.available >= price : false;
   };
 
+  const isUnlocked = (costume: Costume) => {
+    if (!pet || !costume.evolutionRequired) return true;
+    const currentEvolutionIndex = EVOLUTION_ORDER.indexOf(pet.evolution);
+    const requiredEvolutionIndex = EVOLUTION_ORDER.indexOf(costume.evolutionRequired);
+    return currentEvolutionIndex >= requiredEvolutionIndex;
+  };
+
   const renderCostume = (costume: Costume) => {
     const owned = isOwned(costume.id);
     const affordable = canAfford(costume.price);
+    const unlocked = isUnlocked(costume);
 
     return (
-      <Card key={costume.id} data-testid={`card-costume-${costume.id}`}>
+      <Card
+        key={costume.id}
+        data-testid={`card-costume-${costume.id}`}
+        className={!unlocked ? "opacity-60 relative overflow-hidden" : ""}
+      >
+        {!unlocked && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 pointer-events-none z-10" />
+        )}
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <CardTitle className="text-base">{costume.name}</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                {costume.name}
+                {!unlocked && <Lock className="w-3 h-3 text-purple-500" />}
+              </CardTitle>
               <CardDescription className="text-xs">{costume.description}</CardDescription>
             </div>
-            <Badge className={RARITY_COLORS[costume.rarity]} data-testid={`badge-rarity-${costume.id}`}>
-              {costume.rarity}
-            </Badge>
+            <div className="flex flex-col gap-1">
+              <Badge className={RARITY_COLORS[costume.rarity]} data-testid={`badge-rarity-${costume.id}`}>
+                {costume.rarity}
+              </Badge>
+              {!unlocked && costume.evolutionRequired && (
+                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  {EVOLUTION_NAMES[costume.evolutionRequired]}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center p-6 bg-gradient-to-b from-muted to-muted/50 rounded-md min-h-[160px]">
+          <div className="flex items-center justify-center p-6 bg-gradient-to-b from-muted to-muted/50 rounded-md min-h-[160px] relative">
+            {!unlocked && (
+              <div className="absolute inset-0 backdrop-blur-sm bg-black/20 rounded-md flex items-center justify-center">
+                <Lock className="w-12 h-12 text-purple-400/50" />
+              </div>
+            )}
             {costume.imageUrl.startsWith('/') || costume.imageUrl.startsWith('http') || costume.imageUrl.includes('generated_images') ? (
               <img
                 src={costume.imageUrl}
@@ -102,7 +147,17 @@ export function Shop() {
           </div>
         </CardContent>
         <CardFooter>
-          {owned ? (
+          {!unlocked ? (
+            <Button
+              className="w-full"
+              variant="outline"
+              disabled
+              data-testid={`button-locked-${costume.id}`}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Unlocks at {EVOLUTION_NAMES[costume.evolutionRequired!]}
+            </Button>
+          ) : owned ? (
             <Button
               className="w-full"
               variant="outline"

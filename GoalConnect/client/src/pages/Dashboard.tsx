@@ -185,7 +185,7 @@ export default function Dashboard() {
         setCelebrationModal({
           open: true,
           title: "✨ Pet Evolved!",
-          description: "Your pet has evolved to a new form!",
+          description: "Your pet has evolved to a new form! New items are now available in the shop!",
           iconName: "sparkles",
         });
       }

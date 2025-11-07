@@ -90,6 +90,7 @@ export const costumes = pgTable("costumes", {
   price: integer("price").notNull(),
   imageUrl: text("image_url").notNull(),
   rarity: varchar("rarity", { length: 20 }).notNull().$type<"common" | "rare" | "epic" | "legendary">(),
+  evolutionRequired: varchar("evolution_required", { length: 20 }).notNull().default("seed").$type<"seed" | "sprout" | "sapling" | "tree" | "ancient">(),
 });
 
 export const userCostumes = pgTable("user_costumes", {
