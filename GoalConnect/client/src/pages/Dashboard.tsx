@@ -8,7 +8,7 @@ import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
 import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
-import { TaskList } from "@/components/TaskList";
+import { TaskListEnhanced } from "@/components/TaskListEnhanced";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -650,7 +650,7 @@ export default function Dashboard() {
 
             {activeTab === "todos" && (
               <div className="fade-in" data-testid="todos-panel">
-                <TaskList variant="full" />
+                <TaskListEnhanced variant="full" />
               </div>
             )}
           </div>
