@@ -12,7 +12,7 @@ export async function runMigrations() {
     const db = getDb();
 
     // Add retry logic for Railway's slow startup
-    let retries = 5;
+    let retries = 10;
     let checkResult;
 
     while (retries > 0) {
@@ -24,12 +24,17 @@ export async function runMigrations() {
             WHERE table_name = 'users'
           ) as users_exists
         `);
+        console.log('[migrate] ✅ Database connection successful');
         break; // Success, exit retry loop
-      } catch (error) {
+      } catch (error: any) {
         retries--;
-        if (retries === 0) throw error;
-        console.log(`[migrate] Database not ready, retrying... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        console.error(`[migrate] ⚠️  Database connection failed:`, error?.message || error);
+        if (retries === 0) {
+          console.error('[migrate] ❌ Failed to connect to database after all retries');
+          throw error;
+        }
+        console.log(`[migrate] Database not ready, retrying in 3 seconds... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
       }
     }
 
