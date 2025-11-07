@@ -348,7 +348,7 @@ function MinutesTracker({ minutes, onMinutesChange }: { minutes: number; onMinut
   );
 }
 
-// Individual Habit Card Component (Enchanted version)
+// Individual Habit Card Component (Redesigned with unique visuals)
 function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, onDelete }: {
   habit: Habit;
   completed: boolean;
@@ -390,6 +390,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
   const isWeekly = habit.cadence === 'weekly';
   const progress = weeklyProgress?.progress || 0;
   const target = weeklyProgress?.targetPerWeek || 3;
+  const progressPercentage = isWeekly ? Math.round((progress / target) * 100) : 0;
 
   const handleMinutesChange = (delta: number) => {
     setMinutes(Math.max(0, minutes + delta));
@@ -429,6 +430,11 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
   const pointsInfo = calculatePointsEarned();
 
+  // Calculate 7-day completion rate for progress bar
+  const completionRate = completionHistory
+    ? Math.round((completionHistory.history.filter(d => d.completed).length / completionHistory.history.length) * 100)
+    : 0;
+
   return (
     <div
       className={`glass-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500 ${
@@ -438,25 +444,31 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
         transform: isCompleting ? 'scale(0.98)' : undefined,
       }}
     >
-      {/* Gradient accent bar matching habit color */}
+      {/* Large gradient background with icon - makes each habit unique */}
       <div
+        className="absolute inset-0 opacity-20"
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
           background: color.bg,
-          boxShadow: `0 2px 10px ${color.bg}`,
         }}
       />
 
       <div className="flex items-start gap-5 relative z-10">
-        {/* Left side: Main content */}
+        {/* Left side: Large Icon for visual differentiation */}
+        <div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 border-2 border-white/30"
+          style={{
+            background: color.bg,
+            boxShadow: `0 4px 20px ${color.bg}80`,
+          }}
+        >
+          {habit.icon}
+        </div>
+
+        {/* Middle: Main content */}
         <div className="flex-1">
-          {/* Habit Name - BIG & BOLD with glow */}
+          {/* Habit Name */}
           <h3
-            className="text-3xl font-extrabold text-white mb-3"
+            className="text-2xl font-extrabold text-white mb-2"
             style={{
               fontFamily: "'Comfortaa', cursive",
               textShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
@@ -466,91 +478,88 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
             {habit.title}
           </h3>
 
-          {/* Visual Progress for Weekly Habits */}
-          {isWeekly && (
-            <div className="mb-4">
-              <div className="flex gap-3 mb-3">
-                {Array.from({ length: target }).map((_, i) => {
-                  const isCompleted = i < progress;
-                  return (
-                    <div
-                      key={i}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-500 border-2 ${
-                        isCompleted
-                          ? 'border-white/50 shadow-lg'
-                          : 'border-white/20'
-                      }`}
-                      style={{
-                        background: isCompleted ? color.bg : 'rgba(255, 255, 255, 0.1)',
-                        color: 'white',
-                        transform: isCompleted ? 'scale(1) rotate(0deg)' : 'scale(0.85)',
-                        boxShadow: isCompleted ? `0 4px 15px ${color.bg}80` : 'none',
-                      }}
-                    >
-                      {isCompleted && '✓'}
-                    </div>
-                  );
-                })}
+          {/* Streak Display - more compact */}
+          <div className="flex items-center gap-3 mb-3">
+            {streak && streak.streak > 0 && (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(239, 68, 68, 0.3) 100%)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <span className="text-lg">🔥</span>
+                <span className="text-white font-bold text-xs" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  {streak.streak} day{streak.streak > 1 ? 's' : ''}
+                </span>
               </div>
-              <p className="text-sm text-white/80 font-semibold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                {progress}/{target} this week {weeklyProgress?.isComplete && (
-                  <span className="ml-2 text-yellow-300" style={{ filter: 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.8))' }}>
-                    ✨ Complete!
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
+            )}
 
-          {/* Streak Display with fire effect */}
-          {streak && streak.streak > 0 && (
+            {/* Points Badge */}
             <div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-3 border-2 border-white/30"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30"
               style={{
-                background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(239, 68, 68, 0.3) 100%)',
+                background: 'rgba(251, 191, 36, 0.2)',
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <span className="text-2xl animate-pulse">🔥</span>
-              <span className="text-white font-bold text-sm" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                {streak.streak} day streak
+              <span className="text-lg">🪙</span>
+              <span className="text-white font-bold text-xs" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                {pointsInfo.points} coins
               </span>
+            </div>
+          </div>
+
+          {/* Progress Bar for Weekly Habits - REPLACING CIRCLES */}
+          {isWeekly && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white/90 font-semibold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  {progress}/{target} this week
+                </p>
+                {weeklyProgress?.isComplete && (
+                  <span className="text-yellow-300 text-sm" style={{ filter: 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.8))' }}>
+                    ✨ Complete!
+                  </span>
+                )}
+              </div>
+              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-xl">
+                <div
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${progressPercentage}%`,
+                    background: color.bg,
+                    boxShadow: `0 0 10px ${color.bg}80`,
+                  }}
+                />
+              </div>
             </div>
           )}
 
-          {/* Completion History (Last 7 Days) */}
+          {/* 7-Day Progress Bar - REPLACING HISTORY CIRCLES */}
           {completionHistory && completionHistory.history.length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs text-white/60 mb-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Last 7 days
-              </p>
-              <div className="flex gap-2">
-                {completionHistory.history.map((day, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300 ${
-                        day.completed
-                          ? 'border-white/50'
-                          : 'border-white/20'
-                      }`}
-                      style={{
-                        background: day.completed ? 'rgba(34, 197, 94, 0.5)' : 'rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        color: 'white',
-                        boxShadow: day.completed ? '0 2px 8px rgba(34, 197, 94, 0.4)' : 'none',
-                      }}
-                      title={day.date}
-                    >
-                      {day.completed ? '✓' : '·'}
-                    </div>
-                    <span className="text-xs text-white/50" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                      {day.dayOfWeek.charAt(0)}
-                    </span>
-                  </div>
-                ))}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs text-white/60" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  Last 7 days
+                </p>
+                <span className="text-xs text-white/80 font-bold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  {completionRate}%
+                </span>
+              </div>
+              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-xl">
+                <div
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${completionRate}%`,
+                    background: completionRate >= 70
+                      ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
+                      : completionRate >= 40
+                      ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
+                      : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)',
+                  }}
+                />
               </div>
             </div>
           )}
@@ -564,36 +573,56 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
           {/* Details */}
           <p className="text-xs text-white/60" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-            {isWeekly ? `${target}× per week` : 'Daily habit'}
+            {isWeekly ? `${target}× per week` : 'Daily habit'} • {habit.difficulty || 'medium'}
           </p>
         </div>
 
-        {/* Right side: Actions */}
+        {/* Right side: New Completion Button - NOT A CIRCLE */}
         <div className="flex flex-col gap-3 items-end relative">
-          {/* Complete Button - Magical */}
+          {/* NEW: Gradient button instead of circle */}
           <button
             onClick={handleToggleWithFeedback}
             disabled={isCompleting}
-            className={`w-16 h-16 rounded-full border-2 flex items-center justify-center text-3xl transition-all duration-500 ${
+            className={`px-6 py-4 rounded-2xl font-bold text-white transition-all duration-500 border-2 ${
               completed
                 ? 'border-white/50'
                 : 'border-white/30 hover:border-white/50'
             }`}
             style={{
-              background: completed ? color.bg : 'rgba(255, 255, 255, 0.1)',
-              color: 'white',
+              background: completed
+                ? color.bg
+                : 'rgba(255, 255, 255, 0.1)',
               cursor: isCompleting ? 'not-allowed' : 'pointer',
-              transform: isCompleting ? 'scale(1.15) rotate(360deg)' : completed ? 'scale(1)' : 'scale(1)',
-              boxShadow: completed ? `0 4px 20px ${color.bg}80, 0 0 30px ${color.bg}60` : '0 2px 10px rgba(0,0,0,0.2)',
+              transform: isCompleting ? 'scale(1.05)' : 'scale(1)',
+              boxShadow: completed
+                ? `0 4px 20px ${color.bg}80, 0 0 30px ${color.bg}60`
+                : '0 2px 10px rgba(0,0,0,0.2)',
+              minWidth: '100px',
+              fontFamily: "'Quicksand', sans-serif",
             }}
           >
-            {completed ? '✓' : '○'}
+            {isCompleting ? (
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 animate-spin" />
+                <span>Done!</span>
+              </div>
+            ) : completed ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✓</span>
+                <span>Done</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                <span>Mark</span>
+              </div>
+            )}
           </button>
 
           {/* Points Earned Feedback */}
           {showPointsFeedback && (
             <div
-              className="absolute -top-16 right-0 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-3 rounded-2xl shadow-lg border-2 border-white/50 animate-bounce"
+              className="absolute -top-20 right-0 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-3 rounded-2xl shadow-lg border-2 border-white/50 animate-bounce z-50"
               style={{
                 fontFamily: "'Quicksand', sans-serif",
                 minWidth: '150px',
@@ -604,12 +633,11 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
               <div className="text-2xl font-bold">+{pointsInfo.points} coins</div>
               {pointsInfo.multiplier > 1 && (
                 <div className="text-xs opacity-90">
-                  {pointsInfo.basePoints} × {pointsInfo.multiplier}x streak bonus!
+                  {pointsInfo.basePoints} × {pointsInfo.multiplier}x streak!
                 </div>
               )}
             </div>
           )}
-
 
           {/* Mini actions */}
           <button
