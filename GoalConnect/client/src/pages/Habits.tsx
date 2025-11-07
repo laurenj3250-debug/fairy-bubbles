@@ -510,29 +510,39 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
             </div>
           </div>
 
-          {/* Progress Bar for Weekly Habits - REPLACING CIRCLES */}
+          {/* Weekly Progress Circles */}
           {isWeekly && (
             <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-white/90 font-semibold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                  {progress}/{target} this week
-                </p>
-                {weeklyProgress?.isComplete && (
-                  <span className="text-yellow-300 text-sm" style={{ filter: 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.8))' }}>
+              <div className="flex gap-2 mb-2">
+                {Array.from({ length: target }).map((_, i) => {
+                  const isCompleted = i < progress;
+                  return (
+                    <div
+                      key={i}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-500 border-2 ${
+                        isCompleted
+                          ? 'border-white/50 shadow-lg'
+                          : 'border-white/20'
+                      }`}
+                      style={{
+                        background: isCompleted ? color.bg : 'rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        transform: isCompleted ? 'scale(1)' : 'scale(0.9)',
+                        boxShadow: isCompleted ? `0 4px 15px ${color.bg}80` : 'none',
+                      }}
+                    >
+                      {isCompleted && '✓'}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-sm text-white/80 font-semibold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                {progress}/{target} this week {weeklyProgress?.isComplete && (
+                  <span className="ml-2 text-yellow-300" style={{ filter: 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.8))' }}>
                     ✨ Complete!
                   </span>
                 )}
-              </div>
-              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-xl">
-                <div
-                  className="h-full transition-all duration-500 rounded-full"
-                  style={{
-                    width: `${progressPercentage}%`,
-                    background: color.bg,
-                    boxShadow: `0 0 10px ${color.bg}80`,
-                  }}
-                />
-              </div>
+              </p>
             </div>
           )}
 
