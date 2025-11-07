@@ -635,6 +635,16 @@
                inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
+  .glass-card-purple {
+    background: linear-gradient(135deg,
+      rgba(168, 85, 247, 0.15) 0%,
+      rgba(139, 92, 246, 0.15) 100%);
+    backdrop-filter: blur(30px) saturate(180%);
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3),
+               inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
   /* Magical Forest Background Styles */
   #magical-forest-container {
     position: fixed;

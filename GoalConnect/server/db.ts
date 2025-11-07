@@ -23,23 +23,35 @@ export function getDb(): Database {
   }
 
   if (!cachedDb || !pool) {
-    const needsSSL =
-      !/localhost|127\.0\.0\.1/.test(connectionString) &&
-      !connectionString.toLowerCase().includes("sslmode=disable");
-
     // Close existing pool if it exists
     if (pool) {
       pool.end().catch(() => {});
     }
 
+    // Determine if we need SSL
+    // SSL is required for remote databases but not localhost
+    const isLocalhost = /localhost|127\.0\.0\.1/.test(connectionString);
+    const hasSSLDisabled = connectionString.toLowerCase().includes("sslmode=disable");
+    const needsSSL = !isLocalhost && !hasSSLDisabled;
+
+    // Railway-optimized connection settings
+    const isRailway = connectionString.includes('railway.internal');
+
     pool = new Pool({
       connectionString,
-      ...(needsSSL ? { ssl: { rejectUnauthorized: false } } : {}),
-      // Serverless-optimized settings
-      max: isServerless ? 1 : 10, // 1 connection for serverless, 10 for traditional
-      idleTimeoutMillis: isServerless ? 0 : 30000, // Close immediately in serverless
-      connectionTimeoutMillis: 10000,
-      allowExitOnIdle: true, // Allow process to exit when connections are idle
+      // SSL configuration
+      ssl: needsSSL ? { rejectUnauthorized: false } : false,
+      // Connection pool settings optimized for Railway
+      max: isServerless ? 1 : (isRailway ? 10 : 10),
+      min: isRailway ? 2 : 0, // Keep 2 connections alive for Railway
+      idleTimeoutMillis: 30000, // Keep idle connections for 30 seconds
+      connectionTimeoutMillis: 10000, // 10 seconds to establish new connection
+      statement_timeout: 30000, // 30 seconds for queries
+      query_timeout: 30000, // 30 seconds for queries
+      allowExitOnIdle: false, // Don't exit while connections exist
+      // Keep connections alive
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 5000,
     });
 
     // Handle pool errors gracefully

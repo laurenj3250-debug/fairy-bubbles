@@ -1,8 +1,18 @@
+// CRITICAL: Set this BEFORE any imports
+// Railway PostgreSQL uses self-signed certificates
+// This must be set before the pg library is loaded
+// We set it unconditionally in production since Railway is our production host
+if (process.env.NODE_ENV === 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.log('[SSL] Disabled TLS verification for production database');
+}
+
 import "./load-env";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { configureAuth } from "./auth";
+import { configureSimpleAuth } from "./simple-auth";
+import { runMigrations } from "./migrate";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
@@ -17,6 +27,13 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
+// CRITICAL: Trust proxy for Railway deployment
+// Railway runs the app behind a proxy, and we need to trust it for:
+// - Secure cookies to work correctly
+// - req.ip to be accurate
+// - req.protocol to be accurate (http vs https)
+app.set('trust proxy', 1);
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
@@ -29,7 +46,7 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
-configureAuth(app);
+configureSimpleAuth(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -62,6 +79,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run database migrations before starting the server
+  if (process.env.DATABASE_URL) {
+    try {
+      await runMigrations();
+    } catch (error) {
+      console.error('[startup] Failed to run migrations:', error);
+      // Continue anyway - the app might still work with existing schema
+    }
+  }
+
   const server = await registerRoutes(app);
 
   // Serve attached assets (costume images, etc.) as static files

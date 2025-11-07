@@ -1,13 +1,12 @@
-import { Home, CheckCircle, Target, ListTodo, Calendar, Heart, ShoppingBag } from "lucide-react";
+import { Home, CheckCircle, Target, Calendar, Heart, ShoppingBag } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/", label: "Dashboard", icon: Home },
+  { path: "/", label: "Home", icon: Home },
+  { path: "/weekly", label: "Weekly", icon: Calendar },
   { path: "/habits", label: "Habits", icon: CheckCircle },
   { path: "/goals", label: "Goals", icon: Target },
-  { path: "/planner", label: "Planner", icon: Calendar },
-  { path: "/todos", label: "Todos", icon: ListTodo },
   { path: "/pet", label: "Pet", icon: Heart },
   { path: "/shop", label: "Shop", icon: ShoppingBag },
 ];

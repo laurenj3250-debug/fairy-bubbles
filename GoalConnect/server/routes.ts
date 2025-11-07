@@ -18,7 +18,7 @@ import {
   calculateWeeklyCompletion,
   calculateCoinsEarned,
 } from "./pet-utils";
-import { requireUser } from "./auth";
+import { requireUser } from "./simple-auth";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -79,10 +79,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const habit = await storage.getHabit(id);
       if (!habit) {
         return res.status(404).json({ error: "Habit not found" });
+      }
+      // Verify ownership
+      if (habit.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(habit);
     } catch (error) {
@@ -103,11 +108,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const habit = await storage.updateHabit(id, req.body);
-      if (!habit) {
+      // Verify ownership before update
+      const existing = await storage.getHabit(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const habit = await storage.updateHabit(id, req.body);
       res.json(habit);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update habit" });
@@ -116,14 +127,244 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/habits/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteHabit(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getHabit(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteHabit(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete habit" });
+    }
+  });
+
+  // GET all habits with enriched data (streak, weekly progress, history) - BATCH ENDPOINT
+  app.get("/api/habits-with-data", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
+      const allLogs = await storage.getAllHabitLogs(userId);
+
+      // Calculate week boundaries once
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+      const today = new Date().toISOString().split('T')[0];
+
+      const habitsWithData = habits.map(habit => {
+        const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
+
+        // Calculate streak
+        let streak = 0;
+        let checkDate = new Date();
+        const sortedLogs = habitLogs.sort((a, b) => b.date.localeCompare(a.date));
+
+        while (true) {
+          const dateString = checkDate.toISOString().split('T')[0];
+          const hasLog = sortedLogs.some(log => log.date === dateString);
+
+          if (!hasLog) {
+            if (streak === 0 && dateString === today) {
+              checkDate.setDate(checkDate.getDate() - 1);
+              continue;
+            }
+            break;
+          }
+
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+          if (streak > 365) break;
+        }
+
+        // Calculate weekly progress
+        let weeklyProgress = null;
+        if (habit.cadence === 'weekly') {
+          const weekLogs = allLogs.filter(log => {
+            if (log.habitId !== habit.id || !log.completed) return false;
+            const logDate = new Date(log.date);
+            return logDate >= monday && logDate <= sunday;
+          });
+          const completedDates = weekLogs.map(log => log.date);
+          const progress = completedDates.length;
+          const target = habit.targetPerWeek || 7;
+
+          weeklyProgress = {
+            habitId: habit.id,
+            weekStart: monday.toISOString().split('T')[0],
+            weekEnd: sunday.toISOString().split('T')[0],
+            targetPerWeek: target,
+            completedDates,
+            progress,
+            isComplete: progress >= target,
+          };
+        }
+
+        // Calculate 7-day history
+        const history = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateString = date.toISOString().split('T')[0];
+          const completed = habitLogs.some(log => log.date === dateString);
+          history.push({
+            date: dateString,
+            completed,
+            dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
+          });
+        }
+
+        return {
+          ...habit,
+          streak: { habitId: habit.id, streak },
+          weeklyProgress,
+          history: { habitId: habit.id, history }
+        };
+      });
+
+      res.json(habitsWithData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get habits with data" });
+    }
+  });
+
+  // GET weekly progress for a habit
+  app.get("/api/habits/:habitId/weekly-progress", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      // Get current week's logs (Monday to Sunday)
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0 = Sunday
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      // Get all logs for this user
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const weekLogs = allLogs.filter(log => {
+        if (log.habitId !== habitId || !log.completed) return false;
+        const logDate = new Date(log.date);
+        return logDate >= monday && logDate <= sunday;
+      });
+
+      const completedDates = weekLogs.map(log => log.date);
+      const progress = completedDates.length;
+      const target = habit.targetPerWeek || 7;
+
+      res.json({
+        habitId,
+        weekStart: monday.toISOString().split('T')[0],
+        weekEnd: sunday.toISOString().split('T')[0],
+        targetPerWeek: target,
+        completedDates,
+        progress,
+        isComplete: progress >= target,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get weekly progress" });
+    }
+  });
+
+  // GET streak for a habit
+  app.get("/api/habits/:habitId/streak", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const habitLogs = allLogs
+        .filter(log => log.habitId === habitId && log.completed)
+        .sort((a, b) => b.date.localeCompare(a.date)); // Sort descending
+
+      let streak = 0;
+      const today = new Date().toISOString().split('T')[0];
+      let checkDate = new Date();
+
+      // Calculate streak going backwards from today
+      while (true) {
+        const dateString = checkDate.toISOString().split('T')[0];
+        const hasLog = habitLogs.some(log => log.date === dateString);
+
+        if (!hasLog) {
+          // If it's today and no log yet, keep checking
+          if (streak === 0 && dateString === today) {
+            checkDate.setDate(checkDate.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+
+        if (streak > 365) break; // Safety limit
+      }
+
+      res.json({ habitId, streak });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get streak" });
+    }
+  });
+
+  // GET completion history for a habit (last 7 days)
+  app.get("/api/habits/:habitId/history", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habitId = parseInt(req.params.habitId);
+
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const habitLogs = allLogs.filter(log => log.habitId === habitId && log.completed);
+
+      // Get last 7 days (including today)
+      const history = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        const completed = habitLogs.some(log => log.date === dateString);
+        history.push({
+          date: dateString,
+          completed,
+          dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
+        });
+      }
+
+      res.json({ habitId, history });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get completion history" });
     }
   });
 
@@ -204,14 +445,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/habit-logs/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const log = await storage.updateHabitLog(id, req.body);
-      if (!log) {
+      // Verify ownership before update
+      const existing = await storage.getHabitLog(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit log not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const log = await storage.updateHabitLog(id, req.body);
 
       // Auto-update pet stats after changing a log
-      const userId = getUserId(req);
       const petUpdate = await updatePetFromHabits(userId);
 
       res.json({
@@ -228,11 +474,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/habit-logs/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteHabitLog(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getHabitLog(id);
+      if (!existing) {
         return res.status(404).json({ error: "Habit log not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteHabitLog(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete habit log" });
@@ -293,6 +545,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             result.id,
             `Completed "${habit.title}"`
           );
+
+          // If habit is linked to a goal, increment goal progress
+          if (habit.linkedGoalId) {
+            const goal = await storage.getGoal(habit.linkedGoalId);
+            if (goal && goal.userId === userId) {
+              const newValue = goal.currentValue + 1;
+              await storage.updateGoal(goal.id, {
+                currentValue: newValue
+              });
+
+              // Create goal update record for tracking
+              await storage.createGoalUpdate({
+                goalId: goal.id,
+                userId: userId,
+                value: 1,
+                date: date,
+                note: `Auto-incremented from habit: ${habit.title}`
+              });
+            }
+          }
+        }
+      }
+
+      // Handle uncompleting and goal decrement
+      if (existingLog && !existingLog.completed && result.completed === false) {
+        const habit = await storage.getHabit(habitId);
+        if (habit?.linkedGoalId) {
+          const goal = await storage.getGoal(habit.linkedGoalId);
+          if (goal && goal.userId === userId && goal.currentValue > 0) {
+            await storage.updateGoal(goal.id, {
+              currentValue: goal.currentValue - 1
+            });
+          }
         }
       }
 
@@ -324,10 +609,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const goal = await storage.getGoal(id);
       if (!goal) {
         return res.status(404).json({ error: "Goal not found" });
+      }
+      // Verify ownership
+      if (goal.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(goal);
     } catch (error) {
@@ -348,11 +638,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const goal = await storage.updateGoal(id, req.body);
-      if (!goal) {
+      // Verify ownership before update
+      const existing = await storage.getGoal(id);
+      if (!existing) {
         return res.status(404).json({ error: "Goal not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const goal = await storage.updateGoal(id, req.body);
       res.json(goal);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });
@@ -361,11 +657,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/goals/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteGoal(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getGoal(id);
+      if (!existing) {
         return res.status(404).json({ error: "Goal not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteGoal(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete goal" });
@@ -510,11 +812,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/pet/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const pet = await storage.updateVirtualPet(id, req.body);
-      if (!pet) {
+      // Verify ownership before update
+      const existing = await storage.getVirtualPet(userId);
+      if (!existing || existing.id !== id) {
         return res.status(404).json({ error: "Pet not found" });
       }
+      const pet = await storage.updateVirtualPet(id, req.body);
       res.json(pet);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update pet" });
@@ -741,10 +1046,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const todo = await storage.getTodo(id);
       if (!todo) {
         return res.status(404).json({ error: "Todo not found" });
+      }
+      // Verify ownership
+      if (todo.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
       }
       res.json(todo);
     } catch (error) {
@@ -768,11 +1078,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const updated = await storage.updateTodo(id, req.body);
-      if (!updated) {
+      // Verify ownership before update
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const updated = await storage.updateTodo(id, req.body);
       res.json(updated);
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -784,11 +1100,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/todos/:id/complete", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const completed = await storage.completeTodo(id);
-      if (!completed) {
+      // Verify ownership before completing
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const completed = await storage.completeTodo(id);
       res.json(completed);
     } catch (error) {
       res.status(500).json({ error: "Failed to complete todo" });
@@ -797,11 +1119,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/todos/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteTodo(id);
-      if (!deleted) {
+      // Verify ownership before delete
+      const existing = await storage.getTodo(id);
+      if (!existing) {
         return res.status(404).json({ error: "Todo not found" });
       }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const deleted = await storage.deleteTodo(id);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete todo" });
