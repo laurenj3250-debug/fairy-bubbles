@@ -8,6 +8,7 @@ import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
 import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { TaskList } from "@/components/TaskList";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -648,14 +649,8 @@ export default function Dashboard() {
             )}
 
             {activeTab === "todos" && (
-              <div className="glass-card rounded-3xl p-16 text-center fade-in">
-                <h2
-                  className="text-3xl font-bold text-white mb-4"
-                  style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
-                >
-                  To-Do List
-                </h2>
-                <p className="text-white/70">Your enchanted tasks will appear here</p>
+              <div className="fade-in" data-testid="todos-panel">
+                <TaskList variant="full" />
               </div>
             )}
           </div>
