@@ -152,7 +152,10 @@ export type InsertHabit = z.infer<typeof insertHabitSchema>;
 export const insertHabitLogSchema = createInsertSchema(habitLogs).omit({ id: true });
 export type InsertHabitLog = z.infer<typeof insertHabitLogSchema>;
 
-export const insertGoalSchema = createInsertSchema(goals).omit({ id: true });
+export const insertGoalSchema = createInsertSchema(goals).omit({ id: true }).extend({
+  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+  priority: z.enum(["high", "medium", "low"]).default("medium"),
+});
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
 
 export const insertGoalUpdateSchema = createInsertSchema(goalUpdates).omit({ id: true });
