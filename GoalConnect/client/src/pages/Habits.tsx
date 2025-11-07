@@ -79,10 +79,25 @@ export default function Habits() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 pb-24">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen p-6 pb-24" style={{ backgroundColor: '#fff', position: 'relative', zIndex: 1 }}>
+      {/* TEST - YOU SHOULD SEE THIS */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        background: 'red',
+        color: 'white',
+        padding: '20px',
+        zIndex: 999999,
+        fontSize: '24px',
+        fontWeight: 'bold'
+      }}>
+        🔴 HABITS PAGE LOADED - {habits.length} HABITS FOUND
+      </div>
+
+      <div className="max-w-4xl mx-auto" style={{ position: 'relative', zIndex: 2 }}>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Habits</h1>
+          <h1 className="text-3xl font-bold" style={{ color: '#000', fontSize: '32px' }}>Habits</h1>
           <Button onClick={handleCreateNew}>
             <Plus className="w-4 h-4 mr-2" />
             New Habit
