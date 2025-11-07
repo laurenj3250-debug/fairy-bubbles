@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Habit } from "@shared/schema";
+import type { Habit, Goal } from "@shared/schema";
 
 interface HabitDialogProps {
   open: boolean;
@@ -39,7 +40,14 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const [trackMinutes, setTrackMinutes] = useState(false); // TODO: Add to schema
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
   const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || null);
+  const [linkedGoalId, setLinkedGoalId] = useState<number | null>(habit?.linkedGoalId || null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch goals for linking
+  const { data: goals = [] } = useQuery<Goal[]>({
+    queryKey: ["/api/goals"],
+    enabled: open,
+  });
 
   if (!open) return null;
 
@@ -63,6 +71,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         color,
         cadence,
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
+        linkedGoalId: linkedGoalId || null,
       };
 
       if (habit) {
@@ -251,6 +260,49 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
             <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
               Coins are multiplied by your streak! (3+ days: 1.2x, 7+: 1.5x, 14+: 2x, 30+: 3x)
             </p>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#000" }}>
+              Link to Goal (Optional)
+            </label>
+            <select
+              value={linkedGoalId || ""}
+              onChange={(e) => setLinkedGoalId(e.target.value ? parseInt(e.target.value) : null)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
+            >
+              <option value="">No goal (standalone habit)</option>
+              {goals.map(goal => {
+                const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
+                return (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.title} ({progress}% complete)
+                  </option>
+                );
+              })}
+            </select>
+            <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "4px" }}>
+              Connect this habit to a goal it helps you achieve. Each completion will count toward your goal!
+            </p>
+            {linkedGoalId && (
+              <div style={{
+                marginTop: "8px",
+                padding: "12px",
+                background: "#e3f2fd",
+                borderRadius: "8px",
+                border: "1px solid #90caf9"
+              }}>
+                <p style={{ fontSize: "14px", color: "#1976d2", margin: 0 }}>
+                  💡 Completing this habit will automatically add +1 to your goal progress!
+                </p>
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: "20px" }}>

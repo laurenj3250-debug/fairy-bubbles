@@ -545,6 +545,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             result.id,
             `Completed "${habit.title}"`
           );
+
+          // If habit is linked to a goal, increment goal progress
+          if (habit.linkedGoalId) {
+            const goal = await storage.getGoal(habit.linkedGoalId);
+            if (goal && goal.userId === userId) {
+              const newValue = goal.currentValue + 1;
+              await storage.updateGoal(goal.id, {
+                currentValue: newValue
+              });
+
+              // Create goal update record for tracking
+              await storage.createGoalUpdate({
+                goalId: goal.id,
+                userId: userId,
+                value: 1,
+                date: date,
+                note: `Auto-incremented from habit: ${habit.title}`
+              });
+            }
+          }
+        }
+      }
+
+      // Handle uncompleting and goal decrement
+      if (existingLog && !existingLog.completed && result.completed === false) {
+        const habit = await storage.getHabit(habitId);
+        if (habit?.linkedGoalId) {
+          const goal = await storage.getGoal(habit.linkedGoalId);
+          if (goal && goal.userId === userId && goal.currentValue > 0) {
+            await storage.updateGoal(goal.id, {
+              currentValue: goal.currentValue - 1
+            });
+          }
         }
       }
 

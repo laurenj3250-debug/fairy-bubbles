@@ -7,13 +7,14 @@ import { AchievementSpotlight } from "@/components/AchievementSpotlight";
 import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
 import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
-import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown } from "lucide-react";
+import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Habit, HabitLog } from "@shared/schema";
+import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo, useEffect } from "react";
 import { getToday, calculateStreak } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,6 +93,10 @@ export default function Dashboard() {
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", today],
+  });
+
+  const { data: goals = [], isLoading: goalsLoading } = useQuery<Goal[]>({
+    queryKey: ["/api/goals"],
   });
 
   const toggleHabitMutation = useMutation({
@@ -398,6 +403,54 @@ export default function Dashboard() {
         <div className="mb-6">
           <AchievementSpotlight achievements={achievements} autoRotate={true} intervalMs={6000} />
         </div>
+
+        {/* Active Goals Section - NEW! */}
+        {goals.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-3xl font-extrabold text-white flex items-center gap-3"
+                style={{
+                  fontFamily: "'Comfortaa', cursive",
+                  textShadow: '0 0 20px rgba(167, 139, 250, 0.8)'
+                }}
+              >
+                <Target className="w-8 h-8 text-purple-300" />
+                Your Active Goals
+              </h2>
+              <Button
+                onClick={() => setGoalDialogOpen(true)}
+                className="rounded-full px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                + New Goal
+              </Button>
+            </div>
+
+            <div className="grid gap-6">
+              {goals
+                .filter(goal => {
+                  const progress = (goal.currentValue / goal.targetValue) * 100;
+                  return progress < 100; // Only show incomplete goals
+                })
+                .slice(0, 3) // Show max 3 goals on dashboard
+                .map(goal => (
+                  <GoalJourneyCard key={goal.id} goal={goal} />
+                ))}
+            </div>
+
+            {goals.filter(g => (g.currentValue / g.targetValue) * 100 < 100).length > 3 && (
+              <div className="text-center mt-4">
+                <Button
+                  onClick={() => window.location.href = '/goals'}
+                  variant="ghost"
+                  className="text-white/70 hover:text-white"
+                >
+                  View All Goals →
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Week at a Glance */}
         <div className="mb-6">

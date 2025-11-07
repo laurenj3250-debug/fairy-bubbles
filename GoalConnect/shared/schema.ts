@@ -16,10 +16,11 @@ export const habits = pgTable("habits", {
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
   icon: text("icon").notNull(),
-  color: varchar("color", { length: 7 }).notNull(),
+  color: text("color").notNull(),
   cadence: varchar("cadence", { length: 10 }).notNull().$type<"daily" | "weekly">(),
   targetPerWeek: integer("target_per_week"),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
+  linkedGoalId: integer("linked_goal_id").references(() => goals.id),
 });
 
 export const habitLogs = pgTable("habit_logs", {
