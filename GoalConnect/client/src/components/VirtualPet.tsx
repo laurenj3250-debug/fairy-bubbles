@@ -97,7 +97,7 @@ export function VirtualPet() {
   const [isBouncing, setIsBouncing] = useState(false);
 
   const { data: pet, isLoading } = useQuery<VirtualPetType>({
-    queryKey: ["/api/pet"],
+    queryKey: ["/api/virtual-pet"],
   });
 
   const { data: stats } = useQuery<{ currentStreak: number; weeklyCompletion: number }>({
@@ -109,7 +109,7 @@ export function VirtualPet() {
   });
 
   const { data: userPoints } = useQuery<UserPoints>({
-    queryKey: ["/api/points"],
+    queryKey: ["/api/user-points"],
   });
 
   // Trigger bounce animation when points change

@@ -524,30 +524,7 @@ export default function Dashboard() {
           {/* Left Sidebar */}
           <div className="flex flex-col gap-6">
             {/* Enchanted Pet Card */}
-            <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow">
-              <div className="relative z-10">
-                <VirtualPet />
-                <h3
-                  className="text-xl font-bold bg-gradient-to-r from-green-300 via-emerald-400 to-purple-400 bg-clip-text text-transparent mb-3"
-                  style={{ fontFamily: "'Comfortaa', cursive" }}
-                >
-                  Your Forest Friend
-                </h3>
-                <Badge className="rounded-full px-5 py-2 text-sm font-semibold bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 text-green-200 backdrop-blur-xl mb-6 shadow-lg">
-                  Growing Steadily
-                </Badge>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">{currentStreak}</div>
-                    <div className="text-xs text-white/80">Day Streak</div>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
-                    <div className="text-2xl font-bold text-white mb-1">{Math.round((completedCount / totalCount) * 100)}%</div>
-                    <div className="text-xs text-white/80">This Week</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <VirtualPet />
 
             {/* Magical Insights */}
             <div className="glass-card-pink rounded-3xl p-6 magical-glow" style={{animationDelay: '1s'}}>
