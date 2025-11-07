@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Habit, HabitLog, Goal } from "@shared/schema";
+import type { Habit, HabitLog, Goal, Todo } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Calendar, Target, Flame, Trophy, Sparkles, ChevronDown, ChevronUp, Zap, Crown } from "lucide-react";
+import { Calendar, Target, Flame, Trophy, Sparkles, ChevronDown, ChevronUp, Zap, Crown, Clock, CheckSquare, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getToday } from "@/lib/utils";
@@ -58,6 +58,10 @@ export default function WeeklyView() {
 
   const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
+  });
+
+  const { data: todos = [] } = useQuery<Todo[]>({
+    queryKey: ["/api/todos"],
   });
 
   // Get current week (Monday to Sunday)
@@ -140,9 +144,66 @@ export default function WeeklyView() {
   const weeklyGoals = useMemo(() => {
     return goals.filter(goal => {
       const deadline = goal.deadline;
-      return deadline >= weekDates[0].date && deadline <= weekDates[6].date;
+      return deadline >= weekDates[0]?.date && deadline <= weekDates[6]?.date;
     });
   }, [goals, weekDates]);
+
+  // This week's todos
+  const weeklyTodos = useMemo(() => {
+    return todos.filter(todo => {
+      if (todo.completed) return false;
+      if (!todo.dueDate) return false;
+      return todo.dueDate >= weekDates[0]?.date && todo.dueDate <= weekDates[6]?.date;
+    });
+  }, [todos, weekDates]);
+
+  // Combined upcoming deadlines (goals + todos) sorted by urgency
+  const upcomingDeadlines = useMemo(() => {
+    const items: Array<{
+      type: 'goal' | 'todo';
+      id: number;
+      title: string;
+      deadline: string;
+      daysUntil: number;
+      isUrgent: boolean;
+      progress?: number;
+    }> = [];
+
+    // Add goals
+    weeklyGoals.forEach(goal => {
+      const daysUntil = Math.ceil(
+        (new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
+      items.push({
+        type: 'goal',
+        id: goal.id,
+        title: goal.title,
+        deadline: goal.deadline,
+        daysUntil,
+        isUrgent: daysUntil <= 2,
+        progress
+      });
+    });
+
+    // Add todos
+    weeklyTodos.forEach(todo => {
+      const daysUntil = Math.ceil(
+        (new Date(todo.dueDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
+      items.push({
+        type: 'todo',
+        id: todo.id,
+        title: todo.title,
+        deadline: todo.dueDate!,
+        daysUntil,
+        isUrgent: daysUntil <= 1,
+      });
+    });
+
+    // Sort by deadline (soonest first)
+    return items.sort((a, b) => a.deadline.localeCompare(b.deadline));
+  }, [weeklyGoals, weeklyTodos]);
 
   const handleToggle = (habitId: number, date: string) => {
     toggleHabitMutation.mutate({ habitId, date });
@@ -226,42 +287,126 @@ export default function WeeklyView() {
           </div>
         </div>
 
-        {/* This Week's Goals */}
-        {weeklyGoals.length > 0 && (
-          <div className="glass-card-purple rounded-3xl p-6 mb-6 magical-glow">
-            <h3
-              className="text-lg font-bold text-white mb-4 flex items-center gap-2"
-              style={{ fontFamily: "'Comfortaa', cursive" }}
-            >
-              <Target className="w-5 h-5 text-purple-300" />
-              This Week's Focus
-            </h3>
-            <div className="space-y-3">
-              {weeklyGoals.map(goal => {
-                const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
-                return (
-                  <div key={goal.id} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-white font-semibold" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                        {goal.title}
-                      </span>
-                      <span className="text-white font-bold">{progress}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-400 to-pink-400 rounded-full transition-all"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Deadlines & Focus */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Upcoming Deadlines */}
+            <div className="glass-card-pink rounded-3xl p-6 magical-glow">
+              <h3
+                className="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                style={{ fontFamily: "'Comfortaa', cursive" }}
+              >
+                <Clock className="w-5 h-5 text-orange-300" />
+                This Week's Deadlines
+              </h3>
 
-        {/* Week Grid */}
-        <div className="grid grid-cols-7 gap-3">
+              {upcomingDeadlines.length === 0 ? (
+                <p className="text-white/60 text-sm text-center py-4" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                  No deadlines this week! 🎉
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingDeadlines.map(item => {
+                    let urgencyBg = "bg-white/5";
+                    let urgencyBorder = "border-white/20";
+                    let urgencyText = "text-white/80";
+
+                    if (item.isUrgent) {
+                      urgencyBg = "bg-red-500/20";
+                      urgencyBorder = "border-red-400/50";
+                      urgencyText = "text-red-200";
+                    } else if (item.daysUntil <= 3) {
+                      urgencyBg = "bg-orange-500/20";
+                      urgencyBorder = "border-orange-400/50";
+                      urgencyText = "text-orange-200";
+                    }
+
+                    return (
+                      <div
+                        key={`${item.type}-${item.id}`}
+                        className={cn(
+                          "backdrop-blur-xl rounded-2xl p-3 border-2 transition-all",
+                          urgencyBg,
+                          urgencyBorder
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            {item.type === 'goal' ? (
+                              <Target className="w-4 h-4 text-purple-300 mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <CheckSquare className="w-4 h-4 text-blue-300 mt-0.5 flex-shrink-0" />
+                            )}
+                            <span className="text-white font-semibold text-sm" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                              {item.title}
+                            </span>
+                          </div>
+                          {item.isUrgent && (
+                            <AlertCircle className="w-4 h-4 text-red-300 flex-shrink-0" />
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs ml-6">
+                          <span className={urgencyText} style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                            {item.daysUntil === 0 ? "Due Today!" :
+                             item.daysUntil === 1 ? "Due Tomorrow" :
+                             `${item.daysUntil} days left`}
+                          </span>
+                          {item.progress !== undefined && (
+                            <span className="text-white/70 font-bold">{item.progress}%</span>
+                          )}
+                        </div>
+
+                        {item.progress !== undefined && (
+                          <div className="w-full h-1 bg-white/20 rounded-full mt-2 ml-6 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"
+                              style={{ width: `${Math.min(item.progress, 100)}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Incomplete Todos */}
+            {weeklyTodos.length > 0 && (
+              <div className="glass-card-blue rounded-3xl p-6 magical-glow">
+                <h3
+                  className="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                  style={{ fontFamily: "'Comfortaa', cursive" }}
+                >
+                  <CheckSquare className="w-5 h-5 text-blue-300" />
+                  To-Dos ({weeklyTodos.length})
+                </h3>
+                <div className="space-y-2">
+                  {weeklyTodos.slice(0, 5).map(todo => (
+                    <div
+                      key={todo.id}
+                      className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20"
+                    >
+                      <span className="text-white text-sm" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                        {todo.title}
+                      </span>
+                    </div>
+                  ))}
+                  {weeklyTodos.length > 5 && (
+                    <p className="text-xs text-white/60 text-center pt-1">
+                      +{weeklyTodos.length - 5} more
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Week Grid */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-7 gap-3">
           {dayStats.map((day) => (
             <DayCard
               key={day.date}

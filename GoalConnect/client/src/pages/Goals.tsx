@@ -339,28 +339,22 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
   onAddProgress: () => void;
   onDelete: () => void;
 }) {
-  const [quickProgress, setQuickProgress] = useState("");
   const [isAddingProgress, setIsAddingProgress] = useState(false);
 
   const progress = Math.round((goal.currentValue / goal.targetValue) * 100);
   const isComplete = progress >= 100;
 
-  const handleQuickProgress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = parseInt(quickProgress);
-    if (isNaN(value) || value <= 0) return;
-
+  const handleQuickPlusOne = async () => {
     setIsAddingProgress(true);
     try {
       const today = getToday();
       await apiRequest("/api/goal-updates", "POST", {
         goalId: goal.id,
         userId: goal.userId,
-        value: value,
+        value: 1,
         date: today,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
-      setQuickProgress("");
       setIsAddingProgress(false);
     } catch (error) {
       setIsAddingProgress(false);
@@ -471,36 +465,24 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
             />
           </div>
 
-          {/* Quick Progress Input */}
+          {/* Quick +1 Progress Button */}
           {!isComplete && (
-            <form onSubmit={handleQuickProgress} className="mb-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  value={quickProgress}
-                  onChange={(e) => setQuickProgress(e.target.value)}
-                  placeholder={`Add ${goal.unit}...`}
-                  disabled={isAddingProgress}
-                  className="flex-1 px-4 py-2 bg-white/10 border-2 border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition-all"
-                  style={{ fontFamily: "'Quicksand', sans-serif" }}
-                />
-                <button
-                  type="submit"
-                  disabled={!quickProgress || isAddingProgress}
-                  className={cn(
-                    "px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all border-2",
-                    quickProgress && !isAddingProgress
-                      ? "bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40"
-                      : "bg-white/5 border-white/20 text-white/40 cursor-not-allowed"
-                  )}
-                  style={{ fontFamily: "'Quicksand', sans-serif" }}
-                >
-                  {isAddingProgress ? "Adding..." : "Add"}
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+            <div className="mb-4">
+              <button
+                onClick={handleQuickPlusOne}
+                disabled={isAddingProgress}
+                className={cn(
+                  "w-full px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border-2",
+                  isAddingProgress
+                    ? "bg-white/5 border-white/20 text-white/40 cursor-not-allowed"
+                    : "bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40 hover:scale-102"
+                )}
+                style={{ fontFamily: "'Quicksand', sans-serif" }}
+              >
+                {isAddingProgress ? "Adding..." : `+1 ${goal.unit}`}
+                <PlusCircle className="w-5 h-5" />
+              </button>
+            </div>
           )}
 
           {/* Deadline */}
