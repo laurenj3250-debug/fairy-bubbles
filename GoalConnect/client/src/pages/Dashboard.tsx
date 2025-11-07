@@ -18,7 +18,7 @@ import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo, useEffect } from "react";
 import { getToday, calculateStreak } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HabitDialog } from "@/components/HabitDialog";
+import { HabitDialogNew as HabitDialog } from "@/components/HabitDialogNew";
 import { GoalDialog } from "@/components/GoalDialog";
 import { HabitLogDialog } from "@/components/HabitLogDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
