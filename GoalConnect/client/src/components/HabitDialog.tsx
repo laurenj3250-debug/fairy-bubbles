@@ -38,6 +38,18 @@ const QUICK_TEMPLATES = [
   { title: "Climb", icon: "🧗", minutes: 60, difficulty: "hard" as const },
 ];
 
+const UNIT_OPTIONS = [
+  { value: "minutes", label: "minutes", presets: [10, 20, 30, 60] },
+  { value: "lessons", label: "lessons", presets: [0.5, 1, 2, 3] },
+  { value: "pages", label: "pages", presets: [5, 10, 20, 50] },
+  { value: "sets", label: "sets", presets: [1, 2, 3, 5] },
+  { value: "reps", label: "reps", presets: [10, 20, 30, 50] },
+  { value: "chapters", label: "chapters", presets: [1, 2, 3, 5] },
+  { value: "hours", label: "hours", presets: [0.5, 1, 2, 3] },
+  { value: "km", label: "km", presets: [1, 3, 5, 10] },
+  { value: "miles", label: "miles", presets: [1, 3, 5, 10] },
+];
+
 export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
@@ -47,8 +59,9 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const [icon, setIcon] = useState(habit?.icon || "⭐");
   const [color, setColor] = useState(habit?.color || COLOR_OPTIONS[0].gradient);
   const [iconCategory, setIconCategory] = useState<keyof typeof ICON_CATEGORIES>("Health");
-  const [trackMinutes, setTrackMinutes] = useState(false);
-  const [minuteTarget, setMinuteTarget] = useState(30);
+  const [hasTarget, setHasTarget] = useState(false);
+  const [targetAmount, setTargetAmount] = useState<number>(30);
+  const [targetUnit, setTargetUnit] = useState<string>("minutes");
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
   const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || 3);
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(habit?.linkedGoalId || null);
@@ -66,8 +79,9 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
     setTitle(template.title);
     setIcon(template.icon);
     setDifficulty(template.difficulty);
-    setTrackMinutes(true);
-    setMinuteTarget(template.minutes);
+    setHasTarget(true);
+    setTargetAmount(template.minutes);
+    setTargetUnit("minutes");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +95,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
     setSubmitting(true);
 
     try {
-      const habitDescription = trackMinutes ? `${minuteTarget} minutes` : "";
+      const habitDescription = hasTarget ? `${targetAmount} ${targetUnit}` : "";
 
       const data = {
         userId: user.id,
@@ -314,25 +328,27 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
             </div>
           </div>
 
-          {/* Minute Target */}
+          {/* Target Amount & Unit */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
               DAILY TARGET (OPTIONAL)
             </label>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              {/* Amount input */}
               <input
                 type="number"
                 min="0"
-                max="300"
-                step="5"
-                value={trackMinutes ? minuteTarget : ""}
+                max="1000"
+                step="0.5"
+                value={hasTarget ? targetAmount : ""}
                 onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
+                  const val = parseFloat(e.target.value);
                   if (val > 0) {
-                    setTrackMinutes(true);
-                    setMinuteTarget(val);
-                  } else {
-                    setTrackMinutes(false);
+                    setHasTarget(true);
+                    setTargetAmount(val);
+                  } else if (e.target.value === "") {
+                    setHasTarget(false);
                   }
                 }}
                 placeholder="0"
@@ -349,23 +365,51 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
                 onFocus={(e) => e.currentTarget.style.borderColor = "#8B5CF6"}
                 onBlur={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}
               />
-              <span style={{ fontSize: "16px", fontWeight: "500", color: "#6b7280" }}>minutes per day</span>
 
-              {/* Quick preset buttons */}
-              <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
-                {[10, 20, 30, 60].map(mins => (
+              {/* Unit selector */}
+              <select
+                value={targetUnit}
+                onChange={(e) => setTargetUnit(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: "14px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#8B5CF6"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}
+              >
+                {UNIT_OPTIONS.map(unit => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quick preset buttons based on selected unit */}
+            {hasTarget && (
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "12px", color: "#9ca3af", marginRight: "4px", alignSelf: "center" }}>
+                  Quick:
+                </span>
+                {UNIT_OPTIONS.find(u => u.value === targetUnit)?.presets.map(preset => (
                   <button
-                    key={mins}
+                    key={preset}
                     type="button"
                     onClick={() => {
-                      setTrackMinutes(true);
-                      setMinuteTarget(mins);
+                      setHasTarget(true);
+                      setTargetAmount(preset);
                     }}
                     style={{
-                      padding: "8px 12px",
-                      border: trackMinutes && minuteTarget === mins ? "2px solid #8B5CF6" : "2px solid #e5e7eb",
+                      padding: "6px 12px",
+                      border: targetAmount === preset ? "2px solid #8B5CF6" : "2px solid #e5e7eb",
                       borderRadius: "8px",
-                      background: trackMinutes && minuteTarget === mins ? "#faf5ff" : "white",
+                      background: targetAmount === preset ? "#faf5ff" : "white",
                       cursor: "pointer",
                       fontSize: "13px",
                       fontWeight: "500",
@@ -373,13 +417,14 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
                       transition: "all 0.2s",
                     }}
                   >
-                    {mins}
+                    {preset}
                   </button>
                 ))}
               </div>
-            </div>
+            )}
+
             <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px", marginLeft: "2px" }}>
-              Leave at 0 to just track completion without a time goal
+              e.g., "0.5 lessons" for half a Pimsleur lesson, "20 pages" for reading
             </p>
           </div>
 
