@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Habit } from "@shared/schema";
 
 interface HabitDialogProps {
@@ -11,6 +12,7 @@ interface HabitDialogProps {
 
 export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [title, setTitle] = useState(habit?.title || "");
   const [description, setDescription] = useState(habit?.description || "");
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
@@ -21,11 +23,17 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in", variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const data = {
-        userId: 1,
+        userId: user.id,
         title,
         description: description || "",
         icon: "Sparkles",
