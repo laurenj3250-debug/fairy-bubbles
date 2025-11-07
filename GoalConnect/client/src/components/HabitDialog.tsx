@@ -53,23 +53,32 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         console.log("Habit created:", result);
       }
 
-      // Success - refresh and close
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      // Success - reset form
       setTitle("");
       setDescription("");
       setCadence("daily");
       setTargetPerWeek(null);
-      onClose();
 
-      // Show success message AFTER closing to avoid toast issues
-      setTimeout(() => {
-        if (toast && typeof toast === 'function') {
-          toast({
-            title: habit ? "Updated!" : "Created!",
-            description: habit ? "Habit updated successfully" : "Habit created successfully"
-          });
+      // Refresh habits list
+      try {
+        queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      } catch (e) {
+        console.error("Failed to invalidate queries:", e);
+      }
+
+      // Close dialog
+      try {
+        if (onClose && typeof onClose === 'function') {
+          onClose();
         }
-      }, 100);
+      } catch (e) {
+        console.error("Failed to close dialog:", e);
+      }
+
+      // Reload page as fallback to show new habit
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error: any) {
       console.error("Error saving habit:", error);
       console.error("Error details:", {
