@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { EnchantedForestBackground } from "@/components/EnchantedForestBackground";
-import Dashboard from "@/pages/Dashboard";
+import Dashboard from "@/pages/DashboardNew";
 import Habits from "@/pages/Habits";
 import Goals from "@/pages/Goals";
 import WeeklyView from "@/pages/WeeklyView";
