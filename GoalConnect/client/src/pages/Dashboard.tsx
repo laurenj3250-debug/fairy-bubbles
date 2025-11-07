@@ -328,25 +328,7 @@ export default function Dashboard() {
     );
   }
 
-  if (habits.length === 0) {
-    return (
-      <div className="min-h-screen enchanted-bg flex items-center justify-center p-6">
-        <MagicalCanvas />
-        <div className="relative z-10">
-          <EmptyState
-            icon={CheckCircle}
-            title="Ready to build something awesome?"
-            description="Let's create your first habit and start your journey to greatness!"
-            actionLabel="Start a new habit"
-            onAction={handleFabClick}
-          />
-        </div>
-        <FAB onClick={handleFabClick} />
-        <HabitDialog open={habitDialogOpen} onOpenChange={setHabitDialogOpen} />
-        <GoalDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen} />
-      </div>
-    );
-  }
+  // Skip empty state - just show regular dashboard even with no habits
 
   return (
     <div className="min-h-screen enchanted-bg overflow-x-hidden">
