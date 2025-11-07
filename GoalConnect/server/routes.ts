@@ -144,6 +144,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET all habits with enriched data (streak, weekly progress, history) - BATCH ENDPOINT
+  app.get("/api/habits-with-data", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
+      const allLogs = await storage.getAllHabitLogs(userId);
+
+      // Calculate week boundaries once
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+      const today = new Date().toISOString().split('T')[0];
+
+      const habitsWithData = habits.map(habit => {
+        const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
+
+        // Calculate streak
+        let streak = 0;
+        let checkDate = new Date();
+        const sortedLogs = habitLogs.sort((a, b) => b.date.localeCompare(a.date));
+
+        while (true) {
+          const dateString = checkDate.toISOString().split('T')[0];
+          const hasLog = sortedLogs.some(log => log.date === dateString);
+
+          if (!hasLog) {
+            if (streak === 0 && dateString === today) {
+              checkDate.setDate(checkDate.getDate() - 1);
+              continue;
+            }
+            break;
+          }
+
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+          if (streak > 365) break;
+        }
+
+        // Calculate weekly progress
+        let weeklyProgress = null;
+        if (habit.cadence === 'weekly') {
+          const weekLogs = allLogs.filter(log => {
+            if (log.habitId !== habit.id || !log.completed) return false;
+            const logDate = new Date(log.date);
+            return logDate >= monday && logDate <= sunday;
+          });
+          const completedDates = weekLogs.map(log => log.date);
+          const progress = completedDates.length;
+          const target = habit.targetPerWeek || 7;
+
+          weeklyProgress = {
+            habitId: habit.id,
+            weekStart: monday.toISOString().split('T')[0],
+            weekEnd: sunday.toISOString().split('T')[0],
+            targetPerWeek: target,
+            completedDates,
+            progress,
+            isComplete: progress >= target,
+          };
+        }
+
+        // Calculate 7-day history
+        const history = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateString = date.toISOString().split('T')[0];
+          const completed = habitLogs.some(log => log.date === dateString);
+          history.push({
+            date: dateString,
+            completed,
+            dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
+          });
+        }
+
+        return {
+          ...habit,
+          streak: { habitId: habit.id, streak },
+          weeklyProgress,
+          history: { habitId: habit.id, history }
+        };
+      });
+
+      res.json(habitsWithData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get habits with data" });
+    }
+  });
+
   // GET weekly progress for a habit
   app.get("/api/habits/:habitId/weekly-progress", async (req, res) => {
     try {

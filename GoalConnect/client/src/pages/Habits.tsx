@@ -90,14 +90,20 @@ interface CompletionHistory {
   }>;
 }
 
+interface HabitWithData extends Habit {
+  streak: HabitStreak;
+  weeklyProgress: WeeklyProgress | null;
+  history: CompletionHistory;
+}
+
 export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
   const [completingHabit, setCompletingHabit] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
 
-  const { data: habits = [], isLoading } = useQuery<Habit[]>({
-    queryKey: ["/api/habits"],
+  const { data: habits = [], isLoading } = useQuery<HabitWithData[]>({
+    queryKey: ["/api/habits-with-data"],
   });
 
   const { data: todayLogs = [] } = useQuery<HabitLog[]>({
@@ -107,7 +113,7 @@ export default function Habits() {
   const deleteHabitMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
     },
   });
 
@@ -123,6 +129,7 @@ export default function Habits() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
       setTimeout(() => setCompletingHabit(null), 800);
     },
     onError: () => {
@@ -350,7 +357,7 @@ function MinutesTracker({ minutes, onMinutesChange }: { minutes: number; onMinut
 
 // Individual Habit Card Component (Redesigned with unique visuals)
 function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, onDelete }: {
-  habit: Habit;
+  habit: HabitWithData;
   completed: boolean;
   color: { bg: string; name: string };
   isCompleting: boolean;
@@ -362,30 +369,10 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
   const [showMinutes] = useState(false); // TODO: Add this to habit settings
   const [showPointsFeedback, setShowPointsFeedback] = useState(false);
 
-  const { data: streak } = useQuery<HabitStreak>({
-    queryKey: [`/api/habits/${habit.id}/streak`],
-    queryFn: async () => {
-      const res = await fetch(`/api/habits/${habit.id}/streak`, { credentials: 'include' });
-      return res.json();
-    },
-  });
-
-  const { data: weeklyProgress } = useQuery<WeeklyProgress>({
-    queryKey: [`/api/habits/${habit.id}/weekly-progress`],
-    queryFn: async () => {
-      const res = await fetch(`/api/habits/${habit.id}/weekly-progress`, { credentials: 'include' });
-      return res.json();
-    },
-    enabled: habit.cadence === 'weekly',
-  });
-
-  const { data: completionHistory } = useQuery<CompletionHistory>({
-    queryKey: [`/api/habits/${habit.id}/history`],
-    queryFn: async () => {
-      const res = await fetch(`/api/habits/${habit.id}/history`, { credentials: 'include' });
-      return res.json();
-    },
-  });
+  // Data now comes from the habit prop (batch fetched)
+  const streak = habit.streak;
+  const weeklyProgress = habit.weeklyProgress;
+  const completionHistory = habit.history;
 
   const isWeekly = habit.cadence === 'weekly';
   const progress = weeklyProgress?.progress || 0;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Habit } from "@shared/schema";
 
@@ -71,7 +71,12 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         await apiRequest("/api/habits", "POST", data);
       }
 
-      window.location.href = "/habits";
+      // Invalidate cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+
+      // Close dialog
+      onClose();
     } catch (error: any) {
       alert("Failed to save habit: " + (error?.message || "Unknown error"));
       setSubmitting(false);
