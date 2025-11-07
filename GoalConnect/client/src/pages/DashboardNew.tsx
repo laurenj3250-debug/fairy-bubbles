@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { EnhancedTodoDialog } from "@/components/EnhancedTodoDialog";
 import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import type { Goal, Habit, HabitLog, Todo } from "@shared/schema";
 import { getToday } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import confetti from "canvas-confetti";
 
 interface HabitWithData extends Habit {
   streak?: { habitId: number; streak: number };
@@ -20,6 +22,7 @@ export default function DashboardNew() {
   const { user } = useAuth();
   const today = getToday();
   const userName = user?.name?.trim() || user?.email?.split("@")[0] || "User";
+  const [showTodoDialog, setShowTodoDialog] = useState(false);
 
   // Fetch all data
   const { data: goals = [], isLoading: goalsLoading } = useQuery<Goal[]>({
@@ -53,17 +56,23 @@ export default function DashboardNew() {
     },
   });
 
-  // Toggle todo mutation
-  const toggleTodoMutation = useMutation({
+  // Complete todo mutation
+  const completeTodoMutation = useMutation({
     mutationFn: async (todoId: number) => {
-      const todo = todos.find(t => t.id === todoId);
-      if (!todo) return;
-      return await apiRequest(`/api/todos/${todoId}`, "PATCH", {
-        completed: !todo.completed,
-      });
+      return await apiRequest(`/api/todos/${todoId}/complete`, "POST");
     },
-    onSuccess: () => {
+    onSuccess: (data: Todo) => {
+      // Fire confetti!
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FFA500', '#FF69B4', '#87CEEB'],
+      });
+
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
     },
   });
 
@@ -267,9 +276,19 @@ export default function DashboardNew() {
                   <Calendar className="w-5 h-5 text-blue-300" />
                   To-Do List
                 </h3>
-                <Badge className="bg-blue-500/30 text-blue-200 font-bold">
-                  {pendingTodos.length} left
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-500/30 text-blue-200 font-bold">
+                    {pendingTodos.length} left
+                  </Badge>
+                  <Button
+                    onClick={() => setShowTodoDialog(true)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-white/70 hover:text-white hover:bg-white/10 h-7 px-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               {todayTodos.length === 0 ? (
@@ -278,12 +297,13 @@ export default function DashboardNew() {
                     {todos.length === 0 ? "No todos yet" : "All caught up! 🎉"}
                   </p>
                   <Button
-                    onClick={() => window.location.href = '/habits'}
+                    onClick={() => setShowTodoDialog(true)}
                     size="sm"
                     variant="outline"
-                    className="border-white/30 text-white"
+                    className="border-white/30 text-white hover:bg-white/10"
                   >
-                    Add Todo
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Task
                   </Button>
                 </div>
               ) : (
@@ -292,13 +312,18 @@ export default function DashboardNew() {
                     <div
                       key={todo.id}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl bg-white/5"
+                        "flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
                       )}
                     >
                       <button
-                        onClick={() => toggleTodoMutation.mutate(todo.id)}
-                        disabled={toggleTodoMutation.isPending}
-                        className="w-6 h-6 rounded border-2 border-white/30 hover:border-blue-400 transition-all flex items-center justify-center text-xs"
+                        onClick={() => !todo.completed && completeTodoMutation.mutate(todo.id)}
+                        disabled={todo.completed || completeTodoMutation.isPending}
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center text-xs",
+                          todo.completed
+                            ? "bg-green-500 border-green-400 cursor-not-allowed"
+                            : "border-white/30 hover:border-blue-400 hover:scale-110 cursor-pointer"
+                        )}
                       >
                         {todo.completed && "✓"}
                       </button>
@@ -375,6 +400,9 @@ export default function DashboardNew() {
           </Button>
         </div>
       </div>
+
+      {/* Task Creation Dialog */}
+      <EnhancedTodoDialog open={showTodoDialog} onOpenChange={setShowTodoDialog} />
     </div>
   );
 }
