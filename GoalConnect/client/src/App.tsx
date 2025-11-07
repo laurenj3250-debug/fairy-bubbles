@@ -6,15 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { EnchantedForestBackground } from "@/components/EnchantedForestBackground";
 import Dashboard from "@/pages/Dashboard";
-import Habits from "@/pages/Habits";
-import Goals from "@/pages/Goals";
-import TodoList from "@/pages/TodoList";
-import Calendar from "@/pages/Calendar";
-import Planner from "@/pages/Planner";
-import Analytics from "@/pages/Analytics";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
-import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -70,42 +63,6 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
-      <Route path="/habits">
-        <RequireAuth>
-          <Habits />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/goals">
-        <RequireAuth>
-          <Goals />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/todos">
-        <RequireAuth>
-          <TodoList />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/planner">
-        <RequireAuth>
-          <Planner />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/analytics">
-        <RequireAuth>
-          <Analytics />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/calendar">
-        <RequireAuth>
-          <Calendar />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
       <Route path="/pet">
         <RequireAuth>
           <Pet />
@@ -115,12 +72,6 @@ function AppRoutes() {
       <Route path="/shop">
         <RequireAuth>
           <ShopPage />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/settings">
-        <RequireAuth>
-          <Settings />
           <BottomNav />
         </RequireAuth>
       </Route>
