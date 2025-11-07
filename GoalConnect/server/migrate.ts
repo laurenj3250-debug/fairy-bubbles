@@ -65,6 +65,28 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to add difficulty column:', error);
       }
 
+      // Add linked_goal_id column if it doesn't exist
+      try {
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS linked_goal_id INTEGER REFERENCES goals(id)
+        `);
+        console.log('[migrate] ✅ Linked goal ID column added/verified in habits table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add linked_goal_id column:', error);
+      }
+
+      // Change color column to support gradients
+      try {
+        await db.execute(sql`
+          ALTER TABLE habits
+          ALTER COLUMN color TYPE TEXT
+        `);
+        console.log('[migrate] ✅ Color column type updated in habits table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to update color column type:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -100,10 +122,11 @@ export async function runMigrations() {
         title TEXT NOT NULL,
         description TEXT NOT NULL DEFAULT '',
         icon TEXT NOT NULL,
-        color VARCHAR(7) NOT NULL,
+        color TEXT NOT NULL,
         cadence VARCHAR(10) NOT NULL CHECK (cadence IN ('daily', 'weekly')),
         target_per_week INTEGER,
         difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
+        linked_goal_id INTEGER REFERENCES goals(id),
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
