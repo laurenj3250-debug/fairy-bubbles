@@ -22,7 +22,7 @@ export function TaskListEnhanced({ variant = "full" }: TaskListProps) {
   // Fetch todos
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
-    queryFn: () => apiRequest("/api/todos"),
+    queryFn: () => apiRequest("/api/todos", "GET"),
   });
 
   // Update local state when remote data changes

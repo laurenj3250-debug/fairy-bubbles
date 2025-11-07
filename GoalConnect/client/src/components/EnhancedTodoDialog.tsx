@@ -33,7 +33,7 @@ export function EnhancedTodoDialog({ open, onOpenChange }: EnhancedTodoDialogPro
   // Fetch goals for linking
   const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
-    queryFn: () => apiRequest("/api/goals"),
+    queryFn: () => apiRequest("/api/goals", "GET"),
   });
 
   const createMutation = useMutation({
