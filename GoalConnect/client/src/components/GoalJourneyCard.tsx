@@ -10,7 +10,7 @@ interface GoalJourneyCardProps {
 }
 
 export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingProgress, setIsAddingProgress] = useState(false);
   const today = getToday();
 
@@ -90,7 +90,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
   }
 
   return (
-    <div className={`glass-card rounded-3xl p-6 relative overflow-hidden transition-all duration-300 ${percentage >= 100 ? 'magical-glow' : ''}`}>
+    <div className={`glass-card rounded-2xl p-4 relative overflow-hidden transition-all duration-300 ${percentage >= 100 ? 'magical-glow' : ''}`}>
       {/* Gradient accent bar */}
       <div
         style={{
@@ -98,22 +98,22 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
           top: 0,
           left: 0,
           right: 0,
-          height: '4px',
+          height: '3px',
           background: `linear-gradient(to right, ${urgencyColor})`,
         }}
       />
 
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="w-6 h-6 text-purple-300" />
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="w-5 h-5 text-purple-300" />
               <h3
-                className="text-2xl font-extrabold text-white"
+                className="text-lg font-bold text-white"
                 style={{
                   fontFamily: "'Comfortaa', cursive",
-                  textShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
+                  textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
                 }}
               >
                 {goal.title}
@@ -121,16 +121,16 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
             </div>
 
             {/* Progress */}
-            <div className="mb-3">
-              <div className="flex justify-between mb-2">
-                <span className="text-white/80 text-lg font-semibold">
+            <div className="mb-2">
+              <div className="flex justify-between mb-1">
+                <span className="text-white/80 text-sm font-medium">
                   {goal.currentValue}/{goal.targetValue} {goal.unit}
                 </span>
-                <span className="text-white/80 text-lg font-bold">
+                <span className="text-white/80 text-sm font-bold">
                   {percentage}%
                 </span>
               </div>
-              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -143,33 +143,33 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
             </div>
 
             {/* Status Indicator */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1.5 mb-2">
               {percentage >= 100 ? (
                 <>
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-green-400 text-sm font-semibold">
+                  <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-green-400 text-xs font-semibold">
                     Complete! 🎉
                   </span>
                 </>
               ) : onTrack ? (
                 <>
-                  <CheckCircle className="w-4 h-4 text-blue-400" />
-                  <span className="text-blue-400 text-sm font-semibold">
-                    On track • {daysLeft} days left
+                  <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-blue-400 text-xs font-medium">
+                    On track • {daysLeft}d left
                   </span>
                 </>
               ) : (
                 <>
-                  <AlertCircle className="w-4 h-4 text-orange-400" />
-                  <span className="text-orange-400 text-sm font-semibold">
-                    Need {Math.ceil(rateNeeded)} per day • {daysLeft} days left
+                  <AlertCircle className="w-3.5 h-3.5 text-orange-400" />
+                  <span className="text-orange-400 text-xs font-medium">
+                    Need {Math.ceil(rateNeeded)}/day • {daysLeft}d left
                   </span>
                 </>
               )}
             </div>
 
             {goal.description && (
-              <p className="text-sm text-white/60 mb-3" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+              <p className="text-xs text-white/60 mb-2 line-clamp-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
                 {goal.description}
               </p>
             )}
@@ -180,45 +180,45 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
             <button
               onClick={handleQuickPlusOne}
               disabled={isAddingProgress}
-              className="px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all border-2 bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40 hover:scale-105 disabled:opacity-50"
+              className="px-3 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all border-2 bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40 hover:scale-105 disabled:opacity-50 text-sm"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
-              {isAddingProgress ? "Adding..." : `+1 ${goal.unit}`}
-              <PlusCircle className="w-5 h-5" />
+              {isAddingProgress ? "..." : `+1`}
+              <PlusCircle className="w-4 h-4" />
             </button>
           )}
         </div>
 
         {/* Linked Habits Section */}
         {linkedHabits.length > 0 && (
-          <div className="mt-4 bg-white/5 rounded-2xl p-4 border border-white/10">
+          <div className="mt-3 bg-white/5 rounded-xl p-3 border border-white/10">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between mb-3 text-left"
+              className="w-full flex items-center justify-between mb-2 text-left"
             >
-              <h4 className="text-sm font-bold text-white/70 flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" />
-                Contributing Habits ({linkedHabits.length})
+              <h4 className="text-xs font-semibold text-white/70 flex items-center gap-1.5">
+                <LinkIcon className="w-3.5 h-3.5" />
+                Habits ({linkedHabits.length})
               </h4>
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-white/50" />
+                <ChevronUp className="w-3.5 h-3.5 text-white/50" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-white/50" />
+                <ChevronDown className="w-3.5 h-3.5 text-white/50" />
               )}
             </button>
 
             {isExpanded && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {linkedHabits.map(habit => {
                   const completedToday = isHabitCompletedToday(habit.id);
                   return (
                     <div
                       key={habit.id}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
+                      className="flex items-center justify-between p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-all"
                     >
-                      <div className="flex items-center gap-3 flex-1">
+                      <div className="flex items-center gap-2 flex-1">
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl border-2 border-white/20"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-sm border border-white/20"
                           style={{
                             background: habit.color,
                           }}
@@ -226,11 +226,11 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                           {habit.icon}
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-xs font-medium text-white">
                             {habit.title}
                           </div>
-                          <div className="text-xs text-white/50">
-                            {habit.cadence === 'daily' ? 'Daily' : `${habit.targetPerWeek}x per week`}
+                          <div className="text-xs text-white/40">
+                            {habit.cadence === 'daily' ? 'Daily' : `${habit.targetPerWeek}x/wk`}
                           </div>
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                       <button
                         onClick={() => toggleHabitMutation.mutate(habit.id)}
                         disabled={toggleHabitMutation.isPending}
-                        className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                        className={`w-8 h-8 rounded-md border-2 transition-all text-sm ${
                           completedToday
                             ? 'bg-green-500/30 border-green-400/50 text-green-200'
                             : 'border-white/30 hover:border-green-400 hover:bg-green-500/20 text-white/70'
@@ -256,12 +256,12 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
         )}
 
         {linkedHabits.length === 0 && (
-          <div className="mt-4 p-4 bg-white/5 rounded-xl border-2 border-dashed border-white/20 text-center">
-            <p className="text-sm text-white/60 mb-2">
-              No habits linked to this goal yet
+          <div className="mt-3 p-3 bg-white/5 rounded-lg border-2 border-dashed border-white/20 text-center">
+            <p className="text-xs text-white/60 mb-1">
+              No habits linked yet
             </p>
             <p className="text-xs text-white/40">
-              Link habits when creating/editing them to track progress automatically!
+              Link habits to track progress!
             </p>
           </div>
         )}
