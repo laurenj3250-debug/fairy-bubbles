@@ -48,28 +48,15 @@ export default function BiomeExploration() {
   const [eventResult, setEventResult] = useState<EventResult | null>(null);
   const [interactedObjects, setInteractedObjects] = useState<Set<string>>(new Set());
 
-  // Interactive objects in the scene - ENCHANTED FOREST theme
+  // Interactive objects in the scene - ENCHANTED FOREST theme (fewer, more spread out)
   const [objects] = useState<InteractiveObject[]>([
-    { id: 'crystal1', x: 150, emoji: '💎', name: 'Glowing Crystal', size: 50 },
-    { id: 'mushroom1', x: 220, emoji: '🍄', name: 'Magic Mushroom', size: 55 },
-    { id: 'tree1', x: 300, emoji: '🌲', name: 'Ancient Tree', size: 90 },
-    { id: 'flower1', x: 380, emoji: '🌸', name: 'Enchanted Blossom', size: 45 },
-    { id: 'sparkles1', x: 450, emoji: '✨', name: 'Fairy Dust', size: 40 },
-    { id: 'rock1', x: 520, emoji: '🪨', name: 'Rune Stone', size: 55 },
-    { id: 'crystal2', x: 590, emoji: '💠', name: 'Crystal Cluster', size: 48 },
-    { id: 'tree2', x: 670, emoji: '🌳', name: 'Willow Tree', size: 95 },
-    { id: 'mushroom2', x: 750, emoji: '🍄', name: 'Glowcap', size: 50 },
-    { id: 'flower2', x: 820, emoji: '🌺', name: 'Moonflower', size: 46 },
-    { id: 'butterfly1', x: 890, emoji: '🦋', name: 'Spirit Butterfly', size: 42 },
-    { id: 'star1', x: 960, emoji: '⭐', name: 'Fallen Star', size: 38 },
-    { id: 'tree3', x: 1030, emoji: '🌲', name: 'Pine Guardian', size: 88 },
-    { id: 'crystal3', x: 1100, emoji: '💎', name: 'Power Crystal', size: 52 },
-    { id: 'flower3', x: 1170, emoji: '🌼', name: 'Sunburst Flower', size: 44 },
-    { id: 'mushroom3', x: 1240, emoji: '🍄', name: 'Fairy Ring', size: 58 },
-    { id: 'sparkles2', x: 1310, emoji: '✨', name: 'Magic Wisps', size: 42 },
-    { id: 'flower4', x: 1380, emoji: '🌸', name: 'Cherry Blossoms', size: 47 },
-    { id: 'tree4', x: 1450, emoji: '🌳', name: 'Elder Oak', size: 100 },
-    { id: 'crystal4', x: 1520, emoji: '💠', name: 'Mystic Gem', size: 50 },
+    { id: 'crystal1', x: 200, emoji: '💎', name: 'Glowing Crystal', size: 55 },
+    { id: 'mushroom1', x: 400, emoji: '🍄', name: 'Magic Mushroom', size: 60 },
+    { id: 'tree1', x: 600, emoji: '🌲', name: 'Ancient Tree', size: 95 },
+    { id: 'sparkles1', x: 800, emoji: '✨', name: 'Fairy Dust', size: 45 },
+    { id: 'flower1', x: 1000, emoji: '🌺', name: 'Moonflower', size: 50 },
+    { id: 'rock1', x: 1200, emoji: '🪨', name: 'Rune Stone', size: 60 },
+    { id: 'butterfly1', x: 1400, emoji: '🦋', name: 'Spirit Butterfly', size: 48 },
   ]);
 
   // Fetch biome data
@@ -122,8 +109,8 @@ export default function BiomeExploration() {
 
     setInteractedObjects(prev => new Set(prev).add(objectId));
 
-    // Trigger event after interacting with 3rd object
-    if (interactedObjects.size >= 2) {
+    // Trigger event after interacting with 2nd object
+    if (interactedObjects.size >= 1) {
       useRunMutation.mutate();
     }
   }, [interactedObjects, useRunMutation]);
@@ -133,6 +120,17 @@ export default function BiomeExploration() {
     if (!isExploring) return;
 
     const speed = 15;
+
+    switch(e.key) {
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case ' ':
+        // Prevent page scrolling
+        e.preventDefault();
+        break;
+    }
 
     switch(e.key) {
       case 'ArrowLeft':
@@ -205,22 +203,50 @@ export default function BiomeExploration() {
             <div className="absolute inset-0 bg-gradient-to-b from-purple-600 via-pink-400 to-teal-400" />
           )}
 
-          {/* Floating Fireflies / Magic Particles */}
+          {/* Floating Fireflies / Magic Particles - MORE */}
           <div className="absolute top-20 left-40 text-2xl animate-pulse">✨</div>
           <div className="absolute top-60 left-200 text-xl animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
           <div className="absolute top-40 right-60 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>✨</div>
           <div className="absolute top-80 right-200 text-xl animate-pulse" style={{ animationDelay: '1.5s' }}>💫</div>
           <div className="absolute top-100 left-500 text-xl animate-pulse" style={{ animationDelay: '2s' }}>✨</div>
           <div className="absolute top-50 right-400 text-2xl animate-pulse" style={{ animationDelay: '0.8s' }}>⭐</div>
+          <div className="absolute top-30 left-700 text-xl animate-pulse" style={{ animationDelay: '1.2s' }}>💫</div>
+          <div className="absolute top-70 right-500 text-2xl animate-pulse" style={{ animationDelay: '0.3s' }}>✨</div>
+          <div className="absolute top-90 left-900 text-xl animate-pulse" style={{ animationDelay: '1.7s' }}>⭐</div>
+          <div className="absolute top-110 right-700 text-2xl animate-pulse" style={{ animationDelay: '0.9s' }}>💫</div>
+          <div className="absolute top-35 left-1100 text-xl animate-pulse" style={{ animationDelay: '1.4s' }}>✨</div>
+          <div className="absolute top-65 right-900 text-2xl animate-pulse" style={{ animationDelay: '0.6s' }}>⭐</div>
 
           {/* Distant Magical Mountains */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-700 to-purple-900 opacity-50"
                style={{ clipPath: 'polygon(0 100%, 0 40%, 20% 60%, 40% 30%, 60% 50%, 80% 20%, 100% 50%, 100% 100%)' }} />
 
-          {/* Middle Ground Trees (Background) with glow */}
+          {/* Background Trees (Far Distance) - very faded */}
+          <div className="absolute bottom-35 left-100 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
+          <div className="absolute bottom-38 left-300 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
+          <div className="absolute bottom-33 left-500 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
+          <div className="absolute bottom-36 left-800 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
+          <div className="absolute bottom-34 left-1100 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
+          <div className="absolute bottom-37 right-200 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
+
+          {/* Middle Ground Trees (Background) with glow - closer but still background */}
           <div className="absolute bottom-28 left-60 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
-          <div className="absolute bottom-32 right-80 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
-          <div className="absolute bottom-30 left-400 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
+          <div className="absolute bottom-32 left-250 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
+          <div className="absolute bottom-30 left-450 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
+          <div className="absolute bottom-33 left-700 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
+          <div className="absolute bottom-29 left-950 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
+          <div className="absolute bottom-31 left-1200 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
+          <div className="absolute bottom-28 right-100 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
+
+          {/* Decorative Background Flowers and Mushrooms */}
+          <div className="absolute bottom-24 left-150 text-2xl opacity-50">🌸</div>
+          <div className="absolute bottom-25 left-350 text-2xl opacity-50">🍄</div>
+          <div className="absolute bottom-23 left-550 text-2xl opacity-50">🌺</div>
+          <div className="absolute bottom-26 left-750 text-2xl opacity-50">🌼</div>
+          <div className="absolute bottom-24 left-1000 text-2xl opacity-50">🍄</div>
+          <div className="absolute bottom-25 left-1250 text-2xl opacity-50">🌸</div>
+          <div className="absolute bottom-23 right-150 text-2xl opacity-50">🌺</div>
+          <div className="absolute bottom-26 right-350 text-2xl opacity-50">🍄</div>
 
           {/* Enchanted Ground */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-purple-800 to-indigo-950" />
@@ -273,7 +299,7 @@ export default function BiomeExploration() {
           {isExploring && !eventResult && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-3 rounded-full shadow-2xl border-2 border-white/50">
               <div className="text-sm text-white font-bold">
-                ✨ Investigate glowing objects to discover secrets! ({interactedObjects.size}/3 investigated)
+                ✨ Investigate glowing objects to discover secrets! ({interactedObjects.size}/2 investigated)
               </div>
             </div>
           )}
