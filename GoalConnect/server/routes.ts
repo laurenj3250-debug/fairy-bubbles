@@ -20,8 +20,10 @@ import {
   getStreakMultiplier,
 } from "./pet-utils";
 import { requireUser } from "./simple-auth";
+import { RNGService } from "./rng-service";
 
 const getUserId = (req: Request) => requireUser(req).id;
+const rngService = new RNGService(storage);
 
 // Helper function to update pet stats automatically
 async function updatePetFromHabits(userId: number) {
@@ -1433,6 +1435,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(encounters);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch encounters" });
+    }
+  });
+
+  // Runs & Events (RNG System)
+  app.get("/api/runs", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const runs = await rngService.getAvailableRuns(userId, date);
+      res.json(runs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch runs" });
+    }
+  });
+
+  app.post("/api/runs/use", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { biomeId } = req.body;
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+      if (!biomeId) {
+        return res.status(400).json({ error: "biomeId is required" });
+      }
+
+      const result = await rngService.useRun(userId, biomeId, date);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json(result.event);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to use run" });
     }
   });
 
