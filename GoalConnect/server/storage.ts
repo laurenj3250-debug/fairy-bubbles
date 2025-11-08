@@ -147,7 +147,9 @@ export interface IStorage {
 
   // D&D RPG System - Encounters
   getEncounters(userId: number): Promise<Encounter[]>;
+  getEncounter(id: number): Promise<Encounter | undefined>;
   createEncounter(encounter: InsertEncounter): Promise<Encounter>;
+  updateEncounter(id: number, updates: Partial<Encounter>): Promise<Encounter | undefined>;
 
   // D&D RPG System - Combat Logs
   getCombatLog(encounterId: number): Promise<CombatLog | undefined>;

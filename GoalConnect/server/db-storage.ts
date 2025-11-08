@@ -811,6 +811,16 @@ export class DbStorage implements IStorage {
     return created;
   }
 
+  async getEncounter(id: number): Promise<Encounter | undefined> {
+    const [encounter] = await this.db.select().from(schema.encounters).where(eq(schema.encounters.id, id)).limit(1);
+    return encounter;
+  }
+
+  async updateEncounter(id: number, updates: Partial<Encounter>): Promise<Encounter | undefined> {
+    const [updated] = await this.db.update(schema.encounters).set(updates).where(eq(schema.encounters.id, id)).returning();
+    return updated;
+  }
+
   // Combat Logs
   async getCombatLog(encounterId: number): Promise<CombatLog | undefined> {
     const [log] = await this.db.select().from(schema.combatLogs).where(eq(schema.combatLogs.encounterId, encounterId));

@@ -21,9 +21,11 @@ import {
 } from "./pet-utils";
 import { requireUser } from "./simple-auth";
 import { RNGService } from "./rng-service";
+import { CombatEngine } from "./combat-engine";
 
 const getUserId = (req: Request) => requireUser(req).id;
 const rngService = new RNGService(storage);
+const combatEngine = new CombatEngine(storage);
 
 // Helper function to update pet stats automatically
 async function updatePetFromHabits(userId: number) {
@@ -1469,6 +1471,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result.event);
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to use run" });
+    }
+  });
+
+  // Combat System
+  app.post("/api/combat/start", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { encounterId } = req.body;
+
+      if (!encounterId) {
+        return res.status(400).json({ error: "encounterId is required" });
+      }
+
+      const state = await combatEngine.initializeCombat(userId, encounterId);
+      res.json(state);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to start combat" });
+    }
+  });
+
+  app.post("/api/combat/action", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { state, action } = req.body;
+
+      if (!state || !action) {
+        return res.status(400).json({ error: "state and action are required" });
+      }
+
+      const result = await combatEngine.executeAction(userId, state, action);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to execute combat action" });
     }
   });
 
