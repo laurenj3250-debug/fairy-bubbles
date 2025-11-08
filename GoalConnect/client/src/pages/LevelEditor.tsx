@@ -46,7 +46,7 @@ export default function LevelEditor() {
 
   // Fetch biomes
   const { data: biomes = [] } = useQuery<Biome[]>({
-    queryKey: ['/api/biomes'],
+    queryKey: ['/api/game/biomes'],
   });
 
   // Fetch current biome data
@@ -313,37 +313,40 @@ export default function LevelEditor() {
               onMouseLeave={handleCanvasMouseUp}
             >
               {/* Render level objects */}
-              {levelObjects.map((obj, idx) => (
-                <div
-                  key={idx}
-                  onMouseDown={(e) => handleObjectMouseDown(obj, e)}
-                  className={`absolute cursor-move border-2 ${
-                    selectedObject === obj
-                      ? 'border-yellow-400 bg-yellow-400/20'
-                      : 'border-white/40 bg-white/10'
-                  } hover:border-white`}
-                  style={{
-                    left: `${obj.xPosition * SCALE}px`,
-                    top: `${obj.yPosition * SCALE}px`,
-                    width: `${obj.width * SCALE}px`,
-                    height: `${obj.height * SCALE}px`,
-                    transform: `scale(${SCALE})`,
-                    transformOrigin: 'top left',
-                  }}
-                >
-                  <img
-                    src={`/api/sprites/file/${obj.spriteFilename}`}
-                    alt={obj.spriteFilename}
-                    className="w-full h-full object-contain pointer-events-none"
-                    draggable={false}
-                  />
-                  {selectedObject === obj && (
-                    <div className="absolute -top-6 left-0 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
-                      {obj.objectType}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {levelObjects.map((obj, idx) => {
+                const sprite = allSprites.find(s => s.filename === obj.spriteFilename);
+                return (
+                  <div
+                    key={idx}
+                    onMouseDown={(e) => handleObjectMouseDown(obj, e)}
+                    className={`absolute cursor-move border-2 ${
+                      selectedObject === obj
+                        ? 'border-yellow-400 bg-yellow-400/20'
+                        : 'border-white/40 bg-white/10'
+                    } hover:border-white`}
+                    style={{
+                      left: `${obj.xPosition * SCALE}px`,
+                      top: `${obj.yPosition * SCALE}px`,
+                      width: `${obj.width * SCALE}px`,
+                      height: `${obj.height * SCALE}px`,
+                      transform: `scale(${SCALE})`,
+                      transformOrigin: 'top left',
+                    }}
+                  >
+                    <img
+                      src={sprite?.data || `/api/sprites/file/${obj.spriteFilename}`}
+                      alt={obj.spriteFilename}
+                      className="w-full h-full object-contain pointer-events-none"
+                      draggable={false}
+                    />
+                    {selectedObject === obj && (
+                      <div className="absolute -top-6 left-0 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
+                        {obj.objectType}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Instructions */}
@@ -371,7 +374,7 @@ export default function LevelEditor() {
                       className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
                     >
                       <img
-                        src={`/api/sprites/file/${sprite.filename}`}
+                        src={sprite.data}
                         alt={sprite.filename}
                         className="w-full h-12 object-contain"
                       />
@@ -394,7 +397,7 @@ export default function LevelEditor() {
                       className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
                     >
                       <img
-                        src={`/api/sprites/file/${sprite.filename}`}
+                        src={sprite.data}
                         alt={sprite.filename}
                         className="w-full h-12 object-contain"
                       />
