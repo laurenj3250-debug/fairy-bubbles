@@ -890,6 +890,23 @@ export class DbStorage implements IStorage {
     return created;
   }
 
+  async upsertSprite(sprite: InsertSprite): Promise<Sprite> {
+    const [upserted] = await this.db
+      .insert(schema.sprites)
+      .values(sprite)
+      .onConflictDoUpdate({
+        target: schema.sprites.filename,
+        set: {
+          data: sprite.data,
+          mimeType: sprite.mimeType,
+          category: sprite.category,
+          name: sprite.name,
+        },
+      })
+      .returning();
+    return upserted;
+  }
+
   async getSprites(): Promise<Sprite[]> {
     return this.db.select().from(schema.sprites).orderBy(schema.sprites.createdAt);
   }

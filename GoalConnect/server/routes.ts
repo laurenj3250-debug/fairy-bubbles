@@ -1608,8 +1608,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (entryExt === '.jpg' || entryExt === '.jpeg') mimeType = 'image/jpeg';
                 else if (entryExt === '.psd') mimeType = 'image/vnd.adobe.photoshop';
 
-                // Store in database
-                await storage.createSprite({
+                // Store in database (upsert to handle duplicates)
+                await storage.upsertSprite({
                   filename: fileName,
                   category: 'uncategorized',
                   data: base64Data,
@@ -1639,8 +1639,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (ext === '.psd') mimeType = 'image/vnd.adobe.photoshop';
           }
 
-          // Store in database
-          await storage.createSprite({
+          // Store in database (upsert to handle duplicates)
+          await storage.upsertSprite({
             filename: file.originalname,
             category: 'uncategorized',
             data: base64Data,
