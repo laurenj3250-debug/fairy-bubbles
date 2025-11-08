@@ -17,12 +17,20 @@ export default function CrumpetSVGHD({
   className = "",
   crisp = true,
   dropShadow = false,
+  expression = "normal",
+  showTail = true,
+  tailWag = false,
+  earTwitch = false,
 }: {
   pixelSize?: number;
   background?: string;
   className?: string;
   crisp?: boolean;
   dropShadow?: boolean;
+  expression?: "normal" | "happy" | "sleepy" | "excited" | "surprised";
+  showTail?: boolean;
+  tailWag?: boolean;
+  earTwitch?: boolean;
 }) {
   const W = 64;
   const H = 64;
@@ -908,20 +916,105 @@ export default function CrumpetSVGHD({
   ]}
   ];
 
+  // Tail sprite data
+  const TAIL_GROUPS = [
+    { c: "#f0b34d", runs: [
+      {x:0,y:30,w:3}, {x:1,y:31,w:4}, {x:2,y:32,w:5}, {x:2,y:33,w:6},
+      {x:3,y:34,w:6}, {x:3,y:35,w:7}, {x:4,y:36,w:7}, {x:4,y:37,w:6},
+      {x:3,y:38,w:6}, {x:2,y:39,w:5}, {x:1,y:40,w:4}, {x:0,y:41,w:3}
+    ]},
+    { c: "#fcc436", runs: [
+      {x:1,y:30,w:2}, {x:2,y:31,w:3}, {x:3,y:32,w:4}, {x:4,y:33,w:4},
+      {x:5,y:34,w:4}, {x:6,y:35,w:3}, {x:7,y:36,w:2}
+    ]},
+  ];
+
+  // Expression-based eye modifications
+  const getEyeOverrides = () => {
+    const overrides = [];
+
+    if (expression === "sleepy") {
+      // Half-closed eyes (horizontal lines)
+      overrides.push(
+        { c: "#251915", runs: [{x:10,y:17,w:6}, {x:32,y:17,w:6}] }
+      );
+    } else if (expression === "happy") {
+      // Curved happy eyes (arcs)
+      overrides.push(
+        { c: "#251915", runs: [
+          {x:10,y:18,w:2}, {x:14,y:18,w:2}, {x:32,y:18,w:2}, {x:36,y:18,w:2},
+          {x:11,y:19,w:4}, {x:33,y:19,w:4}
+        ] }
+      );
+    } else if (expression === "surprised") {
+      // Wide open eyes
+      overrides.push(
+        { c: "#FFFFFF", runs: [
+          {x:9,y:15,w:8}, {x:9,y:16,w:8}, {x:9,y:17,w:8}, {x:9,y:18,w:8},
+          {x:31,y:15,w:8}, {x:31,y:16,w:8}, {x:31,y:17,w:8}, {x:31,y:18,w:8}
+        ]},
+        { c: "#5C4033", runs: [
+          {x:11,y:16,w:4}, {x:11,y:17,w:4}, {x:33,y:16,w:4}, {x:33,y:17,w:4}
+        ]}
+      );
+    } else if (expression === "excited") {
+      // Star eyes!
+      overrides.push(
+        { c: "#FFD700", runs: [
+          {x:12,y:15,w:2}, {x:11,y:16,w:4}, {x:12,y:17,w:2}, {x:10,y:17,w:1}, {x:15,y:17,w:1},
+          {x:34,y:15,w:2}, {x:33,y:16,w:4}, {x:34,y:17,w:2}, {x:32,y:17,w:1}, {x:37,y:17,w:1}
+        ]}
+      );
+    }
+
+    return overrides;
+  };
+
   const width = W * pixelSize;
   const height = H * pixelSize;
+  const eyeOverrides = getEyeOverrides();
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      width={width}
-      height={height}
-      shapeRendering={crisp ? "crispEdges" : "auto"}
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Crumpet pixel sprite (high detail)"
-    >
+    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
+      {/* Tail */}
+      {showTail && (
+        <svg
+          viewBox="0 0 12 64"
+          width={12 * pixelSize}
+          height={64 * pixelSize}
+          shapeRendering={crisp ? "crispEdges" : "auto"}
+          style={{
+            position: 'absolute',
+            right: `${60 * pixelSize}px`,
+            top: 0,
+            transformOrigin: 'right center',
+            animation: tailWag ? 'tail-wag 0.6s ease-in-out infinite' : 'none',
+          }}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {TAIL_GROUPS.map((g, gi) => (
+            <g key={gi} fill={g.c}>
+              {g.runs.map((r, ri) => (
+                <rect key={ri} x={r.x} y={r.y} width={r.w} height={1} />
+              ))}
+            </g>
+          ))}
+        </svg>
+      )}
+
+      {/* Main body */}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width={width}
+        height={height}
+        shapeRendering={crisp ? "crispEdges" : "auto"}
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="Crumpet pixel sprite (high detail)"
+        style={{
+          animation: earTwitch ? 'ear-twitch 2s ease-in-out infinite' : 'none',
+        }}
+      >
       {dropShadow ? (
         <defs>
           <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
@@ -942,7 +1035,28 @@ export default function CrumpetSVGHD({
             ))}
           </g>
         ))}
+        {/* Expression overlays */}
+        {eyeOverrides.map((g, gi) => (
+          <g key={`override-${gi}`} fill={g.c}>
+            {g.runs.map((r, ri) => (
+              <rect key={ri} x={r.x} y={r.y} width={r.w} height={1} />
+            ))}
+          </g>
+        ))}
       </g>
     </svg>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes tail-wag {
+          0%, 100% { transform: rotate(-15deg); }
+          50% { transform: rotate(15deg); }
+        }
+        @keyframes ear-twitch {
+          0%, 90%, 100% { transform: translateY(0); }
+          93%, 97% { transform: translateY(-1px); }
+        }
+      `}</style>
+    </div>
   );
 }

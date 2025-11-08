@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import CrumpetSVG from "@/components/CrumpetSVG";
+import { ParticleEffects } from "@/components/ParticleEffects";
 
 const MUSHROOM_SPRITE = [
   [0,0,0,1,1,1,1,1,1,0,0,0],
@@ -86,6 +87,38 @@ export default function Wonderland() {
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isWalking, setIsWalking] = useState(false);
   const [timeOfDay, setTimeOfDay] = useState(0); // 0-100 (day cycle)
+  const [isJumping, setIsJumping] = useState(false);
+  const [jumpPhase, setJumpPhase] = useState<'none' | 'squash' | 'air' | 'land'>('none');
+  const [expression, setExpression] = useState<'normal' | 'happy' | 'sleepy' | 'excited' | 'surprised'>('normal');
+  const [particles, setParticles] = useState<{type: 'hearts' | 'sparkles' | 'dust', x: number, y: number, active: boolean}[]>([]);
+
+  // Jump animation
+  const performJump = () => {
+    if (isJumping) return;
+    setIsJumping(true);
+
+    // Squash
+    setJumpPhase('squash');
+    setParticles([{ type: 'dust', x: crumpetPos.x, y: crumpetPos.y + 10, active: true }]);
+
+    setTimeout(() => {
+      // Jump up
+      setJumpPhase('air');
+      setCrumpetPos(prev => ({ ...prev, y: Math.max(10, prev.y - 15) }));
+
+      setTimeout(() => {
+        // Land squash
+        setJumpPhase('land');
+        setParticles([{ type: 'dust', x: crumpetPos.x, y: crumpetPos.y + 10, active: true }]);
+
+        setTimeout(() => {
+          setJumpPhase('none');
+          setIsJumping(false);
+          setParticles([]);
+        }, 100);
+      }, 400);
+    }, 100);
+  };
 
   // Keyboard controls
   useEffect(() => {
@@ -113,6 +146,8 @@ export default function Wonderland() {
           newX = Math.max(5, crumpetPos.x - speed);
           setDirection('left');
           setIsWalking(true);
+          setParticles([{ type: 'dust', x: crumpetPos.x, y: crumpetPos.y + 8, active: true }]);
+          setTimeout(() => setParticles([]), 500);
           break;
         case 'ArrowRight':
         case 'd':
@@ -120,6 +155,31 @@ export default function Wonderland() {
           newX = Math.min(95, crumpetPos.x + speed);
           setDirection('right');
           setIsWalking(true);
+          setParticles([{ type: 'dust', x: crumpetPos.x, y: crumpetPos.y + 8, active: true }]);
+          setTimeout(() => setParticles([]), 500);
+          break;
+        case ' ':
+          e.preventDefault();
+          performJump();
+          break;
+        case '1':
+          setExpression('normal');
+          break;
+        case '2':
+          setExpression('happy');
+          setParticles([{ type: 'hearts', x: crumpetPos.x, y: crumpetPos.y - 5, active: true }]);
+          setTimeout(() => setParticles([]), 1000);
+          break;
+        case '3':
+          setExpression('sleepy');
+          break;
+        case '4':
+          setExpression('excited');
+          setParticles([{ type: 'sparkles', x: crumpetPos.x, y: crumpetPos.y, active: true }]);
+          setTimeout(() => setParticles([]), 1000);
+          break;
+        case '5':
+          setExpression('surprised');
           break;
       }
 
@@ -136,7 +196,7 @@ export default function Wonderland() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [crumpetPos]);
+  }, [crumpetPos, isJumping]);
 
   // Day/night cycle
   useEffect(() => {
@@ -359,14 +419,36 @@ export default function Wonderland() {
 
           <div style={{
             filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
-            animation: isWalking ? 'walk 0.4s steps(2) infinite' : 'idle 2s ease-in-out infinite, blink 4s infinite',
+            animation: isWalking && !isJumping ? 'walk 0.4s steps(2) infinite' : !isJumping ? 'idle 2s ease-in-out infinite, blink 4s infinite' : 'none',
+            transform:
+              jumpPhase === 'squash' ? 'scaleY(0.7) scaleX(1.3)' :
+              jumpPhase === 'air' ? 'scaleY(1.2) scaleX(0.9)' :
+              jumpPhase === 'land' ? 'scaleY(0.8) scaleX(1.2)' :
+              'scaleY(1) scaleX(1)',
+            transition: 'transform 0.1s ease-out',
           }}>
             <CrumpetSVG
               pixelSize={1.8}
               crisp={true}
               dropShadow={false}
+              expression={expression}
+              showTail={true}
+              tailWag={isWalking}
+              earTwitch={!isWalking && !isJumping}
             />
           </div>
+
+          {/* Particle Effects */}
+          {particles.map((particle, idx) => (
+            <ParticleEffects
+              key={idx}
+              type={particle.type}
+              active={particle.active}
+              x={particle.x}
+              y={particle.y}
+              count={particle.type === 'hearts' ? 3 : particle.type === 'sparkles' ? 5 : 4}
+            />
+          ))}
 
           {/* Whiskers (right side) */}
           <div style={{
@@ -429,8 +511,11 @@ export default function Wonderland() {
             margin: '8px 0 0 0',
             fontSize: '14px',
             color: '#666',
+            lineHeight: '1.6',
           }}>
-            Use arrow keys or WASD to explore!
+            <strong>Movement:</strong> Arrow keys or WASD<br/>
+            <strong>Jump:</strong> Spacebar<br/>
+            <strong>Expressions:</strong> 1=Normal, 2=Happy💖, 3=Sleepy, 4=Excited✨, 5=Surprised
           </p>
         </div>
       </div>
