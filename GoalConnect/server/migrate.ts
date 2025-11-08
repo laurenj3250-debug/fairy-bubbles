@@ -12,7 +12,7 @@ export async function runMigrations() {
     const db = getDb();
 
     // Add retry logic for Railway's slow startup
-    let retries = 5;
+    let retries = 10;
     let checkResult;
 
     while (retries > 0) {
@@ -24,12 +24,17 @@ export async function runMigrations() {
             WHERE table_name = 'users'
           ) as users_exists
         `);
+        console.log('[migrate] ✅ Database connection successful');
         break; // Success, exit retry loop
-      } catch (error) {
+      } catch (error: any) {
         retries--;
-        if (retries === 0) throw error;
-        console.log(`[migrate] Database not ready, retrying... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        console.error(`[migrate] ⚠️  Database connection failed:`, error?.message || error);
+        if (retries === 0) {
+          console.error('[migrate] ❌ Failed to connect to database after all retries');
+          throw error;
+        }
+        console.log(`[migrate] Database not ready, retrying in 3 seconds... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
       }
     }
 
@@ -102,6 +107,28 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to migrate todos table:', error);
       }
 
+      try {
+        // Add priority column to goals if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE goals
+          ADD COLUMN IF NOT EXISTS priority VARCHAR(10) NOT NULL DEFAULT 'medium'
+        `);
+        console.log('[migrate] ✅ Priority column added/verified in goals table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add priority column to goals:', error);
+      }
+
+      try {
+        // Add evolutionRequired column to costumes if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE costumes
+          ADD COLUMN IF NOT EXISTS evolution_required VARCHAR(20) NOT NULL DEFAULT 'seed'
+        `);
+        console.log('[migrate] ✅ Evolution required column added/verified in costumes table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add evolution_required column to costumes:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -171,7 +198,9 @@ export async function runMigrations() {
         current_value INTEGER NOT NULL DEFAULT 0,
         unit TEXT NOT NULL,
         deadline VARCHAR(10) NOT NULL,
-        category TEXT NOT NULL
+        category TEXT NOT NULL,
+        difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
+        priority VARCHAR(10) NOT NULL DEFAULT 'medium'
       )
     `);
 
@@ -261,7 +290,8 @@ export async function runMigrations() {
         category VARCHAR(20) NOT NULL CHECK (category IN ('hat', 'outfit', 'accessory', 'background')),
         price INTEGER NOT NULL,
         image_url TEXT NOT NULL,
-        rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary'))
+        rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary')),
+        evolution_required VARCHAR(20) NOT NULL DEFAULT 'seed' CHECK (evolution_required IN ('seed', 'sprout', 'sapling', 'tree', 'ancient'))
       )
     `);
 

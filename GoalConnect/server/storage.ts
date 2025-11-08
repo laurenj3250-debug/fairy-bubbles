@@ -139,21 +139,21 @@ export class MemStorage implements IStorage {
 
     // November 2025 Monthly Goals
     const goals = [
-      { userId: 1, title: "Pimsleur: Complete 16 Lessons", description: "Finish Level 1 (27-30) + reach Level 2 Lesson 12", targetValue: 16, currentValue: 0, unit: "lessons", deadline: "2025-11-30", category: "Learning" },
-      { userId: 1, title: "Duolingo: Finish Current Unit", description: "Complete approximately ¼ progress per week", targetValue: 1, currentValue: 0, unit: "unit", deadline: "2025-11-30", category: "Learning" },
-      { userId: 1, title: "RemNote: Complete Chapters 6 & 7", description: "Finish Chapters 6 and 7 (de Lahunta)", targetValue: 2, currentValue: 0, unit: "chapters", deadline: "2025-11-30", category: "Learning" },
-      { userId: 1, title: "Convert 10 Papers to Flashcards", description: "Transform 10 academic papers into flashcards", targetValue: 10, currentValue: 0, unit: "papers", deadline: "2025-11-30", category: "Learning" },
-      { userId: 1, title: "Watch 2 MRI Education Videos", description: "Complete MRI education videos for Weeks 2 and 3", targetValue: 2, currentValue: 0, unit: "videos", deadline: "2025-11-30", category: "Learning" },
-      { userId: 1, title: "Complete 1 Audiobook", description: "Finish one full audiobook this month", targetValue: 1, currentValue: 0, unit: "book", deadline: "2025-11-30", category: "Creative" },
-      { userId: 1, title: "Play Piano 12 Times", description: "Practice piano at least 12 times (~3x per week)", targetValue: 12, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Creative" },
-      { userId: 1, title: "Complete 16 Gym Sessions", description: "Go to gym 16 times (~4x per week)", targetValue: 16, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Fitness" },
-      { userId: 1, title: "4 Outdoor Climbing Sessions", description: "4 outdoor climbing sessions including 1 overnight trip", targetValue: 4, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Fitness" },
-      { userId: 1, title: "Complete 4 Runs", description: "Run once per week (4 total for the month)", targetValue: 4, currentValue: 0, unit: "runs", deadline: "2025-11-30", category: "Fitness" },
-      { userId: 1, title: "8+ Daylight Exposures", description: "≥10 min outside on 3 days each week (minimum 8 total)", targetValue: 8, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Outdoors" },
-      { userId: 1, title: "Ship 1 App Feature", description: "Deploy one concrete feature by Nov 30", targetValue: 1, currentValue: 0, unit: "feature", deadline: "2025-11-30", category: "Projects" },
-      { userId: 1, title: "Play Video Game Once", description: "Enjoy one video game session this month", targetValue: 1, currentValue: 0, unit: "session", deadline: "2025-11-30", category: "Personal" },
-      { userId: 1, title: "Hang Out with Coworker", description: "Spend social time with a coworker", targetValue: 1, currentValue: 0, unit: "meetup", deadline: "2025-11-30", category: "Personal" },
-      { userId: 1, title: "Try 1 New Thing", description: "Experience something new and novel", targetValue: 1, currentValue: 0, unit: "experience", deadline: "2025-11-30", category: "Personal" },
+      { userId: 1, title: "Pimsleur: Complete 16 Lessons", description: "Finish Level 1 (27-30) + reach Level 2 Lesson 12", targetValue: 16, currentValue: 0, unit: "lessons", deadline: "2025-11-30", category: "Learning", difficulty: "medium" as const, priority: "high" as const },
+      { userId: 1, title: "Duolingo: Finish Current Unit", description: "Complete approximately ¼ progress per week", targetValue: 1, currentValue: 0, unit: "unit", deadline: "2025-11-30", category: "Learning", difficulty: "easy" as const, priority: "medium" as const },
+      { userId: 1, title: "RemNote: Complete Chapters 6 & 7", description: "Finish Chapters 6 and 7 (de Lahunta)", targetValue: 2, currentValue: 0, unit: "chapters", deadline: "2025-11-30", category: "Learning", difficulty: "hard" as const, priority: "high" as const },
+      { userId: 1, title: "Convert 10 Papers to Flashcards", description: "Transform 10 academic papers into flashcards", targetValue: 10, currentValue: 0, unit: "papers", deadline: "2025-11-30", category: "Learning", difficulty: "medium" as const, priority: "medium" as const },
+      { userId: 1, title: "Watch 2 MRI Education Videos", description: "Complete MRI education videos for Weeks 2 and 3", targetValue: 2, currentValue: 0, unit: "videos", deadline: "2025-11-30", category: "Learning", difficulty: "easy" as const, priority: "low" as const },
+      { userId: 1, title: "Complete 1 Audiobook", description: "Finish one full audiobook this month", targetValue: 1, currentValue: 0, unit: "book", deadline: "2025-11-30", category: "Creative", difficulty: "easy" as const, priority: "low" as const },
+      { userId: 1, title: "Play Piano 12 Times", description: "Practice piano at least 12 times (~3x per week)", targetValue: 12, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Creative", difficulty: "medium" as const, priority: "medium" as const },
+      { userId: 1, title: "Complete 16 Gym Sessions", description: "Go to gym 16 times (~4x per week)", targetValue: 16, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Fitness", difficulty: "hard" as const, priority: "high" as const },
+      { userId: 1, title: "4 Outdoor Climbing Sessions", description: "4 outdoor climbing sessions including 1 overnight trip", targetValue: 4, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Fitness", difficulty: "medium" as const, priority: "medium" as const },
+      { userId: 1, title: "Complete 4 Runs", description: "Run once per week (4 total for the month)", targetValue: 4, currentValue: 0, unit: "runs", deadline: "2025-11-30", category: "Fitness", difficulty: "medium" as const, priority: "medium" as const },
+      { userId: 1, title: "8+ Daylight Exposures", description: "≥10 min outside on 3 days each week (minimum 8 total)", targetValue: 8, currentValue: 0, unit: "sessions", deadline: "2025-11-30", category: "Outdoors", difficulty: "easy" as const, priority: "medium" as const },
+      { userId: 1, title: "Ship 1 App Feature", description: "Deploy one concrete feature by Nov 30", targetValue: 1, currentValue: 0, unit: "feature", deadline: "2025-11-30", category: "Projects", difficulty: "hard" as const, priority: "high" as const },
+      { userId: 1, title: "Play Video Game Once", description: "Enjoy one video game session this month", targetValue: 1, currentValue: 0, unit: "session", deadline: "2025-11-30", category: "Personal", difficulty: "easy" as const, priority: "low" as const },
+      { userId: 1, title: "Hang Out with Coworker", description: "Spend social time with a coworker", targetValue: 1, currentValue: 0, unit: "meetup", deadline: "2025-11-30", category: "Personal", difficulty: "easy" as const, priority: "low" as const },
+      { userId: 1, title: "Try 1 New Thing", description: "Experience something new and novel", targetValue: 1, currentValue: 0, unit: "experience", deadline: "2025-11-30", category: "Personal", difficulty: "medium" as const, priority: "low" as const },
     ];
 
     goals.forEach(g => this.createGoal(g));
@@ -162,16 +162,16 @@ export class MemStorage implements IStorage {
 
     // Seed costumes
     const costumeData: Omit<Costume, 'id'>[] = [
-      { name: "Party Hat", description: "A festive party hat", category: "hat", price: 50, imageUrl: "🎉", rarity: "common" },
-      { name: "Crown", description: "Royal crown fit for a king", category: "hat", price: 200, imageUrl: "👑", rarity: "rare" },
-      { name: "Wizard Hat", description: "Magical wizard hat", category: "hat", price: 150, imageUrl: "🧙", rarity: "rare" },
-      { name: "Superhero Cape", description: "Feel like a superhero", category: "outfit", price: 100, imageUrl: "🦸", rarity: "common" },
-      { name: "Ninja Outfit", description: "Stealth mode activated", category: "outfit", price: 250, imageUrl: "🥷", rarity: "epic" },
-      { name: "Sunglasses", description: "Cool shades", category: "accessory", price: 75, imageUrl: "😎", rarity: "common" },
-      { name: "Gold Medal", description: "Achievement unlocked", category: "accessory", price: 300, imageUrl: "🏅", rarity: "epic" },
-      { name: "Space Background", description: "Explore the cosmos", category: "background", price: 400, imageUrl: "🌌", rarity: "legendary" },
-      { name: "Forest Background", description: "Nature vibes", category: "background", price: 150, imageUrl: "🌲", rarity: "rare" },
-      { name: "Rainbow Background", description: "Bright and cheerful", category: "background", price: 100, imageUrl: "🌈", rarity: "common" },
+      { name: "Party Hat", description: "A festive party hat", category: "hat", price: 50, imageUrl: "🎉", rarity: "common", evolutionRequired: "seed" },
+      { name: "Crown", description: "Royal crown fit for a king", category: "hat", price: 200, imageUrl: "👑", rarity: "rare", evolutionRequired: "sprout" },
+      { name: "Wizard Hat", description: "Magical wizard hat", category: "hat", price: 150, imageUrl: "🧙", rarity: "rare", evolutionRequired: "sprout" },
+      { name: "Superhero Cape", description: "Feel like a superhero", category: "outfit", price: 100, imageUrl: "🦸", rarity: "common", evolutionRequired: "seed" },
+      { name: "Ninja Outfit", description: "Stealth mode activated", category: "outfit", price: 250, imageUrl: "🥷", rarity: "epic", evolutionRequired: "sapling" },
+      { name: "Sunglasses", description: "Cool shades", category: "accessory", price: 75, imageUrl: "😎", rarity: "common", evolutionRequired: "seed" },
+      { name: "Gold Medal", description: "Achievement unlocked", category: "accessory", price: 300, imageUrl: "🏅", rarity: "epic", evolutionRequired: "sapling" },
+      { name: "Space Background", description: "Explore the cosmos", category: "background", price: 400, imageUrl: "🌌", rarity: "legendary", evolutionRequired: "ancient" },
+      { name: "Forest Background", description: "Nature vibes", category: "background", price: 150, imageUrl: "🌲", rarity: "rare", evolutionRequired: "sprout" },
+      { name: "Rainbow Background", description: "Bright and cheerful", category: "background", price: 100, imageUrl: "🌈", rarity: "common", evolutionRequired: "seed" },
     ];
 
     costumeData.forEach(c => {
@@ -308,6 +308,8 @@ export class MemStorage implements IStorage {
       unit: goal.unit,
       deadline: goal.deadline,
       category: goal.category,
+      difficulty: goal.difficulty ?? "medium",
+      priority: goal.priority ?? "medium",
     };
     this.goals.set(id, newGoal);
     return newGoal;

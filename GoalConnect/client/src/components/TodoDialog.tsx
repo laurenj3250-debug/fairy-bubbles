@@ -67,13 +67,28 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
       case "tomorrow":
         targetDate = new Date(year, month, day + 1);
         break;
+      case "in-3-days":
+        targetDate = new Date(year, month, day + 3);
+        break;
       case "this-week":
         // Get end of week (Sunday)
-        const daysUntilSunday = 7 - today.getDay();
+        const daysUntilSunday = today.getDay() === 0 ? 0 : 7 - today.getDay();
         targetDate = new Date(year, month, day + daysUntilSunday);
         break;
       case "next-week":
+        // Next Monday
+        const daysUntilMonday = today.getDay() === 0 ? 1 : 8 - today.getDay();
+        targetDate = new Date(year, month, day + daysUntilMonday);
+        break;
+      case "in-1-week":
         targetDate = new Date(year, month, day + 7);
+        break;
+      case "in-2-weeks":
+        targetDate = new Date(year, month, day + 14);
+        break;
+      case "end-of-month":
+        // Last day of current month
+        targetDate = new Date(year, month + 1, 0);
         break;
       default:
         return null;
@@ -196,9 +211,13 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
               <option value="none">No due date</option>
               <option value="today">Today</option>
               <option value="tomorrow">Tomorrow</option>
-              <option value="this-week">End of this week</option>
-              <option value="next-week">Next week</option>
-              <option value="custom">Pick a date...</option>
+              <option value="in-3-days">In 3 days</option>
+              <option value="this-week">End of this week (Sunday)</option>
+              <option value="next-week">Next Monday (start of next week)</option>
+              <option value="in-1-week">In 1 week (7 days)</option>
+              <option value="in-2-weeks">In 2 weeks (14 days)</option>
+              <option value="end-of-month">End of this month</option>
+              <option value="custom">Pick a custom date...</option>
             </select>
 
             {dateOption === "custom" && (

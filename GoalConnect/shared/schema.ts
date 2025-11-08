@@ -49,6 +49,7 @@ export const goals = pgTable("goals", {
   deadline: varchar("deadline", { length: 10 }).notNull(),
   category: text("category").notNull(),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
+  priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"high" | "medium" | "low">(),
 });
 
 export const goalUpdates = pgTable("goal_updates", {
@@ -89,6 +90,7 @@ export const costumes = pgTable("costumes", {
   price: integer("price").notNull(),
   imageUrl: text("image_url").notNull(),
   rarity: varchar("rarity", { length: 20 }).notNull().$type<"common" | "rare" | "epic" | "legendary">(),
+  evolutionRequired: varchar("evolution_required", { length: 20 }).notNull().default("seed").$type<"seed" | "sprout" | "sapling" | "tree" | "ancient">(),
 });
 
 export const userCostumes = pgTable("user_costumes", {
@@ -150,7 +152,10 @@ export type InsertHabit = z.infer<typeof insertHabitSchema>;
 export const insertHabitLogSchema = createInsertSchema(habitLogs).omit({ id: true });
 export type InsertHabitLog = z.infer<typeof insertHabitLogSchema>;
 
-export const insertGoalSchema = createInsertSchema(goals).omit({ id: true });
+export const insertGoalSchema = createInsertSchema(goals).omit({ id: true }).extend({
+  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+  priority: z.enum(["high", "medium", "low"]).default("medium"),
+});
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
 
 export const insertGoalUpdateSchema = createInsertSchema(goalUpdates).omit({ id: true });
