@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface SpriteFile {
@@ -22,7 +22,7 @@ export default function SpriteOrganize() {
   });
 
   // Initialize sprites map when files load
-  useState(() => {
+  useEffect(() => {
     if (files.length > 0 && sprites.size === 0) {
       const newSprites = new Map<string, CategorizedSprite>();
       files.forEach(file => {
@@ -33,7 +33,7 @@ export default function SpriteOrganize() {
       });
       setSprites(newSprites);
     }
-  });
+  }, [files]);
 
   const updateCategory = (filename: string, category: CategorizedSprite['category']) => {
     setSprites(prev => {
