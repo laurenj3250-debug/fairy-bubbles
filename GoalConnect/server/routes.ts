@@ -1766,6 +1766,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== DREAM SCROLL ROUTES ==========
+
+  // Get all dream scroll items for a user
+  app.get("/api/dream-scroll", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const items = await storage.getDreamScrollItems(req.user!.id);
+      res.json(items);
+    } catch (error: any) {
+      console.error('[dream-scroll] Get items error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get dream scroll items by category
+  app.get("/api/dream-scroll/category/:category", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { category } = req.params;
+      const items = await storage.getDreamScrollItemsByCategory(req.user!.id, category);
+      res.json(items);
+    } catch (error: any) {
+      console.error('[dream-scroll] Get by category error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new dream scroll item
+  app.post("/api/dream-scroll", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const item = await storage.createDreamScrollItem({
+        userId: req.user!.id,
+        title: req.body.title,
+        description: req.body.description,
+        category: req.body.category,
+        priority: req.body.priority || 'medium',
+        cost: req.body.cost,
+      });
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Create error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update a dream scroll item
+  app.patch("/api/dream-scroll/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.updateDreamScrollItem(id, req.body);
+
+      if (!item) {
+        return res.status(404).json({ error: "Dream scroll item not found" });
+      }
+
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Update error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Toggle completion status
+  app.post("/api/dream-scroll/:id/toggle", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.toggleDreamScrollItemComplete(id);
+
+      if (!item) {
+        return res.status(404).json({ error: "Dream scroll item not found" });
+      }
+
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Toggle error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a dream scroll item
+  app.delete("/api/dream-scroll/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDreamScrollItem(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[dream-scroll] Delete error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

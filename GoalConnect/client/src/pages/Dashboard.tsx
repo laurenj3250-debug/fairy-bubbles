@@ -8,6 +8,7 @@ import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
 import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -553,6 +554,9 @@ export default function Dashboard() {
 
             {/* Monthly Goals Widget */}
             <MonthlyGoalsWidget />
+
+            {/* Dream Scroll Widget */}
+            <DreamScrollWidget />
           </div>
 
           {/* Right Content Area */}

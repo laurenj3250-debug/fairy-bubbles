@@ -18,6 +18,7 @@ import Combat from "@/pages/Combat";
 import PartyManagement from "@/pages/PartyManagement";
 import SpriteUpload from "@/pages/SpriteUpload";
 import SpriteOrganize from "@/pages/SpriteOrganize";
+import DreamScroll from "@/pages/DreamScroll";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -144,6 +145,12 @@ function AppRoutes() {
       <Route path="/sprites/organize">
         <RequireAuth>
           <SpriteOrganize />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/dream-scroll">
+        <RequireAuth>
+          <DreamScroll />
           <BottomNav />
         </RequireAuth>
       </Route>
