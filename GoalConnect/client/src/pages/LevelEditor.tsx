@@ -51,13 +51,13 @@ export default function LevelEditor() {
 
   // Fetch current biome data
   const { data: currentBiome } = useQuery<Biome>({
-    queryKey: [`/api/biomes/${selectedBiome}`],
+    queryKey: ['/api/biomes', selectedBiome],
     enabled: !!selectedBiome,
   });
 
   // Fetch level objects for selected biome
   const { data: existingLevelObjects = [] } = useQuery<LevelObject[]>({
-    queryKey: [`/api/biomes/${selectedBiome}/level-objects`],
+    queryKey: ['/api/biomes', selectedBiome, 'level-objects'],
     enabled: !!selectedBiome,
   });
 
@@ -108,7 +108,7 @@ export default function LevelEditor() {
         title: 'Success',
         description: 'Level saved successfully!',
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/biomes/${selectedBiome}/level-objects`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/biomes', selectedBiome, 'level-objects'] });
     },
     onError: () => {
       toast({
