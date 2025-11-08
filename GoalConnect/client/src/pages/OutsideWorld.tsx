@@ -98,10 +98,8 @@ export default function OutsideWorld() {
   });
 
   const handleExplore = (biomeId: number) => {
-    setSelectedBiome(biomeId);
-    setEventResult(null);
-    setError(null);
-    useRunMutation.mutate(biomeId);
+    // Navigate to exploration view
+    navigate(`/explore/${biomeId}`);
   };
 
   const runsRemaining = (dailyProgress?.runsAvailable || 0) - (dailyProgress?.runsUsed || 0);

@@ -14,6 +14,7 @@ import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Wonderland from "@/pages/Wonderland";
 import OutsideWorld from "@/pages/OutsideWorld";
+import BiomeExploration from "@/pages/BiomeExploration";
 import Combat from "@/pages/Combat";
 import PartyManagement from "@/pages/PartyManagement";
 import SpriteUpload from "@/pages/SpriteUpload";
@@ -121,6 +122,11 @@ function AppRoutes() {
         <RequireAuth>
           <OutsideWorld />
           <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/explore/:biomeId">
+        <RequireAuth>
+          <BiomeExploration />
         </RequireAuth>
       </Route>
       <Route path="/combat/:encounterId">
