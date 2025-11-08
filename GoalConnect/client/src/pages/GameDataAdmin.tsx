@@ -246,6 +246,22 @@ export default function GameDataAdmin() {
       <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
       <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
+      {/* Sprite Management Links */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => window.location.href = '/sprites/upload'}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+        >
+          📤 Upload Sprites
+        </button>
+        <button
+          onClick={() => window.location.href = '/sprites/organize'}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+        >
+          🗂️ Organize Sprites
+        </button>
+      </div>
+
       {spritesLoading || biomesLoading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400"></div>
