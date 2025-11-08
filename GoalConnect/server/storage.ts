@@ -19,6 +19,25 @@ import {
   type UserPoints,
   type Todo,
   type InsertTodo,
+  // D&D RPG types
+  type Biome,
+  type InsertBiome,
+  type CreatureSpecies,
+  type InsertCreatureSpecies,
+  type UserCreature,
+  type InsertUserCreature,
+  type Item,
+  type InsertItem,
+  type UserInventory,
+  type EquippedItem,
+  type Shard,
+  type DailyProgress,
+  type InsertDailyProgress,
+  type Encounter,
+  type InsertEncounter,
+  type CombatLog,
+  type PlayerStats,
+  type InsertPlayerStats,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 
@@ -83,6 +102,64 @@ export interface IStorage {
   updateTodo(id: number, todo: Partial<Todo>): Promise<Todo | undefined>;
   deleteTodo(id: number): Promise<boolean>;
   completeTodo(id: number): Promise<Todo | undefined>;
+
+  // D&D RPG System - Biomes
+  getBiomes(): Promise<Biome[]>;
+  getBiome(id: number): Promise<Biome | undefined>;
+  getBiomesByLevel(playerLevel: number): Promise<Biome[]>;
+
+  // D&D RPG System - Creature Species
+  getCreatureSpecies(): Promise<CreatureSpecies[]>;
+  getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined>;
+  getCreatureSpeciesByBiome(biomeId: number): Promise<CreatureSpecies[]>;
+  getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]>;
+
+  // D&D RPG System - User Creatures (Party/Collection)
+  getUserCreatures(userId: number): Promise<UserCreature[]>;
+  getUserCreature(id: number): Promise<UserCreature | undefined>;
+  getParty(userId: number): Promise<UserCreature[]>;
+  createUserCreature(creature: InsertUserCreature): Promise<UserCreature>;
+  updateUserCreature(id: number, updates: Partial<UserCreature>): Promise<UserCreature | undefined>;
+  deleteUserCreature(id: number): Promise<boolean>;
+  addToParty(userId: number, creatureId: number, position: number): Promise<UserCreature | undefined>;
+  removeFromParty(creatureId: number): Promise<UserCreature | undefined>;
+
+  // D&D RPG System - Items & Inventory
+  getItems(): Promise<Item[]>;
+  getItem(id: number): Promise<Item | undefined>;
+  getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>>;
+  addItemToInventory(userId: number, itemId: number, quantity: number): Promise<void>;
+  removeItemFromInventory(userId: number, itemId: number, quantity: number): Promise<boolean>;
+  getEquippedItem(creatureId: number): Promise<(EquippedItem & { item: Item }) | undefined>;
+  equipItem(creatureId: number, itemId: number): Promise<EquippedItem>;
+  unequipItem(creatureId: number): Promise<boolean>;
+
+  // D&D RPG System - Shards
+  getShards(userId: number): Promise<Shard[]>;
+  addShards(userId: number, speciesId: number, amount: number): Promise<void>;
+  spendShards(userId: number, speciesId: number, amount: number): Promise<boolean>;
+
+  // D&D RPG System - Daily Progress
+  getDailyProgress(userId: number, date: string): Promise<DailyProgress | undefined>;
+  updateDailyProgress(userId: number, date: string, updates: Partial<DailyProgress>): Promise<DailyProgress>;
+  incrementHabitPoints(userId: number, date: string, points: number): Promise<DailyProgress>;
+  useRun(userId: number, date: string): Promise<boolean>;
+
+  // D&D RPG System - Encounters
+  getEncounters(userId: number): Promise<Encounter[]>;
+  getEncounter(id: number): Promise<Encounter | undefined>;
+  createEncounter(encounter: InsertEncounter): Promise<Encounter>;
+  updateEncounter(id: number, updates: Partial<Encounter>): Promise<Encounter | undefined>;
+
+  // D&D RPG System - Combat Logs
+  getCombatLog(encounterId: number): Promise<CombatLog | undefined>;
+  createCombatLog(log: Omit<CombatLog, "id" | "createdAt">): Promise<CombatLog>;
+
+  // D&D RPG System - Player Stats
+  getPlayerStats(userId: number): Promise<PlayerStats | undefined>;
+  createPlayerStats(userId: number): Promise<PlayerStats>;
+  updatePlayerStats(userId: number, updates: Partial<PlayerStats>): Promise<PlayerStats>;
+  addExperience(userId: number, xp: number): Promise<{ stats: PlayerStats; leveledUp: boolean }>;
 }
 
 export class MemStorage implements IStorage {
