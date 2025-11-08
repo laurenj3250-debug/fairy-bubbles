@@ -48,6 +48,7 @@ export default function OutsideWorld() {
   const [, navigate] = useLocation();
   const [selectedBiome, setSelectedBiome] = useState<number | null>(null);
   const [eventResult, setEventResult] = useState<EventResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch biomes
@@ -83,16 +84,23 @@ export default function OutsideWorld() {
       return response.json();
     },
     onSuccess: (data) => {
+      setError(null);
       setEventResult(data);
       queryClient.invalidateQueries({ queryKey: ['/api/daily-progress'] });
       queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
       queryClient.invalidateQueries({ queryKey: ['/api/encounters'] });
+    },
+    onError: (err: Error) => {
+      console.error('[OutsideWorld] Mutation error:', err);
+      setError(err.message);
+      setEventResult(null);
     },
   });
 
   const handleExplore = (biomeId: number) => {
     setSelectedBiome(biomeId);
     setEventResult(null);
+    setError(null);
     useRunMutation.mutate(biomeId);
   };
 
@@ -178,6 +186,14 @@ export default function OutsideWorld() {
             </div>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 mb-8">
+            <h3 className="text-red-300 font-semibold mb-2">⚠️ Error</h3>
+            <p className="text-white">{error}</p>
+          </div>
+        )}
 
         {/* Event Result */}
         {eventResult && (

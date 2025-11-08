@@ -194,7 +194,7 @@ export class RNGService {
     }
 
     // 2. Check if biome is unlocked
-    const biome = await this.storage.getBiomeById(biomeId);
+    const biome = await this.storage.getBiome(biomeId);
 
     if (!biome) {
       return {
