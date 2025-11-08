@@ -28,23 +28,27 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
   let bgColor = "from-blue-500/30 to-purple-500/30";
   let borderColor = "border-blue-400/50";
   let textColor = "text-blue-200";
-  let progressColor = "from-blue-500 to-purple-500";
+  let gradientId = "gradient-blue";
+  let gradientColors = { start: "#3b82f6", end: "#a855f7" }; // blue-500 to purple-500
 
   if (percentage >= 100) {
     bgColor = "from-green-500/30 to-emerald-500/30";
     borderColor = "border-green-400/50";
     textColor = "text-green-200";
-    progressColor = "from-green-500 to-emerald-500";
+    gradientId = "gradient-green";
+    gradientColors = { start: "#22c55e", end: "#10b981" }; // green-500 to emerald-500
   } else if (!onTrack || daysLeft <= 7) {
     bgColor = "from-orange-500/30 to-yellow-500/30";
     borderColor = "border-orange-400/50";
     textColor = "text-orange-200";
-    progressColor = "from-orange-500 to-yellow-500";
+    gradientId = "gradient-orange";
+    gradientColors = { start: "#f97316", end: "#eab308" }; // orange-500 to yellow-500
   } else if (daysLeft <= 1) {
     bgColor = "from-red-500/30 to-orange-500/30";
     borderColor = "border-red-400/50";
     textColor = "text-red-200";
-    progressColor = "from-red-500 to-orange-500";
+    gradientId = "gradient-red";
+    gradientColors = { start: "#ef4444", end: "#f97316" }; // red-500 to orange-500
   }
 
   const handleQuickPlusOne = async (e: React.MouseEvent) => {
@@ -101,7 +105,7 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="url(#gradient)"
+            stroke={`url(#${gradientId})`}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
@@ -109,9 +113,9 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
             className="transition-all duration-500"
           />
           <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" className={progressColor.split(' ')[0].replace('from-', 'stop-')} />
-              <stop offset="100%" className={progressColor.split(' ')[1].replace('to-', 'stop-')} />
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={gradientColors.start} />
+              <stop offset="100%" stopColor={gradientColors.end} />
             </linearGradient>
           </defs>
         </svg>

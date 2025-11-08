@@ -63,7 +63,7 @@ export function DreamScrollWidget() {
   const completedItems = items.filter(item => item.completed);
 
   return (
-    <div className="glass-card rounded-2xl p-5 relative overflow-hidden">
+    <div className="glass-card rounded-2xl p-5 relative overflow-hidden z-10">
       {/* Magical gradient header */}
       <div
         className={cn(
@@ -96,7 +96,7 @@ export function DreamScrollWidget() {
           </button>
 
           {showCategoryMenu && (
-            <div className="absolute right-0 top-full mt-2 bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg shadow-lg overflow-hidden z-10 min-w-[160px]">
+            <div className="absolute right-0 top-full mt-2 bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg shadow-lg overflow-hidden z-50 min-w-[160px]">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.value}
