@@ -71,7 +71,11 @@ export default function SpriteOrganize() {
   };
 
   const selectAll = () => {
-    setSelectedSprites(new Set(files.map(f => f.filename)));
+    // Only select uncategorized sprites (safest default)
+    const uncategorizedFiles = Array.from(sprites.values())
+      .filter(s => s.category === 'uncategorized')
+      .map(s => s.filename);
+    setSelectedSprites(new Set(uncategorizedFiles));
   };
 
   const clearSelection = () => {
@@ -102,7 +106,29 @@ export default function SpriteOrganize() {
 
   const handleDeleteSelected = () => {
     if (selectedSprites.size === 0) return;
-    if (confirm(`Delete ${selectedSprites.size} selected sprite(s)?`)) {
+
+    // Count by category for better confirmation message
+    const selectedByCategory = {
+      creature: 0,
+      biome: 0,
+      item: 0,
+      ui: 0,
+      uncategorized: 0,
+    };
+
+    selectedSprites.forEach(filename => {
+      const sprite = sprites.get(filename);
+      if (sprite) {
+        selectedByCategory[sprite.category]++;
+      }
+    });
+
+    const categorySummary = Object.entries(selectedByCategory)
+      .filter(([_, count]) => count > 0)
+      .map(([cat, count]) => `${count} ${cat}`)
+      .join(', ');
+
+    if (confirm(`⚠️ DELETE ${selectedSprites.size} sprites?\n\n${categorySummary}\n\nThis cannot be undone!`)) {
       deleteMutation.mutate(Array.from(selectedSprites));
     }
   };
@@ -172,7 +198,7 @@ export default function SpriteOrganize() {
               onClick={selectAll}
               className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-4 py-2 rounded-lg text-sm transition-colors"
             >
-              Select All
+              Select All Uncategorized
             </button>
             {selectedSprites.size > 0 && (
               <>
