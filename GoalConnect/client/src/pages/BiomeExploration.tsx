@@ -48,14 +48,28 @@ export default function BiomeExploration() {
   const [eventResult, setEventResult] = useState<EventResult | null>(null);
   const [interactedObjects, setInteractedObjects] = useState<Set<string>>(new Set());
 
-  // Interactive objects in the scene
+  // Interactive objects in the scene - ENCHANTED FOREST theme
   const [objects] = useState<InteractiveObject[]>([
-    { id: 'tree1', x: 200, emoji: '🌲', name: 'Pine Tree', size: 80 },
-    { id: 'rock1', x: 350, emoji: '🪨', name: 'Rock', size: 50 },
-    { id: 'bush1', x: 500, emoji: '🌿', name: 'Bush', size: 60 },
-    { id: 'mushroom1', x: 650, emoji: '🍄', name: 'Mushroom', size: 45 },
-    { id: 'tree2', x: 800, emoji: '🌳', name: 'Oak Tree', size: 90 },
-    { id: 'flower1', x: 950, emoji: '🌸', name: 'Flowers', size: 40 },
+    { id: 'crystal1', x: 150, emoji: '💎', name: 'Glowing Crystal', size: 50 },
+    { id: 'mushroom1', x: 220, emoji: '🍄', name: 'Magic Mushroom', size: 55 },
+    { id: 'tree1', x: 300, emoji: '🌲', name: 'Ancient Tree', size: 90 },
+    { id: 'flower1', x: 380, emoji: '🌸', name: 'Enchanted Blossom', size: 45 },
+    { id: 'sparkles1', x: 450, emoji: '✨', name: 'Fairy Dust', size: 40 },
+    { id: 'rock1', x: 520, emoji: '🪨', name: 'Rune Stone', size: 55 },
+    { id: 'crystal2', x: 590, emoji: '💠', name: 'Crystal Cluster', size: 48 },
+    { id: 'tree2', x: 670, emoji: '🌳', name: 'Willow Tree', size: 95 },
+    { id: 'mushroom2', x: 750, emoji: '🍄', name: 'Glowcap', size: 50 },
+    { id: 'flower2', x: 820, emoji: '🌺', name: 'Moonflower', size: 46 },
+    { id: 'butterfly1', x: 890, emoji: '🦋', name: 'Spirit Butterfly', size: 42 },
+    { id: 'star1', x: 960, emoji: '⭐', name: 'Fallen Star', size: 38 },
+    { id: 'tree3', x: 1030, emoji: '🌲', name: 'Pine Guardian', size: 88 },
+    { id: 'crystal3', x: 1100, emoji: '💎', name: 'Power Crystal', size: 52 },
+    { id: 'flower3', x: 1170, emoji: '🌼', name: 'Sunburst Flower', size: 44 },
+    { id: 'mushroom3', x: 1240, emoji: '🍄', name: 'Fairy Ring', size: 58 },
+    { id: 'sparkles2', x: 1310, emoji: '✨', name: 'Magic Wisps', size: 42 },
+    { id: 'flower4', x: 1380, emoji: '🌸', name: 'Cherry Blossoms', size: 47 },
+    { id: 'tree4', x: 1450, emoji: '🌳', name: 'Elder Oak', size: 100 },
+    { id: 'crystal4', x: 1520, emoji: '💠', name: 'Mystic Gem', size: 50 },
   ]);
 
   // Fetch biome data
@@ -130,7 +144,7 @@ export default function BiomeExploration() {
       case 'ArrowRight':
       case 'd':
       case 'D':
-        setPlayerX(prev => Math.min(1050, prev + speed));
+        setPlayerX(prev => Math.min(1550, prev + speed));
         setFacingRight(true);
         break;
       case ' ':
@@ -161,63 +175,75 @@ export default function BiomeExploration() {
   const nearbyObject = checkNearbyObjects();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-200 to-green-200 p-6 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-800 to-purple-700 p-6 pb-24">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-green-900">{biome?.name || 'Exploring...'}</h1>
-            <p className="text-green-700 text-sm">← → to move • SPACE or E to interact</p>
+            <h1 className="text-3xl font-bold text-purple-100">{biome?.name || 'Exploring...'}</h1>
+            <p className="text-purple-300 text-sm">← → to move • SPACE or E to interact with glowing objects</p>
           </div>
           <button
             onClick={() => navigate('/outside-world')}
-            className="bg-red-500/20 hover:bg-red-500/30 text-red-700 px-4 py-2 rounded-lg border border-red-400"
+            className="bg-red-500/30 hover:bg-red-500/50 text-red-100 px-4 py-2 rounded-lg border border-red-300"
           >
             Exit Exploration
           </button>
         </div>
 
         {/* Game Scene */}
-        <div className="relative rounded-lg border-4 border-green-800 overflow-hidden shadow-2xl"
-             style={{ width: '1200px', height: '500px', margin: '0 auto' }}>
+        <div className="relative rounded-lg border-4 border-purple-500/50 overflow-hidden shadow-2xl"
+             style={{ width: '1600px', height: '500px', margin: '0 auto' }}>
 
-          {/* Sky Background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200" />
+          {/* Enchanted Sky Background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-600 via-pink-400 to-teal-400" />
 
-          {/* Distant Mountains */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-green-600 to-green-700 opacity-40"
+          {/* Floating Fireflies / Magic Particles */}
+          <div className="absolute top-20 left-40 text-2xl animate-pulse">✨</div>
+          <div className="absolute top-60 left-200 text-xl animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
+          <div className="absolute top-40 right-60 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>✨</div>
+          <div className="absolute top-80 right-200 text-xl animate-pulse" style={{ animationDelay: '1.5s' }}>💫</div>
+          <div className="absolute top-100 left-500 text-xl animate-pulse" style={{ animationDelay: '2s' }}>✨</div>
+          <div className="absolute top-50 right-400 text-2xl animate-pulse" style={{ animationDelay: '0.8s' }}>⭐</div>
+
+          {/* Distant Magical Mountains */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-700 to-purple-900 opacity-50"
                style={{ clipPath: 'polygon(0 100%, 0 40%, 20% 60%, 40% 30%, 60% 50%, 80% 20%, 100% 50%, 100% 100%)' }} />
 
-          {/* Middle Ground Trees (Background) */}
-          <div className="absolute bottom-28 left-20 text-4xl opacity-50">🌲</div>
-          <div className="absolute bottom-32 right-40 text-5xl opacity-50">🌳</div>
+          {/* Middle Ground Trees (Background) with glow */}
+          <div className="absolute bottom-28 left-60 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
+          <div className="absolute bottom-32 right-80 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
+          <div className="absolute bottom-30 left-400 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
 
-          {/* Ground */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-green-600 to-green-800" />
+          {/* Enchanted Ground */}
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-purple-800 to-indigo-950" />
 
-          {/* Grass on ground */}
+          {/* Magical Grass on ground */}
           <div className="absolute bottom-16 left-0 right-0 h-8 flex items-end justify-around px-4">
-            {[...Array(30)].map((_, i) => (
-              <span key={i} className="text-green-700 text-xl opacity-70">🌿</span>
+            {[...Array(50)].map((_, i) => (
+              <span key={i} className="text-teal-400 text-xl opacity-60" style={{ filter: 'drop-shadow(0 0 3px rgba(45, 212, 191, 0.5))' }}>🌿</span>
             ))}
           </div>
 
-          {/* Interactive Objects on Ground */}
+          {/* Interactive Objects on Ground with GLOW */}
           {objects.map(obj => (
             <div
               key={obj.id}
-              className="absolute cursor-pointer hover:scale-110 transition-transform"
+              className="absolute cursor-pointer hover:scale-125 transition-all duration-300"
               style={{
                 left: `${obj.x}px`,
                 bottom: '96px',
                 fontSize: `${obj.size}px`,
-                filter: interactedObjects.has(obj.id) ? 'grayscale(100%) opacity(50%)' : 'none'
+                filter: interactedObjects.has(obj.id)
+                  ? 'grayscale(100%) opacity(30%)'
+                  : 'drop-shadow(0 0 20px rgba(236, 72, 153, 0.8)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.6))',
+                animation: !interactedObjects.has(obj.id) ? 'pulse 2s ease-in-out infinite' : 'none'
               }}
               onClick={() => handleInteract(obj.id)}
             >
               {obj.emoji}
               {nearbyObject?.id === obj.id && !interactedObjects.has(obj.id) && (
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white/90 px-3 py-1 rounded-full text-xs font-semibold text-green-900 whitespace-nowrap animate-bounce">
+                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-purple-500/95 px-4 py-2 rounded-full text-sm font-bold text-white whitespace-nowrap animate-bounce border-2 border-pink-300">
                   Press E ↵
                 </div>
               )}
@@ -238,9 +264,9 @@ export default function BiomeExploration() {
 
           {/* Progress Indicator */}
           {isExploring && !eventResult && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/95 px-6 py-3 rounded-full shadow-lg">
-              <div className="text-sm text-green-900 font-semibold">
-                Explore objects to find something! ({interactedObjects.size}/3 searched)
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-3 rounded-full shadow-2xl border-2 border-white/50">
+              <div className="text-sm text-white font-bold">
+                ✨ Investigate glowing objects to discover secrets! ({interactedObjects.size}/3 investigated)
               </div>
             </div>
           )}
@@ -289,9 +315,9 @@ export default function BiomeExploration() {
         </div>
 
         {/* Instructions */}
-        <div className="mt-4 text-center text-green-800">
-          <p className="font-semibold">Walk through the {biome?.name} and interact with objects to find items or creatures!</p>
-          <p className="text-sm text-green-700 mt-1">Get close to glowing objects and press E or click to investigate</p>
+        <div className="mt-4 text-center text-purple-200">
+          <p className="font-bold text-lg">Wander through the mystical {biome?.name} and investigate glowing objects!</p>
+          <p className="text-sm text-purple-300 mt-1">Approach shimmering objects and press E or click to investigate their magic ✨</p>
         </div>
       </div>
     </div>
