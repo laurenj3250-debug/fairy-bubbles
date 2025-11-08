@@ -173,91 +173,204 @@ export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema
 export const insertTodoSchema = createInsertSchema(todos).omit({ id: true, createdAt: true, completedAt: true });
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 
-// ========== CREATURES SYSTEM ==========
+// ========== D&D RPG SYSTEM ==========
 
-export const creatureSpecies = pgTable("creature_species", {
+// Biomes (Worlds)
+export const biomes = pgTable("biomes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
-  description: text("description").notNull().default(""),
-  elementType: varchar("element_type", { length: 20 }).notNull().$type<"fire" | "water" | "grass" | "electric" | "psychic" | "dark" | "fairy" | "normal" | "dragon">(),
+  description: text("description").notNull(),
+  unlockPlayerLevel: integer("unlock_player_level").notNull().default(1),
 
-  // Base stats
-  baseHp: integer("base_hp").notNull().default(50),
-  baseAttack: integer("base_attack").notNull().default(50),
-  baseDefense: integer("base_defense").notNull().default(50),
-  baseSpeed: integer("base_speed").notNull().default(50),
+  // Event weights
+  lootWeight: integer("loot_weight").notNull().default(70),
+  encounterWeight: integer("encounter_weight").notNull().default(30),
 
-  // Visual
-  spriteUrl: text("sprite_url"),
-  rarity: varchar("rarity", { length: 20 }).notNull().default("common").$type<"common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic">(),
+  // Party gates
+  minPartySize: integer("min_party_size").notNull().default(0),
+  requiredTag: text("required_tag"),
+  requiredStatSum: integer("required_stat_sum").default(0),
+  requiredStatType: varchar("required_stat_type", { length: 10 }),
 
-  // Evolution
-  evolutionStage: integer("evolution_stage").notNull().default(1),
-  evolvesToId: integer("evolves_to_id").references((): any => creatureSpecies.id),
-  evolutionLevel: integer("evolution_level"),
-  evolutionStreak: integer("evolution_streak"),
-
-  // Discovery
-  isStarter: boolean("is_starter").notNull().default(false),
-  isHidden: boolean("is_hidden").notNull().default(false),
-
+  backgroundSprite: text("background_sprite"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const creatures = pgTable("creatures", {
+// Creature Species
+export const creatureSpecies = pgTable("creature_species", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description").notNull(),
+
+  // D&D-style stats
+  baseHp: integer("base_hp").notNull().default(8),
+  baseStr: integer("base_str").notNull().default(1),
+  baseDex: integer("base_dex").notNull().default(1),
+  baseWis: integer("base_wis").notNull().default(1),
+
+  // Tags & rarity
+  tag: varchar("tag", { length: 20 }).notNull(),
+  rarity: varchar("rarity", { length: 20 }).notNull().$type<"common" | "uncommon" | "rare" | "epic">(),
+  captureDc: integer("capture_dc").notNull().default(10),
+
+  // Skills
+  skill1Name: text("skill_1_name"),
+  skill1Effect: text("skill_1_effect"),
+  skill2Name: text("skill_2_name"),
+  skill2Effect: text("skill_2_effect"),
+
+  biomeId: integer("biome_id").references(() => biomes.id),
+  spriteUrl: text("sprite_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User Creatures (Party/Collection)
+export const userCreatures = pgTable("user_creatures", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  habitId: integer("habit_id").notNull().unique().references(() => habits.id),
   speciesId: integer("species_id").notNull().references(() => creatureSpecies.id),
 
-  // Identity
   nickname: text("nickname"),
-
-  // Progression
-  level: integer("level").notNull().default(1),
-  experience: integer("experience").notNull().default(0),
 
   // Stats
   currentHp: integer("current_hp").notNull(),
   maxHp: integer("max_hp").notNull(),
-  attack: integer("attack").notNull(),
-  defense: integer("defense").notNull(),
-  speed: integer("speed").notNull(),
+  str: integer("str").notNull(),
+  dex: integer("dex").notNull(),
+  wis: integer("wis").notNull(),
 
-  // Meta
-  totalCompletions: integer("total_completions").notNull().default(0),
-  currentStreak: integer("current_streak").notNull().default(0),
-  bestStreak: integer("best_streak").notNull().default(0),
+  // Party
+  inParty: boolean("in_party").notNull().default(false),
+  partyPosition: integer("party_position"),
 
-  // Discovery
+  evolutionStage: integer("evolution_stage").notNull().default(1),
   discoveredAt: timestamp("discovered_at").defaultNow().notNull(),
-  lastInteraction: timestamp("last_interaction").defaultNow().notNull(),
 });
 
-export const creatureEvolutions = pgTable("creature_evolutions", {
+// Items (Loot)
+export const items = pgTable("items", {
   id: serial("id").primaryKey(),
-  creatureId: integer("creature_id").notNull().references(() => creatures.id),
-  fromSpeciesId: integer("from_species_id").notNull().references(() => creatureSpecies.id),
-  toSpeciesId: integer("to_species_id").notNull().references(() => creatureSpecies.id),
-  evolvedAt: timestamp("evolved_at").defaultNow().notNull(),
-  triggerType: varchar("trigger_type", { length: 20 }).notNull().$type<"level" | "streak" | "item">(),
-  notes: text("notes"),
+  name: text("name").notNull().unique(),
+  description: text("description").notNull(),
+
+  type: varchar("type", { length: 20 }).notNull().$type<"net" | "charm" | "snack" | "gear" | "cloak" | "brace">(),
+  rarity: varchar("rarity", { length: 20 }).notNull().$type<"common" | "uncommon" | "rare">(),
+
+  effectType: varchar("effect_type", { length: 20 }),
+  effectValue: integer("effect_value"),
+  effectStat: varchar("effect_stat", { length: 10 }),
+
+  consumable: boolean("consumable").notNull().default(true),
+  equippable: boolean("equippable").notNull().default(false),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Creature types
+// User Inventory
+export const userInventory = pgTable("user_inventory", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  itemId: integer("item_id").notNull().references(() => items.id),
+  quantity: integer("quantity").notNull().default(1),
+});
+
+// Equipped Items
+export const equippedItems = pgTable("equipped_items", {
+  id: serial("id").primaryKey(),
+  userCreatureId: integer("user_creature_id").notNull().references(() => userCreatures.id),
+  itemId: integer("item_id").notNull().references(() => items.id),
+});
+
+// Shards (Duplicates)
+export const shards = pgTable("shards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  speciesId: integer("species_id").notNull().references(() => creatureSpecies.id),
+  amount: integer("amount").notNull().default(0),
+});
+
+// Daily Progress
+export const dailyProgress = pgTable("daily_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: varchar("date", { length: 10 }).notNull(),
+
+  habitPointsEarned: integer("habit_points_earned").notNull().default(0),
+  threshold1Reached: boolean("threshold_1_reached").notNull().default(false),
+  threshold2Reached: boolean("threshold_2_reached").notNull().default(false),
+  threshold3Reached: boolean("threshold_3_reached").notNull().default(false),
+
+  runsAvailable: integer("runs_available").notNull().default(0),
+  runsUsed: integer("runs_used").notNull().default(0),
+});
+
+// Encounters
+export const encounters = pgTable("encounters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  biomeId: integer("biome_id").notNull().references(() => biomes.id),
+  speciesId: integer("species_id").references(() => creatureSpecies.id),
+
+  eventType: varchar("event_type", { length: 10 }).notNull().$type<"loot" | "encounter">(),
+  combatWon: boolean("combat_won"),
+  captured: boolean("captured"),
+  shardsEarned: integer("shards_earned").notNull().default(0),
+
+  lootItemId: integer("loot_item_id").references(() => items.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Combat Logs
+export const combatLogs = pgTable("combat_logs", {
+  id: serial("id").primaryKey(),
+  encounterId: integer("encounter_id").notNull().references(() => encounters.id),
+
+  partyCreatures: text("party_creatures").notNull(), // JSON array of IDs
+  enemySpeciesId: integer("enemy_species_id").notNull().references(() => creatureSpecies.id),
+  enemyHp: integer("enemy_hp").notNull(),
+
+  turnLog: text("turn_log").notNull().default("[]"), // JSON turn history
+  roundsFought: integer("rounds_fought").notNull(),
+  victory: boolean("victory").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Player Stats
+export const playerStats = pgTable("player_stats", {
+  userId: integer("user_id").primaryKey().references(() => users.id),
+
+  level: integer("level").notNull().default(1),
+  experience: integer("experience").notNull().default(0),
+  maxPartySize: integer("max_party_size").notNull().default(1),
+});
+
+// TypeScript types
+export type Biome = typeof biomes.$inferSelect;
 export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
-export type NewCreatureSpecies = typeof creatureSpecies.$inferInsert;
-export type Creature = typeof creatures.$inferSelect;
-export type NewCreature = typeof creatures.$inferInsert;
-export type CreatureEvolution = typeof creatureEvolutions.$inferSelect;
-export type NewCreatureEvolution = typeof creatureEvolutions.$inferInsert;
+export type UserCreature = typeof userCreatures.$inferSelect;
+export type Item = typeof items.$inferSelect;
+export type UserInventory = typeof userInventory.$inferSelect;
+export type EquippedItem = typeof equippedItems.$inferSelect;
+export type Shard = typeof shards.$inferSelect;
+export type DailyProgress = typeof dailyProgress.$inferSelect;
+export type Encounter = typeof encounters.$inferSelect;
+export type CombatLog = typeof combatLogs.$inferSelect;
+export type PlayerStats = typeof playerStats.$inferSelect;
 
 // Insert schemas
+export const insertBiomeSchema = createInsertSchema(biomes).omit({ id: true, createdAt: true });
 export const insertCreatureSpeciesSchema = createInsertSchema(creatureSpecies).omit({ id: true, createdAt: true });
+export const insertUserCreatureSchema = createInsertSchema(userCreatures).omit({ id: true, discoveredAt: true });
+export const insertItemSchema = createInsertSchema(items).omit({ id: true, createdAt: true });
+export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit({ id: true });
+export const insertEncounterSchema = createInsertSchema(encounters).omit({ id: true, createdAt: true });
+export const insertPlayerStatsSchema = createInsertSchema(playerStats);
+
+export type InsertBiome = z.infer<typeof insertBiomeSchema>;
 export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
-
-export const insertCreatureSchema = createInsertSchema(creatures).omit({ id: true, discoveredAt: true, lastInteraction: true });
-export type InsertCreature = z.infer<typeof insertCreatureSchema>;
-
-export const insertCreatureEvolutionSchema = createInsertSchema(creatureEvolutions).omit({ id: true, evolvedAt: true });
-export type InsertCreatureEvolution = z.infer<typeof insertCreatureEvolutionSchema>;
+export type InsertUserCreature = z.infer<typeof insertUserCreatureSchema>;
+export type InsertItem = z.infer<typeof insertItemSchema>;
+export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
+export type InsertEncounter = z.infer<typeof insertEncounterSchema>;
+export type InsertPlayerStats = z.infer<typeof insertPlayerStatsSchema>;
