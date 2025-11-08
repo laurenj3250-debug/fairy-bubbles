@@ -59,19 +59,30 @@ type Biome = {
 };
 
 export default function GameDataAdmin() {
+  console.log('🎮 GameDataAdmin component is mounting!');
+
   const [activeTab, setActiveTab] = useState<'biomes' | 'creatures' | 'items'>('biomes');
   const [selectedSprite, setSelectedSprite] = useState<Sprite | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch sprites
-  const { data: sprites = [], isLoading: spritesLoading } = useQuery<Sprite[]>({
+  const { data: sprites = [], isLoading: spritesLoading, error: spritesError } = useQuery<Sprite[]>({
     queryKey: ['/api/sprites'],
   });
 
   // Fetch existing biomes for creature assignment
-  const { data: biomes = [], isLoading: biomesLoading } = useQuery<Biome[]>({
+  const { data: biomes = [], isLoading: biomesLoading, error: biomesError } = useQuery<Biome[]>({
     queryKey: ['/api/game/biomes'],
+  });
+
+  console.log('🎮 Game Admin state:', {
+    spritesLoading,
+    biomesLoading,
+    spritesCount: sprites.length,
+    biomesCount: biomes.length,
+    spritesError,
+    biomesError,
   });
 
   // Filter sprites by category
@@ -241,21 +252,49 @@ export default function GameDataAdmin() {
     createItemMutation.mutate(itemForm);
   };
 
-  if (spritesLoading || biomesLoading) {
-    return (
-      <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 bg-gray-900/50 flex items-center justify-center">
-        <div className="glass-card p-8 rounded-lg">
-          <div className="text-white text-xl font-semibold">Loading game data...</div>
-          <div className="text-white/60 text-sm mt-2">Fetching sprites and biomes</div>
+  // EMERGENCY VISIBILITY TEST
+  return (
+    <div
+      className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative"
+      style={{
+        backgroundColor: '#ff0000',
+        zIndex: 99999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'auto'
+      }}
+    >
+      <div style={{
+        backgroundColor: '#000000',
+        color: '#ffffff',
+        padding: '40px',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        border: '5px solid yellow',
+        margin: '20px'
+      }}>
+        🎮 GAME DATA ADMIN PAGE IS HERE! 🎮
+        <div style={{ fontSize: '16px', marginTop: '20px' }}>
+          <div>Sprites Loading: {String(spritesLoading)}</div>
+          <div>Biomes Loading: {String(biomesLoading)}</div>
+          <div>Sprites Count: {sprites.length}</div>
+          <div>Biomes Count: {biomes.length}</div>
+          {spritesError && <div style={{color: 'red'}}>Sprite Error: {String(spritesError)}</div>}
+          {biomesError && <div style={{color: 'red'}}>Biome Error: {String(biomesError)}</div>}
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
-      <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
-      <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
+      {spritesLoading || biomesLoading ? (
+        <div style={{color: 'white', fontSize: '20px', padding: '20px'}}>
+          Loading game data...
+        </div>
+      ) : (
+        <>
+          <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
+          <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
       {sprites.length === 0 && (
         <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-6 mb-6">
@@ -771,6 +810,8 @@ export default function GameDataAdmin() {
           )}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
