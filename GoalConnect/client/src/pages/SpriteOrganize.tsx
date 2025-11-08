@@ -16,9 +16,7 @@ export default function SpriteOrganize() {
   const queryClient = useQueryClient();
   const [sprites, setSprites] = useState<Map<string, CategorizedSprite>>(new Map());
   const [selectedSprites, setSelectedSprites] = useState<Set<string>>(new Set());
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
-  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+  const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
 
   // Fetch uploaded sprites
   const { data: files = [], isLoading } = useQuery<SpriteFile[]>({
@@ -61,16 +59,32 @@ export default function SpriteOrganize() {
     });
   };
 
-  const toggleSelection = (filename: string) => {
-    setSelectedSprites(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(filename)) {
-        newSet.delete(filename);
-      } else {
-        newSet.add(filename);
-      }
-      return newSet;
-    });
+  const handleSpriteClick = (filename: string, index: number, event: React.MouseEvent) => {
+    if (event.shiftKey && lastClickedIndex !== null) {
+      // Shift-click: select range
+      const allFiles = Array.from(sprites.values()).map(s => s.filename);
+      const startIndex = Math.min(lastClickedIndex, index);
+      const endIndex = Math.max(lastClickedIndex, index);
+      const rangeFiles = allFiles.slice(startIndex, endIndex + 1);
+
+      setSelectedSprites(prev => {
+        const newSet = new Set(prev);
+        rangeFiles.forEach(f => newSet.add(f));
+        return newSet;
+      });
+    } else {
+      // Normal click: toggle individual
+      setSelectedSprites(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(filename)) {
+          newSet.delete(filename);
+        } else {
+          newSet.add(filename);
+        }
+        return newSet;
+      });
+      setLastClickedIndex(index);
+    }
   };
 
   const selectAll = () => {
@@ -148,61 +162,7 @@ export default function SpriteOrganize() {
       return newMap;
     });
     setSelectedSprites(new Set()); // Clear selection after categorizing
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only start selection if clicking on the grid background (not a card)
-    if ((e.target as HTMLElement).closest('[data-sprite-card]')) return;
-
-    setIsSelecting(true);
-    setSelectionStart({ x: e.clientX, y: e.clientY });
-    setSelectionEnd({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isSelecting) return;
-    setSelectionEnd({ x: e.clientX, y: e.clientY });
-
-    // Calculate selection rectangle
-    const rect = {
-      left: Math.min(selectionStart.x, e.clientX),
-      right: Math.max(selectionStart.x, e.clientX),
-      top: Math.min(selectionStart.y, e.clientY),
-      bottom: Math.max(selectionStart.y, e.clientY),
-    };
-
-    // Find all sprite cards and check intersection
-    const selected = new Set<string>();
-    document.querySelectorAll('[data-sprite-card]').forEach(card => {
-      const cardRect = card.getBoundingClientRect();
-      const filename = card.getAttribute('data-sprite-card');
-
-      if (filename &&
-          rect.left < cardRect.right &&
-          rect.right > cardRect.left &&
-          rect.top < cardRect.bottom &&
-          rect.bottom > cardRect.top) {
-        selected.add(filename);
-      }
-    });
-
-    setSelectedSprites(selected);
-  };
-
-  const handleMouseUp = () => {
-    setIsSelecting(false);
-  };
-
-  // Get selection rectangle for rendering
-  const getSelectionRect = () => {
-    if (!isSelecting) return null;
-
-    return {
-      left: Math.min(selectionStart.x, selectionEnd.x),
-      top: Math.min(selectionStart.y, selectionEnd.y),
-      width: Math.abs(selectionEnd.x - selectionStart.x),
-      height: Math.abs(selectionEnd.y - selectionStart.y),
-    };
+    setLastClickedIndex(null); // Reset shift-click reference
   };
 
   const saveMutation = useMutation({
@@ -238,28 +198,8 @@ export default function SpriteOrganize() {
     uncategorized: categorized.filter(s => s.category === 'uncategorized'),
   };
 
-  const selectionRect = getSelectionRect();
-
   return (
-    <div
-      className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 select-none"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {/* Selection Rectangle Overlay */}
-      {selectionRect && (
-        <div
-          className="fixed pointer-events-none z-50 border-2 border-blue-500 bg-blue-500/20"
-          style={{
-            left: `${selectionRect.left}px`,
-            top: `${selectionRect.top}px`,
-            width: `${selectionRect.width}px`,
-            height: `${selectionRect.height}px`,
-          }}
-        />
-      )}
+    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">Organize Sprites</h1>
         <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
@@ -360,17 +300,20 @@ export default function SpriteOrganize() {
             Uncategorized Sprites ({byCategory.uncategorized.length})
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {byCategory.uncategorized.map((sprite) => (
-              <div
-                key={sprite.filename}
-                data-sprite-card={sprite.filename}
-                onClick={() => toggleSelection(sprite.filename)}
-                className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
-                  selectedSprites.has(sprite.filename)
-                    ? 'border-red-400 bg-red-500/20'
-                    : 'border-white/20'
-                }`}
-              >
+            {byCategory.uncategorized.map((sprite, idx) => {
+              const allSprites = Array.from(sprites.values());
+              const globalIndex = allSprites.findIndex(s => s.filename === sprite.filename);
+              return (
+                <div
+                  key={sprite.filename}
+                  data-sprite-card={sprite.filename}
+                  onClick={(e) => handleSpriteClick(sprite.filename, globalIndex, e)}
+                  className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
+                    selectedSprites.has(sprite.filename)
+                      ? 'border-red-400 bg-red-500/20'
+                      : 'border-white/20'
+                  }`}
+                >
                 <div className="flex items-start justify-between mb-2">
                   <input
                     type="checkbox"
@@ -405,7 +348,8 @@ export default function SpriteOrganize() {
                   <option value="ui">UI</option>
                 </select>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -421,17 +365,20 @@ export default function SpriteOrganize() {
               {category}s ({items.length})
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {items.map((sprite) => (
-                <div
-                  key={sprite.filename}
-                  data-sprite-card={sprite.filename}
-                  onClick={() => toggleSelection(sprite.filename)}
-                  className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
-                    selectedSprites.has(sprite.filename)
-                      ? 'border-red-400 bg-red-500/20'
-                      : 'border-teal-400/50'
-                  }`}
-                >
+              {items.map((sprite, idx) => {
+                const allSprites = Array.from(sprites.values());
+                const globalIndex = allSprites.findIndex(s => s.filename === sprite.filename);
+                return (
+                  <div
+                    key={sprite.filename}
+                    data-sprite-card={sprite.filename}
+                    onClick={(e) => handleSpriteClick(sprite.filename, globalIndex, e)}
+                    className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
+                      selectedSprites.has(sprite.filename)
+                        ? 'border-red-400 bg-red-500/20'
+                        : 'border-teal-400/50'
+                    }`}
+                  >
                   <div className="flex items-start justify-between mb-2">
                     <input
                       type="checkbox"
@@ -473,7 +420,8 @@ export default function SpriteOrganize() {
                     Remove
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );
