@@ -13,6 +13,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
 import { runMigrations } from "./migrate";
+import { seedGameData } from "./seed-game-data";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
@@ -83,6 +84,14 @@ app.use((req, res, next) => {
   if (process.env.DATABASE_URL) {
     try {
       await runMigrations();
+
+      // Seed initial game data if needed
+      try {
+        await seedGameData();
+      } catch (error) {
+        console.error('[startup] Failed to seed game data:', error);
+        // Continue anyway - seeding is optional
+      }
     } catch (error) {
       console.error('[startup] Failed to run migrations:', error);
       // Continue anyway - the app might still work with existing schema
