@@ -34,7 +34,12 @@ const combatEngine = new CombatEngine(storage);
 // Configure multer for sprite uploads
 const spriteStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), '..', 'sprite-import', 'unsorted'));
+    const uploadDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+    // Ensure directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -1574,12 +1579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const uploadedFiles: string[] = [];
-      const unsortedDir = path.join(process.cwd(), '..', 'sprite-import', 'unsorted');
-
-      // Ensure unsorted directory exists
-      if (!fs.existsSync(unsortedDir)) {
-        fs.mkdirSync(unsortedDir, { recursive: true });
-      }
+      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
 
       for (const file of files) {
         const ext = path.extname(file.originalname).toLowerCase();
