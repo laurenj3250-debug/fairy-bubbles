@@ -186,12 +186,13 @@ export class RNGService {
       };
     }
 
-    if (progress.runsUsed >= progress.runsAvailable) {
-      return {
-        success: false,
-        error: 'No runs available. Complete more habits to unlock runs!',
-      };
-    }
+    // TESTING: Skip runs check for easier testing
+    // if (progress.runsUsed >= progress.runsAvailable) {
+    //   return {
+    //     success: false,
+    //     error: 'No runs available. Complete more habits to unlock runs!',
+    //   };
+    // }
 
     // 2. Check if biome is unlocked
     const biome = await this.storage.getBiome(biomeId);
@@ -264,9 +265,10 @@ export class RNGService {
     }
 
     // 5. Increment runs used
-    await this.storage.updateDailyProgress(userId, date, {
-      runsUsed: progress.runsUsed + 1,
-    });
+    // TESTING: Skip incrementing runs for easier testing
+    // await this.storage.updateDailyProgress(userId, date, {
+    //   runsUsed: progress.runsUsed + 1,
+    // });
 
     return {
       success: true,
