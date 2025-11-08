@@ -64,7 +64,7 @@ export default function SpriteUpload() {
     <div className="min-h-screen p-8 pb-24 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-white mb-2">Sprite Upload</h1>
       <p className="text-teal-200 mb-6">
-        Upload your sprite pack files here. Supports PNG, JPG, and PSD files.
+        Upload your sprite pack files here. Supports ZIP archives, PNG, JPG, and PSD files.
       </p>
 
       <div
@@ -81,7 +81,7 @@ export default function SpriteUpload() {
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/png,image/jpeg,.psd"
+          accept="image/png,image/jpeg,.psd,.zip,application/zip"
           onChange={handleFileInputChange}
           className="hidden"
         />

@@ -24,6 +24,8 @@ import { RNGService } from "./rng-service";
 import { CombatEngine } from "./combat-engine";
 import multer from "multer";
 import path from "path";
+import AdmZip from "adm-zip";
+import fs from "fs";
 
 const getUserId = (req: Request) => requireUser(req).id;
 const rngService = new RNGService(storage);
@@ -45,14 +47,17 @@ const upload = multer({
     fileSize: 200 * 1024 * 1024, // 200MB per file
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /png|jpg|jpeg|psd/;
+    const allowedTypes = /png|jpg|jpeg|psd|zip/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'image/vnd.adobe.photoshop';
+    const mimetype = allowedTypes.test(file.mimetype) ||
+                     file.mimetype === 'image/vnd.adobe.photoshop' ||
+                     file.mimetype === 'application/zip' ||
+                     file.mimetype === 'application/x-zip-compressed';
 
     if (extname || mimetype) {
       return cb(null, true);
     } else {
-      cb(new Error('Only PNG, JPG, and PSD files are allowed'));
+      cb(new Error('Only PNG, JPG, PSD, and ZIP files are allowed'));
     }
   }
 });
@@ -1568,14 +1573,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No files uploaded" });
       }
 
-      const uploadedFiles = files.map(file => file.originalname);
+      const uploadedFiles: string[] = [];
+      const unsortedDir = path.join(process.cwd(), '..', 'sprite-import', 'unsorted');
+
+      // Ensure unsorted directory exists
+      if (!fs.existsSync(unsortedDir)) {
+        fs.mkdirSync(unsortedDir, { recursive: true });
+      }
+
+      for (const file of files) {
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (ext === '.zip') {
+          // Extract ZIP files
+          console.log(`[sprites] Extracting ZIP: ${file.originalname}`);
+          try {
+            const zip = new AdmZip(file.path);
+            const zipEntries = zip.getEntries();
+
+            for (const entry of zipEntries) {
+              // Skip directories and hidden files
+              if (entry.isDirectory || entry.entryName.startsWith('__MACOSX') || path.basename(entry.entryName).startsWith('.')) {
+                continue;
+              }
+
+              // Only extract image files
+              const entryExt = path.extname(entry.entryName).toLowerCase();
+              if (['.png', '.jpg', '.jpeg', '.psd'].includes(entryExt)) {
+                const fileName = path.basename(entry.entryName);
+                const extractPath = path.join(unsortedDir, fileName);
+
+                // Write the file
+                fs.writeFileSync(extractPath, entry.getData());
+                uploadedFiles.push(fileName);
+                console.log(`[sprites] Extracted: ${fileName}`);
+              }
+            }
+
+            // Delete the ZIP file after extraction
+            fs.unlinkSync(file.path);
+          } catch (error) {
+            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error);
+          }
+        } else {
+          // Non-ZIP files are already in the right place
+          uploadedFiles.push(file.originalname);
+        }
+      }
 
       res.json({
         success: true,
         files: uploadedFiles,
-        count: files.length,
+        count: uploadedFiles.length,
       });
     } catch (error: any) {
+      console.error('[sprites] Upload error:', error);
       res.status(500).json({ error: error.message || "Failed to upload sprites" });
     }
   });
