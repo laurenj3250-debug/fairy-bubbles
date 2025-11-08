@@ -263,6 +263,7 @@ export const items = pgTable("items", {
   consumable: boolean("consumable").notNull().default(true),
   equippable: boolean("equippable").notNull().default(false),
 
+  spriteUrl: text("sprite_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

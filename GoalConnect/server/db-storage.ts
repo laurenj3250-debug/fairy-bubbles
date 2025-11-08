@@ -23,10 +23,13 @@ import type {
   InsertTodo,
   // D&D RPG types
   Biome,
+  InsertBiome,
   CreatureSpecies,
+  InsertCreatureSpecies,
   UserCreature,
   InsertUserCreature,
   Item,
+  InsertItem,
   UserInventory,
   EquippedItem,
   Shard,
@@ -529,6 +532,11 @@ export class DbStorage implements IStorage {
     return await this.db.select().from(schema.biomes).where(eq(schema.biomes.unlockPlayerLevel, playerLevel));
   }
 
+  async createBiome(biome: InsertBiome): Promise<Biome> {
+    const [created] = await this.db.insert(schema.biomes).values(biome).returning();
+    return created;
+  }
+
   // Creature Species
   async getCreatureSpecies(): Promise<CreatureSpecies[]> {
     return await this.db.select().from(schema.creatureSpecies);
@@ -545,6 +553,11 @@ export class DbStorage implements IStorage {
 
   async getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]> {
     return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.rarity, rarity as any));
+  }
+
+  async createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies> {
+    const [created] = await this.db.insert(schema.creatureSpecies).values(species).returning();
+    return created;
   }
 
   // User Creatures (Party/Collection)
@@ -610,6 +623,11 @@ export class DbStorage implements IStorage {
   async getItem(id: number): Promise<Item | undefined> {
     const [item] = await this.db.select().from(schema.items).where(eq(schema.items.id, id));
     return item;
+  }
+
+  async createItem(item: InsertItem): Promise<Item> {
+    const [created] = await this.db.insert(schema.items).values(item).returning();
+    return created;
   }
 
   async getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>> {

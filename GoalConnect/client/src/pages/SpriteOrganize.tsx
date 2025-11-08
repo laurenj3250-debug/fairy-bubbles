@@ -201,8 +201,18 @@ export default function SpriteOrganize() {
   return (
     <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Organize Sprites</h1>
-        <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Organize Sprites</h1>
+            <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
+          </div>
+          <button
+            onClick={() => window.location.href = '/game/admin'}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-lg"
+          >
+            🎮 Create Game Data →
+          </button>
+        </div>
       </div>
 
       {/* Selection Toolbar */}

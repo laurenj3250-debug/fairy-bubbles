@@ -171,6 +171,17 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
       }
 
+      try {
+        // Add sprite_url column to items table if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE items
+          ADD COLUMN IF NOT EXISTS sprite_url TEXT
+        `);
+        console.log('[migrate] ✅ Items sprite_url column added/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add sprite_url column to items:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }

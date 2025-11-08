@@ -113,12 +113,14 @@ export interface IStorage {
   getBiomes(): Promise<Biome[]>;
   getBiome(id: number): Promise<Biome | undefined>;
   getBiomesByLevel(playerLevel: number): Promise<Biome[]>;
+  createBiome(biome: InsertBiome): Promise<Biome>;
 
   // D&D RPG System - Creature Species
   getCreatureSpecies(): Promise<CreatureSpecies[]>;
   getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined>;
   getCreatureSpeciesByBiome(biomeId: number): Promise<CreatureSpecies[]>;
   getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]>;
+  createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies>;
 
   // D&D RPG System - User Creatures (Party/Collection)
   getUserCreatures(userId: number): Promise<UserCreature[]>;
@@ -133,6 +135,7 @@ export interface IStorage {
   // D&D RPG System - Items & Inventory
   getItems(): Promise<Item[]>;
   getItem(id: number): Promise<Item | undefined>;
+  createItem(item: InsertItem): Promise<Item>;
   getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>>;
   addItemToInventory(userId: number, itemId: number, quantity: number): Promise<void>;
   removeItemFromInventory(userId: number, itemId: number, quantity: number): Promise<boolean>;

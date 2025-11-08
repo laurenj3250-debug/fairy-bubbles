@@ -1794,6 +1794,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all sprites (for admin panel)
+  app.get("/api/sprites", async (req, res) => {
+    try {
+      const sprites = await storage.getSprites();
+      const spriteData = sprites.map(s => ({
+        id: s.id,
+        filename: s.filename,
+        category: s.category,
+        name: s.name,
+        data: `data:${s.mimeType};base64,${s.data}`,
+        mimeType: s.mimeType,
+      }));
+      res.json(spriteData);
+    } catch (error: any) {
+      console.error('[sprites] Get all error:', error);
+      res.status(500).json({ error: error.message || "Failed to get sprites" });
+    }
+  });
+
+  // ========== GAME DATA ROUTES ==========
+
+  // Get all biomes
+  app.get("/api/game/biomes", async (req, res) => {
+    try {
+      const biomes = await storage.getBiomes();
+      res.json(biomes);
+    } catch (error: any) {
+      console.error('[game] Get biomes error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create biome
+  app.post("/api/game/biomes", async (req, res) => {
+    try {
+      const biome = await storage.createBiome(req.body);
+      res.json(biome);
+    } catch (error: any) {
+      console.error('[game] Create biome error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all creature species
+  app.get("/api/game/creatures", async (req, res) => {
+    try {
+      const creatures = await storage.getCreatureSpecies();
+      res.json(creatures);
+    } catch (error: any) {
+      console.error('[game] Get creatures error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create creature species
+  app.post("/api/game/creatures", async (req, res) => {
+    try {
+      const creature = await storage.createCreatureSpecies(req.body);
+      res.json(creature);
+    } catch (error: any) {
+      console.error('[game] Create creature error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all items
+  app.get("/api/game/items", async (req, res) => {
+    try {
+      const items = await storage.getItems();
+      res.json(items);
+    } catch (error: any) {
+      console.error('[game] Get items error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create item
+  app.post("/api/game/items", async (req, res) => {
+    try {
+      const item = await storage.createItem(req.body);
+      res.json(item);
+    } catch (error: any) {
+      console.error('[game] Create item error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ========== DREAM SCROLL ROUTES ==========
 
   // Get all dream scroll items for a user
