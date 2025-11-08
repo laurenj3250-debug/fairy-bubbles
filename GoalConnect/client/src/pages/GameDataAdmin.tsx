@@ -59,30 +59,19 @@ type Biome = {
 };
 
 export default function GameDataAdmin() {
-  console.log('🎮 GameDataAdmin component is mounting!');
-
   const [activeTab, setActiveTab] = useState<'biomes' | 'creatures' | 'items'>('biomes');
   const [selectedSprite, setSelectedSprite] = useState<Sprite | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch sprites
-  const { data: sprites = [], isLoading: spritesLoading, error: spritesError } = useQuery<Sprite[]>({
+  const { data: sprites = [], isLoading: spritesLoading } = useQuery<Sprite[]>({
     queryKey: ['/api/sprites'],
   });
 
   // Fetch existing biomes for creature assignment
-  const { data: biomes = [], isLoading: biomesLoading, error: biomesError } = useQuery<Biome[]>({
+  const { data: biomes = [], isLoading: biomesLoading } = useQuery<Biome[]>({
     queryKey: ['/api/game/biomes'],
-  });
-
-  console.log('🎮 Game Admin state:', {
-    spritesLoading,
-    biomesLoading,
-    spritesCount: sprites.length,
-    biomesCount: biomes.length,
-    spritesError,
-    biomesError,
   });
 
   // Filter sprites by category
@@ -252,49 +241,18 @@ export default function GameDataAdmin() {
     createItemMutation.mutate(itemForm);
   };
 
-  // EMERGENCY VISIBILITY TEST
   return (
-    <div
-      className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative"
-      style={{
-        backgroundColor: '#ff0000',
-        zIndex: 99999,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: 'auto'
-      }}
-    >
-      <div style={{
-        backgroundColor: '#000000',
-        color: '#ffffff',
-        padding: '40px',
-        fontSize: '24px',
-        fontWeight: 'bold',
-        border: '5px solid yellow',
-        margin: '20px'
-      }}>
-        🎮 GAME DATA ADMIN PAGE IS HERE! 🎮
-        <div style={{ fontSize: '16px', marginTop: '20px' }}>
-          <div>Sprites Loading: {String(spritesLoading)}</div>
-          <div>Biomes Loading: {String(biomesLoading)}</div>
-          <div>Sprites Count: {sprites.length}</div>
-          <div>Biomes Count: {biomes.length}</div>
-          {spritesError && <div style={{color: 'red'}}>Sprite Error: {String(spritesError)}</div>}
-          {biomesError && <div style={{color: 'red'}}>Biome Error: {String(biomesError)}</div>}
-        </div>
-      </div>
+    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
+      <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
       {spritesLoading || biomesLoading ? (
-        <div style={{color: 'white', fontSize: '20px', padding: '20px'}}>
-          Loading game data...
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400"></div>
+          <p className="text-white/60 mt-4">Loading game data...</p>
         </div>
       ) : (
         <>
-          <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
-          <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
       {sprites.length === 0 && (
         <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-6 mb-6">
