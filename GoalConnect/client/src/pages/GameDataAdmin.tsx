@@ -243,21 +243,19 @@ export default function GameDataAdmin() {
 
   if (spritesLoading || biomesLoading) {
     return (
-      <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 flex items-center justify-center">
-        <div className="text-white text-xl">Loading game data...</div>
+      <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 bg-gray-900/50 flex items-center justify-center">
+        <div className="glass-card p-8 rounded-lg">
+          <div className="text-white text-xl font-semibold">Loading game data...</div>
+          <div className="text-white/60 text-sm mt-2">Fetching sprites and biomes</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative" style={{ zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.9)' }}>
-      {/* Debug banner */}
-      <div className="bg-red-500 text-white p-4 mb-4 text-2xl font-bold">
-        🔴 GAME DATA ADMIN PAGE IS RENDERING - Sprites: {sprites.length}, Biomes: {biomes.length}
-      </div>
-
-      <h1 className="text-3xl font-bold text-white mb-6">🎮 Game Data Admin</h1>
-      <p className="text-teal-200 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
+    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
+      <h1 className="text-3xl font-bold text-white mb-2">🎮 Game Data Admin</h1>
+      <p className="text-white/60 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
       {sprites.length === 0 && (
         <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-6 mb-6">
