@@ -228,23 +228,21 @@ export default function LevelEditor() {
 
   if (!selectedBiome) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-teal-900 p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-8">🎮 Level Editor</h1>
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6">
-            <h2 className="text-2xl font-semibold text-white mb-4">Select a Biome to Edit</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {biomes.map(biome => (
-                <button
-                  key={biome.id}
-                  onClick={() => setSelectedBiome(biome.id)}
-                  className="p-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-left transition-colors"
-                >
-                  <h3 className="text-lg font-semibold text-white">{biome.name}</h3>
-                  <p className="text-sm text-teal-200 mt-1">{biome.description}</p>
-                </button>
-              ))}
-            </div>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-white mb-8">🎮 Level Editor</h1>
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-white mb-4">Select a Biome to Edit</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {biomes.map(biome => (
+              <button
+                key={biome.id}
+                onClick={() => setSelectedBiome(biome.id)}
+                className="p-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-left transition-colors"
+              >
+                <h3 className="text-lg font-semibold text-white">{biome.name}</h3>
+                <p className="text-sm text-teal-200 mt-1">{biome.description}</p>
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -252,7 +250,7 @@ export default function LevelEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-teal-900 p-4">
+    <div className="w-full">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
