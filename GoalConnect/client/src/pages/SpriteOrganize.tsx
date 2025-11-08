@@ -107,6 +107,20 @@ export default function SpriteOrganize() {
     }
   };
 
+  const batchUpdateCategory = (category: CategorizedSprite['category']) => {
+    setSprites(prev => {
+      const newMap = new Map(prev);
+      selectedSprites.forEach(filename => {
+        const sprite = newMap.get(filename);
+        if (sprite) {
+          newMap.set(filename, { ...sprite, category });
+        }
+      });
+      return newMap;
+    });
+    setSelectedSprites(new Set()); // Clear selection after categorizing
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const categorized = Array.from(sprites.values());
@@ -149,32 +163,64 @@ export default function SpriteOrganize() {
 
       {/* Selection Toolbar */}
       {files.length > 0 && (
-        <div className="mb-6 flex items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4">
-          <span className="text-white font-medium">
-            {selectedSprites.size > 0 ? `${selectedSprites.size} selected` : 'Select sprites to delete'}
-          </span>
-          <button
-            onClick={selectAll}
-            className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            Select All
-          </button>
+        <div className="mb-6 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4">
+          <div className="flex items-center gap-4 mb-3">
+            <span className="text-white font-medium">
+              {selectedSprites.size > 0 ? `${selectedSprites.size} selected` : 'Select sprites to categorize'}
+            </span>
+            <button
+              onClick={selectAll}
+              className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-4 py-2 rounded-lg text-sm transition-colors"
+            >
+              Select All
+            </button>
+            {selectedSprites.size > 0 && (
+              <>
+                <button
+                  onClick={clearSelection}
+                  className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ml-auto"
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : `Delete ${selectedSprites.size}`}
+                </button>
+              </>
+            )}
+          </div>
+
           {selectedSprites.size > 0 && (
-            <>
+            <div className="flex items-center gap-2 pt-3 border-t border-white/20">
+              <span className="text-sm text-white/80 mr-2">Assign to category:</span>
               <button
-                onClick={clearSelection}
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                onClick={() => batchUpdateCategory('creature')}
+                className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/50 text-purple-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
               >
-                Clear
+                🐉 Creature
               </button>
               <button
-                onClick={handleDeleteSelected}
-                disabled={deleteMutation.isPending}
-                className="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ml-auto"
+                onClick={() => batchUpdateCategory('biome')}
+                className="bg-green-500/20 hover:bg-green-500/40 border border-green-400/50 text-green-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
               >
-                {deleteMutation.isPending ? 'Deleting...' : `Delete ${selectedSprites.size} Sprite(s)`}
+                🌲 Biome
               </button>
-            </>
+              <button
+                onClick={() => batchUpdateCategory('item')}
+                className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-400/50 text-yellow-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              >
+                💎 Item
+              </button>
+              <button
+                onClick={() => batchUpdateCategory('ui')}
+                className="bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/50 text-blue-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              >
+                🎨 UI
+              </button>
+            </div>
           )}
         </div>
       )}
