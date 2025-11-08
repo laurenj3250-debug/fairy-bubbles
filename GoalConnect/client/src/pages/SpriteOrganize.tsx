@@ -16,6 +16,9 @@ export default function SpriteOrganize() {
   const queryClient = useQueryClient();
   const [sprites, setSprites] = useState<Map<string, CategorizedSprite>>(new Map());
   const [selectedSprites, setSelectedSprites] = useState<Set<string>>(new Set());
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
 
   // Fetch uploaded sprites
   const { data: files = [], isLoading } = useQuery<SpriteFile[]>({
@@ -147,6 +150,61 @@ export default function SpriteOrganize() {
     setSelectedSprites(new Set()); // Clear selection after categorizing
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only start selection if clicking on the grid background (not a card)
+    if ((e.target as HTMLElement).closest('[data-sprite-card]')) return;
+
+    setIsSelecting(true);
+    setSelectionStart({ x: e.clientX, y: e.clientY });
+    setSelectionEnd({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isSelecting) return;
+    setSelectionEnd({ x: e.clientX, y: e.clientY });
+
+    // Calculate selection rectangle
+    const rect = {
+      left: Math.min(selectionStart.x, e.clientX),
+      right: Math.max(selectionStart.x, e.clientX),
+      top: Math.min(selectionStart.y, e.clientY),
+      bottom: Math.max(selectionStart.y, e.clientY),
+    };
+
+    // Find all sprite cards and check intersection
+    const selected = new Set<string>();
+    document.querySelectorAll('[data-sprite-card]').forEach(card => {
+      const cardRect = card.getBoundingClientRect();
+      const filename = card.getAttribute('data-sprite-card');
+
+      if (filename &&
+          rect.left < cardRect.right &&
+          rect.right > cardRect.left &&
+          rect.top < cardRect.bottom &&
+          rect.bottom > cardRect.top) {
+        selected.add(filename);
+      }
+    });
+
+    setSelectedSprites(selected);
+  };
+
+  const handleMouseUp = () => {
+    setIsSelecting(false);
+  };
+
+  // Get selection rectangle for rendering
+  const getSelectionRect = () => {
+    if (!isSelecting) return null;
+
+    return {
+      left: Math.min(selectionStart.x, selectionEnd.x),
+      top: Math.min(selectionStart.y, selectionEnd.y),
+      width: Math.abs(selectionEnd.x - selectionStart.x),
+      height: Math.abs(selectionEnd.y - selectionStart.y),
+    };
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const categorized = Array.from(sprites.values());
@@ -180,8 +238,28 @@ export default function SpriteOrganize() {
     uncategorized: categorized.filter(s => s.category === 'uncategorized'),
   };
 
+  const selectionRect = getSelectionRect();
+
   return (
-    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
+    <div
+      className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 select-none"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      {/* Selection Rectangle Overlay */}
+      {selectionRect && (
+        <div
+          className="fixed pointer-events-none z-50 border-2 border-blue-500 bg-blue-500/20"
+          style={{
+            left: `${selectionRect.left}px`,
+            top: `${selectionRect.top}px`,
+            width: `${selectionRect.width}px`,
+            height: `${selectionRect.height}px`,
+          }}
+        />
+      )}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">Organize Sprites</h1>
         <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
@@ -285,6 +363,7 @@ export default function SpriteOrganize() {
             {byCategory.uncategorized.map((sprite) => (
               <div
                 key={sprite.filename}
+                data-sprite-card={sprite.filename}
                 onClick={() => toggleSelection(sprite.filename)}
                 className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
                   selectedSprites.has(sprite.filename)
@@ -345,6 +424,7 @@ export default function SpriteOrganize() {
               {items.map((sprite) => (
                 <div
                   key={sprite.filename}
+                  data-sprite-card={sprite.filename}
                   onClick={() => toggleSelection(sprite.filename)}
                   className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
                     selectedSprites.has(sprite.filename)
