@@ -61,17 +61,17 @@ export default function SpriteUpload() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">Sprite Upload</h1>
-      <p className="text-gray-600 mb-6">
+    <div className="min-h-screen p-8 pb-24 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-white mb-2">Sprite Upload</h1>
+      <p className="text-teal-200 mb-6">
         Upload your sprite pack files here. Supports PNG, JPG, and PSD files.
       </p>
 
       <div
         className={`border-4 border-dashed rounded-lg p-12 text-center transition-colors ${
           isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 bg-gray-50'
+            ? 'border-teal-400 bg-teal-500/20'
+            : 'border-white/20 bg-white/10 backdrop-blur-sm'
         }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -88,7 +88,7 @@ export default function SpriteUpload() {
 
         <div className="mb-4">
           <svg
-            className="mx-auto h-16 w-16 text-gray-400"
+            className="mx-auto h-16 w-16 text-teal-300"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -102,19 +102,19 @@ export default function SpriteUpload() {
           </svg>
         </div>
 
-        <p className="text-xl mb-4">
+        <p className="text-xl text-white mb-4">
           {isDragging ? 'Drop files here!' : 'Drag & drop sprites here'}
         </p>
 
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
           disabled={uploading}
         >
           {uploading ? 'Uploading...' : 'Or click to browse'}
         </button>
 
-        <p className="text-sm text-gray-500 mt-4">
+        <p className="text-sm text-teal-300 mt-4">
           Up to 500 files, 200MB each
         </p>
       </div>
@@ -127,13 +127,13 @@ export default function SpriteUpload() {
 
       {uploadedFiles.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-3">
+          <h2 className="text-xl font-semibold text-white mb-3">
             Uploaded Files ({uploadedFiles.length})
           </h2>
-          <div className="bg-white border rounded-lg p-4 max-h-96 overflow-y-auto">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 max-h-96 overflow-y-auto">
             <ul className="space-y-1">
               {uploadedFiles.map((file, idx) => (
-                <li key={idx} className="text-sm text-gray-700 flex items-center">
+                <li key={idx} className="text-sm text-teal-200 flex items-center">
                   <svg
                     className="h-4 w-4 text-green-500 mr-2"
                     fill="none"
@@ -162,9 +162,9 @@ export default function SpriteUpload() {
         </div>
       )}
 
-      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="font-semibold mb-2">📦 What happens next?</h3>
-        <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
+      <div className="mt-8 p-4 bg-blue-500/20 border border-blue-400/50 rounded-lg backdrop-blur-sm">
+        <h3 className="font-semibold text-white mb-2">📦 What happens next?</h3>
+        <ol className="list-decimal list-inside space-y-1 text-sm text-blue-200">
           <li>Upload all your sprite pack files</li>
           <li>Click "Organize Sprites" to auto-categorize them</li>
           <li>I'll sort them into creatures, biomes, items, and UI folders</li>
