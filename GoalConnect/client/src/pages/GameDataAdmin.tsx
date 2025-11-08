@@ -282,7 +282,7 @@ export default function GameDataAdmin() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Sprite Selector */}
-        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6">
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 relative z-10">
           <h2 className="text-xl font-semibold text-white mb-4">
             {activeTab === 'biomes' && '🌲 Select Biome Background'}
             {activeTab === 'creatures' && '🐉 Select Creature Sprite'}
@@ -348,7 +348,7 @@ export default function GameDataAdmin() {
         </div>
 
         {/* Form */}
-        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6">
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 relative z-10">
           {activeTab === 'biomes' && (
             <form onSubmit={handleBiomeSubmit} className="space-y-4">
               <h2 className="text-xl font-semibold text-white mb-4">Create Biome</h2>
