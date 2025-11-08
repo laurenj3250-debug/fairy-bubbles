@@ -42,7 +42,7 @@ const spriteStorage = multer.diskStorage({
 const upload = multer({
   storage: spriteStorage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB per file
+    fileSize: 200 * 1024 * 1024, // 200MB per file
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /png|jpg|jpeg|psd/;
@@ -1549,7 +1549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sprite Upload
-  app.post("/api/sprites/upload", upload.array('sprites', 100), async (req, res) => {
+  app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
 

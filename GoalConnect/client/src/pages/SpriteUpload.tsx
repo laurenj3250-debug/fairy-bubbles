@@ -115,7 +115,7 @@ export default function SpriteUpload() {
         </button>
 
         <p className="text-sm text-gray-500 mt-4">
-          You can upload multiple files at once
+          Up to 500 files, 200MB each
         </p>
       </div>
 
