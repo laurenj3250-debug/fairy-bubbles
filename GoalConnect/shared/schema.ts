@@ -345,6 +345,17 @@ export const playerStats = pgTable("player_stats", {
   maxPartySize: integer("max_party_size").notNull().default(1),
 });
 
+// Sprites (stored in database for persistence)
+export const sprites = pgTable("sprites", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull().unique(),
+  category: varchar("category", { length: 20 }).notNull().$type<"creature" | "biome" | "item" | "ui" | "uncategorized">(),
+  name: text("name"), // Optional name for creatures
+  data: text("data").notNull(), // Base64-encoded image data
+  mimeType: text("mime_type").notNull(), // image/png, image/jpeg, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // TypeScript types
 export type Biome = typeof biomes.$inferSelect;
 export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
@@ -357,6 +368,7 @@ export type DailyProgress = typeof dailyProgress.$inferSelect;
 export type Encounter = typeof encounters.$inferSelect;
 export type CombatLog = typeof combatLogs.$inferSelect;
 export type PlayerStats = typeof playerStats.$inferSelect;
+export type Sprite = typeof sprites.$inferSelect;
 
 // Insert schemas
 export const insertBiomeSchema = createInsertSchema(biomes).omit({ id: true, createdAt: true });
@@ -366,6 +378,7 @@ export const insertItemSchema = createInsertSchema(items).omit({ id: true, creat
 export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit({ id: true });
 export const insertEncounterSchema = createInsertSchema(encounters).omit({ id: true, createdAt: true });
 export const insertPlayerStatsSchema = createInsertSchema(playerStats);
+export const insertSpriteSchema = createInsertSchema(sprites).omit({ id: true, createdAt: true });
 
 export type InsertBiome = z.infer<typeof insertBiomeSchema>;
 export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
@@ -374,3 +387,4 @@ export type InsertItem = z.infer<typeof insertItemSchema>;
 export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type InsertEncounter = z.infer<typeof insertEncounterSchema>;
 export type InsertPlayerStats = z.infer<typeof insertPlayerStatsSchema>;
+export type InsertSprite = z.infer<typeof insertSpriteSchema>;

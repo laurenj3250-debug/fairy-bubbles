@@ -35,6 +35,8 @@ import type {
   InsertEncounter,
   CombatLog,
   PlayerStats,
+  Sprite,
+  InsertSprite,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -880,5 +882,33 @@ export class DbStorage implements IStorage {
     });
 
     return { stats, leveledUp };
+  }
+
+  // Sprite Management
+  async createSprite(sprite: InsertSprite): Promise<Sprite> {
+    const [created] = await this.db.insert(schema.sprites).values(sprite).returning();
+    return created;
+  }
+
+  async getSprites(): Promise<Sprite[]> {
+    return this.db.select().from(schema.sprites).orderBy(schema.sprites.createdAt);
+  }
+
+  async getSpriteByFilename(filename: string): Promise<Sprite | undefined> {
+    const [sprite] = await this.db.select().from(schema.sprites).where(eq(schema.sprites.filename, filename));
+    return sprite;
+  }
+
+  async updateSprite(filename: string, updates: { category?: string; name?: string | null }): Promise<Sprite | undefined> {
+    const [updated] = await this.db
+      .update(schema.sprites)
+      .set(updates)
+      .where(eq(schema.sprites.filename, filename))
+      .returning();
+    return updated;
+  }
+
+  async deleteSprite(filename: string): Promise<void> {
+    await this.db.delete(schema.sprites).where(eq(schema.sprites.filename, filename));
   }
 }

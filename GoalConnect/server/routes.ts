@@ -1569,7 +1569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sprite Upload
+  // Sprite Upload (stores in database)
   app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
@@ -1579,7 +1579,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const uploadedFiles: string[] = [];
-      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
 
       for (const file of files) {
         const ext = path.extname(file.originalname).toLowerCase();
@@ -1601,12 +1600,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const entryExt = path.extname(entry.entryName).toLowerCase();
               if (['.png', '.jpg', '.jpeg', '.psd'].includes(entryExt)) {
                 const fileName = path.basename(entry.entryName);
-                const extractPath = path.join(unsortedDir, fileName);
+                const imageData = entry.getData();
+                const base64Data = imageData.toString('base64');
 
-                // Write the file
-                fs.writeFileSync(extractPath, entry.getData());
+                // Determine MIME type
+                let mimeType = 'image/png';
+                if (entryExt === '.jpg' || entryExt === '.jpeg') mimeType = 'image/jpeg';
+                else if (entryExt === '.psd') mimeType = 'image/vnd.adobe.photoshop';
+
+                // Store in database
+                await storage.createSprite({
+                  filename: fileName,
+                  category: 'uncategorized',
+                  data: base64Data,
+                  mimeType,
+                });
+
                 uploadedFiles.push(fileName);
-                console.log(`[sprites] Extracted: ${fileName}`);
+                console.log(`[sprites] Stored in DB: ${fileName}`);
               }
             }
 
@@ -1616,8 +1627,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error);
           }
         } else {
-          // Non-ZIP files are already in the right place
+          // Non-ZIP image files
+          const fileData = fs.readFileSync(file.path);
+          const base64Data = fileData.toString('base64');
+
+          // Determine MIME type
+          let mimeType = file.mimetype;
+          if (!mimeType || mimeType === 'application/octet-stream') {
+            if (ext === '.png') mimeType = 'image/png';
+            else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+            else if (ext === '.psd') mimeType = 'image/vnd.adobe.photoshop';
+          }
+
+          // Store in database
+          await storage.createSprite({
+            filename: file.originalname,
+            category: 'uncategorized',
+            data: base64Data,
+            mimeType,
+          });
+
+          // Delete temporary file
+          fs.unlinkSync(file.path);
+
           uploadedFiles.push(file.originalname);
+          console.log(`[sprites] Stored in DB: ${file.originalname}`);
         }
       }
 
@@ -1632,54 +1666,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // List uploaded sprites
+  // List uploaded sprites (from database)
   app.get("/api/sprites/list", async (req, res) => {
     try {
-      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+      const sprites = await storage.getSprites();
+      const spriteList = sprites.map(s => ({
+        filename: s.filename,
+        path: `/api/sprites/file/${s.filename}`,
+        category: s.category,
+        name: s.name,
+      }));
 
-      if (!fs.existsSync(unsortedDir)) {
-        return res.json([]);
-      }
-
-      const files = fs.readdirSync(unsortedDir);
-      const sprites = files
-        .filter(file => /\.(png|jpg|jpeg|psd)$/i.test(file))
-        .map(filename => ({
-          filename,
-          path: `/api/sprites/file/${filename}`,
-        }));
-
-      res.json(sprites);
+      res.json(spriteList);
     } catch (error: any) {
       console.error('[sprites] List error:', error);
       res.status(500).json({ error: error.message || "Failed to list sprites" });
     }
   });
 
-  // Serve sprite files
-  app.get("/api/sprites/file/:filename", (req, res) => {
+  // Serve sprite files (from database)
+  app.get("/api/sprites/file/:filename", async (req, res) => {
     try {
       const { filename } = req.params;
-      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
-      const filePath = path.join(unsortedDir, filename);
+      const sprite = await storage.getSpriteByFilename(filename);
 
-      // Security: ensure file is within unsorted directory
-      if (!filePath.startsWith(unsortedDir)) {
-        return res.status(403).json({ error: "Access denied" });
+      if (!sprite) {
+        return res.status(404).json({ error: "Sprite not found" });
       }
 
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: "File not found" });
-      }
-
-      res.sendFile(filePath);
+      // Decode base64 and send as image
+      const imageBuffer = Buffer.from(sprite.data, 'base64');
+      res.set('Content-Type', sprite.mimeType);
+      res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(imageBuffer);
     } catch (error: any) {
       console.error('[sprites] File serve error:', error);
       res.status(500).json({ error: error.message || "Failed to serve sprite" });
     }
   });
 
-  // Save sprite organization
+  // Save sprite organization (updates database)
   app.post("/api/sprites/organize", async (req, res) => {
     try {
       const { sprites } = req.body;
@@ -1688,9 +1714,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid request" });
       }
 
-      // TODO: Save to database or move files to categorized folders
-      console.log('[sprites] Organization saved:', sprites.length, 'sprites');
+      // Update each sprite in the database
+      for (const sprite of sprites) {
+        await storage.updateSprite(sprite.filename, {
+          category: sprite.category,
+          name: sprite.name || null,
+        });
+      }
 
+      console.log('[sprites] Organization saved:', sprites.length, 'sprites');
       res.json({ success: true, count: sprites.length });
     } catch (error: any) {
       console.error('[sprites] Organize error:', error);
@@ -1698,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete sprites
+  // Delete sprites (from database)
   app.post("/api/sprites/delete", async (req, res) => {
     try {
       const { filenames } = req.body;
@@ -1707,27 +1739,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid request" });
       }
 
-      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
       const deleted: string[] = [];
       const failed: string[] = [];
 
       for (const filename of filenames) {
-        const filePath = path.join(unsortedDir, filename);
-
-        // Security: ensure file is within unsorted directory
-        if (!filePath.startsWith(unsortedDir)) {
-          failed.push(filename);
-          continue;
-        }
-
         try {
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            deleted.push(filename);
-            console.log(`[sprites] Deleted: ${filename}`);
-          } else {
-            failed.push(filename);
-          }
+          await storage.deleteSprite(filename);
+          deleted.push(filename);
+          console.log(`[sprites] Deleted from DB: ${filename}`);
         } catch (error) {
           console.error(`[sprites] Failed to delete ${filename}:`, error);
           failed.push(filename);
