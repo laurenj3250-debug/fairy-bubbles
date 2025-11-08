@@ -1571,16 +1571,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Sprite Upload (stores in database)
   app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
+    console.log('[sprites] ========== UPLOAD REQUEST STARTED ==========');
     try {
       const files = req.files as Express.Multer.File[];
+      console.log('[sprites] Files received:', files?.length || 0);
 
       if (!files || files.length === 0) {
+        console.log('[sprites] ERROR: No files in request');
         return res.status(400).json({ error: "No files uploaded" });
       }
 
       const uploadedFiles: string[] = [];
 
       for (const file of files) {
+        console.log(`[sprites] Processing file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
         const ext = path.extname(file.originalname).toLowerCase();
 
         if (ext === '.zip') {
@@ -1589,10 +1593,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const zip = new AdmZip(file.path);
             const zipEntries = zip.getEntries();
+            console.log(`[sprites] ZIP contains ${zipEntries.length} entries`);
 
             for (const entry of zipEntries) {
               // Skip directories and hidden files
               if (entry.isDirectory || entry.entryName.startsWith('__MACOSX') || path.basename(entry.entryName).startsWith('.')) {
+                console.log(`[sprites] Skipping: ${entry.entryName}`);
                 continue;
               }
 
@@ -1600,36 +1606,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const entryExt = path.extname(entry.entryName).toLowerCase();
               if (['.png', '.jpg', '.jpeg', '.psd'].includes(entryExt)) {
                 const fileName = path.basename(entry.entryName);
+                console.log(`[sprites] Extracting image: ${fileName}`);
                 const imageData = entry.getData();
                 const base64Data = imageData.toString('base64');
+                console.log(`[sprites] Base64 data length: ${base64Data.length}`);
 
                 // Determine MIME type
                 let mimeType = 'image/png';
                 if (entryExt === '.jpg' || entryExt === '.jpeg') mimeType = 'image/jpeg';
                 else if (entryExt === '.psd') mimeType = 'image/vnd.adobe.photoshop';
 
+                console.log(`[sprites] Attempting to store ${fileName} in database...`);
                 // Store in database (upsert to handle duplicates)
-                await storage.upsertSprite({
-                  filename: fileName,
-                  category: 'uncategorized',
-                  data: base64Data,
-                  mimeType,
-                });
-
-                uploadedFiles.push(fileName);
-                console.log(`[sprites] Stored in DB: ${fileName}`);
+                try {
+                  await storage.upsertSprite({
+                    filename: fileName,
+                    category: 'uncategorized',
+                    data: base64Data,
+                    mimeType,
+                  });
+                  uploadedFiles.push(fileName);
+                  console.log(`[sprites] ✓ Successfully stored in DB: ${fileName}`);
+                } catch (dbError: any) {
+                  console.error(`[sprites] ✗ Database error for ${fileName}:`, dbError.message);
+                  throw dbError;
+                }
               }
             }
 
             // Delete the ZIP file after extraction
             fs.unlinkSync(file.path);
-          } catch (error) {
-            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error);
+            console.log(`[sprites] Deleted ZIP file: ${file.originalname}`);
+          } catch (error: any) {
+            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error.message);
+            throw error;
           }
         } else {
           // Non-ZIP image files
+          console.log(`[sprites] Processing single image: ${file.originalname}`);
           const fileData = fs.readFileSync(file.path);
           const base64Data = fileData.toString('base64');
+          console.log(`[sprites] Base64 data length: ${base64Data.length}`);
 
           // Determine MIME type
           let mimeType = file.mimetype;
@@ -1638,30 +1655,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
             else if (ext === '.psd') mimeType = 'image/vnd.adobe.photoshop';
           }
+          console.log(`[sprites] MIME type: ${mimeType}`);
 
+          console.log(`[sprites] Attempting to store ${file.originalname} in database...`);
           // Store in database (upsert to handle duplicates)
-          await storage.upsertSprite({
-            filename: file.originalname,
-            category: 'uncategorized',
-            data: base64Data,
-            mimeType,
-          });
+          try {
+            await storage.upsertSprite({
+              filename: file.originalname,
+              category: 'uncategorized',
+              data: base64Data,
+              mimeType,
+            });
+            uploadedFiles.push(file.originalname);
+            console.log(`[sprites] ✓ Successfully stored in DB: ${file.originalname}`);
+          } catch (dbError: any) {
+            console.error(`[sprites] ✗ Database error for ${file.originalname}:`, dbError.message);
+            throw dbError;
+          }
 
           // Delete temporary file
           fs.unlinkSync(file.path);
-
-          uploadedFiles.push(file.originalname);
-          console.log(`[sprites] Stored in DB: ${file.originalname}`);
+          console.log(`[sprites] Deleted temp file: ${file.originalname}`);
         }
       }
 
+      console.log(`[sprites] ========== UPLOAD SUCCESS: ${uploadedFiles.length} files ==========`);
       res.json({
         success: true,
         files: uploadedFiles,
         count: uploadedFiles.length,
       });
     } catch (error: any) {
-      console.error('[sprites] Upload error:', error);
+      console.error('[sprites] ========== UPLOAD FAILED ==========');
+      console.error('[sprites] Error type:', error.constructor.name);
+      console.error('[sprites] Error message:', error.message);
+      console.error('[sprites] Error stack:', error.stack);
       res.status(500).json({ error: error.message || "Failed to upload sprites" });
     }
   });
