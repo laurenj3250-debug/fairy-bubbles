@@ -16,6 +16,7 @@ export interface EventResult {
     rarity: string;
   };
   encounter?: {
+    encounterId: number;
     speciesId: number;
     speciesName: string;
     level: number;
@@ -238,14 +239,9 @@ export class RNGService {
 
     } else {
       const encounter = await this.rollEncounter(biomeId, playerStats.level);
-      eventResult = {
-        eventType: 'encounter',
-        encounter,
-      };
 
-      // Note: Combat will be handled by combat engine
-      // For now, just record the encounter
-      await this.storage.createEncounter({
+      // Create encounter record in database
+      const encounterRecord = await this.storage.createEncounter({
         userId,
         biomeId,
         eventType: 'combat',
@@ -255,6 +251,16 @@ export class RNGService {
         rewardXp: 0,
         timestamp: new Date(),
       });
+
+      eventResult = {
+        eventType: 'encounter',
+        encounter: {
+          encounterId: encounterRecord.id,
+          speciesId: encounter.speciesId,
+          speciesName: encounter.speciesName,
+          level: encounter.level,
+        },
+      };
     }
 
     // 5. Increment runs used

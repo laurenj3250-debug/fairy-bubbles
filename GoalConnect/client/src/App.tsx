@@ -13,6 +13,8 @@ import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Wonderland from "@/pages/Wonderland";
+import OutsideWorld from "@/pages/OutsideWorld";
+import Combat from "@/pages/Combat";
 import SpriteUpload from "@/pages/SpriteUpload";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
@@ -110,6 +112,20 @@ function AppRoutes() {
           <Wonderland />
           <BottomNav />
         </RequireAuth>
+      </Route>
+      <Route path="/outside-world">
+        <RequireAuth>
+          <OutsideWorld />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/combat/:encounterId">
+        {(params) => (
+          <RequireAuth>
+            <Combat encounterId={parseInt(params.encounterId)} />
+            <BottomNav />
+          </RequireAuth>
+        )}
       </Route>
       <Route path="/sprites/upload">
         <RequireAuth>
