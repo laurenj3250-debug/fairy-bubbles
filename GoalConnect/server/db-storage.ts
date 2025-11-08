@@ -792,10 +792,10 @@ export class DbStorage implements IStorage {
     const currentPoints = existing?.habitPointsEarned || 0;
     const newPoints = currentPoints + points;
 
-    // Calculate threshold flags
-    const threshold1 = newPoints >= 6;
-    const threshold2 = newPoints >= 9;
-    const threshold3 = newPoints >= 12;
+    // Calculate threshold flags (TESTING VALUES - normally 6/9/12)
+    const threshold1 = newPoints >= 1;
+    const threshold2 = newPoints >= 2;
+    const threshold3 = newPoints >= 3;
 
     // Calculate runs (1-3 based on threshold)
     let runsAvailable = 0;
