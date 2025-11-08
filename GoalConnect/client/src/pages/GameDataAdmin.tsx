@@ -800,6 +800,8 @@ export default function GameDataAdmin() {
         </div>
       </div>
       )}
+      </>
+      )}
     </div>
   );
 }
