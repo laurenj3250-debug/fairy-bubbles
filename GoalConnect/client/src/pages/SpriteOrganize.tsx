@@ -8,8 +8,9 @@ interface SpriteFile {
 
 interface CategorizedSprite {
   filename: string;
-  category: 'creature' | 'biome' | 'item' | 'ui' | 'uncategorized';
+  category: 'creature' | 'biome' | 'biome-background' | 'biome-platform' | 'biome-obstacle' | 'item' | 'egg' | 'ui' | 'uncategorized';
   name?: string;
+  rarity?: 'common' | 'uncommon' | 'rare' | 'epic';
 }
 
 export default function SpriteOrganize() {
@@ -54,6 +55,17 @@ export default function SpriteOrganize() {
       const sprite = newMap.get(filename);
       if (sprite) {
         newMap.set(filename, { ...sprite, name });
+      }
+      return newMap;
+    });
+  };
+
+  const updateRarity = (filename: string, rarity: CategorizedSprite['rarity']) => {
+    setSprites(prev => {
+      const newMap = new Map(prev);
+      const sprite = newMap.get(filename);
+      if (sprite) {
+        newMap.set(filename, { ...sprite, rarity });
       }
       return newMap;
     });
@@ -125,10 +137,14 @@ export default function SpriteOrganize() {
     if (selectedSprites.size === 0) return;
 
     // Count by category for better confirmation message
-    const selectedByCategory = {
+    const selectedByCategory: Record<string, number> = {
       creature: 0,
       biome: 0,
+      'biome-background': 0,
+      'biome-platform': 0,
+      'biome-obstacle': 0,
       item: 0,
+      egg: 0,
       ui: 0,
       uncategorized: 0,
     };
@@ -193,7 +209,11 @@ export default function SpriteOrganize() {
   const byCategory = {
     creature: categorized.filter(s => s.category === 'creature'),
     biome: categorized.filter(s => s.category === 'biome'),
+    'biome-background': categorized.filter(s => s.category === 'biome-background'),
+    'biome-platform': categorized.filter(s => s.category === 'biome-platform'),
+    'biome-obstacle': categorized.filter(s => s.category === 'biome-obstacle'),
     item: categorized.filter(s => s.category === 'item'),
+    egg: categorized.filter(s => s.category === 'egg'),
     ui: categorized.filter(s => s.category === 'ui'),
     uncategorized: categorized.filter(s => s.category === 'uncategorized'),
   };
@@ -248,50 +268,85 @@ export default function SpriteOrganize() {
           </div>
 
           {selectedSprites.size > 0 && (
-            <div className="flex items-center gap-2 pt-3 border-t border-white/20">
-              <span className="text-sm text-white/80 mr-2">Assign to category:</span>
-              <button
-                onClick={() => batchUpdateCategory('creature')}
-                className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/50 text-purple-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                🐉 Creature
-              </button>
-              <button
-                onClick={() => batchUpdateCategory('biome')}
-                className="bg-green-500/20 hover:bg-green-500/40 border border-green-400/50 text-green-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                🌲 Biome
-              </button>
-              <button
-                onClick={() => batchUpdateCategory('item')}
-                className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-400/50 text-yellow-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                💎 Item
-              </button>
-              <button
-                onClick={() => batchUpdateCategory('ui')}
-                className="bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/50 text-blue-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                🎨 UI
-              </button>
+            <div className="pt-3 border-t border-white/20 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-white/80 mr-2">Assign to category:</span>
+                <button
+                  onClick={() => batchUpdateCategory('creature')}
+                  className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/50 text-purple-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🐉 Creature
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('egg')}
+                  className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-400/50 text-pink-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🥚 Egg
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('item')}
+                  className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-400/50 text-yellow-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  💎 Item
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('ui')}
+                  className="bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/50 text-blue-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🎨 UI
+                </button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-white/80 mr-2">Biome parts:</span>
+                <button
+                  onClick={() => batchUpdateCategory('biome')}
+                  className="bg-green-500/20 hover:bg-green-500/40 border border-green-400/50 text-green-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🌲 Full Biome
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('biome-background')}
+                  className="bg-teal-500/20 hover:bg-teal-500/40 border border-teal-400/50 text-teal-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🏔️ Background
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('biome-platform')}
+                  className="bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 text-cyan-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🟪 Platform
+                </button>
+                <button
+                  onClick={() => batchUpdateCategory('biome-obstacle')}
+                  className="bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-400/50 text-emerald-200 px-3 py-1 rounded text-sm font-semibold transition-colors"
+                >
+                  🪨 Obstacle
+                </button>
+              </div>
             </div>
           )}
         </div>
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-purple-500/20 border border-purple-400/50 rounded-lg p-4">
           <div className="text-2xl font-bold text-white">{byCategory.creature.length}</div>
           <div className="text-sm text-purple-200">Creatures</div>
         </div>
-        <div className="bg-green-500/20 border border-green-400/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-white">{byCategory.biome.length}</div>
-          <div className="text-sm text-green-200">Biomes</div>
+        <div className="bg-pink-500/20 border border-pink-400/50 rounded-lg p-4">
+          <div className="text-2xl font-bold text-white">{byCategory.egg.length}</div>
+          <div className="text-sm text-pink-200">Eggs</div>
         </div>
         <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-4">
           <div className="text-2xl font-bold text-white">{byCategory.item.length}</div>
           <div className="text-sm text-yellow-200">Items</div>
+        </div>
+        <div className="bg-green-500/20 border border-green-400/50 rounded-lg p-4">
+          <div className="text-2xl font-bold text-white">
+            {byCategory.biome.length + byCategory['biome-background'].length + byCategory['biome-platform'].length + byCategory['biome-obstacle'].length}
+          </div>
+          <div className="text-sm text-green-200">Biome Assets</div>
         </div>
         <div className="bg-blue-500/20 border border-blue-400/50 rounded-lg p-4">
           <div className="text-2xl font-bold text-white">{byCategory.ui.length}</div>
@@ -351,11 +406,16 @@ export default function SpriteOrganize() {
                   className="w-full bg-white/10 text-white text-xs rounded p-1 border border-white/20"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <option value="uncategorized">Select...</option>
-                  <option value="creature">Creature</option>
-                  <option value="biome">Biome</option>
-                  <option value="item">Item</option>
-                  <option value="ui">UI</option>
+                  <option value="uncategorized">Select category...</option>
+                  <option value="creature">🐉 Creature</option>
+                  <option value="egg">🥚 Egg</option>
+                  <option value="item">💎 Item</option>
+                  <option value="ui">🎨 UI</option>
+                  <option disabled>──────────</option>
+                  <option value="biome">🌲 Full Biome</option>
+                  <option value="biome-background">🏔️ Biome Background</option>
+                  <option value="biome-platform">🟪 Biome Platform</option>
+                  <option value="biome-obstacle">🪨 Biome Obstacle</option>
                 </select>
               </div>
               );
@@ -365,14 +425,25 @@ export default function SpriteOrganize() {
       )}
 
       {/* Categorized Sections */}
-      {(['creature', 'biome', 'item', 'ui'] as const).map((category) => {
+      {(['creature', 'egg', 'item', 'ui', 'biome', 'biome-background', 'biome-platform', 'biome-obstacle'] as const).map((category) => {
         const items = byCategory[category];
         if (items.length === 0) return null;
 
+        const categoryLabels = {
+          'creature': 'Creatures',
+          'egg': 'Eggs',
+          'item': 'Items',
+          'ui': 'UI Elements',
+          'biome': 'Full Biomes',
+          'biome-background': 'Biome Backgrounds',
+          'biome-platform': 'Biome Platforms',
+          'biome-obstacle': 'Biome Obstacles',
+        };
+
         return (
           <div key={category} className="mb-8 bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-4 capitalize">
-              {category}s ({items.length})
+            <h2 className="text-2xl font-bold text-white mb-4">
+              {categoryLabels[category]} ({items.length})
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {items.map((sprite, idx) => {
@@ -396,6 +467,16 @@ export default function SpriteOrganize() {
                       onChange={(e) => e.stopPropagation()}
                       className="w-4 h-4 cursor-pointer pointer-events-none"
                     />
+                    {sprite.rarity && (
+                      <span className={`text-xs px-1 rounded ${
+                        sprite.rarity === 'epic' ? 'bg-orange-500/30 text-orange-200' :
+                        sprite.rarity === 'rare' ? 'bg-purple-500/30 text-purple-200' :
+                        sprite.rarity === 'uncommon' ? 'bg-blue-500/30 text-blue-200' :
+                        'bg-gray-500/30 text-gray-200'
+                      }`}>
+                        {sprite.rarity.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
                     <img
@@ -416,6 +497,23 @@ export default function SpriteOrganize() {
                       onClick={(e) => e.stopPropagation()}
                       className="w-full bg-white/10 text-white text-xs rounded p-1 mb-1 border border-white/20"
                     />
+                  )}
+                  {(category === 'creature' || category === 'egg') && (
+                    <select
+                      value={sprite.rarity || ''}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        updateRarity(sprite.filename, e.target.value as any);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full bg-white/10 text-white text-xs rounded p-1 mb-1 border border-white/20"
+                    >
+                      <option value="">Select rarity...</option>
+                      <option value="common">Common</option>
+                      <option value="uncommon">Uncommon</option>
+                      <option value="rare">Rare</option>
+                      <option value="epic">Epic</option>
+                    </select>
                   )}
                   <div className="text-xs text-white/60 mb-2 truncate" title={sprite.filename}>
                     {sprite.filename}

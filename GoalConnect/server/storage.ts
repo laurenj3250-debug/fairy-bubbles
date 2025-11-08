@@ -176,7 +176,7 @@ export interface IStorage {
   upsertSprite(sprite: InsertSprite): Promise<Sprite>;
   getSprites(): Promise<Sprite[]>;
   getSpriteByFilename(filename: string): Promise<Sprite | undefined>;
-  updateSprite(filename: string, updates: { category?: string; name?: string | null }): Promise<Sprite | undefined>;
+  updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined>;
   deleteSprite(filename: string): Promise<void>;
 
   // Dream Scroll Management

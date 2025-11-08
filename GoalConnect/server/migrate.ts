@@ -135,16 +135,43 @@ export async function runMigrations() {
           CREATE TABLE IF NOT EXISTS sprites (
             id SERIAL PRIMARY KEY,
             filename TEXT NOT NULL UNIQUE,
-            category VARCHAR(20) NOT NULL CHECK (category IN ('creature', 'biome', 'item', 'ui', 'uncategorized')),
+            category VARCHAR(30) NOT NULL DEFAULT 'uncategorized',
             name TEXT,
             data TEXT NOT NULL,
             mime_type TEXT NOT NULL,
+            rarity VARCHAR(20),
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
         console.log('[migrate] ✅ Sprites table created/verified');
+
+        // Add rarity column if it doesn't exist (for existing tables)
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name='sprites' AND column_name='rarity'
+            ) THEN
+              ALTER TABLE sprites ADD COLUMN rarity VARCHAR(20);
+            END IF;
+          END $$;
+        `);
+
+        // Update category constraint to include new categories
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            ALTER TABLE sprites DROP CONSTRAINT IF EXISTS sprites_category_check;
+            ALTER TABLE sprites ADD CONSTRAINT sprites_category_check
+              CHECK (category IN ('creature', 'biome', 'biome-background', 'biome-platform', 'biome-obstacle', 'item', 'egg', 'ui', 'uncategorized'));
+          EXCEPTION
+            WHEN OTHERS THEN NULL;
+          END $$;
+        `);
+        console.log('[migrate] ✅ Sprites table updated with rarity and new categories');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create sprites table:', error);
+        console.error('[migrate] ⚠️  Failed to create/update sprites table:', error);
       }
 
       try {

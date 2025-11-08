@@ -938,7 +938,7 @@ export class DbStorage implements IStorage {
     return sprite;
   }
 
-  async updateSprite(filename: string, updates: { category?: string; name?: string | null }): Promise<Sprite | undefined> {
+  async updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined> {
     const [updated] = await this.db
       .update(schema.sprites)
       .set(updates)

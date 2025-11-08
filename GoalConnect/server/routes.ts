@@ -1750,6 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateSprite(sprite.filename, {
           category: sprite.category,
           name: sprite.name || null,
+          rarity: sprite.rarity || null,
         });
       }
 
