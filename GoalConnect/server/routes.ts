@@ -1632,6 +1632,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // List uploaded sprites
+  app.get("/api/sprites/list", async (req, res) => {
+    try {
+      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+
+      if (!fs.existsSync(unsortedDir)) {
+        return res.json([]);
+      }
+
+      const files = fs.readdirSync(unsortedDir);
+      const sprites = files
+        .filter(file => /\.(png|jpg|jpeg|psd)$/i.test(file))
+        .map(filename => ({
+          filename,
+          path: `/api/sprites/file/${filename}`,
+        }));
+
+      res.json(sprites);
+    } catch (error: any) {
+      console.error('[sprites] List error:', error);
+      res.status(500).json({ error: error.message || "Failed to list sprites" });
+    }
+  });
+
+  // Serve sprite files
+  app.get("/api/sprites/file/:filename", (req, res) => {
+    try {
+      const { filename } = req.params;
+      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+      const filePath = path.join(unsortedDir, filename);
+
+      // Security: ensure file is within unsorted directory
+      if (!filePath.startsWith(unsortedDir)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      res.sendFile(filePath);
+    } catch (error: any) {
+      console.error('[sprites] File serve error:', error);
+      res.status(500).json({ error: error.message || "Failed to serve sprite" });
+    }
+  });
+
+  // Save sprite organization
+  app.post("/api/sprites/organize", async (req, res) => {
+    try {
+      const { sprites } = req.body;
+
+      if (!sprites || !Array.isArray(sprites)) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      // TODO: Save to database or move files to categorized folders
+      console.log('[sprites] Organization saved:', sprites.length, 'sprites');
+
+      res.json({ success: true, count: sprites.length });
+    } catch (error: any) {
+      console.error('[sprites] Organize error:', error);
+      res.status(500).json({ error: error.message || "Failed to save organization" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
