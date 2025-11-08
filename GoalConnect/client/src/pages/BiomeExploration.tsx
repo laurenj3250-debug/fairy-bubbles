@@ -195,8 +195,15 @@ export default function BiomeExploration() {
         <div className="relative rounded-lg border-4 border-purple-500/50 overflow-hidden shadow-2xl"
              style={{ width: '1600px', height: '500px', margin: '0 auto' }}>
 
-          {/* Enchanted Sky Background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-600 via-pink-400 to-teal-400" />
+          {/* Background Image or Gradient */}
+          {biome?.backgroundSprite ? (
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${biome.backgroundSprite})` }}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-600 via-pink-400 to-teal-400" />
+          )}
 
           {/* Floating Fireflies / Magic Particles */}
           <div className="absolute top-20 left-40 text-2xl animate-pulse">✨</div>
