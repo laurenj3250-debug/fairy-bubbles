@@ -39,14 +39,34 @@ export default function BiomeExploration() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
-  const GROUND_Y = 420; // Ground level
+  const GROUND_Y = 404; // Ground level (bottom position)
   const PLAYER_SIZE = 50;
+  const GRAVITY = 0.8;
+  const JUMP_STRENGTH = -15;
 
   const [playerX, setPlayerX] = useState(100);
+  const [playerY, setPlayerY] = useState(GROUND_Y);
+  const [velocityY, setVelocityY] = useState(0);
+  const [isJumping, setIsJumping] = useState(false);
   const [facingRight, setFacingRight] = useState(true);
   const [isExploring, setIsExploring] = useState(true);
   const [eventResult, setEventResult] = useState<EventResult | null>(null);
   const [interactedObjects, setInteractedObjects] = useState<Set<string>>(new Set());
+
+  // Obstacles to jump over
+  const obstacles = [
+    { x: 300, width: 60, height: 50, emoji: '🪵', name: 'Log' },
+    { x: 700, width: 80, height: 60, emoji: '🪨', name: 'Boulder' },
+    { x: 1100, width: 50, height: 45, emoji: '🌳', name: 'Stump' },
+    { x: 1500, width: 70, height: 55, emoji: '🪵', name: 'Fallen Tree' },
+  ];
+
+  // Platforms at different heights
+  const platforms = [
+    { x: 450, y: 340, width: 120, height: 20 },
+    { x: 900, y: 360, width: 100, height: 20 },
+    { x: 1300, y: 350, width: 110, height: 20 },
+  ];
 
   // Interactive objects in the scene - ENCHANTED FOREST theme (fewer, more spread out)
   const [objects] = useState<InteractiveObject[]>([
@@ -90,6 +110,50 @@ export default function BiomeExploration() {
     },
   });
 
+  // Physics update - gravity and jumping
+  useEffect(() => {
+    if (!isExploring || eventResult) return;
+
+    const interval = setInterval(() => {
+      setVelocityY(prevVel => {
+        const newVel = prevVel + GRAVITY;
+        return newVel;
+      });
+
+      setPlayerY(prevY => {
+        const newY = prevY + velocityY;
+
+        // Check platform collisions
+        let onPlatform = false;
+        for (const platform of platforms) {
+          if (
+            playerX + 25 > platform.x &&
+            playerX - 25 < platform.x + platform.width &&
+            prevY >= platform.y - 50 &&
+            newY <= platform.y &&
+            velocityY >= 0
+          ) {
+            onPlatform = true;
+            setVelocityY(0);
+            setIsJumping(false);
+            return platform.y - 50;
+          }
+        }
+
+        // Ground collision
+        if (newY >= GROUND_Y) {
+          setVelocityY(0);
+          setIsJumping(false);
+          return GROUND_Y;
+        }
+
+        return newY;
+      });
+    }, 1000 / 60); // 60 FPS
+
+    return () => clearInterval(interval);
+  }, [isExploring, eventResult, velocityY, playerX]);
+
   // Check if player is near any object
   const checkNearbyObjects = useCallback(() => {
     for (const obj of objects) {
@@ -115,7 +179,7 @@ export default function BiomeExploration() {
     }
   }, [interactedObjects, useRunMutation]);
 
-  // Keyboard controls - left/right only
+  // Keyboard controls - movement and jumping
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isExploring) return;
 
@@ -145,17 +209,26 @@ export default function BiomeExploration() {
         setPlayerX(prev => Math.min(1550, prev + speed));
         setFacingRight(true);
         break;
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
       case ' ':
+        // Jump
+        if (!isJumping) {
+          setVelocityY(JUMP_STRENGTH);
+          setIsJumping(true);
+        }
+        break;
       case 'e':
       case 'E':
-        // Space or E to interact
+        // E to interact
         const nearbyObj = checkNearbyObjects();
         if (nearbyObj) {
           handleInteract(nearbyObj.id);
         }
         break;
     }
-  }, [isExploring, checkNearbyObjects, handleInteract]);
+  }, [isExploring, checkNearbyObjects, handleInteract, isJumping]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -179,7 +252,7 @@ export default function BiomeExploration() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-purple-100">{biome?.name || 'Exploring...'}</h1>
-            <p className="text-purple-300 text-sm">← → to move • SPACE or E to interact with glowing objects</p>
+            <p className="text-purple-300 text-sm">← → to move • SPACE or W to jump • E to interact</p>
           </div>
           <button
             onClick={() => navigate('/outside-world')}
@@ -283,12 +356,42 @@ export default function BiomeExploration() {
             </div>
           ))}
 
+          {/* Obstacles to jump over */}
+          {obstacles.map((obstacle, i) => (
+            <div
+              key={`obstacle-${i}`}
+              className="absolute"
+              style={{
+                left: `${obstacle.x}px`,
+                bottom: '96px',
+                fontSize: '60px',
+              }}
+            >
+              {obstacle.emoji}
+            </div>
+          ))}
+
+          {/* Platforms */}
+          {platforms.map((platform, i) => (
+            <div
+              key={`platform-${i}`}
+              className="absolute bg-gradient-to-b from-purple-600 to-purple-800 rounded-lg border-2 border-purple-400/50"
+              style={{
+                left: `${platform.x}px`,
+                bottom: `${500 - platform.y}px`,
+                width: `${platform.width}px`,
+                height: `${platform.height}px`,
+                boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)',
+              }}
+            />
+          ))}
+
           {/* Player Character */}
           <div
-            className="absolute transition-all duration-200"
+            className="absolute transition-all duration-100"
             style={{
               left: `${playerX}px`,
-              bottom: '96px',
+              bottom: `${500 - playerY}px`,
               transform: facingRight ? 'scaleX(1)' : 'scaleX(-1)'
             }}
           >
@@ -349,8 +452,8 @@ export default function BiomeExploration() {
 
         {/* Instructions */}
         <div className="mt-4 text-center text-purple-200">
-          <p className="font-bold text-lg">Wander through the mystical {biome?.name} and investigate glowing objects!</p>
-          <p className="text-sm text-purple-300 mt-1">Approach shimmering objects and press E or click to investigate their magic ✨</p>
+          <p className="font-bold text-lg">Explore the mystical {biome?.name}! Jump over obstacles and climb platforms!</p>
+          <p className="text-sm text-purple-300 mt-1">Use SPACE or W to jump • Navigate platforms and obstacles • Press E to investigate glowing objects ✨</p>
         </div>
       </div>
     </div>
