@@ -24,6 +24,8 @@ import type {
   // D&D RPG types
   Biome,
   InsertBiome,
+  BiomeLevelObject,
+  InsertBiomeLevelObject,
   CreatureSpecies,
   InsertCreatureSpecies,
   UserCreature,
@@ -536,6 +538,26 @@ export class DbStorage implements IStorage {
   async createBiome(biome: InsertBiome): Promise<Biome> {
     const [created] = await this.db.insert(schema.biomes).values(biome).returning();
     return created;
+  }
+
+  // Biome Level Objects
+  async getBiomeLevelObjects(biomeId: number): Promise<BiomeLevelObject[]> {
+    return await this.db.select().from(schema.biomeLevelObjects).where(eq(schema.biomeLevelObjects.biomeId, biomeId));
+  }
+
+  async createBiomeLevelObjects(objects: InsertBiomeLevelObject[]): Promise<BiomeLevelObject[]> {
+    if (objects.length === 0) {
+      return [];
+    }
+    return await this.db.insert(schema.biomeLevelObjects).values(objects).returning();
+  }
+
+  async deleteBiomeLevelObject(objectId: number): Promise<void> {
+    await this.db.delete(schema.biomeLevelObjects).where(eq(schema.biomeLevelObjects.id, objectId));
+  }
+
+  async deleteBiomeLevelObjects(biomeId: number): Promise<void> {
+    await this.db.delete(schema.biomeLevelObjects).where(eq(schema.biomeLevelObjects.biomeId, biomeId));
   }
 
   // Creature Species

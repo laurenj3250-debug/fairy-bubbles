@@ -22,6 +22,8 @@ import {
   // D&D RPG types
   type Biome,
   type InsertBiome,
+  type BiomeLevelObject,
+  type InsertBiomeLevelObject,
   type CreatureSpecies,
   type InsertCreatureSpecies,
   type UserCreature,
@@ -115,6 +117,12 @@ export interface IStorage {
   getBiome(id: number): Promise<Biome | undefined>;
   getBiomesByLevel(playerLevel: number): Promise<Biome[]>;
   createBiome(biome: InsertBiome): Promise<Biome>;
+
+  // D&D RPG System - Biome Level Objects
+  getBiomeLevelObjects(biomeId: number): Promise<BiomeLevelObject[]>;
+  createBiomeLevelObjects(objects: InsertBiomeLevelObject[]): Promise<BiomeLevelObject[]>;
+  deleteBiomeLevelObject(objectId: number): Promise<void>;
+  deleteBiomeLevelObjects(biomeId: number): Promise<void>;
 
   // D&D RPG System - Creature Species
   getCreatureSpecies(): Promise<CreatureSpecies[]>;

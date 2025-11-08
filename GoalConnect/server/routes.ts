@@ -1274,6 +1274,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Biome Level Objects
+  app.get("/api/biomes/:id/level-objects", async (req, res) => {
+    try {
+      const biomeId = parseInt(req.params.id);
+      const levelObjects = await storage.getBiomeLevelObjects(biomeId);
+      res.json(levelObjects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch level objects" });
+    }
+  });
+
+  app.post("/api/biomes/:id/level-objects/batch", async (req, res) => {
+    try {
+      const biomeId = parseInt(req.params.id);
+      const levelObjects = req.body;
+
+      // Validate that it's an array
+      if (!Array.isArray(levelObjects)) {
+        return res.status(400).json({ error: "Expected an array of level objects" });
+      }
+
+      // Delete all existing level objects for this biome
+      await storage.deleteBiomeLevelObjects(biomeId);
+
+      // Insert all new level objects
+      const created = await storage.createBiomeLevelObjects(
+        levelObjects.map((obj: any) => ({
+          ...obj,
+          biomeId,
+        }))
+      );
+
+      res.json(created);
+    } catch (error) {
+      console.error("Failed to save level objects:", error);
+      res.status(500).json({ error: "Failed to save level objects" });
+    }
+  });
+
+  app.delete("/api/biomes/:id/level-objects/:objectId", async (req, res) => {
+    try {
+      const objectId = parseInt(req.params.objectId);
+      await storage.deleteBiomeLevelObject(objectId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete level object" });
+    }
+  });
+
   // Creature Species (Compendium/Pokédex)
   app.get("/api/creatures/species", async (req, res) => {
     try {
