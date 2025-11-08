@@ -13,6 +13,7 @@ import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Wonderland from "@/pages/Wonderland";
+import SpriteUpload from "@/pages/SpriteUpload";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -107,6 +108,12 @@ function AppRoutes() {
       <Route path="/wonderland">
         <RequireAuth>
           <Wonderland />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/sprites/upload">
+        <RequireAuth>
+          <SpriteUpload />
           <BottomNav />
         </RequireAuth>
       </Route>

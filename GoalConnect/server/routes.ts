@@ -22,10 +22,40 @@ import {
 import { requireUser } from "./simple-auth";
 import { RNGService } from "./rng-service";
 import { CombatEngine } from "./combat-engine";
+import multer from "multer";
+import path from "path";
 
 const getUserId = (req: Request) => requireUser(req).id;
 const rngService = new RNGService(storage);
 const combatEngine = new CombatEngine(storage);
+
+// Configure multer for sprite uploads
+const spriteStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(process.cwd(), '..', 'sprite-import', 'unsorted'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: spriteStorage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB per file
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /png|jpg|jpeg|psd/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'image/vnd.adobe.photoshop';
+
+    if (extname || mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only PNG, JPG, and PSD files are allowed'));
+    }
+  }
+});
 
 // Helper function to update pet stats automatically
 async function updatePetFromHabits(userId: number) {
@@ -1515,6 +1545,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(shards);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch shards" });
+    }
+  });
+
+  // Sprite Upload
+  app.post("/api/sprites/upload", upload.array('sprites', 100), async (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      const uploadedFiles = files.map(file => file.originalname);
+
+      res.json({
+        success: true,
+        files: uploadedFiles,
+        count: files.length,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to upload sprites" });
     }
   });
 
