@@ -1194,19 +1194,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ========== CREATURES ROUTES ==========
+  // ========== D&D RPG ROUTES ==========
 
-  // Get all creature species (Pokédex)
+  // Biomes
+  app.get("/api/biomes", async (req, res) => {
+    try {
+      const biomes = await storage.getBiomes();
+      res.json(biomes);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch biomes" });
+    }
+  });
+
+  app.get("/api/biomes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const biome = await storage.getBiome(id);
+      if (!biome) {
+        return res.status(404).json({ error: "Biome not found" });
+      }
+      res.json(biome);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch biome" });
+    }
+  });
+
+  // Creature Species (Compendium/Pokédex)
   app.get("/api/creatures/species", async (req, res) => {
     try {
       const species = await storage.getCreatureSpecies();
       res.json(species);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch creature species" });
+      res.status(500).json({ error: "Failed to fetch species" });
     }
   });
 
-  // Get specific species by ID
   app.get("/api/creatures/species/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1220,29 +1242,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's creatures (party/collection)
+  // User Creatures (Collection)
   app.get("/api/creatures", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const creatures = await storage.getCreatures(userId);
+      const creatures = await storage.getUserCreatures(userId);
       res.json(creatures);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch creatures" });
     }
   });
 
-  // Get specific creature
   app.get("/api/creatures/:id", async (req, res) => {
     try {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const creature = await storage.getCreature(id);
-      if (!creature) {
+      const creature = await storage.getUserCreature(id);
+      if (!creature || creature.userId !== userId) {
         return res.status(404).json({ error: "Creature not found" });
-      }
-      // Verify ownership
-      if (creature.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
       }
       res.json(creature);
     } catch (error) {
@@ -1250,100 +1267,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a creature (when habit is created)
-  app.post("/api/creatures", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { habitId, speciesId, nickname } = req.body;
-
-      // Verify habit ownership
-      const habit = await storage.getHabit(habitId);
-      if (!habit || habit.userId !== userId) {
-        return res.status(403).json({ error: "Invalid habit" });
-      }
-
-      // Check if creature already exists for this habit
-      const existing = await storage.getCreatureByHabitId(habitId);
-      if (existing) {
-        return res.status(400).json({ error: "Creature already exists for this habit" });
-      }
-
-      // Get species info to calculate stats
-      const species = await storage.getCreatureSpeciesById(speciesId);
-      if (!species) {
-        return res.status(404).json({ error: "Species not found" });
-      }
-
-      // Calculate initial stats
-      const maxHp = species.baseHp + 10;
-      const attack = species.baseAttack + 5;
-      const defense = species.baseDefense + 5;
-      const speed = species.baseSpeed + 5;
-
-      const creature = await storage.createCreature({
-        userId,
-        habitId,
-        speciesId,
-        nickname,
-        level: 1,
-        experience: 0,
-        currentHp: maxHp,
-        maxHp,
-        attack,
-        defense,
-        speed,
-        totalCompletions: 0,
-        currentStreak: 0,
-        bestStreak: 0,
-      });
-
-      res.status(201).json(creature);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to create creature" });
-    }
-  });
-
-  // Update creature (nickname, stats, etc.)
   app.patch("/api/creatures/:id", async (req, res) => {
     try {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
 
-      // Verify ownership
-      const existing = await storage.getCreature(id);
-      if (!existing) {
+      const existing = await storage.getUserCreature(id);
+      if (!existing || existing.userId !== userId) {
         return res.status(404).json({ error: "Creature not found" });
       }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
 
-      const creature = await storage.updateCreature(id, req.body);
+      const creature = await storage.updateUserCreature(id, req.body);
       res.json(creature);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update creature" });
     }
   });
 
-  // Get creature evolution history
-  app.get("/api/creatures/:id/evolutions", async (req, res) => {
+  // Party Management
+  app.get("/api/party", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const id = parseInt(req.params.id);
+      const party = await storage.getParty(userId);
+      res.json(party);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch party" });
+    }
+  });
 
-      // Verify ownership
-      const creature = await storage.getCreature(id);
+  app.post("/api/party/:creatureId", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const creatureId = parseInt(req.params.creatureId);
+      const { position } = req.body;
+
+      const creature = await storage.addToParty(userId, creatureId, position);
       if (!creature) {
         return res.status(404).json({ error: "Creature not found" });
       }
-      if (creature.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
+
+      res.json(creature);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to add to party" });
+    }
+  });
+
+  app.delete("/api/party/:creatureId", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const creatureId = parseInt(req.params.creatureId);
+
+      const creature = await storage.getUserCreature(creatureId);
+      if (!creature || creature.userId !== userId) {
+        return res.status(404).json({ error: "Creature not found" });
       }
 
-      const evolutions = await storage.getCreatureEvolutions(id);
-      res.json(evolutions);
+      await storage.removeFromParty(creatureId);
+      res.status(204).send();
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch evolutions" });
+      res.status(500).json({ error: "Failed to remove from party" });
+    }
+  });
+
+  // Items & Inventory
+  app.get("/api/items", async (req, res) => {
+    try {
+      const items = await storage.getItems();
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch items" });
+    }
+  });
+
+  app.get("/api/inventory", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const inventory = await storage.getUserInventory(userId);
+      res.json(inventory);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch inventory" });
+    }
+  });
+
+  app.post("/api/creatures/:id/equip", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const creatureId = parseInt(req.params.id);
+      const { itemId } = req.body;
+
+      // Verify ownership
+      const creature = await storage.getUserCreature(creatureId);
+      if (!creature || creature.userId !== userId) {
+        return res.status(404).json({ error: "Creature not found" });
+      }
+
+      const equipped = await storage.equipItem(creatureId, itemId);
+      res.json(equipped);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to equip item" });
+    }
+  });
+
+  app.delete("/api/creatures/:id/equip", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const creatureId = parseInt(req.params.id);
+
+      const creature = await storage.getUserCreature(creatureId);
+      if (!creature || creature.userId !== userId) {
+        return res.status(404).json({ error: "Creature not found" });
+      }
+
+      await storage.unequipItem(creatureId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to unequip item" });
+    }
+  });
+
+  // Daily Progress & Threshold
+  app.get("/api/daily-progress", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+      let progress = await storage.getDailyProgress(userId, date);
+      if (!progress) {
+        progress = await storage.updateDailyProgress(userId, date, {
+          habitPointsEarned: 0,
+          threshold1Reached: false,
+          threshold2Reached: false,
+          threshold3Reached: false,
+          runsAvailable: 0,
+          runsUsed: 0,
+        });
+      }
+
+      res.json(progress);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily progress" });
+    }
+  });
+
+  // Player Stats
+  app.get("/api/player-stats", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+
+      let stats = await storage.getPlayerStats(userId);
+      if (!stats) {
+        stats = await storage.createPlayerStats(userId);
+      }
+
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch player stats" });
+    }
+  });
+
+  // Encounters
+  app.get("/api/encounters", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const encounters = await storage.getEncounters(userId);
+      res.json(encounters);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch encounters" });
+    }
+  });
+
+  // Shards
+  app.get("/api/shards", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const shards = await storage.getShards(userId);
+      res.json(shards);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch shards" });
     }
   });
 
