@@ -131,6 +131,7 @@ export default function DreamScroll() {
         category: newItemCategory,
         priority: editPriority,
         cost: editCost || undefined,
+        tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
       });
     }
   };
@@ -279,6 +280,26 @@ export default function DreamScroll() {
                 </select>
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">Tags (optional)</label>
+              <div className="flex flex-wrap gap-2">
+                {TAG_OPTIONS.map(tag => (
+                  <button
+                    key={tag.value}
+                    type="button"
+                    onClick={() => toggleTag(tag.value)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all",
+                      editTags.includes(tag.value)
+                        ? `${tag.color} border-white/30`
+                        : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"
+                    )}
+                  >
+                    {tag.emoji} {tag.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={handleAdd}
@@ -294,6 +315,7 @@ export default function DreamScroll() {
                   setEditDescription("");
                   setEditPriority("medium");
                   setEditCost(null);
+                  setEditTags([]);
                 }}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-colors"
               >
@@ -336,6 +358,26 @@ export default function DreamScroll() {
                       rows={2}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
+                    <div className="mb-2">
+                      <label className="block text-xs font-medium text-white/70 mb-1">Tags</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TAG_OPTIONS.map(tag => (
+                          <button
+                            key={tag.value}
+                            type="button"
+                            onClick={() => toggleTag(tag.value)}
+                            className={cn(
+                              "px-2 py-1 rounded text-xs font-medium border transition-all",
+                              editTags.includes(tag.value)
+                                ? `${tag.color} border-white/30`
+                                : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"
+                            )}
+                          >
+                            {tag.emoji} {tag.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveEdit}
@@ -379,6 +421,21 @@ export default function DreamScroll() {
                       <h3 className="text-white font-semibold">{item.title}</h3>
                       {item.description && (
                         <p className="text-sm text-white/70 mt-1">{item.description}</p>
+                      )}
+                      {item.tags && JSON.parse(item.tags).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {JSON.parse(item.tags).map((tagValue: string) => {
+                            const tag = TAG_OPTIONS.find(t => t.value === tagValue);
+                            return tag ? (
+                              <span
+                                key={tagValue}
+                                className={cn("px-2 py-0.5 rounded text-xs font-medium", tag.color)}
+                              >
+                                {tag.emoji} {tag.label}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <span className={cn("text-xs", PRIORITY_OPTIONS.find(p => p.value === item.priority)?.color)}>

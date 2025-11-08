@@ -1994,6 +1994,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== DREAM SCROLL TAG ROUTES ==========
+
+  // Get all tags for a specific category
+  app.get("/api/dream-scroll/tags/:category", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { category } = req.params;
+      const tags = await storage.getDreamScrollTags(req.user!.id, category);
+      res.json(tags);
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Get tags error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new tag
+  app.post("/api/dream-scroll/tags", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const tag = await storage.createDreamScrollTag({
+        userId: req.user!.id,
+        category: req.body.category,
+        name: req.body.name,
+        color: req.body.color || 'bg-gray-500/20 text-gray-300',
+      });
+      res.json(tag);
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Create tag error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a tag
+  app.delete("/api/dream-scroll/tags/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDreamScrollTag(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Delete tag error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

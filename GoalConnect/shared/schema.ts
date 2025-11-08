@@ -357,6 +357,16 @@ export const sprites = pgTable("sprites", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Dream Scroll Tags (user-created tags per category)
+export const dreamScrollTags = pgTable("dream_scroll_tags", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
+  name: text("name").notNull(),
+  color: varchar("color", { length: 50 }).notNull().default("bg-gray-500/20 text-gray-300"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Dream Scroll (magical wishlist)
 export const dreamScrollItems = pgTable("dream_scroll_items", {
   id: serial("id").primaryKey(),
@@ -366,7 +376,7 @@ export const dreamScrollItems = pgTable("dream_scroll_items", {
   category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
   priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"low" | "medium" | "high">(),
   cost: varchar("cost", { length: 10 }).$type<"free" | "$" | "$$" | "$$$">(),
-  tags: text("tags"), // JSON array of tags: ["goal", "exploration", "vocal", "piano", "singing"]
+  tags: text("tags"), // JSON array of tag IDs
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -385,6 +395,7 @@ export type Encounter = typeof encounters.$inferSelect;
 export type CombatLog = typeof combatLogs.$inferSelect;
 export type PlayerStats = typeof playerStats.$inferSelect;
 export type Sprite = typeof sprites.$inferSelect;
+export type DreamScrollTag = typeof dreamScrollTags.$inferSelect;
 export type DreamScrollItem = typeof dreamScrollItems.$inferSelect;
 
 // Insert schemas

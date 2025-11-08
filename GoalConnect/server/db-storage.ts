@@ -41,6 +41,7 @@ import type {
   Sprite,
   InsertSprite,
   // Dream Scroll types
+  DreamScrollTag,
   DreamScrollItem,
   InsertDreamScrollItem,
 } from "@shared/schema";
@@ -999,5 +1000,25 @@ export class DbStorage implements IStorage {
       .where(eq(schema.dreamScrollItems.id, id))
       .returning();
     return updated;
+  }
+
+  // Dream Scroll Tag Management
+  async createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag> {
+    const [created] = await this.db.insert(schema.dreamScrollTags).values(tag).returning();
+    return created;
+  }
+
+  async getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]> {
+    return this.db.select().from(schema.dreamScrollTags)
+      .where(and(
+        eq(schema.dreamScrollTags.userId, userId),
+        eq(schema.dreamScrollTags.category, category as any)
+      ))
+      .orderBy(desc(schema.dreamScrollTags.createdAt));
+  }
+
+  async deleteDreamScrollTag(id: number): Promise<void> {
+    await this.db.delete(schema.dreamScrollTags)
+      .where(eq(schema.dreamScrollTags.id, id));
   }
 }

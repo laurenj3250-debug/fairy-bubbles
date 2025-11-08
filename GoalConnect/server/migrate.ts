@@ -148,6 +148,24 @@ export async function runMigrations() {
       }
 
       try {
+        // Create dream_scroll_tags table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS dream_scroll_tags (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
+            name TEXT NOT NULL,
+            color VARCHAR(50) NOT NULL DEFAULT 'bg-gray-500/20 text-gray-300',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_tags_user_category ON dream_scroll_tags(user_id, category)`);
+        console.log('[migrate] ✅ Dream scroll tags table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create dream_scroll_tags table:', error);
+      }
+
+      try {
         // Create dream_scroll_items table if it doesn't exist
         await db.execute(sql`
           CREATE TABLE IF NOT EXISTS dream_scroll_items (

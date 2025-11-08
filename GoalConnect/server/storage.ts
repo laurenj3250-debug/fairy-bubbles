@@ -42,6 +42,7 @@ import {
   type Sprite,
   type InsertSprite,
   // Dream Scroll types
+  type DreamScrollTag,
   type DreamScrollItem,
   type InsertDreamScrollItem,
 } from "@shared/schema";
@@ -185,6 +186,11 @@ export interface IStorage {
   updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined>;
   deleteDreamScrollItem(id: number): Promise<void>;
   toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined>;
+
+  // Dream Scroll Tag Management
+  createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag>;
+  getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]>;
+  deleteDreamScrollTag(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
