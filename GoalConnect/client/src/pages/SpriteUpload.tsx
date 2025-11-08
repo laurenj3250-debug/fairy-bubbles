@@ -62,7 +62,15 @@ export default function SpriteUpload() {
 
   return (
     <div className="min-h-screen p-8 pb-24 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-white mb-2">Sprite Upload</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-3xl font-bold text-white">Sprite Upload</h1>
+        <button
+          onClick={() => window.location.href = '/sprites/organize'}
+          className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+        >
+          Organize Sprites →
+        </button>
+      </div>
       <p className="text-teal-200 mb-6">
         Upload your sprite pack files here. Supports ZIP archives, PNG, JPG, and PSD files.
       </p>
