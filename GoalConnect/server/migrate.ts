@@ -129,6 +129,48 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to add evolution_required column to costumes:', error);
       }
 
+      try {
+        // Create sprites table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS sprites (
+            id SERIAL PRIMARY KEY,
+            filename TEXT NOT NULL UNIQUE,
+            category VARCHAR(20) NOT NULL CHECK (category IN ('creature', 'biome', 'item', 'ui', 'uncategorized')),
+            name TEXT,
+            data TEXT NOT NULL,
+            mime_type TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Sprites table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create sprites table:', error);
+      }
+
+      try {
+        // Create dream_scroll_items table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS dream_scroll_items (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            description TEXT,
+            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience')),
+            priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+            cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+            completed BOOLEAN NOT NULL DEFAULT FALSE,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
+        console.log('[migrate] ✅ Dream scroll table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -314,6 +356,35 @@ export async function runMigrations() {
       FOREIGN KEY (current_costume_id) REFERENCES costumes(id)
     `);
 
+    // Sprites table
+    await db.execute(sql`
+      CREATE TABLE sprites (
+        id SERIAL PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        category VARCHAR(20) NOT NULL CHECK (category IN ('creature', 'biome', 'item', 'ui', 'uncategorized')),
+        name TEXT,
+        data TEXT NOT NULL,
+        mime_type TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // Dream Scroll table
+    await db.execute(sql`
+      CREATE TABLE dream_scroll_items (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience')),
+        priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+        cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
     // Create indexes
     await db.execute(sql`CREATE INDEX idx_habits_user_id ON habits(user_id)`);
     await db.execute(sql`CREATE INDEX idx_habit_logs_habit_id ON habit_logs(habit_id)`);
@@ -323,6 +394,9 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_todos_user_id ON todos(user_id)`);
     await db.execute(sql`CREATE INDEX idx_user_costumes_user_id ON user_costumes(user_id)`);
     await db.execute(sql`CREATE INDEX idx_point_transactions_user_id ON point_transactions(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');
