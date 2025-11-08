@@ -554,6 +554,16 @@ export default function Wonderland() {
             filter: brightness(0.8);
           }
         }
+
+        @keyframes tail-wag {
+          0%, 100% { transform: rotate(-15deg); }
+          50% { transform: rotate(15deg); }
+        }
+
+        @keyframes ear-twitch {
+          0%, 90%, 100% { transform: translateY(0); }
+          93%, 97% { transform: translateY(-1px); }
+        }
       `}</style>
     </div>
   );
