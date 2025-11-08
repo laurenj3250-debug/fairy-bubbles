@@ -91,7 +91,7 @@ export default function SpriteOrganize() {
   };
 
   return (
-    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto">
+    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">Organize Sprites</h1>
         <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
