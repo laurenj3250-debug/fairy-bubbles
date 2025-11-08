@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import LevelEditor from './LevelEditor';
 
 type Sprite = {
   id: number;
@@ -59,7 +60,7 @@ type Biome = {
 };
 
 export default function GameDataAdmin() {
-  const [activeTab, setActiveTab] = useState<'biomes' | 'creatures' | 'items'>('biomes');
+  const [activeTab, setActiveTab] = useState<'biomes' | 'creatures' | 'items' | 'level-editor'>('biomes');
   const [selectedSprite, setSelectedSprite] = useState<Sprite | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -317,9 +318,23 @@ export default function GameDataAdmin() {
         >
           💎 Items
         </button>
+        <button
+          onClick={() => setActiveTab('level-editor')}
+          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+            activeTab === 'level-editor'
+              ? 'bg-teal-500 text-white'
+              : 'bg-white/10 text-teal-200 hover:bg-white/20'
+          }`}
+        >
+          🎮 Level Editor
+        </button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Render Level Editor if active */}
+      {activeTab === 'level-editor' ? (
+        <LevelEditor />
+      ) : (
+        <div className="grid lg:grid-cols-2 gap-6">
         {/* Sprite Selector */}
         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 relative z-10">
           <h2 className="text-xl font-semibold text-white mb-4">
@@ -784,6 +799,7 @@ export default function GameDataAdmin() {
           )}
         </div>
       </div>
+      )}
       </>
       )}
     </div>

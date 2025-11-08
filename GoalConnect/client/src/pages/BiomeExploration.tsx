@@ -17,6 +17,33 @@ interface InteractiveObject {
   size: number;
 }
 
+interface LevelObject {
+  id: number;
+  objectType: 'platform' | 'obstacle' | 'decoration';
+  spriteFilename: string;
+  xPosition: number;
+  yPosition: number;
+  width: number;
+  height: number;
+  zIndex: number;
+}
+
+interface Obstacle {
+  x: number;
+  width: number;
+  height: number;
+  sprite: string;
+  name: string;
+}
+
+interface Platform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sprite?: string;
+}
+
 interface EventResult {
   eventType: 'loot' | 'encounter';
   loot?: {
@@ -59,22 +86,32 @@ export default function BiomeExploration() {
 
   const END_ZONE_X = 2500; // End of level position (longer level)
 
-  // Obstacles to jump over (spread out over longer level)
-  const obstacles = [
-    { x: 500, width: 60, height: 50, emoji: '🪵', name: 'Log' },
-    { x: 900, width: 80, height: 60, emoji: '🪨', name: 'Boulder' },
-    { x: 1300, width: 50, height: 45, emoji: '🌳', name: 'Stump' },
-    { x: 1700, width: 70, height: 55, emoji: '🪵', name: 'Fallen Tree' },
-    { x: 2100, width: 60, height: 50, emoji: '🪨', name: 'Rock' },
-  ];
+  // Fetch level objects from database
+  const { data: levelObjects = [] } = useQuery<LevelObject[]>({
+    queryKey: [`/api/biomes/${biomeId}/level-objects`],
+    enabled: !!biomeId,
+  });
 
-  // Platforms at different heights
-  const platforms = [
-    { x: 700, y: 340, width: 120, height: 20 },
-    { x: 1100, y: 360, width: 100, height: 20 },
-    { x: 1500, y: 350, width: 110, height: 20 },
-    { x: 1900, y: 340, width: 120, height: 20 },
-  ];
+  // Transform level objects into obstacles and platforms
+  const obstacles: Obstacle[] = levelObjects
+    .filter(obj => obj.objectType === 'obstacle')
+    .map(obj => ({
+      x: obj.xPosition,
+      width: obj.width,
+      height: obj.height,
+      sprite: `/api/sprites/file/${obj.spriteFilename}`,
+      name: obj.spriteFilename,
+    }));
+
+  const platforms: Platform[] = levelObjects
+    .filter(obj => obj.objectType === 'platform')
+    .map(obj => ({
+      x: obj.xPosition,
+      y: obj.yPosition,
+      width: obj.width,
+      height: obj.height,
+      sprite: `/api/sprites/file/${obj.spriteFilename}`,
+    }));
 
   // Collectible items scattered throughout the level
   const [objects] = useState<InteractiveObject[]>([
@@ -466,10 +503,19 @@ export default function BiomeExploration() {
                 style={{
                   left: `${screenX}px`,
                   bottom: '96px',
-                  fontSize: '60px',
+                  width: `${obstacle.width}px`,
+                  height: `${obstacle.height}px`,
                 }}
               >
-                {obstacle.emoji}
+                {obstacle.sprite ? (
+                  <img
+                    src={obstacle.sprite}
+                    alt={obstacle.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-600 rounded" />
+                )}
               </div>
             );
           })}
@@ -481,15 +527,24 @@ export default function BiomeExploration() {
             return (
               <div
                 key={`platform-${i}`}
-                className="absolute bg-gradient-to-b from-purple-600 to-purple-800 rounded-lg border-2 border-purple-400/50"
+                className="absolute rounded-lg border-2 border-purple-400/50"
                 style={{
                   left: `${screenX}px`,
                   bottom: `${500 - platform.y}px`,
                   width: `${platform.width}px`,
                   height: `${platform.height}px`,
                   boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)',
+                  background: platform.sprite ? 'transparent' : 'linear-gradient(to bottom, #9333ea, #6b21a8)',
                 }}
-              />
+              >
+                {platform.sprite && (
+                  <img
+                    src={platform.sprite}
+                    alt="platform"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                )}
+              </div>
             );
           })}
 

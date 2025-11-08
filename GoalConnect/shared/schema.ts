@@ -346,11 +346,26 @@ export const playerStats = pgTable("player_stats", {
   maxPartySize: integer("max_party_size").notNull().default(1),
 });
 
+// Biome Level Objects (platforms, obstacles, decorations)
+export const biomeLevelObjects = pgTable("biome_level_objects", {
+  id: serial("id").primaryKey(),
+  biomeId: integer("biome_id").notNull().references(() => biomes.id),
+  objectType: varchar("object_type", { length: 20 }).notNull().$type<"platform" | "obstacle" | "decoration">(),
+  spriteFilename: text("sprite_filename").notNull(),
+  xPosition: integer("x_position").notNull(),
+  yPosition: integer("y_position").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  zIndex: integer("z_index").notNull().default(0),
+  metadata: text("metadata").default("{}"), // JSON string for future properties
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Sprites (stored in database for persistence)
 export const sprites = pgTable("sprites", {
   id: serial("id").primaryKey(),
   filename: text("filename").notNull().unique(),
-  category: varchar("category", { length: 20 }).notNull().$type<"creature" | "biome" | "item" | "ui" | "uncategorized">(),
+  category: varchar("category", { length: 30 }).notNull().$type<"creature" | "biome" | "item" | "ui" | "biome-background" | "biome-platform" | "biome-obstacle" | "uncategorized">(),
   name: text("name"), // Optional name for creatures
   data: text("data").notNull(), // Base64-encoded image data
   mimeType: text("mime_type").notNull(), // image/png, image/jpeg, etc.
@@ -384,6 +399,7 @@ export const dreamScrollItems = pgTable("dream_scroll_items", {
 
 // TypeScript types
 export type Biome = typeof biomes.$inferSelect;
+export type BiomeLevelObject = typeof biomeLevelObjects.$inferSelect;
 export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
 export type UserCreature = typeof userCreatures.$inferSelect;
 export type Item = typeof items.$inferSelect;
@@ -400,6 +416,7 @@ export type DreamScrollItem = typeof dreamScrollItems.$inferSelect;
 
 // Insert schemas
 export const insertBiomeSchema = createInsertSchema(biomes).omit({ id: true, createdAt: true });
+export const insertBiomeLevelObjectSchema = createInsertSchema(biomeLevelObjects).omit({ id: true, createdAt: true });
 export const insertCreatureSpeciesSchema = createInsertSchema(creatureSpecies).omit({ id: true, createdAt: true });
 export const insertUserCreatureSchema = createInsertSchema(userCreatures).omit({ id: true, discoveredAt: true });
 export const insertItemSchema = createInsertSchema(items).omit({ id: true, createdAt: true });
@@ -410,6 +427,7 @@ export const insertSpriteSchema = createInsertSchema(sprites).omit({ id: true, c
 export const insertDreamScrollItemSchema = createInsertSchema(dreamScrollItems).omit({ id: true, createdAt: true, completedAt: true });
 
 export type InsertBiome = z.infer<typeof insertBiomeSchema>;
+export type InsertBiomeLevelObject = z.infer<typeof insertBiomeLevelObjectSchema>;
 export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
 export type InsertUserCreature = z.infer<typeof insertUserCreatureSchema>;
 export type InsertItem = z.infer<typeof insertItemSchema>;
