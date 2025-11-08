@@ -19,12 +19,25 @@ import {
   type UserPoints,
   type Todo,
   type InsertTodo,
+  // D&D RPG types
+  type Biome,
+  type InsertBiome,
   type CreatureSpecies,
   type InsertCreatureSpecies,
-  type Creature,
-  type InsertCreature,
-  type CreatureEvolution,
-  type InsertCreatureEvolution,
+  type UserCreature,
+  type InsertUserCreature,
+  type Item,
+  type InsertItem,
+  type UserInventory,
+  type EquippedItem,
+  type Shard,
+  type DailyProgress,
+  type InsertDailyProgress,
+  type Encounter,
+  type InsertEncounter,
+  type CombatLog,
+  type PlayerStats,
+  type InsertPlayerStats,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 
@@ -90,21 +103,61 @@ export interface IStorage {
   deleteTodo(id: number): Promise<boolean>;
   completeTodo(id: number): Promise<Todo | undefined>;
 
-  // Creature system
+  // D&D RPG System - Biomes
+  getBiomes(): Promise<Biome[]>;
+  getBiome(id: number): Promise<Biome | undefined>;
+  getBiomesByLevel(playerLevel: number): Promise<Biome[]>;
+
+  // D&D RPG System - Creature Species
   getCreatureSpecies(): Promise<CreatureSpecies[]>;
   getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined>;
-  getCreatureSpeciesByElement(elementType: string): Promise<CreatureSpecies[]>;
-  createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies>;
+  getCreatureSpeciesByBiome(biomeId: number): Promise<CreatureSpecies[]>;
+  getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]>;
 
-  getCreatures(userId: number): Promise<Creature[]>;
-  getCreature(id: number): Promise<Creature | undefined>;
-  getCreatureByHabitId(habitId: number): Promise<Creature | undefined>;
-  createCreature(creature: InsertCreature): Promise<Creature>;
-  updateCreature(id: number, creature: Partial<Creature>): Promise<Creature | undefined>;
-  deleteCreature(id: number): Promise<boolean>;
+  // D&D RPG System - User Creatures (Party/Collection)
+  getUserCreatures(userId: number): Promise<UserCreature[]>;
+  getUserCreature(id: number): Promise<UserCreature | undefined>;
+  getParty(userId: number): Promise<UserCreature[]>;
+  createUserCreature(creature: InsertUserCreature): Promise<UserCreature>;
+  updateUserCreature(id: number, updates: Partial<UserCreature>): Promise<UserCreature | undefined>;
+  deleteUserCreature(id: number): Promise<boolean>;
+  addToParty(userId: number, creatureId: number, position: number): Promise<UserCreature | undefined>;
+  removeFromParty(creatureId: number): Promise<UserCreature | undefined>;
 
-  getCreatureEvolutions(creatureId: number): Promise<CreatureEvolution[]>;
-  createCreatureEvolution(evolution: InsertCreatureEvolution): Promise<CreatureEvolution>;
+  // D&D RPG System - Items & Inventory
+  getItems(): Promise<Item[]>;
+  getItem(id: number): Promise<Item | undefined>;
+  getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>>;
+  addItemToInventory(userId: number, itemId: number, quantity: number): Promise<void>;
+  removeItemFromInventory(userId: number, itemId: number, quantity: number): Promise<boolean>;
+  getEquippedItem(creatureId: number): Promise<(EquippedItem & { item: Item }) | undefined>;
+  equipItem(creatureId: number, itemId: number): Promise<EquippedItem>;
+  unequipItem(creatureId: number): Promise<boolean>;
+
+  // D&D RPG System - Shards
+  getShards(userId: number): Promise<Shard[]>;
+  addShards(userId: number, speciesId: number, amount: number): Promise<void>;
+  spendShards(userId: number, speciesId: number, amount: number): Promise<boolean>;
+
+  // D&D RPG System - Daily Progress
+  getDailyProgress(userId: number, date: string): Promise<DailyProgress | undefined>;
+  updateDailyProgress(userId: number, date: string, updates: Partial<DailyProgress>): Promise<DailyProgress>;
+  incrementHabitPoints(userId: number, date: string, points: number): Promise<DailyProgress>;
+  useRun(userId: number, date: string): Promise<boolean>;
+
+  // D&D RPG System - Encounters
+  getEncounters(userId: number): Promise<Encounter[]>;
+  createEncounter(encounter: InsertEncounter): Promise<Encounter>;
+
+  // D&D RPG System - Combat Logs
+  getCombatLog(encounterId: number): Promise<CombatLog | undefined>;
+  createCombatLog(log: Omit<CombatLog, "id" | "createdAt">): Promise<CombatLog>;
+
+  // D&D RPG System - Player Stats
+  getPlayerStats(userId: number): Promise<PlayerStats | undefined>;
+  createPlayerStats(userId: number): Promise<PlayerStats>;
+  updatePlayerStats(userId: number, updates: Partial<PlayerStats>): Promise<PlayerStats>;
+  addExperience(userId: number, xp: number): Promise<{ stats: PlayerStats; leveledUp: boolean }>;
 }
 
 export class MemStorage implements IStorage {

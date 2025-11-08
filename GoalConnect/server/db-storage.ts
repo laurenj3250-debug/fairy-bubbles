@@ -21,12 +21,20 @@ import type {
   UserPoints,
   Todo,
   InsertTodo,
+  // D&D RPG types
+  Biome,
   CreatureSpecies,
-  InsertCreatureSpecies,
-  Creature,
-  InsertCreature,
-  CreatureEvolution,
-  InsertCreatureEvolution,
+  UserCreature,
+  InsertUserCreature,
+  Item,
+  UserInventory,
+  EquippedItem,
+  Shard,
+  DailyProgress,
+  Encounter,
+  InsertEncounter,
+  CombatLog,
+  PlayerStats,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -500,9 +508,23 @@ export class DbStorage implements IStorage {
     return results[0];
   }
 
-  // ========== CREATURES SYSTEM ==========
+  // ========== D&D RPG SYSTEM ==========
 
-  // Creature Species methods
+  // Biomes
+  async getBiomes(): Promise<Biome[]> {
+    return await this.db.select().from(schema.biomes);
+  }
+
+  async getBiome(id: number): Promise<Biome | undefined> {
+    const [biome] = await this.db.select().from(schema.biomes).where(eq(schema.biomes.id, id));
+    return biome;
+  }
+
+  async getBiomesByLevel(playerLevel: number): Promise<Biome[]> {
+    return await this.db.select().from(schema.biomes).where(eq(schema.biomes.unlockPlayerLevel, playerLevel));
+  }
+
+  // Creature Species
   async getCreatureSpecies(): Promise<CreatureSpecies[]> {
     return await this.db.select().from(schema.creatureSpecies);
   }
@@ -512,60 +534,341 @@ export class DbStorage implements IStorage {
     return species;
   }
 
-  async getCreatureSpeciesByElement(elementType: string): Promise<CreatureSpecies[]> {
-    return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.elementType, elementType as any));
+  async getCreatureSpeciesByBiome(biomeId: number): Promise<CreatureSpecies[]> {
+    return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.biomeId, biomeId));
   }
 
-  async createCreatureSpecies(speciesData: InsertCreatureSpecies): Promise<CreatureSpecies> {
-    const [species] = await this.db.insert(schema.creatureSpecies).values(speciesData).returning();
-    return species;
+  async getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]> {
+    return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.rarity, rarity as any));
   }
 
-  // Creature instance methods
-  async getCreatures(userId: number): Promise<Creature[]> {
-    return await this.db.select().from(schema.creatures).where(eq(schema.creatures.userId, userId));
+  // User Creatures (Party/Collection)
+  async getUserCreatures(userId: number): Promise<UserCreature[]> {
+    return await this.db.select().from(schema.userCreatures).where(eq(schema.userCreatures.userId, userId));
   }
 
-  async getCreature(id: number): Promise<Creature | undefined> {
-    const [creature] = await this.db.select().from(schema.creatures).where(eq(schema.creatures.id, id));
+  async getUserCreature(id: number): Promise<UserCreature | undefined> {
+    const [creature] = await this.db.select().from(schema.userCreatures).where(eq(schema.userCreatures.id, id));
     return creature;
   }
 
-  async getCreatureByHabitId(habitId: number): Promise<Creature | undefined> {
-    const [creature] = await this.db.select().from(schema.creatures).where(eq(schema.creatures.habitId, habitId));
-    return creature;
+  async getParty(userId: number): Promise<UserCreature[]> {
+    return await this.db
+      .select()
+      .from(schema.userCreatures)
+      .where(and(eq(schema.userCreatures.userId, userId), eq(schema.userCreatures.inParty, true)))
+      .orderBy(schema.userCreatures.partyPosition);
   }
 
-  async createCreature(creatureData: InsertCreature): Promise<Creature> {
-    const [creature] = await this.db.insert(schema.creatures).values(creatureData).returning();
-    return creature;
+  async createUserCreature(creature: InsertUserCreature): Promise<UserCreature> {
+    const [created] = await this.db.insert(schema.userCreatures).values(creature).returning();
+    return created;
   }
 
-  async updateCreature(id: number, creatureData: Partial<Creature>): Promise<Creature | undefined> {
-    const [creature] = await this.db
-      .update(schema.creatures)
-      .set(creatureData)
-      .where(eq(schema.creatures.id, id))
+  async updateUserCreature(id: number, updates: Partial<UserCreature>): Promise<UserCreature | undefined> {
+    const [updated] = await this.db
+      .update(schema.userCreatures)
+      .set(updates)
+      .where(eq(schema.userCreatures.id, id))
       .returning();
-    return creature;
+    return updated;
   }
 
-  async deleteCreature(id: number): Promise<boolean> {
-    const result = await this.db.delete(schema.creatures).where(eq(schema.creatures.id, id));
+  async deleteUserCreature(id: number): Promise<boolean> {
+    const result = await this.db.delete(schema.userCreatures).where(eq(schema.userCreatures.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
-  // Creature Evolution methods
-  async getCreatureEvolutions(creatureId: number): Promise<CreatureEvolution[]> {
-    return await this.db
-      .select()
-      .from(schema.creatureEvolutions)
-      .where(eq(schema.creatureEvolutions.creatureId, creatureId))
-      .orderBy(desc(schema.creatureEvolutions.evolvedAt));
+  async addToParty(userId: number, creatureId: number, position: number): Promise<UserCreature | undefined> {
+    const [updated] = await this.db
+      .update(schema.userCreatures)
+      .set({ inParty: true, partyPosition: position })
+      .where(and(eq(schema.userCreatures.id, creatureId), eq(schema.userCreatures.userId, userId)))
+      .returning();
+    return updated;
   }
 
-  async createCreatureEvolution(evolutionData: InsertCreatureEvolution): Promise<CreatureEvolution> {
-    const [evolution] = await this.db.insert(schema.creatureEvolutions).values(evolutionData).returning();
-    return evolution;
+  async removeFromParty(creatureId: number): Promise<UserCreature | undefined> {
+    const [updated] = await this.db
+      .update(schema.userCreatures)
+      .set({ inParty: false, partyPosition: null })
+      .where(eq(schema.userCreatures.id, creatureId))
+      .returning();
+    return updated;
+  }
+
+  // Items & Inventory
+  async getItems(): Promise<Item[]> {
+    return await this.db.select().from(schema.items);
+  }
+
+  async getItem(id: number): Promise<Item | undefined> {
+    const [item] = await this.db.select().from(schema.items).where(eq(schema.items.id, id));
+    return item;
+  }
+
+  async getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>> {
+    const inventory = await this.db
+      .select()
+      .from(schema.userInventory)
+      .leftJoin(schema.items, eq(schema.userInventory.itemId, schema.items.id))
+      .where(eq(schema.userInventory.userId, userId));
+
+    return inventory.map(row => ({
+      ...row.user_inventory,
+      item: row.items!
+    }));
+  }
+
+  async addItemToInventory(userId: number, itemId: number, quantity: number): Promise<void> {
+    // Check if item exists in inventory
+    const existing = await this.db
+      .select()
+      .from(schema.userInventory)
+      .where(and(eq(schema.userInventory.userId, userId), eq(schema.userInventory.itemId, itemId)));
+
+    if (existing.length > 0) {
+      // Update quantity
+      await this.db
+        .update(schema.userInventory)
+        .set({ quantity: existing[0].quantity + quantity })
+        .where(and(eq(schema.userInventory.userId, userId), eq(schema.userInventory.itemId, itemId)));
+    } else {
+      // Insert new
+      await this.db.insert(schema.userInventory).values({ userId, itemId, quantity });
+    }
+  }
+
+  async removeItemFromInventory(userId: number, itemId: number, quantity: number): Promise<boolean> {
+    const existing = await this.db
+      .select()
+      .from(schema.userInventory)
+      .where(and(eq(schema.userInventory.userId, userId), eq(schema.userInventory.itemId, itemId)));
+
+    if (existing.length === 0 || existing[0].quantity < quantity) {
+      return false;
+    }
+
+    const newQuantity = existing[0].quantity - quantity;
+    if (newQuantity === 0) {
+      await this.db
+        .delete(schema.userInventory)
+        .where(and(eq(schema.userInventory.userId, userId), eq(schema.userInventory.itemId, itemId)));
+    } else {
+      await this.db
+        .update(schema.userInventory)
+        .set({ quantity: newQuantity })
+        .where(and(eq(schema.userInventory.userId, userId), eq(schema.userInventory.itemId, itemId)));
+    }
+
+    return true;
+  }
+
+  async getEquippedItem(creatureId: number): Promise<(EquippedItem & { item: Item }) | undefined> {
+    const equipped = await this.db
+      .select()
+      .from(schema.equippedItems)
+      .leftJoin(schema.items, eq(schema.equippedItems.itemId, schema.items.id))
+      .where(eq(schema.equippedItems.userCreatureId, creatureId));
+
+    if (equipped.length === 0) return undefined;
+
+    return {
+      ...equipped[0].equipped_items,
+      item: equipped[0].items!
+    };
+  }
+
+  async equipItem(creatureId: number, itemId: number): Promise<EquippedItem> {
+    // Unequip existing item first
+    await this.db.delete(schema.equippedItems).where(eq(schema.equippedItems.userCreatureId, creatureId));
+
+    // Equip new item
+    const [equipped] = await this.db
+      .insert(schema.equippedItems)
+      .values({ userCreatureId: creatureId, itemId })
+      .returning();
+    return equipped;
+  }
+
+  async unequipItem(creatureId: number): Promise<boolean> {
+    const result = await this.db.delete(schema.equippedItems).where(eq(schema.equippedItems.userCreatureId, creatureId));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Shards
+  async getShards(userId: number): Promise<Shard[]> {
+    return await this.db.select().from(schema.shards).where(eq(schema.shards.userId, userId));
+  }
+
+  async addShards(userId: number, speciesId: number, amount: number): Promise<void> {
+    const existing = await this.db
+      .select()
+      .from(schema.shards)
+      .where(and(eq(schema.shards.userId, userId), eq(schema.shards.speciesId, speciesId)));
+
+    if (existing.length > 0) {
+      await this.db
+        .update(schema.shards)
+        .set({ amount: existing[0].amount + amount })
+        .where(and(eq(schema.shards.userId, userId), eq(schema.shards.speciesId, speciesId)));
+    } else {
+      await this.db.insert(schema.shards).values({ userId, speciesId, amount });
+    }
+  }
+
+  async spendShards(userId: number, speciesId: number, amount: number): Promise<boolean> {
+    const existing = await this.db
+      .select()
+      .from(schema.shards)
+      .where(and(eq(schema.shards.userId, userId), eq(schema.shards.speciesId, speciesId)));
+
+    if (existing.length === 0 || existing[0].amount < amount) {
+      return false;
+    }
+
+    await this.db
+      .update(schema.shards)
+      .set({ amount: existing[0].amount - amount })
+      .where(and(eq(schema.shards.userId, userId), eq(schema.shards.speciesId, speciesId)));
+
+    return true;
+  }
+
+  // Daily Progress
+  async getDailyProgress(userId: number, date: string): Promise<DailyProgress | undefined> {
+    const [progress] = await this.db
+      .select()
+      .from(schema.dailyProgress)
+      .where(and(eq(schema.dailyProgress.userId, userId), eq(schema.dailyProgress.date, date)));
+    return progress;
+  }
+
+  async updateDailyProgress(userId: number, date: string, updates: Partial<DailyProgress>): Promise<DailyProgress> {
+    const existing = await this.getDailyProgress(userId, date);
+
+    if (existing) {
+      const [updated] = await this.db
+        .update(schema.dailyProgress)
+        .set(updates)
+        .where(and(eq(schema.dailyProgress.userId, userId), eq(schema.dailyProgress.date, date)))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await this.db
+        .insert(schema.dailyProgress)
+        .values({ userId, date, ...updates })
+        .returning();
+      return created;
+    }
+  }
+
+  async incrementHabitPoints(userId: number, date: string, points: number): Promise<DailyProgress> {
+    const existing = await this.getDailyProgress(userId, date);
+    const currentPoints = existing?.habitPointsEarned || 0;
+    const newPoints = currentPoints + points;
+
+    // Calculate threshold flags
+    const threshold1 = newPoints >= 6;
+    const threshold2 = newPoints >= 9;
+    const threshold3 = newPoints >= 12;
+
+    // Calculate runs (1-3 based on threshold)
+    let runsAvailable = 0;
+    if (threshold1) runsAvailable = 1;
+    if (threshold2) runsAvailable = 2;
+    if (threshold3) runsAvailable = 3;
+
+    return await this.updateDailyProgress(userId, date, {
+      habitPointsEarned: newPoints,
+      threshold1Reached: threshold1,
+      threshold2Reached: threshold2,
+      threshold3Reached: threshold3,
+      runsAvailable,
+    });
+  }
+
+  async useRun(userId: number, date: string): Promise<boolean> {
+    const progress = await this.getDailyProgress(userId, date);
+    if (!progress || progress.runsUsed >= progress.runsAvailable) {
+      return false;
+    }
+
+    await this.updateDailyProgress(userId, date, {
+      runsUsed: progress.runsUsed + 1,
+    });
+
+    return true;
+  }
+
+  // Encounters
+  async getEncounters(userId: number): Promise<Encounter[]> {
+    return await this.db.select().from(schema.encounters).where(eq(schema.encounters.userId, userId)).orderBy(desc(schema.encounters.createdAt));
+  }
+
+  async createEncounter(encounter: InsertEncounter): Promise<Encounter> {
+    const [created] = await this.db.insert(schema.encounters).values(encounter).returning();
+    return created;
+  }
+
+  // Combat Logs
+  async getCombatLog(encounterId: number): Promise<CombatLog | undefined> {
+    const [log] = await this.db.select().from(schema.combatLogs).where(eq(schema.combatLogs.encounterId, encounterId));
+    return log;
+  }
+
+  async createCombatLog(log: Omit<CombatLog, "id" | "createdAt">): Promise<CombatLog> {
+    const [created] = await this.db.insert(schema.combatLogs).values(log).returning();
+    return created;
+  }
+
+  // Player Stats
+  async getPlayerStats(userId: number): Promise<PlayerStats | undefined> {
+    const [stats] = await this.db.select().from(schema.playerStats).where(eq(schema.playerStats.userId, userId));
+    return stats;
+  }
+
+  async createPlayerStats(userId: number): Promise<PlayerStats> {
+    const [stats] = await this.db
+      .insert(schema.playerStats)
+      .values({ userId, level: 1, experience: 0, maxPartySize: 1 })
+      .returning();
+    return stats;
+  }
+
+  async updatePlayerStats(userId: number, updates: Partial<PlayerStats>): Promise<PlayerStats> {
+    const [updated] = await this.db
+      .update(schema.playerStats)
+      .set(updates)
+      .where(eq(schema.playerStats.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async addExperience(userId: number, xp: number): Promise<{ stats: PlayerStats; leveledUp: boolean }> {
+    const current = await this.getPlayerStats(userId);
+    if (!current) {
+      const stats = await this.createPlayerStats(userId);
+      return { stats, leveledUp: false };
+    }
+
+    const newXp = current.experience + xp;
+    const xpPerLevel = 10; // Simple: 10 XP per level
+    const newLevel = Math.min(10, Math.floor(newXp / xpPerLevel) + 1);
+    const leveledUp = newLevel > current.level;
+
+    // Update max party size based on level
+    let newMaxPartySize = current.maxPartySize;
+    if (newLevel >= 3 && current.maxPartySize < 2) newMaxPartySize = 2;
+    if (newLevel >= 5 && current.maxPartySize < 3) newMaxPartySize = 3;
+    if (newLevel >= 7 && current.maxPartySize < 4) newMaxPartySize = 4;
+
+    const stats = await this.updatePlayerStats(userId, {
+      experience: newXp,
+      level: newLevel,
+      maxPartySize: newMaxPartySize,
+    });
+
+    return { stats, leveledUp };
   }
 }
