@@ -1,4 +1,4 @@
-import { Home, CheckCircle, Users, Sparkles, Upload } from "lucide-react";
+import { Home, CheckCircle, Users, Sparkles, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const navItems = [
   { path: "/habits", label: "Habits", icon: CheckCircle },
   { path: "/outside-world", label: "World", icon: Sparkles },
   { path: "/party", label: "Party", icon: Users },
-  { path: "/sprites/upload", label: "Sprites", icon: Upload },
+  { path: "/game/admin", label: "Admin", icon: Settings },
 ];
 
 export function BottomNav() {
