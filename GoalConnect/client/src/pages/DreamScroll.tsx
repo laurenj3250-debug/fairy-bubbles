@@ -12,6 +12,15 @@ const CATEGORIES = [
   { value: "visit", label: "To Visit", emoji: "🗺️", color: "from-orange-500 to-yellow-500", bgColor: "bg-orange-500/20", borderColor: "border-orange-400/50" },
   { value: "learn", label: "To Learn", emoji: "📚", color: "from-indigo-500 to-purple-500", bgColor: "bg-indigo-500/20", borderColor: "border-indigo-400/50" },
   { value: "experience", label: "To Experience", emoji: "🎭", color: "from-pink-500 to-rose-500", bgColor: "bg-pink-500/20", borderColor: "border-pink-400/50" },
+  { value: "music", label: "Music", emoji: "🎹", color: "from-violet-500 to-fuchsia-500", bgColor: "bg-violet-500/20", borderColor: "border-violet-400/50" },
+] as const;
+
+const TAG_OPTIONS = [
+  { value: "goal", label: "Goal Piece", emoji: "🎯", color: "bg-amber-500/20 text-amber-300" },
+  { value: "exploration", label: "Exploration", emoji: "🔍", color: "bg-cyan-500/20 text-cyan-300" },
+  { value: "vocal", label: "Vocal/Singing", emoji: "🎤", color: "bg-pink-500/20 text-pink-300" },
+  { value: "piano", label: "Piano", emoji: "🎹", color: "bg-purple-500/20 text-purple-300" },
+  { value: "strings", label: "Strings", emoji: "🎻", color: "bg-green-500/20 text-green-300" },
 ] as const;
 
 const PRIORITY_OPTIONS = [
@@ -34,6 +43,7 @@ export default function DreamScroll() {
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<"low" | "medium" | "high">("medium");
   const [editCost, setEditCost] = useState<"free" | "$" | "$$" | "$$$" | null>(null);
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newItemCategory, setNewItemCategory] = useState<string>("do");
 
@@ -43,7 +53,7 @@ export default function DreamScroll() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (item: { title: string; description?: string; category: string; priority: string; cost?: string }) => {
+    mutationFn: async (item: { title: string; description?: string; category: string; priority: string; cost?: string; tags?: string }) => {
       return apiRequest("/api/dream-scroll", "POST", item);
     },
     onSuccess: () => {
@@ -53,6 +63,7 @@ export default function DreamScroll() {
       setEditDescription("");
       setEditPriority("medium");
       setEditCost(null);
+      setEditTags([]);
     },
   });
 
@@ -90,6 +101,13 @@ export default function DreamScroll() {
     setEditDescription(item.description || "");
     setEditPriority(item.priority);
     setEditCost(item.cost || null);
+    setEditTags(item.tags ? JSON.parse(item.tags) : []);
+  };
+
+  const toggleTag = (tag: string) => {
+    setEditTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
   };
 
   const handleSaveEdit = () => {
@@ -98,6 +116,7 @@ export default function DreamScroll() {
         id: editingItem.id,
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
+        tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
         priority: editPriority,
         cost: editCost || undefined,
       });

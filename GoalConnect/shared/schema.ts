@@ -363,9 +363,10 @@ export const dreamScrollItems = pgTable("dream_scroll_items", {
   userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
-  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience">(),
+  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
   priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"low" | "medium" | "high">(),
   cost: varchar("cost", { length: 10 }).$type<"free" | "$" | "$$" | "$$$">(),
+  tags: text("tags"), // JSON array of tags: ["goal", "exploration", "vocal", "piano", "singing"]
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

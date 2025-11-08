@@ -155,9 +155,10 @@ export async function runMigrations() {
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             title TEXT NOT NULL,
             description TEXT,
-            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience')),
+            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
             priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
             cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+            tags TEXT,
             completed BOOLEAN NOT NULL DEFAULT FALSE,
             completed_at TIMESTAMP,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -169,6 +170,17 @@ export async function runMigrations() {
         console.log('[migrate] ✅ Dream scroll table and indexes created/verified');
       } catch (error) {
         console.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
+      }
+
+      try {
+        // Add tags column to dream_scroll_items if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE dream_scroll_items
+          ADD COLUMN IF NOT EXISTS tags TEXT
+        `);
+        console.log('[migrate] ✅ Tags column added/verified in dream_scroll_items table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add tags column to dream_scroll_items:', error);
       }
 
       try {
@@ -387,9 +399,10 @@ export async function runMigrations() {
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         title TEXT NOT NULL,
         description TEXT,
-        category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience')),
+        category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
         priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
         cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+        tags TEXT,
         completed BOOLEAN NOT NULL DEFAULT FALSE,
         completed_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
