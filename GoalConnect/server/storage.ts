@@ -38,6 +38,13 @@ import {
   type CombatLog,
   type PlayerStats,
   type InsertPlayerStats,
+  // Sprite types
+  type Sprite,
+  type InsertSprite,
+  // Dream Scroll types
+  type DreamScrollTag,
+  type DreamScrollItem,
+  type InsertDreamScrollItem,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 
@@ -107,12 +114,14 @@ export interface IStorage {
   getBiomes(): Promise<Biome[]>;
   getBiome(id: number): Promise<Biome | undefined>;
   getBiomesByLevel(playerLevel: number): Promise<Biome[]>;
+  createBiome(biome: InsertBiome): Promise<Biome>;
 
   // D&D RPG System - Creature Species
   getCreatureSpecies(): Promise<CreatureSpecies[]>;
   getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined>;
   getCreatureSpeciesByBiome(biomeId: number): Promise<CreatureSpecies[]>;
   getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]>;
+  createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies>;
 
   // D&D RPG System - User Creatures (Party/Collection)
   getUserCreatures(userId: number): Promise<UserCreature[]>;
@@ -127,6 +136,7 @@ export interface IStorage {
   // D&D RPG System - Items & Inventory
   getItems(): Promise<Item[]>;
   getItem(id: number): Promise<Item | undefined>;
+  createItem(item: InsertItem): Promise<Item>;
   getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>>;
   addItemToInventory(userId: number, itemId: number, quantity: number): Promise<void>;
   removeItemFromInventory(userId: number, itemId: number, quantity: number): Promise<boolean>;
@@ -160,6 +170,27 @@ export interface IStorage {
   createPlayerStats(userId: number): Promise<PlayerStats>;
   updatePlayerStats(userId: number, updates: Partial<PlayerStats>): Promise<PlayerStats>;
   addExperience(userId: number, xp: number): Promise<{ stats: PlayerStats; leveledUp: boolean }>;
+
+  // Sprite Management
+  createSprite(sprite: InsertSprite): Promise<Sprite>;
+  upsertSprite(sprite: InsertSprite): Promise<Sprite>;
+  getSprites(): Promise<Sprite[]>;
+  getSpriteByFilename(filename: string): Promise<Sprite | undefined>;
+  updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined>;
+  deleteSprite(filename: string): Promise<void>;
+
+  // Dream Scroll Management
+  createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem>;
+  getDreamScrollItems(userId: number): Promise<DreamScrollItem[]>;
+  getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]>;
+  updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined>;
+  deleteDreamScrollItem(id: number): Promise<void>;
+  toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined>;
+
+  // Dream Scroll Tag Management
+  createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag>;
+  getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]>;
+  deleteDreamScrollTag(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

@@ -129,6 +129,323 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to add evolution_required column to costumes:', error);
       }
 
+      try {
+        // Create sprites table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS sprites (
+            id SERIAL PRIMARY KEY,
+            filename TEXT NOT NULL UNIQUE,
+            category VARCHAR(30) NOT NULL DEFAULT 'uncategorized',
+            name TEXT,
+            data TEXT NOT NULL,
+            mime_type TEXT NOT NULL,
+            rarity VARCHAR(20),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Sprites table created/verified');
+
+        // Add rarity column if it doesn't exist (for existing tables)
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name='sprites' AND column_name='rarity'
+            ) THEN
+              ALTER TABLE sprites ADD COLUMN rarity VARCHAR(20);
+            END IF;
+          END $$;
+        `);
+
+        // Update category constraint to include new categories
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            ALTER TABLE sprites DROP CONSTRAINT IF EXISTS sprites_category_check;
+            ALTER TABLE sprites ADD CONSTRAINT sprites_category_check
+              CHECK (category IN ('creature', 'biome', 'biome-background', 'biome-platform', 'biome-obstacle', 'item', 'egg', 'ui', 'uncategorized'));
+          EXCEPTION
+            WHEN OTHERS THEN NULL;
+          END $$;
+        `);
+        console.log('[migrate] ✅ Sprites table updated with rarity and new categories');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create/update sprites table:', error);
+      }
+
+      try {
+        // Create dream_scroll_tags table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS dream_scroll_tags (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
+            name TEXT NOT NULL,
+            color VARCHAR(50) NOT NULL DEFAULT 'bg-gray-500/20 text-gray-300',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_tags_user_category ON dream_scroll_tags(user_id, category)`);
+        console.log('[migrate] ✅ Dream scroll tags table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create dream_scroll_tags table:', error);
+      }
+
+      try {
+        // Create dream_scroll_items table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS dream_scroll_items (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            description TEXT,
+            category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
+            priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+            cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+            tags TEXT,
+            completed BOOLEAN NOT NULL DEFAULT FALSE,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
+        console.log('[migrate] ✅ Dream scroll table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
+      }
+
+      try {
+        // Add tags column to dream_scroll_items if it doesn't exist
+        await db.execute(sql`
+          ALTER TABLE dream_scroll_items
+          ADD COLUMN IF NOT EXISTS tags TEXT
+        `);
+        console.log('[migrate] ✅ Tags column added/verified in dream_scroll_items table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add tags column to dream_scroll_items:', error);
+      }
+
+      try {
+        // Create biomes table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS biomes (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT NOT NULL,
+            unlock_player_level INTEGER NOT NULL DEFAULT 1,
+            loot_weight INTEGER NOT NULL DEFAULT 70,
+            encounter_weight INTEGER NOT NULL DEFAULT 30,
+            min_party_size INTEGER NOT NULL DEFAULT 0,
+            required_tag TEXT,
+            required_stat_sum INTEGER DEFAULT 0,
+            required_stat_type VARCHAR(10),
+            background_sprite TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Biomes table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create biomes table:', error);
+      }
+
+      try {
+        // Create creature_species table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS creature_species (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT NOT NULL,
+            base_hp INTEGER NOT NULL DEFAULT 8,
+            base_str INTEGER NOT NULL DEFAULT 1,
+            base_dex INTEGER NOT NULL DEFAULT 1,
+            base_wis INTEGER NOT NULL DEFAULT 1,
+            tag VARCHAR(20) NOT NULL,
+            rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'uncommon', 'rare', 'epic')),
+            capture_dc INTEGER NOT NULL DEFAULT 10,
+            skill_1_name TEXT,
+            skill_1_effect TEXT,
+            skill_2_name TEXT,
+            skill_2_effect TEXT,
+            biome_id INTEGER REFERENCES biomes(id),
+            sprite_url TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Creature species table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create creature_species table:', error);
+      }
+
+      try {
+        // Create items table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS items (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT NOT NULL,
+            type VARCHAR(20) NOT NULL CHECK (type IN ('net', 'charm', 'snack', 'gear', 'cloak', 'brace')),
+            rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'uncommon', 'rare')),
+            effect_type VARCHAR(20),
+            effect_value INTEGER,
+            effect_stat VARCHAR(10),
+            consumable BOOLEAN NOT NULL DEFAULT true,
+            equippable BOOLEAN NOT NULL DEFAULT false,
+            sprite_url TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Items table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create items table:', error);
+      }
+
+      try {
+        // Create user_creatures table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS user_creatures (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            species_id INTEGER NOT NULL REFERENCES creature_species(id),
+            nickname TEXT,
+            current_hp INTEGER NOT NULL,
+            max_hp INTEGER NOT NULL,
+            str INTEGER NOT NULL,
+            dex INTEGER NOT NULL,
+            wis INTEGER NOT NULL,
+            in_party BOOLEAN NOT NULL DEFAULT false,
+            party_position INTEGER,
+            evolution_stage INTEGER NOT NULL DEFAULT 1,
+            discovered_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ User creatures table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create user_creatures table:', error);
+      }
+
+      try {
+        // Create user_inventory table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS user_inventory (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            item_id INTEGER NOT NULL REFERENCES items(id),
+            quantity INTEGER NOT NULL DEFAULT 1
+          )
+        `);
+        console.log('[migrate] ✅ User inventory table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create user_inventory table:', error);
+      }
+
+      try {
+        // Create equipped_items table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS equipped_items (
+            id SERIAL PRIMARY KEY,
+            user_creature_id INTEGER NOT NULL REFERENCES user_creatures(id),
+            item_id INTEGER NOT NULL REFERENCES items(id)
+          )
+        `);
+        console.log('[migrate] ✅ Equipped items table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create equipped_items table:', error);
+      }
+
+      try {
+        // Create shards table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS shards (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            species_id INTEGER NOT NULL REFERENCES creature_species(id),
+            amount INTEGER NOT NULL DEFAULT 0
+          )
+        `);
+        console.log('[migrate] ✅ Shards table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create shards table:', error);
+      }
+
+      try {
+        // Create daily_progress table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS daily_progress (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            date VARCHAR(10) NOT NULL,
+            habit_points_earned INTEGER NOT NULL DEFAULT 0,
+            threshold_1_reached BOOLEAN NOT NULL DEFAULT false,
+            threshold_2_reached BOOLEAN NOT NULL DEFAULT false,
+            threshold_3_reached BOOLEAN NOT NULL DEFAULT false,
+            runs_available INTEGER NOT NULL DEFAULT 0,
+            runs_used INTEGER NOT NULL DEFAULT 0
+          )
+        `);
+        console.log('[migrate] ✅ Daily progress table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create daily_progress table:', error);
+      }
+
+      try {
+        // Create encounters table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS encounters (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            biome_id INTEGER NOT NULL REFERENCES biomes(id),
+            species_id INTEGER REFERENCES creature_species(id),
+            event_type VARCHAR(10) NOT NULL CHECK (event_type IN ('loot', 'encounter')),
+            combat_won BOOLEAN,
+            captured BOOLEAN,
+            shards_earned INTEGER NOT NULL DEFAULT 0,
+            loot_item_id INTEGER REFERENCES items(id),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Encounters table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create encounters table:', error);
+      }
+
+      try {
+        // Create combat_logs table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS combat_logs (
+            id SERIAL PRIMARY KEY,
+            encounter_id INTEGER NOT NULL REFERENCES encounters(id),
+            party_creatures TEXT NOT NULL,
+            enemy_species_id INTEGER NOT NULL REFERENCES creature_species(id),
+            enemy_hp INTEGER NOT NULL,
+            turn_log TEXT NOT NULL DEFAULT '[]',
+            rounds_fought INTEGER NOT NULL,
+            victory BOOLEAN NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Combat logs table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create combat_logs table:', error);
+      }
+
+      try {
+        // Create player_stats table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS player_stats (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            level INTEGER NOT NULL DEFAULT 1,
+            experience INTEGER NOT NULL DEFAULT 0,
+            max_party_size INTEGER NOT NULL DEFAULT 1
+          )
+        `);
+        console.log('[migrate] ✅ Player stats table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create player_stats table:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -314,6 +631,36 @@ export async function runMigrations() {
       FOREIGN KEY (current_costume_id) REFERENCES costumes(id)
     `);
 
+    // Sprites table
+    await db.execute(sql`
+      CREATE TABLE sprites (
+        id SERIAL PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        category VARCHAR(20) NOT NULL CHECK (category IN ('creature', 'biome', 'item', 'ui', 'uncategorized')),
+        name TEXT,
+        data TEXT NOT NULL,
+        mime_type TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // Dream Scroll table
+    await db.execute(sql`
+      CREATE TABLE dream_scroll_items (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
+        priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+        cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
+        tags TEXT,
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
     // Create indexes
     await db.execute(sql`CREATE INDEX idx_habits_user_id ON habits(user_id)`);
     await db.execute(sql`CREATE INDEX idx_habit_logs_habit_id ON habit_logs(habit_id)`);
@@ -323,6 +670,9 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_todos_user_id ON todos(user_id)`);
     await db.execute(sql`CREATE INDEX idx_user_costumes_user_id ON user_costumes(user_id)`);
     await db.execute(sql`CREATE INDEX idx_point_transactions_user_id ON point_transactions(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
+    await db.execute(sql`CREATE INDEX idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');

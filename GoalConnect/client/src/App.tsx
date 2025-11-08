@@ -13,6 +13,14 @@ import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import Wonderland from "@/pages/Wonderland";
+import OutsideWorld from "@/pages/OutsideWorld";
+import BiomeExploration from "@/pages/BiomeExploration";
+import Combat from "@/pages/Combat";
+import PartyManagement from "@/pages/PartyManagement";
+import SpriteUpload from "@/pages/SpriteUpload";
+import SpriteOrganize from "@/pages/SpriteOrganize";
+import GameDataAdmin from "@/pages/GameDataAdmin";
+import DreamScroll from "@/pages/DreamScroll";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -107,6 +115,55 @@ function AppRoutes() {
       <Route path="/wonderland">
         <RequireAuth>
           <Wonderland />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/outside-world">
+        <RequireAuth>
+          <OutsideWorld />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/explore/:biomeId">
+        <RequireAuth>
+          <BiomeExploration />
+        </RequireAuth>
+      </Route>
+      <Route path="/combat/:encounterId">
+        {(params) => (
+          <RequireAuth>
+            <Combat encounterId={parseInt(params.encounterId)} />
+            <BottomNav />
+          </RequireAuth>
+        )}
+      </Route>
+      <Route path="/party">
+        <RequireAuth>
+          <PartyManagement />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/sprites/upload">
+        <RequireAuth>
+          <SpriteUpload />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/sprites/organize">
+        <RequireAuth>
+          <SpriteOrganize />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/game/admin">
+        <RequireAuth>
+          <GameDataAdmin />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/dream-scroll">
+        <RequireAuth>
+          <DreamScroll />
           <BottomNav />
         </RequireAuth>
       </Route>

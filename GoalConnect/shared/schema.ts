@@ -263,6 +263,7 @@ export const items = pgTable("items", {
   consumable: boolean("consumable").notNull().default(true),
   equippable: boolean("equippable").notNull().default(false),
 
+  spriteUrl: text("sprite_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -345,6 +346,42 @@ export const playerStats = pgTable("player_stats", {
   maxPartySize: integer("max_party_size").notNull().default(1),
 });
 
+// Sprites (stored in database for persistence)
+export const sprites = pgTable("sprites", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull().unique(),
+  category: varchar("category", { length: 20 }).notNull().$type<"creature" | "biome" | "item" | "ui" | "uncategorized">(),
+  name: text("name"), // Optional name for creatures
+  data: text("data").notNull(), // Base64-encoded image data
+  mimeType: text("mime_type").notNull(), // image/png, image/jpeg, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Dream Scroll Tags (user-created tags per category)
+export const dreamScrollTags = pgTable("dream_scroll_tags", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
+  name: text("name").notNull(),
+  color: varchar("color", { length: 50 }).notNull().default("bg-gray-500/20 text-gray-300"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Dream Scroll (magical wishlist)
+export const dreamScrollItems = pgTable("dream_scroll_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
+  priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"low" | "medium" | "high">(),
+  cost: varchar("cost", { length: 10 }).$type<"free" | "$" | "$$" | "$$$">(),
+  tags: text("tags"), // JSON array of tag IDs
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // TypeScript types
 export type Biome = typeof biomes.$inferSelect;
 export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
@@ -357,6 +394,9 @@ export type DailyProgress = typeof dailyProgress.$inferSelect;
 export type Encounter = typeof encounters.$inferSelect;
 export type CombatLog = typeof combatLogs.$inferSelect;
 export type PlayerStats = typeof playerStats.$inferSelect;
+export type Sprite = typeof sprites.$inferSelect;
+export type DreamScrollTag = typeof dreamScrollTags.$inferSelect;
+export type DreamScrollItem = typeof dreamScrollItems.$inferSelect;
 
 // Insert schemas
 export const insertBiomeSchema = createInsertSchema(biomes).omit({ id: true, createdAt: true });
@@ -366,6 +406,8 @@ export const insertItemSchema = createInsertSchema(items).omit({ id: true, creat
 export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit({ id: true });
 export const insertEncounterSchema = createInsertSchema(encounters).omit({ id: true, createdAt: true });
 export const insertPlayerStatsSchema = createInsertSchema(playerStats);
+export const insertSpriteSchema = createInsertSchema(sprites).omit({ id: true, createdAt: true });
+export const insertDreamScrollItemSchema = createInsertSchema(dreamScrollItems).omit({ id: true, createdAt: true, completedAt: true });
 
 export type InsertBiome = z.infer<typeof insertBiomeSchema>;
 export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
@@ -374,3 +416,5 @@ export type InsertItem = z.infer<typeof insertItemSchema>;
 export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type InsertEncounter = z.infer<typeof insertEncounterSchema>;
 export type InsertPlayerStats = z.infer<typeof insertPlayerStatsSchema>;
+export type InsertSprite = z.infer<typeof insertSpriteSchema>;
+export type InsertDreamScrollItem = z.infer<typeof insertDreamScrollItemSchema>;

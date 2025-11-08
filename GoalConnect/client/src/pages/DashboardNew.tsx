@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { GoalBadge } from "@/components/GoalBadge";
+import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { TodoDialog } from "@/components/TodoDialog";
 import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -159,9 +161,13 @@ export default function DashboardNew() {
               </Button>
             </div>
 
-            <div className="grid gap-4">
-              {activeGoals.slice(0, 3).map(goal => (
-                <GoalJourneyCard key={goal.id} goal={goal} />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {activeGoals.slice(0, 8).map(goal => (
+                <GoalBadge
+                  key={goal.id}
+                  goal={goal}
+                  onClick={() => window.location.href = '/goals'}
+                />
               ))}
             </div>
           </div>
@@ -189,7 +195,7 @@ export default function DashboardNew() {
             Today's Focus
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Daily Habits */}
             <div className="glass-card rounded-3xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -341,6 +347,9 @@ export default function DashboardNew() {
                 </div>
               )}
             </div>
+
+            {/* Dream Scroll */}
+            <DreamScrollWidget />
           </div>
         </div>
 

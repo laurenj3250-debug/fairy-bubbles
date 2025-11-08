@@ -22,10 +22,50 @@ import {
 import { requireUser } from "./simple-auth";
 import { RNGService } from "./rng-service";
 import { CombatEngine } from "./combat-engine";
+import multer from "multer";
+import path from "path";
+import AdmZip from "adm-zip";
+import fs from "fs";
 
 const getUserId = (req: Request) => requireUser(req).id;
 const rngService = new RNGService(storage);
 const combatEngine = new CombatEngine(storage);
+
+// Configure multer for sprite uploads
+const spriteStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+    // Ensure directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: spriteStorage,
+  limits: {
+    fileSize: 200 * 1024 * 1024, // 200MB per file
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /png|jpg|jpeg|psd|zip/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype) ||
+                     file.mimetype === 'image/vnd.adobe.photoshop' ||
+                     file.mimetype === 'application/zip' ||
+                     file.mimetype === 'application/x-zip-compressed';
+
+    if (extname || mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only PNG, JPG, PSD, and ZIP files are allowed'));
+    }
+  }
+});
 
 // Helper function to update pet stats automatically
 async function updatePetFromHabits(userId: number) {
@@ -431,6 +471,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           log.id,
           `Completed "${habit.title}"`
         );
+
+        // Award RPG habit points for daily progress (unlocks runs)
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const habitPoints = 1; // 1 point per habit completion (could vary by difficulty)
+        try {
+          await storage.incrementHabitPoints(userId, today, habitPoints);
+          console.log(`[RPG] Awarded ${habitPoints} habit point(s) for completing "${habit.title}"`);
+        } catch (error) {
+          console.error('[RPG] Failed to increment habit points:', error);
+          // Don't fail the request if RPG system fails
+        }
       }
 
       // Auto-update pet stats
@@ -1402,9 +1453,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           threshold1Reached: false,
           threshold2Reached: false,
           threshold3Reached: false,
-          runsAvailable: 0,
+          runsAvailable: 999, // TESTING: infinite runs
           runsUsed: 0,
         });
+      } else {
+        // TESTING: Override runs available to 999
+        progress = { ...progress, runsAvailable: 999 };
       }
 
       res.json(progress);
@@ -1515,6 +1569,486 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(shards);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch shards" });
+    }
+  });
+
+  // Sprite Upload (stores in database)
+  app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
+    console.log('[sprites] ========== UPLOAD REQUEST STARTED ==========');
+    try {
+      const files = req.files as Express.Multer.File[];
+      console.log('[sprites] Files received:', files?.length || 0);
+
+      if (!files || files.length === 0) {
+        console.log('[sprites] ERROR: No files in request');
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      const uploadedFiles: string[] = [];
+
+      for (const file of files) {
+        console.log(`[sprites] Processing file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (ext === '.zip') {
+          // Extract ZIP files
+          console.log(`[sprites] Extracting ZIP: ${file.originalname}`);
+          try {
+            const zip = new AdmZip(file.path);
+            const zipEntries = zip.getEntries();
+            console.log(`[sprites] ZIP contains ${zipEntries.length} entries`);
+
+            for (const entry of zipEntries) {
+              // Skip directories and hidden files
+              if (entry.isDirectory || entry.entryName.startsWith('__MACOSX') || path.basename(entry.entryName).startsWith('.')) {
+                console.log(`[sprites] Skipping: ${entry.entryName}`);
+                continue;
+              }
+
+              // Only extract image files
+              const entryExt = path.extname(entry.entryName).toLowerCase();
+              if (['.png', '.jpg', '.jpeg', '.psd'].includes(entryExt)) {
+                const fileName = path.basename(entry.entryName);
+                console.log(`[sprites] Extracting image: ${fileName}`);
+                const imageData = entry.getData();
+                const base64Data = imageData.toString('base64');
+                console.log(`[sprites] Base64 data length: ${base64Data.length}`);
+
+                // Determine MIME type
+                let mimeType = 'image/png';
+                if (entryExt === '.jpg' || entryExt === '.jpeg') mimeType = 'image/jpeg';
+                else if (entryExt === '.psd') mimeType = 'image/vnd.adobe.photoshop';
+
+                console.log(`[sprites] Attempting to store ${fileName} in database...`);
+                // Store in database (upsert to handle duplicates)
+                try {
+                  await storage.upsertSprite({
+                    filename: fileName,
+                    category: 'uncategorized',
+                    data: base64Data,
+                    mimeType,
+                  });
+                  uploadedFiles.push(fileName);
+                  console.log(`[sprites] ✓ Successfully stored in DB: ${fileName}`);
+                } catch (dbError: any) {
+                  console.error(`[sprites] ✗ Database error for ${fileName}:`, dbError.message);
+                  throw dbError;
+                }
+              }
+            }
+
+            // Delete the ZIP file after extraction
+            fs.unlinkSync(file.path);
+            console.log(`[sprites] Deleted ZIP file: ${file.originalname}`);
+          } catch (error: any) {
+            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error.message);
+            throw error;
+          }
+        } else {
+          // Non-ZIP image files
+          console.log(`[sprites] Processing single image: ${file.originalname}`);
+          const fileData = fs.readFileSync(file.path);
+          const base64Data = fileData.toString('base64');
+          console.log(`[sprites] Base64 data length: ${base64Data.length}`);
+
+          // Determine MIME type
+          let mimeType = file.mimetype;
+          if (!mimeType || mimeType === 'application/octet-stream') {
+            if (ext === '.png') mimeType = 'image/png';
+            else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+            else if (ext === '.psd') mimeType = 'image/vnd.adobe.photoshop';
+          }
+          console.log(`[sprites] MIME type: ${mimeType}`);
+
+          console.log(`[sprites] Attempting to store ${file.originalname} in database...`);
+          // Store in database (upsert to handle duplicates)
+          try {
+            await storage.upsertSprite({
+              filename: file.originalname,
+              category: 'uncategorized',
+              data: base64Data,
+              mimeType,
+            });
+            uploadedFiles.push(file.originalname);
+            console.log(`[sprites] ✓ Successfully stored in DB: ${file.originalname}`);
+          } catch (dbError: any) {
+            console.error(`[sprites] ✗ Database error for ${file.originalname}:`, dbError.message);
+            throw dbError;
+          }
+
+          // Delete temporary file
+          fs.unlinkSync(file.path);
+          console.log(`[sprites] Deleted temp file: ${file.originalname}`);
+        }
+      }
+
+      console.log(`[sprites] ========== UPLOAD SUCCESS: ${uploadedFiles.length} files ==========`);
+      res.json({
+        success: true,
+        files: uploadedFiles,
+        count: uploadedFiles.length,
+      });
+    } catch (error: any) {
+      console.error('[sprites] ========== UPLOAD FAILED ==========');
+      console.error('[sprites] Error type:', error.constructor.name);
+      console.error('[sprites] Error message:', error.message);
+      console.error('[sprites] Error stack:', error.stack);
+      res.status(500).json({ error: error.message || "Failed to upload sprites" });
+    }
+  });
+
+  // List uploaded sprites (from database)
+  app.get("/api/sprites/list", async (req, res) => {
+    try {
+      const sprites = await storage.getSprites();
+      const spriteList = sprites.map(s => ({
+        filename: s.filename,
+        path: `/api/sprites/file/${s.filename}`,
+        category: s.category,
+        name: s.name,
+      }));
+
+      res.json(spriteList);
+    } catch (error: any) {
+      console.error('[sprites] List error:', error);
+      res.status(500).json({ error: error.message || "Failed to list sprites" });
+    }
+  });
+
+  // Serve sprite files (from database)
+  app.get("/api/sprites/file/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const sprite = await storage.getSpriteByFilename(filename);
+
+      if (!sprite) {
+        return res.status(404).json({ error: "Sprite not found" });
+      }
+
+      // Decode base64 and send as image
+      const imageBuffer = Buffer.from(sprite.data, 'base64');
+      res.set('Content-Type', sprite.mimeType);
+      res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(imageBuffer);
+    } catch (error: any) {
+      console.error('[sprites] File serve error:', error);
+      res.status(500).json({ error: error.message || "Failed to serve sprite" });
+    }
+  });
+
+  // Save sprite organization (updates database)
+  app.post("/api/sprites/organize", async (req, res) => {
+    try {
+      const { sprites } = req.body;
+
+      if (!sprites || !Array.isArray(sprites)) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      // Update each sprite in the database
+      for (const sprite of sprites) {
+        await storage.updateSprite(sprite.filename, {
+          category: sprite.category,
+          name: sprite.name || null,
+          rarity: sprite.rarity || null,
+        });
+      }
+
+      console.log('[sprites] Organization saved:', sprites.length, 'sprites');
+      res.json({ success: true, count: sprites.length });
+    } catch (error: any) {
+      console.error('[sprites] Organize error:', error);
+      res.status(500).json({ error: error.message || "Failed to save organization" });
+    }
+  });
+
+  // Delete sprites (from database)
+  app.post("/api/sprites/delete", async (req, res) => {
+    try {
+      const { filenames } = req.body;
+
+      if (!filenames || !Array.isArray(filenames)) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      const deleted: string[] = [];
+      const failed: string[] = [];
+
+      for (const filename of filenames) {
+        try {
+          await storage.deleteSprite(filename);
+          deleted.push(filename);
+          console.log(`[sprites] Deleted from DB: ${filename}`);
+        } catch (error) {
+          console.error(`[sprites] Failed to delete ${filename}:`, error);
+          failed.push(filename);
+        }
+      }
+
+      res.json({
+        success: true,
+        deleted: deleted.length,
+        failed: failed.length,
+        deletedFiles: deleted,
+        failedFiles: failed,
+      });
+    } catch (error: any) {
+      console.error('[sprites] Delete error:', error);
+      res.status(500).json({ error: error.message || "Failed to delete sprites" });
+    }
+  });
+
+  // Get all sprites (for admin panel)
+  app.get("/api/sprites", async (req, res) => {
+    try {
+      const sprites = await storage.getSprites();
+      const spriteData = sprites.map(s => ({
+        id: s.id,
+        filename: s.filename,
+        category: s.category,
+        name: s.name,
+        data: `data:${s.mimeType};base64,${s.data}`,
+        mimeType: s.mimeType,
+      }));
+      res.json(spriteData);
+    } catch (error: any) {
+      console.error('[sprites] Get all error:', error);
+      res.status(500).json({ error: error.message || "Failed to get sprites" });
+    }
+  });
+
+  // ========== GAME DATA ROUTES ==========
+
+  // Get all biomes
+  app.get("/api/game/biomes", async (req, res) => {
+    try {
+      const biomes = await storage.getBiomes();
+      res.json(biomes);
+    } catch (error: any) {
+      console.error('[game] Get biomes error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create biome
+  app.post("/api/game/biomes", async (req, res) => {
+    try {
+      const biome = await storage.createBiome(req.body);
+      res.json(biome);
+    } catch (error: any) {
+      console.error('[game] Create biome error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all creature species
+  app.get("/api/game/creatures", async (req, res) => {
+    try {
+      const creatures = await storage.getCreatureSpecies();
+      res.json(creatures);
+    } catch (error: any) {
+      console.error('[game] Get creatures error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create creature species
+  app.post("/api/game/creatures", async (req, res) => {
+    try {
+      const creature = await storage.createCreatureSpecies(req.body);
+      res.json(creature);
+    } catch (error: any) {
+      console.error('[game] Create creature error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all items
+  app.get("/api/game/items", async (req, res) => {
+    try {
+      const items = await storage.getItems();
+      res.json(items);
+    } catch (error: any) {
+      console.error('[game] Get items error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create item
+  app.post("/api/game/items", async (req, res) => {
+    try {
+      const item = await storage.createItem(req.body);
+      res.json(item);
+    } catch (error: any) {
+      console.error('[game] Create item error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== DREAM SCROLL ROUTES ==========
+
+  // Get all dream scroll items for a user
+  app.get("/api/dream-scroll", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const items = await storage.getDreamScrollItems(req.user!.id);
+      res.json(items);
+    } catch (error: any) {
+      console.error('[dream-scroll] Get items error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get dream scroll items by category
+  app.get("/api/dream-scroll/category/:category", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { category } = req.params;
+      const items = await storage.getDreamScrollItemsByCategory(req.user!.id, category);
+      res.json(items);
+    } catch (error: any) {
+      console.error('[dream-scroll] Get by category error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new dream scroll item
+  app.post("/api/dream-scroll", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const item = await storage.createDreamScrollItem({
+        userId: req.user!.id,
+        title: req.body.title,
+        description: req.body.description,
+        category: req.body.category,
+        priority: req.body.priority || 'medium',
+        cost: req.body.cost,
+      });
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Create error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update a dream scroll item
+  app.patch("/api/dream-scroll/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.updateDreamScrollItem(id, req.body);
+
+      if (!item) {
+        return res.status(404).json({ error: "Dream scroll item not found" });
+      }
+
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Update error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Toggle completion status
+  app.post("/api/dream-scroll/:id/toggle", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.toggleDreamScrollItemComplete(id);
+
+      if (!item) {
+        return res.status(404).json({ error: "Dream scroll item not found" });
+      }
+
+      res.json(item);
+    } catch (error: any) {
+      console.error('[dream-scroll] Toggle error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a dream scroll item
+  app.delete("/api/dream-scroll/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDreamScrollItem(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[dream-scroll] Delete error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== DREAM SCROLL TAG ROUTES ==========
+
+  // Get all tags for a specific category
+  app.get("/api/dream-scroll/tags/:category", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { category } = req.params;
+      const tags = await storage.getDreamScrollTags(req.user!.id, category);
+      res.json(tags);
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Get tags error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new tag
+  app.post("/api/dream-scroll/tags", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const tag = await storage.createDreamScrollTag({
+        userId: req.user!.id,
+        category: req.body.category,
+        name: req.body.name,
+        color: req.body.color || 'bg-gray-500/20 text-gray-300',
+      });
+      res.json(tag);
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Create tag error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a tag
+  app.delete("/api/dream-scroll/tags/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDreamScrollTag(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[dream-scroll-tags] Delete tag error:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 

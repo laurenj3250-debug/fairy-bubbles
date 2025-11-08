@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { users } from "@shared/schema";
+import { storage } from "./storage";
 
 const PgSession = connectPgSimple(session);
 const MemoryStore = createMemoryStore(session);
@@ -103,6 +104,41 @@ async function handleRegister(req: Request, res: Response) {
         password: hashedPassword,
       })
       .returning();
+
+    // Initialize RPG data for new user
+    try {
+      // 1. Create player stats
+      await storage.createPlayerStats(newUser.id);
+      console.log('[auth] ✅ Player stats initialized');
+
+      // 2. Give starter creature
+      const allSpecies = await storage.getCreatureSpecies();
+      if (allSpecies.length > 0) {
+        const starterSpecies = allSpecies[0]; // First species in database
+
+        // Calculate starter HP (level 1)
+        const wisMod = Math.floor((starterSpecies.baseWis - 10) / 2);
+        const maxHp = (1 * 5) + (1 * Math.max(0, wisMod));
+
+        await storage.createUserCreature({
+          userId: newUser.id,
+          speciesId: starterSpecies.id,
+          level: 1,
+          experience: 0,
+          hp: maxHp,
+          currentHp: maxHp,
+          str: starterSpecies.baseStr,
+          dex: starterSpecies.baseDex,
+          wis: starterSpecies.baseWis,
+          isInParty: true,
+          partyPosition: 1,
+        });
+        console.log('[auth] ✅ Starter creature given:', starterSpecies.name);
+      }
+    } catch (error) {
+      console.error('[auth] ⚠️  Failed to initialize RPG data:', error);
+      // Don't fail registration if RPG init fails
+    }
 
     // Create session
     req.session.user = {

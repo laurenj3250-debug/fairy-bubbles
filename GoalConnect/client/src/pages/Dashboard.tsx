@@ -8,6 +8,8 @@ import { WeekAtAGlance } from "@/components/WeekAtAGlance";
 import { WeeklyGoalsWidget } from "@/components/WeeklyGoalsWidget";
 import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
+import { GoalBadge } from "@/components/GoalBadge";
+import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -488,26 +490,30 @@ export default function Dashboard() {
               </Button>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {goals
                 .filter(goal => {
                   const progress = (goal.currentValue / goal.targetValue) * 100;
                   return progress < 100; // Only show incomplete goals
                 })
-                .slice(0, 3) // Show max 3 goals on dashboard
+                .slice(0, 8) // Show max 8 goals on dashboard (since they're smaller now)
                 .map(goal => (
-                  <GoalJourneyCard key={goal.id} goal={goal} />
+                  <GoalBadge
+                    key={goal.id}
+                    goal={goal}
+                    onClick={() => window.location.href = '/goals'}
+                  />
                 ))}
             </div>
 
-            {goals.filter(g => (g.currentValue / g.targetValue) * 100 < 100).length > 3 && (
+            {goals.filter(g => (g.currentValue / g.targetValue) * 100 < 100).length > 8 && (
               <div className="text-center mt-4">
                 <Button
                   onClick={() => window.location.href = '/goals'}
                   variant="ghost"
                   className="text-white/70 hover:text-white"
                 >
-                  View All Goals →
+                  View All Goals ({goals.filter(g => (g.currentValue / g.targetValue) * 100 < 100).length}) →
                 </Button>
               </div>
             )}
@@ -553,6 +559,9 @@ export default function Dashboard() {
 
             {/* Monthly Goals Widget */}
             <MonthlyGoalsWidget />
+
+            {/* Dream Scroll Widget */}
+            <DreamScrollWidget />
           </div>
 
           {/* Right Content Area */}

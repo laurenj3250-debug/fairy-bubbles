@@ -16,6 +16,7 @@ export interface EventResult {
     rarity: string;
   };
   encounter?: {
+    encounterId: number;
     speciesId: number;
     speciesName: string;
     level: number;
@@ -185,15 +186,16 @@ export class RNGService {
       };
     }
 
-    if (progress.runsUsed >= progress.runsAvailable) {
-      return {
-        success: false,
-        error: 'No runs available. Complete more habits to unlock runs!',
-      };
-    }
+    // TESTING: Skip runs check for easier testing
+    // if (progress.runsUsed >= progress.runsAvailable) {
+    //   return {
+    //     success: false,
+    //     error: 'No runs available. Complete more habits to unlock runs!',
+    //   };
+    // }
 
     // 2. Check if biome is unlocked
-    const biome = await this.storage.getBiomeById(biomeId);
+    const biome = await this.storage.getBiome(biomeId);
 
     if (!biome) {
       return {
@@ -238,14 +240,9 @@ export class RNGService {
 
     } else {
       const encounter = await this.rollEncounter(biomeId, playerStats.level);
-      eventResult = {
-        eventType: 'encounter',
-        encounter,
-      };
 
-      // Note: Combat will be handled by combat engine
-      // For now, just record the encounter
-      await this.storage.createEncounter({
+      // Create encounter record in database
+      const encounterRecord = await this.storage.createEncounter({
         userId,
         biomeId,
         eventType: 'combat',
@@ -255,12 +252,23 @@ export class RNGService {
         rewardXp: 0,
         timestamp: new Date(),
       });
+
+      eventResult = {
+        eventType: 'encounter',
+        encounter: {
+          encounterId: encounterRecord.id,
+          speciesId: encounter.speciesId,
+          speciesName: encounter.speciesName,
+          level: encounter.level,
+        },
+      };
     }
 
     // 5. Increment runs used
-    await this.storage.updateDailyProgress(userId, date, {
-      runsUsed: progress.runsUsed + 1,
-    });
+    // TESTING: Skip incrementing runs for easier testing
+    // await this.storage.updateDailyProgress(userId, date, {
+    //   runsUsed: progress.runsUsed + 1,
+    // });
 
     return {
       success: true,

@@ -23,10 +23,13 @@ import type {
   InsertTodo,
   // D&D RPG types
   Biome,
+  InsertBiome,
   CreatureSpecies,
+  InsertCreatureSpecies,
   UserCreature,
   InsertUserCreature,
   Item,
+  InsertItem,
   UserInventory,
   EquippedItem,
   Shard,
@@ -35,6 +38,12 @@ import type {
   InsertEncounter,
   CombatLog,
   PlayerStats,
+  Sprite,
+  InsertSprite,
+  // Dream Scroll types
+  DreamScrollTag,
+  DreamScrollItem,
+  InsertDreamScrollItem,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -524,6 +533,11 @@ export class DbStorage implements IStorage {
     return await this.db.select().from(schema.biomes).where(eq(schema.biomes.unlockPlayerLevel, playerLevel));
   }
 
+  async createBiome(biome: InsertBiome): Promise<Biome> {
+    const [created] = await this.db.insert(schema.biomes).values(biome).returning();
+    return created;
+  }
+
   // Creature Species
   async getCreatureSpecies(): Promise<CreatureSpecies[]> {
     return await this.db.select().from(schema.creatureSpecies);
@@ -540,6 +554,11 @@ export class DbStorage implements IStorage {
 
   async getCreatureSpeciesByRarity(rarity: string): Promise<CreatureSpecies[]> {
     return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.rarity, rarity as any));
+  }
+
+  async createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies> {
+    const [created] = await this.db.insert(schema.creatureSpecies).values(species).returning();
+    return created;
   }
 
   // User Creatures (Party/Collection)
@@ -605,6 +624,11 @@ export class DbStorage implements IStorage {
   async getItem(id: number): Promise<Item | undefined> {
     const [item] = await this.db.select().from(schema.items).where(eq(schema.items.id, id));
     return item;
+  }
+
+  async createItem(item: InsertItem): Promise<Item> {
+    const [created] = await this.db.insert(schema.items).values(item).returning();
+    return created;
   }
 
   async getUserInventory(userId: number): Promise<Array<UserInventory & { item: Item }>> {
@@ -768,10 +792,10 @@ export class DbStorage implements IStorage {
     const currentPoints = existing?.habitPointsEarned || 0;
     const newPoints = currentPoints + points;
 
-    // Calculate threshold flags
-    const threshold1 = newPoints >= 6;
-    const threshold2 = newPoints >= 9;
-    const threshold3 = newPoints >= 12;
+    // Calculate threshold flags (TESTING VALUES - normally 6/9/12)
+    const threshold1 = newPoints >= 1;
+    const threshold2 = newPoints >= 2;
+    const threshold3 = newPoints >= 3;
 
     // Calculate runs (1-3 based on threshold)
     let runsAvailable = 0;
@@ -880,5 +904,121 @@ export class DbStorage implements IStorage {
     });
 
     return { stats, leveledUp };
+  }
+
+  // Sprite Management
+  async createSprite(sprite: InsertSprite): Promise<Sprite> {
+    const [created] = await this.db.insert(schema.sprites).values(sprite).returning();
+    return created;
+  }
+
+  async upsertSprite(sprite: InsertSprite): Promise<Sprite> {
+    const [upserted] = await this.db
+      .insert(schema.sprites)
+      .values(sprite)
+      .onConflictDoUpdate({
+        target: schema.sprites.filename,
+        set: {
+          data: sprite.data,
+          mimeType: sprite.mimeType,
+          category: sprite.category,
+          name: sprite.name,
+        },
+      })
+      .returning();
+    return upserted;
+  }
+
+  async getSprites(): Promise<Sprite[]> {
+    return this.db.select().from(schema.sprites).orderBy(schema.sprites.createdAt);
+  }
+
+  async getSpriteByFilename(filename: string): Promise<Sprite | undefined> {
+    const [sprite] = await this.db.select().from(schema.sprites).where(eq(schema.sprites.filename, filename));
+    return sprite;
+  }
+
+  async updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined> {
+    const [updated] = await this.db
+      .update(schema.sprites)
+      .set(updates)
+      .where(eq(schema.sprites.filename, filename))
+      .returning();
+    return updated;
+  }
+
+  async deleteSprite(filename: string): Promise<void> {
+    await this.db.delete(schema.sprites).where(eq(schema.sprites.filename, filename));
+  }
+
+  // Dream Scroll Management
+  async createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem> {
+    const [created] = await this.db.insert(schema.dreamScrollItems).values(item).returning();
+    return created;
+  }
+
+  async getDreamScrollItems(userId: number): Promise<DreamScrollItem[]> {
+    return this.db.select().from(schema.dreamScrollItems)
+      .where(eq(schema.dreamScrollItems.userId, userId))
+      .orderBy(desc(schema.dreamScrollItems.createdAt));
+  }
+
+  async getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]> {
+    return this.db.select().from(schema.dreamScrollItems)
+      .where(and(
+        eq(schema.dreamScrollItems.userId, userId),
+        eq(schema.dreamScrollItems.category, category as any)
+      ))
+      .orderBy(desc(schema.dreamScrollItems.createdAt));
+  }
+
+  async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
+    const [updated] = await this.db
+      .update(schema.dreamScrollItems)
+      .set(updates)
+      .where(eq(schema.dreamScrollItems.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteDreamScrollItem(id: number): Promise<void> {
+    await this.db.delete(schema.dreamScrollItems).where(eq(schema.dreamScrollItems.id, id));
+  }
+
+  async toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined> {
+    const [item] = await this.db.select().from(schema.dreamScrollItems)
+      .where(eq(schema.dreamScrollItems.id, id));
+
+    if (!item) return undefined;
+
+    const [updated] = await this.db
+      .update(schema.dreamScrollItems)
+      .set({
+        completed: !item.completed,
+        completedAt: !item.completed ? new Date() : null,
+      })
+      .where(eq(schema.dreamScrollItems.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Dream Scroll Tag Management
+  async createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag> {
+    const [created] = await this.db.insert(schema.dreamScrollTags).values(tag).returning();
+    return created;
+  }
+
+  async getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]> {
+    return this.db.select().from(schema.dreamScrollTags)
+      .where(and(
+        eq(schema.dreamScrollTags.userId, userId),
+        eq(schema.dreamScrollTags.category, category as any)
+      ))
+      .orderBy(desc(schema.dreamScrollTags.createdAt));
+  }
+
+  async deleteDreamScrollTag(id: number): Promise<void> {
+    await this.db.delete(schema.dreamScrollTags)
+      .where(eq(schema.dreamScrollTags.id, id));
   }
 }
