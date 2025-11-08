@@ -461,6 +461,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           log.id,
           `Completed "${habit.title}"`
         );
+
+        // Award RPG habit points for daily progress (unlocks runs)
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const habitPoints = 1; // 1 point per habit completion (could vary by difficulty)
+        try {
+          await storage.incrementHabitPoints(userId, today, habitPoints);
+          console.log(`[RPG] Awarded ${habitPoints} habit point(s) for completing "${habit.title}"`);
+        } catch (error) {
+          console.error('[RPG] Failed to increment habit points:', error);
+          // Don't fail the request if RPG system fails
+        }
       }
 
       // Auto-update pet stats

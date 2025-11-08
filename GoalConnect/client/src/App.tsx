@@ -15,6 +15,7 @@ import ShopPage from "@/pages/ShopPage";
 import Wonderland from "@/pages/Wonderland";
 import OutsideWorld from "@/pages/OutsideWorld";
 import Combat from "@/pages/Combat";
+import PartyManagement from "@/pages/PartyManagement";
 import SpriteUpload from "@/pages/SpriteUpload";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
@@ -126,6 +127,12 @@ function AppRoutes() {
             <BottomNav />
           </RequireAuth>
         )}
+      </Route>
+      <Route path="/party">
+        <RequireAuth>
+          <PartyManagement />
+          <BottomNav />
+        </RequireAuth>
       </Route>
       <Route path="/sprites/upload">
         <RequireAuth>
