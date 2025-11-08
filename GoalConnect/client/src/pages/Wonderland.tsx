@@ -418,6 +418,8 @@ export default function Wonderland() {
           }} />
 
           <div style={{
+            position: 'relative',
+            display: 'inline-block',
             filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
             animation: isWalking && !isJumping ? 'walk 0.4s steps(2) infinite' : !isJumping ? 'idle 2s ease-in-out infinite, blink 4s infinite' : 'none',
             transform:

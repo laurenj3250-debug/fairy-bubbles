@@ -975,7 +975,7 @@ export default function CrumpetSVGHD({
   const eyeOverrides = getEyeOverrides();
 
   return (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       {/* Tail */}
       {showTail && (
         <svg
@@ -985,7 +985,7 @@ export default function CrumpetSVGHD({
           shapeRendering={crisp ? "crispEdges" : "auto"}
           style={{
             position: 'absolute',
-            right: `${60 * pixelSize}px`,
+            left: '-20px',
             top: 0,
             transformOrigin: 'right center',
             animation: tailWag ? 'tail-wag 0.6s ease-in-out infinite' : 'none',
@@ -1011,7 +1011,9 @@ export default function CrumpetSVGHD({
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="Crumpet pixel sprite (high detail)"
+        className={className}
         style={{
+          display: 'block',
           animation: earTwitch ? 'ear-twitch 2s ease-in-out infinite' : 'none',
         }}
       >
@@ -1045,7 +1047,6 @@ export default function CrumpetSVGHD({
         ))}
       </g>
     </svg>
-
-    </div>
+    </>
   );
 }
