@@ -1,34 +1,46 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-// Pixel art sprite data (16x16 grid, each number is a color)
+// Pixel art sprite data (24x24 grid for more detail, each number is a color)
 const CRUMPET_SPRITE = [
-  [0,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0], // ears
-  [0,0,1,2,2,2,2,1,1,2,2,2,2,1,0,0],
-  [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
-  [0,1,2,3,3,2,2,2,2,2,2,3,3,2,1,0], // eyes
-  [0,1,2,3,3,2,2,2,2,2,2,3,3,2,1,0],
-  [0,1,2,2,2,2,2,4,4,2,2,2,2,2,1,0], // nose
-  [0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0],
-  [0,1,2,2,2,5,2,2,2,2,5,2,2,2,1,0], // whisker dots
-  [0,0,1,2,2,2,2,2,2,2,2,2,2,1,0,0],
-  [0,0,1,1,2,2,2,2,2,2,2,2,1,1,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0], // body
-  [0,0,0,1,2,2,2,2,2,2,2,2,1,0,0,0],
-  [0,0,1,2,2,2,2,2,2,2,2,2,2,1,0,0],
-  [0,0,1,2,2,1,1,2,2,1,1,2,2,1,0,0], // legs
-  [0,0,1,2,1,0,0,1,1,0,0,1,2,1,0,0],
-  [0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0],
+  [0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], // ears with stripes
+  [0,0,0,1,2,2,6,2,2,1,0,0,0,1,2,2,6,2,2,1,0,0,0,0],
+  [0,0,1,2,2,2,2,2,2,2,1,0,1,2,2,2,2,2,2,2,1,0,0,0],
+  [0,0,1,7,7,7,2,2,2,2,1,1,1,2,2,2,2,7,7,7,1,0,0,0], // ear insides
+  [0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0], // head top
+  [0,1,2,2,2,6,6,2,2,2,2,2,2,2,2,6,6,2,2,2,2,1,0,0], // stripes
+  [0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0],
+  [0,1,2,2,3,3,3,2,2,2,2,2,2,2,2,3,3,3,2,2,2,1,0,0], // eye outline
+  [0,1,2,2,3,4,4,3,2,2,2,2,2,2,3,4,4,3,2,2,2,1,0,0], // big eyes
+  [0,1,2,2,3,4,5,3,2,2,2,2,2,2,3,4,5,3,2,2,2,1,0,0], // eye highlights
+  [0,1,2,2,2,3,3,2,2,2,2,2,2,2,2,3,3,2,2,2,2,1,0,0],
+  [0,1,2,2,2,2,2,2,8,8,8,8,8,8,2,2,2,2,2,2,2,1,0,0], // blush
+  [0,1,2,2,2,2,2,2,2,9,9,9,2,2,2,2,2,2,2,2,2,1,0,0], // nose
+  [0,1,2,2,2,2,2,2,9,2,2,2,9,2,2,2,2,2,2,2,2,1,0,0], // smile
+  [0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0],
+  [0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0], // body
+  [0,0,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,0,0,0],
+  [0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0],
+  [0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0],
+  [0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0],
+  [0,0,0,1,2,2,2,1,1,2,2,2,2,1,1,2,2,2,1,0,0,0,0,0], // front paws
+  [0,0,0,1,2,2,1,0,0,1,2,2,1,0,0,1,2,2,1,0,0,0,0,0],
+  [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 ];
 
-// Color palette (Alice in Wonderland pastels)
+// Color palette (cuter, warmer colors like the original)
 const COLORS = {
   0: 'transparent',
   1: '#8B4513', // brown outline
-  2: '#FFB366', // orange fur
-  3: '#2C1810', // dark brown eyes
-  4: '#FFB6C1', // pink nose
-  5: '#654321', // whisker dots
+  2: '#FFB366', // orange/golden fur
+  3: '#3D2817', // dark brown eye outline
+  4: '#5C3317', // brown iris
+  5: '#FFFFFF', // white eye highlight (sparkle!)
+  6: '#E89B4B', // darker orange stripes
+  7: '#FFD4A3', // pink ear inside
+  8: '#FFC0CB', // light pink blush
+  9: '#FF9999', // pink nose/mouth
 };
 
 const MUSHROOM_SPRITE = [
@@ -357,16 +369,75 @@ export default function Wonderland() {
         transition: 'left 0.2s, top 0.2s',
         zIndex: 100,
       }}>
-        <PixelSprite
-          sprite={CRUMPET_SPRITE}
-          colors={COLORS}
-          scale={3}
-          className={isWalking ? 'walking' : ''}
-          style={{
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
-            animation: isWalking ? 'walk 0.4s steps(2) infinite' : 'idle 2s ease-in-out infinite',
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          {/* Whiskers */}
+          <div style={{
+            position: 'absolute',
+            left: '-15px',
+            top: '35px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+            transform: 'rotate(-10deg)',
+          }} />
+          <div style={{
+            position: 'absolute',
+            left: '-15px',
+            top: '40px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+          }} />
+          <div style={{
+            position: 'absolute',
+            left: '-15px',
+            top: '45px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+            transform: 'rotate(10deg)',
+          }} />
+
+          <PixelSprite
+            sprite={CRUMPET_SPRITE}
+            colors={COLORS}
+            scale={2.5}
+            className={isWalking ? 'walking' : ''}
+            style={{
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+              animation: isWalking ? 'walk 0.4s steps(2) infinite' : 'idle 2s ease-in-out infinite, blink 4s infinite',
+            }}
+          />
+
+          {/* Whiskers (right side) */}
+          <div style={{
+            position: 'absolute',
+            right: '-15px',
+            top: '35px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+            transform: 'rotate(10deg) scaleX(-1)',
+          }} />
+          <div style={{
+            position: 'absolute',
+            right: '-15px',
+            top: '40px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+            transform: 'scaleX(-1)',
+          }} />
+          <div style={{
+            position: 'absolute',
+            right: '-15px',
+            top: '45px',
+            width: '20px',
+            height: '1px',
+            background: '#654321',
+            transform: 'rotate(-10deg) scaleX(-1)',
+          }} />
+        </div>
       </div>
 
       {/* UI Overlay */}
@@ -428,8 +499,16 @@ export default function Wonderland() {
         }
 
         @keyframes idle {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-4px); }
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-4px) scale(1.02); }
+        }
+
+        @keyframes blink {
+          0%, 90%, 100% { opacity: 1; }
+          92%, 96% { opacity: 1; }
+          94% {
+            filter: brightness(0.8);
+          }
         }
       `}</style>
     </div>
