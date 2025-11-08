@@ -37,6 +37,9 @@ import type {
   PlayerStats,
   Sprite,
   InsertSprite,
+  // Dream Scroll types
+  DreamScrollItem,
+  InsertDreamScrollItem,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -927,5 +930,56 @@ export class DbStorage implements IStorage {
 
   async deleteSprite(filename: string): Promise<void> {
     await this.db.delete(schema.sprites).where(eq(schema.sprites.filename, filename));
+  }
+
+  // Dream Scroll Management
+  async createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem> {
+    const [created] = await this.db.insert(schema.dreamScrollItems).values(item).returning();
+    return created;
+  }
+
+  async getDreamScrollItems(userId: number): Promise<DreamScrollItem[]> {
+    return this.db.select().from(schema.dreamScrollItems)
+      .where(eq(schema.dreamScrollItems.userId, userId))
+      .orderBy(desc(schema.dreamScrollItems.createdAt));
+  }
+
+  async getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]> {
+    return this.db.select().from(schema.dreamScrollItems)
+      .where(and(
+        eq(schema.dreamScrollItems.userId, userId),
+        eq(schema.dreamScrollItems.category, category as any)
+      ))
+      .orderBy(desc(schema.dreamScrollItems.createdAt));
+  }
+
+  async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
+    const [updated] = await this.db
+      .update(schema.dreamScrollItems)
+      .set(updates)
+      .where(eq(schema.dreamScrollItems.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteDreamScrollItem(id: number): Promise<void> {
+    await this.db.delete(schema.dreamScrollItems).where(eq(schema.dreamScrollItems.id, id));
+  }
+
+  async toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined> {
+    const [item] = await this.db.select().from(schema.dreamScrollItems)
+      .where(eq(schema.dreamScrollItems.id, id));
+
+    if (!item) return undefined;
+
+    const [updated] = await this.db
+      .update(schema.dreamScrollItems)
+      .set({
+        completed: !item.completed,
+        completedAt: !item.completed ? new Date() : null,
+      })
+      .where(eq(schema.dreamScrollItems.id, id))
+      .returning();
+    return updated;
   }
 }

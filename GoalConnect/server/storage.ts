@@ -38,6 +38,12 @@ import {
   type CombatLog,
   type PlayerStats,
   type InsertPlayerStats,
+  // Sprite types
+  type Sprite,
+  type InsertSprite,
+  // Dream Scroll types
+  type DreamScrollItem,
+  type InsertDreamScrollItem,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 
@@ -160,6 +166,22 @@ export interface IStorage {
   createPlayerStats(userId: number): Promise<PlayerStats>;
   updatePlayerStats(userId: number, updates: Partial<PlayerStats>): Promise<PlayerStats>;
   addExperience(userId: number, xp: number): Promise<{ stats: PlayerStats; leveledUp: boolean }>;
+
+  // Sprite Management
+  createSprite(sprite: InsertSprite): Promise<Sprite>;
+  upsertSprite(sprite: InsertSprite): Promise<Sprite>;
+  getSprites(): Promise<Sprite[]>;
+  getSpriteByFilename(filename: string): Promise<Sprite | undefined>;
+  updateSprite(filename: string, updates: { category?: string; name?: string | null }): Promise<Sprite | undefined>;
+  deleteSprite(filename: string): Promise<void>;
+
+  // Dream Scroll Management
+  createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem>;
+  getDreamScrollItems(userId: number): Promise<DreamScrollItem[]>;
+  getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]>;
+  updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined>;
+  deleteDreamScrollItem(id: number): Promise<void>;
+  toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined>;
 }
 
 export class MemStorage implements IStorage {
