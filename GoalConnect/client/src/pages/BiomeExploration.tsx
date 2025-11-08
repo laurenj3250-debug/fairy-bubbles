@@ -51,7 +51,10 @@ export default function BiomeExploration() {
   const [facingRight, setFacingRight] = useState(true);
   const [isExploring, setIsExploring] = useState(true);
   const [eventResult, setEventResult] = useState<EventResult | null>(null);
-  const [interactedObjects, setInteractedObjects] = useState<Set<string>>(new Set());
+  const [collectedObjects, setCollectedObjects] = useState<Set<string>>(new Set());
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
+
+  const END_ZONE_X = 1500; // End of level position
 
   // Obstacles to jump over
   const obstacles = [
@@ -68,15 +71,14 @@ export default function BiomeExploration() {
     { x: 1300, y: 350, width: 110, height: 20 },
   ];
 
-  // Interactive objects in the scene - ENCHANTED FOREST theme (fewer, more spread out)
+  // Collectible items scattered throughout the level
   const [objects] = useState<InteractiveObject[]>([
-    { id: 'crystal1', x: 200, emoji: '💎', name: 'Glowing Crystal', size: 55 },
-    { id: 'mushroom1', x: 400, emoji: '🍄', name: 'Magic Mushroom', size: 60 },
-    { id: 'tree1', x: 600, emoji: '🌲', name: 'Ancient Tree', size: 95 },
-    { id: 'sparkles1', x: 800, emoji: '✨', name: 'Fairy Dust', size: 45 },
-    { id: 'flower1', x: 1000, emoji: '🌺', name: 'Moonflower', size: 50 },
-    { id: 'rock1', x: 1200, emoji: '🪨', name: 'Rune Stone', size: 60 },
-    { id: 'butterfly1', x: 1400, emoji: '🦋', name: 'Spirit Butterfly', size: 48 },
+    { id: 'berry1', x: 250, emoji: '🫐', name: 'Forest Berry', size: 40 },
+    { id: 'crystal1', x: 500, emoji: '💎', name: 'Crystal Shard', size: 45 },
+    { id: 'coin1', x: 750, emoji: '🪙', name: 'Gold Coin', size: 40 },
+    { id: 'flower1', x: 950, emoji: '🌸', name: 'Magic Blossom', size: 40 },
+    { id: 'coin2', x: 1150, emoji: '🪙', name: 'Gold Coin', size: 40 },
+    { id: 'sparkles1', x: 1350, emoji: '✨', name: 'Stardust', size: 40 },
   ]);
 
   // Fetch biome data
@@ -154,30 +156,29 @@ export default function BiomeExploration() {
     return () => clearInterval(interval);
   }, [isExploring, eventResult, velocityY, playerX]);
 
-  // Check if player is near any object
-  const checkNearbyObjects = useCallback(() => {
-    for (const obj of objects) {
-      if (interactedObjects.has(obj.id)) continue;
+  // Check if player reached end zone
+  useEffect(() => {
+    if (!isExploring || eventResult || hasReachedEnd) return;
 
-      const distance = Math.abs(playerX - obj.x);
-      if (distance < 80) {
-        return obj;
-      }
-    }
-    return null;
-  }, [playerX, objects, interactedObjects]);
-
-  // Interact with object
-  const handleInteract = useCallback((objectId: string) => {
-    if (interactedObjects.has(objectId)) return;
-
-    setInteractedObjects(prev => new Set(prev).add(objectId));
-
-    // Trigger event after interacting with 2nd object
-    if (interactedObjects.size >= 1) {
+    if (playerX >= END_ZONE_X) {
+      setHasReachedEnd(true);
+      // Trigger encounter at the end
       useRunMutation.mutate();
     }
-  }, [interactedObjects, useRunMutation]);
+  }, [playerX, isExploring, eventResult, hasReachedEnd, useRunMutation]);
+
+  // Auto-collect items as player passes them
+  useEffect(() => {
+    for (const obj of objects) {
+      if (collectedObjects.has(obj.id)) continue;
+
+      const distance = Math.abs(playerX - obj.x);
+      if (distance < 50) {
+        setCollectedObjects(prev => new Set(prev).add(obj.id));
+      }
+    }
+  }, [playerX, objects, collectedObjects]);
+
 
   // Keyboard controls - movement and jumping
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -219,16 +220,8 @@ export default function BiomeExploration() {
           setIsJumping(true);
         }
         break;
-      case 'e':
-      case 'E':
-        // E to interact
-        const nearbyObj = checkNearbyObjects();
-        if (nearbyObj) {
-          handleInteract(nearbyObj.id);
-        }
-        break;
     }
-  }, [isExploring, checkNearbyObjects, handleInteract, isJumping]);
+  }, [isExploring, isJumping]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -243,8 +236,6 @@ export default function BiomeExploration() {
     }
   };
 
-  const nearbyObject = checkNearbyObjects();
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-800 to-purple-700 p-6 pb-24">
       <div className="max-w-6xl mx-auto">
@@ -252,7 +243,7 @@ export default function BiomeExploration() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-purple-100">{biome?.name || 'Exploring...'}</h1>
-            <p className="text-purple-300 text-sm">← → to move • SPACE or W to jump • E to interact</p>
+            <p className="text-purple-300 text-sm">← → to move • SPACE or W to jump • Reach the end to find a creature!</p>
           </div>
           <button
             onClick={() => navigate('/outside-world')}
@@ -331,30 +322,45 @@ export default function BiomeExploration() {
             ))}
           </div>
 
-          {/* Interactive Objects on Ground with GLOW */}
+          {/* Collectible Items */}
           {objects.map(obj => (
             <div
               key={obj.id}
-              className="absolute cursor-pointer hover:scale-125 transition-all duration-300"
+              className="absolute transition-all duration-300"
               style={{
                 left: `${obj.x}px`,
                 bottom: '96px',
                 fontSize: `${obj.size}px`,
-                filter: interactedObjects.has(obj.id)
-                  ? 'grayscale(100%) opacity(30%)'
-                  : 'drop-shadow(0 0 20px rgba(236, 72, 153, 0.8)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.6))',
-                animation: !interactedObjects.has(obj.id) ? 'pulse 2s ease-in-out infinite' : 'none'
+                filter: collectedObjects.has(obj.id)
+                  ? 'grayscale(100%) opacity(0%)'
+                  : 'drop-shadow(0 0 15px rgba(255, 215, 0, 0.8))',
+                animation: !collectedObjects.has(obj.id) ? 'pulse 2s ease-in-out infinite' : 'none',
+                opacity: collectedObjects.has(obj.id) ? 0 : 1,
+                transform: collectedObjects.has(obj.id) ? 'scale(0.5) translateY(-50px)' : 'scale(1)',
+                transition: 'all 0.5s ease-out'
               }}
-              onClick={() => handleInteract(obj.id)}
             >
               {obj.emoji}
-              {nearbyObject?.id === obj.id && !interactedObjects.has(obj.id) && (
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-purple-500/95 px-4 py-2 rounded-full text-sm font-bold text-white whitespace-nowrap animate-bounce border-2 border-pink-300">
-                  Press E ↵
-                </div>
-              )}
             </div>
           ))}
+
+          {/* End Zone Marker */}
+          <div
+            className="absolute"
+            style={{
+              left: `${END_ZONE_X}px`,
+              bottom: '0px',
+              width: '100px',
+              height: '500px',
+              background: 'linear-gradient(90deg, rgba(139, 92, 246, 0) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(236, 72, 153, 0.5) 100%)',
+              borderLeft: '4px solid rgba(236, 72, 153, 0.8)',
+              boxShadow: '0 0 40px rgba(236, 72, 153, 0.6)',
+            }}
+          >
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-2xl rotate-90 whitespace-nowrap">
+              ⭐ FINISH ⭐
+            </div>
+          </div>
 
           {/* Obstacles to jump over */}
           {obstacles.map((obstacle, i) => (
@@ -401,8 +407,11 @@ export default function BiomeExploration() {
           {/* Progress Indicator */}
           {isExploring && !eventResult && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-3 rounded-full shadow-2xl border-2 border-white/50">
-              <div className="text-sm text-white font-bold">
-                ✨ Investigate glowing objects to discover secrets! ({interactedObjects.size}/2 investigated)
+              <div className="text-sm text-white font-bold flex items-center gap-4">
+                <span>🪙 Items: {collectedObjects.size}/{objects.length}</span>
+                <span className="border-l border-white/30 pl-4">
+                  {playerX >= END_ZONE_X ? '⭐ REACHED END!' : `📍 Distance: ${Math.max(0, Math.floor((END_ZONE_X - playerX) / 100))}m`}
+                </span>
               </div>
             </div>
           )}
@@ -432,16 +441,19 @@ export default function BiomeExploration() {
 
                 {eventResult.eventType === 'encounter' && eventResult.encounter && (
                   <>
-                    <div className="text-6xl mb-4">⚔️</div>
-                    <h2 className="text-3xl font-bold text-white mb-3">Wild Encounter!</h2>
-                    <p className="text-xl text-white mb-6">
+                    <div className="text-6xl mb-4">🎯</div>
+                    <h2 className="text-3xl font-bold text-white mb-3">You reached the end!</h2>
+                    <p className="text-xl text-white mb-2">
                       A wild <span className="font-bold text-yellow-300">Lv.{eventResult.encounter.level} {eventResult.encounter.speciesName}</span> appeared!
+                    </p>
+                    <p className="text-purple-200 text-sm mb-6">
+                      Battle and attempt to capture it! Success depends on your skills and equipped items.
                     </p>
                     <button
                       onClick={handleExitExploration}
                       className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 transition-colors"
                     >
-                      Start Battle →
+                      Enter Battle →
                     </button>
                   </>
                 )}
@@ -452,8 +464,8 @@ export default function BiomeExploration() {
 
         {/* Instructions */}
         <div className="mt-4 text-center text-purple-200">
-          <p className="font-bold text-lg">Explore the mystical {biome?.name}! Jump over obstacles and climb platforms!</p>
-          <p className="text-sm text-purple-300 mt-1">Use SPACE or W to jump • Navigate platforms and obstacles • Press E to investigate glowing objects ✨</p>
+          <p className="font-bold text-lg">Platform through the mystical {biome?.name} to reach the end!</p>
+          <p className="text-sm text-purple-300 mt-1">Collect items along the way • Jump over obstacles • Reach the FINISH line to encounter a creature!</p>
         </div>
       </div>
     </div>
