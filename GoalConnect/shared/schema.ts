@@ -172,3 +172,92 @@ export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema
 
 export const insertTodoSchema = createInsertSchema(todos).omit({ id: true, createdAt: true, completedAt: true });
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
+
+// ========== CREATURES SYSTEM ==========
+
+export const creatureSpecies = pgTable("creature_species", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description").notNull().default(""),
+  elementType: varchar("element_type", { length: 20 }).notNull().$type<"fire" | "water" | "grass" | "electric" | "psychic" | "dark" | "fairy" | "normal" | "dragon">(),
+
+  // Base stats
+  baseHp: integer("base_hp").notNull().default(50),
+  baseAttack: integer("base_attack").notNull().default(50),
+  baseDefense: integer("base_defense").notNull().default(50),
+  baseSpeed: integer("base_speed").notNull().default(50),
+
+  // Visual
+  spriteUrl: text("sprite_url"),
+  rarity: varchar("rarity", { length: 20 }).notNull().default("common").$type<"common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic">(),
+
+  // Evolution
+  evolutionStage: integer("evolution_stage").notNull().default(1),
+  evolvesToId: integer("evolves_to_id").references((): any => creatureSpecies.id),
+  evolutionLevel: integer("evolution_level"),
+  evolutionStreak: integer("evolution_streak"),
+
+  // Discovery
+  isStarter: boolean("is_starter").notNull().default(false),
+  isHidden: boolean("is_hidden").notNull().default(false),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const creatures = pgTable("creatures", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  habitId: integer("habit_id").notNull().unique().references(() => habits.id),
+  speciesId: integer("species_id").notNull().references(() => creatureSpecies.id),
+
+  // Identity
+  nickname: text("nickname"),
+
+  // Progression
+  level: integer("level").notNull().default(1),
+  experience: integer("experience").notNull().default(0),
+
+  // Stats
+  currentHp: integer("current_hp").notNull(),
+  maxHp: integer("max_hp").notNull(),
+  attack: integer("attack").notNull(),
+  defense: integer("defense").notNull(),
+  speed: integer("speed").notNull(),
+
+  // Meta
+  totalCompletions: integer("total_completions").notNull().default(0),
+  currentStreak: integer("current_streak").notNull().default(0),
+  bestStreak: integer("best_streak").notNull().default(0),
+
+  // Discovery
+  discoveredAt: timestamp("discovered_at").defaultNow().notNull(),
+  lastInteraction: timestamp("last_interaction").defaultNow().notNull(),
+});
+
+export const creatureEvolutions = pgTable("creature_evolutions", {
+  id: serial("id").primaryKey(),
+  creatureId: integer("creature_id").notNull().references(() => creatures.id),
+  fromSpeciesId: integer("from_species_id").notNull().references(() => creatureSpecies.id),
+  toSpeciesId: integer("to_species_id").notNull().references(() => creatureSpecies.id),
+  evolvedAt: timestamp("evolved_at").defaultNow().notNull(),
+  triggerType: varchar("trigger_type", { length: 20 }).notNull().$type<"level" | "streak" | "item">(),
+  notes: text("notes"),
+});
+
+// Creature types
+export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
+export type NewCreatureSpecies = typeof creatureSpecies.$inferInsert;
+export type Creature = typeof creatures.$inferSelect;
+export type NewCreature = typeof creatures.$inferInsert;
+export type CreatureEvolution = typeof creatureEvolutions.$inferSelect;
+export type NewCreatureEvolution = typeof creatureEvolutions.$inferInsert;
+
+// Insert schemas
+export const insertCreatureSpeciesSchema = createInsertSchema(creatureSpecies).omit({ id: true, createdAt: true });
+export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
+
+export const insertCreatureSchema = createInsertSchema(creatures).omit({ id: true, discoveredAt: true, lastInteraction: true });
+export type InsertCreature = z.infer<typeof insertCreatureSchema>;
+
+export const insertCreatureEvolutionSchema = createInsertSchema(creatureEvolutions).omit({ id: true, evolvedAt: true });
+export type InsertCreatureEvolution = z.infer<typeof insertCreatureEvolutionSchema>;

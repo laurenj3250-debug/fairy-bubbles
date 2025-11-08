@@ -19,6 +19,12 @@ import {
   type UserPoints,
   type Todo,
   type InsertTodo,
+  type CreatureSpecies,
+  type InsertCreatureSpecies,
+  type Creature,
+  type InsertCreature,
+  type CreatureEvolution,
+  type InsertCreatureEvolution,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 
@@ -83,6 +89,22 @@ export interface IStorage {
   updateTodo(id: number, todo: Partial<Todo>): Promise<Todo | undefined>;
   deleteTodo(id: number): Promise<boolean>;
   completeTodo(id: number): Promise<Todo | undefined>;
+
+  // Creature system
+  getCreatureSpecies(): Promise<CreatureSpecies[]>;
+  getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined>;
+  getCreatureSpeciesByElement(elementType: string): Promise<CreatureSpecies[]>;
+  createCreatureSpecies(species: InsertCreatureSpecies): Promise<CreatureSpecies>;
+
+  getCreatures(userId: number): Promise<Creature[]>;
+  getCreature(id: number): Promise<Creature | undefined>;
+  getCreatureByHabitId(habitId: number): Promise<Creature | undefined>;
+  createCreature(creature: InsertCreature): Promise<Creature>;
+  updateCreature(id: number, creature: Partial<Creature>): Promise<Creature | undefined>;
+  deleteCreature(id: number): Promise<boolean>;
+
+  getCreatureEvolutions(creatureId: number): Promise<CreatureEvolution[]>;
+  createCreatureEvolution(evolution: InsertCreatureEvolution): Promise<CreatureEvolution>;
 }
 
 export class MemStorage implements IStorage {

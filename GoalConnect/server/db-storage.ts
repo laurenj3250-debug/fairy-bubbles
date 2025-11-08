@@ -21,6 +21,12 @@ import type {
   UserPoints,
   Todo,
   InsertTodo,
+  CreatureSpecies,
+  InsertCreatureSpecies,
+  Creature,
+  InsertCreature,
+  CreatureEvolution,
+  InsertCreatureEvolution,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -492,5 +498,74 @@ export class DbStorage implements IStorage {
     }
 
     return results[0];
+  }
+
+  // ========== CREATURES SYSTEM ==========
+
+  // Creature Species methods
+  async getCreatureSpecies(): Promise<CreatureSpecies[]> {
+    return await this.db.select().from(schema.creatureSpecies);
+  }
+
+  async getCreatureSpeciesById(id: number): Promise<CreatureSpecies | undefined> {
+    const [species] = await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.id, id));
+    return species;
+  }
+
+  async getCreatureSpeciesByElement(elementType: string): Promise<CreatureSpecies[]> {
+    return await this.db.select().from(schema.creatureSpecies).where(eq(schema.creatureSpecies.elementType, elementType as any));
+  }
+
+  async createCreatureSpecies(speciesData: InsertCreatureSpecies): Promise<CreatureSpecies> {
+    const [species] = await this.db.insert(schema.creatureSpecies).values(speciesData).returning();
+    return species;
+  }
+
+  // Creature instance methods
+  async getCreatures(userId: number): Promise<Creature[]> {
+    return await this.db.select().from(schema.creatures).where(eq(schema.creatures.userId, userId));
+  }
+
+  async getCreature(id: number): Promise<Creature | undefined> {
+    const [creature] = await this.db.select().from(schema.creatures).where(eq(schema.creatures.id, id));
+    return creature;
+  }
+
+  async getCreatureByHabitId(habitId: number): Promise<Creature | undefined> {
+    const [creature] = await this.db.select().from(schema.creatures).where(eq(schema.creatures.habitId, habitId));
+    return creature;
+  }
+
+  async createCreature(creatureData: InsertCreature): Promise<Creature> {
+    const [creature] = await this.db.insert(schema.creatures).values(creatureData).returning();
+    return creature;
+  }
+
+  async updateCreature(id: number, creatureData: Partial<Creature>): Promise<Creature | undefined> {
+    const [creature] = await this.db
+      .update(schema.creatures)
+      .set(creatureData)
+      .where(eq(schema.creatures.id, id))
+      .returning();
+    return creature;
+  }
+
+  async deleteCreature(id: number): Promise<boolean> {
+    const result = await this.db.delete(schema.creatures).where(eq(schema.creatures.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Creature Evolution methods
+  async getCreatureEvolutions(creatureId: number): Promise<CreatureEvolution[]> {
+    return await this.db
+      .select()
+      .from(schema.creatureEvolutions)
+      .where(eq(schema.creatureEvolutions.creatureId, creatureId))
+      .orderBy(desc(schema.creatureEvolutions.evolvedAt));
+  }
+
+  async createCreatureEvolution(evolutionData: InsertCreatureEvolution): Promise<CreatureEvolution> {
+    const [evolution] = await this.db.insert(schema.creatureEvolutions).values(evolutionData).returning();
+    return evolution;
   }
 }

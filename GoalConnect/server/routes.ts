@@ -1194,6 +1194,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== CREATURES ROUTES ==========
+
+  // Get all creature species (Pokédex)
+  app.get("/api/creatures/species", async (req, res) => {
+    try {
+      const species = await storage.getCreatureSpecies();
+      res.json(species);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch creature species" });
+    }
+  });
+
+  // Get specific species by ID
+  app.get("/api/creatures/species/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const species = await storage.getCreatureSpeciesById(id);
+      if (!species) {
+        return res.status(404).json({ error: "Species not found" });
+      }
+      res.json(species);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch species" });
+    }
+  });
+
+  // Get user's creatures (party/collection)
+  app.get("/api/creatures", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const creatures = await storage.getCreatures(userId);
+      res.json(creatures);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch creatures" });
+    }
+  });
+
+  // Get specific creature
+  app.get("/api/creatures/:id", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseInt(req.params.id);
+      const creature = await storage.getCreature(id);
+      if (!creature) {
+        return res.status(404).json({ error: "Creature not found" });
+      }
+      // Verify ownership
+      if (creature.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      res.json(creature);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch creature" });
+    }
+  });
+
+  // Create a creature (when habit is created)
+  app.post("/api/creatures", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { habitId, speciesId, nickname } = req.body;
+
+      // Verify habit ownership
+      const habit = await storage.getHabit(habitId);
+      if (!habit || habit.userId !== userId) {
+        return res.status(403).json({ error: "Invalid habit" });
+      }
+
+      // Check if creature already exists for this habit
+      const existing = await storage.getCreatureByHabitId(habitId);
+      if (existing) {
+        return res.status(400).json({ error: "Creature already exists for this habit" });
+      }
+
+      // Get species info to calculate stats
+      const species = await storage.getCreatureSpeciesById(speciesId);
+      if (!species) {
+        return res.status(404).json({ error: "Species not found" });
+      }
+
+      // Calculate initial stats
+      const maxHp = species.baseHp + 10;
+      const attack = species.baseAttack + 5;
+      const defense = species.baseDefense + 5;
+      const speed = species.baseSpeed + 5;
+
+      const creature = await storage.createCreature({
+        userId,
+        habitId,
+        speciesId,
+        nickname,
+        level: 1,
+        experience: 0,
+        currentHp: maxHp,
+        maxHp,
+        attack,
+        defense,
+        speed,
+        totalCompletions: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+      });
+
+      res.status(201).json(creature);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to create creature" });
+    }
+  });
+
+  // Update creature (nickname, stats, etc.)
+  app.patch("/api/creatures/:id", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseInt(req.params.id);
+
+      // Verify ownership
+      const existing = await storage.getCreature(id);
+      if (!existing) {
+        return res.status(404).json({ error: "Creature not found" });
+      }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const creature = await storage.updateCreature(id, req.body);
+      res.json(creature);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to update creature" });
+    }
+  });
+
+  // Get creature evolution history
+  app.get("/api/creatures/:id/evolutions", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseInt(req.params.id);
+
+      // Verify ownership
+      const creature = await storage.getCreature(id);
+      if (!creature) {
+        return res.status(404).json({ error: "Creature not found" });
+      }
+      if (creature.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const evolutions = await storage.getCreatureEvolutions(id);
+      res.json(evolutions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch evolutions" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
