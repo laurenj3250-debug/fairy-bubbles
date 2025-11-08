@@ -65,12 +65,12 @@ export default function GameDataAdmin() {
   const queryClient = useQueryClient();
 
   // Fetch sprites
-  const { data: sprites = [] } = useQuery<Sprite[]>({
+  const { data: sprites = [], isLoading: spritesLoading } = useQuery<Sprite[]>({
     queryKey: ['/api/sprites'],
   });
 
   // Fetch existing biomes for creature assignment
-  const { data: biomes = [] } = useQuery<Biome[]>({
+  const { data: biomes = [], isLoading: biomesLoading } = useQuery<Biome[]>({
     queryKey: ['/api/game/biomes'],
   });
 
@@ -241,10 +241,33 @@ export default function GameDataAdmin() {
     createItemMutation.mutate(itemForm);
   };
 
+  if (spritesLoading || biomesLoading) {
+    return (
+      <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10 flex items-center justify-center">
+        <div className="text-white text-xl">Loading game data...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
       <h1 className="text-3xl font-bold text-white mb-6">🎮 Game Data Admin</h1>
       <p className="text-teal-200 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
+
+      {sprites.length === 0 && (
+        <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-yellow-200 mb-2">No sprites uploaded yet!</h2>
+          <p className="text-yellow-100 mb-4">
+            You need to upload and organize sprites before you can create game data.
+          </p>
+          <button
+            onClick={() => window.location.href = '/sprites/upload'}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+          >
+            Upload Sprites →
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
