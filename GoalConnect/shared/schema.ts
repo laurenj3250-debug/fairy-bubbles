@@ -356,6 +356,20 @@ export const sprites = pgTable("sprites", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Dream Scroll (magical wishlist)
+export const dreamScrollItems = pgTable("dream_scroll_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience">(),
+  priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"low" | "medium" | "high">(),
+  cost: varchar("cost", { length: 10 }).$type<"free" | "$" | "$$" | "$$$">(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // TypeScript types
 export type Biome = typeof biomes.$inferSelect;
 export type CreatureSpecies = typeof creatureSpecies.$inferSelect;
@@ -369,6 +383,7 @@ export type Encounter = typeof encounters.$inferSelect;
 export type CombatLog = typeof combatLogs.$inferSelect;
 export type PlayerStats = typeof playerStats.$inferSelect;
 export type Sprite = typeof sprites.$inferSelect;
+export type DreamScrollItem = typeof dreamScrollItems.$inferSelect;
 
 // Insert schemas
 export const insertBiomeSchema = createInsertSchema(biomes).omit({ id: true, createdAt: true });
@@ -379,6 +394,7 @@ export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit(
 export const insertEncounterSchema = createInsertSchema(encounters).omit({ id: true, createdAt: true });
 export const insertPlayerStatsSchema = createInsertSchema(playerStats);
 export const insertSpriteSchema = createInsertSchema(sprites).omit({ id: true, createdAt: true });
+export const insertDreamScrollItemSchema = createInsertSchema(dreamScrollItems).omit({ id: true, createdAt: true, completedAt: true });
 
 export type InsertBiome = z.infer<typeof insertBiomeSchema>;
 export type InsertCreatureSpecies = z.infer<typeof insertCreatureSpeciesSchema>;
@@ -388,3 +404,4 @@ export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type InsertEncounter = z.infer<typeof insertEncounterSchema>;
 export type InsertPlayerStats = z.infer<typeof insertPlayerStatsSchema>;
 export type InsertSprite = z.infer<typeof insertSpriteSchema>;
+export type InsertDreamScrollItem = z.infer<typeof insertDreamScrollItemSchema>;
