@@ -1453,9 +1453,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           threshold1Reached: false,
           threshold2Reached: false,
           threshold3Reached: false,
-          runsAvailable: 0,
+          runsAvailable: 999, // TESTING: infinite runs
           runsUsed: 0,
         });
+      } else {
+        // TESTING: Override runs available to 999
+        progress = { ...progress, runsAvailable: 999 };
       }
 
       res.json(progress);
