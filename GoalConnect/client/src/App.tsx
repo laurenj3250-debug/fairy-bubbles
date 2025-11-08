@@ -12,6 +12,7 @@ import Todos from "@/pages/Todos";
 import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
+import Wonderland from "@/pages/Wonderland";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -100,6 +101,12 @@ function AppRoutes() {
       <Route path="/shop">
         <RequireAuth>
           <ShopPage />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/wonderland">
+        <RequireAuth>
+          <Wonderland />
           <BottomNav />
         </RequireAuth>
       </Route>
