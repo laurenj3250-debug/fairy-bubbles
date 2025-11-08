@@ -15,6 +15,7 @@ interface CategorizedSprite {
 export default function SpriteOrganize() {
   const queryClient = useQueryClient();
   const [sprites, setSprites] = useState<Map<string, CategorizedSprite>>(new Map());
+  const [selectedSprites, setSelectedSprites] = useState<Set<string>>(new Set());
 
   // Fetch uploaded sprites
   const { data: files = [], isLoading } = useQuery<SpriteFile[]>({
@@ -57,6 +58,55 @@ export default function SpriteOrganize() {
     });
   };
 
+  const toggleSelection = (filename: string) => {
+    setSelectedSprites(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedSprites(new Set(files.map(f => f.filename)));
+  };
+
+  const clearSelection = () => {
+    setSelectedSprites(new Set());
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: async (filenames: string[]) => {
+      const response = await fetch('/api/sprites/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filenames }),
+      });
+      if (!response.ok) throw new Error('Failed to delete sprites');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sprites/list'] });
+      setSelectedSprites(new Set());
+      // Remove deleted sprites from state
+      setSprites(prev => {
+        const newMap = new Map(prev);
+        selectedSprites.forEach(filename => newMap.delete(filename));
+        return newMap;
+      });
+    },
+  });
+
+  const handleDeleteSelected = () => {
+    if (selectedSprites.size === 0) return;
+    if (confirm(`Delete ${selectedSprites.size} selected sprite(s)?`)) {
+      deleteMutation.mutate(Array.from(selectedSprites));
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const categorized = Array.from(sprites.values());
@@ -97,6 +147,38 @@ export default function SpriteOrganize() {
         <p className="text-teal-200">Categorize your sprites and set up creatures for the game</p>
       </div>
 
+      {/* Selection Toolbar */}
+      {files.length > 0 && (
+        <div className="mb-6 flex items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4">
+          <span className="text-white font-medium">
+            {selectedSprites.size > 0 ? `${selectedSprites.size} selected` : 'Select sprites to delete'}
+          </span>
+          <button
+            onClick={selectAll}
+            className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            Select All
+          </button>
+          {selectedSprites.size > 0 && (
+            <>
+              <button
+                onClick={clearSelection}
+                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={deleteMutation.isPending}
+                className="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ml-auto"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : `Delete ${selectedSprites.size} Sprite(s)`}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-purple-500/20 border border-purple-400/50 rounded-lg p-4">
@@ -129,7 +211,22 @@ export default function SpriteOrganize() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {byCategory.uncategorized.map((sprite) => (
-              <div key={sprite.filename} className="bg-white/5 rounded-lg p-3 border border-white/20">
+              <div
+                key={sprite.filename}
+                className={`bg-white/5 rounded-lg p-3 border transition-colors ${
+                  selectedSprites.has(sprite.filename)
+                    ? 'border-red-400 bg-red-500/20'
+                    : 'border-white/20'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedSprites.has(sprite.filename)}
+                    onChange={() => toggleSelection(sprite.filename)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </div>
                 <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
                   <img
                     src={`/api/sprites/file/${sprite.filename}`}
@@ -169,7 +266,22 @@ export default function SpriteOrganize() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {items.map((sprite) => (
-                <div key={sprite.filename} className="bg-white/5 rounded-lg p-3 border border-teal-400/50">
+                <div
+                  key={sprite.filename}
+                  className={`bg-white/5 rounded-lg p-3 border transition-colors ${
+                    selectedSprites.has(sprite.filename)
+                      ? 'border-red-400 bg-red-500/20'
+                      : 'border-teal-400/50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedSprites.has(sprite.filename)}
+                      onChange={() => toggleSelection(sprite.filename)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </div>
                   <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
                     <img
                       src={`/api/sprites/file/${sprite.filename}`}

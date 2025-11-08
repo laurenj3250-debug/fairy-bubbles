@@ -1698,6 +1698,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete sprites
+  app.post("/api/sprites/delete", async (req, res) => {
+    try {
+      const { filenames } = req.body;
+
+      if (!filenames || !Array.isArray(filenames)) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      const unsortedDir = path.join(process.cwd(), 'uploads', 'sprites', 'unsorted');
+      const deleted: string[] = [];
+      const failed: string[] = [];
+
+      for (const filename of filenames) {
+        const filePath = path.join(unsortedDir, filename);
+
+        // Security: ensure file is within unsorted directory
+        if (!filePath.startsWith(unsortedDir)) {
+          failed.push(filename);
+          continue;
+        }
+
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            deleted.push(filename);
+            console.log(`[sprites] Deleted: ${filename}`);
+          } else {
+            failed.push(filename);
+          }
+        } catch (error) {
+          console.error(`[sprites] Failed to delete ${filename}:`, error);
+          failed.push(filename);
+        }
+      }
+
+      res.json({
+        success: true,
+        deleted: deleted.length,
+        failed: failed.length,
+        deletedFiles: deleted,
+        failedFiles: failed,
+      });
+    } catch (error: any) {
+      console.error('[sprites] Delete error:', error);
+      res.status(500).json({ error: error.message || "Failed to delete sprites" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
