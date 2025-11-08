@@ -250,7 +250,12 @@ export default function GameDataAdmin() {
   }
 
   return (
-    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative z-10">
+    <div className="min-h-screen p-8 pb-24 max-w-7xl mx-auto relative" style={{ zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.9)' }}>
+      {/* Debug banner */}
+      <div className="bg-red-500 text-white p-4 mb-4 text-2xl font-bold">
+        🔴 GAME DATA ADMIN PAGE IS RENDERING - Sprites: {sprites.length}, Biomes: {biomes.length}
+      </div>
+
       <h1 className="text-3xl font-bold text-white mb-6">🎮 Game Data Admin</h1>
       <p className="text-teal-200 mb-6">Create biomes, creatures, and items using your organized sprites.</p>
 
