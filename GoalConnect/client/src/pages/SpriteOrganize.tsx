@@ -259,7 +259,8 @@ export default function SpriteOrganize() {
             {byCategory.uncategorized.map((sprite) => (
               <div
                 key={sprite.filename}
-                className={`bg-white/5 rounded-lg p-3 border transition-colors ${
+                onClick={() => toggleSelection(sprite.filename)}
+                className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
                   selectedSprites.has(sprite.filename)
                     ? 'border-red-400 bg-red-500/20'
                     : 'border-white/20'
@@ -269,8 +270,8 @@ export default function SpriteOrganize() {
                   <input
                     type="checkbox"
                     checked={selectedSprites.has(sprite.filename)}
-                    onChange={() => toggleSelection(sprite.filename)}
-                    className="w-4 h-4 cursor-pointer"
+                    onChange={(e) => e.stopPropagation()}
+                    className="w-4 h-4 cursor-pointer pointer-events-none"
                   />
                 </div>
                 <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
@@ -285,8 +286,12 @@ export default function SpriteOrganize() {
                 </div>
                 <select
                   value={sprite.category}
-                  onChange={(e) => updateCategory(sprite.filename, e.target.value as any)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateCategory(sprite.filename, e.target.value as any);
+                  }}
                   className="w-full bg-white/10 text-white text-xs rounded p-1 border border-white/20"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <option value="uncategorized">Select...</option>
                   <option value="creature">Creature</option>
@@ -314,7 +319,8 @@ export default function SpriteOrganize() {
               {items.map((sprite) => (
                 <div
                   key={sprite.filename}
-                  className={`bg-white/5 rounded-lg p-3 border transition-colors ${
+                  onClick={() => toggleSelection(sprite.filename)}
+                  className={`bg-white/5 rounded-lg p-3 border transition-colors cursor-pointer hover:bg-white/10 ${
                     selectedSprites.has(sprite.filename)
                       ? 'border-red-400 bg-red-500/20'
                       : 'border-teal-400/50'
@@ -324,8 +330,8 @@ export default function SpriteOrganize() {
                     <input
                       type="checkbox"
                       checked={selectedSprites.has(sprite.filename)}
-                      onChange={() => toggleSelection(sprite.filename)}
-                      className="w-4 h-4 cursor-pointer"
+                      onChange={(e) => e.stopPropagation()}
+                      className="w-4 h-4 cursor-pointer pointer-events-none"
                     />
                   </div>
                   <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
@@ -340,7 +346,11 @@ export default function SpriteOrganize() {
                       type="text"
                       placeholder="Creature name..."
                       value={sprite.name || ''}
-                      onChange={(e) => updateName(sprite.filename, e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        updateName(sprite.filename, e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-full bg-white/10 text-white text-xs rounded p-1 mb-1 border border-white/20"
                     />
                   )}
@@ -348,7 +358,10 @@ export default function SpriteOrganize() {
                     {sprite.filename}
                   </div>
                   <button
-                    onClick={() => updateCategory(sprite.filename, 'uncategorized')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateCategory(sprite.filename, 'uncategorized');
+                    }}
                     className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs rounded p-1"
                   >
                     Remove
