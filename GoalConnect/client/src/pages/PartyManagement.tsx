@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tantml:query/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface CreatureSpecies {
   id: number;
