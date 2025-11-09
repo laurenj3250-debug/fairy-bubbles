@@ -8,22 +8,22 @@ import { cn } from "@/lib/utils";
 const CATEGORIES = [
   { value: "summits", label: "Summits to Climb", emoji: "🏔️", bgColor: "bg-slate-600/30", borderColor: "border-slate-500/50" },
   { value: "gear", label: "Gear to Acquire", emoji: "⛏️", bgColor: "bg-blue-600/30", borderColor: "border-blue-500/50" },
-  { value: "skills", label: "Skills to Master", emoji: "🧗", bgColor: "bg-purple-600/30", borderColor: "border-purple-500/50" },
-  { value: "locations", label: "Regions to Explore", emoji: "🗺️", bgColor: "bg-green-600/30", borderColor: "border-green-500/50" },
-  { value: "expeditions", label: "Expeditions to Plan", emoji: "🎯", bgColor: "bg-orange-600/30", borderColor: "border-orange-500/50" },
-  { value: "training", label: "Training Goals", emoji: "💪", bgColor: "bg-red-600/30", borderColor: "border-red-500/50" },
-  { value: "records", label: "Personal Records", emoji: "🏆", bgColor: "bg-amber-600/30", borderColor: "border-amber-500/50" },
+  { value: "skills", label: "Skills to Master", emoji: "🧗", bgColor: "bg-cyan-600/30", borderColor: "border-cyan-500/50" },
+  { value: "locations", label: "Regions to Explore", emoji: "🗺️", bgColor: "bg-teal-600/30", borderColor: "border-teal-500/50" },
+  { value: "expeditions", label: "Expeditions to Plan", emoji: "🎯", bgColor: "bg-sky-600/30", borderColor: "border-sky-500/50" },
+  { value: "training", label: "Training Goals", emoji: "💪", bgColor: "bg-indigo-600/30", borderColor: "border-indigo-500/50" },
+  { value: "records", label: "Personal Records", emoji: "🏆", bgColor: "bg-stone-600/30", borderColor: "border-stone-500/50" },
 ] as const;
 
 const TAG_COLORS = [
   "bg-slate-500/30 text-slate-300 border-slate-500/50",
   "bg-blue-500/30 text-blue-300 border-blue-500/50",
-  "bg-purple-500/30 text-purple-300 border-purple-500/50",
-  "bg-green-500/30 text-green-300 border-green-500/50",
-  "bg-orange-500/30 text-orange-300 border-orange-500/50",
-  "bg-red-500/30 text-red-300 border-red-500/50",
-  "bg-amber-500/30 text-amber-300 border-amber-500/50",
   "bg-cyan-500/30 text-cyan-300 border-cyan-500/50",
+  "bg-teal-500/30 text-teal-300 border-teal-500/50",
+  "bg-sky-500/30 text-sky-300 border-sky-500/50",
+  "bg-indigo-500/30 text-indigo-300 border-indigo-500/50",
+  "bg-stone-500/30 text-stone-300 border-stone-500/50",
+  "bg-gray-500/30 text-gray-300 border-gray-500/50",
 ];
 
 const PRIORITY_OPTIONS = [
