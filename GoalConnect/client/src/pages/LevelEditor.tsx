@@ -51,13 +51,14 @@ export default function LevelEditor() {
 
   // Fetch current biome data
   const { data: currentBiome } = useQuery<Biome>({
-    queryKey: ['/api/biomes', selectedBiome],
+    queryKey: [`/api/biomes/${selectedBiome}`],
     enabled: !!selectedBiome,
   });
 
   // Fetch level objects for selected biome
+  // Fixed: Corrected query key to match API endpoint format
   const { data: existingLevelObjects = [] } = useQuery<LevelObject[]>({
-    queryKey: ['/api/biomes', selectedBiome, 'level-objects'],
+    queryKey: [`/api/biomes/${selectedBiome}/level-objects`],
     enabled: !!selectedBiome,
   });
 
@@ -108,7 +109,7 @@ export default function LevelEditor() {
         title: 'Success',
         description: 'Level saved successfully!',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/biomes', selectedBiome, 'level-objects'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/biomes/${selectedBiome}/level-objects`] });
     },
     onError: () => {
       toast({
@@ -312,7 +313,7 @@ export default function LevelEditor() {
               onMouseUp={handleCanvasMouseUp}
               onMouseLeave={handleCanvasMouseUp}
             >
-              {/* Render level objects */}
+              {/* Render level objects - Fixed: Removed duplicate scale transform that was breaking positioning */}
               {levelObjects.map((obj, idx) => {
                 const sprite = allSprites.find(s => s.filename === obj.spriteFilename);
                 return (
@@ -329,8 +330,7 @@ export default function LevelEditor() {
                       top: `${obj.yPosition * SCALE}px`,
                       width: `${obj.width * SCALE}px`,
                       height: `${obj.height * SCALE}px`,
-                      transform: `scale(${SCALE})`,
-                      transformOrigin: 'top left',
+                      // Removed transform: scale() that was causing double-scaling and click detection issues
                     }}
                   >
                     <img
@@ -338,9 +338,16 @@ export default function LevelEditor() {
                       alt={obj.spriteFilename}
                       className="w-full h-full object-contain pointer-events-none"
                       draggable={false}
+                      onError={(e) => {
+                        // Fallback to API path if data URL fails
+                        const target = e.target as HTMLImageElement;
+                        if (!target.src.includes('/api/sprites/file/')) {
+                          target.src = `/api/sprites/file/${obj.spriteFilename}`;
+                        }
+                      }}
                     />
                     {selectedObject === obj && (
-                      <div className="absolute -top-6 left-0 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
+                      <div className="absolute -top-6 left-0 text-xs bg-yellow-400 text-black px-2 py-1 rounded whitespace-nowrap">
                         {obj.objectType}
                       </div>
                     )}

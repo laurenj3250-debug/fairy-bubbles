@@ -65,6 +65,7 @@ export default function BiomeExploration() {
   const biomeId = parseInt(params.biomeId || '0');
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const [fps, setFps] = useState(0);
 
   const GROUND_Y = 404; // Ground level (bottom position)
   const PLAYER_SIZE = 50;
@@ -130,65 +131,87 @@ export default function BiomeExploration() {
     queryKey: [`/api/biomes/${biomeId}`],
   });
 
-  // Auto-scroll effect - moves camera forward automatically
+  // Performance optimization: Single animation loop using requestAnimationFrame
+  // This replaces the two separate setInterval loops for better performance
   useEffect(() => {
     if (!isExploring || eventResult) return;
 
-    const interval = setInterval(() => {
+    let animationFrameId: number;
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsUpdateTime = 0;
+
+    const gameLoop = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+
+      // Update FPS counter every 500ms
+      frameCount++;
+      if (currentTime - fpsUpdateTime >= 500) {
+        const calculatedFps = Math.round(frameCount * 2); // frames in 0.5s * 2
+        setFps(calculatedFps);
+        frameCount = 0;
+        fpsUpdateTime = currentTime;
+      }
+
+      // Auto-scroll camera and player
       setCameraX(prevCamera => {
         const newCamera = prevCamera + AUTO_SCROLL_SPEED;
-        // Update player X to follow camera
         setPlayerX(prev => prev + AUTO_SCROLL_SPEED);
         return newCamera;
       });
-    }, 1000 / 60); // 60 FPS
 
-    return () => clearInterval(interval);
-  }, [isExploring, eventResult]);
+      // Physics update - run at 60 FPS equivalent timing
+      if (deltaTime < 100) { // Skip if frame took too long (tab switch, etc.)
+        // Update velocity
+        setVelocityY(prevVel => prevVel + GRAVITY);
 
-  // Physics update - gravity and jumping
-  useEffect(() => {
-    if (!isExploring || eventResult) return;
+        // Update position with collision detection
+        setPlayerY(prevY => {
+          const newY = prevY + velocityY;
 
-    const interval = setInterval(() => {
-      setVelocityY(prevVel => {
-        const newVel = prevVel + GRAVITY;
-        return newVel;
-      });
+          // Only check collisions with nearby platforms (viewport culling)
+          const nearbyPlatforms = platforms.filter(platform =>
+            Math.abs(platform.x - playerX) < 200 // Only check platforms within 200px
+          );
 
-      setPlayerY(prevY => {
-        const newY = prevY + velocityY;
+          // Check platform collisions
+          for (const platform of nearbyPlatforms) {
+            if (
+              playerX + 25 > platform.x &&
+              playerX - 25 < platform.x + platform.width &&
+              prevY >= platform.y - 50 &&
+              newY <= platform.y &&
+              velocityY >= 0
+            ) {
+              setVelocityY(0);
+              setIsJumping(false);
+              return platform.y - 50;
+            }
+          }
 
-        // Check platform collisions
-        let onPlatform = false;
-        for (const platform of platforms) {
-          if (
-            playerX + 25 > platform.x &&
-            playerX - 25 < platform.x + platform.width &&
-            prevY >= platform.y - 50 &&
-            newY <= platform.y &&
-            velocityY >= 0
-          ) {
-            onPlatform = true;
+          // Ground collision
+          if (newY >= GROUND_Y) {
             setVelocityY(0);
             setIsJumping(false);
-            return platform.y - 50;
+            return GROUND_Y;
           }
-        }
 
-        // Ground collision
-        if (newY >= GROUND_Y) {
-          setVelocityY(0);
-          setIsJumping(false);
-          return GROUND_Y;
-        }
+          return newY;
+        });
+      }
 
-        return newY;
-      });
-    }, 1000 / 60); // 60 FPS
+      animationFrameId = requestAnimationFrame(gameLoop);
+    };
 
-    return () => clearInterval(interval);
-  }, [isExploring, eventResult, velocityY, playerX]);
+    animationFrameId = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isExploring, eventResult, velocityY, playerX, platforms]);
 
   // Check if player reached end zone - trigger egg reward
   useEffect(() => {
@@ -365,12 +388,18 @@ export default function BiomeExploration() {
             <h1 className="text-3xl font-bold text-purple-100">{biome?.name || 'Exploring...'}</h1>
             <p className="text-purple-300 text-sm">← → to move • SPACE or W to jump • Collect items & reach the end for an egg reward!</p>
           </div>
-          <button
-            onClick={() => navigate('/outside-world')}
-            className="bg-red-500/30 hover:bg-red-500/50 text-red-100 px-4 py-2 rounded-lg border border-red-300"
-          >
-            Exit Exploration
-          </button>
+          <div className="flex items-center gap-4">
+            {/* FPS Counter */}
+            <div className={`px-3 py-1 rounded-lg ${fps > 50 ? 'bg-green-500/30 text-green-200' : fps > 30 ? 'bg-yellow-500/30 text-yellow-200' : 'bg-red-500/30 text-red-200'} border ${fps > 50 ? 'border-green-400' : fps > 30 ? 'border-yellow-400' : 'border-red-400'}`}>
+              FPS: {fps}
+            </div>
+            <button
+              onClick={() => navigate('/outside-world')}
+              className="bg-red-500/30 hover:bg-red-500/50 text-red-100 px-4 py-2 rounded-lg border border-red-300"
+            >
+              Exit Exploration
+            </button>
+          </div>
         </div>
 
         {/* Game Scene */}
@@ -387,60 +416,51 @@ export default function BiomeExploration() {
             <div className="absolute inset-0 bg-gradient-to-b from-purple-600 via-pink-400 to-teal-400" />
           )}
 
-          {/* Floating Fireflies / Magic Particles - MORE */}
-          <div className="absolute top-20 left-40 text-2xl animate-pulse">✨</div>
-          <div className="absolute top-60 left-200 text-xl animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
-          <div className="absolute top-40 right-60 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>✨</div>
-          <div className="absolute top-80 right-200 text-xl animate-pulse" style={{ animationDelay: '1.5s' }}>💫</div>
-          <div className="absolute top-100 left-500 text-xl animate-pulse" style={{ animationDelay: '2s' }}>✨</div>
-          <div className="absolute top-50 right-400 text-2xl animate-pulse" style={{ animationDelay: '0.8s' }}>⭐</div>
-          <div className="absolute top-30 left-700 text-xl animate-pulse" style={{ animationDelay: '1.2s' }}>💫</div>
-          <div className="absolute top-70 right-500 text-2xl animate-pulse" style={{ animationDelay: '0.3s' }}>✨</div>
-          <div className="absolute top-90 left-900 text-xl animate-pulse" style={{ animationDelay: '1.7s' }}>⭐</div>
-          <div className="absolute top-110 right-700 text-2xl animate-pulse" style={{ animationDelay: '0.9s' }}>💫</div>
-          <div className="absolute top-35 left-1100 text-xl animate-pulse" style={{ animationDelay: '1.4s' }}>✨</div>
-          <div className="absolute top-65 right-900 text-2xl animate-pulse" style={{ animationDelay: '0.6s' }}>⭐</div>
+          {/* Performance optimized: CSS-based particle effects */}
+          <div className="absolute inset-0 pointer-events-none">
+            <style>{`
+              @keyframes float-particle {
+                0%, 100% { transform: translateY(0px) scale(1); opacity: 0.6; }
+                50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
+              }
+              .particle {
+                position: absolute;
+                animation: float-particle 3s ease-in-out infinite;
+              }
+            `}</style>
+            {/* Only render a few particles for visual effect */}
+            <div className="particle" style={{ top: '20%', left: '15%', animationDelay: '0s' }}>✨</div>
+            <div className="particle" style={{ top: '40%', right: '20%', animationDelay: '1s' }}>⭐</div>
+            <div className="particle" style={{ top: '60%', left: '50%', animationDelay: '2s' }}>💫</div>
+          </div>
 
           {/* Distant Magical Mountains */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-700 to-purple-900 opacity-50"
                style={{ clipPath: 'polygon(0 100%, 0 40%, 20% 60%, 40% 30%, 60% 50%, 80% 20%, 100% 50%, 100% 100%)' }} />
 
-          {/* Background Trees (Far Distance) - very faded */}
-          <div className="absolute bottom-35 left-100 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
-          <div className="absolute bottom-38 left-300 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
-          <div className="absolute bottom-33 left-500 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
-          <div className="absolute bottom-36 left-800 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
-          <div className="absolute bottom-34 left-1100 text-4xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌲</div>
-          <div className="absolute bottom-37 right-200 text-5xl opacity-20" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))' }}>🌳</div>
-
-          {/* Middle Ground Trees (Background) with glow - closer but still background */}
-          <div className="absolute bottom-28 left-60 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
-          <div className="absolute bottom-32 left-250 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
-          <div className="absolute bottom-30 left-450 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
-          <div className="absolute bottom-33 left-700 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
-          <div className="absolute bottom-29 left-950 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
-          <div className="absolute bottom-31 left-1200 text-6xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌳</div>
-          <div className="absolute bottom-28 right-100 text-5xl opacity-40" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.5))' }}>🌲</div>
-
-          {/* Decorative Background Flowers and Mushrooms */}
-          <div className="absolute bottom-24 left-150 text-2xl opacity-50">🌸</div>
-          <div className="absolute bottom-25 left-350 text-2xl opacity-50">🍄</div>
-          <div className="absolute bottom-23 left-550 text-2xl opacity-50">🌺</div>
-          <div className="absolute bottom-26 left-750 text-2xl opacity-50">🌼</div>
-          <div className="absolute bottom-24 left-1000 text-2xl opacity-50">🍄</div>
-          <div className="absolute bottom-25 left-1250 text-2xl opacity-50">🌸</div>
-          <div className="absolute bottom-23 right-150 text-2xl opacity-50">🌺</div>
-          <div className="absolute bottom-26 right-350 text-2xl opacity-50">🍄</div>
+          {/* Performance optimized: Background decoration using CSS pattern */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
+            style={{
+              background: `
+                linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.1) 100%),
+                repeating-linear-gradient(90deg, transparent, transparent 200px, rgba(168, 85, 247, 0.05) 200px, rgba(168, 85, 247, 0.05) 220px)
+              `,
+              maskImage: 'linear-gradient(180deg, transparent 0%, black 100%)'
+            }}
+          />
 
           {/* Enchanted Ground */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-purple-800 to-indigo-950" />
 
-          {/* Magical Grass on ground */}
-          <div className="absolute bottom-16 left-0 right-0 h-8 flex items-end justify-around px-4">
-            {[...Array(50)].map((_, i) => (
-              <span key={i} className="text-teal-400 text-xl opacity-60" style={{ filter: 'drop-shadow(0 0 3px rgba(45, 212, 191, 0.5))' }}>🌿</span>
-            ))}
-          </div>
+          {/* Performance optimized: CSS-based grass pattern */}
+          <div
+            className="absolute bottom-16 left-0 right-0 h-8"
+            style={{
+              background: 'repeating-linear-gradient(90deg, rgba(45, 212, 191, 0.3) 0px, transparent 5px, transparent 30px, rgba(45, 212, 191, 0.3) 35px)',
+              borderTop: '2px solid rgba(45, 212, 191, 0.2)'
+            }}
+          />
 
           {/* Collectible Items */}
           {objects.map(obj => {

@@ -1,8 +1,11 @@
 // CRITICAL: Set this BEFORE any imports
-// Railway PostgreSQL uses self-signed certificates
+// Railway/Supabase PostgreSQL uses self-signed certificates
 // This must be set before the pg library is loaded
-// We set it unconditionally in production since Railway is our production host
-if (process.env.NODE_ENV === 'production') {
+// We set it for both production and development since Supabase requires it
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('supabase.com')) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.log('[SSL] Disabled TLS verification for Supabase database');
+} else if (process.env.NODE_ENV === 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   console.log('[SSL] Disabled TLS verification for production database');
 }
@@ -125,11 +128,11 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+
+  // Use localhost for development (macOS compatibility), 0.0.0.0 for production (Railway)
+  const host = process.env.NODE_ENV === 'production' ? "0.0.0.0" : "localhost";
+
+  server.listen(port, host, () => {
+    log(`serving on ${host}:${port}`);
   });
 })();

@@ -1,8 +1,13 @@
 import { useState, useRef } from 'react';
 
+interface UploadedFile {
+  filename: string;
+  thumbnail?: string; // Base64 preview
+}
+
 export default function SpriteUpload() {
   const [uploading, setUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -10,6 +15,31 @@ export default function SpriteUpload() {
   const handleFileUpload = async (files: FileList) => {
     setUploading(true);
     setError(null);
+
+    // Create thumbnails for image files
+    const fileThumbnails: Map<string, string> = new Map();
+    const thumbnailPromises: Promise<void>[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        const promise = new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              fileThumbnails.set(file.name, e.target.result as string);
+            }
+            resolve();
+          };
+          reader.onerror = () => resolve(); // Skip on error
+          reader.readAsDataURL(file);
+        });
+        thumbnailPromises.push(promise);
+      }
+    }
+
+    // Wait for all thumbnails to load
+    await Promise.all(thumbnailPromises);
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -27,7 +57,12 @@ export default function SpriteUpload() {
       }
 
       const result = await response.json();
-      setUploadedFiles(prev => [...prev, ...result.files]);
+      // Add thumbnails to uploaded files
+      const newFiles: UploadedFile[] = result.files.map((filename: string) => ({
+        filename,
+        thumbnail: fileThumbnails.get(filename),
+      }));
+      setUploadedFiles(prev => [...prev, ...newFiles]);
     } catch (err) {
       setError('Failed to upload sprites. Please try again.');
       console.error(err);
@@ -139,26 +174,56 @@ export default function SpriteUpload() {
             Uploaded Files ({uploadedFiles.length})
           </h2>
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 max-h-96 overflow-y-auto">
-            <ul className="space-y-1">
+            {/* Grid view with thumbnails for images */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {uploadedFiles.map((file, idx) => (
-                <li key={idx} className="text-sm text-teal-200 flex items-center">
-                  <svg
-                    className="h-4 w-4 text-green-500 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  {file}
-                </li>
+                <div key={idx} className="bg-white/5 rounded-lg p-2 border border-white/20">
+                  {file.thumbnail ? (
+                    <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={file.thumbnail}
+                        alt={file.filename}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-square bg-white/10 rounded mb-2 flex items-center justify-center">
+                      <svg
+                        className="h-8 w-8 text-teal-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-1">
+                    <svg
+                      className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <p className="text-xs text-teal-200 truncate" title={file.filename}>
+                      {file.filename}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
           <button
