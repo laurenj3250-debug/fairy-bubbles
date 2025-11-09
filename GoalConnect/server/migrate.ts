@@ -1,5 +1,6 @@
 import { getDb } from './db';
 import { sql } from 'drizzle-orm';
+import { seedMountaineeringData } from './seed-mountaineering-data';
 
 /**
  * Run database migrations on startup for Railway PostgreSQL
@@ -733,6 +734,14 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
       }
 
+      // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
+      try {
+        await seedMountaineeringData();
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
+        // Continue anyway - seeding is optional
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -963,6 +972,15 @@ export async function runMigrations() {
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');
+
+    // Seed mountaineering data (regions, mountains, routes, gear)
+    try {
+      await seedMountaineeringData();
+    } catch (error) {
+      console.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
+      // Continue anyway - seeding is optional
+    }
+
     return { success: true, skipped: false };
   } catch (error) {
     console.error('[migrate] ❌ Migration failed:', error);
