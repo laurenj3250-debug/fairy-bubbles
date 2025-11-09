@@ -277,8 +277,8 @@ export default function Habits() {
         </div>
 
         {habits.length === 0 ? (
-          <div className="glass-card-pink rounded-3xl p-12 text-center magical-glow">
-            <Sparkles className="w-16 h-16 mx-auto mb-6 text-yellow-300" style={{ filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))' }} />
+          <div className="glass-card-blue rounded-3xl p-12 text-center magical-glow">
+            <Sparkles className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
             <h2
               className="text-3xl font-bold text-white mb-4"
               style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 15px rgba(255, 255, 255, 0.5)' }}
@@ -290,7 +290,7 @@ export default function Habits() {
             </p>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-2 border-white/30 shadow-lg"
+              className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border-2 border-white/30 shadow-lg"
             >
               Create First Habit
             </Button>
@@ -619,7 +619,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Points Earned Feedback */}
           {showPointsFeedback && (
             <div
-              className="absolute -top-20 right-0 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-3 rounded-2xl shadow-lg border-2 border-white/50 animate-bounce z-50"
+              className="absolute -top-20 right-0 bg-gradient-to-r from-cyan-400 to-teal-400 text-white px-4 py-3 rounded-2xl shadow-lg border-2 border-white/50 animate-bounce z-50"
               style={{
                 fontFamily: "'Quicksand', sans-serif",
                 minWidth: '150px',

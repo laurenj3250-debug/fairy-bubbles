@@ -229,10 +229,10 @@ export default function Goals() {
             </div>
           </div>
 
-          <div className="glass-card-pink rounded-2xl p-5 magical-glow" style={{ animationDelay: '0.3s' }}>
+          <div className="glass-card-blue rounded-2xl p-5 magical-glow" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-purple-400/30 flex items-center justify-center">
-                <Target className="w-5 h-5 text-purple-300" />
+              <div className="w-10 h-10 rounded-full bg-cyan-400/30 flex items-center justify-center">
+                <Target className="w-5 h-5 text-cyan-300" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">{goals.length}</div>
@@ -249,7 +249,7 @@ export default function Goals() {
             className={cn(
               "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "all"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-white/30 shadow-lg"
+                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
                 : "text-white/70 hover:text-white hover:bg-white/10"
             )}
             onClick={() => setActiveView("all")}
@@ -262,7 +262,7 @@ export default function Goals() {
             className={cn(
               "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "weekly"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-white/30 shadow-lg"
+                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
                 : "text-white/70 hover:text-white hover:bg-white/10"
             )}
             onClick={() => setActiveView("weekly")}
@@ -275,7 +275,7 @@ export default function Goals() {
             className={cn(
               "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "monthly"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-white/30 shadow-lg"
+                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
                 : "text-white/70 hover:text-white hover:bg-white/10"
             )}
             onClick={() => setActiveView("monthly")}
@@ -287,8 +287,8 @@ export default function Goals() {
 
         {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <div className="glass-card-pink rounded-3xl p-12 text-center magical-glow">
-            <Target className="w-16 h-16 mx-auto mb-6 text-purple-300" style={{ filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.8))' }} />
+          <div className="glass-card-blue rounded-3xl p-12 text-center magical-glow">
+            <Target className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
             <h2
               className="text-3xl font-bold text-white mb-4"
               style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 15px rgba(255, 255, 255, 0.5)' }}
@@ -304,7 +304,7 @@ export default function Goals() {
             </p>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-2 border-white/30 shadow-lg"
+              className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border-2 border-white/30 shadow-lg"
             >
               Create First Goal
             </Button>
@@ -374,7 +374,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
   );
 
   // Determine urgency
-  let urgencyColor = "from-blue-500 to-purple-500";
+  let urgencyColor = "from-blue-500 to-cyan-500";
   let textColor = "text-blue-200";
   let borderColor = "border-blue-400/30";
 
@@ -383,19 +383,19 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
     textColor = "text-green-200";
     borderColor = "border-green-400/30";
   } else if (daysUntil <= 1) {
-    urgencyColor = "from-red-500 to-orange-500";
-    textColor = "text-red-200";
-    borderColor = "border-red-400/30";
+    urgencyColor = "from-slate-500 to-slate-600";
+    textColor = "text-slate-200";
+    borderColor = "border-slate-400/30";
   } else if (daysUntil <= 7) {
-    urgencyColor = "from-orange-500 to-yellow-500";
-    textColor = "text-orange-200";
-    borderColor = "border-orange-400/30";
+    urgencyColor = "from-cyan-500 to-teal-500";
+    textColor = "text-cyan-200";
+    borderColor = "border-cyan-400/30";
   }
 
   // Priority styling
   const isHighPriority = goal.priority === "high";
   const priorityColors = {
-    high: { bg: "bg-red-500/20", border: "border-red-400/40", text: "text-red-200", icon: "🔥" },
+    high: { bg: "bg-cyan-500/20", border: "border-cyan-400/40", text: "text-cyan-200", icon: "🔥" },
     medium: { bg: "bg-blue-500/20", border: "border-blue-400/40", text: "text-blue-200", icon: "⭐" },
     low: { bg: "bg-gray-500/20", border: "border-gray-400/40", text: "text-gray-300", icon: "📌" },
   };
