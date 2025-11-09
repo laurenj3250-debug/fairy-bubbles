@@ -39,7 +39,7 @@ function MagicalCanvas() {
     if (!canvas) return;
 
     // Create fairy lights
-    const colors = ['#a7f3d0', '#fbbf24', '#a78bfa', '#fca5a5', '#93c5fd'];
+    const colors = ['#a7f3d0', '#06b6d4', '#64748b', '#475569', '#93c5fd'];
     for (let i = 0; i < 30; i++) {
       const light = document.createElement('div');
       light.className = 'absolute rounded-full float-fairy blur-sm';
@@ -279,7 +279,7 @@ export default function Dashboard() {
         icon: "star" as const,
         title: "Perfect Day!",
         description: "All habits completed today",
-        color: "bg-gradient-to-br from-yellow-400 to-orange-500",
+        color: "bg-gradient-to-br from-teal-400 to-cyan-500",
       });
     }
 
@@ -290,7 +290,7 @@ export default function Dashboard() {
         icon: "flame" as const,
         title: `${currentStreak} Day Streak!`,
         description: "You're on fire! Keep it going!",
-        color: "bg-gradient-to-br from-orange-500 to-red-500",
+        color: "bg-gradient-to-br from-cyan-500 to-slate-500",
       });
     } else if (currentStreak >= 3) {
       achs.push({
@@ -298,7 +298,7 @@ export default function Dashboard() {
         icon: "flame" as const,
         title: `${currentStreak} Days Strong`,
         description: "Building momentum!",
-        color: "bg-gradient-to-br from-orange-400 to-orange-600",
+        color: "bg-gradient-to-br from-cyan-400 to-cyan-600",
       });
     }
 
@@ -310,7 +310,7 @@ export default function Dashboard() {
         icon: "trophy" as const,
         title: "Century Club",
         description: `${totalCompletions} total habit completions!`,
-        color: "bg-gradient-to-br from-purple-500 to-pink-500",
+        color: "bg-gradient-to-br from-slate-600 to-slate-700",
       });
     } else if (totalCompletions >= 50) {
       achs.push({
@@ -406,11 +406,11 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div className="relative float-animation">
                 <Avatar className="w-14 h-14 border-3 border-white/30 shadow-lg relative">
-                  <AvatarFallback className="text-lg font-bold bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                  <AvatarFallback className="text-lg font-bold bg-gradient-to-br from-slate-600 to-slate-700 text-white">
                     {userName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center border-2 border-white/50 pulse-animation shadow-lg">
+                <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-full flex items-center justify-center border-2 border-white/50 pulse-animation shadow-lg">
                   <Crown className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
@@ -431,7 +431,7 @@ export default function Dashboard() {
               {/* Streak Ladder */}
               <div className="flex items-center gap-2">
                 <Badge
-                  className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400/40 text-yellow-100 backdrop-blur-xl shadow-lg"
+                  className="rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 flex-1 sm:flex-initial justify-center bg-gradient-to-r from-teal-400/20 to-cyan-400/20 border-2 border-teal-400/40 text-teal-100 backdrop-blur-xl shadow-lg"
                   data-testid="streak-badge"
                 >
                   <Zap className="w-4 h-4" />
@@ -443,7 +443,7 @@ export default function Dashboard() {
                     {Array.from({ length: Math.min(currentStreak, 7) }).map((_, i) => (
                       <div
                         key={i}
-                        className="w-6 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full shadow-lg shadow-yellow-400/50 animate-pulse"
+                        className="w-6 h-1 bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full shadow-lg shadow-teal-400/50 animate-pulse"
                         style={{
                           animationDelay: `${i * 100}ms`,
                           opacity: 1 - (i * 0.1)
@@ -479,12 +479,12 @@ export default function Dashboard() {
                   textShadow: '0 0 20px rgba(167, 139, 250, 0.8)'
                 }}
               >
-                <Target className="w-8 h-8 text-purple-300" />
+                <Target className="w-8 h-8 text-cyan-300" />
                 Your Active Goals
               </h2>
               <Button
                 onClick={() => setGoalDialogOpen(true)}
-                className="rounded-full px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
+                className="rounded-full px-5 py-2 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
               >
                 + New Goal
               </Button>
@@ -533,10 +533,10 @@ export default function Dashboard() {
             <VirtualPet />
 
             {/* Magical Insights */}
-            <div className="glass-card-pink rounded-3xl p-6 magical-glow" style={{animationDelay: '1s'}}>
+            <div className="glass-card-blue rounded-3xl p-6 magical-glow" style={{animationDelay: '1s'}}>
               <h3
-                className="text-base font-bold text-yellow-400 mb-5 flex items-center gap-2"
-                style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(251, 191, 36, 0.5)' }}
+                className="text-base font-bold text-teal-400 mb-5 flex items-center gap-2"
+                style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(20, 184, 166, 0.5)' }}
               >
                 <Sparkles className="w-4 h-4" />
                 Quick Insights
@@ -630,7 +630,7 @@ export default function Dashboard() {
                         {completedCount}/{totalCount}
                       </Badge>
                     </h2>
-                    <Sparkles className="w-6 h-6 text-yellow-400" style={{filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))'}} />
+                    <Sparkles className="w-6 h-6 text-teal-400" style={{filter: 'drop-shadow(0 0 10px rgba(20, 184, 166, 0.8))'}} />
                   </div>
                   <div className="space-y-3">
                     {todayHabits.length === 0 ? (
@@ -676,7 +676,7 @@ export default function Dashboard() {
                           <div className={cn(
                             "aspect-square rounded-full flex items-center justify-center text-base font-bold transition-all duration-300 border-2",
                             isToday
-                              ? "border-yellow-400 bg-gradient-to-br from-yellow-400/30 to-orange-400/30 text-white pulse-glow shadow-lg"
+                              ? "border-teal-400 bg-gradient-to-br from-teal-400/30 to-cyan-400/30 text-white pulse-glow shadow-lg"
                               : "bg-white/10 backdrop-blur-xl border-white/20 text-white/60 hover:scale-110 hover:shadow-lg"
                           )}>
                             {isToday ? completedCount : 0}
