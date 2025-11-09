@@ -446,6 +446,29 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create player_stats table:', error);
       }
 
+      try {
+        // Create biome_level_objects table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS biome_level_objects (
+            id SERIAL PRIMARY KEY,
+            biome_id INTEGER NOT NULL REFERENCES biomes(id) ON DELETE CASCADE,
+            object_type VARCHAR(20) NOT NULL CHECK (object_type IN ('platform', 'obstacle', 'decoration')),
+            sprite_filename TEXT NOT NULL,
+            x_position INTEGER NOT NULL,
+            y_position INTEGER NOT NULL,
+            width INTEGER NOT NULL,
+            height INTEGER NOT NULL,
+            z_index INTEGER NOT NULL DEFAULT 0,
+            metadata TEXT DEFAULT '{}',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_biome_level_objects_biome_id ON biome_level_objects(biome_id)`);
+        console.log('[migrate] ✅ Biome level objects table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create biome_level_objects table:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
