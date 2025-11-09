@@ -25,11 +25,11 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
   const onTrack = rateNeeded <= 1 || percentage >= 75;
 
   // Color based on status
-  let bgColor = "from-blue-500/30 to-purple-500/30";
+  let bgColor = "from-blue-500/30 to-cyan-500/30";
   let borderColor = "border-blue-400/50";
   let textColor = "text-blue-200";
   let gradientId = "gradient-blue";
-  let gradientColors = { start: "#3b82f6", end: "#a855f7" }; // blue-500 to purple-500
+  let gradientColors = { start: "#3b82f6", end: "#06b6d4" }; // blue-500 to cyan-500
 
   if (percentage >= 100) {
     bgColor = "from-green-500/30 to-emerald-500/30";
@@ -38,17 +38,17 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
     gradientId = "gradient-green";
     gradientColors = { start: "#22c55e", end: "#10b981" }; // green-500 to emerald-500
   } else if (!onTrack || daysLeft <= 7) {
-    bgColor = "from-orange-500/30 to-yellow-500/30";
-    borderColor = "border-orange-400/50";
-    textColor = "text-orange-200";
-    gradientId = "gradient-orange";
-    gradientColors = { start: "#f97316", end: "#eab308" }; // orange-500 to yellow-500
+    bgColor = "from-cyan-500/30 to-teal-500/30";
+    borderColor = "border-cyan-400/50";
+    textColor = "text-cyan-200";
+    gradientId = "gradient-cyan";
+    gradientColors = { start: "#06b6d4", end: "#14b8a6" }; // cyan-500 to teal-500
   } else if (daysLeft <= 1) {
-    bgColor = "from-red-500/30 to-orange-500/30";
-    borderColor = "border-red-400/50";
-    textColor = "text-red-200";
-    gradientId = "gradient-red";
-    gradientColors = { start: "#ef4444", end: "#f97316" }; // red-500 to orange-500
+    bgColor = "from-slate-500/30 to-cyan-500/30";
+    borderColor = "border-slate-400/50";
+    textColor = "text-slate-200";
+    gradientId = "gradient-slate";
+    gradientColors = { start: "#64748b", end: "#06b6d4" }; // slate-500 to cyan-500
   }
 
   const handleQuickPlusOne = async (e: React.MouseEvent) => {
@@ -145,7 +145,7 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
           {percentage >= 100 ? (
             <CheckCircle className="w-3 h-3 text-green-400" />
           ) : !onTrack ? (
-            <AlertCircle className="w-3 h-3 text-orange-400" />
+            <AlertCircle className="w-3 h-3 text-cyan-400" />
           ) : (
             <CheckCircle className="w-3 h-3 text-blue-400" />
           )}

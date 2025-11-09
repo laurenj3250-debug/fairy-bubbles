@@ -71,7 +71,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
   const rateNeeded = progressNeeded / Math.max(daysLeft, 1);
   const onTrack = rateNeeded <= 1 || percentage >= 75; // On track if < 1 per day needed or >75% done
 
-  let urgencyColor = "from-blue-500 to-purple-500";
+  let urgencyColor = "from-blue-500 to-cyan-500";
   let textColor = "text-blue-200";
   let borderColor = "border-blue-400/30";
 
@@ -80,13 +80,13 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
     textColor = "text-green-200";
     borderColor = "border-green-400/30";
   } else if (!onTrack || daysLeft <= 7) {
-    urgencyColor = "from-orange-500 to-yellow-500";
-    textColor = "text-orange-200";
-    borderColor = "border-orange-400/30";
+    urgencyColor = "from-cyan-500 to-teal-500";
+    textColor = "text-cyan-200";
+    borderColor = "border-cyan-400/30";
   } else if (daysLeft <= 1) {
-    urgencyColor = "from-red-500 to-orange-500";
-    textColor = "text-red-200";
-    borderColor = "border-red-400/30";
+    urgencyColor = "from-slate-500 to-cyan-500";
+    textColor = "text-slate-200";
+    borderColor = "border-slate-400/30";
   }
 
   return (
@@ -108,7 +108,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <Target className="w-5 h-5 text-purple-300" />
+              <Target className="w-5 h-5 text-cyan-300" />
               <h3
                 className="text-lg font-bold text-white"
                 style={{
@@ -160,8 +160,8 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                 </>
               ) : (
                 <>
-                  <AlertCircle className="w-3.5 h-3.5 text-orange-400" />
-                  <span className="text-orange-400 text-xs font-medium">
+                  <AlertCircle className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-cyan-400 text-xs font-medium">
                     Need {Math.ceil(rateNeeded)}/day • {daysLeft}d left
                   </span>
                 </>

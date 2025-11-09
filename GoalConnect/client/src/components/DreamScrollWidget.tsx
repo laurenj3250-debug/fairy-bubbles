@@ -6,12 +6,12 @@ import type { DreamScrollItem } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { value: "do", label: "To Do", emoji: "✨", color: "from-purple-500 to-pink-500" },
+  { value: "do", label: "To Do", emoji: "✨", color: "from-cyan-500 to-teal-500" },
   { value: "buy", label: "To Buy", emoji: "🛍️", color: "from-blue-500 to-cyan-500" },
   { value: "see", label: "To See", emoji: "👀", color: "from-green-500 to-emerald-500" },
-  { value: "visit", label: "To Visit", emoji: "🗺️", color: "from-orange-500 to-yellow-500" },
-  { value: "learn", label: "To Learn", emoji: "📚", color: "from-indigo-500 to-purple-500" },
-  { value: "experience", label: "To Experience", emoji: "🎭", color: "from-pink-500 to-rose-500" },
+  { value: "visit", label: "To Visit", emoji: "🗺️", color: "from-cyan-500 to-teal-500" },
+  { value: "learn", label: "To Learn", emoji: "📚", color: "from-indigo-500 to-cyan-500" },
+  { value: "experience", label: "To Experience", emoji: "🎭", color: "from-teal-500 to-teal-500" },
 ] as const;
 
 export function DreamScrollWidget() {
@@ -75,7 +75,7 @@ export function DreamScrollWidget() {
       {/* Header with category selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-300" />
+          <Sparkles className="w-5 h-5 text-cyan-300" />
           <h3 className="text-lg font-bold text-white" style={{ fontFamily: "'Comfortaa', cursive" }}>
             Dream Scroll
           </h3>
@@ -107,7 +107,7 @@ export function DreamScrollWidget() {
                   className={cn(
                     "w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors",
                     cat.value === selectedCategory
-                      ? "bg-purple-500/20 text-purple-200"
+                      ? "bg-cyan-500/20 text-cyan-200"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                 >
@@ -130,12 +130,12 @@ export function DreamScrollWidget() {
               onChange={(e) => setNewItemTitle(e.target.value)}
               placeholder="What's your dream?"
               autoFocus
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
             <button
               type="submit"
               disabled={!newItemTitle.trim() || createMutation.isPending}
-              className="px-3 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-3 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
             >
               Add
             </button>
@@ -154,7 +154,7 @@ export function DreamScrollWidget() {
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="w-full mb-3 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border-2 border-dashed border-purple-400/50 rounded-lg text-purple-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
+          className="w-full mb-3 px-3 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-dashed border-cyan-400/50 rounded-lg text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Dream
@@ -181,7 +181,7 @@ export function DreamScrollWidget() {
                 <button
                   onClick={() => toggleMutation.mutate(item.id)}
                   disabled={toggleMutation.isPending}
-                  className="mt-0.5 w-5 h-5 rounded border-2 border-white/40 hover:border-purple-400 transition-colors flex items-center justify-center text-white/0 hover:text-white group-hover:border-purple-400"
+                  className="mt-0.5 w-5 h-5 rounded border-2 border-white/40 hover:border-cyan-400 transition-colors flex items-center justify-center text-white/0 hover:text-white group-hover:border-cyan-400"
                 >
                   <Check className="w-3 h-3" />
                 </button>
@@ -226,7 +226,7 @@ export function DreamScrollWidget() {
       <div className="mt-4 pt-3 border-t border-white/10">
         <a
           href="/dream-scroll"
-          className="text-xs text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-1 justify-center"
+          className="text-xs text-cyan-300 hover:text-cyan-200 transition-colors flex items-center gap-1 justify-center"
         >
           View All Dreams
           <span>→</span>

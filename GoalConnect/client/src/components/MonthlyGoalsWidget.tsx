@@ -40,16 +40,16 @@ export function MonthlyGoalsWidget() {
   const completedGoals = monthlyGoals.filter(g => (g.currentValue / g.targetValue) >= 1).length;
 
   return (
-    <div className="glass-card-purple rounded-3xl p-5 magical-glow" style={{ animationDelay: '1.5s' }}>
+    <div className="glass-card-cyan rounded-3xl p-5 magical-glow" style={{ animationDelay: '1.5s' }}>
       <div className="flex items-center justify-between mb-4">
         <h3
           className="text-sm font-bold text-white flex items-center gap-2"
           style={{ fontFamily: "'Comfortaa', cursive" }}
         >
-          <CalendarDays className="w-4 h-4 text-purple-400" />
+          <CalendarDays className="w-4 h-4 text-cyan-400" />
           {monthDates.monthName.split(' ')[0]}
         </h3>
-        <Badge className="bg-purple-500/20 text-purple-200 border-purple-400/30 text-xs">
+        <Badge className="bg-cyan-500/20 text-cyan-200 border-cyan-400/30 text-xs">
           {monthlyGoals.length} goals
         </Badge>
       </div>
@@ -98,7 +98,7 @@ export function MonthlyGoalsWidget() {
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
-                        isComplete ? "bg-green-400" : "bg-purple-400"
+                        isComplete ? "bg-green-400" : "bg-cyan-400"
                       )}
                       style={{ width: `${Math.min(progress, 100)}%` }}
                     />
