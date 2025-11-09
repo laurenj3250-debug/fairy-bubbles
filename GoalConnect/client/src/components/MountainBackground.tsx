@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from "react";
 export function MountainBackground() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -56,23 +54,16 @@ export function MountainBackground() {
     };
   }, []);
 
-  // Parallax scroll effect
+  // Parallax scroll effect (scroll only, no mouse)
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setMouseX((e.clientX - window.innerWidth / 2) / 50);
-      setMouseY((e.clientY - window.innerHeight / 2) / 50);
-    };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
@@ -91,7 +82,7 @@ export function MountainBackground() {
         <div
           className="mountain-layer layer-far-1"
           style={{
-            transform: `translate(${mouseX * 0.5}px, ${scrollY * 0.1 + mouseY * 0.5}px)`
+            transform: `translateY(${scrollY * 0.1}px)`
           }}
         >
           <svg className="mountain-silhouette" viewBox="0 0 1400 600" preserveAspectRatio="none">
@@ -114,7 +105,7 @@ export function MountainBackground() {
         <div
           className="mountain-layer layer-far-2"
           style={{
-            transform: `translate(${mouseX * 0.8}px, ${scrollY * 0.2 + mouseY * 0.8}px)`
+            transform: `translateY(${scrollY * 0.2}px)`
           }}
         >
           <svg className="mountain-silhouette" viewBox="0 0 1400 600" preserveAspectRatio="none">
@@ -135,7 +126,7 @@ export function MountainBackground() {
         <div
           className="mountain-layer layer-mid"
           style={{
-            transform: `translate(${mouseX * 1.2}px, ${scrollY * 0.3 + mouseY * 1.2}px)`
+            transform: `translateY(${scrollY * 0.3}px)`
           }}
         >
           <svg className="mountain-silhouette" viewBox="0 0 1400 600" preserveAspectRatio="none">
@@ -156,7 +147,7 @@ export function MountainBackground() {
         <div
           className="mountain-layer layer-near"
           style={{
-            transform: `translate(${mouseX * 1.6}px, ${scrollY * 0.4 + mouseY * 1.6}px)`
+            transform: `translateY(${scrollY * 0.4}px)`
           }}
         >
           <svg className="mountain-silhouette" viewBox="0 0 1400 600" preserveAspectRatio="none">
@@ -177,7 +168,7 @@ export function MountainBackground() {
         <div
           className="mountain-layer layer-foreground"
           style={{
-            transform: `translate(${mouseX * 2}px, ${scrollY * 0.5 + mouseY * 2}px)`
+            transform: `translateY(${scrollY * 0.5}px)`
           }}
         >
           <svg className="mountain-silhouette" viewBox="0 0 1400 600" preserveAspectRatio="none">
