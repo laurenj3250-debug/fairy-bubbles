@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
 import { GoalBadge } from "@/components/GoalBadge";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { TodoDialog } from "@/components/TodoDialog";
-import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame, Mountain, Tent } from "lucide-react";
+import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame, Mountain, Tent, Flag, Anchor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Goal, Habit, HabitLog, Todo } from "@shared/schema";
@@ -97,6 +97,25 @@ export default function DashboardNew() {
     return todayLogs.some(log => log.habitId === habitId && log.completed);
   };
 
+  // Weather condition based on progress (Phase C - Dynamic Effects)
+  const getWeatherCondition = () => {
+    if (completionPercentage >= 80) return "clear";
+    if (completionPercentage >= 50) return "partly-cloudy";
+    return "overcast";
+  };
+
+  const weatherCondition = getWeatherCondition();
+
+  // Celebration effect for habit completion
+  const [celebratingHabitId, setCelebratingHabitId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (celebratingHabitId) {
+      const timer = setTimeout(() => setCelebratingHabitId(null), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [celebratingHabitId]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -117,14 +136,88 @@ export default function DashboardNew() {
 
   return (
     <div className="min-h-screen pb-24 bg-transparent">
-      {/* Vertical Progress Bar - Left Side */}
-      <div className="fixed left-4 top-20 bottom-24 w-12 z-20 hidden md:flex flex-col items-center">
-        <div className="relative w-3 flex-1 bg-muted/30 rounded-full overflow-hidden">
-          <div
-            className="absolute bottom-0 w-full bg-gradient-to-t from-[hsl(var(--accent))] to-orange-300 rounded-full transition-all duration-500"
-            style={{ height: `${completionPercentage}%` }}
-          />
+      {/* Weather overlay effect based on progress */}
+      <div
+        className={cn(
+          "fixed inset-0 pointer-events-none z-5 transition-opacity duration-1000",
+          weatherCondition === "clear" && "opacity-0",
+          weatherCondition === "partly-cloudy" && "opacity-20",
+          weatherCondition === "overcast" && "opacity-40"
+        )}
+        style={{
+          background: "linear-gradient(180deg, rgba(100, 120, 140, 0.3) 0%, transparent 50%)"
+        }}
+      />
+
+      {/* Enhanced Vertical Progress Bar - Left Side with Camp Markers */}
+      <div className="fixed left-4 top-20 bottom-24 w-16 z-20 hidden md:flex flex-col items-center">
+        <div className="relative flex-1 flex flex-col items-center">
+          {/* Climbing rope */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-1 -translate-x-1/2 climbing-rope" />
+
+          {/* Progress fill */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-3 -translate-x-1/2 bg-muted/30 rounded-full overflow-hidden">
+            <div
+              className="absolute bottom-0 w-full bg-gradient-to-t from-[hsl(var(--accent))] to-orange-300 rounded-full transition-all duration-500"
+              style={{ height: `${completionPercentage}%` }}
+            />
+          </div>
+
+          {/* Camp markers */}
+          <div className="absolute inset-0 flex flex-col justify-between py-4">
+            {/* Summit - 100% */}
+            <div className="flex items-center gap-2 relative">
+              <Flag className={cn(
+                "w-5 h-5 transition-all duration-500",
+                completionPercentage >= 100 ? "text-[hsl(var(--accent))] flag-plant" : "text-muted-foreground/30"
+              )} />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Summit</span>
+            </div>
+
+            {/* Camp 4 - 80% */}
+            <div className="flex items-center gap-2">
+              <Tent className={cn(
+                "w-4 h-4 transition-all",
+                completionPercentage >= 80 ? "text-primary" : "text-muted-foreground/30"
+              )} />
+              <span className="text-xs text-muted-foreground/70">C4</span>
+            </div>
+
+            {/* Camp 3 - 60% */}
+            <div className="flex items-center gap-2">
+              <Tent className={cn(
+                "w-4 h-4 transition-all",
+                completionPercentage >= 60 ? "text-primary" : "text-muted-foreground/30"
+              )} />
+              <span className="text-xs text-muted-foreground/70">C3</span>
+            </div>
+
+            {/* Camp 2 - 40% */}
+            <div className="flex items-center gap-2">
+              <Tent className={cn(
+                "w-4 h-4 transition-all",
+                completionPercentage >= 40 ? "text-primary" : "text-muted-foreground/30"
+              )} />
+              <span className="text-xs text-muted-foreground/70">C2</span>
+            </div>
+
+            {/* Camp 1 - 20% */}
+            <div className="flex items-center gap-2">
+              <Tent className={cn(
+                "w-4 h-4 transition-all",
+                completionPercentage >= 20 ? "text-primary" : "text-muted-foreground/30"
+              )} />
+              <span className="text-xs text-muted-foreground/70">C1</span>
+            </div>
+
+            {/* Base Camp - 0% */}
+            <div className="flex items-center gap-2">
+              <Mountain className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground/70">Base</span>
+            </div>
+          </div>
         </div>
+
         <div className="mt-2 text-center">
           <div className="text-xs font-bold text-foreground">{todayAltitude}m</div>
           <div className="text-xs text-muted-foreground">altitude</div>
@@ -134,7 +227,7 @@ export default function DashboardNew() {
       {/* Main Content */}
       <div className="relative z-10 max-w-4xl mx-auto p-4 md:p-6 md:ml-20">
         {/* Header */}
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg">
+        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern card-tilt">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">
@@ -174,18 +267,34 @@ export default function DashboardNew() {
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg">
-            {/* Progress Bar with Altitude */}
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern mountain-card-depth">
+            {/* Enhanced Progress Bar with Climbing Route Visualization */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muted-foreground">Climbed today</span>
                 <span className="text-sm font-bold text-[hsl(var(--accent))]">{todayAltitude}m / 1000m</span>
               </div>
-              <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
+              <div className="relative h-4 bg-muted/30 rounded-full overflow-hidden">
+                {/* Climbing route with pitons */}
                 <div
-                  className="h-full bg-gradient-to-r from-[hsl(var(--accent))] to-orange-400 transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[hsl(var(--accent))] to-orange-400 transition-all duration-500 relative"
                   style={{ width: `${completionPercentage}%` }}
-                />
+                >
+                  {/* Piton markers at 25%, 50%, 75% */}
+                  {completionPercentage >= 25 && (
+                    <Anchor className="absolute top-1/2 -translate-y-1/2 w-3 h-3 text-white" style={{ left: "25%" }} />
+                  )}
+                  {completionPercentage >= 50 && (
+                    <Anchor className="absolute top-1/2 -translate-y-1/2 w-3 h-3 text-white" style={{ left: "50%" }} />
+                  )}
+                  {completionPercentage >= 75 && (
+                    <Anchor className="absolute top-1/2 -translate-y-1/2 w-3 h-3 text-white" style={{ left: "75%" }} />
+                  )}
+                </div>
+                {/* Summit flag */}
+                {completionPercentage >= 100 && (
+                  <Flag className="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 text-white flag-plant" />
+                )}
               </div>
             </div>
 
@@ -202,35 +311,57 @@ export default function DashboardNew() {
               </div>
             ) : (
               <div className="space-y-2">
-                {habits.map(habit => {
+                {habits.map((habit, index) => {
                   const completed = isHabitCompletedToday(habit.id);
+                  const isCelebrating = celebratingHabitId === habit.id;
+                  const elevationGain = Math.round(1000 / totalHabits); // Each habit contributes equally
+
                   return (
                     <div
                       key={habit.id}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl transition-all border",
-                        completed ? "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30" : "bg-muted/10 border-border/50"
+                        "flex items-center gap-3 p-3 rounded-xl transition-all border ice-crystal-border relative group",
+                        completed ? "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30" : "bg-muted/10 border-border/50",
+                        isCelebrating && "summit-pulse"
                       )}
                     >
+                      {/* Elevation gain tooltip on hover */}
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-2 py-1 text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        +{elevationGain}m elevation
+                      </div>
+
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110"
                         style={{ background: habit.color }}
                       >
                         {habit.icon}
                       </div>
                       <div className="flex-1">
                         <div className="text-foreground font-medium text-sm">{habit.title}</div>
-                        {habit.linkedGoalId && (
-                          <div className="text-xs text-primary">
-                            → Contributes to goal
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-xs">
+                          {habit.linkedGoalId && (
+                            <span className="text-primary">
+                              → Contributes to goal
+                            </span>
+                          )}
+                          {habit.streak && habit.streak.streak > 0 && (
+                            <span className="flex items-center gap-1 text-[hsl(var(--accent))]">
+                              <Flame className="w-3 h-3" />
+                              {habit.streak.streak} day{habit.streak.streak !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <button
-                        onClick={() => toggleHabitMutation.mutate(habit.id)}
+                        onClick={() => {
+                          toggleHabitMutation.mutate(habit.id);
+                          if (!completed) {
+                            setCelebratingHabitId(habit.id);
+                          }
+                        }}
                         disabled={toggleHabitMutation.isPending}
                         className={cn(
-                          "w-10 h-10 rounded-lg border-2 transition-all font-bold text-lg",
+                          "w-10 h-10 rounded-lg border-2 transition-all font-bold text-lg hover:scale-110 active:scale-95",
                           completed
                             ? "bg-[hsl(var(--accent))]/30 border-[hsl(var(--accent))] text-[hsl(var(--accent))]"
                             : "border-muted-foreground/30 hover:border-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/10 text-muted-foreground"
@@ -272,7 +403,7 @@ export default function DashboardNew() {
               </Button>
             </div>
           ) : (
-            <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg">
+            <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern mountain-card-depth">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {activeGoals.slice(0, 6).map(goal => (
                   <GoalBadge
@@ -309,7 +440,7 @@ export default function DashboardNew() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Today's To-Dos */}
-            <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg">
+            <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern card-tilt">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-primary" />
@@ -390,48 +521,48 @@ export default function DashboardNew() {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions with enhanced hover effects */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button
             onClick={() => window.location.href = '/habits'}
-            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80"
+            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80 ice-crystal-border transition-all hover:scale-105 active:scale-95"
             variant="outline"
           >
             <div className="text-center">
-              <CheckCircle className="w-6 h-6 mx-auto mb-1 text-primary" />
+              <CheckCircle className="w-6 h-6 mx-auto mb-1 text-primary transition-transform group-hover:scale-110" />
               <div className="text-sm font-bold text-foreground">Habits</div>
             </div>
           </Button>
 
           <Button
             onClick={() => window.location.href = '/goals'}
-            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80"
+            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80 ice-crystal-border transition-all hover:scale-105 active:scale-95"
             variant="outline"
           >
             <div className="text-center">
-              <Target className="w-6 h-6 mx-auto mb-1 text-primary" />
+              <Target className="w-6 h-6 mx-auto mb-1 text-primary transition-transform group-hover:scale-110" />
               <div className="text-sm font-bold text-foreground">Goals</div>
             </div>
           </Button>
 
           <Button
             onClick={() => window.location.href = '/weekly'}
-            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80"
+            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80 ice-crystal-border transition-all hover:scale-105 active:scale-95"
             variant="outline"
           >
             <div className="text-center">
-              <Calendar className="w-6 h-6 mx-auto mb-1 text-primary" />
+              <Calendar className="w-6 h-6 mx-auto mb-1 text-primary transition-transform group-hover:scale-110" />
               <div className="text-sm font-bold text-foreground">Weekly</div>
             </div>
           </Button>
 
           <Button
             onClick={() => window.location.href = '/habits'}
-            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80"
+            className="h-20 bg-card/60 border-2 border-border/50 hover:border-primary/50 hover:bg-card/80 ice-crystal-border transition-all hover:scale-105 active:scale-95"
             variant="outline"
           >
             <div className="text-center">
-              <TrendingUp className="w-6 h-6 mx-auto mb-1 text-[hsl(var(--accent))]" />
+              <TrendingUp className="w-6 h-6 mx-auto mb-1 text-[hsl(var(--accent))] transition-transform group-hover:scale-110" />
               <div className="text-sm font-bold text-foreground">Progress</div>
             </div>
           </Button>

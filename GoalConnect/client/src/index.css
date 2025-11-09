@@ -410,6 +410,160 @@
     );
   }
 
+  /* Topographic pattern for cards - subtle mountain contour lines */
+  .topo-pattern {
+    position: relative;
+  }
+
+  .topo-pattern::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(255,255,255,0.03) 18px, rgba(255,255,255,0.03) 19px),
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(255,255,255,0.03) 18px, rgba(255,255,255,0.03) 19px),
+      repeating-linear-gradient(45deg, transparent, transparent 25px, rgba(255,255,255,0.02) 25px, rgba(255,255,255,0.02) 26px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Enhanced mountain card depth - carved into mountain effect */
+  .mountain-card-depth {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      0 8px 16px rgba(0, 0, 0, 0.15),
+      0 16px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Ice crystal border effect on hover */
+  .ice-crystal-border {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .ice-crystal-border:hover::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(200, 230, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(200, 230, 255, 0.3) 100%);
+    pointer-events: none;
+    z-index: -1;
+    animation: ice-shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes ice-shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* 3D tilt effect for cards on hover */
+  .card-tilt {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform-style: preserve-3d;
+  }
+
+  .card-tilt:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-4px);
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      0 12px 24px rgba(0, 0, 0, 0.2),
+      0 24px 48px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Subtle noise texture overlay */
+  .texture-overlay {
+    position: relative;
+  }
+
+  .texture-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  /* Summit flag plant animation */
+  @keyframes flag-plant {
+    0% {
+      transform: translateY(20px) scale(0.5) rotate(-10deg);
+      opacity: 0;
+    }
+    50% {
+      transform: translateY(-5px) scale(1.1) rotate(2deg);
+    }
+    100% {
+      transform: translateY(0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  .flag-plant {
+    animation: flag-plant 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Summit celebration pulse */
+  @keyframes summit-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(255, 126, 95, 0.7);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px 10px rgba(255, 126, 95, 0);
+    }
+  }
+
+  .summit-pulse {
+    animation: summit-pulse 2s ease-in-out infinite;
+  }
+
+  /* Climbing rope connector */
+  .climbing-rope {
+    position: relative;
+  }
+
+  .climbing-rope::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.2) 0px,
+      rgba(255, 255, 255, 0.2) 8px,
+      rgba(150, 150, 150, 0.15) 8px,
+      rgba(150, 150, 150, 0.15) 16px
+    );
+    transform: translateX(-50%);
+    z-index: -1;
+  }
+
+  /* Piton/anchor markers for progress */
+  .piton-marker {
+    position: relative;
+  }
+
+  .piton-marker::after {
+    content: "⚙";
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
   /* Magical Glow Effect */
   .magical-glow {
     animation: magical-glow 4s infinite;
@@ -425,6 +579,46 @@
       box-shadow: 0 0 30px rgba(167, 139, 250, 0.5),
                  0 0 60px rgba(139, 92, 246, 0.3),
                  0 0 90px rgba(124, 58, 237, 0.2);
+    }
+  }
+
+  /* Elevation gain notification animation */
+  @keyframes elevation-gain {
+    0% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-50px) scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  .elevation-gain {
+    animation: elevation-gain 2s ease-out forwards;
+  }
+
+  /* Gentle glow for summit achievement */
+  .summit-glow {
+    box-shadow:
+      0 0 20px rgba(255, 126, 95, 0.4),
+      0 0 40px rgba(254, 180, 123, 0.3),
+      0 0 60px rgba(255, 126, 95, 0.2);
+    animation: summit-glow-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes summit-glow-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 20px rgba(255, 126, 95, 0.4),
+        0 0 40px rgba(254, 180, 123, 0.3),
+        0 0 60px rgba(255, 126, 95, 0.2);
+    }
+    50% {
+      box-shadow:
+        0 0 30px rgba(255, 126, 95, 0.6),
+        0 0 60px rgba(254, 180, 123, 0.5),
+        0 0 90px rgba(255, 126, 95, 0.3);
     }
   }
 
