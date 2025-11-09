@@ -29,7 +29,7 @@ const TAG_COLORS = [
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Low Priority", color: "text-slate-400" },
   { value: "medium", label: "Medium Priority", color: "text-blue-400" },
-  { value: "high", label: "High Priority", color: "text-red-400" },
+  { value: "high", label: "High Priority", color: "text-cyan-400" },
 ] as const;
 
 const DIFFICULTY_OPTIONS = [

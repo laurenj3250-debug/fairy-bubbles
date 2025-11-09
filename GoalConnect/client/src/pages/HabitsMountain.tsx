@@ -253,7 +253,7 @@ export default function HabitsMountain() {
                 </button>
               )}
               {isFuture && (
-                <span className="text-xs text-amber-400">
+                <span className="text-xs text-slate-400">
                   Future Date
                 </span>
               )}
@@ -279,7 +279,7 @@ export default function HabitsMountain() {
             </p>
             <Button
               onClick={handleCreateNew}
-              className="rounded-xl px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border border-blue-500/50 shadow-lg"
+              className="rounded-xl px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border border-slate-500/50 shadow-lg"
             >
               Create First Habit
             </Button>
@@ -412,8 +412,8 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Streak & Energy Display */}
           <div className="flex items-center gap-3 mb-3">
             {streak && streak.streak > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/40">
-                <TrendingUp className="w-4 h-4 text-orange-400" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border-teal-500/40">
+                <TrendingUp className="w-4 h-4 text-teal-400" />
                 <span className="text-white font-bold text-xs">
                   {streak.streak} day{streak.streak > 1 ? 's' : ''}
                 </span>
