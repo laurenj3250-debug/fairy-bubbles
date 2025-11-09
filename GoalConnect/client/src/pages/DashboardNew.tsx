@@ -507,7 +507,7 @@ export default function DashboardNew() {
                       </div>
                       {todo.difficulty && (
                         <Badge className="bg-[hsl(var(--accent))]/20 text-[hsl(var(--accent))] text-xs border border-[hsl(var(--accent))]/30">
-                          {todo.difficulty === 'easy' ? '5' : todo.difficulty === 'hard' ? '15' : '10'} coins
+                          {todo.difficulty === 'easy' ? '5' : todo.difficulty === 'hard' ? '15' : '10'} tokens
                         </Badge>
                       )}
                     </div>

@@ -219,7 +219,7 @@ export default function AlpineShop() {
                         )}
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Cost:</span>
-                          <span className="font-bold text-amber-400">{gear.cost} coins</span>
+                          <span className="font-bold text-amber-400">{gear.cost} tokens</span>
                         </div>
 
                         {owned ? (
@@ -233,7 +233,7 @@ export default function AlpineShop() {
                             disabled={purchaseMutation.isPending}
                             className="w-full bg-blue-600 hover:bg-blue-700"
                           >
-                            {purchaseMutation.isPending ? "Purchasing..." : `Buy for ${gear.cost} coins`}
+                            {purchaseMutation.isPending ? "Purchasing..." : `Buy for ${gear.cost} tokens`}
                           </Button>
                         ) : (
                           <Button disabled className="w-full" variant="outline">

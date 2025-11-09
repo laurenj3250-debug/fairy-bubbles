@@ -19,7 +19,7 @@ function MagicalCanvas() {
     const colors = ['#a7f3d0', '#fbbf24', '#a78bfa', '#fca5a5', '#93c5fd'];
     for (let i = 0; i < 30; i++) {
       const light = document.createElement('div');
-      light.className = 'absolute rounded-full float-fairy blur-sm';
+      light.className = 'absolute rounded-full float-snow blur-sm';
       light.style.background = colors[Math.floor(Math.random() * colors.length)];
       light.style.width = Math.random() * 4 + 2 + 'px';
       light.style.height = light.style.width;
@@ -166,7 +166,7 @@ export default function Goals() {
         <div className="relative z-10 max-w-5xl mx-auto p-6">
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="glass-card rounded-3xl h-40 magical-glow animate-pulse"></div>
+              <div key={i} className="glass-card rounded-3xl h-40 alpine-glow animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function Goals() {
 
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Enchanted Header */}
-        <div className="glass-card rounded-3xl p-6 mb-6 magical-glow shimmer-effect relative overflow-hidden">
+        <div className="glass-card rounded-3xl p-6 mb-6 alpine-glow shimmer-effect relative overflow-hidden">
           <div className="flex items-center justify-between relative z-10">
             <div>
               <h1
@@ -190,7 +190,7 @@ export default function Goals() {
                 Your Goals
               </h1>
               <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Track your progress towards your dreams
+                Track your progress towards your goals
               </p>
             </div>
             <Button
@@ -205,7 +205,7 @@ export default function Goals() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-card-green rounded-2xl p-5 magical-glow" style={{ animationDelay: '0.1s' }}>
+          <div className="glass-card-green rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-green-400/30 flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-green-300" />
@@ -217,7 +217,7 @@ export default function Goals() {
             </div>
           </div>
 
-          <div className="glass-card-blue rounded-2xl p-5 magical-glow" style={{ animationDelay: '0.2s' }}>
+          <div className="glass-card-blue rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-blue-400/30 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-blue-300" />
@@ -229,7 +229,7 @@ export default function Goals() {
             </div>
           </div>
 
-          <div className="glass-card-blue rounded-2xl p-5 magical-glow" style={{ animationDelay: '0.3s' }}>
+          <div className="glass-card-blue rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-cyan-400/30 flex items-center justify-center">
                 <Target className="w-5 h-5 text-cyan-300" />
@@ -287,7 +287,7 @@ export default function Goals() {
 
         {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <div className="glass-card-blue rounded-3xl p-12 text-center magical-glow">
+          <div className="glass-card-blue rounded-3xl p-12 text-center alpine-glow">
             <Target className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
             <h2
               className="text-3xl font-bold text-white mb-4"
@@ -404,7 +404,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
   return (
     <div
       className={`glass-card rounded-3xl p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
-        isComplete ? 'magical-glow' : isHighPriority ? 'magical-glow ring-2 ring-red-400/50' : ''
+        isComplete ? 'alpine-glow' : isHighPriority ? 'alpine-glow ring-2 ring-red-400/50' : ''
       }`}
       style={isHighPriority ? {
         boxShadow: '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.15)',
@@ -448,7 +448,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
               className="bg-yellow-400/20 backdrop-blur-xl text-yellow-200 border-2 border-yellow-400/30"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
-              🪙 {goal.difficulty === 'easy' ? 5 : goal.difficulty === 'hard' ? 15 : 10} coins
+              🪙 {goal.difficulty === 'easy' ? 5 : goal.difficulty === 'hard' ? 15 : 10} tokens
             </Badge>
           </div>
 

@@ -90,7 +90,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
   }
 
   return (
-    <div className={`glass-card rounded-2xl p-4 relative overflow-hidden transition-all duration-300 ${percentage >= 100 ? 'magical-glow' : ''}`}>
+    <div className={`glass-card rounded-2xl p-4 relative overflow-hidden transition-all duration-300 ${percentage >= 100 ? 'alpine-glow' : ''}`}>
       {/* Gradient accent bar */}
       <div
         style={{

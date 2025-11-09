@@ -619,7 +619,7 @@ export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
                     >
                       {diff}
                     </div>
-                    <div style={{ fontSize: "12px", color: selected ? "#7c3aed" : "#999" }}>{points} coins</div>
+                    <div style={{ fontSize: "12px", color: selected ? "#7c3aed" : "#999" }}>{points} tokens</div>
                   </button>
                 );
               })}

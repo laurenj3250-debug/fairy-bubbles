@@ -6,12 +6,12 @@ import type { DreamScrollItem } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { value: "do", label: "To Do", emoji: "✨", color: "from-cyan-500 to-teal-500" },
-  { value: "buy", label: "To Buy", emoji: "🛍️", color: "from-blue-500 to-cyan-500" },
-  { value: "see", label: "To See", emoji: "👀", color: "from-green-500 to-emerald-500" },
-  { value: "visit", label: "To Visit", emoji: "🗺️", color: "from-cyan-500 to-teal-500" },
-  { value: "learn", label: "To Learn", emoji: "📚", color: "from-indigo-500 to-cyan-500" },
-  { value: "experience", label: "To Experience", emoji: "🎭", color: "from-teal-500 to-teal-500" },
+  { value: "do", label: "Peaks to Climb", emoji: "⛰️", color: "from-cyan-500 to-teal-500" },
+  { value: "buy", label: "Gear Wishlist", emoji: "🎒", color: "from-blue-500 to-cyan-500" },
+  { value: "see", label: "Views to Witness", emoji: "🏔️", color: "from-green-500 to-emerald-500" },
+  { value: "visit", label: "Ranges to Explore", emoji: "🗺️", color: "from-cyan-500 to-teal-500" },
+  { value: "learn", label: "Skills to Master", emoji: "🧗", color: "from-indigo-500 to-cyan-500" },
+  { value: "experience", label: "Alpine Adventures", emoji: "⚡", color: "from-teal-500 to-teal-500" },
 ] as const;
 
 export function DreamScrollWidget() {
@@ -77,7 +77,7 @@ export function DreamScrollWidget() {
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-cyan-300" />
           <h3 className="text-lg font-bold text-white" style={{ fontFamily: "'Comfortaa', cursive" }}>
-            Dream Scroll
+            Summit Journal
           </h3>
         </div>
 
@@ -128,7 +128,7 @@ export function DreamScrollWidget() {
               type="text"
               value={newItemTitle}
               onChange={(e) => setNewItemTitle(e.target.value)}
-              placeholder="What's your dream?"
+              placeholder="What's your goal?"
               autoFocus
               className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
@@ -157,7 +157,7 @@ export function DreamScrollWidget() {
           className="w-full mb-3 px-3 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-dashed border-cyan-400/50 rounded-lg text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add Dream
+          Add Entry
         </button>
       )}
 
@@ -168,8 +168,8 @@ export function DreamScrollWidget() {
         ) : activeItems.length === 0 && completedItems.length === 0 ? (
           <div className="text-center text-white/60 text-sm py-6">
             <Sparkles className="w-8 h-8 mx-auto mb-2 text-white/40" />
-            <p>No dreams yet!</p>
-            <p className="text-xs mt-1">Add your first dream to get started</p>
+            <p>No entries yet!</p>
+            <p className="text-xs mt-1">Add your first summit goal</p>
           </div>
         ) : (
           <>
@@ -228,7 +228,7 @@ export function DreamScrollWidget() {
           href="/dream-scroll"
           className="text-xs text-cyan-300 hover:text-cyan-200 transition-colors flex items-center gap-1 justify-center"
         >
-          View All Dreams
+          View Full Journal
           <span>→</span>
         </a>
       </div>

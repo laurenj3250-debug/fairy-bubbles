@@ -44,7 +44,7 @@ export function WeeklyGoalsWidget() {
   }
 
   return (
-    <div className="glass-card-blue rounded-3xl p-6 magical-glow" style={{ animationDelay: '0.3s' }}>
+    <div className="glass-card-blue rounded-3xl p-6 alpine-glow" style={{ animationDelay: '0.3s' }}>
       <div className="flex items-center justify-between mb-4">
         <h3
           className="text-lg font-bold text-white flex items-center gap-2"

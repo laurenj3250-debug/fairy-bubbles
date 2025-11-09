@@ -6,13 +6,12 @@ import type { DreamScrollItem, DreamScrollTag } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { value: "summits", label: "Summits to Climb", emoji: "🏔️", bgColor: "bg-slate-600/30", borderColor: "border-slate-500/50" },
-  { value: "gear", label: "Gear to Acquire", emoji: "⛏️", bgColor: "bg-blue-600/30", borderColor: "border-blue-500/50" },
+  { value: "summits", label: "Peaks to Climb", emoji: "⛰️", bgColor: "bg-slate-600/30", borderColor: "border-slate-500/50" },
+  { value: "gear", label: "Gear Wishlist", emoji: "🎒", bgColor: "bg-blue-600/30", borderColor: "border-blue-500/50" },
   { value: "skills", label: "Skills to Master", emoji: "🧗", bgColor: "bg-cyan-600/30", borderColor: "border-cyan-500/50" },
-  { value: "locations", label: "Regions to Explore", emoji: "🗺️", bgColor: "bg-teal-600/30", borderColor: "border-teal-500/50" },
-  { value: "expeditions", label: "Expeditions to Plan", emoji: "🎯", bgColor: "bg-sky-600/30", borderColor: "border-sky-500/50" },
-  { value: "training", label: "Training Goals", emoji: "💪", bgColor: "bg-indigo-600/30", borderColor: "border-indigo-500/50" },
-  { value: "records", label: "Personal Records", emoji: "🏆", bgColor: "bg-stone-600/30", borderColor: "border-stone-500/50" },
+  { value: "locations", label: "Ranges to Explore", emoji: "🗺️", bgColor: "bg-teal-600/30", borderColor: "border-teal-500/50" },
+  { value: "expeditions", label: "Views to Witness", emoji: "🏔️", bgColor: "bg-sky-600/30", borderColor: "border-sky-500/50" },
+  { value: "training", label: "Alpine Adventures", emoji: "⚡", bgColor: "bg-indigo-600/30", borderColor: "border-indigo-500/50" },
 ] as const;
 
 const TAG_COLORS = [
@@ -530,7 +529,7 @@ export default function DreamScrollMountain() {
   );
 }
 
-// Individual Dream Item Component
+// Individual Goal Item Component
 function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTitle, editDescription, editTags, editPriority, editCost, setEditTitle, setEditDescription, setEditPriority, setEditCost, toggleTag, handleSaveEdit, setEditingItem }: any) {
   const isEditing = editingItem?.id === item.id;
   const itemTags = item.tags ? JSON.parse(item.tags) : [];

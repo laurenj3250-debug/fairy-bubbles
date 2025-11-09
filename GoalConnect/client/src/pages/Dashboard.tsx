@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo, useEffect } from "react";
 import { getToday, calculateStreak } from "@/lib/utils";
+import { getClimbingRank } from "@/lib/climbingRanks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HabitDialogNew as HabitDialog } from "@/components/HabitDialogNew";
 import { GoalDialog } from "@/components/GoalDialog";
@@ -32,17 +33,17 @@ import { useToast } from "@/hooks/use-toast";
 
 type TabType = "today" | "calendar" | "todos";
 
-// Magical Canvas Component
-function MagicalCanvas() {
+// Alpine Vista Component
+function AlpineVista() {
   useEffect(() => {
     const canvas = document.getElementById('magicCanvas');
     if (!canvas) return;
 
-    // Create fairy lights
-    const colors = ['#a7f3d0', '#06b6d4', '#64748b', '#475569', '#93c5fd'];
+    // Create snow particles / stars
+    const colors = ['#ffffff', '#e0f2fe', '#dbeafe', '#cbd5e1', '#f0f9ff'];
     for (let i = 0; i < 30; i++) {
       const light = document.createElement('div');
-      light.className = 'absolute rounded-full float-fairy blur-sm';
+      light.className = 'absolute rounded-full float-snow blur-sm';
       light.style.background = colors[Math.floor(Math.random() * colors.length)];
       light.style.width = Math.random() * 4 + 2 + 'px';
       light.style.height = light.style.width;
@@ -158,7 +159,7 @@ export default function Dashboard() {
         const { coinsEarned, baseCoins, streak, streakMultiplier, habitTitle } = data.rewardDetails;
 
         // Build toast message
-        let toastTitle = `+${coinsEarned} coins earned! 🪙`;
+        let toastTitle = `+${coinsEarned} tokens earned! 💎`;
         let toastDescription = `Completed "${habitTitle}"`;
 
         if (streakMultiplier > 1.0) {
@@ -277,8 +278,8 @@ export default function Dashboard() {
       achs.push({
         id: "perfect-day",
         icon: "star" as const,
-        title: "Perfect Day!",
-        description: "All habits completed today",
+        title: "Summit Day!",
+        description: "All training completed today",
         color: "bg-gradient-to-br from-teal-400 to-cyan-500",
       });
     }
@@ -288,16 +289,16 @@ export default function Dashboard() {
       achs.push({
         id: "week-streak",
         icon: "flame" as const,
-        title: `${currentStreak} Day Streak!`,
-        description: "You're on fire! Keep it going!",
+        title: "High Altitude Training",
+        description: "Training at high altitude!",
         color: "bg-gradient-to-br from-cyan-500 to-slate-500",
       });
     } else if (currentStreak >= 3) {
       achs.push({
         id: "mini-streak",
         icon: "flame" as const,
-        title: `${currentStreak} Days Strong`,
-        description: "Building momentum!",
+        title: "Base Camp Established",
+        description: "Building endurance!",
         color: "bg-gradient-to-br from-cyan-400 to-cyan-600",
       });
     }
@@ -308,15 +309,15 @@ export default function Dashboard() {
       achs.push({
         id: "century",
         icon: "trophy" as const,
-        title: "Century Club",
-        description: `${totalCompletions} total habit completions!`,
+        title: "Everest Club",
+        description: `${totalCompletions} training sessions completed!`,
         color: "bg-gradient-to-br from-slate-600 to-slate-700",
       });
     } else if (totalCompletions >= 50) {
       achs.push({
         id: "half-century",
         icon: "target" as const,
-        title: "Halfway Hero",
+        title: "Base Camp Victory",
         description: `${totalCompletions} completions and counting`,
         color: "bg-gradient-to-br from-blue-500 to-indigo-500",
       });
@@ -327,8 +328,8 @@ export default function Dashboard() {
       achs.push({
         id: "getting-started",
         icon: "star" as const,
-        title: "Let's Get Started!",
-        description: "Complete your first habit today",
+        title: "Begin Your Ascent!",
+        description: "Complete your first training today",
         color: "bg-gradient-to-br from-green-400 to-emerald-500",
       });
     }
@@ -371,7 +372,7 @@ export default function Dashboard() {
   if (habitsLoading || logsLoading) {
     return (
       <div className="min-h-screen enchanted-bg flex flex-col md:flex-row gap-4 md:gap-6 p-4 md:p-6">
-        <MagicalCanvas />
+        <AlpineVista />
         <div className="w-full md:w-80 relative z-10">
           <Skeleton className="h-96 w-full rounded-3xl" />
         </div>
@@ -387,7 +388,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen enchanted-bg overflow-x-hidden">
-      <MagicalCanvas />
+      <AlpineVista />
 
       {/* Celebration components */}
       <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
@@ -400,8 +401,8 @@ export default function Dashboard() {
       />
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8">
-        {/* Enchanted Header */}
-        <div className="glass-card rounded-3xl p-6 mb-6 magical-glow relative overflow-hidden shimmer-effect">
+        {/* Alpine Dashboard Header */}
+        <div className="glass-card rounded-3xl p-6 mb-6 alpine-glow relative overflow-hidden shimmer-effect">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-4">
               <div className="relative float-animation">
@@ -423,7 +424,7 @@ export default function Dashboard() {
                   {getGreeting()}, {userName}
                 </h1>
                 <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                  {formatDate()} - Keep growing!
+                  {formatDate()} - Keep climbing!
                 </p>
               </div>
             </div>
@@ -480,7 +481,7 @@ export default function Dashboard() {
                 }}
               >
                 <Target className="w-8 h-8 text-cyan-300" />
-                Your Active Goals
+                Your Summit Goals
               </h2>
               <Button
                 onClick={() => setGoalDialogOpen(true)}
@@ -529,11 +530,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
           {/* Left Sidebar */}
           <div className="flex flex-col gap-6">
-            {/* Enchanted Pet Card */}
+            {/* Climbing Partner */}
             <VirtualPet />
 
-            {/* Magical Insights */}
-            <div className="glass-card-blue rounded-3xl p-6 magical-glow" style={{animationDelay: '1s'}}>
+            {/* Training Insights */}
+            <div className="glass-card-blue rounded-3xl p-6 alpine-glow" style={{animationDelay: '1s'}}>
               <h3
                 className="text-base font-bold text-teal-400 mb-5 flex items-center gap-2"
                 style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(20, 184, 166, 0.5)' }}
@@ -618,14 +619,14 @@ export default function Dashboard() {
             {/* Tab Content */}
             {activeTab === "today" && (
               <div className="fade-in" data-testid="today-panel">
-                {/* Enchanted Habits Card */}
-                <div className="glass-card-green rounded-3xl p-8 magical-glow mb-6" style={{animationDelay: '0.5s'}}>
+                {/* Daily Training Card */}
+                <div className="glass-card-green rounded-3xl p-8 alpine-glow mb-6" style={{animationDelay: '0.5s'}}>
                   <div className="flex items-center justify-between mb-6">
                     <h2
                       className="text-xl font-bold text-white flex items-center gap-3"
                       style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                     >
-                      Today's Habits
+                      Daily Training
                       <Badge className="rounded-full px-4 py-1 text-sm font-bold bg-green-500/30 border-2 border-green-500/40 text-green-200">
                         {completedCount}/{totalCount}
                       </Badge>
@@ -657,13 +658,13 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Magical Weekly Progress */}
-                <div className="glass-card-blue rounded-3xl p-8 magical-glow" style={{animationDelay: '1.5s'}}>
+                {/* Weekly Training Progress */}
+                <div className="glass-card-blue rounded-3xl p-8 alpine-glow" style={{animationDelay: '1.5s'}}>
                   <h3
                     className="text-lg font-bold text-white mb-6 flex items-center gap-2"
                     style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(255, 255, 255, 0.5)' }}
                   >
-                    This Week's Progress
+                    Training Progress
                   </h3>
                   <div className="grid grid-cols-7 gap-3">
                     {[6, 5, 4, 3, 2, 1, 0].map((daysAgo, idx) => {
@@ -740,7 +741,7 @@ export default function Dashboard() {
               data-testid="button-create-goal"
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              Dream big
+              Plan Expedition
             </Button>
           </div>
         </SheetContent>

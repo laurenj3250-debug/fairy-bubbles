@@ -431,7 +431,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
           {/* Difficulty - Visual Buttons */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "500", color: "#666" }}>
-              DIFFICULTY & COINS
+              DIFFICULTY & TOKENS
             </label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
               {[
@@ -455,7 +455,7 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
                 >
                   <div style={{ fontSize: "24px", marginBottom: "4px" }}>{option.emoji}</div>
                   <div style={{ fontSize: "14px", fontWeight: "600", marginBottom: "2px" }}>{option.label}</div>
-                  <div style={{ fontSize: "13px", color: "#f59e0b", fontWeight: "500" }}>🪙 {option.coins}</div>
+                  <div style={{ fontSize: "13px", color: "#f59e0b", fontWeight: "500" }}>💎 {option.coins}</div>
                 </button>
               ))}
             </div>

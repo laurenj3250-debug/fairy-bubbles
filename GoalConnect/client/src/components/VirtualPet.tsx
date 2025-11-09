@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, TrendingUp, Coins } from "lucide-react";
+import { Sparkles, TrendingUp, Gem } from "lucide-react";
 import type { VirtualPet as VirtualPetType, UserCostume, Costume, UserPoints } from "@shared/schema";
 import { useState, useEffect } from "react";
 import catImage from "@assets/3d ish crumpet.png";
+import { getClimbingRank } from "@/lib/climbingRanks";
 
 // Evolution configurations
 const EVOLUTION_CONFIG = {
@@ -104,6 +105,10 @@ export function VirtualPet() {
     queryKey: ["/api/stats"],
   });
 
+  const { data: climbingStats } = useQuery<{ climbingLevel: number }>({
+    queryKey: ["/api/climbing/stats"],
+  });
+
   const { data: equippedCostumes = [] } = useQuery<Array<UserCostume & { costume: Costume }>>({
     queryKey: ["/api/costumes/equipped"],
   });
@@ -123,7 +128,7 @@ export function VirtualPet() {
 
   if (isLoading || !pet) {
     return (
-      <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow animate-pulse">
+      <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden alpine-glow animate-pulse">
         <div className="w-48 h-48 bg-white/10 rounded-full mx-auto mb-4" />
         <div className="h-6 bg-white/10 rounded w-32 mx-auto mb-2" />
         <div className="h-4 bg-white/10 rounded w-24 mx-auto" />
@@ -135,9 +140,11 @@ export function VirtualPet() {
   const currentStreak = stats?.currentStreak || 0;
   const availablePoints = userPoints?.available || 0;
   const weeklyCompletion = stats?.weeklyCompletion || 0;
+  const climbingLevel = climbingStats?.climbingLevel || 0;
+  const climbingRank = getClimbingRank(climbingLevel);
 
   return (
-    <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden magical-glow">
+    <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden alpine-glow">
       {/* Floating Sparkles */}
       <div className="absolute inset-0 pointer-events-none">
         <span className="absolute top-5 left-5 text-xl float-sparkle">✨</span>
@@ -168,6 +175,15 @@ export function VirtualPet() {
           Level {pet.level} 🌱
         </Badge>
 
+        {/* Climbing Rank Badge */}
+        {climbingLevel > 0 && (
+          <div className="mb-6">
+            <Badge className="rounded-full px-5 py-2 text-sm font-semibold bg-gradient-to-r from-slate-600/30 to-slate-700/30 border-2 border-slate-500/40 text-slate-200 backdrop-blur-xl shadow-lg">
+              Level {climbingLevel} • {climbingRank.grade} {climbingRank.name}
+            </Badge>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
@@ -180,10 +196,10 @@ export function VirtualPet() {
 
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border-2 border-white/20 shadow-lg">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <Coins className="w-6 h-6 text-yellow-400" />
+              <Gem className="w-6 h-6 text-yellow-400" />
             </div>
             <div className="text-2xl font-bold text-white mb-1">{availablePoints}</div>
-            <div className="text-xs text-white/80">Points</div>
+            <div className="text-xs text-white/80">Tokens</div>
           </div>
         </div>
 

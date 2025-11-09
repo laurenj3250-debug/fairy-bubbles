@@ -84,7 +84,7 @@ export function GoalBadge({ goal, onClick }: GoalBadgeProps) {
         "bg-gradient-to-br border-2",
         bgColor,
         borderColor,
-        percentage >= 100 && "magical-glow"
+        percentage >= 100 && "alpine-glow"
       )}
     >
       {/* Circular Progress */}

@@ -342,7 +342,7 @@ export function TodoDialog({ open, onOpenChange }: TodoDialogProps) {
                     }}
                   >
                     <div style={{ fontSize: "14px", textTransform: "capitalize", color: "#000" }}>{diff}</div>
-                    <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{points} coins</div>
+                    <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{points} tokens</div>
                   </button>
                 );
               })}

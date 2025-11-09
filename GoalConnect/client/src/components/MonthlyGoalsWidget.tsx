@@ -40,7 +40,7 @@ export function MonthlyGoalsWidget() {
   const completedGoals = monthlyGoals.filter(g => (g.currentValue / g.targetValue) >= 1).length;
 
   return (
-    <div className="glass-card-cyan rounded-3xl p-5 magical-glow" style={{ animationDelay: '1.5s' }}>
+    <div className="glass-card-cyan rounded-3xl p-5 alpine-glow" style={{ animationDelay: '1.5s' }}>
       <div className="flex items-center justify-between mb-4">
         <h3
           className="text-sm font-bold text-white flex items-center gap-2"

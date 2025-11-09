@@ -376,7 +376,7 @@ export function HabitDialogNew({ open, onClose, habit }: HabitDialogProps) {
                     }}
                   >
                     <div style={{ fontSize: "11px", fontWeight: "600", marginBottom: "2px" }}>{option.label}</div>
-                    <div style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "500" }}>{option.coins}🪙</div>
+                    <div style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "500" }}>{option.coins}💎</div>
                   </button>
                 ))}
               </div>

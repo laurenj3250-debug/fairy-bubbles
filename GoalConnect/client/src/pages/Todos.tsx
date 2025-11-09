@@ -8,6 +8,7 @@ import { TodoDialog } from "@/components/TodoDialog";
 import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getTaskGrade } from "@/lib/climbingRanks";
 
 interface Subtask {
   id: string;
@@ -155,7 +156,7 @@ export default function Todos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
-      toast({ title: "Added!", description: "Todo added successfully" });
+      toast({ title: "Added!", description: "Task added successfully" });
     },
   });
 
@@ -167,7 +168,7 @@ export default function Todos() {
           <div>
             <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3" style={{ fontFamily: "'Comfortaa', cursive" }}>
               <ListTodo className="w-8 h-8 text-blue-300" />
-              To-Do List
+              Expedition Tasks
             </h1>
             <p className="text-white/60 text-sm">
               {pendingCount} pending, {completedCount} completed
@@ -178,7 +179,7 @@ export default function Todos() {
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
           >
             <Plus className="w-4 h-4 mr-2" />
-            New Todo
+            New Task
           </Button>
         </div>
 
@@ -264,9 +265,9 @@ export default function Todos() {
               <div className="glass-card rounded-3xl p-12 text-center">
                 <ListTodo className="w-16 h-16 text-white/30 mx-auto mb-4" />
                 <p className="text-white/60 mb-4">
-                  {filter === "all" && "No todos yet. Create your first one!"}
-                  {filter === "pending" && "No pending todos. Great job!"}
-                  {filter === "completed" && "No completed todos yet."}
+                  {filter === "all" && "No tasks yet. Create your first one!"}
+                  {filter === "pending" && "No pending tasks. Great job!"}
+                  {filter === "completed" && "No completed tasks yet."}
                 </p>
                 {filter === "all" && (
                   <Button
@@ -275,7 +276,7 @@ export default function Todos() {
                     className="border-white/30 text-white"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Todo
+                    Create Task
                   </Button>
                 )}
               </div>
@@ -283,7 +284,7 @@ export default function Todos() {
               <div className="space-y-3">
                 {sortedTodos.map((todo) => {
                   const dueDateInfo = formatDueDate(todo.dueDate);
-                  const points = todo.difficulty === "easy" ? 5 : todo.difficulty === "hard" ? 15 : 10;
+                  const gradeInfo = getTaskGrade(todo.difficulty);
 
                   const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
                   const completedSubtasks = subtasks.filter(st => st.completed).length;
@@ -359,7 +360,7 @@ export default function Todos() {
                             )}
                             {todo.difficulty && (
                               <Badge className="bg-yellow-400/20 text-yellow-200 border-0">
-                                {todo.difficulty} • {points} coins
+                                {gradeInfo.label} • {gradeInfo.points} tokens
                               </Badge>
                             )}
                           </div>
@@ -368,13 +369,13 @@ export default function Todos() {
                         {/* Delete button */}
                         <button
                           onClick={() => {
-                            if (confirm("Delete this todo?")) {
+                            if (confirm("Delete this task?")) {
                               deleteTodoMutation.mutate(todo.id);
                             }
                           }}
                           disabled={deleteTodoMutation.isPending}
                           className="flex-shrink-0 p-2 text-slate-400 hover:bg-slate-500/20 rounded-lg transition-all"
-                          title="Delete todo"
+                          title="Delete task"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -450,7 +451,7 @@ export default function Todos() {
                       <input
                         type="text"
                         name={`todo-${dateKey}`}
-                        placeholder="Add todo..."
+                        placeholder="Add task..."
                         className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-blue-400"
                       />
                     </form>
@@ -458,7 +459,7 @@ export default function Todos() {
                     {/* Todos for this day */}
                     <div className="space-y-2">
                       {dayTodos.map((todo) => {
-                        const points = todo.difficulty === "easy" ? 5 : todo.difficulty === "hard" ? 15 : 10;
+                        const gradeInfo = getTaskGrade(todo.difficulty);
                         return (
                           <div
                             key={todo.id}
@@ -480,14 +481,14 @@ export default function Todos() {
                                 <p className={cn("text-white break-words", todo.completed && "line-through")}>
                                   {todo.title}
                                 </p>
-                                <p className="text-yellow-300/70 mt-0.5">{points} coins</p>
+                                <p className="text-yellow-300/70 mt-0.5">{gradeInfo.points} tokens</p>
                               </div>
                             </button>
                           </div>
                         );
                       })}
                       {dayTodos.length === 0 && (
-                        <p className="text-white/30 text-xs text-center py-2">No todos</p>
+                        <p className="text-white/30 text-xs text-center py-2">No tasks</p>
                       )}
                     </div>
                   </div>

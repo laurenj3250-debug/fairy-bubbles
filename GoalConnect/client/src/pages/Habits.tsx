@@ -17,7 +17,7 @@ function MagicalCanvas() {
     const colors = ['#a7f3d0', '#fbbf24', '#a78bfa', '#fca5a5', '#93c5fd'];
     for (let i = 0; i < 30; i++) {
       const light = document.createElement('div');
-      light.className = 'absolute rounded-full float-fairy blur-sm';
+      light.className = 'absolute rounded-full float-snow blur-sm';
       light.style.background = colors[Math.floor(Math.random() * colors.length)];
       light.style.width = Math.random() * 4 + 2 + 'px';
       light.style.height = light.style.width;
@@ -197,7 +197,7 @@ export default function Habits() {
         <div className="relative z-10 max-w-5xl mx-auto p-6">
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="glass-card rounded-3xl h-40 magical-glow animate-pulse"></div>
+              <div key={i} className="glass-card rounded-3xl h-40 alpine-glow animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function Habits() {
 
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Enchanted Header */}
-        <div className="glass-card rounded-3xl p-6 mb-6 magical-glow shimmer-effect relative overflow-hidden">
+        <div className="glass-card rounded-3xl p-6 mb-6 alpine-glow shimmer-effect relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -230,7 +230,7 @@ export default function Habits() {
                 className="rounded-full px-6 py-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                <span className="font-semibold">New Habit</span>
+                <span className="font-semibold">Start New Training</span>
               </Button>
             </div>
 
@@ -277,22 +277,22 @@ export default function Habits() {
         </div>
 
         {habits.length === 0 ? (
-          <div className="glass-card-blue rounded-3xl p-12 text-center magical-glow">
+          <div className="glass-card-blue rounded-3xl p-12 text-center alpine-glow">
             <Sparkles className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
             <h2
               className="text-3xl font-bold text-white mb-4"
               style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 15px rgba(255, 255, 255, 0.5)' }}
             >
-              Begin Your Journey
+              No Training Scheduled
             </h2>
             <p className="text-white/80 mb-8 text-lg" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-              Create your first habit and watch the magic unfold
+              Track your daily training
             </p>
             <Button
               onClick={handleCreateNew}
               className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border-2 border-white/30 shadow-lg"
             >
-              Create First Habit
+              Start New Training
             </Button>
           </div>
         ) : (
@@ -425,7 +425,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
   return (
     <div
       className={`glass-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500 ${
-        completed ? 'magical-glow' : ''
+        completed ? 'alpine-glow' : ''
       } ${isCompleting ? 'scale-98' : 'scale-100 hover:scale-102'}`}
       style={{
         transform: isCompleting ? 'scale(0.98)' : undefined,
@@ -492,7 +492,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
             >
               <span className="text-lg">🪙</span>
               <span className="text-white font-bold text-xs" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                {pointsInfo.points} coins
+                {pointsInfo.points} tokens
               </span>
             </div>
           </div>
@@ -627,7 +627,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                 animation: 'fadeInUp 0.5s ease-out, fadeOut 0.5s ease-out 1.5s',
               }}
             >
-              <div className="text-2xl font-bold">+{pointsInfo.points} coins</div>
+              <div className="text-2xl font-bold">+{pointsInfo.points} tokens earned!</div>
               {pointsInfo.multiplier > 1 && (
                 <div className="text-xs opacity-90">
                   {pointsInfo.basePoints} × {pointsInfo.multiplier}x streak!

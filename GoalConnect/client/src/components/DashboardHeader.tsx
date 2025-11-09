@@ -1,7 +1,7 @@
 import { getGreeting, formatDate } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Coins } from "lucide-react";
+import { Gem } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserPoints } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,7 +40,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
       
       <div className="flex items-center gap-3">
         <Badge variant="secondary" className="gap-1.5" data-testid="badge-points">
-          <Coins className="w-3.5 h-3.5" />
+          <Gem className="w-3.5 h-3.5" />
           <span className="font-semibold">{points?.available ?? 0}</span>
         </Badge>
         
