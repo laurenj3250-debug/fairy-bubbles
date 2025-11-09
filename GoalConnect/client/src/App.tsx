@@ -12,6 +12,8 @@ import Todos from "@/pages/Todos";
 import WeeklyView from "@/pages/WeeklyView";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
+import AlpineShop from "@/pages/AlpineShop";
+import WorldMap from "@/pages/WorldMap";
 import Wonderland from "@/pages/Wonderland";
 import OutsideWorld from "@/pages/OutsideWorld";
 import BiomeExploration from "@/pages/BiomeExploration";
@@ -110,6 +112,18 @@ function AppRoutes() {
       <Route path="/shop">
         <RequireAuth>
           <ShopPage />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/alpine-shop">
+        <RequireAuth>
+          <AlpineShop />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/world-map">
+        <RequireAuth>
+          <WorldMap />
           <BottomNav />
         </RequireAuth>
       </Route>

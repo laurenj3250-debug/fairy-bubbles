@@ -1059,4 +1059,102 @@ export class DbStorage implements IStorage {
     await this.db.delete(schema.dreamScrollTags)
       .where(eq(schema.dreamScrollTags.id, id));
   }
+
+  // ========================================
+  // Mountaineering Game Methods
+  // ========================================
+
+  async getAllAlpineGear(): Promise<any[]> {
+    return await this.db.select().from(schema.alpineGear).orderBy(schema.alpineGear.tier, schema.alpineGear.unlockLevel);
+  }
+
+  async getPlayerGearInventory(userId: number): Promise<any[]> {
+    return await this.db
+      .select({
+        inventoryId: schema.playerGearInventory.id,
+        gearId: schema.alpineGear.id,
+        name: schema.alpineGear.name,
+        category: schema.alpineGear.category,
+        description: schema.alpineGear.description,
+        weightGrams: schema.alpineGear.weightGrams,
+        tier: schema.alpineGear.tier,
+        acquiredDate: schema.playerGearInventory.acquiredDate,
+      })
+      .from(schema.playerGearInventory)
+      .innerJoin(schema.alpineGear, eq(schema.playerGearInventory.gearId, schema.alpineGear.id))
+      .where(eq(schema.playerGearInventory.userId, userId));
+  }
+
+  async purchaseGear(userId: number, gearId: number): Promise<any> {
+    // Check if already owned
+    const [existing] = await this.db
+      .select()
+      .from(schema.playerGearInventory)
+      .where(and(eq(schema.playerGearInventory.userId, userId), eq(schema.playerGearInventory.gearId, gearId)));
+
+    if (existing) {
+      throw new Error("Already own this gear");
+    }
+
+    // Get gear details
+    const [gear] = await this.db.select().from(schema.alpineGear).where(eq(schema.alpineGear.id, gearId));
+
+    if (!gear) {
+      throw new Error("Gear not found");
+    }
+
+    // TODO: Check if player has enough coins/points and deduct
+    // TODO: Check if player meets unlock requirements
+
+    // Add to inventory
+    const [newInventoryItem] = await this.db
+      .insert(schema.playerGearInventory)
+      .values({ userId, gearId })
+      .returning();
+
+    return { ...newInventoryItem, gear };
+  }
+
+  async getAllRegions(): Promise<any[]> {
+    return await this.db.select().from(schema.worldMapRegions).orderBy(schema.worldMapRegions.name);
+  }
+
+  async getAllMountains(): Promise<any[]> {
+    return await this.db.select().from(schema.mountains).orderBy(schema.mountains.elevation);
+  }
+
+  async getMountainsByRegion(regionId: number): Promise<any[]> {
+    return await this.db
+      .select()
+      .from(schema.mountains)
+      .where(eq(schema.mountains.regionId, regionId))
+      .orderBy(schema.mountains.elevation);
+  }
+
+  async getPlayerClimbingStats(userId: number): Promise<any> {
+    const [stats] = await this.db
+      .select()
+      .from(schema.playerClimbingStats)
+      .where(eq(schema.playerClimbingStats.userId, userId));
+
+    if (!stats) {
+      // Create default stats
+      const [newStats] = await this.db
+        .insert(schema.playerClimbingStats)
+        .values({
+          userId,
+          climbingLevel: 1,
+          totalXp: 0,
+          summits: 0,
+          totalDistance: 0,
+          totalElevationGain: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+        })
+        .returning();
+      return newStats;
+    }
+
+    return stats;
+  }
 }

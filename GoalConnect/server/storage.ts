@@ -201,6 +201,17 @@ export interface IStorage {
   createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag>;
   getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]>;
   deleteDreamScrollTag(id: number): Promise<void>;
+
+  // Mountaineering Game - Alpine Gear
+  getAllAlpineGear(): Promise<any[]>;
+  getPlayerGearInventory(userId: number): Promise<any[]>;
+  purchaseGear(userId: number, gearId: number): Promise<any>;
+
+  // Mountaineering Game - Mountains & Regions
+  getAllRegions(): Promise<any[]>;
+  getAllMountains(): Promise<any[]>;
+  getMountainsByRegion(regionId: number): Promise<any[]>;
+  getPlayerClimbingStats(userId: number): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -755,6 +766,72 @@ export class MemStorage implements IStorage {
     );
 
     return updated;
+  }
+
+  // Mountaineering - stub implementations for MemStorage
+  async getAllAlpineGear(): Promise<any[]> {
+    return [];
+  }
+
+  async getPlayerGearInventory(userId: number): Promise<any[]> {
+    return [];
+  }
+
+  async purchaseGear(userId: number, gearId: number): Promise<any> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getAllRegions(): Promise<any[]> {
+    return [];
+  }
+
+  async getAllMountains(): Promise<any[]> {
+    return [];
+  }
+
+  async getMountainsByRegion(regionId: number): Promise<any[]> {
+    return [];
+  }
+
+  async getPlayerClimbingStats(userId: number): Promise<any> {
+    return null;
+  }
+
+  // Dream Scroll stubs
+  async createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getDreamScrollItems(userId: number): Promise<DreamScrollItem[]> {
+    return [];
+  }
+
+  async getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]> {
+    return [];
+  }
+
+  async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
+    return undefined;
+  }
+
+  async deleteDreamScrollItem(id: number): Promise<void> {
+    // noop
+  }
+
+  async toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined> {
+    return undefined;
+  }
+
+  async createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getDreamScrollTags(userId: number, category: string): Promise<DreamScrollTag[]> {
+    return [];
+  }
+
+  async deleteDreamScrollTag(id: number): Promise<void> {
+    // noop
   }
 }
 

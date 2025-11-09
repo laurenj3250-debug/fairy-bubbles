@@ -2148,6 +2148,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== MOUNTAINEERING GAME ROUTES ==========
+
+  // Get all alpine gear
+  app.get("/api/alpine-gear", async (req, res) => {
+    try {
+      const gear = await storage.getAllAlpineGear();
+      res.json(gear);
+    } catch (error: any) {
+      console.error('[alpine-gear] Get all gear error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get player's gear inventory
+  app.get("/api/alpine-gear/inventory", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const inventory = await storage.getPlayerGearInventory(req.user!.id);
+      res.json(inventory);
+    } catch (error: any) {
+      console.error('[alpine-gear] Get inventory error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Purchase gear
+  app.post("/api/alpine-gear/purchase", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { gearId } = req.body;
+      const result = await storage.purchaseGear(req.user!.id, gearId);
+      res.json(result);
+    } catch (error: any) {
+      console.error('[alpine-gear] Purchase error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Get all regions
+  app.get("/api/mountains/regions", async (req, res) => {
+    try {
+      const regions = await storage.getAllRegions();
+      res.json(regions);
+    } catch (error: any) {
+      console.error('[mountains] Get regions error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all mountains
+  app.get("/api/mountains", async (req, res) => {
+    try {
+      const mountains = await storage.getAllMountains();
+      res.json(mountains);
+    } catch (error: any) {
+      console.error('[mountains] Get all error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get mountains by region
+  app.get("/api/mountains/region/:regionId", async (req, res) => {
+    try {
+      const regionId = parseInt(req.params.regionId);
+      const mountains = await storage.getMountainsByRegion(regionId);
+      res.json(mountains);
+    } catch (error: any) {
+      console.error('[mountains] Get by region error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get player climbing stats
+  app.get("/api/climbing/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const stats = await storage.getPlayerClimbingStats(req.user!.id);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('[climbing] Get stats error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
