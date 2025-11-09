@@ -19,6 +19,7 @@ import Combat from "@/pages/Combat";
 import PartyManagement from "@/pages/PartyManagement";
 import SpriteUpload from "@/pages/SpriteUpload";
 import SpriteOrganize from "@/pages/SpriteOrganize";
+import LevelEditor from "@/pages/LevelEditor";
 import GameDataAdmin from "@/pages/GameDataAdmin";
 import DreamScroll from "@/pages/DreamScroll";
 import SignupPage from "@/pages/Signup";
@@ -152,6 +153,12 @@ function AppRoutes() {
       <Route path="/sprites/organize">
         <RequireAuth>
           <SpriteOrganize />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/level-editor">
+        <RequireAuth>
+          <LevelEditor />
           <BottomNav />
         </RequireAuth>
       </Route>
