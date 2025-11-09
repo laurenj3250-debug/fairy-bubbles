@@ -53,9 +53,9 @@ export default function WorldMap() {
   const tierColors: Record<string, string> = {
     beginner: "bg-green-500/20 text-green-300 border-green-500/40",
     intermediate: "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    advanced: "bg-purple-500/20 text-purple-300 border-purple-500/40",
-    expert: "bg-red-500/20 text-red-300 border-red-500/40",
-    elite: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    advanced: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+    expert: "bg-slate-500/20 text-slate-300 border-slate-500/40",
+    elite: "bg-teal-500/20 text-teal-300 border-teal-500/40",
   };
 
   const canAttempt = (mountain: Mountain) => {
@@ -107,7 +107,7 @@ export default function WorldMap() {
                 <div className="text-sm text-muted-foreground">Summits</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">
+                <div className="text-2xl font-bold text-cyan-400">
                   {allMountains.filter((m) => canAttempt(m)).length}
                 </div>
                 <div className="text-sm text-muted-foreground">Unlocked</div>
