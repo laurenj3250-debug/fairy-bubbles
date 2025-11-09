@@ -955,6 +955,22 @@ export class DbStorage implements IStorage {
     return this.db.select().from(schema.sprites).orderBy(schema.sprites.createdAt);
   }
 
+  async getSpritesMetadata(): Promise<Omit<Sprite, 'data'>[]> {
+    return this.db.select({
+      id: schema.sprites.id,
+      filename: schema.sprites.filename,
+      category: schema.sprites.category,
+      name: schema.sprites.name,
+      mimeType: schema.sprites.mimeType,
+      createdAt: schema.sprites.createdAt,
+    }).from(schema.sprites).orderBy(schema.sprites.createdAt);
+  }
+
+  async getSpriteById(id: number): Promise<Sprite | undefined> {
+    const [sprite] = await this.db.select().from(schema.sprites).where(eq(schema.sprites.id, id));
+    return sprite;
+  }
+
   async getSpriteByFilename(filename: string): Promise<Sprite | undefined> {
     const [sprite] = await this.db.select().from(schema.sprites).where(eq(schema.sprites.filename, filename));
     return sprite;

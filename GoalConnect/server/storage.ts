@@ -183,6 +183,8 @@ export interface IStorage {
   createSprite(sprite: InsertSprite): Promise<Sprite>;
   upsertSprite(sprite: InsertSprite): Promise<Sprite>;
   getSprites(): Promise<Sprite[]>;
+  getSpritesMetadata(): Promise<Omit<Sprite, 'data'>[]>;
+  getSpriteById(id: number): Promise<Sprite | undefined>;
   getSpriteByFilename(filename: string): Promise<Sprite | undefined>;
   updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined>;
   deleteSprite(filename: string): Promise<void>;

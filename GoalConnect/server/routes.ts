@@ -1847,19 +1847,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all sprites (for admin panel)
+  // Get sprite metadata (lightweight - no base64 data)
+  app.get("/api/sprites/metadata", async (req, res) => {
+    try {
+      const metadata = await storage.getSpritesMetadata();
+      res.json(metadata);
+    } catch (error: any) {
+      console.error('[sprites] Get metadata error:', error);
+      res.status(500).json({ error: error.message || "Failed to get sprite metadata" });
+    }
+  });
+
+  // Get individual sprite by ID (with full data)
+  app.get("/api/sprites/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid sprite ID" });
+      }
+
+      const sprite = await storage.getSpriteById(id);
+      if (!sprite) {
+        return res.status(404).json({ error: "Sprite not found" });
+      }
+
+      res.json({
+        id: sprite.id,
+        filename: sprite.filename,
+        category: sprite.category,
+        name: sprite.name,
+        data: `data:${sprite.mimeType};base64,${sprite.data}`,
+        mimeType: sprite.mimeType,
+      });
+    } catch (error: any) {
+      console.error('[sprites] Get by ID error:', error);
+      res.status(500).json({ error: error.message || "Failed to get sprite" });
+    }
+  });
+
+  // Get all sprites (for admin panel) - with optional includeData parameter
   app.get("/api/sprites", async (req, res) => {
     try {
-      const sprites = await storage.getSprites();
-      const spriteData = sprites.map(s => ({
-        id: s.id,
-        filename: s.filename,
-        category: s.category,
-        name: s.name,
-        data: `data:${s.mimeType};base64,${s.data}`,
-        mimeType: s.mimeType,
-      }));
-      res.json(spriteData);
+      const includeData = req.query.includeData !== 'false'; // Default to true for backward compatibility
+
+      if (!includeData) {
+        // Return metadata only
+        const metadata = await storage.getSpritesMetadata();
+        res.json(metadata);
+      } else {
+        // Return full sprite data (backward compatible)
+        const sprites = await storage.getSprites();
+        const spriteData = sprites.map(s => ({
+          id: s.id,
+          filename: s.filename,
+          category: s.category,
+          name: s.name,
+          data: `data:${s.mimeType};base64,${s.data}`,
+          mimeType: s.mimeType,
+        }));
+        res.json(spriteData);
+      }
     } catch (error: any) {
       console.error('[sprites] Get all error:', error);
       res.status(500).json({ error: error.message || "Failed to get sprites" });

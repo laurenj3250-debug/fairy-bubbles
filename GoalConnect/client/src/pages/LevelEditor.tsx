@@ -2,13 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
-type Sprite = {
+type SpriteMetadata = {
   id: number;
   filename: string;
   category: string;
   name: string | null;
-  data: string;
   mimeType: string;
+};
+
+type Sprite = SpriteMetadata & {
+  data: string;
 };
 
 type Biome = {
@@ -37,9 +40,10 @@ export default function LevelEditor() {
   const [selectedBiome, setSelectedBiome] = useState<number | null>(null);
   const [levelObjects, setLevelObjects] = useState<LevelObject[]>([]);
   const [selectedObject, setSelectedObject] = useState<LevelObject | null>(null);
-  const [draggedSprite, setDraggedSprite] = useState<Sprite | null>(null);
+  const [draggedSprite, setDraggedSprite] = useState<SpriteMetadata | null>(null);
   const [isDraggingObject, setIsDraggingObject] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [loadedSpriteImages, setLoadedSpriteImages] = useState<Map<number, string>>(new Map());
   const canvasRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,18 +75,35 @@ export default function LevelEditor() {
     }
   }, [existingLevelObjects]);
 
-  // Fetch sprites for toolbox
-  const { data: allSprites = [] } = useQuery<Sprite[]>({
-    queryKey: ['/api/sprites'],
+  // Fetch sprite metadata (lightweight - no base64 data)
+  const { data: allSpritesMetadata = [] } = useQuery<SpriteMetadata[]>({
+    queryKey: ['/api/sprites/metadata'],
   });
 
   // Filter sprites for platforms and obstacles
-  const platformSprites = allSprites.filter(s =>
+  const platformSprites = allSpritesMetadata.filter(s =>
     s.category === 'biome-platform' || s.category === 'platform'
   );
-  const obstacleSprites = allSprites.filter(s =>
+  const obstacleSprites = allSpritesMetadata.filter(s =>
     s.category === 'biome-obstacle' || s.category === 'obstacle'
   );
+
+  // Helper function to load sprite image on-demand
+  const loadSpriteImage = async (spriteId: number): Promise<string> => {
+    // Check if already loaded
+    if (loadedSpriteImages.has(spriteId)) {
+      return loadedSpriteImages.get(spriteId)!;
+    }
+
+    // Fetch the full sprite data
+    const response = await fetch(`/api/sprites/${spriteId}`);
+    const sprite: Sprite = await response.json();
+
+    // Cache the loaded image
+    setLoadedSpriteImages(prev => new Map(prev).set(spriteId, sprite.data));
+
+    return sprite.data;
+  };
 
   // Save level mutation
   const saveLevelMutation = useMutation({
@@ -313,9 +334,11 @@ export default function LevelEditor() {
               onMouseUp={handleCanvasMouseUp}
               onMouseLeave={handleCanvasMouseUp}
             >
-              {/* Render level objects - Fixed: Removed duplicate scale transform that was breaking positioning */}
+              {/* Render level objects */}
               {levelObjects.map((obj, idx) => {
-                const sprite = allSprites.find(s => s.filename === obj.spriteFilename);
+                const spriteMetadata = allSpritesMetadata.find(s => s.filename === obj.spriteFilename);
+                const spriteImage = spriteMetadata ? loadedSpriteImages.get(spriteMetadata.id) : undefined;
+
                 return (
                   <div
                     key={idx}
@@ -330,14 +353,19 @@ export default function LevelEditor() {
                       top: `${obj.yPosition * SCALE}px`,
                       width: `${obj.width * SCALE}px`,
                       height: `${obj.height * SCALE}px`,
-                      // Removed transform: scale() that was causing double-scaling and click detection issues
                     }}
                   >
                     <img
-                      src={sprite?.data || `/api/sprites/file/${obj.spriteFilename}`}
+                      src={spriteImage || `/api/sprites/file/${obj.spriteFilename}`}
                       alt={obj.spriteFilename}
                       className="w-full h-full object-contain pointer-events-none"
                       draggable={false}
+                      onLoad={(e) => {
+                        // Load sprite image on-demand when displayed
+                        if (spriteMetadata && !spriteImage) {
+                          loadSpriteImage(spriteMetadata.id);
+                        }
+                      }}
                       onError={(e) => {
                         // Fallback to API path if data URL fails
                         const target = e.target as HTMLImageElement;
@@ -373,46 +401,76 @@ export default function LevelEditor() {
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-teal-200 mb-2">Platforms</h4>
                 <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
-                  {platformSprites.map(sprite => (
-                    <div
-                      key={sprite.id}
-                      draggable
-                      onDragStart={() => handleSpriteStart(sprite, 'platform')}
-                      className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
-                    >
-                      <img
-                        src={sprite.data}
-                        alt={sprite.filename}
-                        className="w-full h-12 object-contain"
-                      />
-                      <p className="text-xs text-teal-200 mt-1 truncate text-center">
-                        {sprite.name || sprite.filename}
-                      </p>
-                    </div>
-                  ))}
+                  {platformSprites.map(sprite => {
+                    const spriteImage = loadedSpriteImages.get(sprite.id);
+                    return (
+                      <div
+                        key={sprite.id}
+                        draggable
+                        onDragStart={() => handleSpriteStart(sprite, 'platform')}
+                        onMouseEnter={() => {
+                          // Pre-load sprite image on hover for smoother drag experience
+                          if (!spriteImage) {
+                            loadSpriteImage(sprite.id);
+                          }
+                        }}
+                        className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
+                      >
+                        <img
+                          src={spriteImage || `/api/sprites/file/${sprite.filename}`}
+                          alt={sprite.filename}
+                          className="w-full h-12 object-contain"
+                          onLoad={() => {
+                            // Load sprite image on-demand when displayed
+                            if (!spriteImage) {
+                              loadSpriteImage(sprite.id);
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-teal-200 mt-1 truncate text-center">
+                          {sprite.name || sprite.filename}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               <div>
                 <h4 className="text-sm font-semibold text-teal-200 mb-2">Obstacles</h4>
                 <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
-                  {obstacleSprites.map(sprite => (
-                    <div
-                      key={sprite.id}
-                      draggable
-                      onDragStart={() => handleSpriteStart(sprite, 'obstacle')}
-                      className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
-                    >
-                      <img
-                        src={sprite.data}
-                        alt={sprite.filename}
-                        className="w-full h-12 object-contain"
-                      />
-                      <p className="text-xs text-teal-200 mt-1 truncate text-center">
-                        {sprite.name || sprite.filename}
-                      </p>
-                    </div>
-                  ))}
+                  {obstacleSprites.map(sprite => {
+                    const spriteImage = loadedSpriteImages.get(sprite.id);
+                    return (
+                      <div
+                        key={sprite.id}
+                        draggable
+                        onDragStart={() => handleSpriteStart(sprite, 'obstacle')}
+                        onMouseEnter={() => {
+                          // Pre-load sprite image on hover for smoother drag experience
+                          if (!spriteImage) {
+                            loadSpriteImage(sprite.id);
+                          }
+                        }}
+                        className="cursor-grab active:cursor-grabbing p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded transition-colors"
+                      >
+                        <img
+                          src={spriteImage || `/api/sprites/file/${sprite.filename}`}
+                          alt={sprite.filename}
+                          className="w-full h-12 object-contain"
+                          onLoad={() => {
+                            // Load sprite image on-demand when displayed
+                            if (!spriteImage) {
+                              loadSpriteImage(sprite.id);
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-teal-200 mt-1 truncate text-center">
+                          {sprite.name || sprite.filename}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
