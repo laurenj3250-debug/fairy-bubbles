@@ -13,10 +13,10 @@ const habitColors = [
   { bg: "linear-gradient(135deg, #64748b 0%, #475569 100%)", name: "Granite Ridge", border: "#94a3b8" },
   { bg: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", name: "Forest Base", border: "#14b8a6" },
   { bg: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)", name: "Glacier Ice", border: "#3b82f6" },
-  { bg: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", name: "Twilight Summit", border: "#a78bfa" },
-  { bg: "linear-gradient(135deg, #be123c 0%, #9f1239 100%)", name: "Alpine Sunset", border: "#f43f5e" },
-  { bg: "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)", name: "Mountain Mist", border: "#c084fc" },
+  { bg: "linear-gradient(135deg, #0e7490 0%, #155e75 100%)", name: "Deep Ice", border: "#06b6d4" },
+  { bg: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)", name: "Sky Ridge", border: "#3b82f6" },
   { bg: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)", name: "Snowmelt Stream", border: "#22d3ee" },
+  { bg: "linear-gradient(135deg, #78716c 0%, #57534e 100%)", name: "Rocky Cliff", border: "#a8a29e" },
 ];
 
 // Get consistent color for a habit based on its ID
