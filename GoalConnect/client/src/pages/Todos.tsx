@@ -105,9 +105,9 @@ export default function Todos() {
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return { text: `${Math.abs(diffDays)} days overdue`, color: "text-red-400" };
+      return { text: `${Math.abs(diffDays)} days overdue`, color: "text-slate-400" };
     } else if (diffDays === 0) {
-      return { text: "Due today", color: "text-orange-400" };
+      return { text: "Due today", color: "text-cyan-400" };
     } else if (diffDays === 1) {
       return { text: "Due tomorrow", color: "text-yellow-400" };
     } else if (diffDays <= 7) {
@@ -175,7 +175,7 @@ export default function Todos() {
           </div>
           <Button
             onClick={() => setTodoDialogOpen(true)}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Todo
@@ -373,7 +373,7 @@ export default function Todos() {
                             }
                           }}
                           disabled={deleteTodoMutation.isPending}
-                          className="flex-shrink-0 p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
+                          className="flex-shrink-0 p-2 text-slate-400 hover:bg-slate-500/20 rounded-lg transition-all"
                           title="Delete todo"
                         >
                           <Trash2 className="w-4 h-4" />

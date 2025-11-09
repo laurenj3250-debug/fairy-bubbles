@@ -206,7 +206,7 @@ export default function WeeklyView() {
         {weeklyHabits.length > 0 && (
           <div className="glass-card rounded-2xl p-4 mb-4">
             <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-purple-300" />
+              <TrendingUp className="w-4 h-4 text-cyan-300" />
               Weekly Goals
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -224,7 +224,7 @@ export default function WeeklyView() {
                       <div
                         className={cn(
                           "h-full transition-all",
-                          isComplete ? "bg-green-400" : "bg-purple-400"
+                          isComplete ? "bg-green-400" : "bg-cyan-400"
                         )}
                         style={{ width: `${percentage}%` }}
                       />
