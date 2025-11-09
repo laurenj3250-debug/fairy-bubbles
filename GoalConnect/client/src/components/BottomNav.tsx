@@ -1,13 +1,13 @@
-import { Home, CheckCircle, Users, Sparkles, Settings } from "lucide-react";
+import { Home, TrendingUp, Mountain, ShoppingBag, Target } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/habits", label: "Habits", icon: CheckCircle },
-  { path: "/outside-world", label: "World", icon: Sparkles },
-  { path: "/party", label: "Party", icon: Users },
-  { path: "/game/admin", label: "Admin", icon: Settings },
+  { path: "/", label: "Base Camp", icon: Home },
+  { path: "/habits", label: "Training", icon: TrendingUp },
+  { path: "/world-map", label: "Mountains", icon: Mountain },
+  { path: "/alpine-shop", label: "Gear Shop", icon: ShoppingBag },
+  { path: "/dream-scroll", label: "Log", icon: Target },
 ];
 
 export function BottomNav() {
