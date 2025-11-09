@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
-import { EnchantedForestBackground } from "@/components/EnchantedForestBackground";
+import { MountainBackground } from "@/components/MountainBackground";
 import Dashboard from "@/pages/DashboardNew";
 import Habits from "@/pages/Habits";
 import Goals from "@/pages/Goals";
@@ -184,7 +184,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <EnchantedForestBackground />
+          <MountainBackground />
           <Toaster />
           <AppRoutes />
           <style>{`

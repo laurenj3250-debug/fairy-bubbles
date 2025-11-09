@@ -159,85 +159,85 @@
   --elevate-1: rgba(255,255,255, .03);
   --elevate-2: rgba(255,255,255, .06);
 
-  /* Soft dark background with subtle warmth */
-  --background: 230 15% 12%;
+  /* Mountain theme: Deep desaturated blue background */
+  --background: 213 45% 20%;
 
-  /* Soft light text */
-  --foreground: 220 15% 88%;
+  /* Light text for readability */
+  --foreground: 210 20% 90%;
 
-  /* Subtle border */
-  --border: 230 10% 22%;
+  /* Subtle border - cool gray */
+  --border: 215 15% 30%;
 
-  /* Elevated card surface */
-  --card: 230 12% 16%;
+  /* Elevated card surface - slightly lighter than background */
+  --card: 215 20% 25%;
 
-  --card-foreground: 220 15% 88%;
+  --card-foreground: 210 20% 90%;
 
   /* Subtle card border */
-  --card-border: 230 10% 24%;
+  --card-border: 215 15% 35%;
 
   /* Sidebar matches card */
-  --sidebar: 230 12% 16%;
+  --sidebar: 215 20% 25%;
 
-  --sidebar-foreground: 220 15% 88%;
+  --sidebar-foreground: 210 20% 90%;
 
-  --sidebar-border: 230 10% 24%;
+  --sidebar-border: 215 15% 35%;
 
-  /* Soft Teal primary (slightly brighter for dark mode) */
-  --sidebar-primary: 170 55% 55%;
+  /* Primary: Deep desaturated blue (night mountain) */
+  --sidebar-primary: 213 45% 45%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  /* Soft lavender accent */
-  --sidebar-accent: 260 30% 28%;
+  /* Accent for secondary areas */
+  --sidebar-accent: 215 20% 30%;
 
-  --sidebar-accent-foreground: 170 55% 60%;
+  --sidebar-accent-foreground: 213 45% 60%;
 
-  --sidebar-ring: 170 55% 55%;
+  --sidebar-ring: 213 45% 45%;
 
   /* Popovers */
-  --popover: 230 12% 16%;
+  --popover: 215 20% 25%;
 
-  --popover-foreground: 220 15% 88%;
+  --popover-foreground: 210 20% 90%;
 
-  --popover-border: 230 10% 26%;
+  --popover-border: 215 15% 35%;
 
-  /* Soft Teal primary */
-  --primary: 170 55% 55%;
+  /* Primary: Deep desaturated blue */
+  --primary: 213 45% 45%;
 
   --primary-foreground: 0 0% 100%;
 
-  /* Warm Peach (adjusted for dark mode) */
-  --secondary: 25 80% 60%;
+  /* Secondary: Cold gray (rock/snow shadow) */
+  --secondary: 215 10% 50%;
 
-  --secondary-foreground: 220 15% 12%;
+  --secondary-foreground: 0 0% 100%;
 
-  /* Soft Sage - muted backgrounds */
-  --muted: 150 15% 24%;
+  /* Muted backgrounds - cool gray */
+  --muted: 215 15% 30%;
 
   /* Muted text */
-  --muted-foreground: 220 10% 60%;
+  --muted-foreground: 215 10% 65%;
 
-  /* Soft Lavender accent */
-  --accent: 260 35% 50%;
+  /* Accent: Sunrise orange for progress/success */
+  --accent: 30 95% 55%;
 
-  --accent-foreground: 220 15% 95%;
+  --accent-foreground: 0 0% 100%;
 
-  /* Muted Coral destructive */
+  /* Destructive remains similar */
   --destructive: 5 65% 60%;
 
   --destructive-foreground: 0 0% 100%;
 
-  /* Soft input backgrounds */
-  --input: 230 10% 22%;
-  --ring: 170 55% 55%;
+  /* Input backgrounds */
+  --input: 215 15% 30%;
+  --ring: 213 45% 45%;
   
-  /* Pastel chart colors (adjusted for dark mode) */
-  --chart-1: 170 55% 55%;
-  --chart-2: 25 80% 60%;
-  --chart-3: 260 35% 60%;
-  --chart-4: 140 45% 55%;
-  --chart-5: 40 75% 55%;
+  /* Mountain-themed chart colors */
+  --chart-1: 213 45% 55%;  /* Mountain blue */
+  --chart-2: 30 95% 55%;   /* Sunrise orange */
+  --chart-3: 215 10% 60%;  /* Rock gray */
+  --chart-4: 200 50% 45%;  /* Glacier teal */
+  --chart-5: 35 85% 50%;   /* Sunset amber */
 
   /* Soft layered shadows in dark mode */
   --shadow-2xs: 0 2px 4px hsl(0 0% 0% / 0.20);
@@ -399,19 +399,15 @@
   }
 }
 
-/* Enchanted Forest Design System */
+/* Mountain Climbing Theme Design System */
 @layer utilities {
-  /* Magical Gradient Background Animation */
-  .enchanted-bg {
-    background: linear-gradient(135deg, #1a1f3a 0%, #2d1b4e 25%, #1f3d4a 50%, #2a4a3a 75%, #3d2f5c 100%);
-    background-size: 400% 400%;
-    animation: dreamyGradient 20s ease infinite;
-  }
-
-  @keyframes dreamyGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  /* Mountain Gradient Background - Static, calm */
+  .mountain-bg-static {
+    background: linear-gradient(180deg,
+      hsl(var(--background)) 0%,
+      hsl(213 40% 25%) 50%,
+      hsl(213 35% 30%) 100%
+    );
   }
 
   /* Magical Glow Effect */
