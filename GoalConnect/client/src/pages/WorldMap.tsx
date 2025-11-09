@@ -221,23 +221,19 @@ export default function WorldMap() {
                           </div>
                         </div>
 
-                        <Button
-                          disabled={!unlocked}
-                          className="w-full"
-                          variant={unlocked ? "default" : "outline"}
-                        >
-                          {unlocked ? (
-                            <>
+                        {unlocked ? (
+                          <Link href={`/expedition/plan/${mountain.id}`}>
+                            <Button className="w-full">
                               <TrendingUp className="w-4 h-4 mr-2" />
                               Plan Expedition
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-4 h-4 mr-2" />
-                              Locked
-                            </>
-                          )}
-                        </Button>
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Button disabled className="w-full" variant="outline">
+                            <Lock className="w-4 h-4 mr-2" />
+                            Locked
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   );

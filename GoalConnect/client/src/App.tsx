@@ -14,6 +14,7 @@ import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
+import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
 import Wonderland from "@/pages/Wonderland";
 import OutsideWorld from "@/pages/OutsideWorld";
 import BiomeExploration from "@/pages/BiomeExploration";
@@ -124,6 +125,12 @@ function AppRoutes() {
       <Route path="/world-map">
         <RequireAuth>
           <WorldMap />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/expedition/plan/:mountainId">
+        <RequireAuth>
+          <ExpeditionPlanning />
           <BottomNav />
         </RequireAuth>
       </Route>
