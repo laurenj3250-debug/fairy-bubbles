@@ -335,14 +335,14 @@ export default function WeeklyView() {
                         className={cn(
                           "w-full rounded-lg p-2 transition-all text-left",
                           isCompleted
-                            ? "bg-blue-500/20 border border-blue-400/50"
+                            ? "bg-slate-500/20 border border-slate-400/50"
                             : "bg-white/5 border border-white/10 hover:bg-white/10"
                         )}
                       >
                         <div className="flex items-center gap-2">
                           <div className={cn(
                             "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                            isCompleted ? "bg-blue-400 border-blue-500" : "border-white/40"
+                            isCompleted ? "bg-slate-400 border-slate-500" : "border-white/40"
                           )}>
                             {isCompleted && <span className="text-white text-xs">✓</span>}
                           </div>

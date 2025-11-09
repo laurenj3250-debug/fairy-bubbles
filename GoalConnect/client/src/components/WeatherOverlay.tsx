@@ -68,8 +68,6 @@ export function WeatherOverlay({ weather }: WeatherOverlayProps) {
               />
             ))}
           </div>
-          {/* Lightning flash */}
-          <div className="lightning-flash" style={{ animationDelay: '2s' }} />
         </>
       )}
 

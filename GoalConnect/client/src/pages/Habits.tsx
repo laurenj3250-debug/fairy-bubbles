@@ -277,7 +277,7 @@ export default function Habits() {
         </div>
 
         {habits.length === 0 ? (
-          <div className="glass-card-blue rounded-3xl p-12 text-center alpine-glow">
+          <div className="glass-card rounded-3xl p-12 text-center alpine-glow">
             <Sparkles className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
             <h2
               className="text-3xl font-bold text-white mb-4"
