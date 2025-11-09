@@ -12,6 +12,8 @@ import type { Goal, Habit, HabitLog, Todo } from "@shared/schema";
 import { getToday } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { getWeatherFromStreak, WEATHER_INFO } from "@/lib/weatherEffects";
+import { WeatherOverlay } from "@/components/WeatherOverlay";
 
 interface HabitWithData extends Habit {
   streak?: { habitId: number; streak: number };
@@ -97,14 +99,24 @@ export default function DashboardNew() {
     return todayLogs.some(log => log.habitId === habitId && log.completed);
   };
 
-  // Weather condition based on progress (Phase C - Dynamic Effects)
-  const getWeatherCondition = () => {
-    if (completionPercentage >= 80) return "clear";
-    if (completionPercentage >= 50) return "partly-cloudy";
-    return "overcast";
+  // Weather condition based on streak and performance
+  const calculateMissedDaysThisWeek = () => {
+    // Get all unique habit logs for this week
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    // Simple calculation: if completion percentage is low, count missed days
+    const totalPossible = habits.length * 7;
+    const completed = todayLogs.filter(log => log.completed).length * 7;
+    const missedPercentage = totalPossible > 0 ? ((totalPossible - completed) / totalPossible) * 100 : 0;
+
+    // Convert to missed days (0-7)
+    return Math.min(Math.floor(missedPercentage / 15), 7);
   };
 
-  const weatherCondition = getWeatherCondition();
+  const missedDaysThisWeek = calculateMissedDaysThisWeek();
+  const weather = getWeatherFromStreak(longestStreak, missedDaysThisWeek);
+  const weatherInfo = WEATHER_INFO[weather];
 
   // Celebration effect for habit completion
   const [celebratingHabitId, setCelebratingHabitId] = useState<number | null>(null);
@@ -135,19 +147,9 @@ export default function DashboardNew() {
   }
 
   return (
-    <div className="min-h-screen pb-24 bg-transparent">
-      {/* Weather overlay effect based on progress */}
-      <div
-        className={cn(
-          "fixed inset-0 pointer-events-none z-5 transition-opacity duration-1000",
-          weatherCondition === "clear" && "opacity-0",
-          weatherCondition === "partly-cloudy" && "opacity-20",
-          weatherCondition === "overcast" && "opacity-40"
-        )}
-        style={{
-          background: "linear-gradient(180deg, rgba(100, 120, 140, 0.3) 0%, transparent 50%)"
-        }}
-      />
+    <div className="min-h-screen pb-24 bg-transparent" data-weather={weather}>
+      {/* Weather overlay with animated effects */}
+      <WeatherOverlay weather={weather} />
 
       {/* Enhanced Vertical Progress Bar - Left Side with Camp Markers */}
       <div className="fixed left-4 top-20 bottom-24 w-16 z-20 hidden md:flex flex-col items-center">
@@ -228,7 +230,7 @@ export default function DashboardNew() {
       <div className="relative z-10 max-w-4xl mx-auto p-4 md:p-6 md:ml-20">
         {/* Header */}
         <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern card-tilt">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">
                 {getGreeting()}, {userName}!
@@ -252,6 +254,25 @@ export default function DashboardNew() {
                 <div className="text-xs text-muted-foreground">Streak</div>
               </div>
             </div>
+          </div>
+
+          {/* Weather Conditions Display */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted/10 rounded-xl border border-border/30">
+            <span className="text-2xl">{weatherInfo.emoji}</span>
+            <div className="flex-1">
+              <div className="text-sm font-bold text-foreground">{weatherInfo.name}</div>
+              <div className="text-xs text-muted-foreground">{weatherInfo.description}</div>
+            </div>
+            {longestStreak >= 7 && (
+              <Badge className="bg-[hsl(var(--accent))]/20 text-[hsl(var(--accent))] border-[hsl(var(--accent))]/30">
+                Perfect Conditions
+              </Badge>
+            )}
+            {missedDaysThisWeek >= 3 && (
+              <Badge className="bg-destructive/20 text-destructive border-destructive/30">
+                Take Shelter
+              </Badge>
+            )}
           </div>
         </div>
 

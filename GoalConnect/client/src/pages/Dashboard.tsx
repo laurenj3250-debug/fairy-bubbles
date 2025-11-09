@@ -10,6 +10,8 @@ import { MonthlyGoalsWidget } from "@/components/MonthlyGoalsWidget";
 import { GoalJourneyCard } from "@/components/GoalJourneyCard";
 import { GoalBadge } from "@/components/GoalBadge";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
+import { RidgeTraverseWeek } from "@/components/RidgeTraverseWeek";
+import { AscentMap } from "@/components/AscentMap";
 import { Home, Calendar, List, CheckCircle, Sparkles, Zap, Crown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -469,6 +471,11 @@ export default function Dashboard() {
           <AchievementSpotlight achievements={achievements} autoRotate={true} intervalMs={6000} />
         </div>
 
+        {/* Ridge Traverse Week */}
+        <div className="mb-6">
+          <RidgeTraverseWeek />
+        </div>
+
         {/* Active Goals Section - NEW! */}
         {goals.length > 0 && (
           <div className="mb-8">
@@ -532,6 +539,9 @@ export default function Dashboard() {
           <div className="flex flex-col gap-6">
             {/* Climbing Partner */}
             <VirtualPet />
+
+            {/* Ascent Map */}
+            <AscentMap />
 
             {/* Training Insights */}
             <div className="glass-card-blue rounded-3xl p-6 alpine-glow" style={{animationDelay: '1s'}}>

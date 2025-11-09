@@ -684,6 +684,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get abandoned goals (no updates in 90+ days and not completed)
+  app.get("/api/goals/abandoned", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const goals = await storage.getGoals(userId);
+
+      // Filter incomplete goals
+      const incompleteGoals = goals.filter(
+        goal => goal.currentValue < goal.targetValue
+      );
+
+      // For each incomplete goal, get the most recent update
+      const abandonedGoals = [];
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      for (const goal of incompleteGoals) {
+        const updates = await storage.getGoalUpdates(goal.id);
+
+        // If no updates, use a very old date to consider it abandoned
+        if (updates.length === 0) {
+          abandonedGoals.push({
+            ...goal,
+            lastUpdateDate: null,
+            daysSinceUpdate: 999,
+          });
+          continue;
+        }
+
+        // Get the most recent update
+        const sortedUpdates = updates.sort((a, b) => b.date.localeCompare(a.date));
+        const lastUpdate = sortedUpdates[0];
+        const lastUpdateDate = new Date(lastUpdate.date);
+        const daysSinceUpdate = Math.floor(
+          (Date.now() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        // Include if last update was more than 90 days ago
+        if (daysSinceUpdate >= 90) {
+          abandonedGoals.push({
+            ...goal,
+            lastUpdateDate: lastUpdate.date,
+            daysSinceUpdate,
+          });
+        }
+      }
+
+      res.json(abandonedGoals);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch abandoned goals" });
+    }
+  });
+
   app.get("/api/goals/:id", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -748,6 +801,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete goal" });
+    }
+  });
+
+  // Reactivate an abandoned goal by adding a new update
+  app.post("/api/goals/:id/reactivate", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseInt(req.params.id);
+
+      // Verify ownership
+      const existing = await storage.getGoal(id);
+      if (!existing) {
+        return res.status(404).json({ error: "Goal not found" });
+      }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Add a new update with current value to "reactivate" the goal
+      const today = new Date().toISOString().split('T')[0];
+      const update = await storage.createGoalUpdate({
+        goalId: id,
+        userId,
+        date: today,
+        value: existing.currentValue,
+        note: "Goal reactivated from abandoned gear",
+      });
+
+      res.json({ success: true, goal: existing, update });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to reactivate goal" });
     }
   });
 
@@ -1154,6 +1238,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(todos);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch todos" });
+    }
+  });
+
+  // Get abandoned todos (created 90+ days ago and not completed)
+  app.get("/api/todos/abandoned", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const todos = await storage.getTodos(userId);
+
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      // Filter incomplete todos that are older than 90 days
+      const abandonedTodos = todos.filter(todo => {
+        if (todo.completed) return false;
+        if (!todo.createdAt) return false;
+
+        const createdDate = new Date(todo.createdAt);
+        return createdDate < ninetyDaysAgo;
+      });
+
+      res.json(abandonedTodos);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch abandoned todos" });
     }
   });
 

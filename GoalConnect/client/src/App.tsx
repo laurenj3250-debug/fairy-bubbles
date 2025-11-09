@@ -29,6 +29,9 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Component that requires authentication
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -67,6 +70,26 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const timeOfDay = useTimeOfDay();
+  const { user } = useAuth();
+
+  // Fetch habits to check for streak
+  const { data: habits = [] } = useQuery<any[]>({
+    queryKey: ["/api/habits-with-data"],
+    enabled: !!user,
+  });
+
+  // Check for high streak (7+ days)
+  useEffect(() => {
+    const longestStreak = habits.reduce((max, habit) => {
+      const streak = habit.streak?.streak || 0;
+      return Math.max(max, streak);
+    }, 0);
+
+    const hasStreak = longestStreak >= 7;
+    document.documentElement.setAttribute('data-has-streak', hasStreak ? 'true' : 'false');
+  }, [habits]);
+
   return (
     <Switch>
       {/* Public routes */}
