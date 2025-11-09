@@ -436,3 +436,280 @@ export type InsertEncounter = z.infer<typeof insertEncounterSchema>;
 export type InsertPlayerStats = z.infer<typeof insertPlayerStatsSchema>;
 export type InsertSprite = z.infer<typeof insertSpriteSchema>;
 export type InsertDreamScrollItem = z.infer<typeof insertDreamScrollItemSchema>;
+
+// ========== MOUNTAINEERING EXPEDITION GAME ==========
+
+// World Map Regions (Geographic organization of mountains)
+export const worldMapRegions = pgTable("world_map_regions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  continent: varchar("continent", { length: 50 }).notNull(),
+  description: text("description").notNull().default(""),
+  unlockLevel: integer("unlock_level").notNull().default(1),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Mountains (Real-world peaks)
+export const mountains = pgTable("mountains", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  elevation: integer("elevation").notNull(), // meters
+  country: text("country").notNull(),
+  mountainRange: text("mountain_range").notNull(),
+  continent: varchar("continent", { length: 50 }).notNull(),
+  regionId: integer("region_id").references(() => worldMapRegions.id),
+
+  // Geographic coordinates for map positioning
+  latitude: text("latitude").notNull(),
+  longitude: text("longitude").notNull(),
+
+  // Difficulty and progression
+  difficultyTier: varchar("difficulty_tier", { length: 20 }).notNull()
+    .$type<"novice" | "intermediate" | "advanced" | "expert" | "elite">(),
+  requiredClimbingLevel: integer("required_climbing_level").notNull().default(1),
+
+  // Metadata
+  description: text("description").notNull().default(""),
+  firstAscentYear: integer("first_ascent_year"),
+  fatalityRate: text("fatality_rate"), // e.g., "3.5%" stored as text
+  bestSeasonStart: varchar("best_season_start", { length: 20 }),
+  bestSeasonEnd: varchar("best_season_end", { length: 20 }),
+
+  // Unlock requirements (JSON: level, habits_completed, previous_climbs, etc.)
+  unlockRequirements: text("unlock_requirements").notNull().default("{}"),
+
+  // Display
+  imageUrl: text("image_url"),
+  mapPositionX: integer("map_position_x"),
+  mapPositionY: integer("map_position_y"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Routes (Multiple climbing routes per mountain)
+export const routes = pgTable("routes", {
+  id: serial("id").primaryKey(),
+  mountainId: integer("mountain_id").notNull().references(() => mountains.id),
+  routeName: text("route_name").notNull(),
+
+  // Grading
+  gradingSystem: varchar("grading_system", { length: 20 }).notNull(), // YDS, UIAA, French, etc.
+  gradeValue: text("grade_value").notNull(), // e.g., "5.10a", "AD", "III"
+
+  // Route characteristics
+  elevationGain: integer("elevation_gain").notNull(), // meters
+  estimatedDays: integer("estimated_days").notNull(),
+  terrainTypes: text("terrain_types").notNull().default("[]"), // JSON array: ["glacier", "rock", "snow", "mixed"]
+  hazards: text("hazards").notNull().default("[]"), // JSON array: ["avalanche", "crevasse", "rockfall", "altitude"]
+
+  // Requirements
+  requiresOxygen: boolean("requires_oxygen").notNull().default(false),
+  requiresFixedRopes: boolean("requires_fixed_ropes").notNull().default(false),
+  requiresTechnicalClimbing: boolean("requires_technical_climbing").notNull().default(false),
+
+  // Description
+  routeDescription: text("route_description").notNull().default(""),
+  firstAscentYear: integer("first_ascent_year"),
+
+  // Difficulty
+  technicalDifficulty: integer("technical_difficulty").notNull().default(1), // 1-10 scale
+  physicalDifficulty: integer("physical_difficulty").notNull().default(1), // 1-10 scale
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Alpine Gear (Equipment for mountaineering)
+export const alpineGear = pgTable("alpine_gear", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  category: varchar("category", { length: 30 }).notNull()
+    .$type<"boots" | "crampons" | "rope" | "tent" | "clothing" | "safety" | "oxygen" | "ice_axe" | "harness" | "backpack" | "sleeping_bag" | "stove" | "miscellaneous">(),
+  description: text("description").notNull().default(""),
+
+  // Physical properties
+  weightGrams: integer("weight_grams").notNull().default(0),
+
+  // Progression
+  tier: varchar("tier", { length: 20 }).notNull()
+    .$type<"basic" | "intermediate" | "advanced" | "elite">(),
+  unlockLevel: integer("unlock_level").notNull().default(1),
+  unlockHabitCount: integer("unlock_habit_count").notNull().default(0),
+
+  // Acquisition
+  cost: integer("cost").notNull().default(0), // In-game currency
+
+  // Stats (JSON: warmth_rating, durability, technical_grade, oxygen_capacity, etc.)
+  stats: text("stats").notNull().default("{}"),
+
+  // Display
+  imageUrl: text("image_url"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Route Gear Requirements (What gear is needed per route)
+export const routeGearRequirements = pgTable("route_gear_requirements", {
+  id: serial("id").primaryKey(),
+  routeId: integer("route_id").notNull().references(() => routes.id),
+  gearId: integer("gear_id").notNull().references(() => alpineGear.id),
+  isRequired: boolean("is_required").notNull().default(true),
+  quantity: integer("quantity").notNull().default(1),
+  notes: text("notes"),
+});
+
+// Player Gear Inventory (Gear owned by players)
+export const playerGearInventory = pgTable("player_gear_inventory", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  gearId: integer("gear_id").notNull().references(() => alpineGear.id),
+  acquiredDate: timestamp("acquired_date").defaultNow().notNull(),
+  timesUsed: integer("times_used").notNull().default(0),
+  condition: integer("condition").notNull().default(100), // 0-100%, degrades with use
+});
+
+// Player Climbing Stats (Overall progression and achievements)
+export const playerClimbingStats = pgTable("player_climbing_stats", {
+  userId: integer("user_id").primaryKey().references(() => users.id),
+
+  // Progression
+  climbingLevel: integer("climbing_level").notNull().default(1),
+  totalExperience: integer("total_experience").notNull().default(0),
+
+  // Achievements
+  summitsReached: integer("summits_reached").notNull().default(0),
+  totalElevationClimbed: integer("total_elevation_climbed").notNull().default(0), // meters
+  continentsCompleted: text("continents_completed").notNull().default("[]"), // JSON array
+  achievements: text("achievements").notNull().default("[]"), // JSON array of achievement IDs
+
+  // Energy system
+  currentEnergy: integer("current_energy").notNull().default(100),
+  maxEnergy: integer("max_energy").notNull().default(100),
+  trainingDaysCompleted: integer("training_days_completed").notNull().default(0),
+
+  // Stats
+  longestExpedition: integer("longest_expedition").notNull().default(0), // days
+  highestPeakClimbed: integer("highest_peak_climbed").notNull().default(0), // meters
+
+  // Last updated
+  lastEnergyRefresh: timestamp("last_energy_refresh").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Player Expeditions (Climbing attempts/progress)
+export const playerExpeditions = pgTable("player_expeditions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  routeId: integer("route_id").notNull().references(() => routes.id),
+
+  // Status
+  status: varchar("status", { length: 20 }).notNull()
+    .$type<"planning" | "in_progress" | "completed" | "failed" | "abandoned">(),
+
+  // Timeline
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  completionDate: timestamp("completion_date"),
+
+  // Progress tracking
+  currentProgress: integer("current_progress").notNull().default(0), // 0-100%
+  currentAltitude: integer("current_altitude").notNull().default(0), // meters
+  currentDay: integer("current_day").notNull().default(1),
+
+  // Resources
+  energySpent: integer("energy_spent").notNull().default(0),
+  habitsCompletedDuring: integer("habits_completed_during").notNull().default(0),
+
+  // Outcome
+  summitReached: boolean("summit_reached").notNull().default(false),
+  experienceEarned: integer("experience_earned").notNull().default(0),
+
+  // Player notes/journal
+  notes: text("notes").default(""),
+
+  // Metadata
+  weatherCondition: varchar("weather_condition", { length: 20 }),
+  teamMorale: integer("team_morale").notNull().default(100), // 0-100
+  acclimatizationLevel: integer("acclimatization_level").notNull().default(0), // 0-100
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Expedition Events (Events during climbs)
+export const expeditionEvents = pgTable("expedition_events", {
+  id: serial("id").primaryKey(),
+  expeditionId: integer("expedition_id").notNull().references(() => playerExpeditions.id),
+
+  // Event details
+  eventType: varchar("event_type", { length: 30 }).notNull()
+    .$type<"weather_delay" | "storm" | "avalanche" | "crevasse" | "altitude_sickness" | "equipment_failure" | "success" | "rest_day" | "acclimatization" | "team_conflict" | "rescue">(),
+  eventDay: integer("event_day").notNull(),
+  eventDescription: text("event_description").notNull(),
+
+  // Impact
+  energyCost: integer("energy_cost").notNull().default(0),
+  progressImpact: integer("progress_impact").notNull().default(0), // Can be negative
+  moraleImpact: integer("morale_impact").notNull().default(0),
+
+  // Player decision/response (JSON)
+  playerChoice: text("player_choice").default("{}"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Expedition Gear Loadout (What gear was taken on each expedition)
+export const expeditionGearLoadout = pgTable("expedition_gear_loadout", {
+  id: serial("id").primaryKey(),
+  expeditionId: integer("expedition_id").notNull().references(() => playerExpeditions.id),
+  gearId: integer("gear_id").notNull().references(() => alpineGear.id),
+  quantity: integer("quantity").notNull().default(1),
+  conditionBefore: integer("condition_before").notNull().default(100),
+  conditionAfter: integer("condition_after").notNull().default(100),
+});
+
+// Mountain Unlocks (Track which mountains are unlocked for each player)
+export const mountainUnlocks = pgTable("mountain_unlocks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  mountainId: integer("mountain_id").notNull().references(() => mountains.id),
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  unlockedBy: varchar("unlocked_by", { length: 50 }).notNull(), // "level", "achievement", "previous_climb", etc.
+});
+
+// TypeScript types for mountaineering tables
+export type WorldMapRegion = typeof worldMapRegions.$inferSelect;
+export type Mountain = typeof mountains.$inferSelect;
+export type Route = typeof routes.$inferSelect;
+export type AlpineGear = typeof alpineGear.$inferSelect;
+export type RouteGearRequirement = typeof routeGearRequirements.$inferSelect;
+export type PlayerGearInventory = typeof playerGearInventory.$inferSelect;
+export type PlayerClimbingStats = typeof playerClimbingStats.$inferSelect;
+export type PlayerExpedition = typeof playerExpeditions.$inferSelect;
+export type ExpeditionEvent = typeof expeditionEvents.$inferSelect;
+export type ExpeditionGearLoadout = typeof expeditionGearLoadout.$inferSelect;
+export type MountainUnlock = typeof mountainUnlocks.$inferSelect;
+
+// Insert schemas for mountaineering tables
+export const insertWorldMapRegionSchema = createInsertSchema(worldMapRegions).omit({ id: true, createdAt: true });
+export const insertMountainSchema = createInsertSchema(mountains).omit({ id: true, createdAt: true });
+export const insertRouteSchema = createInsertSchema(routes).omit({ id: true, createdAt: true });
+export const insertAlpineGearSchema = createInsertSchema(alpineGear).omit({ id: true, createdAt: true });
+export const insertRouteGearRequirementSchema = createInsertSchema(routeGearRequirements).omit({ id: true });
+export const insertPlayerGearInventorySchema = createInsertSchema(playerGearInventory).omit({ id: true, acquiredDate: true });
+export const insertPlayerClimbingStatsSchema = createInsertSchema(playerClimbingStats);
+export const insertPlayerExpeditionSchema = createInsertSchema(playerExpeditions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertExpeditionEventSchema = createInsertSchema(expeditionEvents).omit({ id: true, createdAt: true });
+export const insertExpeditionGearLoadoutSchema = createInsertSchema(expeditionGearLoadout).omit({ id: true });
+export const insertMountainUnlockSchema = createInsertSchema(mountainUnlocks).omit({ id: true, unlockedAt: true });
+
+export type InsertWorldMapRegion = z.infer<typeof insertWorldMapRegionSchema>;
+export type InsertMountain = z.infer<typeof insertMountainSchema>;
+export type InsertRoute = z.infer<typeof insertRouteSchema>;
+export type InsertAlpineGear = z.infer<typeof insertAlpineGearSchema>;
+export type InsertRouteGearRequirement = z.infer<typeof insertRouteGearRequirementSchema>;
+export type InsertPlayerGearInventory = z.infer<typeof insertPlayerGearInventorySchema>;
+export type InsertPlayerClimbingStats = z.infer<typeof insertPlayerClimbingStatsSchema>;
+export type InsertPlayerExpedition = z.infer<typeof insertPlayerExpeditionSchema>;
+export type InsertExpeditionEvent = z.infer<typeof insertExpeditionEventSchema>;
+export type InsertExpeditionGearLoadout = z.infer<typeof insertExpeditionGearLoadoutSchema>;
+export type InsertMountainUnlock = z.infer<typeof insertMountainUnlockSchema>;

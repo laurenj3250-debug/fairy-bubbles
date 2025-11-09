@@ -469,6 +469,270 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create biome_level_objects table:', error);
       }
 
+      // ========== MOUNTAINEERING EXPEDITION GAME MIGRATIONS ==========
+
+      try {
+        // Create world_map_regions table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS world_map_regions (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            continent VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            unlock_level INTEGER NOT NULL DEFAULT 1,
+            display_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ World map regions table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create world_map_regions table:', error);
+      }
+
+      try {
+        // Create mountains table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS mountains (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            elevation INTEGER NOT NULL,
+            country TEXT NOT NULL,
+            mountain_range TEXT NOT NULL,
+            continent VARCHAR(50) NOT NULL,
+            region_id INTEGER REFERENCES world_map_regions(id),
+            latitude TEXT NOT NULL,
+            longitude TEXT NOT NULL,
+            difficulty_tier VARCHAR(20) NOT NULL CHECK (difficulty_tier IN ('novice', 'intermediate', 'advanced', 'expert', 'elite')),
+            required_climbing_level INTEGER NOT NULL DEFAULT 1,
+            description TEXT NOT NULL DEFAULT '',
+            first_ascent_year INTEGER,
+            fatality_rate TEXT,
+            best_season_start VARCHAR(20),
+            best_season_end VARCHAR(20),
+            unlock_requirements TEXT NOT NULL DEFAULT '{}',
+            image_url TEXT,
+            map_position_x INTEGER,
+            map_position_y INTEGER,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_difficulty_tier ON mountains(difficulty_tier)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_continent ON mountains(continent)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_region_id ON mountains(region_id)`);
+        console.log('[migrate] ✅ Mountains table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create mountains table:', error);
+      }
+
+      try {
+        // Create routes table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS routes (
+            id SERIAL PRIMARY KEY,
+            mountain_id INTEGER NOT NULL REFERENCES mountains(id) ON DELETE CASCADE,
+            route_name TEXT NOT NULL,
+            grading_system VARCHAR(20) NOT NULL,
+            grade_value TEXT NOT NULL,
+            elevation_gain INTEGER NOT NULL,
+            estimated_days INTEGER NOT NULL,
+            terrain_types TEXT NOT NULL DEFAULT '[]',
+            hazards TEXT NOT NULL DEFAULT '[]',
+            requires_oxygen BOOLEAN NOT NULL DEFAULT false,
+            requires_fixed_ropes BOOLEAN NOT NULL DEFAULT false,
+            requires_technical_climbing BOOLEAN NOT NULL DEFAULT false,
+            route_description TEXT NOT NULL DEFAULT '',
+            first_ascent_year INTEGER,
+            technical_difficulty INTEGER NOT NULL DEFAULT 1,
+            physical_difficulty INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_routes_mountain_id ON routes(mountain_id)`);
+        console.log('[migrate] ✅ Routes table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create routes table:', error);
+      }
+
+      try {
+        // Create alpine_gear table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS alpine_gear (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            category VARCHAR(30) NOT NULL CHECK (category IN ('boots', 'crampons', 'rope', 'tent', 'clothing', 'safety', 'oxygen', 'ice_axe', 'harness', 'backpack', 'sleeping_bag', 'stove', 'miscellaneous')),
+            description TEXT NOT NULL DEFAULT '',
+            weight_grams INTEGER NOT NULL DEFAULT 0,
+            tier VARCHAR(20) NOT NULL CHECK (tier IN ('basic', 'intermediate', 'advanced', 'elite')),
+            unlock_level INTEGER NOT NULL DEFAULT 1,
+            unlock_habit_count INTEGER NOT NULL DEFAULT 0,
+            cost INTEGER NOT NULL DEFAULT 0,
+            stats TEXT NOT NULL DEFAULT '{}',
+            image_url TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_alpine_gear_category ON alpine_gear(category)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_alpine_gear_tier ON alpine_gear(tier)`);
+        console.log('[migrate] ✅ Alpine gear table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create alpine_gear table:', error);
+      }
+
+      try {
+        // Create route_gear_requirements table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS route_gear_requirements (
+            id SERIAL PRIMARY KEY,
+            route_id INTEGER NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+            gear_id INTEGER NOT NULL REFERENCES alpine_gear(id) ON DELETE CASCADE,
+            is_required BOOLEAN NOT NULL DEFAULT true,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            notes TEXT
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_route_gear_route_id ON route_gear_requirements(route_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_route_gear_gear_id ON route_gear_requirements(gear_id)`);
+        console.log('[migrate] ✅ Route gear requirements table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create route_gear_requirements table:', error);
+      }
+
+      try {
+        // Create player_gear_inventory table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS player_gear_inventory (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            gear_id INTEGER NOT NULL REFERENCES alpine_gear(id) ON DELETE CASCADE,
+            acquired_date TIMESTAMP NOT NULL DEFAULT NOW(),
+            times_used INTEGER NOT NULL DEFAULT 0,
+            condition INTEGER NOT NULL DEFAULT 100
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_gear_user_id ON player_gear_inventory(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_gear_gear_id ON player_gear_inventory(gear_id)`);
+        console.log('[migrate] ✅ Player gear inventory table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create player_gear_inventory table:', error);
+      }
+
+      try {
+        // Create player_climbing_stats table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS player_climbing_stats (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            climbing_level INTEGER NOT NULL DEFAULT 1,
+            total_experience INTEGER NOT NULL DEFAULT 0,
+            summits_reached INTEGER NOT NULL DEFAULT 0,
+            total_elevation_climbed INTEGER NOT NULL DEFAULT 0,
+            continents_completed TEXT NOT NULL DEFAULT '[]',
+            achievements TEXT NOT NULL DEFAULT '[]',
+            current_energy INTEGER NOT NULL DEFAULT 100,
+            max_energy INTEGER NOT NULL DEFAULT 100,
+            training_days_completed INTEGER NOT NULL DEFAULT 0,
+            longest_expedition INTEGER NOT NULL DEFAULT 0,
+            highest_peak_climbed INTEGER NOT NULL DEFAULT 0,
+            last_energy_refresh TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        console.log('[migrate] ✅ Player climbing stats table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create player_climbing_stats table:', error);
+      }
+
+      try {
+        // Create player_expeditions table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS player_expeditions (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            route_id INTEGER NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+            status VARCHAR(20) NOT NULL CHECK (status IN ('planning', 'in_progress', 'completed', 'failed', 'abandoned')),
+            start_date TIMESTAMP NOT NULL DEFAULT NOW(),
+            completion_date TIMESTAMP,
+            current_progress INTEGER NOT NULL DEFAULT 0,
+            current_altitude INTEGER NOT NULL DEFAULT 0,
+            current_day INTEGER NOT NULL DEFAULT 1,
+            energy_spent INTEGER NOT NULL DEFAULT 0,
+            habits_completed_during INTEGER NOT NULL DEFAULT 0,
+            summit_reached BOOLEAN NOT NULL DEFAULT false,
+            experience_earned INTEGER NOT NULL DEFAULT 0,
+            notes TEXT DEFAULT '',
+            weather_condition VARCHAR(20),
+            team_morale INTEGER NOT NULL DEFAULT 100,
+            acclimatization_level INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_user_id ON player_expeditions(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_route_id ON player_expeditions(route_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_status ON player_expeditions(user_id, status)`);
+        console.log('[migrate] ✅ Player expeditions table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create player_expeditions table:', error);
+      }
+
+      try {
+        // Create expedition_events table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS expedition_events (
+            id SERIAL PRIMARY KEY,
+            expedition_id INTEGER NOT NULL REFERENCES player_expeditions(id) ON DELETE CASCADE,
+            event_type VARCHAR(30) NOT NULL CHECK (event_type IN ('weather_delay', 'storm', 'avalanche', 'crevasse', 'altitude_sickness', 'equipment_failure', 'success', 'rest_day', 'acclimatization', 'team_conflict', 'rescue')),
+            event_day INTEGER NOT NULL,
+            event_description TEXT NOT NULL,
+            energy_cost INTEGER NOT NULL DEFAULT 0,
+            progress_impact INTEGER NOT NULL DEFAULT 0,
+            morale_impact INTEGER NOT NULL DEFAULT 0,
+            player_choice TEXT DEFAULT '{}',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_events_expedition_id ON expedition_events(expedition_id)`);
+        console.log('[migrate] ✅ Expedition events table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create expedition_events table:', error);
+      }
+
+      try {
+        // Create expedition_gear_loadout table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS expedition_gear_loadout (
+            id SERIAL PRIMARY KEY,
+            expedition_id INTEGER NOT NULL REFERENCES player_expeditions(id) ON DELETE CASCADE,
+            gear_id INTEGER NOT NULL REFERENCES alpine_gear(id) ON DELETE CASCADE,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            condition_before INTEGER NOT NULL DEFAULT 100,
+            condition_after INTEGER NOT NULL DEFAULT 100
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_gear_expedition_id ON expedition_gear_loadout(expedition_id)`);
+        console.log('[migrate] ✅ Expedition gear loadout table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create expedition_gear_loadout table:', error);
+      }
+
+      try {
+        // Create mountain_unlocks table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS mountain_unlocks (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            mountain_id INTEGER NOT NULL REFERENCES mountains(id) ON DELETE CASCADE,
+            unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            unlocked_by VARCHAR(50) NOT NULL
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_unlocks_user_id ON mountain_unlocks(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_unlocks_mountain_id ON mountain_unlocks(mountain_id)`);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_mountain_unlocks_user_mountain ON mountain_unlocks(user_id, mountain_id)`);
+        console.log('[migrate] ✅ Mountain unlocks table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
+      }
+
       console.log('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
