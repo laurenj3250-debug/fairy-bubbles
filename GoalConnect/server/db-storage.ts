@@ -1158,6 +1158,15 @@ export class DbStorage implements IStorage {
     return stats;
   }
 
+  async updatePlayerClimbingStats(userId: number, data: Partial<any>): Promise<any> {
+    const [updated] = await this.db
+      .update(schema.playerClimbingStats)
+      .set(data)
+      .where(eq(schema.playerClimbingStats.userId, userId))
+      .returning();
+    return updated;
+  }
+
   // Combo System
   async getComboStats(userId: number): Promise<any> {
     const [stats] = await this.db

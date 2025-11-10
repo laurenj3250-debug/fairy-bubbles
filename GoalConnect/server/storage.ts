@@ -212,6 +212,7 @@ export interface IStorage {
   getAllMountains(): Promise<any[]>;
   getMountainsByRegion(regionId: number): Promise<any[]>;
   getPlayerClimbingStats(userId: number): Promise<any>;
+  updatePlayerClimbingStats(userId: number, data: Partial<any>): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -794,6 +795,10 @@ export class MemStorage implements IStorage {
   }
 
   async getPlayerClimbingStats(userId: number): Promise<any> {
+    return null;
+  }
+
+  async updatePlayerClimbingStats(userId: number, data: Partial<any>): Promise<any> {
     return null;
   }
 

@@ -660,6 +660,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `Completed "${habit.title}"${multiplier > 1.0 ? ` (${multiplier.toFixed(1)}x combo)` : ''}`
           );
 
+          // Award XP for habit completion (Phase B: XP Tracking)
+          let xpEarned = 10; // Base XP
+          if (habit.effort === 'medium') xpEarned = 15;
+          if (habit.effort === 'heavy') xpEarned = 20;
+
+          // Get or create climbing stats
+          let climbingStats = await storage.getPlayerClimbingStats(userId);
+          if (!climbingStats) {
+            climbingStats = await storage.updatePlayerClimbingStats(userId, {
+              climbingLevel: 1,
+              totalXp: 0,
+              summits: 0,
+              totalDistance: 0,
+              totalElevationGain: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+            });
+          }
+
+          const oldLevel = climbingStats.climbingLevel;
+          const newTotalXp = (climbingStats.totalXp || 0) + xpEarned;
+          const newLevel = Math.floor(newTotalXp / 100) + 1; // 100 XP per level
+          const leveledUp = newLevel > oldLevel;
+
+          await storage.updatePlayerClimbingStats(userId, {
+            totalXp: newTotalXp,
+            climbingLevel: newLevel,
+          });
+
+          console.log(`[XP] Awarded ${xpEarned} XP for completing "${habit.title}" (Total: ${newTotalXp}, Level: ${newLevel})`);
+
           // If habit is linked to a goal, increment goal progress
           if (habit.linkedGoalId) {
             const goal = await storage.getGoal(habit.linkedGoalId);
@@ -2718,6 +2749,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== GEAR COLLECTION ROUTES ==========
+
+  // Get gear collection stats (for GearCollectionPanel)
+  app.get("/api/gear/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+
+      // Get all gear
+      const allGear = await storage.getAllAlpineGear();
+
+      // Get player's inventory
+      const inventory = await storage.getPlayerGearInventory(userId);
+      const ownedGearIds = new Set(inventory.map((item: any) => item.gearId));
+
+      // Calculate stats by tier
+      const stats = {
+        totalGear: allGear.length,
+        ownedGear: inventory.length,
+        basicTier: allGear.filter((g: any) => g.tier === 'basic').length,
+        intermediateTier: allGear.filter((g: any) => g.tier === 'intermediate').length,
+        advancedTier: allGear.filter((g: any) => g.tier === 'advanced').length,
+        eliteTier: allGear.filter((g: any) => g.tier === 'elite').length,
+      };
+
+      res.json(stats);
+    } catch (error: any) {
+      console.error('[gear] Get stats error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get gear collection with owned status (for GearCollectionPanel)
+  app.get("/api/gear/collection", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+
+      // Get all gear
+      const allGear = await storage.getAllAlpineGear();
+
+      // Get player's inventory
+      const inventory = await storage.getPlayerGearInventory(userId);
+      const ownedGearIds = new Set(inventory.map((item: any) => item.gearId));
+
+      // Map gear with owned status
+      const gearCollection = allGear.map((gear: any) => ({
+        id: gear.id,
+        name: gear.name,
+        category: gear.category,
+        tier: gear.tier,
+        unlockLevel: gear.unlockLevel || 1,
+        cost: gear.cost || 0,
+        imageUrl: gear.imageUrl,
+        owned: ownedGearIds.has(gear.id),
+      }));
+
+      res.json(gearCollection);
+    } catch (error: any) {
+      console.error('[gear] Get collection error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== MOUNTAIN ROUTES ==========
+
   // Get all regions
   app.get("/api/mountains/regions", async (req, res) => {
     try {
@@ -2763,6 +2866,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error: any) {
       console.error('[climbing] Get stats error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get level progress (for XP bar)
+  app.get("/api/user/level-progress", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      let stats = await storage.getPlayerClimbingStats(userId);
+
+      if (!stats) {
+        stats = {
+          climbingLevel: 1,
+          totalXp: 0,
+        };
+      }
+
+      const currentLevel = stats.climbingLevel || 1;
+      const totalXp = stats.totalXp || 0;
+      const xpForCurrentLevel = (currentLevel - 1) * 100;
+      const xpInCurrentLevel = totalXp - xpForCurrentLevel;
+      const xpNeededForNextLevel = 100; // 100 XP per level
+
+      // Calculate climbing grade based on level
+      const gradeMap: Record<number, string> = {
+        1: "5.5", 2: "5.6", 3: "5.7", 4: "5.8", 5: "5.9",
+        6: "5.10a", 7: "5.10b", 8: "5.10c", 9: "5.10d",
+        10: "5.11a", 11: "5.11b", 12: "5.11c", 13: "5.11d",
+        14: "5.12a", 15: "5.12b", 16: "5.12c", 17: "5.12d",
+        18: "5.13a", 19: "5.13b", 20: "5.13c",
+      };
+      const grade = gradeMap[currentLevel] || "5.13d";
+
+      res.json({
+        level: currentLevel,
+        grade,
+        totalXp,
+        xpInCurrentLevel,
+        xpNeededForNextLevel,
+        progressPercent: Math.round((xpInCurrentLevel / xpNeededForNextLevel) * 100),
+      });
+    } catch (error: any) {
+      console.error('[user] Get level progress error:', error);
       res.status(500).json({ error: error.message });
     }
   });
