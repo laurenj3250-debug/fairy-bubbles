@@ -18,12 +18,7 @@ export function XPProgressBar() {
   });
 
   if (!progress) {
-    return (
-      <div className="bg-card/60 backdrop-blur-sm border border-card-border rounded-xl p-3 animate-pulse">
-        <div className="h-4 bg-muted/20 rounded w-32 mb-2" />
-        <div className="h-2 bg-muted/20 rounded" />
-      </div>
-    );
+    return null; // Hide component if data can't be loaded
   }
 
   return (
