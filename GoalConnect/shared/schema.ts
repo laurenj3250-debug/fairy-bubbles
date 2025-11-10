@@ -25,6 +25,8 @@ export const habits = pgTable("habits", {
   category: varchar("category", { length: 20 }).default("training").$type<"training" | "mind" | "foundation" | "adventure">(),
   effort: varchar("effort", { length: 10 }).default("medium").$type<"light" | "medium" | "heavy">(),
   grade: text("grade").default("5.9"), // e.g., "5.9", "5.11"
+  // Adventure scheduling
+  scheduledDay: varchar("scheduled_day", { length: 10 }), // ISO date string (YYYY-MM-DD) for which day this week
 });
 
 export const habitLogs = pgTable("habit_logs", {

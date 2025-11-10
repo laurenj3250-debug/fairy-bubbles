@@ -170,6 +170,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Schedule adventure habit for a specific day
+  app.patch("/api/habits/:id/schedule", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseInt(req.params.id);
+      const { scheduledDay } = req.body;
+
+      // Verify ownership
+      const existing = await storage.getHabit(id);
+      if (!existing) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Validate that it's an adventure habit
+      if (existing.category !== "adventure") {
+        return res.status(400).json({ error: "Only adventure habits can be scheduled" });
+      }
+
+      // Update scheduledDay (can be null to clear schedule)
+      const habit = await storage.updateHabit(id, { scheduledDay });
+      res.json(habit);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to schedule habit" });
+    }
+  });
+
   app.delete("/api/habits/:id", async (req, res) => {
     try {
       const userId = getUserId(req);

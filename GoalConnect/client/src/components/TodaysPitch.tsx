@@ -22,10 +22,10 @@ const CATEGORY_LABELS = {
 } as const;
 
 const CATEGORY_COLORS = {
-  mind: "from-purple-500/30 to-indigo-500/30 border-purple-400/40",
-  foundation: "from-orange-500/30 to-amber-500/30 border-orange-400/40",
-  adventure: "from-green-500/30 to-emerald-500/30 border-green-400/40",
-  training: "from-blue-500/30 to-cyan-500/30 border-blue-400/40",
+  mind: "bg-muted/20 border-border/50",
+  foundation: "bg-muted/20 border-border/50",
+  adventure: "bg-muted/20 border-border/50",
+  training: "bg-muted/20 border-border/50",
 } as const;
 
 function getEffortIcon(effort: string): string {
@@ -132,11 +132,19 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
     habitsWithCompletion.forEach((habit) => {
       const category = habit.category || "training";
-      groups[category].push(habit);
+
+      // Filter Adventure habits: only show if scheduled for today
+      if (category === "adventure") {
+        if (habit.scheduledDay === today) {
+          groups[category].push(habit);
+        }
+      } else {
+        groups[category].push(habit);
+      }
     });
 
     return groups;
-  }, [habitsWithCompletion]);
+  }, [habitsWithCompletion, today]);
 
   const handleToggle = (habitId: number) => {
     toggleHabitMutation.mutate({ habitId });
@@ -144,12 +152,12 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
   if (habitsLoading || logsLoading) {
     return (
-      <div className={cn("glass-card rounded-3xl p-8", className)}>
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-white/20 rounded w-1/3"></div>
+      <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
+        <div className="animate-pulse space-y-4 relative z-10">
+          <div className="h-8 bg-muted/30 rounded w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-white/10 rounded-xl"></div>
+              <div key={i} className="h-16 bg-muted/20 rounded-xl"></div>
             ))}
           </div>
         </div>
@@ -161,28 +169,22 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
   const completedHabits = habitsWithCompletion.filter((h) => h.completed).length;
 
   return (
-    <div className={cn("glass-card rounded-3xl p-8 alpine-glow", className)}>
+    <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern mountain-card-depth", className)}>
       {/* Header */}
-      <div className="mb-6">
-        <h2
-          className="text-2xl font-bold text-white flex items-center gap-3"
-          style={{
-            fontFamily: "'Comfortaa', cursive",
-            textShadow: "0 0 10px rgba(255, 255, 255, 0.5)",
-          }}
-        >
+      <div className="mb-6 relative z-10">
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
           Today's Pitch
-          <span className="text-lg font-normal text-white/80">
+          <span className="text-lg font-normal text-muted-foreground">
             ({completedHabits}/{totalHabits})
           </span>
         </h2>
-        <p className="text-white/70 text-sm mt-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+        <p className="text-muted-foreground text-sm mt-1">
           1-tap to log your training
         </p>
       </div>
 
       {/* Habits grouped by category */}
-      <div className="space-y-6">
+      <div className="space-y-6 relative z-10">
         {Object.entries(groupedHabits).map(([category, categoryHabits]) => {
           if (categoryHabits.length === 0) return null;
 
@@ -193,7 +195,7 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
             <div key={category}>
               {/* Category header */}
               <div className="mb-3">
-                <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   {CATEGORY_LABELS[categoryKey]}
                 </h3>
               </div>
@@ -206,55 +208,53 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
                     onClick={() => handleToggle(habit.id)}
                     className={cn(
                       "habit-row relative cursor-pointer transition-all duration-200",
-                      "rounded-xl p-4 border-2",
-                      "bg-gradient-to-r backdrop-blur-xl",
+                      "rounded-xl p-3 border",
                       categoryColor,
-                      "hover:scale-[1.02] active:scale-[0.98]",
-                      habit.completed && "opacity-60"
+                      "ice-crystal-border",
+                      "hover:scale-[1.01] active:scale-[0.99]",
+                      habit.completed && "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30"
                     )}
                   >
-                    <div className="flex items-center gap-4">
-                      {/* Checkbox */}
+                    <div className="flex items-center gap-3">
+                      {/* Icon */}
                       <div
-                        className={cn(
-                          "flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                          habit.completed
-                            ? "bg-white border-white"
-                            : "border-white/50 hover:border-white"
-                        )}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110"
+                        style={{ background: habit.color }}
                       >
-                        {habit.completed && (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        )}
+                        {habit.icon}
                       </div>
 
                       {/* Habit info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{habit.icon}</span>
-                          <span
-                            className={cn(
-                              "font-semibold text-white",
-                              habit.completed && "line-through"
-                            )}
-                          >
-                            {habit.title}
-                          </span>
+                      <div className="flex-1">
+                        <div className="text-foreground font-medium text-sm">
+                          {habit.title}
                         </div>
-                        <div className="text-xs text-white/70 mt-0.5">
+                        <div className="text-xs text-muted-foreground mt-0.5">
                           {CATEGORY_LABELS[categoryKey]}
                         </div>
                       </div>
 
                       {/* Grade + Effort */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm font-bold text-white/90 bg-white/10 px-2 py-1 rounded">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs font-bold text-foreground bg-muted/30 px-2 py-1 rounded">
                           {habit.grade || "5.9"}
                         </span>
-                        <span className="text-lg" title={`${habit.effort || "medium"} effort`}>
+                        <span className="text-base text-foreground" title={`${habit.effort || "medium"} effort`}>
                           {getEffortIcon(habit.effort || "medium")}
                         </span>
                       </div>
+
+                      {/* Checkbox */}
+                      <button
+                        className={cn(
+                          "w-10 h-10 rounded-lg border-2 transition-all font-bold text-lg hover:scale-110 active:scale-95",
+                          habit.completed
+                            ? "bg-[hsl(var(--accent))]/30 border-[hsl(var(--accent))] text-[hsl(var(--accent))]"
+                            : "border-muted-foreground/30 hover:border-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/10 text-muted-foreground"
+                        )}
+                      >
+                        {habit.completed ? "✓" : "○"}
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -264,8 +264,8 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
         })}
 
         {totalHabits === 0 && (
-          <div className="text-center py-12">
-            <p className="text-white/60" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+          <div className="text-center py-12 relative z-10">
+            <p className="text-muted-foreground">
               No habits scheduled for today.
               <br />
               Create one to start your training!

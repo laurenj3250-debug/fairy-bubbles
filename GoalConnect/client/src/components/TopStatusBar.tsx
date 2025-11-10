@@ -87,11 +87,11 @@ export function TopStatusBar() {
   const rank = climbingStats ? getClimbingRank(climbingStats.climbingLevel) : null;
 
   return (
-    <div className="glass-card rounded-2xl p-3 mb-4 backdrop-blur-xl bg-white/10 border border-white/20">
-      <div className="flex items-center justify-between text-xs text-white/90">
+    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-3 mb-4 shadow-lg topo-pattern">
+      <div className="flex items-center justify-between text-xs text-foreground relative z-10">
         {/* Left: Season progress */}
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-teal-300">Season:</span>
+          <span className="font-semibold text-primary">Season:</span>
           <span className="font-mono">
             {seasonProgress.current}/{seasonProgress.total} days
           </span>
@@ -101,46 +101,46 @@ export function TopStatusBar() {
         <div className="flex items-center gap-2">
           {rank && (
             <>
-              <span className="text-white/60">•</span>
-              <span className="font-bold text-cyan-300">{rank.grade}</span>
-              <span className="text-white/80 hidden sm:inline">{rank.name}</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="font-bold text-primary">{rank.grade}</span>
+              <span className="text-foreground hidden sm:inline">{rank.name}</span>
             </>
           )}
         </div>
 
         {/* Right: Week summary */}
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-white/60 hidden md:inline">This week:</span>
+          <span className="text-muted-foreground hidden md:inline">This week:</span>
 
           {weekProgress.mind.target > 0 && (
             <div className="flex items-center gap-1">
-              <span className="text-purple-300 font-semibold">
+              <span className="text-[hsl(var(--accent))] font-semibold">
                 {weekProgress.mind.completed}/{weekProgress.mind.target}
               </span>
-              <span className="text-white/60">Mind</span>
+              <span className="text-muted-foreground">Mind</span>
             </div>
           )}
 
           {weekProgress.foundation.target > 0 && (
             <>
-              <span className="text-white/30">•</span>
+              <span className="text-muted-foreground/30">•</span>
               <div className="flex items-center gap-1">
-                <span className="text-orange-300 font-semibold">
+                <span className="text-[hsl(var(--accent))] font-semibold">
                   {weekProgress.foundation.completed}/{weekProgress.foundation.target}
                 </span>
-                <span className="text-white/60">Foundation</span>
+                <span className="text-muted-foreground">Foundation</span>
               </div>
             </>
           )}
 
           {weekProgress.adventure.target > 0 && (
             <>
-              <span className="text-white/30">•</span>
+              <span className="text-muted-foreground/30">•</span>
               <div className="flex items-center gap-1">
-                <span className="text-green-300 font-semibold">
+                <span className="text-[hsl(var(--accent))] font-semibold">
                   {weekProgress.adventure.completed}/{weekProgress.adventure.target}
                 </span>
-                <span className="text-white/60">Adventure</span>
+                <span className="text-muted-foreground">Adventure</span>
               </div>
             </>
           )}

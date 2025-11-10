@@ -101,13 +101,13 @@ export function RidgeTraverseWeekCompact({ onDayClick }: RidgeTraverseWeekCompac
   }
 
   return (
-    <div className="glass-card rounded-2xl p-4 alpine-glow">
+    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern">
       {/* Compact header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white/90">
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <h3 className="text-sm font-semibold text-foreground">
           Ridge Traverse
         </h3>
-        <span className="text-xs text-teal-300 font-semibold">
+        <span className="text-xs text-primary font-semibold">
           {peaksTraversed}/7 peaks
         </span>
       </div>
@@ -172,9 +172,9 @@ export function RidgeTraverseWeekCompact({ onDayClick }: RidgeTraverseWeekCompac
 
                   {/* Tooltip on hover */}
                   <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
-                    <div className="bg-black/90 text-white text-xs px-2 py-1 rounded border border-white/20">
+                    <div className="bg-card border border-border text-foreground text-xs px-2 py-1 rounded shadow-lg">
                       <div className="font-semibold">{day.dayName}</div>
-                      <div className="text-white/80">
+                      <div className="text-muted-foreground">
                         {day.completed}/{day.total}
                       </div>
                     </div>
@@ -188,12 +188,12 @@ export function RidgeTraverseWeekCompact({ onDayClick }: RidgeTraverseWeekCompac
                   className={cn(
                     "text-xs font-semibold transition-colors",
                     day.isToday
-                      ? "text-cyan-300"
+                      ? "text-primary"
                       : day.completionPercentage === 100
-                      ? "text-green-300"
+                      ? "text-[hsl(var(--accent))]"
                       : day.completionPercentage >= 50
-                      ? "text-yellow-300"
-                      : "text-white/60"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
                   )}
                 >
                   {day.dayName}
