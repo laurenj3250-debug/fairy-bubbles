@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Mountain, TrendingUp, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap } from "lucide-react";
-import { HabitDialogNew as HabitDialog } from "@/components/HabitDialogNew";
+import { HabitCreateDialog as HabitDialog } from "@/components/HabitCreateDialog";
 import { getToday, formatDateInput } from "@/lib/utils";
 import { getWeatherFromStreak, WEATHER_INFO } from "@/lib/weatherEffects";
 import { WeatherOverlay } from "@/components/WeatherOverlay";

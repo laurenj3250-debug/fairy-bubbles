@@ -23,7 +23,7 @@ import { useState, useMemo, useEffect } from "react";
 import { getToday, calculateStreak } from "@/lib/utils";
 import { getClimbingRank } from "@/lib/climbingRanks";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HabitDialogNew as HabitDialog } from "@/components/HabitDialogNew";
+import { HabitCreateDialog as HabitDialog } from "@/components/HabitCreateDialog";
 import { GoalDialog } from "@/components/GoalDialog";
 import { HabitLogDialog } from "@/components/HabitLogDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
