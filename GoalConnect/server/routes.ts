@@ -621,14 +621,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (habit) {
           const allLogs = await storage.getAllHabitLogs(userId);
           const currentStreak = calculateStreak(allLogs);
-          const coins = calculateCoinsEarned(habit, currentStreak);
+          let coins = calculateCoinsEarned(habit, currentStreak);
+
+          // Register combo and get multiplier
+          const now = new Date();
+          let stats = await storage.getComboStats(userId);
+          if (!stats) {
+            stats = await storage.createComboStats(userId);
+          }
+
+          const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
+          let currentCombo = stats.currentCombo;
+
+          if (comboExpiresAt && now > comboExpiresAt) {
+            currentCombo = 0;
+          }
+
+          currentCombo += 1;
+          const newExpiresAt = new Date(now.getTime() + 5 * 60 * 1000);
+          const dailyHighScore = Math.max(stats.dailyHighScore, currentCombo);
+          const multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
+
+          await storage.updateComboStats(userId, {
+            currentCombo,
+            dailyHighScore,
+            lastCompletionTime: now.toISOString(),
+            comboExpiresAt: newExpiresAt.toISOString(),
+          });
+
+          // Apply combo multiplier to coins
+          coins = Math.round(coins * multiplier);
 
           await storage.addPoints(
             userId,
             coins,
             "habit_complete",
             result.id,
-            `Completed "${habit.title}"`
+            `Completed "${habit.title}"${multiplier > 1.0 ? ` (${multiplier.toFixed(1)}x combo)` : ''}`
           );
 
           // If habit is linked to a goal, increment goal progress
@@ -668,6 +697,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Auto-update pet stats
       const petUpdate = await updatePetFromHabits(userId);
+
+      // Update daily quest progress (if completing a habit)
+      if (result.completed && !existingLog) {
+        const today = new Date().toISOString().split('T')[0];
+        const allUserQuests = await storage.getUserDailyQuests(userId, today);
+
+        for (const userQuest of allUserQuests) {
+          if (userQuest.completed || userQuest.claimed) continue;
+
+          const questTemplate = await storage.getDailyQuestTemplate(userQuest.questId);
+          if (!questTemplate) continue;
+
+          // Update progress based on quest type
+          let newProgress = userQuest.progress;
+          let shouldUpdate = false;
+
+          if (questTemplate.questType === 'complete_habits') {
+            newProgress = userQuest.progress + 1;
+            shouldUpdate = true;
+          } else if (questTemplate.questType.startsWith('complete_category_')) {
+            const habit = await storage.getHabit(habitId);
+            if (habit) {
+              const categoryType = questTemplate.questType.replace('complete_category_', '');
+              if (habit.category === categoryType) {
+                newProgress = userQuest.progress + 1;
+                shouldUpdate = true;
+              }
+            }
+          }
+
+          if (shouldUpdate) {
+            const completed = newProgress >= questTemplate.targetValue;
+            await storage.updateUserDailyQuest(userQuest.id, {
+              progress: newProgress,
+              completed,
+            });
+          }
+        }
+      }
 
       // Calculate reward details for frontend
       let rewardDetails = null;
@@ -2281,6 +2349,327 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error: any) {
       console.error('[dream-scroll-tags] Delete tag error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== COMBO SYSTEM ROUTES ==========
+
+  // Get combo stats
+  app.get("/api/combo/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+
+      // Get or create combo stats
+      let stats = await storage.getComboStats(userId);
+
+      if (!stats) {
+        stats = await storage.createComboStats(userId);
+      }
+
+      // Check if combo has expired (5 minutes)
+      const now = new Date();
+      const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
+
+      let currentCombo = stats.currentCombo;
+      let expiresIn = 0;
+
+      if (comboExpiresAt && now > comboExpiresAt) {
+        // Combo expired, reset
+        currentCombo = 0;
+        await storage.updateComboStats(userId, {
+          currentCombo: 0,
+          comboExpiresAt: null,
+        });
+      } else if (comboExpiresAt) {
+        expiresIn = Math.floor((comboExpiresAt.getTime() - now.getTime()) / 1000);
+      }
+
+      // Calculate multiplier
+      const multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
+
+      res.json({
+        currentCombo,
+        dailyHighScore: stats.dailyHighScore,
+        multiplier,
+        expiresIn,
+      });
+    } catch (error: any) {
+      console.error('[combo] Get stats error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Register a habit completion for combo tracking
+  app.post("/api/combo/register", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const now = new Date();
+
+      // Get or create combo stats
+      let stats = await storage.getComboStats(userId);
+
+      if (!stats) {
+        stats = await storage.createComboStats(userId);
+      }
+
+      // Check if previous combo is still valid (within 5 minutes)
+      const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
+      let currentCombo = stats.currentCombo;
+
+      if (comboExpiresAt && now > comboExpiresAt) {
+        // Previous combo expired, start new one
+        currentCombo = 0;
+      }
+
+      // Increment combo
+      currentCombo += 1;
+
+      // Set new expiration (5 minutes from now)
+      const newExpiresAt = new Date(now.getTime() + 5 * 60 * 1000);
+
+      // Update daily high score if needed
+      const dailyHighScore = Math.max(stats.dailyHighScore, currentCombo);
+
+      // Calculate multiplier
+      const multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
+
+      await storage.updateComboStats(userId, {
+        currentCombo,
+        dailyHighScore,
+        lastCompletionTime: now.toISOString(),
+        comboExpiresAt: newExpiresAt.toISOString(),
+      });
+
+      res.json({
+        currentCombo,
+        dailyHighScore,
+        multiplier,
+        expiresIn: 300, // 5 minutes in seconds
+      });
+    } catch (error: any) {
+      console.error('[combo] Register error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== DAILY QUEST SYSTEM ROUTES ==========
+
+  // Get today's daily quests with progress
+  app.get("/api/daily-quests", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const today = new Date().toISOString().split('T')[0];
+
+      // Get all quest templates
+      const questTemplates = await storage.getDailyQuestTemplates();
+
+      // Deterministically select 3 quests for today based on date
+      const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+      const selectedQuests = questTemplates
+        .sort((a, b) => a.id - b.id)
+        .filter((_, index) => (index + dayOfYear) % 3 < 3)
+        .slice(0, 3);
+
+      // Get or create user quest progress
+      const userQuests = [];
+      for (const quest of selectedQuests) {
+        let userQuest = await storage.getUserDailyQuest(userId, today, quest.id);
+
+        if (!userQuest) {
+          userQuest = await storage.createUserDailyQuest({
+            userId,
+            questDate: today,
+            questId: quest.id,
+            progress: 0,
+            completed: false,
+            claimed: false,
+          });
+        }
+
+        userQuests.push({
+          id: userQuest.id,
+          questId: quest.id,
+          title: quest.title,
+          description: quest.description,
+          targetValue: quest.targetValue,
+          rewardTokens: quest.rewardTokens,
+          progress: userQuest.progress,
+          completed: userQuest.completed,
+          claimed: userQuest.claimed,
+        });
+      }
+
+      res.json(userQuests);
+    } catch (error: any) {
+      console.error('[daily-quests] Get error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Claim quest reward
+  app.post("/api/daily-quests/:id/claim", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const questId = parseInt(req.params.id);
+
+      // Get user quest
+      const userQuest = await storage.getUserDailyQuestById(questId);
+
+      if (!userQuest || userQuest.userId !== userId) {
+        return res.status(404).json({ error: "Quest not found" });
+      }
+
+      if (!userQuest.completed) {
+        return res.status(400).json({ error: "Quest not completed yet" });
+      }
+
+      if (userQuest.claimed) {
+        return res.status(400).json({ error: "Quest reward already claimed" });
+      }
+
+      // Get quest template for reward amount
+      const questTemplate = await storage.getDailyQuestTemplate(userQuest.questId);
+
+      if (!questTemplate) {
+        return res.status(404).json({ error: "Quest template not found" });
+      }
+
+      // Award tokens
+      await storage.addPoints(
+        userId,
+        questTemplate.rewardTokens,
+        "daily_quest",
+        questId,
+        `Completed daily quest: ${questTemplate.title}`
+      );
+
+      // Mark as claimed
+      await storage.updateUserDailyQuest(questId, { claimed: true });
+
+      res.json({
+        success: true,
+        tokensEarned: questTemplate.rewardTokens,
+      });
+    } catch (error: any) {
+      console.error('[daily-quests] Claim error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ========== STREAK FREEZE ROUTES ==========
+
+  // Get user's streak freezes
+  app.get("/api/streak-freezes", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      let freezeData = await storage.getStreakFreeze(userId);
+
+      // Create if doesn't exist
+      if (!freezeData) {
+        freezeData = await storage.createStreakFreeze(userId);
+      }
+
+      // Check if user can earn a freeze (7-day streak)
+      const habits = await storage.getHabits(userId);
+      const allLogs = await storage.getAllHabitLogs(userId);
+
+      // Calculate current streak (simplified - you may want to use a more robust streak calculation)
+      const today = new Date();
+      let currentStreak = 0;
+
+      for (let i = 0; i < 90; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toISOString().split('T')[0];
+
+        const dayLogs = allLogs.filter(log => log.date === dateStr && log.completed);
+        if (dayLogs.length > 0) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+
+      const canEarn = currentStreak >= 7 && freezeData.freezeCount < 3;
+
+      res.json({
+        freezeCount: freezeData.freezeCount,
+        canEarn,
+      });
+    } catch (error: any) {
+      console.error('[streak-freezes] Get error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Purchase a streak freeze
+  app.post("/api/streak-freezes/purchase", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const FREEZE_COST = 100;
+
+      // Get current points
+      const points = await storage.getUserPoints(userId);
+      if (!points || points.available < FREEZE_COST) {
+        return res.status(400).json({ error: "Not enough tokens" });
+      }
+
+      // Get current freeze data
+      let freezeData = await storage.getStreakFreeze(userId);
+      if (!freezeData) {
+        freezeData = await storage.createStreakFreeze(userId);
+      }
+
+      // Check if at max freezes
+      if (freezeData.freezeCount >= 3) {
+        return res.status(400).json({ error: "Already at maximum freezes (3)" });
+      }
+
+      // Deduct points
+      await storage.addPoints(
+        userId,
+        -FREEZE_COST,
+        "habit_complete",
+        null,
+        "Purchased streak freeze"
+      );
+
+      // Increment freeze count
+      const updated = await storage.updateStreakFreeze(userId, {
+        freezeCount: freezeData.freezeCount + 1,
+      });
+
+      res.json({
+        success: true,
+        freezeCount: updated.freezeCount,
+      });
+    } catch (error: any) {
+      console.error('[streak-freezes] Purchase error:', error);
       res.status(500).json({ error: error.message });
     }
   });

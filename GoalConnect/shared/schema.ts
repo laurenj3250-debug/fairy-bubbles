@@ -719,3 +719,60 @@ export type InsertPlayerExpedition = z.infer<typeof insertPlayerExpeditionSchema
 export type InsertExpeditionEvent = z.infer<typeof insertExpeditionEventSchema>;
 export type InsertExpeditionGearLoadout = z.infer<typeof insertExpeditionGearLoadoutSchema>;
 export type InsertMountainUnlock = z.infer<typeof insertMountainUnlockSchema>;
+
+// ========== COMBO SYSTEM ==========
+
+export const userComboStats = pgTable("user_combo_stats", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  currentCombo: integer("current_combo").default(0).notNull(),
+  dailyHighScore: integer("daily_high_score").default(0).notNull(),
+  lastCompletionTime: timestamp("last_completion_time"),
+  comboExpiresAt: timestamp("combo_expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type UserComboStats = typeof userComboStats.$inferSelect;
+export type InsertUserComboStats = typeof userComboStats.$inferInsert;
+
+// ========== DAILY QUEST SYSTEM ==========
+
+export const dailyQuests = pgTable("daily_quests", {
+  id: serial("id").primaryKey(),
+  questType: varchar("quest_type", { length: 50 }).notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  targetValue: integer("target_value").notNull(),
+  rewardTokens: integer("reward_tokens").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userDailyQuests = pgTable("user_daily_quests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  questDate: varchar("quest_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  questId: integer("quest_id").notNull().references(() => dailyQuests.id, { onDelete: "cascade" }),
+  progress: integer("progress").default(0).notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  claimed: boolean("claimed").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type DailyQuest = typeof dailyQuests.$inferSelect;
+export type InsertDailyQuest = typeof dailyQuests.$inferInsert;
+export type UserDailyQuest = typeof userDailyQuests.$inferSelect;
+export type InsertUserDailyQuest = typeof userDailyQuests.$inferInsert;
+
+// ========== STREAK FREEZE SYSTEM ==========
+
+export const streakFreezes = pgTable("streak_freezes", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  freezeCount: integer("freeze_count").default(0).notNull(),
+  lastEarnedDate: varchar("last_earned_date", { length: 10 }), // YYYY-MM-DD
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type StreakFreeze = typeof streakFreezes.$inferSelect;
+export type InsertStreakFreeze = typeof streakFreezes.$inferInsert;

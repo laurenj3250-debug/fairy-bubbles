@@ -1,7 +1,8 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as Icons from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { CompletionCelebration } from "./CompletionCelebration";
 
 interface HabitToggleRowProps {
   title: string;
@@ -11,6 +12,7 @@ interface HabitToggleRowProps {
   onToggle: () => void;
   onLongPress?: () => void;
   className?: string;
+  tokensEarned?: number;
 }
 
 export function HabitToggleRow({
@@ -21,10 +23,14 @@ export function HabitToggleRow({
   onToggle,
   onLongPress,
   className,
+  tokensEarned = 10,
 }: HabitToggleRowProps) {
   const IconComponent = (Icons as any)[icon] || Icons.Sparkles;
 
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationPosition, setCelebrationPosition] = useState<{ x: number; y: number }>();
 
   const handlePressStart = () => {
     pressTimer.current = setTimeout(() => {
@@ -39,15 +45,34 @@ export function HabitToggleRow({
     }
   };
 
+  const handleToggle = () => {
+    // If toggling to completed, show celebration
+    if (!completed && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCelebrationPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+      setShowCelebration(true);
+
+      // Hide celebration after animation
+      setTimeout(() => setShowCelebration(false), 800);
+    }
+
+    onToggle();
+  };
+
   return (
-    <button
-      onClick={onToggle}
-      onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={handlePressEnd}
-      onTouchStart={handlePressStart}
-      onTouchEnd={handlePressEnd}
-      className={cn(
+    <>
+      <button
+        ref={buttonRef}
+        onClick={handleToggle}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressEnd}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        className={cn(
         "flex items-center gap-3 w-full min-h-14 px-4 py-3 rounded-2xl transition-all border-2 relative overflow-hidden",
         completed
           ? "bg-muted border-muted"
@@ -89,6 +114,13 @@ export function HabitToggleRow({
       )}>
         {title}
       </span>
-    </button>
+      </button>
+
+      <CompletionCelebration
+        show={showCelebration}
+        tokensEarned={tokensEarned}
+        position={celebrationPosition}
+      />
+    </>
   );
 }

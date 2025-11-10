@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Habit, HabitLog } from "@shared/schema";
 import { useMemo } from "react";
 import { getClimbingRank } from "@/lib/climbingRanks";
+import { TokenCounter } from "./TokenCounter";
 
 interface ClimbingStats {
   climbingLevel: number;
@@ -89,12 +90,15 @@ export function TopStatusBar() {
   return (
     <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-3 mb-4 shadow-lg topo-pattern">
       <div className="flex items-center justify-between text-xs text-foreground relative z-10">
-        {/* Left: Season progress */}
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-primary">Season:</span>
-          <span className="font-mono">
-            {seasonProgress.current}/{seasonProgress.total} days
-          </span>
+        {/* Left: Token Counter + Season progress */}
+        <div className="flex items-center gap-4">
+          <TokenCounter />
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-primary">Season:</span>
+            <span className="font-mono">
+              {seasonProgress.current}/{seasonProgress.total} days
+            </span>
+          </div>
         </div>
 
         {/* Center: Climbing grade/rank */}

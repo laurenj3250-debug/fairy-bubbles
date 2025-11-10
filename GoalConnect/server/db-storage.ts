@@ -1157,4 +1157,162 @@ export class DbStorage implements IStorage {
 
     return stats;
   }
+
+  // Combo System
+  async getComboStats(userId: number): Promise<any> {
+    const [stats] = await this.db
+      .select()
+      .from(schema.userComboStats)
+      .where(eq(schema.userComboStats.userId, userId));
+    return stats;
+  }
+
+  async createComboStats(userId: number): Promise<any> {
+    const [stats] = await this.db
+      .insert(schema.userComboStats)
+      .values({
+        userId,
+        currentCombo: 0,
+        dailyHighScore: 0,
+        lastCompletionTime: null,
+        comboExpiresAt: null,
+      })
+      .returning();
+    return stats;
+  }
+
+  async updateComboStats(userId: number, data: Partial<any>): Promise<any> {
+    const [updated] = await this.db
+      .update(schema.userComboStats)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .where(eq(schema.userComboStats.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  // Daily Quest System
+  async getDailyQuestTemplates(): Promise<any[]> {
+    return await this.db.select().from(schema.dailyQuests);
+  }
+
+  async getDailyQuestTemplate(id: number): Promise<any> {
+    const [template] = await this.db
+      .select()
+      .from(schema.dailyQuests)
+      .where(eq(schema.dailyQuests.id, id));
+    return template;
+  }
+
+  async getUserDailyQuest(userId: number, date: string, questId: number): Promise<any> {
+    const [quest] = await this.db
+      .select()
+      .from(schema.userDailyQuests)
+      .where(
+        and(
+          eq(schema.userDailyQuests.userId, userId),
+          eq(schema.userDailyQuests.questDate, date),
+          eq(schema.userDailyQuests.questId, questId)
+        )
+      );
+    return quest;
+  }
+
+  async getUserDailyQuestById(id: number): Promise<any> {
+    const [quest] = await this.db
+      .select()
+      .from(schema.userDailyQuests)
+      .where(eq(schema.userDailyQuests.id, id));
+    return quest;
+  }
+
+  async getUserDailyQuests(userId: number, date: string): Promise<any[]> {
+    const quests = await this.db
+      .select()
+      .from(schema.userDailyQuests)
+      .where(
+        and(
+          eq(schema.userDailyQuests.userId, userId),
+          eq(schema.userDailyQuests.questDate, date)
+        )
+      );
+    return quests;
+  }
+
+  async createUserDailyQuest(data: any): Promise<any> {
+    const [quest] = await this.db
+      .insert(schema.userDailyQuests)
+      .values(data)
+      .returning();
+    return quest;
+  }
+
+  async updateUserDailyQuest(id: number, data: Partial<any>): Promise<any> {
+    const [updated] = await this.db
+      .update(schema.userDailyQuests)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .where(eq(schema.userDailyQuests.id, id))
+      .returning();
+    return updated;
+  }
+
+  // ========== STREAK FREEZE METHODS ==========
+
+  async getStreakFreeze(userId: number): Promise<any> {
+    const [freeze] = await this.db
+      .select()
+      .from(schema.streakFreezes)
+      .where(eq(schema.streakFreezes.userId, userId));
+    return freeze;
+  }
+
+  async createStreakFreeze(userId: number): Promise<any> {
+    const [freeze] = await this.db
+      .insert(schema.streakFreezes)
+      .values({
+        userId,
+        freezeCount: 0,
+        lastEarnedDate: null,
+      })
+      .returning();
+    return freeze;
+  }
+
+  async updateStreakFreeze(userId: number, data: Partial<any>): Promise<any> {
+    const [updated] = await this.db
+      .update(schema.streakFreezes)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .where(eq(schema.streakFreezes.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async incrementStreakFreeze(userId: number): Promise<any> {
+    const freeze = await this.getStreakFreeze(userId);
+    if (!freeze) {
+      return this.createStreakFreeze(userId);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check if already earned today
+    if (freeze.lastEarnedDate === today) {
+      return freeze;
+    }
+
+    return this.updateStreakFreeze(userId, {
+      freezeCount: Math.min(freeze.freezeCount + 1, 3), // Max 3 freezes
+      lastEarnedDate: today,
+    });
+  }
+
+  async decrementStreakFreeze(userId: number): Promise<any> {
+    const freeze = await this.getStreakFreeze(userId);
+    if (!freeze || freeze.freezeCount <= 0) {
+      return freeze;
+    }
+
+    return this.updateStreakFreeze(userId, {
+      freezeCount: freeze.freezeCount - 1,
+    });
+  }
 }
