@@ -753,6 +753,24 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
       }
 
+      // ========== GAMIFICATION TABLES ==========
+
+      try {
+        // Create streak_freezes table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS streak_freezes (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            count INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
+        console.log('[migrate] ✅ Streak freezes table created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create streak_freezes table:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
@@ -976,6 +994,16 @@ export async function runMigrations() {
       )
     `);
 
+    // Streak Freezes table (gamification)
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS streak_freezes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        count INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
     // Create indexes
     await db.execute(sql`CREATE INDEX idx_habits_user_id ON habits(user_id)`);
     await db.execute(sql`CREATE INDEX idx_habit_logs_habit_id ON habit_logs(habit_id)`);
@@ -988,6 +1016,7 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
     await db.execute(sql`CREATE INDEX idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
     await db.execute(sql`CREATE INDEX idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
 
     console.log('[migrate] ✅ Fresh database schema created successfully');
     console.log('[migrate] ✅ Ready for new user signups');
