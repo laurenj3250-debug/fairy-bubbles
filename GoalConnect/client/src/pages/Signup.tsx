@@ -70,16 +70,16 @@ export default function SignupPage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
         <div className="pointer-events-none absolute inset-0 bg-background/80 backdrop-blur-sm" />
-        <Card className="relative z-10 w-full max-w-sm border-border/60 shadow-lg">
-          <CardHeader>
+        <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
+          <CardHeader className="relative z-10">
             <CardTitle className="text-center text-2xl">Check Your Email</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <p className="text-center text-sm text-muted-foreground">
               We've sent you a confirmation email. Please click the link in the email to verify your account.
             </p>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="relative z-10 flex justify-center">
             <Link href="/login">
               <Button variant="outline">Back to Login</Button>
             </Link>
@@ -92,14 +92,14 @@ export default function SignupPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
       <div className="pointer-events-none absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      <Card className="relative z-10 w-full max-w-sm border-border/60 shadow-lg">
-        <CardHeader>
+      <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
+        <CardHeader className="relative z-10">
           <CardTitle className="text-center text-2xl">Create Account</CardTitle>
           <p className="text-center text-sm text-muted-foreground">
-            Sign up to start using GoalConnect
+            Sign up to start using Mountain Habit
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
@@ -154,7 +154,7 @@ export default function SignupPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="relative z-10 flex justify-center">
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline">

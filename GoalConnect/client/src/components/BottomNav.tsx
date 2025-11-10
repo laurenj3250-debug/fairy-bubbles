@@ -1,13 +1,13 @@
-import { Home, TrendingUp, Mountain, ShoppingBag, Target } from "lucide-react";
+import { Home, TrendingUp, Mountain, ShoppingBag, BookOpen, CheckSquare, Target } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/", label: "Base Camp", icon: Home },
-  { path: "/habits", label: "Training", icon: TrendingUp },
-  { path: "/world-map", label: "Mountains", icon: Mountain },
-  { path: "/alpine-shop", label: "Gear Shop", icon: ShoppingBag },
-  { path: "/dream-scroll", label: "Log", icon: Target },
+  { path: "/weekly-hub", label: "Base Camp", icon: Home },
+  { path: "/habits", label: "Mountains", icon: Mountain },
+  { path: "/goals", label: "Routes", icon: Target },
+  { path: "/todos", label: "Tasks", icon: CheckSquare },
+  { path: "/dream-scroll", label: "Journal", icon: BookOpen },
 ];
 
 export function BottomNav() {
@@ -15,7 +15,7 @@ export function BottomNav() {
   
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t flex items-center justify-around z-50 safe-area-inset-bottom"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-card-border topo-pattern flex items-center justify-around z-50 safe-area-inset-bottom"
       data-testid="bottom-nav"
     >
       {navItems.map(({ path, label, icon: Icon }) => {

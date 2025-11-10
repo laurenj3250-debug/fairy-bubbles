@@ -9,22 +9,23 @@ import Dashboard from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
-import WeeklyView from "@/pages/WeeklyView";
+// import WeeklyView from "@/pages/WeeklyView"; // REMOVED: Consolidated into WeeklyHub
 import WeeklyHub from "@/pages/WeeklyHub";
-import Pet from "@/pages/Pet";
-import ShopPage from "@/pages/ShopPage";
+// REMOVED LEGACY GAME PAGES:
+// import Pet from "@/pages/Pet";
+// import ShopPage from "@/pages/ShopPage";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
-import Wonderland from "@/pages/Wonderland";
-import OutsideWorld from "@/pages/OutsideWorld";
-import BiomeExploration from "@/pages/BiomeExploration";
-import Combat from "@/pages/Combat";
-import PartyManagement from "@/pages/PartyManagement";
-import SpriteUpload from "@/pages/SpriteUpload";
-import SpriteOrganize from "@/pages/SpriteOrganize";
-import LevelEditor from "@/pages/LevelEditor";
-import GameDataAdmin from "@/pages/GameDataAdmin";
+// import Wonderland from "@/pages/Wonderland";
+// import OutsideWorld from "@/pages/OutsideWorld";
+// import BiomeExploration from "@/pages/BiomeExploration";
+// import Combat from "@/pages/Combat";
+// import PartyManagement from "@/pages/PartyManagement";
+// import SpriteUpload from "@/pages/SpriteUpload";
+// import SpriteOrganize from "@/pages/SpriteOrganize";
+// import LevelEditor from "@/pages/LevelEditor";
+// import GameDataAdmin from "@/pages/GameDataAdmin";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
@@ -100,6 +101,11 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
+          <Redirect to="/weekly-hub" />
+        </RequireAuth>
+      </Route>
+      <Route path="/dashboard">
+        <RequireAuth>
           <Dashboard />
           <BottomNav />
         </RequireAuth>
@@ -122,10 +128,10 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
+      {/* Redirect /weekly to /weekly-hub */}
       <Route path="/weekly">
         <RequireAuth>
-          <WeeklyView />
-          <BottomNav />
+          <Redirect to="/weekly-hub" />
         </RequireAuth>
       </Route>
       <Route path="/weekly-hub">
@@ -134,18 +140,19 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
-      <Route path="/pet">
-        <RequireAuth>
-          <Pet />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/shop">
-        <RequireAuth>
-          <ShopPage />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
+      {/* REMOVED LEGACY ROUTES:
+      <Route path="/pet"> - Pet page
+      <Route path="/shop"> - Costume shop
+      <Route path="/combat/:encounterId"> - Combat
+      <Route path="/party"> - Party Management
+      <Route path="/wonderland"> - Wonderland
+      <Route path="/outside-world"> - Outside World
+      <Route path="/explore/:biomeId"> - Biome Exploration
+      <Route path="/sprites/upload"> - Sprite Upload
+      <Route path="/sprites/organize"> - Sprite Organize
+      <Route path="/level-editor"> - Level Editor
+      <Route path="/game/admin"> - Game Data Admin
+      */}
       <Route path="/alpine-shop">
         <RequireAuth>
           <AlpineShop />
@@ -161,61 +168,6 @@ function AppRoutes() {
       <Route path="/expedition/plan/:mountainId">
         <RequireAuth>
           <ExpeditionPlanning />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/wonderland">
-        <RequireAuth>
-          <Wonderland />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/outside-world">
-        <RequireAuth>
-          <OutsideWorld />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/explore/:biomeId">
-        <RequireAuth>
-          <BiomeExploration />
-        </RequireAuth>
-      </Route>
-      <Route path="/combat/:encounterId">
-        {(params) => (
-          <RequireAuth>
-            <Combat encounterId={parseInt(params.encounterId)} />
-            <BottomNav />
-          </RequireAuth>
-        )}
-      </Route>
-      <Route path="/party">
-        <RequireAuth>
-          <PartyManagement />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/sprites/upload">
-        <RequireAuth>
-          <SpriteUpload />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/sprites/organize">
-        <RequireAuth>
-          <SpriteOrganize />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/level-editor">
-        <RequireAuth>
-          <LevelEditor />
-          <BottomNav />
-        </RequireAuth>
-      </Route>
-      <Route path="/game/admin">
-        <RequireAuth>
-          <GameDataAdmin />
           <BottomNav />
         </RequireAuth>
       </Route>

@@ -9,52 +9,7 @@ import { GoalProgressDialog } from "@/components/GoalProgressDialog";
 import { Badge } from "@/components/ui/badge";
 import { cn, getToday } from "@/lib/utils";
 
-// Magical Canvas Component (matching Dashboard)
-function MagicalCanvas() {
-  useEffect(() => {
-    const canvas = document.getElementById('goalsCanvas');
-    if (!canvas) return;
-
-    // Create fairy lights
-    const colors = ['#a7f3d0', '#fbbf24', '#a78bfa', '#fca5a5', '#93c5fd'];
-    for (let i = 0; i < 30; i++) {
-      const light = document.createElement('div');
-      light.className = 'absolute rounded-full float-snow blur-sm';
-      light.style.background = colors[Math.floor(Math.random() * colors.length)];
-      light.style.width = Math.random() * 4 + 2 + 'px';
-      light.style.height = light.style.width;
-      light.style.left = Math.random() * 100 + '%';
-      light.style.top = Math.random() * 100 + '%';
-      light.style.animationDelay = Math.random() * 8 + 's';
-      light.style.animationDuration = (Math.random() * 4 + 6) + 's';
-      canvas.appendChild(light);
-    }
-
-    // Create twinkling stars
-    for (let i = 0; i < 50; i++) {
-      const star = document.createElement('div');
-      star.className = 'absolute w-0.5 h-0.5 bg-white rounded-full twinkle';
-      star.style.left = Math.random() * 100 + '%';
-      star.style.top = Math.random() * 100 + '%';
-      star.style.animationDelay = Math.random() * 3 + 's';
-      star.style.boxShadow = '0 0 3px white, 0 0 6px white';
-      canvas.appendChild(star);
-    }
-
-    return () => {
-      if (canvas) {
-        canvas.innerHTML = '';
-      }
-    };
-  }, []);
-
-  return (
-    <div
-      id="goalsCanvas"
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
-    />
-  );
-}
+// REMOVED: MagicalCanvas - No longer needed for mountain aesthetic
 
 type ViewType = "all" | "weekly" | "monthly";
 
@@ -161,12 +116,11 @@ export default function Goals() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen enchanted-bg">
-        <MagicalCanvas />
+      <div className="min-h-screen">
         <div className="relative z-10 max-w-5xl mx-auto p-6">
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="glass-card rounded-3xl h-40 alpine-glow animate-pulse"></div>
+              <div key={i} className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern h-40 animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -175,95 +129,90 @@ export default function Goals() {
   }
 
   return (
-    <div className="min-h-screen enchanted-bg pb-24">
-      <MagicalCanvas />
-
+    <div className="min-h-screen pb-24">
       <div className="relative z-10 max-w-5xl mx-auto p-6">
-        {/* Enchanted Header */}
-        <div className="glass-card rounded-3xl p-6 mb-6 alpine-glow shimmer-effect relative overflow-hidden">
+        {/* Header */}
+        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mb-6 relative overflow-hidden">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <h1
-                className="text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 20px rgba(167, 139, 250, 0.8)' }}
-              >
-                Your Goals
+              <h1 className="text-4xl font-bold text-foreground mb-2">
+                Your Routes
               </h1>
-              <p className="text-sm text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Track your progress towards your goals
+              <p className="text-sm text-muted-foreground">
+                Track your progress towards your climbing goals
               </p>
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-6 py-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-2 border-white/30 shadow-lg transition-all duration-300 hover:scale-105"
+              className="rounded-full px-6 py-6 bg-primary hover:bg-primary/90 text-white shadow-lg transition-all duration-300 hover:scale-105"
             >
               <Plus className="w-5 h-5 mr-2" />
-              <span className="font-semibold">New Goal</span>
+              <span className="font-semibold">New Route</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-card-green rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-green-400/30 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-green-300" />
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+            <div className="flex items-center gap-3 mb-2 relative z-10">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">{completedGoals}</div>
-                <div className="text-xs text-white/70" style={{ fontFamily: "'Quicksand', sans-serif" }}>Completed</div>
+                <div className="text-2xl font-bold text-foreground">{completedGoals}</div>
+                <div className="text-xs text-muted-foreground">Sent</div>
               </div>
             </div>
           </div>
 
-          <div className="glass-card-blue rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-blue-400/30 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-blue-300" />
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+            <div className="flex items-center gap-3 mb-2 relative z-10">
+              <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-[hsl(var(--accent))]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">{inProgressGoals}</div>
-                <div className="text-xs text-white/70" style={{ fontFamily: "'Quicksand', sans-serif" }}>In Progress</div>
+                <div className="text-2xl font-bold text-foreground">{inProgressGoals}</div>
+                <div className="text-xs text-muted-foreground">In Progress</div>
               </div>
             </div>
           </div>
 
-          <div className="glass-card-blue rounded-2xl p-5 alpine-glow" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-cyan-400/30 flex items-center justify-center">
-                <Target className="w-5 h-5 text-cyan-300" />
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+            <div className="flex items-center gap-3 mb-2 relative z-10">
+              <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
+                <Target className="w-5 h-5 text-[hsl(var(--accent))]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">{goals.length}</div>
-                <div className="text-xs text-white/70" style={{ fontFamily: "'Quicksand', sans-serif" }}>Total Goals</div>
+                <div className="text-2xl font-bold text-foreground">{goals.length}</div>
+                <div className="text-xs text-muted-foreground">Total Routes</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* View Tabs */}
-        <div className="glass-card rounded-3xl p-2 flex gap-2 mb-6">
+        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-2 flex gap-2 mb-6 relative">
           <Button
             variant={activeView === "all" ? "default" : "ghost"}
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
+              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
               activeView === "all"
-                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
-                : "text-white/70 hover:text-white hover:bg-white/10"
+                ? "bg-primary text-white shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             onClick={() => setActiveView("all")}
           >
             <Target className="w-4 h-4 mr-2" />
-            All Goals
+            All Routes
           </Button>
           <Button
             variant={activeView === "weekly" ? "default" : "ghost"}
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
+              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
               activeView === "weekly"
-                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
-                : "text-white/70 hover:text-white hover:bg-white/10"
+                ? "bg-primary text-white shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             onClick={() => setActiveView("weekly")}
           >
@@ -273,10 +222,10 @@ export default function Goals() {
           <Button
             variant={activeView === "monthly" ? "default" : "ghost"}
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300",
+              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
               activeView === "monthly"
-                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white border-2 border-white/30 shadow-lg"
-                : "text-white/70 hover:text-white hover:bg-white/10"
+                ? "bg-primary text-white shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             onClick={() => setActiveView("monthly")}
           >
@@ -287,27 +236,26 @@ export default function Goals() {
 
         {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <div className="glass-card-blue rounded-3xl p-12 text-center alpine-glow">
-            <Target className="w-16 h-16 mx-auto mb-6 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))' }} />
-            <h2
-              className="text-3xl font-bold text-white mb-4"
-              style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 15px rgba(255, 255, 255, 0.5)' }}
-            >
-              No Goals Yet
-            </h2>
-            <p className="text-white/80 mb-8 text-lg" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-              {activeView === "all"
-                ? "Create your first goal and start tracking your progress"
-                : activeView === "weekly"
-                ? "No goals due this week"
-                : "No goals due this month"}
-            </p>
-            <Button
-              onClick={handleCreateNew}
-              className="rounded-full px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border-2 border-white/30 shadow-lg"
-            >
-              Create First Goal
-            </Button>
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-12 text-center relative">
+            <div className="relative z-10">
+              <Target className="w-16 h-16 mx-auto mb-6 text-primary" />
+              <h2 className="text-3xl font-bold text-foreground mb-4">
+                No Routes Yet
+              </h2>
+              <p className="text-muted-foreground mb-8 text-lg">
+                {activeView === "all"
+                  ? "Create your first route and start tracking your progress"
+                  : activeView === "weekly"
+                  ? "No routes due this week"
+                  : "No routes due this month"}
+              </p>
+              <Button
+                onClick={handleCreateNew}
+                className="rounded-full px-8 py-6 text-lg bg-primary hover:bg-primary/90 text-white shadow-lg"
+              >
+                Create First Route
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
@@ -374,53 +322,45 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
   );
 
   // Determine urgency
-  let urgencyColor = "from-blue-500 to-cyan-500";
-  let textColor = "text-blue-200";
-  let borderColor = "border-blue-400/30";
+  let urgencyColor = "bg-[hsl(var(--accent))]";
+  let textColor = "text-[hsl(var(--accent))]";
+  let borderColor = "border-[hsl(var(--accent))]/30";
 
   if (isComplete) {
-    urgencyColor = "from-green-500 to-emerald-500";
-    textColor = "text-green-200";
-    borderColor = "border-green-400/30";
+    urgencyColor = "bg-primary";
+    textColor = "text-primary";
+    borderColor = "border-primary/30";
   } else if (daysUntil <= 1) {
-    urgencyColor = "from-slate-500 to-slate-600";
-    textColor = "text-slate-200";
-    borderColor = "border-slate-400/30";
+    urgencyColor = "bg-muted";
+    textColor = "text-muted-foreground";
+    borderColor = "border-border";
   } else if (daysUntil <= 7) {
-    urgencyColor = "from-cyan-500 to-teal-500";
-    textColor = "text-cyan-200";
-    borderColor = "border-cyan-400/30";
+    urgencyColor = "bg-[hsl(var(--accent))]";
+    textColor = "text-[hsl(var(--accent))]";
+    borderColor = "border-[hsl(var(--accent))]/30";
   }
 
   // Priority styling
   const isHighPriority = goal.priority === "high";
   const priorityColors = {
-    high: { bg: "bg-cyan-500/20", border: "border-cyan-400/40", text: "text-cyan-200", icon: "🔥" },
-    medium: { bg: "bg-blue-500/20", border: "border-blue-400/40", text: "text-blue-200", icon: "⭐" },
-    low: { bg: "bg-gray-500/20", border: "border-gray-400/40", text: "text-gray-300", icon: "📌" },
+    high: { bg: "bg-primary/20", border: "border-primary/30", text: "text-primary", icon: "🔥" },
+    medium: { bg: "bg-[hsl(var(--accent))]/20", border: "border-[hsl(var(--accent))]/30", text: "text-[hsl(var(--accent))]", icon: "⭐" },
+    low: { bg: "bg-muted/20", border: "border-border", text: "text-muted-foreground", icon: "📌" },
   };
   const priorityStyle = priorityColors[goal.priority || "medium"];
 
   return (
     <div
-      className={`glass-card rounded-3xl p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
-        isComplete ? 'alpine-glow' : isHighPriority ? 'alpine-glow ring-2 ring-red-400/50' : ''
+      className={`bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
+        isHighPriority ? 'ring-2 ring-red-400/50' : ''
       }`}
       style={isHighPriority ? {
         boxShadow: '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.15)',
       } : {}}
     >
-      {/* Gradient accent bar */}
+      {/* Accent bar */}
       <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: isHighPriority ? '6px' : '4px',
-          background: `linear-gradient(to right, ${urgencyColor})`,
-          boxShadow: `0 2px 10px rgba(139, 92, 246, 0.5)`,
-        }}
+        className={`absolute top-0 left-0 right-0 ${urgencyColor} ${isHighPriority ? 'h-1.5' : 'h-1'}`}
       />
 
       <div className="flex items-start gap-3 relative z-10">
@@ -430,43 +370,33 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {/* Priority Badge */}
             <Badge
-              className={`${priorityStyle.bg} backdrop-blur-xl ${priorityStyle.text} border-2 ${priorityStyle.border} font-bold uppercase text-xs`}
-              style={{ fontFamily: "'Quicksand', sans-serif" }}
+              className={`${priorityStyle.bg} ${priorityStyle.text} border ${priorityStyle.border} font-bold uppercase text-xs`}
             >
               {priorityStyle.icon} {goal.priority || "medium"} priority
             </Badge>
 
             {goal.category && (
               <Badge
-                className={`${borderColor} bg-white/10 backdrop-blur-xl ${textColor} border-2`}
-                style={{ fontFamily: "'Quicksand', sans-serif" }}
+                className={`${borderColor} bg-card/50 ${textColor} border`}
               >
                 {goal.category}
               </Badge>
             )}
             <Badge
-              className="bg-yellow-400/20 backdrop-blur-xl text-yellow-200 border-2 border-yellow-400/30"
-              style={{ fontFamily: "'Quicksand', sans-serif" }}
+              className="bg-primary/20 text-primary border border-primary/30"
             >
               🪙 {goal.difficulty === 'easy' ? 5 : goal.difficulty === 'hard' ? 15 : 10} tokens
             </Badge>
           </div>
 
           {/* Goal Title */}
-          <h3
-            className="text-xl font-bold text-white mb-1.5"
-            style={{
-              fontFamily: "'Comfortaa', cursive",
-              textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
-              lineHeight: '1.2',
-            }}
-          >
+          <h3 className="text-xl font-bold text-foreground mb-1.5 leading-tight">
             {goal.title}
           </h3>
 
           {/* Description */}
           {goal.description && (
-            <p className="text-sm text-white/70 mb-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+            <p className="text-sm text-muted-foreground mb-2">
               {goal.description}
             </p>
           )}
@@ -474,27 +404,23 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           {/* Progress Info */}
           <div className="flex items-center gap-3 mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-white">{goal.currentValue}</span>
-              <span className="text-white/60">/</span>
-              <span className="text-lg text-white/80">{goal.targetValue}</span>
-              <span className="text-sm text-white/60">{goal.unit}</span>
+              <span className="text-xl font-bold text-foreground">{goal.currentValue}</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-lg text-foreground">{goal.targetValue}</span>
+              <span className="text-sm text-muted-foreground">{goal.unit}</span>
             </div>
 
-            <div className={`px-3 py-1 rounded-full border-2 ${borderColor}`}
-              style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}
-            >
-              <span className="text-white font-bold text-base">{progress}%</span>
+            <div className={`px-3 py-1 rounded-full border ${borderColor} bg-card/50`}>
+              <span className="text-foreground font-bold text-base">{progress}%</span>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden mb-3">
+          <div className="w-full h-2.5 bg-muted/50 rounded-full overflow-hidden mb-3">
             <div
-              className={`h-full rounded-full transition-all duration-500`}
+              className={`h-full rounded-full transition-all duration-500 ${urgencyColor}`}
               style={{
                 width: `${Math.min(progress, 100)}%`,
-                background: `linear-gradient(to right, ${urgencyColor})`,
-                boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)'
               }}
             />
           </div>
@@ -506,12 +432,11 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
                 onClick={handleQuickPlusOne}
                 disabled={isAddingProgress}
                 className={cn(
-                  "w-full px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border-2 text-sm",
+                  "w-full px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border text-sm",
                   isAddingProgress
-                    ? "bg-white/5 border-white/20 text-white/40 cursor-not-allowed"
-                    : "bg-green-500/30 border-green-400/50 text-green-200 hover:bg-green-500/40 hover:scale-102"
+                    ? "bg-muted/50 border-border text-muted-foreground cursor-not-allowed"
+                    : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30 hover:scale-102"
                 )}
-                style={{ fontFamily: "'Quicksand', sans-serif" }}
               >
                 {isAddingProgress ? "Adding..." : `+1 ${goal.unit}`}
                 <PlusCircle className="w-4 h-4" />
@@ -521,13 +446,13 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
           {/* Deadline */}
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-white/60" />
-            <span className="text-white/80" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-foreground">
               Due: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
             {daysUntil >= 0 && (
               <>
-                <span className="text-white/40">•</span>
+                <span className="text-muted-foreground">•</span>
                 <span className={cn("font-semibold", textColor)}>
                   {daysUntil === 0 ? (
                     <span className="flex items-center gap-1">
@@ -549,14 +474,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
         <div className="flex flex-col gap-2 items-end">
           {/* Status Icon */}
           {isComplete && (
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 border-green-400/50"
-              style={{
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(16, 185, 129, 0.3) 100%)',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)'
-              }}
-            >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl border border-primary/50 bg-primary/20">
               🏆
             </div>
           )}
@@ -565,8 +483,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           {!isComplete && (
             <button
               onClick={onAddProgress}
-              className="text-xs text-green-400 hover:text-green-300 transition-colors px-2 py-1 flex items-center gap-1 font-semibold"
-              style={{ fontFamily: "'Quicksand', sans-serif" }}
+              className="text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1 flex items-center gap-1 font-semibold"
             >
               <PlusCircle className="w-3 h-3" />
               Add Progress
@@ -574,16 +491,14 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           )}
           <button
             onClick={onEdit}
-            className="text-xs text-white/60 hover:text-white/90 transition-colors px-2 py-1 flex items-center gap-1"
-            style={{ fontFamily: "'Quicksand', sans-serif" }}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 flex items-center gap-1"
           >
             <Edit className="w-3 h-3" />
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="text-xs text-white/40 hover:text-white/70 transition-colors px-2 py-1 flex items-center gap-1"
-            style={{ fontFamily: "'Quicksand', sans-serif" }}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 flex items-center gap-1"
           >
             <Trash2 className="w-3 h-3" />
             Delete

@@ -141,23 +141,23 @@ export default function AlpineShop() {
         </div>
 
         {/* Stats Bar */}
-        <Card className="bg-slate-900/40 border-slate-700/50">
-          <CardContent className="pt-6">
+        <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern">
+          <CardContent className="pt-6 relative z-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">{inventory.length}</div>
+                <div className="text-2xl font-bold text-primary">{inventory.length}</div>
                 <div className="text-sm text-muted-foreground">Gear Owned</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">{stats?.summits || 0}</div>
+                <div className="text-2xl font-bold text-primary">{stats?.summits || 0}</div>
                 <div className="text-sm text-muted-foreground">Summits</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-amber-400">{stats?.currentStreak || 0}</div>
+                <div className="text-2xl font-bold text-[hsl(var(--accent))]">{stats?.currentStreak || 0}</div>
                 <div className="text-sm text-muted-foreground">Day Streak</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-400">{stats?.totalXp || 0}</div>
+                <div className="text-2xl font-bold text-primary">{stats?.totalXp || 0}</div>
                 <div className="text-sm text-muted-foreground">Total XP</div>
               </div>
             </div>
@@ -181,11 +181,11 @@ export default function AlpineShop() {
                   return (
                     <Card
                       key={gear.id}
-                      className={`bg-slate-900/40 border-slate-700/50 transition-all ${
+                      className={`bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern transition-all ${
                         owned ? "ring-2 ring-green-500/50" : ""
                       } ${!unlocked && !owned ? "opacity-60" : ""}`}
                     >
-                      <CardHeader>
+                      <CardHeader className="relative z-10">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-lg flex items-center gap-2">
                             {gear.name}
@@ -200,7 +200,7 @@ export default function AlpineShop() {
                           {gear.description}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-3">
+                      <CardContent className="relative z-10 space-y-3">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Weight:</span>
                           <span className="font-medium">{(gear.weightGrams / 1000).toFixed(1)} kg</span>
@@ -231,7 +231,7 @@ export default function AlpineShop() {
                           <Button
                             onClick={() => purchaseMutation.mutate(gear.id)}
                             disabled={purchaseMutation.isPending}
-                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            className="w-full bg-primary hover:bg-primary/90"
                           >
                             {purchaseMutation.isPending ? "Purchasing..." : `Buy for ${gear.cost} tokens`}
                           </Button>
