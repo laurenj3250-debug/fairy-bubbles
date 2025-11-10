@@ -54,10 +54,18 @@ export function MountainBackground() {
     };
   }, []);
 
-  // Parallax scroll effect (scroll only, no mouse)
+  // Parallax scroll effect (scroll only, no mouse) - throttled for smoothness
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -241,7 +249,7 @@ export function MountainBackground() {
           width: 100%;
           height: 100%;
           bottom: 0;
-          transition: transform 0.05s ease-out;
+          transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
           will-change: transform;
         }
 

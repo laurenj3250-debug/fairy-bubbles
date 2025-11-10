@@ -5,6 +5,10 @@ import { GoalJourneyCard } from "@/components/GoalJourneyCard";
 import { GoalBadge } from "@/components/GoalBadge";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { TodoDialog } from "@/components/TodoDialog";
+import { MountainAchievements } from "@/components/MountainAchievements";
+import { GradeBadge } from "@/components/GradeBadge";
+import { MountainStatsPanel } from "@/components/MountainStatsPanel";
+import { ExpeditionCard } from "@/components/ExpeditionCard";
 import { Target, Calendar, CheckCircle, Plus, Sparkles, TrendingUp, Flame, Mountain, Tent, Flag, Anchor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,10 +79,17 @@ export default function DashboardNew() {
 
   // Calculate stats
   const activeGoals = goals.filter(g => (g.currentValue / g.targetValue) * 100 < 100);
+  const completedGoals = goals.filter(g => (g.currentValue / g.targetValue) >= 1);
   const completedHabits = todayLogs.filter(log => log.completed).length;
   const totalHabits = habits.length;
   const completedTodos = todos.filter(t => t.completed).length;
   const pendingTodos = todos.filter(t => !t.completed);
+
+  // Calculate total habits completed across all time
+  const totalHabitsCompletedAllTime = habits.reduce((sum, habit) => {
+    const habitLogs = habit.history?.history || [];
+    return sum + habitLogs.filter((h: any) => h.completed).length;
+  }, 0);
 
   // Today's todos (due today or no due date)
   const todayTodos = pendingTodos.filter(t =>
@@ -256,6 +267,30 @@ export default function DashboardNew() {
             </div>
           </div>
 
+          {/* Expedition Overview Stats - NEW */}
+          <div className="grid grid-cols-4 gap-3 mb-3">
+            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl px-3 py-2 border border-primary/20">
+              <div className="text-xs text-muted-foreground mb-1">Habits</div>
+              <div className="text-lg font-bold text-foreground">{completedHabits}/{totalHabits}</div>
+              <div className="text-xs text-primary">Today</div>
+            </div>
+            <div className="bg-gradient-to-br from-[hsl(var(--accent))]/20 to-[hsl(var(--accent))]/5 rounded-xl px-3 py-2 border border-[hsl(var(--accent))]/20">
+              <div className="text-xs text-muted-foreground mb-1">Active Goals</div>
+              <div className="text-lg font-bold text-foreground">{activeGoals.length}</div>
+              <div className="text-xs text-[hsl(var(--accent))]">In Progress</div>
+            </div>
+            <div className="bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-xl px-3 py-2 border border-blue-500/20">
+              <div className="text-xs text-muted-foreground mb-1">Tasks</div>
+              <div className="text-lg font-bold text-foreground">{pendingTodos.length}</div>
+              <div className="text-xs text-blue-400">Pending</div>
+            </div>
+            <div className="bg-gradient-to-br from-orange-500/20 to-orange-500/5 rounded-xl px-3 py-2 border border-orange-500/20">
+              <div className="text-xs text-muted-foreground mb-1">Altitude</div>
+              <div className="text-lg font-bold text-foreground">{todayAltitude}m</div>
+              <div className="text-xs text-orange-400">Today</div>
+            </div>
+          </div>
+
           {/* Weather Conditions Display */}
           <div className="flex items-center gap-2 px-4 py-2 bg-muted/10 rounded-xl border border-border/30">
             <span className="text-2xl">{weatherInfo.emoji}</span>
@@ -274,6 +309,16 @@ export default function DashboardNew() {
               </Badge>
             )}
           </div>
+        </div>
+
+        {/* Mountain Stats Overview - NEW */}
+        <div className="mb-6">
+          <MountainStatsPanel
+            totalHabitsCompleted={totalHabitsCompletedAllTime}
+            totalGoalsCompleted={completedGoals.length}
+            longestStreak={longestStreak}
+            currentAltitude={todayAltitude}
+          />
         </div>
 
         {/* SECTION 1: Today's Route (Today's Habits) */}
@@ -358,7 +403,10 @@ export default function DashboardNew() {
                         {habit.icon}
                       </div>
                       <div className="flex-1">
-                        <div className="text-foreground font-medium text-sm">{habit.title}</div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="text-foreground font-medium text-sm">{habit.title}</div>
+                          {habit.grade && <GradeBadge grade={habit.grade} size="sm" />}
+                        </div>
                         <div className="flex items-center gap-2 text-xs">
                           {habit.linkedGoalId && (
                             <span className="text-primary">
@@ -447,7 +495,12 @@ export default function DashboardNew() {
           )}
         </div>
 
-        {/* SECTION 3: Base Camp (Pet, Todos, Stats) */}
+        {/* SECTION 3: Expeditions (World Map & Alpine Shop) */}
+        <div className="mb-8">
+          <ExpeditionCard />
+        </div>
+
+        {/* SECTION 4: Base Camp (Pet, Todos, Stats) */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -540,6 +593,18 @@ export default function DashboardNew() {
             {/* Dream Scroll */}
             <DreamScrollWidget />
           </div>
+        </div>
+
+        {/* SECTION 5: Summit Badges (Achievements) - NEW */}
+        <div className="mb-8">
+          <MountainAchievements
+            habits={habits}
+            goals={goals}
+            totalHabits={totalHabits}
+            completedHabits={completedHabits}
+            longestStreak={longestStreak}
+            activeGoals={activeGoals}
+          />
         </div>
 
         {/* Quick Actions with enhanced hover effects */}

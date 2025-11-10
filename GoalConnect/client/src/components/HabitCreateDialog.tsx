@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -125,19 +125,41 @@ const HABIT_ICONS = [
 export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogProps) {
   const { user } = useAuth();
 
-  // Form state
-  const [title, setTitle] = useState(habit?.title || "");
-  const [icon, setIcon] = useState(habit?.icon || "⭐");
-  const [category, setCategory] = useState<"training" | "mind" | "foundation" | "adventure">(
-    (habit?.category as any) || "training"
-  );
-  const [effort, setEffort] = useState<"light" | "medium" | "heavy">(
-    (habit?.effort as any) || "medium"
-  );
-  const [grade, setGrade] = useState(habit?.grade || "5.9");
-  const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
-  const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || 3);
+  // Form state - properly reset when dialog opens/closes or habit changes
+  const [title, setTitle] = useState("");
+  const [icon, setIcon] = useState("⭐");
+  const [category, setCategory] = useState<"training" | "mind" | "foundation" | "adventure">("training");
+  const [effort, setEffort] = useState<"light" | "medium" | "heavy">("medium");
+  const [grade, setGrade] = useState("5.9");
+  const [cadence, setCadence] = useState<"daily" | "weekly">("daily");
+  const [targetPerWeek, setTargetPerWeek] = useState(3);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset form when dialog opens or habit changes
+  useEffect(() => {
+    if (open) {
+      if (habit) {
+        setTitle(habit.title || "");
+        setIcon(habit.icon || "⭐");
+        setCategory((habit.category as any) || "training");
+        setEffort((habit.effort as any) || "medium");
+        setGrade(habit.grade || "5.9");
+        setCadence(habit.cadence || "daily");
+        setTargetPerWeek(habit.targetPerWeek || 3);
+      } else {
+        // Reset to defaults for new habit
+        setTitle("");
+        setIcon("⭐");
+        setCategory("training");
+        setEffort("medium");
+        setGrade("5.9");
+        setCadence("daily");
+        setTargetPerWeek(3);
+      }
+      setError(null);
+    }
+  }, [open, habit]);
 
   const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
@@ -165,6 +187,8 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
     setSubmitting(true);
 
     try {
+      setError(null);
+
       const data = {
         userId: user.id,
         title: title.trim(),
@@ -180,18 +204,25 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         linkedGoalId: null,
       };
 
+      console.log("[HabitCreateDialog] Submitting habit:", data);
+
       if (habit) {
         await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
+        console.log("[HabitCreateDialog] Habit updated successfully");
       } else {
         await apiRequest("/api/habits", "POST", data);
+        console.log("[HabitCreateDialog] Habit created successfully");
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
 
+      // Reset form and close
+      setSubmitting(false);
       onClose();
     } catch (error: any) {
-      console.error("Failed to save habit:", error);
+      console.error("[HabitCreateDialog] Failed to save habit:", error);
+      setError(error.message || "Failed to save route. Please try again.");
       setSubmitting(false);
     }
   };
@@ -230,6 +261,13 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border-2 border-destructive/50 rounded-xl">
+              <p className="text-sm text-destructive font-semibold">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Route Templates */}

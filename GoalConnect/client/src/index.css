@@ -894,6 +894,36 @@
     100% { transform: rotate(360deg); }
   }
 
+  /* Subtle Pulse Animation for Gamification */
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  /* Slow Spin for Celebration Elements */
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  @keyframes spin-slow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Drop Shadow Glow for Emojis */
+  .drop-shadow-glow {
+    filter: drop-shadow(0 0 8px rgba(255, 200, 100, 0.6));
+  }
+
+  /* DEPRECATED: Use topo-pattern instead. These styles remain for backward compatibility only. */
   /* Glassmorphism */
   .glass-card {
     background: linear-gradient(135deg,

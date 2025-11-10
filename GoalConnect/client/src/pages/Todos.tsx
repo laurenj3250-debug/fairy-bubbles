@@ -166,7 +166,7 @@ export default function Todos() {
       <div className="max-w-4xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3" style={{ fontFamily: "'Comfortaa', cursive" }}>
+            <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
               <ListTodo className="w-8 h-8 text-primary" />
               Expedition Tasks
             </h1>

@@ -1,12 +1,12 @@
-import { Home, TrendingUp, Mountain, ShoppingBag, BookOpen, CheckSquare, Target } from "lucide-react";
+import { Home, TrendingUp, Activity, Globe, BookOpen, CheckSquare, Target } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/weekly-hub", label: "Base Camp", icon: Home },
-  { path: "/habits", label: "Mountains", icon: Mountain },
+  { path: "/habits", label: "Training", icon: Activity },
+  { path: "/world-map", label: "Expeditions", icon: Globe },
   { path: "/goals", label: "Routes", icon: Target },
-  { path: "/todos", label: "Tasks", icon: CheckSquare },
   { path: "/dream-scroll", label: "Journal", icon: BookOpen },
 ];
 
