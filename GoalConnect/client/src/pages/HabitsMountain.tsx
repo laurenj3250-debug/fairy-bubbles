@@ -211,11 +211,11 @@ export default function HabitsMountain() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-24 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
         <div className="space-y-4 w-full max-w-5xl mx-auto p-6">
-          <div className="h-40 bg-slate-800/50 rounded-2xl animate-pulse"></div>
+          <div className="h-40 bg-card/80 rounded-2xl animate-pulse"></div>
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-slate-800/50 rounded-2xl animate-pulse"></div>
+            <div key={i} className="h-32 bg-card/80 rounded-2xl animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -223,26 +223,26 @@ export default function HabitsMountain() {
   }
 
   return (
-    <div className="min-h-screen pb-24 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" data-weather={weather}>
+    <div className="min-h-screen pb-24 bg-background" data-weather={weather}>
       {/* Weather overlay with animated effects */}
       <WeatherOverlay weather={weather} />
 
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Header */}
-        <div className="bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern">
+          <div className="flex items-center justify-between mb-4 relative z-10">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                <Mountain className="w-9 h-9 text-blue-400" />
+              <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
+                <Mountain className="w-9 h-9 text-[hsl(var(--accent))]" />
                 Training Camp
               </h1>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 {habits.length} {habits.length === 1 ? 'habit' : 'habits'} building your expedition strength
               </p>
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-xl px-6 py-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white border border-blue-500/50 shadow-lg transition-all duration-300 hover:scale-105"
+              className="rounded-xl px-6 py-6 bg-primary hover:bg-primary/90 text-primary-foreground border border-card-border shadow-lg transition-all duration-300 hover:scale-105"
             >
               <Plus className="w-5 h-5 mr-2" />
               <span className="font-semibold">New Habit</span>
@@ -250,50 +250,50 @@ export default function HabitsMountain() {
           </div>
 
           {/* Weather Conditions Display */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-900/50 rounded-xl border border-slate-700/50 mb-4">
+          <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl border border-border mb-4 relative z-10">
             <span className="text-2xl">{weatherInfo.emoji}</span>
             <div className="flex-1">
-              <div className="text-sm font-bold text-white">{weatherInfo.name}</div>
-              <div className="text-xs text-slate-400">{weatherInfo.description}</div>
+              <div className="text-sm font-bold text-foreground">{weatherInfo.name}</div>
+              <div className="text-xs text-muted-foreground">{weatherInfo.description}</div>
             </div>
             {longestStreak >= 7 && (
-              <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
+              <Badge className="bg-muted/80 text-[hsl(var(--accent))] border-border">
                 Perfect Conditions
               </Badge>
             )}
             {missedDaysThisWeek >= 3 && (
-              <Badge className="bg-red-500/20 text-red-300 border-red-500/40">
+              <Badge className="bg-muted/80 text-destructive border-border">
                 Storm Warning
               </Badge>
             )}
           </div>
 
           {/* Date Navigator */}
-          <div className="flex items-center justify-between gap-4 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4 border border-border relative z-10">
             <button
               onClick={goToPreviousDay}
-              className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 flex items-center justify-center transition-all border border-slate-600/50"
+              className="w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all border border-border"
             >
-              <ChevronLeft className="w-5 h-5 text-white" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
 
             <div className="flex-1 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <span className="text-lg font-bold text-white">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-lg font-bold text-foreground">
                   {selectedDateDisplay}
                 </span>
               </div>
               {!isToday && (
                 <button
                   onClick={goToToday}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold"
+                  className="text-xs text-[hsl(var(--accent))] hover:text-primary transition-colors font-semibold"
                 >
                   Jump to Today
                 </button>
               )}
               {isFuture && (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-muted-foreground">
                   Future Date
                 </span>
               )}
@@ -301,28 +301,30 @@ export default function HabitsMountain() {
 
             <button
               onClick={goToNextDay}
-              className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 flex items-center justify-center transition-all border border-slate-600/50"
+              className="w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all border border-border"
             >
-              <ChevronRight className="w-5 h-5 text-white" />
+              <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
           </div>
         </div>
 
         {habits.length === 0 ? (
-          <div className="bg-slate-800/60 backdrop-blur-xl rounded-2xl p-12 text-center border border-slate-700/50">
-            <Mountain className="w-16 h-16 mx-auto mb-6 text-blue-400" />
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Start Your Ascent
-            </h2>
-            <p className="text-slate-400 mb-8 text-lg">
-              Build habits to strengthen your expedition and unlock new mountains
-            </p>
-            <Button
-              onClick={handleCreateNew}
-              className="rounded-xl px-8 py-6 text-lg bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white border border-slate-500/50 shadow-lg"
-            >
-              Create First Habit
-            </Button>
+          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-12 text-center shadow-lg topo-pattern">
+            <div className="relative z-10">
+              <Mountain className="w-16 h-16 mx-auto mb-6 text-[hsl(var(--accent))]" />
+              <h2 className="text-3xl font-bold text-foreground mb-4">
+                Start Your Ascent
+              </h2>
+              <p className="text-muted-foreground mb-8 text-lg">
+                Build habits to strengthen your expedition and unlock new mountains
+              </p>
+              <Button
+                onClick={handleCreateNew}
+                className="rounded-xl px-8 py-6 text-lg bg-muted hover:bg-muted/80 text-foreground border border-card-border shadow-lg"
+              >
+                Create First Habit
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
@@ -417,8 +419,8 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
   return (
     <div
-      className={`bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border ${
-        completed ? 'border-blue-500/50 shadow-lg shadow-blue-500/20' : 'border-slate-700/50'
+      className={`bg-card/80 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border shadow-lg topo-pattern ${
+        completed ? 'border-[hsl(var(--accent))] shadow-[hsl(var(--accent))]/20' : 'border-card-border'
       } ${isCompleting ? 'scale-98' : 'scale-100 hover:scale-[1.02]'}`}
     >
       {/* Gradient background accent */}
@@ -445,25 +447,25 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
         {/* Middle: Main content */}
         <div className="flex-1">
           {/* Habit Name */}
-          <h3 className="text-2xl font-bold text-white mb-2">
+          <h3 className="text-2xl font-bold text-foreground mb-2">
             {habit.title}
           </h3>
 
           {/* Streak & Energy Display */}
           <div className="flex items-center gap-3 mb-3">
             {streak && streak.streak > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border-teal-500/40">
-                <TrendingUp className="w-4 h-4 text-teal-400" />
-                <span className="text-white font-bold text-xs">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-muted/50 border-border">
+                <TrendingUp className="w-4 h-4 text-[hsl(var(--accent))]" />
+                <span className="text-foreground font-bold text-xs">
                   {streak.streak} day{streak.streak > 1 ? 's' : ''}
                 </span>
               </div>
             )}
 
             {/* Energy Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/40">
-              <Zap className="w-4 h-4 text-blue-400" />
-              <span className="text-white font-bold text-xs">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-muted/50 border-border">
+              <Zap className="w-4 h-4 text-[hsl(var(--accent))]" />
+              <span className="text-foreground font-bold text-xs">
                 {energyInfo.energy} energy
               </span>
             </div>
@@ -480,12 +482,12 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                       key={i}
                       className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold transition-all duration-500 border-2 ${
                         isCompleted
-                          ? 'border-blue-400/50 shadow-lg'
-                          : 'border-slate-600/50'
+                          ? 'border-[hsl(var(--accent))]/50 shadow-lg'
+                          : 'border-border'
                       }`}
                       style={{
-                        background: isCompleted ? color.bg : 'rgba(71, 85, 105, 0.3)',
-                        color: 'white',
+                        background: isCompleted ? color.bg : 'hsl(var(--muted))',
+                        color: 'hsl(var(--foreground))',
                         transform: isCompleted ? 'scale(1)' : 'scale(0.9)',
                         boxShadow: isCompleted ? `0 4px 15px ${color.border}60` : 'none',
                       }}
@@ -495,9 +497,9 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                   );
                 })}
               </div>
-              <p className="text-sm text-slate-400 font-semibold">
+              <p className="text-sm text-muted-foreground font-semibold">
                 {progress}/{target} this week {weeklyProgress?.isComplete && (
-                  <span className="ml-2 text-blue-400">
+                  <span className="ml-2 text-[hsl(var(--accent))]">
                     ✓ Complete!
                   </span>
                 )}
@@ -509,14 +511,14 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {completionHistory && completionHistory.history.length > 0 && (
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Last 7 days
                 </p>
-                <span className="text-xs text-slate-400 font-bold">
+                <span className="text-xs text-muted-foreground font-bold">
                   {completionRate}%
                 </span>
               </div>
-              <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
                 <div
                   className="h-full transition-all duration-500 rounded-full"
                   style={{
@@ -524,9 +526,9 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                     background: completionRate >= 70
                       ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
                       : completionRate >= 40
-                      ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
+                      ? 'hsl(var(--accent))'
                       : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                    boxShadow: '0 0 8px rgba(59, 130, 246, 0.5)',
+                    boxShadow: '0 0 8px hsl(var(--accent) / 0.5)',
                   }}
                 />
               </div>
@@ -534,7 +536,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           )}
 
           {/* Details */}
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {isWeekly ? `${target}× per week` : 'Daily habit'} • {habit.difficulty || 'medium'}
           </p>
         </div>
@@ -544,19 +546,19 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           <button
             onClick={handleToggleWithFeedback}
             disabled={isCompleting}
-            className={`px-6 py-4 rounded-xl font-bold text-white transition-all duration-500 border-2 ${
+            className={`px-6 py-4 rounded-xl font-bold text-foreground transition-all duration-500 border-2 ${
               completed
-                ? 'border-blue-500/50'
-                : 'border-slate-600/50 hover:border-slate-500/50'
+                ? 'border-[hsl(var(--accent))]/50'
+                : 'border-border hover:border-border/80'
             }`}
             style={{
               background: completed
-                ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                : 'rgba(71, 85, 105, 0.4)',
+                ? 'hsl(var(--accent))'
+                : 'hsl(var(--muted))',
               cursor: isCompleting ? 'not-allowed' : 'pointer',
               transform: isCompleting ? 'scale(1.05)' : 'scale(1)',
               boxShadow: completed
-                ? '0 4px 20px rgba(59, 130, 246, 0.4)'
+                ? '0 4px 20px hsl(var(--accent) / 0.4)'
                 : '0 2px 10px rgba(0,0,0,0.2)',
               minWidth: '100px',
             }}
@@ -582,7 +584,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Energy Earned Feedback */}
           {showEnergyFeedback && (
             <div
-              className="absolute -top-20 right-0 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-3 rounded-xl shadow-lg border-2 border-blue-400/50 animate-bounce z-50"
+              className="absolute -top-20 right-0 bg-primary text-primary-foreground px-4 py-3 rounded-xl shadow-lg border-2 border-card-border animate-bounce z-50"
               style={{
                 minWidth: '150px',
                 textAlign: 'center',
@@ -604,13 +606,13 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Mini actions */}
           <button
             onClick={onEdit}
-            className="text-xs text-slate-400 hover:text-slate-200 transition-colors px-2 py-1"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
           >
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1"
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1"
           >
             Delete
           </button>
