@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
 import { CalendarView } from "@/components/CalendarView";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti, CelebrationModal } from "@/components/Confetti";
+import { LevelUpModal } from "@/components/LevelUpModal";
+import { MountainUnlockToast } from "@/components/MountainUnlockToast";
 import { useToast } from "@/hooks/use-toast";
 
 type TabType = "today" | "calendar" | "todos";
@@ -96,6 +98,8 @@ export default function Dashboard() {
     description: string;
     iconName: string;
   }>({ open: false, title: "", description: "", iconName: "sparkles" });
+  const [levelUpModalData, setLevelUpModalData] = useState<any>(null);
+  const [mountainUnlockData, setMountainUnlockData] = useState<any>(null);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -175,6 +179,17 @@ export default function Dashboard() {
         });
       }
 
+      // Celebration for level-up (climbing level)
+      if (data.levelUpData?.leveledUp) {
+        setLevelUpModalData(data.levelUpData);
+        setShowConfetti(true);
+
+        // Check if a mountain was unlocked
+        if (data.levelUpData.unlockedMountain) {
+          setMountainUnlockData(data.levelUpData.unlockedMountain);
+        }
+      }
+
       // Celebration for level-up
       if (data.petUpdate?.leveledUp) {
         setShowConfetti(true);
@@ -210,6 +225,9 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
       // Refresh points display
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      // Refresh XP and level progress
+      queryClient.invalidateQueries({ queryKey: ["/api/user/level-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
     },
   });
 
@@ -401,6 +419,27 @@ export default function Dashboard() {
         description={celebrationModal.description}
         iconName={celebrationModal.iconName}
       />
+
+      {/* Level-up modal */}
+      {levelUpModalData && (
+        <LevelUpModal
+          open={!!levelUpModalData}
+          onClose={() => setLevelUpModalData(null)}
+          oldLevel={levelUpModalData.oldLevel}
+          newLevel={levelUpModalData.newLevel}
+          oldGrade={levelUpModalData.oldGrade}
+          newGrade={levelUpModalData.newGrade}
+          xpEarned={levelUpModalData.xpEarned}
+        />
+      )}
+
+      {/* Mountain unlock toast */}
+      {mountainUnlockData && (
+        <MountainUnlockToast
+          mountain={mountainUnlockData}
+          onClose={() => setMountainUnlockData(null)}
+        />
+      )}
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8">
         {/* Alpine Dashboard Header */}

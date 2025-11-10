@@ -618,6 +618,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Award points for completing a habit
         const habit = await storage.getHabit(habitId);
+        let levelUpData: any = null;
+
         if (habit) {
           const allLogs = await storage.getAllHabitLogs(userId);
           const currentStreak = calculateStreak(allLogs);
@@ -690,6 +692,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           console.log(`[XP] Awarded ${xpEarned} XP for completing "${habit.title}" (Total: ${newTotalXp}, Level: ${newLevel})`);
+
+          // Prepare level-up data if user leveled up
+          if (leveledUp) {
+            const gradeMap: Record<number, string> = {
+              1: "5.5", 2: "5.6", 3: "5.7", 4: "5.8", 5: "5.9",
+              6: "5.10a", 7: "5.10b", 8: "5.10c", 9: "5.10d",
+              10: "5.11a", 11: "5.11b", 12: "5.11c", 13: "5.11d",
+              14: "5.12a", 15: "5.12b", 16: "5.12c", 17: "5.12d",
+              18: "5.13a", 19: "5.13b", 20: "5.13c",
+            };
+
+            // Check for newly unlocked mountains
+            let unlockedMountain = null;
+            try {
+              const newlyUnlockedMountains = await storage.getMountainsByRequiredLevel(newLevel);
+              if (newlyUnlockedMountains && newlyUnlockedMountains.length > 0) {
+                // Pick the first mountain that unlocks at this exact level
+                unlockedMountain = newlyUnlockedMountains[0];
+              }
+            } catch (err) {
+              console.log('[XP] No mountains found for level', newLevel);
+            }
+
+            levelUpData = {
+              leveledUp: true,
+              oldLevel,
+              newLevel,
+              oldGrade: gradeMap[oldLevel] || "5.5",
+              newGrade: gradeMap[newLevel] || "5.13d",
+              xpEarned,
+              totalXp: newTotalXp,
+              unlockedMountain,
+            };
+          }
 
           // If habit is linked to a goal, increment goal progress
           if (habit.linkedGoalId) {
@@ -795,6 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           evolved: petUpdate.evolved,
         } : null,
         rewardDetails,
+        levelUpData,
       });
     } catch (error: any) {
       console.error('Error toggling habit log:', error);

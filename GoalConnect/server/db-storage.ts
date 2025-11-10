@@ -1131,6 +1131,14 @@ export class DbStorage implements IStorage {
       .orderBy(schema.mountains.elevation);
   }
 
+  async getMountainsByRequiredLevel(level: number): Promise<any[]> {
+    return await this.db
+      .select()
+      .from(schema.mountains)
+      .where(eq(schema.mountains.requiredClimbingLevel, level))
+      .orderBy(schema.mountains.elevation);
+  }
+
   async getPlayerClimbingStats(userId: number): Promise<any> {
     const [stats] = await this.db
       .select()
