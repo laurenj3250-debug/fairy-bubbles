@@ -10,6 +10,7 @@ import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
 import WeeklyView from "@/pages/WeeklyView";
+import WeeklyHub from "@/pages/WeeklyHub";
 import Pet from "@/pages/Pet";
 import ShopPage from "@/pages/ShopPage";
 import AlpineShop from "@/pages/AlpineShop";
@@ -124,6 +125,12 @@ function AppRoutes() {
       <Route path="/weekly">
         <RequireAuth>
           <WeeklyView />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/weekly-hub">
+        <RequireAuth>
+          <WeeklyHub />
           <BottomNav />
         </RequireAuth>
       </Route>

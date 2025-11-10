@@ -72,6 +72,25 @@ export async function runMigrations() {
       }
 
       try {
+        // Add Weekly Hub fields to habits if they don't exist
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS category VARCHAR(20) DEFAULT 'training'
+        `);
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS effort VARCHAR(10) DEFAULT 'medium'
+        `);
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS grade TEXT DEFAULT '5.9'
+        `);
+        console.log('[migrate] ✅ Weekly Hub columns (category, effort, grade) added/verified in habits table');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add Weekly Hub columns to habits:', error);
+      }
+
+      try {
         // Add difficulty column to goals if it doesn't exist
         await db.execute(sql`
           ALTER TABLE goals
