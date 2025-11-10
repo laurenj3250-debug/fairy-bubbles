@@ -549,6 +549,41 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
+  /* Rope fiber texture - subtle woven pattern */
+  .rope-texture {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.05) 2px,
+        rgba(255, 255, 255, 0.05) 3px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 3px
+      );
+  }
+
+  /* Granite texture overlay for panels */
+  .granite-overlay {
+    position: relative;
+  }
+
+  .granite-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='granite'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' seed='42' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23granite)' /%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   /* Ice crystal border effect on hover */
   .ice-crystal-border {
     position: relative;
