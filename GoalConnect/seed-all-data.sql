@@ -102,37 +102,37 @@ BEGIN
   -- ==================== CREATE GOALS ====================
 
   -- Goal 1: Lose 10 pounds (Monthly goal)
-  INSERT INTO goals (user_id, title, description, deadline, priority, difficulty, created_at)
+  INSERT INTO goals (user_id, title, description, target_value, current_value, unit, deadline, category, priority, difficulty)
   VALUES (v_user_id, 'Lose 10 pounds', 'Get down to target weight',
-          (v_today + INTERVAL '30 days')::DATE, 'high', 'hard', NOW())
+          10, 5, 'pounds', (v_today + INTERVAL '30 days')::DATE, 'health', 'high', 'hard')
   RETURNING id INTO v_goal_id1;
 
   -- Add progress updates
-  INSERT INTO goal_updates (goal_id, update_text, progress_delta, created_at) VALUES
-    (v_goal_id1, 'Lost 3 pounds this week!', 30, NOW() - INTERVAL '7 days'),
-    (v_goal_id1, 'Down another 2 pounds', 20, NOW() - INTERVAL '3 days');
+  INSERT INTO goal_updates (goal_id, user_id, date, value, note) VALUES
+    (v_goal_id1, v_user_id, (v_today - 7)::VARCHAR, 3, 'Lost 3 pounds this week!'),
+    (v_goal_id1, v_user_id, (v_today - 3)::VARCHAR, 2, 'Down another 2 pounds');
 
   -- Goal 2: Read 3 books (Monthly goal)
-  INSERT INTO goals (user_id, title, description, deadline, priority, difficulty, created_at)
+  INSERT INTO goals (user_id, title, description, target_value, current_value, unit, deadline, category, priority, difficulty)
   VALUES (v_user_id, 'Read 3 books', 'Finish reading list for this month',
-          (v_today + INTERVAL '25 days')::DATE, 'medium', 'medium', NOW())
+          3, 1, 'books', (v_today + INTERVAL '25 days')::DATE, 'learning', 'medium', 'medium')
   RETURNING id INTO v_goal_id2;
 
   -- Add progress
-  INSERT INTO goal_updates (goal_id, update_text, progress_delta, created_at) VALUES
-    (v_goal_id2, 'Finished first book', 33, NOW() - INTERVAL '10 days');
+  INSERT INTO goal_updates (goal_id, user_id, date, value, note) VALUES
+    (v_goal_id2, v_user_id, (v_today - 10)::VARCHAR, 1, 'Finished first book');
 
   RAISE NOTICE 'Created 2 goals with progress updates';
 
   -- ==================== CREATE TODOS ====================
 
-  INSERT INTO todos (user_id, title, completed, priority, difficulty, subtasks, created_at) VALUES
-    (v_user_id, 'Buy new running shoes', false, 'high', 'easy', '[]', NOW()),
-    (v_user_id, 'Schedule dentist appointment', false, 'medium', 'easy', '[]', NOW()),
-    (v_user_id, 'Meal prep for the week', false, 'high', 'medium',
+  INSERT INTO todos (user_id, title, completed, difficulty, subtasks, created_at) VALUES
+    (v_user_id, 'Buy new running shoes', false, 'easy', '[]', NOW()),
+    (v_user_id, 'Schedule dentist appointment', false, 'easy', '[]', NOW()),
+    (v_user_id, 'Meal prep for the week', false, 'medium',
      '[{"text": "Make grocery list", "completed": true}, {"text": "Shop for ingredients", "completed": false}, {"text": "Cook meals", "completed": false}]', NOW()),
-    (v_user_id, 'Update resume', false, 'low', 'medium', '[]', NOW()),
-    (v_user_id, 'Call mom', true, 'medium', 'easy', '[]', NOW() - INTERVAL '1 day');
+    (v_user_id, 'Update resume', false, 'medium', '[]', NOW()),
+    (v_user_id, 'Call mom', true, 'easy', '[]', NOW() - INTERVAL '1 day');
 
   RAISE NOTICE 'Created 5 todos';
 

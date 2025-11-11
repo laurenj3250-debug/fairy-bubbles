@@ -45,6 +45,8 @@ export default function DreamScroll() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editTags, setEditTags] = useState<number[]>([]);
+  const [editPriority, setEditPriority] = useState<string>("medium");
+  const [editCost, setEditCost] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
