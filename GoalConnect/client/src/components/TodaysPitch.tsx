@@ -1,9 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import type { Habit, HabitLog } from "@shared/schema";
+import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo, useEffect } from "react";
 import { cn, getToday } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Mountain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TodaysPitchProps {
@@ -61,6 +61,10 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
   const { data: todayLogs = [], isLoading: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", today],
+  });
+
+  const { data: goals = [] } = useQuery<Goal[]>({
+    queryKey: ["/api/goals"],
   });
 
   const toggleHabitMutation = useMutation({
@@ -316,37 +320,51 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
               {/* Category habits */}
               <div className="space-y-2">
-                {categoryHabits.map((habit) => (
-                  <div
-                    key={habit.id}
-                    onClick={() => handleToggle(habit.id)}
-                    className={cn(
-                      "habit-row relative cursor-pointer transition-all duration-200",
-                      "rounded-xl p-3 border",
-                      categoryColor,
-                      "ice-crystal-border",
-                      "hover:scale-[1.01] active:scale-[0.99]",
-                      habit.completed && "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Icon */}
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110"
-                        style={{ background: habit.color }}
-                      >
-                        {habit.icon}
-                      </div>
+                {categoryHabits.map((habit) => {
+                  const linkedGoal = habit.linkedGoalId ? goals.find((g) => g.id === habit.linkedGoalId) : null;
 
-                      {/* Habit info */}
-                      <div className="flex-1">
-                        <div className="text-foreground font-medium text-sm">
-                          {habit.title}
+                  return (
+                    <div
+                      key={habit.id}
+                      onClick={() => handleToggle(habit.id)}
+                      className={cn(
+                        "habit-row relative cursor-pointer transition-all duration-200",
+                        "rounded-xl p-3 border",
+                        categoryColor,
+                        "ice-crystal-border",
+                        "hover:scale-[1.01] active:scale-[0.99]",
+                        habit.completed && "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Icon */}
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110"
+                          style={{ background: habit.color }}
+                        >
+                          {habit.icon}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {CATEGORY_LABELS[categoryKey]}
+
+                        {/* Habit info */}
+                        <div className="flex-1">
+                          <div className="text-foreground font-medium text-sm">
+                            {habit.title}
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground">
+                              {CATEGORY_LABELS[categoryKey]}
+                            </span>
+                            {linkedGoal && (
+                              <>
+                                <span className="text-muted-foreground/30">•</span>
+                                <span className="flex items-center gap-1 text-xs text-[hsl(var(--accent))] font-semibold">
+                                  <Mountain className="w-3 h-3" />
+                                  {linkedGoal.title}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
                       {/* Grade + Effort */}
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -371,7 +389,8 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
