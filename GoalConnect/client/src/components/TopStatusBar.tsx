@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Habit, HabitLog } from "@shared/schema";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getClimbingRank } from "@/lib/climbingRanks";
 import { TokenCounter } from "./TokenCounter";
 import { XPProgressBar } from "./XPProgressBar";
+import { X } from "lucide-react";
 
 interface ClimbingStats {
   climbingLevel: number;
@@ -88,8 +89,53 @@ export function TopStatusBar() {
 
   const rank = climbingStats ? getClimbingRank(climbingStats.climbingLevel) : null;
 
+  // Welcome back message for returning users
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const lastVisit = localStorage.getItem('lastVisit');
+    const dismissed = sessionStorage.getItem('welcomeBackDismissed');
+
+    if (!dismissed && lastVisit) {
+      const lastVisitDate = new Date(lastVisit);
+      const todayDate = new Date(today);
+      const daysDiff = Math.floor((todayDate.getTime() - lastVisitDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff >= 2) {
+        setShowWelcomeBack(true);
+      }
+    }
+
+    // Update last visit
+    localStorage.setItem('lastVisit', today);
+  }, []);
+
+  const dismissWelcomeBack = () => {
+    sessionStorage.setItem('welcomeBackDismissed', 'true');
+    setShowWelcomeBack(false);
+  };
+
   return (
     <div className="space-y-3 mb-4">
+      {/* Welcome Back Banner */}
+      {showWelcomeBack && (
+        <div className="bg-[hsl(var(--accent))]/10 border border-[hsl(var(--accent))]/30 rounded-2xl p-4 shadow-lg relative animate-in fade-in slide-in-from-top duration-300">
+          <button
+            onClick={dismissWelcomeBack}
+            className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="pr-8">
+            <h3 className="text-base font-bold text-foreground mb-1">Welcome back!</h3>
+            <p className="text-sm text-muted-foreground">
+              Conditions are good today. Ready to climb?
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top status bar */}
       <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-3 shadow-lg topo-pattern">
         <div className="flex items-center justify-between text-xs text-foreground relative z-10">

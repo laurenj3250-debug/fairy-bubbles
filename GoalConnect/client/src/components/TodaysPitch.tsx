@@ -15,17 +15,17 @@ interface HabitWithCompletion extends Habit {
 }
 
 const CATEGORY_LABELS = {
-  mind: "MIND",
-  foundation: "FOUNDATION",
-  adventure: "ADVENTURE",
-  training: "TRAINING",
+  mind: "ALPINE OBJECTIVES",
+  foundation: "BASE CAMP",
+  adventure: "EXPEDITION DAYS",
+  training: "GYM SESSIONS",
 } as const;
 
 const CATEGORY_COLORS = {
-  mind: "bg-muted/20 border-border/50",
-  foundation: "bg-muted/20 border-border/50",
-  adventure: "bg-muted/20 border-border/50",
-  training: "bg-muted/20 border-border/50",
+  mind: "bg-blue-500/10 border-blue-400/40",           // Alpine blue/ice
+  foundation: "bg-amber-600/10 border-amber-500/40",   // Earth tones/base camp
+  adventure: "bg-orange-500/10 border-orange-400/40",  // Sunset orange/expedition
+  training: "bg-slate-500/10 border-slate-400/40",     // Chalk gray/gym
 } as const;
 
 function getEffortIcon(effort: string): string {
@@ -39,6 +39,14 @@ function getEffortIcon(effort: string): string {
     default:
       return "●";
   }
+}
+
+function getProgressMessage(percentage: number, totalHabits: number): string {
+  if (totalHabits === 0) return "No pitches scheduled today";
+  if (percentage === 0) return "First pitch of the day—let's go!";
+  if (percentage < 50) return "Building momentum...";
+  if (percentage < 100) return "Almost to the summit!";
+  return "Summit reached! 🏔️";
 }
 
 export function TodaysPitch({ className }: TodaysPitchProps) {
@@ -267,6 +275,12 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
               )}
               style={{ width: `${completionPercentage}%` }}
             />
+          </div>
+          {/* Progress message */}
+          <div className="mt-2 text-center">
+            <span className="text-sm font-medium text-foreground/80 italic">
+              {getProgressMessage(completionPercentage, totalHabitsForToday)}
+            </span>
           </div>
         </div>
       </div>
