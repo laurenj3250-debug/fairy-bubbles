@@ -38,16 +38,12 @@ export default function WeeklyHub() {
         </div>
 
         {/* Secondary Content: Tasks + Dreams */}
-        <div className="mt-4 flex flex-col lg:flex-row gap-4">
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Today's Tasks Panel */}
-          <div className="flex-1 lg:w-[48%]">
-            <TodaysTasksPanel />
-          </div>
+          <TodaysTasksPanel />
 
           {/* Dream Scroll Widget */}
-          <div className="lg:w-[48%]">
-            <DreamScrollWidget />
-          </div>
+          <DreamScrollWidget />
         </div>
       </div>
     </div>
