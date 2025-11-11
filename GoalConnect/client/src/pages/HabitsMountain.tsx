@@ -92,10 +92,8 @@ export default function HabitsMountain() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      // Only invalidate specific queries to avoid 404 errors
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate], exact: true });
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
       queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
