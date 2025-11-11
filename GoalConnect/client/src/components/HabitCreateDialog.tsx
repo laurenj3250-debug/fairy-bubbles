@@ -133,6 +133,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
   const [grade, setGrade] = useState("5.9");
   const [cadence, setCadence] = useState<"daily" | "weekly">("daily");
   const [targetPerWeek, setTargetPerWeek] = useState(3);
+  const [linkedGoalId, setLinkedGoalId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,6 +148,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         setGrade(habit.grade || "5.9");
         setCadence(habit.cadence || "daily");
         setTargetPerWeek(habit.targetPerWeek || 3);
+        setLinkedGoalId(habit.linkedGoalId || null);
       } else {
         // Reset to defaults for new habit
         setTitle("");
@@ -156,6 +158,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         setGrade("5.9");
         setCadence("daily");
         setTargetPerWeek(3);
+        setLinkedGoalId(null);
       }
       setError(null);
     }
@@ -201,7 +204,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         cadence,
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
         difficulty: effort === "light" ? "easy" : effort === "medium" ? "medium" : "hard",
-        linkedGoalId: null,
+        linkedGoalId: linkedGoalId,
       };
 
       console.log("[HabitCreateDialog] Submitting habit:", data);
@@ -467,6 +470,34 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
                 </div>
               </div>
             )}
+
+            {/* Link to Route (Goal) */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Link to Route (Optional)
+              </label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Connect this habit to a multi-pitch route. Each completion sends a pitch!
+              </p>
+              <select
+                value={linkedGoalId || ""}
+                onChange={(e) => setLinkedGoalId(e.target.value ? parseInt(e.target.value) : null)}
+                className="w-full px-4 py-3 border-2 border-card-border rounded-xl bg-card/40 text-foreground cursor-pointer hover:border-primary/50 focus:outline-none focus:border-primary/50 transition-colors"
+              >
+                <option value="">No route (habit only)</option>
+                {goals.filter((g) => {
+                  const percentage = (g.currentValue / g.targetValue) * 100;
+                  return percentage < 100; // Only show incomplete goals
+                }).map((goal) => {
+                  const percentage = Math.round((goal.currentValue / goal.targetValue) * 100);
+                  return (
+                    <option key={goal.id} value={goal.id}>
+                      {goal.title} ({percentage}% complete)
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
 
             {/* Actions */}
             <div className="flex gap-3 pt-4 border-t border-card-border">

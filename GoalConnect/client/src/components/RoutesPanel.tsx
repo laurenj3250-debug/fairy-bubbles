@@ -64,21 +64,23 @@ export function RoutesPanel({ className }: RoutesPanelProps) {
   }, [goals]);
 
   const incrementGoalMutation = useMutation({
-    mutationFn: async ({ goalId }: { goalId: number }) => {
-      return await apiRequest("/api/goal-updates", "POST", {
-        goalId,
-        value: 1,
-        date: new Date().toISOString().split("T")[0],
+    mutationFn: async ({ goalId, currentValue }: { goalId: number; currentValue: number }) => {
+      return await apiRequest(`/api/goals/${goalId}`, "PATCH", {
+        currentValue: currentValue + 1,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
     },
+    onError: (error: any) => {
+      console.error("[RoutesPanel] Failed to increment goal:", error);
+      // Could add a toast here if you want to show errors to user
+    },
   });
 
-  const handleIncrementGoal = (event: React.MouseEvent, goalId: number) => {
+  const handleIncrementGoal = (event: React.MouseEvent, goalId: number, currentValue: number) => {
     event.stopPropagation();
-    incrementGoalMutation.mutate({ goalId });
+    incrementGoalMutation.mutate({ goalId, currentValue });
   };
 
   if (isCollapsed) {
@@ -207,7 +209,7 @@ export function RoutesPanel({ className }: RoutesPanelProps) {
 
               {/* Action button */}
               <button
-                onClick={(e) => handleIncrementGoal(e, goal.id)}
+                onClick={(e) => handleIncrementGoal(e, goal.id, goal.currentValue)}
                 disabled={incrementGoalMutation.isPending}
                 className={cn(
                   "w-full py-2 px-3 rounded-lg border-2 transition-all font-semibold text-sm",
