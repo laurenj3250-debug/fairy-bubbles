@@ -293,3 +293,44 @@ All progress bars use:
 - Backdrop: `bg-background/80 backdrop-blur-sm`
 - Content card: Accent border, icon, title, description
 - Auto-dismiss: 4s timeout, no manual close needed (keeps it quick)
+
+---
+
+## XP & LEVELING SYSTEM
+
+### Core XP Mechanics
+**Location:** Habit toggle endpoint (`/api/habit-logs/toggle`)
+
+- Award **10 XP** per habit completion (matches 10 token reward)
+- Deduct **10 XP** when uncompleting habits
+- **100 XP per level** (simple, predictable progression)
+- Auto level-up when crossing XP threshold
+- Wrapped in try/catch to never break core habit logging
+
+**Climbing Grades by Level:**
+- Level 1-5: 5.5 → 5.9 (beginner)
+- Level 6-9: 5.10a → 5.10d (intermediate)
+- Level 10-13: 5.11a → 5.11d (advanced)
+- Level 14-17: 5.12a → 5.12d (expert)
+- Level 18-20: 5.13a → 5.13d (elite)
+
+### XP Progress Bar Component
+**Location:** `XPProgressBar.tsx` (rendered in `TopStatusBar`)
+
+Displays:
+- Current level and climbing grade (e.g., "Level 3 - 5.7")
+- XP progress within current level (e.g., "30 / 100 XP")
+- Visual progress bar with gradient fill
+- Percentage completion
+- "Almost there!" pulse when ≥80% to next level
+
+**Design:**
+- Compact card with gradient icon background
+- Updates every 5 seconds via React Query
+- Hidden if data fails to load (graceful degradation)
+- Climbing grade shown prominently for motivation
+
+**Progression Feel:**
+- 10 habits = 1 level (100 XP ÷ 10 XP per habit)
+- Tangible sense of "climbing harder routes" as you level up
+- Grade progression mirrors real climbing difficulty system
