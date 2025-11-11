@@ -65,7 +65,7 @@ export default function HabitsMountain() {
 
   // Fetch logs for selected date
   const { data: logsData } = useQuery<HabitLog[]>({
-    queryKey: ["/api/habit-logs", "by-date", selectedDate],
+    queryKey: ["/api/habit-logs", selectedDate],
     queryFn: () => apiRequest(`/api/habit-logs/date/${selectedDate}`),
   });
 
@@ -94,8 +94,12 @@ export default function HabitsMountain() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/habit-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
       queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       setTimeout(() => setCompletingHabit(null), 500);
     },
     onError: () => {
