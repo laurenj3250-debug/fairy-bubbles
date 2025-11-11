@@ -98,15 +98,27 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
       return { previousLogs };
     },
     onSuccess: (data: any) => {
-      if (data.rewardDetails) {
-        const { coinsEarned, habitTitle } = data.rewardDetails;
-        setTodayTokens((prev) => prev + coinsEarned);
-        toast({
-          title: `+${coinsEarned} tokens! 💎`,
-          description: `Completed "${habitTitle}"`,
-          duration: 2000,
-        });
+      // Update today's token count
+      const tokensEarned = data.tokensAwarded || 10;
+      if (data.completed) {
+        setTodayTokens((prev) => prev + tokensEarned);
       }
+
+      // Build toast message
+      let toastTitle = `+${tokensEarned} tokens! 💎`;
+      let toastDescription = "Habit completed";
+
+      // If route progress exists, show pitch information
+      if (data.routeProgress) {
+        const { routeName, pitch, totalPitches } = data.routeProgress;
+        toastDescription = `Pitch ${pitch}/${totalPitches} sent on "${routeName}"`;
+      }
+
+      toast({
+        title: toastTitle,
+        description: toastDescription,
+        duration: 2000,
+      });
     },
     onError: (err, variables, context) => {
       if (context?.previousLogs) {
