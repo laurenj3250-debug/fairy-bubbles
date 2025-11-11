@@ -78,17 +78,12 @@ export default function HabitsMountain() {
       );
 
       if (existingLog) {
-        await apiRequest(`/api/habit-logs/${existingLog.id}`, {
-          method: "DELETE",
-        });
+        await apiRequest(`/api/habit-logs/${existingLog.id}`, "DELETE");
       } else {
-        await apiRequest("/api/habit-logs", {
-          method: "POST",
-          body: JSON.stringify({
-            habitId,
-            date: selectedDate,
-            completed: true,
-          }),
+        await apiRequest("/api/habit-logs", "POST", {
+          habitId,
+          date: selectedDate,
+          completed: true,
         });
       }
     },

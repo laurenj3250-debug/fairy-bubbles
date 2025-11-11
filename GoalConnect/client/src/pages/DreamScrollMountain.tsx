@@ -52,7 +52,7 @@ export default function DreamScrollMountain() {
   const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
 
   // Fetch all dream scroll items
-  const { data: allItems = [], isLoading } = useQuery<DreamScrollItem[]>({
+  const { data: allItems = [], isLoading, isError, error } = useQuery<DreamScrollItem[]>({
     queryKey: ["/api/dream-scroll"],
   });
 
@@ -190,6 +190,17 @@ export default function DreamScrollMountain() {
     return (
       <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
         <div className="animate-pulse text-lg text-foreground">Loading Expedition Log...</div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
+        <div className="text-center space-y-4">
+          <div className="text-lg text-destructive">Failed to load Expedition Log</div>
+          <div className="text-sm text-muted-foreground">{error?.message || "Unknown error"}</div>
+        </div>
       </div>
     );
   }
