@@ -58,33 +58,9 @@ export default function HabitsMountain() {
   const [selectedDate, setSelectedDate] = useState(() => getToday());
   const [completingHabit, setCompletingHabit] = useState<number | null>(null);
 
-  // Fetch habits with streak, progress, and history
+  // Fetch habits with streak, progress, and history using batch endpoint
   const { data: habits = [], isLoading } = useQuery<HabitWithData[]>({
-    queryKey: ["/api/habits", "with-data"],
-    queryFn: async () => {
-      const habitsData = await apiRequest<Habit[]>("/api/habits");
-
-      const habitsWithData = await Promise.all(
-        habitsData.map(async (habit) => {
-          const [streak, weeklyProgress, history] = await Promise.all([
-            apiRequest<HabitStreak>(`/api/habits/${habit.id}/streak`),
-            habit.cadence === 'weekly'
-              ? apiRequest<WeeklyProgress>(`/api/habits/${habit.id}/weekly-progress`)
-              : Promise.resolve(null),
-            apiRequest<CompletionHistory>(`/api/habits/${habit.id}/completion-history`)
-          ]);
-
-          return {
-            ...habit,
-            streak,
-            weeklyProgress,
-            history
-          };
-        })
-      );
-
-      return habitsWithData;
-    }
+    queryKey: ["/api/habits-with-data"],
   });
 
   // Fetch logs for selected date
