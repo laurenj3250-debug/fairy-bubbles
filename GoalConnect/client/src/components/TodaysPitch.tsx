@@ -1,9 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Habit, HabitLog, Goal } from "@shared/schema";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn, getToday } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CheckCircle2, PlusCircle } from "lucide-react";
+import { CheckCircle2, PlusCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TodaysPitchProps {
@@ -44,6 +44,8 @@ function getEffortIcon(effort: string): string {
 export function TodaysPitch({ className }: TodaysPitchProps) {
   const { toast } = useToast();
   const today = getToday();
+  const [showSummitCelebration, setShowSummitCelebration] = useState(false);
+  const [todayTokens, setTodayTokens] = useState(0);
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -94,6 +96,7 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
     onSuccess: (data: any) => {
       if (data.rewardDetails) {
         const { coinsEarned, habitTitle } = data.rewardDetails;
+        setTodayTokens((prev) => prev + coinsEarned);
         toast({
           title: `+${coinsEarned} tokens! 💎`,
           description: `Completed "${habitTitle}"`,
@@ -150,6 +153,42 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
     return groups;
   }, [habitsWithCompletion, today]);
 
+  // Check for summit celebration (all habits completed)
+  useEffect(() => {
+    const totalHabitsForToday = habitsWithCompletion.filter((h) => {
+      if (h.category === "adventure") {
+        return h.scheduledDay === today;
+      }
+      return true;
+    }).length;
+
+    const completedCount = habitsWithCompletion.filter((h) => {
+      if (h.category === "adventure" && h.scheduledDay !== today) {
+        return false;
+      }
+      return h.completed;
+    }).length;
+
+    if (totalHabitsForToday > 0 && completedCount === totalHabitsForToday && completedCount > 0) {
+      const wasAlreadyShown = sessionStorage.getItem(`summit-${today}`);
+      if (!wasAlreadyShown) {
+        setShowSummitCelebration(true);
+        sessionStorage.setItem(`summit-${today}`, "true");
+        setTimeout(() => setShowSummitCelebration(false), 4000);
+      }
+    }
+  }, [habitsWithCompletion, today]);
+
+  // Calculate today's earned tokens from completed logs
+  useEffect(() => {
+    const completedToday = todayLogs.filter((log) => log.completed);
+    const tokensFromLogs = completedToday.reduce((sum, log) => {
+      const habit = habits.find((h) => h.id === log.habitId);
+      return sum + (habit?.coinsReward || 10);
+    }, 0);
+    setTodayTokens(tokensFromLogs);
+  }, [todayLogs, habits]);
+
   const incrementGoalMutation = useMutation({
     mutationFn: async ({ goalId }: { goalId: number }) => {
       return await apiRequest("/api/goal-updates", "POST", {
@@ -200,22 +239,75 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
     );
   }
 
-  const totalHabits = habitsWithCompletion.length;
-  const completedHabits = habitsWithCompletion.filter((h) => h.completed).length;
+  const totalHabitsForToday = habitsWithCompletion.filter((h) => {
+    if (h.category === "adventure") {
+      return h.scheduledDay === today;
+    }
+    return true;
+  }).length;
+
+  const completedHabits = habitsWithCompletion.filter((h) => {
+    if (h.category === "adventure" && h.scheduledDay !== today) {
+      return false;
+    }
+    return h.completed;
+  }).length;
+
   const totalGoals = goals.length;
-  const totalItems = totalHabits + totalGoals;
+  const totalItems = totalHabitsForToday + totalGoals;
+  const completionPercentage = totalHabitsForToday > 0 ? (completedHabits / totalHabitsForToday) * 100 : 0;
 
   return (
     <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern mountain-card-depth", className)}>
+      {/* Summit Celebration Overlay */}
+      {showSummitCelebration && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">
+          <div className="text-center space-y-2 px-6 py-8 bg-[hsl(var(--accent))]/20 border-2 border-[hsl(var(--accent))] rounded-xl">
+            <Sparkles className="w-12 h-12 mx-auto text-[hsl(var(--accent))] animate-pulse" />
+            <h3 className="text-2xl font-bold text-foreground">Summit Reached!</h3>
+            <p className="text-muted-foreground">All pitches sent today.</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-6 relative z-10">
-        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-          Today's Pitch
-          <span className="text-lg font-normal text-muted-foreground">
-            ({totalHabits} habits, {totalGoals} routes)
-          </span>
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-bold text-foreground">
+            Today's Pitch
+          </h2>
+          {todayTokens > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--accent))]/20 border border-[hsl(var(--accent))]/30 rounded-full">
+              <span className="text-sm font-semibold text-foreground">Today: +{todayTokens}</span>
+              <span className="text-lg">💎</span>
+            </div>
+          )}
+        </div>
+
+        {/* Progress bar - topo line style */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Daily Progress
+            </span>
+            <span className="text-xs font-mono text-foreground">
+              {completedHabits}/{totalHabitsForToday}
+            </span>
+          </div>
+          <div className="h-3 bg-muted/30 rounded-full overflow-hidden border border-border/30">
+            <div
+              className={cn(
+                "h-full transition-all duration-500 rounded-full",
+                completionPercentage === 100
+                  ? "bg-gradient-to-r from-[hsl(var(--accent))] to-primary"
+                  : "bg-gradient-to-r from-muted-foreground/40 to-primary"
+              )}
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        <p className="text-muted-foreground text-sm">
           1-tap habits • +1 route progress
         </p>
       </div>
