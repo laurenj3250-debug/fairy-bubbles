@@ -2,6 +2,8 @@ import { TopStatusBar } from "@/components/TopStatusBar";
 import { RidgeTraverseWeekCompact } from "@/components/RidgeTraverseWeekCompact";
 import { TodaysPitch } from "@/components/TodaysPitch";
 import { RoutesPanel } from "@/components/RoutesPanel";
+import { TodaysTasksPanel } from "@/components/TodaysTasksPanel";
+import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { useState } from "react";
 
 export default function WeeklyHub() {
@@ -32,6 +34,19 @@ export default function WeeklyHub() {
           {/* Routes Panel - Sidebar (30% width on desktop, 5% gap) */}
           <div className="lg:w-[30%]">
             <RoutesPanel />
+          </div>
+        </div>
+
+        {/* Secondary Content: Tasks + Dreams */}
+        <div className="mt-4 flex flex-col lg:flex-row gap-4">
+          {/* Today's Tasks Panel */}
+          <div className="flex-1 lg:w-[48%]">
+            <TodaysTasksPanel />
+          </div>
+
+          {/* Dream Scroll Widget */}
+          <div className="lg:w-[48%]">
+            <DreamScrollWidget />
           </div>
         </div>
       </div>
