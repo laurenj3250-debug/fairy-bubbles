@@ -334,3 +334,49 @@ Displays:
 - 10 habits = 1 level (100 XP ÷ 10 XP per habit)
 - Tangible sense of "climbing harder routes" as you level up
 - Grade progression mirrors real climbing difficulty system
+
+---
+
+## PHASE 1 IMPROVEMENTS (Implemented)
+
+### Category Visual Theming
+**Location:** `TodaysPitch.tsx` lines 17-29
+
+Climbing-themed category names and distinct colors:
+- **Mind** → "ALPINE OBJECTIVES" (blue/ice: `bg-blue-500/10 border-blue-400/40`)
+- **Foundation** → "BASE CAMP" (earth tones: `bg-amber-600/10 border-amber-500/40`)
+- **Adventure** → "EXPEDITION DAYS" (sunset orange: `bg-orange-500/10 border-orange-400/40`)
+- **Training** → "GYM SESSIONS" (chalk gray: `bg-slate-500/10 border-slate-400/40`)
+
+**Why it works:**
+- Instant visual scanning (color-coded categories)
+- Climbing metaphors feel authentic, not slapped on
+- Reduces cognitive load for ADHD users
+
+### Progress Micro-Copy
+**Location:** `TodaysPitch.tsx` lines 44-50, 280-284
+
+Dynamic motivational messages based on daily completion:
+- 0%: "First pitch of the day—let's go!"
+- 1-49%: "Building momentum..."
+- 50-99%: "Almost to the summit!"
+- 100%: "Summit reached! 🏔️"
+
+**Why it works:**
+- Creates small dopamine hits throughout the day
+- Progress-aware feedback feels personal
+- Uses climbing language ("pitch", "summit")
+
+### Welcome Back Recovery Message
+**Location:** `TopStatusBar.tsx` lines 92-137
+
+Gentle re-entry banner after 2+ days away:
+- Shows: "Welcome back! Conditions are good today. Ready to climb?"
+- Dismissible with X button (sessionStorage)
+- Uses weather metaphor (storm break → clear conditions)
+- No guilt, no streak shame
+
+**Why it works:**
+- Removes shame barrier that prevents re-entry
+- Zombie-Lauren safe (low-energy welcome)
+- Climbing metaphor: weather breaks are normal, not failures
