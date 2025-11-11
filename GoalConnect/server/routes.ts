@@ -576,7 +576,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Toggle habit completion endpoint
+  // EMERGENCY MINIMAL Toggle habit completion endpoint
+  // REMOVED TEMPORARILY: Combo stats, XP/leveling, mountain unlocks, pet updates, daily quests, linked goals, reward details
+  // Core loop only: Toggle habit log + award/deduct 10 tokens
   app.post("/api/habit-logs/toggle", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -599,18 +601,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingLog) {
         // Toggle existing log
         const newCompleted = !existingLog.completed;
+        console.log('[toggle] Toggling existing log from', existingLog.completed, 'to', newCompleted);
+
         result = await storage.updateHabitLog(existingLog.id, {
           completed: newCompleted
         });
 
-        // If uncompleting, deduct points
-        if (!newCompleted && existingLog.completed) {
-          // Deduct the points that were awarded
+        // Award or deduct points based on toggle direction
+        if (newCompleted && !existingLog.completed) {
+          // Completing: award 10 tokens
+          await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
+          console.log('[toggle] Awarded 10 tokens for completing habit');
+        } else if (!newCompleted && existingLog.completed) {
+          // Uncompleting: deduct 10 tokens
           await storage.spendPoints(userId, 10, `Uncompleted habit`);
+          console.log('[toggle] Deducted 10 tokens for uncompleting habit');
         }
-        // If completing, points are awarded by the updateHabitLog logic
       } else {
         // Create new log as completed
+        console.log('[toggle] Creating new completed log');
         const validated = insertHabitLogSchema.parse({
           habitId,
           userId,
@@ -620,259 +629,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         result = await storage.createHabitLog(validated);
 
-        // Award points for completing a habit
-        const habit = await storage.getHabit(habitId);
-        let levelUpData: any = null;
-
-        if (habit) {
-          const allLogs = await storage.getAllHabitLogs(userId);
-          const currentStreak = calculateStreak(allLogs);
-          let coins = calculateCoinsEarned(habit, currentStreak);
-
-          // Register combo and get multiplier (optional feature)
-          let multiplier = 1.0;
-          try {
-            const now = new Date();
-            let stats = await storage.getComboStats(userId);
-            if (!stats) {
-              stats = await storage.createComboStats(userId);
-            }
-
-            const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
-            let currentCombo = stats.currentCombo;
-
-            if (comboExpiresAt && now > comboExpiresAt) {
-              currentCombo = 0;
-            }
-
-            currentCombo += 1;
-            const newExpiresAt = new Date(now.getTime() + 5 * 60 * 1000);
-            const dailyHighScore = Math.max(stats.dailyHighScore, currentCombo);
-            multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
-
-            await storage.updateComboStats(userId, {
-              currentCombo,
-              dailyHighScore,
-              lastCompletionTime: now.toISOString(),
-              comboExpiresAt: newExpiresAt.toISOString(),
-            });
-          } catch (error) {
-            console.error('[toggle] Failed to update combo stats, using 1.0x multiplier:', error);
-            // Continue with base multiplier - don't fail the habit toggle
-          }
-
-          // Apply combo multiplier to coins
-          coins = Math.round(coins * multiplier);
-
-          await storage.addPoints(
-            userId,
-            coins,
-            "habit_complete",
-            result.id,
-            `Completed "${habit.title}"${multiplier > 1.0 ? ` (${multiplier.toFixed(1)}x combo)` : ''}`
-          );
-
-          // Award XP for habit completion (Phase B: XP Tracking) - Optional feature
-          try {
-            let xpEarned = 10; // Base XP
-            if (habit.effort === 'medium') xpEarned = 15;
-            if (habit.effort === 'heavy') xpEarned = 20;
-
-            // Get or create climbing stats
-            let climbingStats = await storage.getPlayerClimbingStats(userId);
-            if (!climbingStats) {
-              climbingStats = await storage.updatePlayerClimbingStats(userId, {
-                climbingLevel: 1,
-                totalXp: 0,
-                summits: 0,
-                totalDistance: 0,
-                totalElevationGain: 0,
-                currentStreak: 0,
-                longestStreak: 0,
-              });
-            }
-
-            const oldLevel = climbingStats.climbingLevel;
-            const newTotalXp = (climbingStats.totalXp || 0) + xpEarned;
-            const newLevel = Math.floor(newTotalXp / 100) + 1; // 100 XP per level
-            const leveledUp = newLevel > oldLevel;
-
-            await storage.updatePlayerClimbingStats(userId, {
-              totalXp: newTotalXp,
-              climbingLevel: newLevel,
-            });
-
-            console.log(`[XP] Awarded ${xpEarned} XP for completing "${habit.title}" (Total: ${newTotalXp}, Level: ${newLevel})`);
-
-            // Prepare level-up data if user leveled up
-            if (leveledUp) {
-              const gradeMap: Record<number, string> = {
-                1: "5.5", 2: "5.6", 3: "5.7", 4: "5.8", 5: "5.9",
-                6: "5.10a", 7: "5.10b", 8: "5.10c", 9: "5.10d",
-                10: "5.11a", 11: "5.11b", 12: "5.11c", 13: "5.11d",
-                14: "5.12a", 15: "5.12b", 16: "5.12c", 17: "5.12d",
-                18: "5.13a", 19: "5.13b", 20: "5.13c",
-              };
-
-              // Check for newly unlocked mountains
-              let unlockedMountain = null;
-              try {
-                const newlyUnlockedMountains = await storage.getMountainsByRequiredLevel(newLevel);
-                if (newlyUnlockedMountains && newlyUnlockedMountains.length > 0) {
-                  // Pick the first mountain that unlocks at this exact level
-                  unlockedMountain = newlyUnlockedMountains[0];
-                }
-              } catch (err) {
-                console.log('[XP] No mountains found for level', newLevel);
-              }
-
-              levelUpData = {
-                leveledUp: true,
-                oldLevel,
-                newLevel,
-                oldGrade: gradeMap[oldLevel] || "5.5",
-                newGrade: gradeMap[newLevel] || "5.13d",
-                xpEarned,
-                totalXp: newTotalXp,
-                unlockedMountain,
-              };
-            }
-          } catch (error) {
-            console.error('[toggle] Failed to award XP or check level up:', error);
-            // Continue - don't fail the habit toggle
-          }
-
-          // If habit is linked to a goal, increment goal progress
-          try {
-            if (habit.linkedGoalId) {
-              const goal = await storage.getGoal(habit.linkedGoalId);
-              if (goal && goal.userId === userId) {
-                const newValue = goal.currentValue + 1;
-                await storage.updateGoal(goal.id, {
-                  currentValue: newValue
-                });
-
-                // Create goal update record for tracking
-                await storage.createGoalUpdate({
-                  goalId: goal.id,
-                  userId: userId,
-                  value: 1,
-                  date: date,
-                  note: `Auto-incremented from habit: ${habit.title}`
-                });
-              }
-            }
-          } catch (error) {
-            console.error('[toggle] Failed to update linked goal:', error);
-            // Continue - don't fail the habit toggle
-          }
-        }
+        // Award 10 tokens for completing the habit
+        await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
+        console.log('[toggle] Created log and awarded 10 tokens');
       }
 
-      // Handle uncompleting and goal decrement
-      try {
-        if (existingLog && !existingLog.completed && result.completed === false) {
-          const habit = await storage.getHabit(habitId);
-          if (habit?.linkedGoalId) {
-            const goal = await storage.getGoal(habit.linkedGoalId);
-            if (goal && goal.userId === userId && goal.currentValue > 0) {
-              await storage.updateGoal(goal.id, {
-                currentValue: goal.currentValue - 1
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[toggle] Failed to decrement linked goal:', error);
-        // Continue - don't fail the habit toggle
-      }
-
-      // Auto-update pet stats (optional feature)
-      let petUpdate = null;
-      try {
-        petUpdate = await updatePetFromHabits(userId);
-      } catch (error) {
-        console.error('[toggle] Failed to update pet stats:', error);
-        // Continue - don't fail the habit toggle
-      }
-
-      // Update daily quest progress (if completing a habit)
-      try {
-        if (result.completed && !existingLog) {
-          const today = new Date().toISOString().split('T')[0];
-          const allUserQuests = await storage.getUserDailyQuests(userId, today);
-
-          for (const userQuest of allUserQuests) {
-            if (userQuest.completed || userQuest.claimed) continue;
-
-            const questTemplate = await storage.getDailyQuestTemplate(userQuest.questId);
-            if (!questTemplate) continue;
-
-            // Update progress based on quest type
-            let newProgress = userQuest.progress;
-            let shouldUpdate = false;
-
-            if (questTemplate.questType === 'complete_habits') {
-              newProgress = userQuest.progress + 1;
-              shouldUpdate = true;
-            } else if (questTemplate.questType.startsWith('complete_category_')) {
-              const habit = await storage.getHabit(habitId);
-              if (habit) {
-                const categoryType = questTemplate.questType.replace('complete_category_', '');
-                if (habit.category === categoryType) {
-                  newProgress = userQuest.progress + 1;
-                  shouldUpdate = true;
-                }
-              }
-            }
-
-            if (shouldUpdate) {
-              const completed = newProgress >= questTemplate.targetValue;
-              await storage.updateUserDailyQuest(userQuest.id, {
-                progress: newProgress,
-                completed,
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[toggle] Failed to update daily quests:', error);
-        // Continue - don't fail the habit toggle
-      }
-
-      // Calculate reward details for frontend (optional feature)
-      let rewardDetails = null;
-      try {
-        if (result.completed && !existingLog) {
-          const habit = await storage.getHabit(habitId);
-          if (habit) {
-            const allLogs = await storage.getAllHabitLogs(userId);
-            const currentStreak = calculateStreak(allLogs);
-            const coins = calculateCoinsEarned(habit, currentStreak);
-            const streakMultiplier = getStreakMultiplier(currentStreak);
-
-            rewardDetails = {
-              coinsEarned: coins,
-              baseCoins: habit.difficulty === 'easy' ? 5 : habit.difficulty === 'hard' ? 15 : 10,
-              streak: currentStreak,
-              streakMultiplier: streakMultiplier,
-              habitTitle: habit.title,
-            };
-          }
-        }
-      } catch (error) {
-        console.error('[toggle] Failed to calculate reward details:', error);
-        // Continue - don't fail the habit toggle
-      }
-
+      console.log('[toggle] Success:', result);
       res.json({
         ...result,
-        petUpdate: petUpdate ? {
-          leveledUp: petUpdate.leveledUp,
-          evolved: petUpdate.evolved,
-        } : null,
-        rewardDetails,
-        levelUpData,
+        tokensAwarded: result.completed ? 10 : 0
       });
     } catch (error: any) {
       console.error('[toggle] Error details:', {
@@ -883,6 +648,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message || "Failed to toggle habit log" });
     }
   });
+
+  /* TEMPORARILY DISABLED COMPLEX FEATURES - TO BE RE-ADDED AFTER CORE LOOP IS STABLE
+
+  Features removed from toggle endpoint:
+  - Combo stats (5-minute window multipliers)
+  - XP/leveling system
+  - Mountain unlocks
+  - Pet stat updates
+  - Daily quest progress
+  - Linked goal increments/decrements
+  - Reward details calculation
+  - Streak multipliers
+
+  These will be re-added one at a time after the core loop is working reliably.
+  */
 
   app.get("/api/goals", async (req, res) => {
     try {
