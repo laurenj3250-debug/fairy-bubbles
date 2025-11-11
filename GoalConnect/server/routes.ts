@@ -582,13 +582,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getUserId(req);
       const { habitId, date } = req.body;
 
+      console.log('[toggle] Request:', { userId, habitId, date });
+
       if (!habitId || !date) {
         return res.status(400).json({ error: "habitId and date are required" });
       }
 
       // Find existing log for this habit on this date
       const existingLogs = await storage.getHabitLogsByDate(userId, date);
+      console.log('[toggle] Existing logs for date:', existingLogs.length);
       const existingLog = existingLogs.find(log => log.habitId === habitId);
+      console.log('[toggle] Existing log found:', existingLog ? 'yes' : 'no');
 
       let result;
 
@@ -834,7 +838,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         levelUpData,
       });
     } catch (error: any) {
-      console.error('Error toggling habit log:', error);
+      console.error('[toggle] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       res.status(500).json({ error: error.message || "Failed to toggle habit log" });
     }
   });
