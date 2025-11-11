@@ -73,27 +73,15 @@ export default function HabitsMountain() {
       console.log('[HabitsMountain] Toggling habit', habitId, 'on date', selectedDate);
       setCompletingHabit(habitId);
 
-      const existingLog = logsData?.find(
-        (log) => log.habitId === habitId && log.date === selectedDate
-      );
-
-      console.log('[HabitsMountain] Existing log:', existingLog);
-
-      if (existingLog) {
-        console.log('[HabitsMountain] Deleting log', existingLog.id);
-        await apiRequest(`/api/habit-logs/${existingLog.id}`, "DELETE");
-      } else {
-        console.log('[HabitsMountain] Creating new log');
-        await apiRequest("/api/habit-logs", "POST", {
-          habitId,
-          date: selectedDate,
-          completed: true,
-        });
-      }
+      // Use the same toggle endpoint as TodaysPitch
+      return await apiRequest("/api/habit-logs/toggle", "POST", {
+        habitId,
+        date: selectedDate,
+      });
     },
     onSuccess: () => {
-      // Only invalidate specific queries to avoid 404 errors
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate], exact: true });
+      // Invalidate queries to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate] });
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
       queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
