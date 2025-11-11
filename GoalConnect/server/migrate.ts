@@ -85,7 +85,11 @@ export async function runMigrations() {
           ALTER TABLE habits
           ADD COLUMN IF NOT EXISTS grade TEXT DEFAULT '5.9'
         `);
-        console.log('[migrate] ✅ Weekly Hub columns (category, effort, grade) added/verified in habits table');
+        await db.execute(sql`
+          ALTER TABLE habits
+          ADD COLUMN IF NOT EXISTS scheduled_day VARCHAR(10)
+        `);
+        console.log('[migrate] ✅ Weekly Hub columns (category, effort, grade, scheduled_day) added/verified in habits table');
       } catch (error) {
         console.error('[migrate] ⚠️  Failed to add Weekly Hub columns to habits:', error);
       }
