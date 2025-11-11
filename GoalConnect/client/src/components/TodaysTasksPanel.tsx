@@ -12,7 +12,7 @@ interface TodaysTasksPanelProps {
 
 export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem("tasksPanel Collapsed");
+    const saved = localStorage.getItem("tasksPanelCollapsed");
     return saved === "true";
   });
 
