@@ -66,7 +66,6 @@ export default function HabitsMountain() {
   // Fetch logs for selected date
   const { data: logsData } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs", selectedDate],
-    queryFn: () => apiRequest(`/api/habit-logs/date/${selectedDate}`),
   });
 
   const toggleHabitMutation = useMutation({
@@ -103,9 +102,10 @@ export default function HabitsMountain() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
     },
   });
 

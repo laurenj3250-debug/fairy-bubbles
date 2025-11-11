@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getToday } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CheckCircle2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,7 @@ function getEffortIcon(effort: string): string {
 
 export function TodaysPitch({ className }: TodaysPitchProps) {
   const { toast } = useToast();
-  const today = new Date().toISOString().split("T")[0];
+  const today = getToday();
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
