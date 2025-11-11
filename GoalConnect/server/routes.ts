@@ -576,9 +576,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EMERGENCY MINIMAL Toggle habit completion endpoint
-  // REMOVED TEMPORARILY: Combo stats, XP/leveling, mountain unlocks, pet updates, daily quests, linked goals, reward details
-  // Core loop only: Toggle habit log + award/deduct 10 tokens
+  // Toggle habit completion endpoint
+  // Core loop: Toggle habit log + award/deduct tokens + award XP
   app.post("/api/habit-logs/toggle", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -597,6 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[toggle] Existing log found:', existingLog ? 'yes' : 'no');
 
       let result;
+      let xpAwarded = 0;
 
       if (existingLog) {
         // Toggle existing log
@@ -612,10 +612,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Completing: award 10 tokens
           await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
           console.log('[toggle] Awarded 10 tokens for completing habit');
+          xpAwarded = 10;
         } else if (!newCompleted && existingLog.completed) {
           // Uncompleting: deduct 10 tokens
           await storage.spendPoints(userId, 10, `Uncompleted habit`);
           console.log('[toggle] Deducted 10 tokens for uncompleting habit');
+          xpAwarded = -10;
         }
       } else {
         // Create new log as completed
@@ -632,6 +634,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Award 10 tokens for completing the habit
         await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
         console.log('[toggle] Created log and awarded 10 tokens');
+        xpAwarded = 10;
+      }
+
+      // Award or deduct XP (simple system: 10 XP per habit, 100 XP per level)
+      try {
+        let stats = await storage.getPlayerClimbingStats(userId);
+        if (!stats) {
+          // Initialize stats if they don't exist
+          stats = { climbingLevel: 1, totalXp: 0 };
+        }
+
+        const newTotalXp = Math.max(0, (stats.totalXp || 0) + xpAwarded);
+        const newLevel = Math.floor(newTotalXp / 100) + 1;
+        const oldLevel = stats.climbingLevel || 1;
+
+        await storage.updatePlayerClimbingStats(userId, {
+          totalXp: newTotalXp,
+          climbingLevel: newLevel
+        });
+
+        console.log('[toggle] XP updated:', { oldXp: stats.totalXp, newXp: newTotalXp, oldLevel, newLevel });
+      } catch (xpError: any) {
+        // Don't fail the entire request if XP update fails
+        console.error('[toggle] XP update failed (non-fatal):', xpError.message);
       }
 
       console.log('[toggle] Success:', result);
