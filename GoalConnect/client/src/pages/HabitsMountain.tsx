@@ -70,15 +70,20 @@ export default function HabitsMountain() {
 
   const toggleHabitMutation = useMutation({
     mutationFn: async (habitId: number) => {
+      console.log('[HabitsMountain] Toggling habit', habitId, 'on date', selectedDate);
       setCompletingHabit(habitId);
 
       const existingLog = logsData?.find(
         (log) => log.habitId === habitId && log.date === selectedDate
       );
 
+      console.log('[HabitsMountain] Existing log:', existingLog);
+
       if (existingLog) {
+        console.log('[HabitsMountain] Deleting log', existingLog.id);
         await apiRequest(`/api/habit-logs/${existingLog.id}`, "DELETE");
       } else {
+        console.log('[HabitsMountain] Creating new log');
         await apiRequest("/api/habit-logs", "POST", {
           habitId,
           date: selectedDate,
