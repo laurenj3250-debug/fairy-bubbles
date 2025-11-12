@@ -660,10 +660,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('[toggle] XP update failed (non-fatal):', xpError.message);
       }
 
+      // Check for linked goal/route and update progress
+      let routeProgress = null;
+      try {
+        const habit = await storage.getHabit(habitId);
+
+        if (habit?.linkedGoalId && result.completed) {
+          // Habit is linked to a route and was just completed
+          const goal = await storage.getGoal(habit.linkedGoalId);
+
+          if (goal) {
+            // Increment goal progress
+            const newValue = (goal.currentValue || 0) + 1;
+            await storage.updateGoal(habit.linkedGoalId, {
+              currentValue: newValue
+            });
+
+            // Calculate pitch progress (12 pitches per route)
+            const totalPitches = 12;
+            const percentage = Math.round((newValue / goal.targetValue) * 100);
+            const completedPitches = Math.floor((percentage / 100) * totalPitches);
+
+            routeProgress = {
+              routeName: goal.title,
+              pitch: completedPitches,
+              totalPitches,
+              percentage: Math.min(percentage, 100)
+            };
+
+            console.log('[toggle] Route progress updated:', routeProgress);
+          }
+        }
+      } catch (routeError: any) {
+        // Don't fail the entire request if route update fails
+        console.error('[toggle] Route update failed (non-fatal):', routeError.message);
+      }
+
       console.log('[toggle] Success:', result);
       res.json({
         ...result,
-        tokensAwarded: result.completed ? 10 : 0
+        tokensAwarded: result.completed ? 10 : 0,
+        routeProgress
       });
     } catch (error: any) {
       console.error('[toggle] Error details:', {

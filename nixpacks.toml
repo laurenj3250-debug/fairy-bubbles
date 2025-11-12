@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["cd GoalConnect && npm install"]
+
+[phases.build]
+cmds = ["cd GoalConnect && npm run build"]
+
+[start]
+cmd = "cd GoalConnect && npm run start"
