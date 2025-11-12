@@ -31,15 +31,11 @@ export default function WeeklyHub() {
             {/* Today's Pitch */}
             <TodaysPitch />
 
-            {/* Today's Tasks Panel - slightly larger */}
-            <div className="flex-1">
-              <TodaysTasksPanel />
-            </div>
+            {/* Today's Tasks Panel */}
+            <TodaysTasksPanel />
 
-            {/* Dream Scroll Widget (Summit Journal) - slightly larger */}
-            <div className="flex-1">
-              <DreamScrollWidget />
-            </div>
+            {/* Dream Scroll Widget (Summit Journal) */}
+            <DreamScrollWidget />
           </div>
 
           {/* Right Column: Routes Panel spanning full height */}
