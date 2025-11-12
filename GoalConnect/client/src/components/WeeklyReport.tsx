@@ -93,7 +93,7 @@ export function WeeklyReport() {
   if (habits.length === 0) return null;
 
   return (
-    <Card className="glass-card rounded-3xl border-2 border-primary/20">
+    <Card className="bg-card/80 backdrop-blur-sm border-2 border-card-border rounded-3xl shadow-lg topo-pattern">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

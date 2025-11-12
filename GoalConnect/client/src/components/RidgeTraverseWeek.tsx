@@ -120,7 +120,7 @@ export function RidgeTraverseWeek() {
   }
 
   return (
-    <div className="glass-card rounded-3xl p-6 alpine-glow relative overflow-hidden">
+    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-6 shadow-lg topo-pattern relative overflow-hidden">
       {/* Header */}
       <div className="mb-6">
         <h2
