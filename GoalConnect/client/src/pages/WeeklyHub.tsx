@@ -24,26 +24,28 @@ export default function WeeklyHub() {
         {/* Ridge Traverse Week */}
         <RidgeTraverseWeekCompact onDayClick={handleDayClick} />
 
-        {/* Main Content: Today's Pitch + Routes Panel */}
+        {/* Main Content: Left column (Pitch + Tasks + Journal) + Right column (Routes) */}
         <div className="mt-4 flex flex-col lg:flex-row gap-4">
-          {/* Today's Pitch - Main hero component (65% width on desktop) */}
-          <div className="flex-1 lg:w-[65%]">
+          {/* Left Column: Today's Pitch, Tasks, and Journal stacked vertically */}
+          <div className="flex-1 lg:w-[65%] flex flex-col gap-4">
+            {/* Today's Pitch */}
             <TodaysPitch />
+
+            {/* Today's Tasks Panel - slightly larger */}
+            <div className="flex-1">
+              <TodaysTasksPanel />
+            </div>
+
+            {/* Dream Scroll Widget (Summit Journal) - slightly larger */}
+            <div className="flex-1">
+              <DreamScrollWidget />
+            </div>
           </div>
 
-          {/* Routes Panel - Sidebar (30% width on desktop, 5% gap) */}
+          {/* Right Column: Routes Panel spanning full height */}
           <div className="lg:w-[30%]">
             <RoutesPanel />
           </div>
-        </div>
-
-        {/* Secondary Content: Tasks + Dreams */}
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Today's Tasks Panel */}
-          <TodaysTasksPanel />
-
-          {/* Dream Scroll Widget */}
-          <DreamScrollWidget />
         </div>
       </div>
     </div>
