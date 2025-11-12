@@ -4,6 +4,7 @@ import { TodaysPitch } from "@/components/TodaysPitch";
 import { RoutesPanel } from "@/components/RoutesPanel";
 import { TodaysTasksPanel } from "@/components/TodaysTasksPanel";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
+import { HabitHeatmapDashboard } from "@/components/HabitHeatmapDashboard";
 import { useState } from "react";
 
 export default function WeeklyHub() {
@@ -36,6 +37,9 @@ export default function WeeklyHub() {
 
             {/* Dream Scroll Widget (Summit Journal) */}
             <DreamScrollWidget />
+
+            {/* Habit Heatmap */}
+            <HabitHeatmapDashboard />
           </div>
 
           {/* Right Column: Routes Panel spanning full height */}
