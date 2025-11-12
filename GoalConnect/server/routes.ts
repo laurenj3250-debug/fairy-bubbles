@@ -2146,7 +2146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all dream scroll items for a user
   app.get("/api/dream-scroll", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2161,7 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get dream scroll items by category
   app.get("/api/dream-scroll/category/:category", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2177,7 +2177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create a new dream scroll item
   app.post("/api/dream-scroll", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2199,7 +2199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Update a dream scroll item
   app.patch("/api/dream-scroll/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2220,7 +2220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Toggle completion status
   app.post("/api/dream-scroll/:id/toggle", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2241,7 +2241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Delete a dream scroll item
   app.delete("/api/dream-scroll/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2259,7 +2259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all tags for a specific category
   app.get("/api/dream-scroll/tags/:category", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2275,7 +2275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create a new tag
   app.post("/api/dream-scroll/tags", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2295,7 +2295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Delete a tag
   app.delete("/api/dream-scroll/tags/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2313,7 +2313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get combo stats
   app.get("/api/combo/stats", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2362,7 +2362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register a habit completion for combo tracking
   app.post("/api/combo/register", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2421,7 +2421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get today's daily quests with progress
   app.get("/api/daily-quests", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2477,7 +2477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Claim quest reward
   app.post("/api/daily-quests/:id/claim", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2533,7 +2533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get user's streak freezes
   app.get("/api/streak-freezes", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2581,7 +2581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Purchase a streak freeze
   app.post("/api/streak-freezes/purchase", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2645,7 +2645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get player's gear inventory
   app.get("/api/alpine-gear/inventory", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2660,7 +2660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Purchase gear
   app.post("/api/alpine-gear/purchase", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2678,7 +2678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get gear collection stats (for GearCollectionPanel)
   app.get("/api/gear/stats", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2711,7 +2711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get gear collection with owned status (for GearCollectionPanel)
   app.get("/api/gear/collection", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2782,7 +2782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get player climbing stats
   app.get("/api/climbing/stats", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -2797,7 +2797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get level progress (for XP bar)
   app.get("/api/user/level-progress", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
