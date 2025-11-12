@@ -9,23 +9,10 @@ import Dashboard from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
-// import WeeklyView from "@/pages/WeeklyView"; // REMOVED: Consolidated into WeeklyHub
 import WeeklyHub from "@/pages/WeeklyHub";
-// REMOVED LEGACY GAME PAGES:
-// import Pet from "@/pages/Pet";
-// import ShopPage from "@/pages/ShopPage";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
-// import Wonderland from "@/pages/Wonderland";
-// import OutsideWorld from "@/pages/OutsideWorld";
-// import BiomeExploration from "@/pages/BiomeExploration";
-// import Combat from "@/pages/Combat";
-// import PartyManagement from "@/pages/PartyManagement";
-// import SpriteUpload from "@/pages/SpriteUpload";
-// import SpriteOrganize from "@/pages/SpriteOrganize";
-// import LevelEditor from "@/pages/LevelEditor";
-// import GameDataAdmin from "@/pages/GameDataAdmin";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
@@ -140,19 +127,6 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
-      {/* REMOVED LEGACY ROUTES:
-      <Route path="/pet"> - Pet page
-      <Route path="/shop"> - Costume shop
-      <Route path="/combat/:encounterId"> - Combat
-      <Route path="/party"> - Party Management
-      <Route path="/wonderland"> - Wonderland
-      <Route path="/outside-world"> - Outside World
-      <Route path="/explore/:biomeId"> - Biome Exploration
-      <Route path="/sprites/upload"> - Sprite Upload
-      <Route path="/sprites/organize"> - Sprite Organize
-      <Route path="/level-editor"> - Level Editor
-      <Route path="/game/admin"> - Game Data Admin
-      */}
       <Route path="/alpine-shop">
         <RequireAuth>
           <AlpineShop />
