@@ -12,6 +12,7 @@ import { RidgeTraverseEnhanced } from "@/components/RidgeTraverseEnhanced";
 import { ComboTracker } from "@/components/ComboTracker";
 import { DailyQuests } from "@/components/DailyQuests";
 import { StreakFreeze } from "@/components/StreakFreeze";
+import { Altimeter } from "@/components/Altimeter";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -210,6 +211,9 @@ export default function DashboardNew() {
 
           {/* Routes & Goals Compact */}
           <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* Altimeter - shows current elevation/altitude */}
+            <Altimeter compact={false} />
+
             {/* Daily Quests */}
             <DailyQuests />
 

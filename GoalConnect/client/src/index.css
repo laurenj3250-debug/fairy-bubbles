@@ -1404,3 +1404,116 @@
     0 -1px 0 rgba(0, 0, 0, 0.8),
     0 2px 4px rgba(0, 0, 0, 0.4);
 }
+
+/* ===================================
+   ATMOSPHERIC DEPTH SYSTEM
+   Creates elevation-based visual effects
+   =================================== */
+
+/* Altitude zones create progressively thinner air effects
+   Higher XP = Higher elevation = More atmospheric haze
+
+   Usage: Add data-altitude="[zone]" to elements
+   Zones: base (0-1000m), treeline (1000-2500m), alpine (2500-4500m),
+          high (4500-6000m), death (6000-8000m), summit (8000m+)
+*/
+
+/* Base Camp - Sea level, clear air */
+[data-altitude="base"] {
+  --atmosphere-opacity: 0;
+  --atmosphere-blur: 0px;
+  --atmosphere-brightness: 1;
+}
+
+/* Tree Line - Slight atmospheric effect */
+[data-altitude="treeline"] {
+  --atmosphere-opacity: 0.05;
+  --atmosphere-blur: 1px;
+  --atmosphere-brightness: 1.02;
+}
+
+/* Alpine Zone - Noticeable thinning */
+[data-altitude="alpine"] {
+  --atmosphere-opacity: 0.1;
+  --atmosphere-blur: 2px;
+  --atmosphere-brightness: 1.05;
+}
+
+/* High Camp - Very thin air */
+[data-altitude="high"] {
+  --atmosphere-opacity: 0.15;
+  --atmosphere-blur: 3px;
+  --atmosphere-brightness: 1.08;
+}
+
+/* Death Zone - Extreme altitude effects */
+[data-altitude="death"] {
+  --atmosphere-opacity: 0.2;
+  --atmosphere-blur: 4px;
+  --atmosphere-brightness: 1.12;
+}
+
+/* Summit - Stratosphere clarity with intense light */
+[data-altitude="summit"] {
+  --atmosphere-opacity: 0.25;
+  --atmosphere-blur: 5px;
+  --atmosphere-brightness: 1.15;
+}
+
+/* Apply atmospheric effects to child elements */
+[data-altitude]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, var(--atmosphere-opacity)) 0%,
+    transparent 50%,
+    rgba(125, 211, 252, calc(var(--atmosphere-opacity) * 0.3)) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--atmosphere-blur));
+}
+
+[data-altitude] > * {
+  position: relative;
+  z-index: 2;
+  filter: brightness(var(--atmosphere-brightness));
+}
+
+/* Depth card modifiers - creates layered mountain effect */
+.mountain-card-depth {
+  transform: translateZ(0);
+  transform-style: preserve-3d;
+}
+
+.mountain-card-depth:hover {
+  transform: translateZ(8px) scale(1.01);
+}
+
+/* Breathing animation for high altitude cards */
+@keyframes altitude-breathe {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.05) saturate(1.1);
+  }
+}
+
+[data-altitude="death"] .card-ice-shelf,
+[data-altitude="summit"] .card-ice-shelf {
+  animation: altitude-breathe 4s ease-in-out infinite;
+}
+
+/* Dark mode adjustments for atmosphere */
+.dark [data-altitude]::before {
+  background: linear-gradient(
+    180deg,
+    rgba(125, 211, 252, calc(var(--atmosphere-opacity) * 0.3)) 0%,
+    transparent 50%,
+    rgba(59, 130, 246, calc(var(--atmosphere-opacity) * 0.2)) 100%
+  );
+}
