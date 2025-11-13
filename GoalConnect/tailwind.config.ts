@@ -19,6 +19,32 @@ export default {
         "gradient-radial-highlight": "var(--gradient-radial-highlight)",
       },
       colors: {
+        // Mountain-inspired colors
+        mountain: {
+          // Sky & Air
+          'sky-light': '#0ea5e9',
+          'sky-horizon': '#e0f2fe',
+          // Ice & Snow
+          'glacier-ice': '#7dd3fc',
+          'fresh-snow': '#f8fafc',
+          'snow-shadow': '#e2e8f0',
+          // Rock & Stone
+          'granite': '#64748b',
+          'dark-rock': '#334155',
+          'cliff-face': '#1e293b',
+          // Warmth (Sunrise/Sunset)
+          'alpenglow': '#f97316',
+          'golden-hour': '#facc15',
+          'sunset-pink': '#f9a8d4',
+          // Growth & Life
+          'alpine-meadow': '#22c55e',
+          'tree-line': '#14b8a6',
+          // Night
+          'night-sky': '#0f172a',
+          'starlit': '#1e293b',
+          'moonlit-snow': '#3b82f6',
+          'camp-fire': '#f97316',
+        },
         // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
@@ -94,6 +120,8 @@ export default {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+        altitude: ["var(--font-altitude)", "sans-serif"],
+        technical: ["var(--font-technical)", "monospace"],
       },
       keyframes: {
         "accordion-down": {
