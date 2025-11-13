@@ -164,7 +164,7 @@ export default function WorldMap() {
             {/* Mountains Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredMountains
-                .sort((a, b) => b.elevation - a.elevation)
+                .sort((a, b) => a.requiredClimbingLevel - b.requiredClimbingLevel)
                 .map((mountain) => {
                   const unlocked = canAttempt(mountain);
 
