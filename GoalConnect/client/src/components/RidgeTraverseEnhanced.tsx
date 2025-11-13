@@ -117,13 +117,92 @@ export function RidgeTraverseEnhanced({ onDayClick, selectedDate, seasonProgress
 
       {/* Ridge visualization */}
       <div className="relative w-full h-32 mb-4">
-        {/* Rope baseline */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-0.5 opacity-30"
-          style={{
-            background: "repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0px, rgba(255,255,255,0.3) 4px, transparent 4px, transparent 8px)",
-          }}
-        />
+        {/* Climbing Rope - connects peaks */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ zIndex: 5 }}
+        >
+          <defs>
+            {/* Rope pattern - twisted climbing rope texture */}
+            <pattern id="rope-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+              <rect width="8" height="8" fill="rgba(249, 115, 22, 0.3)" />
+              <line x1="0" y1="4" x2="8" y2="4" stroke="rgba(251, 146, 60, 0.5)" strokeWidth="2" />
+            </pattern>
+            {/* Rope shadow for depth */}
+            <filter id="rope-shadow">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.3" />
+            </filter>
+          </defs>
+
+          {/* Draw rope connecting peaks */}
+          <path
+            d={weekData.map((day, i) => {
+              const x = (i / 6) * 100; // Percentage across width
+              const y = 100 - (day.height * 0.8); // Invert Y for SVG (higher peaks = lower Y)
+              return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
+            }).join(" ")}
+            stroke="url(#rope-pattern)"
+            strokeWidth="3"
+            fill="none"
+            filter="url(#rope-shadow)"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="animate-rope-sway"
+          />
+
+          {/* Carabiners at each peak */}
+          {weekData.map((day, i) => {
+            const x = (i / 6) * 100;
+            const y = 100 - (day.height * 0.8);
+            return (
+              <g key={`carabiner-${i}`}>
+                <ellipse
+                  cx={x}
+                  cy={y}
+                  rx="2"
+                  ry="3"
+                  fill="none"
+                  stroke={day.completionPercentage === 100 ? "#7dd3fc" : "#94a3b8"}
+                  strokeWidth="1"
+                  className="transition-all duration-300"
+                />
+              </g>
+            );
+          })}
+
+          {/* Climber figure at current progress */}
+          {(() => {
+            const todayIndex = weekData.findIndex(d => d.isToday);
+            if (todayIndex >= 0) {
+              const x = (todayIndex / 6) * 100;
+              const y = 100 - (weekData[todayIndex].height * 0.8);
+              return (
+                <g className="animate-climber-breathe" style={{ transformOrigin: `${x}% ${y}%` }}>
+                  {/* Climber body */}
+                  <circle cx={x} cy={y - 5} r="2.5" fill="#f97316" opacity="0.9" />
+                  {/* Helmet */}
+                  <path
+                    d={`M ${x - 2} ${y - 7} Q ${x} ${y - 9} ${x + 2} ${y - 7}`}
+                    fill="#fbbf24"
+                    stroke="#f59e0b"
+                    strokeWidth="0.5"
+                  />
+                  {/* Climbing position indicator */}
+                  <line
+                    x1={x}
+                    y1={y - 2}
+                    x2={x}
+                    y2={y + 2}
+                    stroke="#f97316"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            }
+            return null;
+          })()}
+        </svg>
 
         <div className="absolute inset-0 flex items-end justify-between gap-2 relative z-10">
           {weekData.map((day, index) => {
@@ -243,7 +322,7 @@ export function RidgeTraverseEnhanced({ onDayClick, selectedDate, seasonProgress
         </div>
       </div>
 
-      {/* Peak animation */}
+      {/* Animations */}
       <style>{`
         @keyframes peak-grow {
           0% {
@@ -254,6 +333,36 @@ export function RidgeTraverseEnhanced({ onDayClick, selectedDate, seasonProgress
             transform: translateY(0) scaleY(1);
             opacity: 1;
           }
+        }
+
+        @keyframes rope-sway {
+          0%, 100% {
+            transform: translateY(0) translateX(0);
+          }
+          50% {
+            transform: translateY(-2px) translateX(1px);
+          }
+        }
+
+        @keyframes climber-breathe {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
+        .animate-rope-sway {
+          animation: rope-sway 3s ease-in-out infinite;
+        }
+
+        .animate-climber-breathe {
+          animation: climber-breathe 2s ease-in-out infinite;
+        }
+
+        .animate-pulse-subtle {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>
