@@ -136,11 +136,26 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(true);
+
+  // Apply template to form
+  const applyTemplate = (template: typeof ROUTE_TEMPLATES[0]) => {
+    setTitle(template.name);
+    setIcon(template.icon);
+    setCategory(template.category);
+    setEffort(template.effort);
+    setGrade(template.grade);
+    setCadence(template.cadence);
+    setTargetPerWeek(template.targetPerWeek || 3);
+    setShowTemplates(false);
+  };
 
   // Reset form when dialog opens or habit changes
   useEffect(() => {
     if (open) {
       if (habit) {
+        // Editing existing habit - skip templates
+        setShowTemplates(false);
         setTitle(habit.title || "");
         setIcon(habit.icon || "⭐");
         setCategory((habit.category as any) || "training");
@@ -150,7 +165,8 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         setTargetPerWeek(habit.targetPerWeek || 3);
         setLinkedGoalId(habit.linkedGoalId || null);
       } else {
-        // Reset to defaults for new habit
+        // New habit - show templates
+        setShowTemplates(true);
         setTitle("");
         setIcon("⭐");
         setCategory("training");
@@ -170,18 +186,6 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
   });
 
   if (!open) return null;
-
-  const applyTemplate = (template: typeof ROUTE_TEMPLATES[0]) => {
-    setTitle(template.name);
-    setIcon(template.icon);
-    setCategory(template.category);
-    setEffort(template.effort);
-    setGrade(template.grade);
-    setCadence(template.cadence);
-    if (template.targetPerWeek) {
-      setTargetPerWeek(template.targetPerWeek);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,10 +276,51 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Route Templates */}
-            {!habit && (
-              <div>
+          {/* Template Selection Screen */}
+          {showTemplates && !habit && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold mb-2">Quick Start</h3>
+                <p className="text-sm text-muted-foreground">Choose a template or customize</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {ROUTE_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => applyTemplate(template)}
+                    className="p-4 border-2 border-card-border rounded-xl hover:border-primary/50 transition-all hover:bg-muted/10 text-left"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-3xl">{template.icon}</span>
+                      <div>
+                        <div className="font-semibold text-foreground">{template.name}</div>
+                        <div className="text-xs text-muted-foreground capitalize">{template.category}</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{template.description}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-center pt-4 border-t border-card-border">
+                <button
+                  type="button"
+                  onClick={() => setShowTemplates(false)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Or customize from scratch →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showTemplates && (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Route Templates - REMOVED, NOW IN SEPARATE SCREEN */}
+              {!habit && false && (
+                <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                   Quick Routes
                 </label>
@@ -528,6 +573,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </>
