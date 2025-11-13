@@ -136,14 +136,14 @@ export function RoutesPanel({ className }: RoutesPanelProps) {
           return (
             <div
               key={goal.id}
-              className="route-card p-4 rounded-xl border border-border/50 bg-muted/10 hover:border-[hsl(var(--accent))]/40 transition-all duration-300"
+              className="route-card p-4 card-stone-cliff granite-overlay transition-all duration-300"
             >
               {/* Route Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-foreground text-sm mb-1">{goal.title}</h3>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-mono bg-muted/30 px-2 py-0.5 rounded font-semibold text-[hsl(var(--accent))]">
+                    <span className="font-technical bg-mountain-glacier-ice/20 px-2 py-0.5 rounded font-bold text-mountain-glacier-ice border border-mountain-glacier-ice/30">
                       {grade}
                     </span>
                     <span>•</span>

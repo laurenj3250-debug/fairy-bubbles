@@ -137,7 +137,7 @@ export function TopStatusBar() {
       )}
 
       {/* Top status bar */}
-      <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-3 shadow-lg topo-pattern">
+      <div className="card-snow-layer p-3 shadow-lg topo-pattern">
         <div className="flex items-center justify-between text-xs text-foreground relative z-10">
           {/* Left: Token Counter + Season progress */}
           <div className="flex items-center gap-4">
@@ -155,8 +155,8 @@ export function TopStatusBar() {
             {rank && (
               <>
                 <span className="text-muted-foreground">•</span>
-                <span className="font-bold text-primary">{rank.grade}</span>
-                <span className="text-foreground hidden sm:inline">{rank.name}</span>
+                <span className="font-technical font-bold text-mountain-alpenglow">{rank.grade}</span>
+                <span className="text-foreground hidden sm:inline font-semibold">{rank.name}</span>
               </>
             )}
           </div>

@@ -62,12 +62,12 @@ export function RidgeTraverseWeekCompact({ onDayClick }: RidgeTraverseWeekCompac
       const total = habits.length;
       const percentage = total > 0 ? (completed / total) * 100 : 0;
 
-      // Determine color based on completion
-      let color = "#64748b"; // gray
+      // Determine color based on completion - mountain-inspired
+      let color = "#64748b"; // granite (incomplete)
       if (percentage === 100) {
-        color = "#10b981"; // green
+        color = "#7dd3fc"; // glacier-ice (summit reached)
       } else if (percentage >= 50) {
-        color = "#fbbf24"; // yellow
+        color = "#f97316"; // alpenglow (climbing)
       }
 
       // Height scales from 30% to 100% of container for compact view
@@ -101,13 +101,13 @@ export function RidgeTraverseWeekCompact({ onDayClick }: RidgeTraverseWeekCompac
   }
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern">
+    <div className="card-snow-layer p-4 shadow-lg topo-pattern">
       {/* Compact header */}
       <div className="flex items-center justify-between mb-3 relative z-10">
-        <h3 className="text-sm font-semibold text-foreground">
+        <h3 className="text-sm font-altitude font-bold text-foreground uppercase tracking-tight">
           Ridge Traverse
         </h3>
-        <span className="text-xs text-primary font-semibold">
+        <span className="text-xs text-mountain-glacier-ice font-technical font-bold">
           {peaksTraversed}/7 peaks
         </span>
       </div>

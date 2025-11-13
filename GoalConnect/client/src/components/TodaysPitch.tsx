@@ -247,7 +247,7 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
   const completionPercentage = totalHabitsForToday > 0 ? (completedHabits / totalHabitsForToday) * 100 : 0;
 
   return (
-    <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern mountain-card-depth", className)}>
+    <div className={cn("card-snow-layer p-6 shadow-lg topo-pattern mountain-card-depth", className)}>
       {/* Summit Celebration Overlay */}
       {showSummitCelebration && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">
@@ -274,8 +274,8 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
             </Link>
           </div>
           {todayTokens > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full">
-              <span className="text-sm font-semibold text-foreground">+{todayTokens} XP</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-mountain-glacier-ice/20 border border-mountain-glacier-ice/40 rounded-full">
+              <span className="text-sm font-technical font-bold text-foreground">+{todayTokens} XP</span>
               <span className="text-lg">⚡</span>
             </div>
           )}
@@ -338,12 +338,10 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
                       key={habit.id}
                       onClick={() => handleToggle(habit.id)}
                       className={cn(
-                        "habit-row relative cursor-pointer transition-all duration-200",
-                        "rounded-xl p-3 border",
-                        categoryColor,
-                        "ice-crystal-border",
-                        "hover:scale-[1.01] active:scale-[0.99]",
-                        habit.completed && "bg-[hsl(var(--accent))]/10 border-[hsl(var(--accent))]/30"
+                        "habit-row relative cursor-pointer transition-all duration-300",
+                        "p-3",
+                        habit.completed ? "card-ice-shelf ice-crystal-border" : "card-stone-cliff",
+                        "hover:scale-[1.02] active:scale-[0.98]"
                       )}
                     >
                       <div className="flex items-center gap-3">
