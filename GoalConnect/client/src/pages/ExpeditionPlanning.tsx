@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mountain, ArrowLeft, Cloud, Wind, Thermometer, Package, TrendingUp, AlertTriangle, Check, Backpack } from "lucide-react";
+import { Mountain, ArrowLeft, Cloud, Wind, Thermometer, Package, TrendingUp, AlertTriangle, Check, Backpack, Trophy, X } from "lucide-react";
 import { Link, useRoute, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Mountain {
   id: number;
@@ -44,6 +45,21 @@ interface GearItem {
   tier: string;
 }
 
+interface ExpeditionResult {
+  success: boolean;
+  xpEarned: number;
+  successChance: number;
+  mountain: {
+    name: string;
+    elevation: number;
+    tier: string;
+  };
+  route: {
+    name: string;
+    grade: string;
+  };
+}
+
 export default function ExpeditionPlanning() {
   const [, params] = useRoute("/expedition/plan/:mountainId");
   const [, setLocation] = useLocation();
@@ -52,6 +68,8 @@ export default function ExpeditionPlanning() {
   const [selectedRoute, setSelectedRoute] = useState<number | null>(null);
   const [selectedGear, setSelectedGear] = useState<number[]>([]);
   const [teamSize, setTeamSize] = useState(1);
+  const [expeditionResult, setExpeditionResult] = useState<ExpeditionResult | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   // Fetch mountain details
   const { data: mountains = [] } = useQuery({
@@ -76,6 +94,29 @@ export default function ExpeditionPlanning() {
     queryKey: ["/api/climbing/stats"],
   });
 
+  // Mutation to create expedition
+  const createExpeditionMutation = useMutation({
+    mutationFn: async (data: {
+      routeId: number;
+      mountainId: number;
+      gearIds: number[];
+      teamSize: number;
+    }) => {
+      const response = await apiRequest("POST", "/api/expeditions", data);
+      return response;
+    },
+    onSuccess: (data) => {
+      setExpeditionResult(data);
+      setShowResultModal(true);
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/expeditions"] });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to create expedition");
+    },
+  });
+
   const selectedRouteData = routes.find((r: Route) => r.id === selectedRoute);
 
   // Calculate total weight of selected gear
@@ -96,8 +137,17 @@ export default function ExpeditionPlanning() {
       return;
     }
 
-    // TODO: Create expedition API endpoint
-    alert("Expedition system coming soon! This will create a new expedition with your selected gear and route.");
+    createExpeditionMutation.mutate({
+      routeId: selectedRoute,
+      mountainId: mountainId!,
+      gearIds: selectedGear,
+      teamSize,
+    });
+  };
+
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
+    setLocation("/world-map");
   };
 
   if (!mountainId || !mountain) {
@@ -421,10 +471,12 @@ export default function ExpeditionPlanning() {
 
                 <Button
                   onClick={handleStartExpedition}
-                  disabled={!canAttempt || !selectedRoute}
+                  disabled={!canAttempt || !selectedRoute || createExpeditionMutation.isPending}
                   className="w-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-6"
                 >
-                  {!canAttempt ? (
+                  {createExpeditionMutation.isPending ? (
+                    "Starting Expedition..."
+                  ) : !canAttempt ? (
                     "Level Too Low"
                   ) : !selectedRoute ? (
                     "Select Route First"
@@ -439,6 +491,106 @@ export default function ExpeditionPlanning() {
             </Card>
           </div>
         </div>
+
+        {/* Expedition Result Modal */}
+        <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+          <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                {expeditionResult?.success ? (
+                  <>
+                    <Trophy className="w-6 h-6 text-yellow-400" />
+                    Summit Success!
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-6 h-6 text-red-400" />
+                    Expedition Failed
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            {expeditionResult && (
+              <div className="space-y-4 py-4">
+                <div className={`rounded-lg p-4 ${
+                  expeditionResult.success
+                    ? 'bg-green-900/20 border border-green-500/30'
+                    : 'bg-red-900/20 border border-red-500/30'
+                }`}>
+                  <p className="text-center text-lg mb-2">
+                    {expeditionResult.success
+                      ? `You reached the summit of ${expeditionResult.mountain.name}!`
+                      : `You didn't reach the summit this time, but you learned valuable lessons.`
+                    }
+                  </p>
+                  <p className="text-center text-sm text-slate-400">
+                    {expeditionResult.route.name} • {expeditionResult.route.grade}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+                    <div className="text-sm text-slate-400 mb-1">Success Chance</div>
+                    <div className="text-2xl font-bold text-white">
+                      {expeditionResult.successChance}%
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+                    <div className="text-sm text-slate-400 mb-1">XP Earned</div>
+                    <div className="text-2xl font-bold text-green-400">
+                      +{expeditionResult.xpEarned}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/50 rounded-lg p-3">
+                  <div className="text-sm text-slate-400 mb-2">Mountain Details</div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-300">Peak:</span>
+                      <span className="text-white font-semibold">{expeditionResult.mountain.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-300">Elevation:</span>
+                      <span className="text-white font-semibold">
+                        {expeditionResult.mountain.elevation.toLocaleString()} m
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-300">Difficulty:</span>
+                      <span className="text-white font-semibold capitalize">
+                        {expeditionResult.mountain.tier}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCloseResultModal}
+                    className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800"
+                  >
+                    Back to World Map
+                  </Button>
+                  {expeditionResult.success && (
+                    <Button
+                      onClick={() => {
+                        setShowResultModal(false);
+                        setSelectedRoute(null);
+                        setSelectedGear([]);
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Plan Another
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

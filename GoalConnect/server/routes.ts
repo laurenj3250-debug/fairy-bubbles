@@ -2842,6 +2842,191 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =============================================
+  // EXPEDITION ROUTES
+  // =============================================
+
+  // POST /api/expeditions - Create and complete an expedition
+  app.post("/api/expeditions", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { routeId, mountainId, gearIds, teamSize } = req.body;
+
+      if (!routeId) {
+        return res.status(400).json({ error: "Route ID is required" });
+      }
+
+      // Get user's current climbing level
+      const stats = await storage.getPlayerClimbingStats(userId);
+      const userLevel = stats?.climbingLevel || 1;
+
+      // Get mountain and route details
+      const mountain = await db.query(
+        `SELECT * FROM mountains WHERE id = $1`,
+        [mountainId]
+      );
+
+      if (mountain.rows.length === 0) {
+        return res.status(404).json({ error: "Mountain not found" });
+      }
+
+      const route = await db.query(
+        `SELECT * FROM routes WHERE id = $1`,
+        [routeId]
+      );
+
+      if (route.rows.length === 0) {
+        return res.status(404).json({ error: "Route not found" });
+      }
+
+      const mountainData = mountain.rows[0];
+      const routeData = route.rows[0];
+
+      // Calculate success probability
+      let successChance = 50; // Base 50%
+
+      // Level bonus: +10% if level meets or exceeds requirement
+      if (userLevel >= mountainData.required_climbing_level) {
+        successChance += 10;
+      }
+
+      // Gear bonus: +5% per item (max 25%)
+      const gearBonus = Math.min((gearIds?.length || 0) * 5, 25);
+      successChance += gearBonus;
+
+      // Team size bonus: +10% for larger teams
+      if (teamSize >= 3) {
+        successChance += 10;
+      }
+
+      // Cap at 90%
+      successChance = Math.min(successChance, 90);
+
+      // Determine success
+      const success = Math.random() * 100 < successChance;
+
+      // Calculate XP rewards based on difficulty tier
+      const xpRewards: Record<string, number> = {
+        beginner: 50,
+        intermediate: 100,
+        advanced: 200,
+        expert: 250,
+        elite: 300,
+      };
+
+      const baseXp = xpRewards[mountainData.difficulty_tier] || 100;
+      const xpEarned = Math.round(baseXp * (success ? 1.5 : 0.5));
+
+      // Create expedition record
+      const expeditionResult = await db.query(
+        `INSERT INTO player_expeditions
+         (user_id, route_id, status, start_date, completion_date, summit_reached, experience_earned, current_progress, notes)
+         VALUES ($1, $2, $3, NOW(), NOW(), $4, $5, $6, $7)
+         RETURNING *`,
+        [
+          userId,
+          routeId,
+          success ? 'completed' : 'failed',
+          success,
+          xpEarned,
+          100,
+          success ? 'Successfully reached the summit!' : 'Expedition failed, but learned valuable lessons.'
+        ]
+      );
+
+      const expeditionId = expeditionResult.rows[0].id;
+
+      // Save gear loadout if provided
+      if (gearIds && gearIds.length > 0) {
+        for (const gearId of gearIds) {
+          await db.query(
+            `INSERT INTO expedition_gear_loadout (expedition_id, gear_id)
+             VALUES ($1, $2)`,
+            [expeditionId, gearId]
+          );
+        }
+      }
+
+      // Award XP to player
+      await db.query(
+        `UPDATE player_climbing_stats
+         SET total_xp = total_xp + $1,
+             climbing_level = FLOOR((total_xp + $1) / 100) + 1
+         WHERE user_id = $2`,
+        [xpEarned, userId]
+      );
+
+      // Create expedition event
+      await db.query(
+        `INSERT INTO expedition_events
+         (expedition_id, event_type, event_day, description, altitude, energy_change)
+         VALUES ($1, $2, 1, $3, $4, 0)`,
+        [
+          expeditionId,
+          success ? 'summit' : 'failure',
+          success ? 'Reached the summit!' : 'Expedition unsuccessful',
+          success ? mountainData.elevation : Math.floor(mountainData.elevation * 0.7)
+        ]
+      );
+
+      res.json({
+        success,
+        expedition: expeditionResult.rows[0],
+        xpEarned,
+        successChance,
+        mountain: {
+          name: mountainData.name,
+          elevation: mountainData.elevation,
+          tier: mountainData.difficulty_tier
+        },
+        route: {
+          name: routeData.name,
+          grade: routeData.difficulty_grade
+        }
+      });
+    } catch (error: any) {
+      console.error('[expeditions] Create expedition error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/expeditions - Get user's expedition history
+  app.get("/api/expeditions", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+
+      const expeditions = await db.query(
+        `SELECT
+          e.*,
+          r.name as route_name,
+          r.difficulty_grade,
+          m.name as mountain_name,
+          m.elevation,
+          m.difficulty_tier
+         FROM player_expeditions e
+         JOIN routes r ON e.route_id = r.id
+         JOIN mountains m ON r.mountain_id = m.id
+         WHERE e.user_id = $1
+         ORDER BY e.start_date DESC
+         LIMIT 50`,
+        [userId]
+      );
+
+      res.json(expeditions.rows);
+    } catch (error: any) {
+      console.error('[expeditions] Get expeditions error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
