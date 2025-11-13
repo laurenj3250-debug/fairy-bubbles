@@ -197,7 +197,7 @@ export default function DreamScrollMountain() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
-        <div className="animate-pulse text-lg text-foreground">Loading Expedition Log...</div>
+        <div className="animate-pulse text-lg text-foreground">Loading Notes & Ideas...</div>
       </div>
     );
   }
@@ -206,7 +206,7 @@ export default function DreamScrollMountain() {
     return (
       <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
         <div className="text-center space-y-4">
-          <div className="text-lg text-destructive">Failed to load Expedition Log</div>
+          <div className="text-lg text-destructive">Failed to load Notes & Ideas</div>
           <div className="text-sm text-muted-foreground">{error?.message || "Unknown error"}</div>
         </div>
       </div>
@@ -222,10 +222,10 @@ export default function DreamScrollMountain() {
         <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
           <div className="flex items-center gap-3 mb-2 relative z-10">
             <Target className="w-9 h-9 text-[hsl(var(--accent))]" />
-            <h1 className="text-4xl font-bold text-foreground">Expedition Log</h1>
+            <h1 className="text-4xl font-bold text-foreground">Notes & Ideas</h1>
           </div>
           <p className="text-muted-foreground relative z-10">
-            Track your mountaineering aspirations and life goals
+            Capture your thoughts, dreams, and plans
           </p>
         </div>
 
