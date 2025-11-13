@@ -472,17 +472,18 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
             )}
 
             {/* Link to Route (Goal) */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Link to Route (Optional)
+            <div className="bg-primary/5 border-2 border-primary/20 rounded-xl p-4">
+              <label className="block text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                ⛰️ Link to Route
+                <span className="text-xs font-normal text-muted-foreground">(Recommended)</span>
               </label>
               <p className="text-xs text-muted-foreground mb-3">
-                Connect this habit to a multi-pitch route. Each completion sends a pitch!
+                Connect this habit to a bigger goal. Each completion auto-advances your route progress!
               </p>
               <select
                 value={linkedGoalId || ""}
                 onChange={(e) => setLinkedGoalId(e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-4 py-3 border-2 border-card-border rounded-xl bg-card/40 text-foreground cursor-pointer hover:border-primary/50 focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full px-4 py-3 border-2 border-primary/30 rounded-xl bg-card/40 text-foreground cursor-pointer hover:border-primary/50 focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="">No route (habit only)</option>
                 {goals.filter((g) => {
@@ -497,6 +498,11 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
                   );
                 })}
               </select>
+              {!linkedGoalId && goals.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-2 italic">
+                  💡 Tip: Create a route in the Routes tab to link habits to bigger goals
+                </p>
+              )}
             </div>
 
             {/* Actions */}

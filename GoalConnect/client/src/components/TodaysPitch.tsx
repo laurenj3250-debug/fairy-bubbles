@@ -3,8 +3,9 @@ import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { useState, useMemo, useEffect } from "react";
 import { cn, getToday } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Sparkles, Mountain } from "lucide-react";
+import { Sparkles, Mountain, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 interface TodaysPitchProps {
   className?: string;
@@ -102,26 +103,27 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
       return { previousLogs };
     },
     onSuccess: (data: any) => {
-      // Update today's token count
-      const tokensEarned = data.tokensAwarded || 10;
+      // Update today's XP count
+      const xpEarned = data.xpAwarded || 10;
       if (data.completed) {
-        setTodayTokens((prev) => prev + tokensEarned);
+        setTodayTokens((prev) => prev + xpEarned);  // TODO: Rename setTodayTokens to setTodayXp
       }
 
       // Build toast message
-      let toastTitle = `+${tokensEarned} tokens! 💎`;
-      let toastDescription = "Habit completed";
+      let toastTitle = `+${xpEarned} XP earned!`;
+      let toastDescription = "Training complete";
 
       // If route progress exists, show pitch information
       if (data.routeProgress) {
-        const { routeName, pitch, totalPitches } = data.routeProgress;
-        toastDescription = `Pitch ${pitch}/${totalPitches} sent on "${routeName}"`;
+        const { routeName, pitch, totalPitches, percentage } = data.routeProgress;
+        toastTitle = `⛰️ Pitch sent on route!`;
+        toastDescription = `${routeName}: ${pitch}/${totalPitches} pitches (${percentage}%) | +${xpEarned} XP`;
       }
 
       toast({
         title: toastTitle,
         description: toastDescription,
-        duration: 2000,
+        duration: 3000,
       });
     },
     onError: (err, variables, context) => {
@@ -260,13 +262,21 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
       {/* Header */}
       <div className="mb-6 relative z-10">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold text-foreground">
-            Today's Pitch
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-foreground">
+              Today's Pitch
+            </h2>
+            <Link href="/habits">
+              <button className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-md hover:bg-muted/20">
+                <Settings className="w-3 h-3" />
+                Manage
+              </button>
+            </Link>
+          </div>
           {todayTokens > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--accent))]/20 border border-[hsl(var(--accent))]/30 rounded-full">
-              <span className="text-sm font-semibold text-foreground">Today: +{todayTokens}</span>
-              <span className="text-lg">💎</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full">
+              <span className="text-sm font-semibold text-foreground">+{todayTokens} XP</span>
+              <span className="text-lg">⚡</span>
             </div>
           )}
         </div>

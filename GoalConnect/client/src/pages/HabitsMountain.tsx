@@ -3,12 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Mountain, TrendingUp, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap } from "lucide-react";
+import { Plus, Trash2, Mountain, TrendingUp, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, ArrowLeft } from "lucide-react";
 import { HabitCreateDialog as HabitDialog } from "@/components/HabitCreateDialog";
 import { getToday, formatDateInput } from "@/lib/utils";
 import { getWeatherFromStreak, WEATHER_INFO } from "@/lib/weatherEffects";
 import { WeatherOverlay } from "@/components/WeatherOverlay";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 
 // Mountain-themed color palette based on terrain and elevation
 const habitColors = [
@@ -194,13 +195,23 @@ export default function HabitsMountain() {
       <WeatherOverlay weather={weather} />
 
       <div className="relative z-10 max-w-5xl mx-auto p-6">
+        {/* Back Button */}
+        <div className="mb-4">
+          <Link href="/weekly-hub">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Today
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern">
           <div className="flex items-center justify-between mb-4 relative z-10">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
                 <Mountain className="w-9 h-9 text-[hsl(var(--accent))]" />
-                Training Camp
+                Manage Habits
               </h1>
               <p className="text-sm text-muted-foreground">
                 {habits.length} {habits.length === 1 ? 'habit' : 'habits'} building your expedition strength

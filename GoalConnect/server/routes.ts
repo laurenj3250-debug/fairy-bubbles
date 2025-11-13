@@ -699,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[toggle] Success:', result);
       res.json({
         ...result,
-        tokensAwarded: result.completed ? 10 : 0,
+        xpAwarded: result.completed ? 10 : 0,  // Changed from tokensAwarded
         routeProgress
       });
     } catch (error: any) {

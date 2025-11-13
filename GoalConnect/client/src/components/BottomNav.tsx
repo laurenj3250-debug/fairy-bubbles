@@ -3,9 +3,8 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/weekly-hub", label: "Base Camp", icon: Home },
-  { path: "/habits", label: "Training", icon: Activity },
-  { path: "/world-map", label: "Expeditions", icon: Globe },
+  { path: "/weekly-hub", label: "Today", icon: Home },
+  { path: "/world-map", label: "Explore", icon: Globe },
   { path: "/goals", label: "Routes", icon: Target },
   { path: "/dream-scroll", label: "Journal", icon: BookOpen },
 ];
