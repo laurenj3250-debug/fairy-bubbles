@@ -103,7 +103,7 @@ export function RidgeTraverseEnhanced({ onDayClick, selectedDate, seasonProgress
   }
 
   return (
-    <div className="relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden">
+    <div className="relative bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden">
       {/* Topo lines in background */}
       <TopoProgressLines seasonProgress={seasonProgress} />
 

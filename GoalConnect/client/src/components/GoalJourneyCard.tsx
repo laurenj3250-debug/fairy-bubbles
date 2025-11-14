@@ -90,7 +90,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
   }
 
   return (
-    <div className={`bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 relative overflow-hidden transition-all duration-300 shadow-lg topo-pattern ${percentage >= 100 ? 'alpine-glow' : ''}`}>
+    <div className={`bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-4 relative overflow-hidden transition-all duration-300 shadow-lg topo-pattern ${percentage >= 100 ? 'alpine-glow' : ''}`}>
       {/* Gradient accent bar */}
       <div
         style={{

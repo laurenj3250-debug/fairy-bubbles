@@ -85,7 +85,7 @@ export function RoutesPanel({ className }: RoutesPanelProps) {
 
   if (isCollapsed) {
     return (
-      <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern", className)}>
+      <div className={cn("bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern", className)}>
         <button
           onClick={() => setIsCollapsed(false)}
           className="w-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative z-10"
@@ -98,7 +98,7 @@ export function RoutesPanel({ className }: RoutesPanelProps) {
   }
 
   return (
-    <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
+    <div className={cn("bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>

@@ -73,7 +73,7 @@ export function GearCollectionPanel() {
 
   if (!stats) {
     return (
-      <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 topo-pattern">
+      <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 topo-pattern">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-muted/20 rounded w-1/2" />
           <div className="h-32 bg-muted/20 rounded" />
@@ -95,7 +95,7 @@ export function GearCollectionPanel() {
   };
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern relative overflow-hidden">
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern relative overflow-hidden">
       {/* Background texture */}
       <div
         className="absolute inset-0 pointer-events-none opacity-30"

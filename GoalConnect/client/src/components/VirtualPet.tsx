@@ -128,7 +128,7 @@ export function VirtualPet() {
 
   if (isLoading || !pet) {
     return (
-      <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg animate-pulse">
+      <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg animate-pulse">
         <div className="w-48 h-48 bg-white/10 rounded-full mx-auto mb-4" />
         <div className="h-6 bg-white/10 rounded w-32 mx-auto mb-2" />
         <div className="h-4 bg-white/10 rounded w-24 mx-auto" />
@@ -144,7 +144,7 @@ export function VirtualPet() {
   const climbingRank = getClimbingRank(climbingLevel);
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg">
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg">
       {/* Floating Sparkles */}
       <div className="absolute inset-0 pointer-events-none">
         <span className="absolute top-5 left-5 text-xl float-sparkle">✨</span>

@@ -180,9 +180,9 @@ export default function HabitsMountain() {
     return (
       <div className="min-h-screen flex items-center justify-center pb-24">
         <div className="space-y-4 w-full max-w-5xl mx-auto p-6">
-          <div className="h-40 bg-card/80 rounded-2xl animate-pulse"></div>
+          <div className="h-40 bg-card/40 rounded-2xl animate-pulse"></div>
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-card/80 rounded-2xl animate-pulse"></div>
+            <div key={i} className="h-32 bg-card/40 rounded-2xl animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function HabitsMountain() {
         </div>
 
         {/* Header */}
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern">
+        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern">
           <div className="flex items-center justify-between mb-4 relative z-10">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
@@ -286,7 +286,7 @@ export default function HabitsMountain() {
         </div>
 
         {habits.length === 0 ? (
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-12 text-center shadow-lg topo-pattern">
+          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-12 text-center shadow-lg topo-pattern">
             <div className="relative z-10">
               <Mountain className="w-16 h-16 mx-auto mb-6 text-[hsl(var(--accent))]" />
               <h2 className="text-3xl font-bold text-foreground mb-4">
@@ -396,7 +396,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
   return (
     <div
-      className={`bg-card/80 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border shadow-lg topo-pattern ${
+      className={`bg-card/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border shadow-lg topo-pattern ${
         completed ? 'border-[hsl(var(--accent))] shadow-[hsl(var(--accent))]/20' : 'border-card-border'
       } ${isCompleting ? 'scale-98' : 'scale-100 hover:scale-[1.02]'}`}
     >

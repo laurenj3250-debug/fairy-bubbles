@@ -227,7 +227,7 @@ export default function DashboardNew() {
             <RoutesPanelEnhanced />
 
             {/* Basecamp status */}
-            <div className="relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg overflow-hidden">
+            <div className="relative bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg overflow-hidden">
               <div
                 className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
@@ -284,7 +284,7 @@ export default function DashboardNew() {
 
         {/* Bottom strip: Recent events / notifications (optional) */}
         {routesSent > 0 && (
-          <div className="relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg overflow-hidden">
+          <div className="relative bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg overflow-hidden">
             <div
               className="absolute inset-0 pointer-events-none opacity-30"
               style={{
@@ -308,7 +308,7 @@ export default function DashboardNew() {
         )}
 
         {missedDaysThisWeek >= 3 && (
-          <div className="relative bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 shadow-lg overflow-hidden">
+          <div className="relative bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-4 shadow-lg overflow-hidden">
             <div
               className="absolute inset-0 pointer-events-none opacity-30"
               style={{

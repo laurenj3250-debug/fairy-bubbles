@@ -83,7 +83,7 @@ export function WeekAtAGlance() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-2 border-card-border rounded-3xl shadow-lg topo-pattern">
+    <Card className="bg-card/40 backdrop-blur-sm border-2 border-card-border rounded-3xl shadow-lg topo-pattern">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="flex items-center gap-2 text-white font-bold" style={{ fontFamily: "'Comfortaa', cursive" }}>
           <Calendar className="w-5 h-5 text-yellow-400" />

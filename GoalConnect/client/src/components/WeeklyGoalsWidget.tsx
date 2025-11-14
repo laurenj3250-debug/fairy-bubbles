@@ -44,7 +44,7 @@ export function WeeklyGoalsWidget() {
   }
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-6 shadow-lg topo-pattern" style={{ animationDelay: '0.3s' }}>
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-6 shadow-lg topo-pattern" style={{ animationDelay: '0.3s' }}>
       <div className="flex items-center justify-between mb-4">
         <h3
           className="text-lg font-bold text-white flex items-center gap-2"

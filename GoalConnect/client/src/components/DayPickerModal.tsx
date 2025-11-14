@@ -65,7 +65,7 @@ export function DayPickerModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-card/80 backdrop-blur-sm border border-card-border max-w-md shadow-lg topo-pattern"
+        className="bg-card/40 backdrop-blur-sm border border-card-border max-w-md shadow-lg topo-pattern"
         style={{
           background: "linear-gradient(to bottom right, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95))",
         }}

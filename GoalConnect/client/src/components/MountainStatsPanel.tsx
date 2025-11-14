@@ -19,7 +19,7 @@ export function MountainStatsPanel({
   const verticalGain = Math.floor(totalHabitsCompleted * 100); // Each habit = 100m vertical gain
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
           <Mountain className="w-6 h-6 text-primary" />

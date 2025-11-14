@@ -250,7 +250,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         onClick={(e) => e.stopPropagation()}
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999999] w-full max-w-2xl max-h-[90vh] overflow-auto"
       >
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mx-4">
+        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mx-4">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div>

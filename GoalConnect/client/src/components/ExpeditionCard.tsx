@@ -60,7 +60,7 @@ export function ExpeditionCard() {
   };
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern relative overflow-hidden">
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern relative overflow-hidden">
       {/* Background mountain silhouette */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <svg viewBox="0 0 1200 400" className="w-full h-full">

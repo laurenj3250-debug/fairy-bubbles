@@ -81,7 +81,7 @@ export function AscentMap() {
 
   if (isLoading || !climbingStats) {
     return (
-      <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg animate-pulse">
+      <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-8 text-center relative overflow-hidden topo-pattern shadow-lg animate-pulse">
         <div className="h-6 bg-white/10 rounded w-48 mx-auto mb-4" />
         <div className="h-[450px] bg-white/10 rounded-2xl" />
       </div>
@@ -134,7 +134,7 @@ export function AscentMap() {
   };
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-3xl p-6 relative overflow-hidden topo-pattern shadow-lg">
+    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-6 relative overflow-hidden topo-pattern shadow-lg">
       {/* Header */}
       <div className="mb-4 text-center relative z-10">
         <h3

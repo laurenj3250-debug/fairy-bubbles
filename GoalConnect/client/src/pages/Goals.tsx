@@ -120,7 +120,7 @@ export default function Goals() {
         <div className="relative z-10 max-w-5xl mx-auto p-6">
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern h-40 animate-pulse"></div>
+              <div key={i} className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern h-40 animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function Goals() {
     <div className="min-h-screen pb-24">
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Header */}
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mb-6 relative overflow-hidden">
+        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mb-6 relative overflow-hidden">
           <div className="flex items-center justify-between relative z-10">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">
@@ -154,7 +154,7 @@ export default function Goals() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
             <div className="flex items-center gap-3 mb-2 relative z-10">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-primary" />
@@ -166,7 +166,7 @@ export default function Goals() {
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
             <div className="flex items-center gap-3 mb-2 relative z-10">
               <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-[hsl(var(--accent))]" />
@@ -178,7 +178,7 @@ export default function Goals() {
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
+          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
             <div className="flex items-center gap-3 mb-2 relative z-10">
               <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
                 <Target className="w-5 h-5 text-[hsl(var(--accent))]" />
@@ -192,7 +192,7 @@ export default function Goals() {
         </div>
 
         {/* View Tabs */}
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-2 flex gap-2 mb-6 relative">
+        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-2 flex gap-2 mb-6 relative">
           <Button
             variant={activeView === "all" ? "default" : "ghost"}
             className={cn(
@@ -236,7 +236,7 @@ export default function Goals() {
 
         {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-12 text-center relative">
+          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-12 text-center relative">
             <div className="relative z-10">
               <Target className="w-16 h-16 mx-auto mb-6 text-primary" />
               <h2 className="text-3xl font-bold text-foreground mb-4">
@@ -351,7 +351,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
   return (
     <div
-      className={`bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
+      className={`bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
         isHighPriority ? 'ring-2 ring-red-400/50' : ''
       }`}
       style={isHighPriority ? {

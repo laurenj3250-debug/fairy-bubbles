@@ -141,7 +141,7 @@ export default function AlpineShop() {
         </div>
 
         {/* Stats Bar */}
-        <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern">
+        <Card className="bg-card/40 backdrop-blur-sm border border-card-border shadow-lg topo-pattern">
           <CardContent className="pt-6 relative z-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
@@ -181,7 +181,7 @@ export default function AlpineShop() {
                   return (
                     <Card
                       key={gear.id}
-                      className={`bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern transition-all ${
+                      className={`bg-card/40 backdrop-blur-sm border border-card-border shadow-lg topo-pattern transition-all ${
                         owned ? "ring-2 ring-green-500/50" : ""
                       } ${!unlocked && !owned ? "opacity-60" : ""}`}
                     >

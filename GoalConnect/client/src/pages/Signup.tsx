@@ -70,7 +70,7 @@ export default function SignupPage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
         <div className="pointer-events-none absolute inset-0 bg-background/80 backdrop-blur-sm" />
-        <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
+        <Card className="bg-card/40 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
           <CardHeader className="relative z-10">
             <CardTitle className="text-center text-2xl">Check Your Email</CardTitle>
           </CardHeader>
@@ -92,7 +92,7 @@ export default function SignupPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
       <div className="pointer-events-none absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      <Card className="bg-card/80 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
+      <Card className="bg-card/40 backdrop-blur-sm border border-card-border shadow-lg topo-pattern relative z-10 w-full max-w-sm">
         <CardHeader className="relative z-10">
           <CardTitle className="text-center text-2xl">Create Account</CardTitle>
           <p className="text-center text-sm text-muted-foreground">

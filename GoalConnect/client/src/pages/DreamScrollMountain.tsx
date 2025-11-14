@@ -470,7 +470,7 @@ export default function DreamScrollMountain() {
         {/* Items List */}
         <div className="space-y-3">
           {activeItems.length === 0 && completedItems.length === 0 ? (
-            <div className="bg-card/80 backdrop-blur-sm rounded-xl p-12 text-center border border-card-border shadow-lg topo-pattern">
+            <div className="bg-card/40 backdrop-blur-sm rounded-xl p-12 text-center border border-card-border shadow-lg topo-pattern">
               <div className="relative z-10">
                 <Mountain className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">No goals yet. Add your first objective!</p>
@@ -561,7 +561,7 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
 
   if (isEditing) {
     return (
-      <div className="bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-[hsl(var(--accent))]/50 shadow-lg topo-pattern">
+      <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-[hsl(var(--accent))]/50 shadow-lg topo-pattern">
         <div className="space-y-3 relative z-10">
           <input
             type="text"
@@ -612,7 +612,7 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
 
   return (
     <div className={cn(
-      "bg-card/80 backdrop-blur-sm rounded-xl p-4 border transition-all shadow-lg topo-pattern",
+      "bg-card/40 backdrop-blur-sm rounded-xl p-4 border transition-all shadow-lg topo-pattern",
       item.completed ? "border-primary/30 bg-primary/10" : "border-card-border hover:border-border"
     )}>
       <div className="flex items-start gap-3 relative z-10">
