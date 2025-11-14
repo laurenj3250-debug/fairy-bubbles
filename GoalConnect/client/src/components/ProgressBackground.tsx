@@ -14,8 +14,8 @@ export function ProgressBackground({ children }: ProgressBackgroundProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // El Capitan background URL
-  const elCapImage = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80';
+  // El Capitan background - local image
+  const elCapImage = '/backgrounds/el capitan.png';
 
   // Apply the Granite Monolith theme on mount
   useEffect(() => {
