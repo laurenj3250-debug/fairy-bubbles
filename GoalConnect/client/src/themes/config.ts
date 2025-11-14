@@ -58,22 +58,22 @@ export interface BackgroundConfig {
  */
 export const backgrounds: BackgroundConfig[] = [
   {
-    id: 'starter',
-    name: 'Base Camp',
-    image: '/backgrounds/basecamp.jpg',
-    mountainName: 'Training Grounds',  // Default - always unlocked
-    description: 'Where your journey begins',
-    timeOfDay: 'day',
-    themeId: 'mountainDusk'
-  },
-  {
     id: 'el-capitan',
     name: 'El Capitan',
     image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-    mountainName: 'El Capitan',
-    description: 'The legendary 3,000-foot granite monolith',
+    mountainName: 'Base Camp',  // Default - always unlocked
+    description: 'The legendary 3,000-foot granite monolith - your base camp',
     timeOfDay: 'day',
     themeId: 'graniteMonolith'
+  },
+  {
+    id: 'mt-toubkal',
+    name: 'Mt Toubkal',
+    image: '/backgrounds/mttoukbal.jpg',
+    mountainName: 'Mt Toubkal',  // Unlocks via Toubkal expedition
+    description: 'North Africa\'s highest peak in the Atlas Mountains',
+    timeOfDay: 'day',
+    themeId: 'mountainDusk'  // You can create a custom theme for this later
   },
   {
     id: 'alpine-meadow',
