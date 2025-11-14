@@ -47,10 +47,10 @@ export function GoalsSection() {
             <Target className="w-5 h-5 text-primary" />
           </div>
           <div className="text-left">
-            <h2 className="text-lg font-semibold text-foreground">Active Goals</h2>
-            <p className="text-sm text-muted-foreground">
-              {activeGoals.length} in progress
-              {completedToday > 0 && ` • ${completedToday} completed`}
+            <h2 className="text-lg font-semibold text-foreground">Active Routes</h2>
+            <p className="text-sm text-accent/70">
+              {activeGoals.length} {activeGoals.length === 1 ? 'route' : 'routes'} in progress
+              {completedToday > 0 && ` • ${completedToday} summited`}
             </p>
           </div>
         </div>
@@ -82,12 +82,12 @@ export function GoalsSection() {
           <div className="mt-6 space-y-4">
             {activeGoals.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No active goals yet.</p>
+                <p className="text-muted-foreground">No active routes yet.</p>
                 <button
                   onClick={() => window.location.href = '/goals'}
                   className="btn btn-primary mt-4"
                 >
-                  Create Your First Goal
+                  Chart Your First Route
                 </button>
               </div>
             ) : (
@@ -104,7 +104,7 @@ export function GoalsSection() {
             ))}
             {activeGoals.length > 2 && (
               <p className="text-xs text-muted-foreground text-center pt-2">
-                +{activeGoals.length - 2} more {activeGoals.length - 2 === 1 ? 'goal' : 'goals'}
+                +{activeGoals.length - 2} more {activeGoals.length - 2 === 1 ? 'route' : 'routes'}
               </p>
             )}
           </div>
@@ -159,7 +159,7 @@ function GoalCard({ goal }: GoalCardProps) {
         }}
         className="btn btn-secondary w-full text-sm"
       >
-        Log Progress
+        Send Pitch
       </button>
     </div>
   );

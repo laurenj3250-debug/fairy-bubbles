@@ -45,9 +45,9 @@ export function DailyFocusHero() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Today's Focus</h1>
-            <p className="text-muted-foreground mt-1">
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
+            <h1 className="text-3xl font-bold text-foreground">Today's Pitch</h1>
+            <p className="text-sm text-accent/80 font-medium tracking-wide uppercase">
+              {format(new Date(), 'EEEE, MMMM d')}
             </p>
           </div>
 
@@ -102,7 +102,10 @@ export function DailyFocusHero() {
 
         {/* Habits Checklist */}
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Today's Habits</h2>
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <span>Objectives</span>
+            <span className="text-xs text-muted-foreground font-normal">({totalCount} moves)</span>
+          </h2>
 
           <div className="space-y-2">
             {habits.map((habit) => (

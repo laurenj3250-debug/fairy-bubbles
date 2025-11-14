@@ -23,28 +23,28 @@
 
 @layer base {
   :root {
-    /* Colors - Light Mountain Theme (default) */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 98%;
-    --card-foreground: 222 47% 11%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* Colors - Mountain Dusk Theme (climbing-inspired) */
+    --background: 215 25% 27%;        /* Deep mountain blue-gray */
+    --foreground: 39 80% 95%;         /* Warm cream/snow white */
+    --card: 215 20% 32%;              /* Slightly lighter blue-gray for cards */
+    --card-foreground: 39 80% 95%;
+    --primary: 199 89% 58%;           /* Bright sky blue (clearer than before) */
+    --primary-foreground: 215 25% 15%;
+    --secondary: 215 20% 40%;         /* Stone gray */
+    --secondary-foreground: 39 80% 95%;
+    --accent: 25 95% 63%;             /* Sunrise orange (brighter) */
+    --accent-foreground: 215 25% 15%;
+    --success: 142 71% 55%;           /* Fresh green (brighter for visibility) */
+    --success-foreground: 215 25% 15%;
+    --warning: 38 92% 60%;            /* Amber (brighter) */
+    --warning-foreground: 215 25% 15%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 199 89% 48%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --border: 215 15% 42%;            /* Subtle granite border */
+    --input: 215 15% 42%;
+    --ring: 199 89% 58%;
+    --muted: 215 20% 38%;
+    --muted-foreground: 39 50% 75%;   /* Softer cream for muted text */
 
     /* Spacing */
     --section-gap: 1.5rem;

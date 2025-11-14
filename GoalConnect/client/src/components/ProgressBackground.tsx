@@ -38,17 +38,38 @@ export function ProgressBackground({ streakDays, children }: ProgressBackgroundP
 
   return (
     <div className="relative min-h-screen">
-      {/* Background image with subtle overlay */}
+      {/* Background image with atmospheric overlay */}
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
         style={{
           backgroundImage: `url(${currentBackground.image})`,
-          opacity: 0.15  // Very subtle - doesn't overpower content
+          opacity: 0.4  // More visible - brings climbing atmosphere
         }}
       />
 
-      {/* Gradient overlay for readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-background/90 via-background/95 to-background" />
+      {/* Gradient overlay for readability - keeps content clear */}
+      <div className="fixed inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background/90" />
+
+      {/* Subtle topographic texture overlay for climbing essence */}
+      <div
+        className="fixed inset-0 opacity-5"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 255, 255, 0.03) 10px,
+            rgba(255, 255, 255, 0.03) 11px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 255, 255, 0.03) 10px,
+            rgba(255, 255, 255, 0.03) 11px
+          )`
+        }}
+      />
 
       {/* Content */}
       <div className="relative z-10">
