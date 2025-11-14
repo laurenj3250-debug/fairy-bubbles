@@ -196,7 +196,7 @@ export default function DreamScrollMountain() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
+      <div className="min-h-screen flex items-center justify-center pb-24">
         <div className="animate-pulse text-lg text-foreground">Loading Notes & Ideas...</div>
       </div>
     );
@@ -204,7 +204,7 @@ export default function DreamScrollMountain() {
 
   if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
+      <div className="min-h-screen flex items-center justify-center pb-24">
         <div className="text-center space-y-4">
           <div className="text-lg text-destructive">Failed to load Notes & Ideas</div>
           <div className="text-sm text-muted-foreground">{error?.message || "Unknown error"}</div>
@@ -216,7 +216,7 @@ export default function DreamScrollMountain() {
   const currentCategory = CATEGORIES.find(c => c.value === selectedCategory);
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="min-h-screen pb-24">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">

@@ -178,7 +178,7 @@ export default function HabitsMountain() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-24 bg-background">
+      <div className="min-h-screen flex items-center justify-center pb-24">
         <div className="space-y-4 w-full max-w-5xl mx-auto p-6">
           <div className="h-40 bg-card/80 rounded-2xl animate-pulse"></div>
           {[1, 2, 3].map((i) => (
@@ -190,7 +190,7 @@ export default function HabitsMountain() {
   }
 
   return (
-    <div className="min-h-screen pb-24 bg-background" data-weather={weather}>
+    <div className="min-h-screen pb-24" data-weather={weather}>
       {/* Weather overlay with animated effects */}
       <WeatherOverlay weather={weather} />
 
