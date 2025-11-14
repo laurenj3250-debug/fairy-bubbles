@@ -73,7 +73,16 @@ export const backgrounds: BackgroundConfig[] = [
     mountainName: 'Mt Toubkal',  // Unlocks via Toubkal expedition
     description: 'North Africa\'s highest peak in the Atlas Mountains',
     timeOfDay: 'day',
-    themeId: 'mountainDusk'  // You can create a custom theme for this later
+    themeId: 'atlasRed'  // Custom theme inspired by red rock Atlas Mountains
+  },
+  {
+    id: 'mt-whitney',
+    name: 'Mt Whitney',
+    image: '/backgrounds/mtwhitney.jpg',
+    mountainName: 'Mt Whitney',  // Unlocks via Whitney expedition
+    description: 'Highest summit in the contiguous United States',
+    timeOfDay: 'day',
+    themeId: 'sierraGold'  // Custom theme inspired by Sierra Nevada granite and golden light
   },
   {
     id: 'alpine-meadow',
@@ -419,6 +428,90 @@ export const glacierBlueTheme: Theme = {
 };
 
 /**
+ * ATLAS RED THEME - Mt Toubkal
+ * Inspired by the red rock Atlas Mountains with warm desert tones
+ * Rusty reds, warm earth, golden sun
+ */
+export const atlasRedTheme: Theme = {
+  name: 'Atlas Red',
+  colors: {
+    background: '15 30% 22%',            // Deep rusty brown
+    foreground: '35 60% 95%',            // Warm sandy white
+    card: '15 28% 28%',                  // Lighter red-brown
+    cardForeground: '35 60% 95%',
+    primary: '15 75% 55%',               // Warm rusty red
+    primaryForeground: '15 30% 10%',
+    secondary: '20 25% 35%',             // Warm earth brown
+    secondaryForeground: '35 60% 95%',
+    accent: '35 85% 58%',                // Desert gold
+    accentForeground: '15 30% 10%',
+    success: '142 71% 55%',
+    successForeground: '15 30% 10%',
+    warning: '35 92% 60%',
+    warningForeground: '15 30% 10%',
+    destructive: '0 84% 60%',
+    destructiveForeground: '0 0% 100%',
+    border: '15 20% 38%',                // Weathered red rock
+    input: '15 20% 38%',
+    ring: '15 75% 55%',
+    muted: '15 25% 30%',
+    mutedForeground: '35 40% 70%'
+  },
+  spacing: {
+    sectionGap: '1.5rem',
+    cardPadding: '1.5rem',
+    borderRadius: '0.75rem'
+  },
+  effects: {
+    cardShadow: '0 4px 12px 0 rgb(0 0 0 / 0.2)',
+    hoverScale: 1.02,
+    transitionSpeed: '150ms'
+  }
+};
+
+/**
+ * SIERRA GOLD THEME - Mt Whitney
+ * Inspired by Sierra Nevada granite with golden afternoon light
+ * Granite grays, golden sun, crisp alpine blue
+ */
+export const sierraGoldTheme: Theme = {
+  name: 'Sierra Gold',
+  colors: {
+    background: '40 12% 24%',            // Warm granite gray
+    foreground: '50 40% 95%',            // Warm light cream
+    card: '40 12% 30%',                  // Lighter granite
+    cardForeground: '50 40% 95%',
+    primary: '45 95% 60%',               // Bright golden yellow (afternoon sun)
+    primaryForeground: '40 12% 10%',
+    secondary: '40 10% 38%',             // Medium granite
+    secondaryForeground: '50 40% 95%',
+    accent: '200 85% 55%',               // Crisp alpine blue sky
+    accentForeground: '40 12% 10%',
+    success: '142 71% 55%',
+    successForeground: '40 12% 10%',
+    warning: '45 92% 60%',
+    warningForeground: '40 12% 10%',
+    destructive: '0 84% 60%',
+    destructiveForeground: '0 0% 100%',
+    border: '40 10% 40%',                // Granite edge
+    input: '40 10% 40%',
+    ring: '45 95% 60%',
+    muted: '40 10% 32%',
+    mutedForeground: '50 30% 70%'
+  },
+  spacing: {
+    sectionGap: '1.5rem',
+    cardPadding: '1.5rem',
+    borderRadius: '0.75rem'
+  },
+  effects: {
+    cardShadow: '0 4px 12px 0 rgb(0 0 0 / 0.2)',
+    hoverScale: 1.02,
+    transitionSpeed: '150ms'
+  }
+};
+
+/**
  * NORTHERN LIGHTS THEME (365 days - LEGENDARY!)
  * Purple, green, and teal aurora borealis magic
  */
@@ -466,6 +559,8 @@ export const northernLightsTheme: Theme = {
 export const themes = {
   mountainDusk: mountainDuskTheme,
   graniteMonolith: graniteMonolithTheme,
+  atlasRed: atlasRedTheme,
+  sierraGold: sierraGoldTheme,
   alpineMeadow: alpineMeadowTheme,
   sunsetPeak: sunsetPeakTheme,
   alpineDawn: alpineDawnTheme,
