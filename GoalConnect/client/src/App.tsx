@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
-import { MountainBackground } from "@/components/MountainBackground";
+import { ProgressBackground } from "@/components/ProgressBackground";
 import Dashboard from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
@@ -161,9 +161,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <MountainBackground />
-          <Toaster />
-          <AppRoutes />
+          <ProgressBackground>
+            <Toaster />
+            <AppRoutes />
+          </ProgressBackground>
           <style>{`
             @keyframes spin {
               0% { transform: rotate(0deg); }
