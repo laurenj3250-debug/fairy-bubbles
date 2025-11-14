@@ -65,7 +65,7 @@ export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
 
   if (isCollapsed) {
     return (
-      <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern", className)}>
+      <div className={cn("card", className)}>
         <button
           onClick={() => setIsCollapsed(false)}
           className="w-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative z-10"
@@ -78,7 +78,7 @@ export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
   }
 
   return (
-    <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
+    <div className={cn("card", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>

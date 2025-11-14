@@ -588,13 +588,20 @@ export function getBackgroundForMountain(mountainName: string): BackgroundConfig
  * @returns The most recently unlocked background, or default
  */
 export function getCurrentBackground(unlockedMountains: string[]): BackgroundConfig {
-  // Find all unlocked backgrounds
-  const unlocked = backgrounds.filter(bg =>
-    unlockedMountains.includes(bg.mountainName)
+  // Always include the base camp background (El Capitan) as unlocked
+  const basecamp = backgrounds.find(bg => bg.mountainName === 'Base Camp');
+
+  // Find all unlocked backgrounds from expedition mountains
+  const expeditionUnlocked = backgrounds.filter(bg =>
+    bg.mountainName !== 'Base Camp' && unlockedMountains.includes(bg.mountainName)
   );
 
-  // Return most recent (last in array) or default
-  return unlocked[unlocked.length - 1] || backgrounds[0];
+  // Return most recently unlocked expedition background, or base camp
+  if (expeditionUnlocked.length > 0) {
+    return expeditionUnlocked[expeditionUnlocked.length - 1];
+  }
+
+  return basecamp || backgrounds[0];
 }
 
 /**

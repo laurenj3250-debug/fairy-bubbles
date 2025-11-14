@@ -66,7 +66,7 @@ export function DreamScrollWidget() {
   const completedItems = items.filter(item => item.completed);
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
+    <div className="card">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
