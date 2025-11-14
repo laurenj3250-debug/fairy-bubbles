@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TodoDialog } from "@/components/TodoDialog";
 import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getToday } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getTaskGrade } from "@/lib/climbingRanks";
 
@@ -257,6 +257,33 @@ export default function Todos() {
         {/* List View */}
         {view === "list" && (
           <>
+            {/* Quick Add Task */}
+            <div className="card mb-4">
+              <div className="relative z-10">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = e.currentTarget.elements.namedItem('quick-task') as HTMLInputElement;
+                    const title = input.value.trim();
+                    if (title) {
+                      quickAddTodoMutation.mutate({ title, dueDate: getToday() });
+                      input.value = '';
+                    }
+                  }}
+                >
+                  <input
+                    type="text"
+                    name="quick-task"
+                    placeholder="Quick add: Type a task and press Enter..."
+                    className="w-full px-4 py-3 bg-transparent border-0 text-foreground placeholder-muted-foreground focus:outline-none text-base"
+                  />
+                </form>
+                <p className="text-xs text-muted-foreground px-4 pb-3">
+                  Press Enter to add with default settings, or click "New Task" for more options
+                </p>
+              </div>
+            </div>
+
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
