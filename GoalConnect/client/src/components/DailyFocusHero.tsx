@@ -4,9 +4,16 @@ import { CheckCircle2, Circle } from "lucide-react";
 
 interface Habit {
   id: number;
-  name: string;
+  title: string;
   category: string;
+  icon: string;
+}
+
+interface HabitLog {
+  id: number;
+  habitId: number;
   completed: boolean;
+  habit: Habit;
 }
 
 /**
@@ -18,18 +25,33 @@ interface Habit {
 export function DailyFocusHero() {
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  // Fetch today's habits
-  const { data: habits = [], isLoading } = useQuery<Habit[]>({
-    queryKey: ['/api/habits/today', today],
+  // Fetch all habits
+  const { data: allHabits = [] } = useQuery<Habit[]>({
+    queryKey: ['/api/habits'],
+  });
+
+  // Fetch today's habit logs
+  const { data: habitLogs = [], isLoading } = useQuery<HabitLog[]>({
+    queryKey: [`/api/habit-logs/${today}`],
+  });
+
+  // Combine habits with their completion status
+  const habitsWithStatus = allHabits.map(habit => {
+    const log = habitLogs.find(l => l.habitId === habit.id);
+    return {
+      ...habit,
+      completed: log?.completed || false,
+      logId: log?.id
+    };
   });
 
   // Calculate completion
-  const completedCount = habits.filter(h => h.completed).length;
-  const totalCount = habits.length;
+  const completedCount = habitsWithStatus.filter(h => h.completed).length;
+  const totalCount = habitsWithStatus.length;
   const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const isFullyComplete = completedCount === totalCount && totalCount > 0;
 
-  const remainingHabits = habits.filter(h => !h.completed);
+  const remainingHabits = habitsWithStatus.filter(h => !h.completed);
 
   if (isLoading) {
     return (
@@ -108,12 +130,12 @@ export function DailyFocusHero() {
           </h2>
 
           <div className="space-y-2">
-            {habits.map((habit) => (
+            {habitsWithStatus.map((habit) => (
               <HabitChecklistItem key={habit.id} habit={habit} />
             ))}
           </div>
 
-          {habits.length === 0 && (
+          {habitsWithStatus.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <p>No habits configured yet.</p>
               <p className="text-sm mt-2">Add habits to start tracking your progress!</p>
@@ -186,7 +208,7 @@ function HabitChecklistItem({ habit }: HabitChecklistItemProps) {
       {/* Habit info */}
       <div className="flex-1 min-w-0">
         <p className={`font-medium ${habit.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-          {habit.name}
+          {habit.title}
         </p>
       </div>
 

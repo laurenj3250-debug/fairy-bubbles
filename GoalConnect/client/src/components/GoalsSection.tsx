@@ -6,8 +6,9 @@ interface Goal {
   id: number;
   title: string;
   description: string;
-  progress: number;
-  targetProgress: number;
+  currentValue: number;
+  targetValue: number;
+  unit: string;
 }
 
 /**
@@ -24,8 +25,8 @@ export function GoalsSection() {
     queryKey: ['/api/goals'],
   });
 
-  const activeGoals = goals.filter(g => g.progress < g.targetProgress);
-  const completedToday = goals.filter(g => g.progress === g.targetProgress).length;
+  const activeGoals = goals.filter(g => g.currentValue < g.targetValue);
+  const completedToday = goals.filter(g => g.currentValue >= g.targetValue).length;
 
   if (isLoading) {
     return (
@@ -119,8 +120,8 @@ interface GoalCardProps {
 }
 
 function GoalCard({ goal }: GoalCardProps) {
-  const progressPercentage = goal.targetProgress > 0
-    ? Math.round((goal.progress / goal.targetProgress) * 100)
+  const progressPercentage = goal.targetValue > 0
+    ? Math.round((goal.currentValue / goal.targetValue) * 100)
     : 0;
 
   return (
@@ -136,7 +137,7 @@ function GoalCard({ goal }: GoalCardProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            {goal.progress} / {goal.targetProgress}
+            {goal.currentValue} / {goal.targetValue} {goal.unit}
           </span>
           <span className="font-medium text-foreground">
             {progressPercentage}%
@@ -166,8 +167,8 @@ function GoalCard({ goal }: GoalCardProps) {
 }
 
 function GoalCompactCard({ goal }: GoalCardProps) {
-  const progressPercentage = goal.targetProgress > 0
-    ? Math.round((goal.progress / goal.targetProgress) * 100)
+  const progressPercentage = goal.targetValue > 0
+    ? Math.round((goal.currentValue / goal.targetValue) * 100)
     : 0;
 
   return (
