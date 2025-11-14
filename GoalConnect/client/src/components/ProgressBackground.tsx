@@ -30,7 +30,14 @@ interface MountainUnlock {
  */
 export function ProgressBackground({ children }: ProgressBackgroundProps) {
   // Initialize with default El Capitan background immediately
-  const [currentBackground, setCurrentBackground] = useState<BackgroundConfig>(() => getCurrentBackground([]));
+  const [currentBackground, setCurrentBackground] = useState<BackgroundConfig | null>(() => {
+    try {
+      return getCurrentBackground([]);
+    } catch (e) {
+      console.error('Error initializing background:', e);
+      return null;
+    }
+  });
   const [nextBackground, setNextBackground] = useState<BackgroundConfig | null>(null);
 
   // Fetch user's unlocked mountains
@@ -41,9 +48,13 @@ export function ProgressBackground({ children }: ProgressBackgroundProps) {
   // Apply default theme on mount
   useEffect(() => {
     if (currentBackground?.themeId) {
-      applyTheme(currentBackground.themeId as ThemeKey);
+      try {
+        applyTheme(currentBackground.themeId as ThemeKey);
+      } catch (e) {
+        console.error('Error applying theme:', e);
+      }
     }
-  }, []); // Only run once on mount
+  }, [currentBackground?.themeId]);
 
   useEffect(() => {
     const mountainNames = unlockedMountains.map(m => m.mountainName);
@@ -55,9 +66,18 @@ export function ProgressBackground({ children }: ProgressBackgroundProps) {
 
     // Auto-apply the theme linked to this background!
     if (current?.themeId) {
-      applyTheme(current.themeId as ThemeKey);
+      try {
+        applyTheme(current.themeId as ThemeKey);
+      } catch (e) {
+        console.error('Error applying theme:', e);
+      }
     }
   }, [unlockedMountains]);
+
+  // Fallback if no background is loaded
+  if (!currentBackground) {
+    return <div className="min-h-screen bg-background">{children}</div>;
+  }
 
   return (
     <div className="relative min-h-screen">
