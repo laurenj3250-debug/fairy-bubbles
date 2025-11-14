@@ -106,6 +106,9 @@ app.use((req, res, next) => {
   // Serve attached assets (costume images, etc.) as static files
   app.use("/attached_assets", express.static("attached_assets"));
 
+  // Serve background images from client/public/backgrounds
+  app.use("/backgrounds", express.static("client/public/backgrounds"));
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
