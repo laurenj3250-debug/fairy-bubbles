@@ -49,7 +49,7 @@ export function StreakFreeze() {
   const maxFreezes = 3;
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg">
+    <div className="card-ice-shelf p-4 shadow-lg">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Snowflake className="w-5 h-5 text-cyan-400" />

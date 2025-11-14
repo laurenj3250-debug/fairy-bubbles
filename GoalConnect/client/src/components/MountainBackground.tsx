@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { getTodaysMountain, type MountainProfile } from "@/lib/mountainProfiles";
 
-export function MountainBackground() {
+interface MountainBackgroundProps {
+  profile?: MountainProfile;
+}
+
+export function MountainBackground({ profile }: MountainBackgroundProps = {}) {
+  // Use provided profile or get today's mountain
+  const mountainProfile = profile || getTodaysMountain();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
 
@@ -101,11 +108,8 @@ export function MountainBackground() {
               </linearGradient>
             </defs>
             {/* Mountain peaks */}
-            <path d="M0,600 L0,400 Q100,320 200,280 L250,320 L300,240 Q400,200 500,260 L600,220 L650,180 L700,210 Q800,170 900,220 L1000,200 L1100,280 Q1200,320 1300,360 L1400,400 L1400,600 Z"
+            <path d={mountainProfile.layers.far1}
                   fill="#1a2942" opacity="0.3" />
-            {/* Snow caps */}
-            <path d="M280,240 L300,240 L320,280 Z" fill="url(#snowCap1)" />
-            <path d="M630,180 L650,180 L670,215 Z" fill="url(#snowCap1)" />
           </svg>
         </div>
 
@@ -123,10 +127,12 @@ export function MountainBackground() {
                 <stop offset="100%" style={{ stopColor: '#e0f2ff', stopOpacity: 0.3 }} />
               </linearGradient>
             </defs>
-            <path d="M0,600 L0,450 Q150,380 250,340 L320,380 L400,300 Q500,250 600,320 L700,280 L800,240 L900,290 Q1000,260 1100,310 L1200,340 Q1300,380 1400,420 L1400,600 Z"
+            <path d={mountainProfile.layers.far2}
                   fill="#253a52" opacity="0.5" />
-            <path d="M380,300 L400,300 L420,340 Z" fill="url(#snowCap2)" />
-            <path d="M780,240 L800,240 L820,280 Z" fill="url(#snowCap2)" />
+            {/* Snow caps for layer 2 */}
+            {mountainProfile.snowCaps.find(sc => sc.layer === 2)?.paths.map((path, i) => (
+              <path key={i} d={path} fill="url(#snowCap2)" />
+            ))}
           </svg>
         </div>
 
@@ -144,10 +150,12 @@ export function MountainBackground() {
                 <stop offset="100%" style={{ stopColor: '#e0f2ff', stopOpacity: 0.4 }} />
               </linearGradient>
             </defs>
-            <path d="M0,600 L0,480 Q100,420 180,390 L250,430 L350,340 Q450,300 550,380 L650,350 L750,310 L850,360 L950,330 Q1050,310 1150,360 L1250,400 Q1350,440 1400,470 L1400,600 Z"
+            <path d={mountainProfile.layers.mid}
                   fill="#2f4a62" opacity="0.7" />
-            <path d="M330,340 L350,340 L370,380 Z" fill="url(#snowCap3)" />
-            <path d="M730,310 L750,310 L770,350 Z" fill="url(#snowCap3)" />
+            {/* Snow caps for layer 3 */}
+            {mountainProfile.snowCaps.find(sc => sc.layer === 3)?.paths.map((path, i) => (
+              <path key={i} d={path} fill="url(#snowCap3)" />
+            ))}
           </svg>
         </div>
 
@@ -165,10 +173,12 @@ export function MountainBackground() {
                 <stop offset="100%" style={{ stopColor: '#e0f2ff', stopOpacity: 0.5 }} />
               </linearGradient>
             </defs>
-            <path d="M0,600 L0,510 Q120,460 200,440 L280,480 L380,400 Q480,360 580,440 L680,410 L780,380 L880,420 L980,400 Q1080,380 1180,420 L1280,450 Q1380,490 1400,520 L1400,600 Z"
+            <path d={mountainProfile.layers.near}
                   fill="#3a5570" opacity="0.85" />
-            <path d="M360,400 L380,400 L400,440 Z" fill="url(#snowCap4)" />
-            <path d="M760,380 L780,380 L800,420 Z" fill="url(#snowCap4)" />
+            {/* Snow caps for layer 4 */}
+            {mountainProfile.snowCaps.find(sc => sc.layer === 4)?.paths.map((path, i) => (
+              <path key={i} d={path} fill="url(#snowCap4)" />
+            ))}
           </svg>
         </div>
 
@@ -186,10 +196,12 @@ export function MountainBackground() {
                 <stop offset="100%" style={{ stopColor: '#e0f2ff', stopOpacity: 0.6 }} />
               </linearGradient>
             </defs>
-            <path d="M0,600 L0,530 Q100,490 180,470 L260,510 L360,450 Q460,420 560,490 L660,460 L760,440 L860,470 L960,450 Q1060,430 1160,470 L1260,500 Q1360,540 1400,560 L1400,600 Z"
+            <path d={mountainProfile.layers.foreground}
                   fill="#445d75" opacity="1.0" />
-            <path d="M340,450 L360,450 L380,490 Z" fill="url(#snowCap5)" />
-            <path d="M740,440 L760,440 L780,480 Z" fill="url(#snowCap5)" />
+            {/* Snow caps for layer 5 */}
+            {mountainProfile.snowCaps.find(sc => sc.layer === 5)?.paths.map((path, i) => (
+              <path key={i} d={path} fill="url(#snowCap5)" />
+            ))}
           </svg>
         </div>
 
@@ -220,12 +232,7 @@ export function MountainBackground() {
           left: 0;
           width: 100%;
           height: 100%;
-          background: linear-gradient(180deg,
-            #0f1f3a 0%,
-            #1a2d4a 30%,
-            #253a5a 60%,
-            #2d4a6e 100%
-          );
+          background: linear-gradient(180deg, ${mountainProfile.skyGradient.join(', ')});
         }
 
         /* Horizon glow - sunrise/golden hour effect */
@@ -236,12 +243,12 @@ export function MountainBackground() {
           width: 100%;
           height: 40%;
           background: radial-gradient(ellipse at bottom,
-            rgba(255, 126, 95, 0.15) 0%,
-            rgba(254, 180, 123, 0.1) 30%,
-            rgba(255, 126, 95, 0.05) 50%,
+            ${mountainProfile.horizonGlow.colors[0]} 0%,
+            ${mountainProfile.horizonGlow.colors[1]} 30%,
+            ${mountainProfile.horizonGlow.colors.length > 2 ? mountainProfile.horizonGlow.colors[2] : 'transparent'} 50%,
             transparent 70%
           );
-          opacity: 0.8;
+          opacity: ${mountainProfile.horizonGlow.opacity};
         }
 
         .mountain-layer {

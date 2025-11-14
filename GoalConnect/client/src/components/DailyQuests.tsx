@@ -50,7 +50,7 @@ export function DailyQuests() {
   if (quests.length === 0) return null;
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg">
+    <div className="card-ice-shelf p-4 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-foreground">Daily Quests</h3>
         <div className="text-xs text-muted-foreground">

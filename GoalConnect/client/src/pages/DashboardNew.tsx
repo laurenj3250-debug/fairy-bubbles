@@ -13,6 +13,7 @@ import { ComboTracker } from "@/components/ComboTracker";
 import { DailyQuests } from "@/components/DailyQuests";
 import { StreakFreeze } from "@/components/StreakFreeze";
 import { Altimeter } from "@/components/Altimeter";
+import { ClimbingInspirationTile } from "@/components/ClimbingInspirationTile";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -216,6 +217,9 @@ export default function DashboardNew() {
 
             {/* Daily Quests */}
             <DailyQuests />
+
+            {/* Climbing Inspiration - Daily rotation of locations, facts, tips, quotes */}
+            <ClimbingInspirationTile />
 
             {/* Streak Freeze */}
             <StreakFreeze />
