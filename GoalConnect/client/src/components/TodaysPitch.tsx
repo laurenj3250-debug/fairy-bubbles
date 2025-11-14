@@ -217,7 +217,7 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
   if (habitsLoading || logsLoading) {
     return (
-      <div className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
+      <div className={cn("bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
         <div className="animate-pulse space-y-4 relative z-10">
           <div className="h-8 bg-muted/30 rounded w-1/3"></div>
           <div className="space-y-3">
@@ -247,7 +247,7 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
   const completionPercentage = totalHabitsForToday > 0 ? (completedHabits / totalHabitsForToday) * 100 : 0;
 
   return (
-    <div className={cn("card-snow-layer p-6 shadow-lg topo-pattern mountain-card-depth", className)}>
+    <div className={cn("bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern", className)}>
       {/* Summit Celebration Overlay */}
       {showSummitCelebration && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">

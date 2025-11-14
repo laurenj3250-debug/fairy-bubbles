@@ -219,7 +219,7 @@ export default function DreamScrollMountain() {
     <div className="min-h-screen pb-24 bg-background">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
+        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
           <div className="flex items-center gap-3 mb-2 relative z-10">
             <Target className="w-9 h-9 text-[hsl(var(--accent))]" />
             <h1 className="text-4xl font-bold text-foreground">Notes & Ideas</h1>
@@ -263,7 +263,7 @@ export default function DreamScrollMountain() {
 
         {/* Stats Bar */}
         {categoryItems.length > 0 && (
-          <div className="bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
+          <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
             <div className="flex items-center justify-between mb-2 relative z-10">
               <span className="text-sm text-muted-foreground">Progress</span>
               <span className="text-sm font-bold text-foreground">{completionRate}%</span>
@@ -285,7 +285,7 @@ export default function DreamScrollMountain() {
         )}
 
         {/* Tag Management */}
-        <div className="bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
+        <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
           <div className="flex items-center justify-between mb-3 relative z-10">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Tag className="w-4 h-4" />
@@ -364,7 +364,7 @@ export default function DreamScrollMountain() {
 
         {/* Add New Item */}
         {isAdding ? (
-          <div className="bg-card/80 backdrop-blur-sm rounded-xl p-5 border border-card-border shadow-lg topo-pattern">
+          <div className="bg-card/40 backdrop-blur-sm rounded-xl p-5 border border-card-border shadow-lg topo-pattern">
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2 relative z-10">
               <Plus className="w-5 h-5" />
               Add to {currentCategory?.label}
