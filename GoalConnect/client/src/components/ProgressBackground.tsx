@@ -29,13 +29,21 @@ interface MountainUnlock {
  * </ProgressBackground>
  */
 export function ProgressBackground({ children }: ProgressBackgroundProps) {
-  const [currentBackground, setCurrentBackground] = useState<BackgroundConfig | null>(null);
+  // Initialize with default El Capitan background immediately
+  const [currentBackground, setCurrentBackground] = useState<BackgroundConfig>(() => getCurrentBackground([]));
   const [nextBackground, setNextBackground] = useState<BackgroundConfig | null>(null);
 
   // Fetch user's unlocked mountains
   const { data: unlockedMountains = [] } = useQuery<MountainUnlock[]>({
     queryKey: ['/api/mountains/unlocked'],
   });
+
+  // Apply default theme on mount
+  useEffect(() => {
+    if (currentBackground?.themeId) {
+      applyTheme(currentBackground.themeId as ThemeKey);
+    }
+  }, []); // Only run once on mount
 
   useEffect(() => {
     const mountainNames = unlockedMountains.map(m => m.mountainName);
@@ -50,10 +58,6 @@ export function ProgressBackground({ children }: ProgressBackgroundProps) {
       applyTheme(current.themeId as ThemeKey);
     }
   }, [unlockedMountains]);
-
-  if (!currentBackground) {
-    return <div className="min-h-screen bg-background">{children}</div>;
-  }
 
   return (
     <div className="relative min-h-screen">
