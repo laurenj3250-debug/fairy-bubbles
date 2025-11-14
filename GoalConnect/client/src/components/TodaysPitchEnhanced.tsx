@@ -171,7 +171,7 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
 
   if (habitsLoading || logsLoading) {
     return (
-      <div className={cn("relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
+      <div className={cn("relative bg-card/60 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
         <GraniteTexture />
         <div className="animate-pulse space-y-4 relative z-10">
           <div className="h-8 bg-muted/30 rounded w-1/3"></div>
@@ -195,7 +195,7 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
 
   return (
     <>
-      <div className={cn("relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
+      <div className={cn("relative bg-card/60 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
         {/* Granite texture overlay */}
         <GraniteTexture />
 

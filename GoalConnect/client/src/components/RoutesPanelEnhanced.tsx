@@ -81,7 +81,7 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
   }
 
   return (
-    <div className={cn("relative bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
+    <div className={cn("relative bg-card/60 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
       <GraniteTexture />
 
       {/* Header */}
