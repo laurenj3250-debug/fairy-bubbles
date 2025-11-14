@@ -261,7 +261,7 @@ export default function DashboardNew() {
           />
 
           {/* Quick Actions pill - bottom-left overlay */}
-          <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-card/90 backdrop-blur-sm border border-card-border rounded-full px-4 py-2 shadow-lg">
+          <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-card/40 backdrop-blur-sm border border-card-border rounded-full px-4 py-2 shadow-lg">
             <button
               onClick={() => (window.location.href = "/habits")}
               className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors px-3 py-1 rounded-full hover:bg-primary/10"
