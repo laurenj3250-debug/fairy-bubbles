@@ -1,53 +1,60 @@
-import { TopStatusBar } from "@/components/TopStatusBar";
-import { RidgeTraverseWeekCompact } from "@/components/RidgeTraverseWeekCompact";
-import { TodaysPitch } from "@/components/TodaysPitch";
-import { RoutesPanel } from "@/components/RoutesPanel";
+import { DailyFocusHero } from "@/components/DailyFocusHero";
+import { WeekOverviewStreak } from "@/components/WeekOverviewStreak";
+import { GoalsSection } from "@/components/GoalsSection";
 import { TodaysTasksPanel } from "@/components/TodaysTasksPanel";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
-import { HabitHeatmapDashboard } from "@/components/HabitHeatmapDashboard";
-import { useState } from "react";
+import { ProgressBackground } from "@/components/ProgressBackground";
+import { useQuery } from "@tanstack/react-query";
 
+/**
+ * REDESIGNED WeeklyHub
+ *
+ * New hierarchy prioritizes daily clarity:
+ * 1. Daily Focus Hero (60%) - "What do I need to do TODAY?"
+ * 2. Week Overview + Streak (30%) - See patterns + motivation
+ * 3. Goals (20% or less) - Collapsible, doesn't dominate
+ * 4. Optional: Tasks + Journal below
+ */
 export default function WeeklyHub() {
-  const [activeDay, setActiveDay] = useState<string | null>(null);
+  // Fetch streak for background progression
+  const { data: streakData } = useQuery<{ currentStreak: number }>({
+    queryKey: ['/api/habits/streak'],
+  });
 
-  const handleDayClick = (date: string) => {
-    setActiveDay(date);
-    // Could expand this to show that day's details
-    console.log("Selected day:", date);
-  };
+  const currentStreak = streakData?.currentStreak || 0;
 
   return (
-    <div className="min-h-screen bg-transparent pb-20 md:pb-0">
-      <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-6">
-        {/* Top Status Bar */}
-        <TopStatusBar />
+    <ProgressBackground streakDays={currentStreak}>
+      <div className="min-h-screen pb-20 md:pb-8">
+        <div className="max-w-6xl mx-auto p-4 md:p-6 section">
+          {/* Hero: Daily Focus - BIGGEST section */}
+          <DailyFocusHero />
 
-        {/* Ridge Traverse Week */}
-        <RidgeTraverseWeekCompact onDayClick={handleDayClick} />
+          {/* Week Overview + Streak - Side by side */}
+          <WeekOverviewStreak />
 
-        {/* Main Content: Left column (Pitch + Tasks + Journal) + Right column (Routes) */}
-        <div className="mt-4 flex flex-col lg:flex-row gap-4">
-          {/* Left Column: Today's Pitch, Tasks, and Journal stacked vertically */}
-          <div className="flex-1 lg:w-[65%] flex flex-col gap-4">
-            {/* Today's Pitch */}
-            <TodaysPitch />
+          {/* Active Goals - Collapsible, takes minimal space */}
+          <GoalsSection />
 
-            {/* Today's Tasks Panel */}
+          {/* Optional sections - Can be toggled or moved to separate views */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TodaysTasksPanel />
-
-            {/* Dream Scroll Widget (Summit Journal) */}
             <DreamScrollWidget />
-
-            {/* Habit Heatmap */}
-            <HabitHeatmapDashboard />
           </div>
 
-          {/* Right Column: Routes Panel spanning full height */}
-          <div className="lg:w-[30%]">
-            <RoutesPanel />
+          {/* Link to full habit history */}
+          <div className="card bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+            <a href="/habits" className="block text-center py-4">
+              <p className="text-sm font-medium text-foreground">
+                View Full Habit History
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                See detailed analytics, patterns, and past performance
+              </p>
+            </a>
           </div>
         </div>
       </div>
-    </div>
+    </ProgressBackground>
   );
 }
