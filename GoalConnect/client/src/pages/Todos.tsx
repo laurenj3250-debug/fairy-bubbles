@@ -262,7 +262,7 @@ export default function Todos() {
                 <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
               </div>
             ) : sortedTodos.length === 0 ? (
-              <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-12 shadow-lg topo-pattern">
+              <div className="card p-12">
                 <div className="relative z-10 text-center">
                   <ListTodo className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">
@@ -295,7 +295,7 @@ export default function Todos() {
                     <div
                       key={todo.id}
                       className={cn(
-                        "bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 shadow-lg topo-pattern transition-all",
+                        "card transition-all",
                         todo.completed && "opacity-60"
                       )}
                     >
@@ -394,7 +394,7 @@ export default function Todos() {
         {view === "week" && (
           <div>
             {/* Week Navigation */}
-            <div className="bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-4 mb-4 shadow-lg topo-pattern">
+            <div className="card mb-4">
               <div className="relative z-10 flex items-center justify-between">
                 <button
                   onClick={() => setWeekOffset(weekOffset - 1)}
@@ -430,7 +430,7 @@ export default function Todos() {
                 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
                 return (
-                  <div key={dateKey} className={cn("bg-card/80 backdrop-blur-sm border border-card-border rounded-2xl p-3 shadow-lg topo-pattern", isToday && "ring-2 ring-primary")}>
+                  <div key={dateKey} className={cn("card p-3", isToday && "ring-2 ring-primary")}>
                     <div className="relative z-10">
                       {/* Day Header */}
                       <div className="text-center mb-3">
