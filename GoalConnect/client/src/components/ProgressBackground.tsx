@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getBackgroundForStreak, getNextBackground, daysUntilNextUnlock, type BackgroundConfig } from '@/themes/config';
+import { getBackgroundForStreak, getNextBackground, daysUntilNextUnlock, applyTheme, type BackgroundConfig, type ThemeKey } from '@/themes/config';
 
 interface ProgressBackgroundProps {
   streakDays: number;
@@ -9,8 +9,8 @@ interface ProgressBackgroundProps {
 /**
  * ProgressBackground Component
  *
- * Automatically changes the background based on user's streak progress.
- * Unlocks new mountain scenes as milestones are reached!
+ * Automatically changes the background AND theme based on user's streak progress.
+ * Unlocks new mountain scenes + matching color themes as milestones are reached!
  *
  * Usage:
  * <ProgressBackground streakDays={userStreak}>
@@ -30,6 +30,11 @@ export function ProgressBackground({ streakDays, children }: ProgressBackgroundP
     setCurrentBackground(current);
     setNextBackground(next);
     setDaysToUnlock(days);
+
+    // Auto-apply the theme linked to this background!
+    if (current?.themeId) {
+      applyTheme(current.themeId as ThemeKey);
+    }
   }, [streakDays]);
 
   if (!currentBackground) {
