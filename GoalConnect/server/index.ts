@@ -1,11 +1,7 @@
 // CRITICAL: Set this BEFORE any imports
-// Railway/Supabase PostgreSQL uses self-signed certificates
+// PostgreSQL SSL configuration
 // This must be set before the pg library is loaded
-// We set it for both production and development since Supabase requires it
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('supabase.com')) {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  console.log('[SSL] Disabled TLS verification for Supabase database');
-} else if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   console.log('[SSL] Disabled TLS verification for production database');
 }
