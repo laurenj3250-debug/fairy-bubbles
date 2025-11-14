@@ -67,6 +67,15 @@ export const backgrounds: BackgroundConfig[] = [
     themeId: 'mountainDusk'
   },
   {
+    id: 'el-capitan',
+    name: 'El Capitan',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+    mountainName: 'El Capitan',
+    description: 'The legendary 3,000-foot granite monolith',
+    timeOfDay: 'day',
+    themeId: 'graniteMonolith'
+  },
+  {
     id: 'alpine-meadow',
     name: 'Alpine Meadow',
     image: '/backgrounds/meadow.jpg',
@@ -199,6 +208,47 @@ export const mountainDuskTheme: Theme = {
   },
   effects: {
     cardShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+    hoverScale: 1.02,
+    transitionSpeed: '150ms'
+  }
+};
+
+/**
+ * GRANITE MONOLITH THEME (El Capitan)
+ * Warm granite grays with golden accents - inspired by Yosemite's iconic wall
+ */
+export const graniteMonolithTheme: Theme = {
+  name: 'Granite Monolith',
+  colors: {
+    background: '30 8% 22%',              // Warm dark granite gray
+    foreground: '40 30% 95%',             // Warm light cream
+    card: '30 10% 28%',                   // Lighter granite
+    cardForeground: '40 30% 95%',
+    primary: '40 85% 55%',                // Warm golden yellow (sun on granite)
+    primaryForeground: '30 8% 15%',
+    secondary: '30 8% 35%',               // Medium granite
+    secondaryForeground: '40 30% 95%',
+    accent: '25 90% 60%',                 // Warm sunset orange
+    accentForeground: '30 8% 15%',
+    success: '142 71% 55%',
+    successForeground: '30 8% 15%',
+    warning: '40 92% 60%',
+    warningForeground: '30 8% 15%',
+    destructive: '0 84% 60%',
+    destructiveForeground: '0 0% 100%',
+    border: '30 10% 38%',                 // Granite edge
+    input: '30 10% 38%',
+    ring: '40 85% 55%',
+    muted: '30 8% 32%',
+    mutedForeground: '40 20% 70%'
+  },
+  spacing: {
+    sectionGap: '1.5rem',
+    cardPadding: '1.5rem',
+    borderRadius: '0.75rem'
+  },
+  effects: {
+    cardShadow: '0 4px 12px 0 rgb(0 0 0 / 0.2)',
     hoverScale: 1.02,
     transitionSpeed: '150ms'
   }
@@ -415,6 +465,7 @@ export const northernLightsTheme: Theme = {
 
 export const themes = {
   mountainDusk: mountainDuskTheme,
+  graniteMonolith: graniteMonolithTheme,
   alpineMeadow: alpineMeadowTheme,
   sunsetPeak: sunsetPeakTheme,
   alpineDawn: alpineDawnTheme,
