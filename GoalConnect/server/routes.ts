@@ -2780,6 +2780,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's unlocked mountains (for background/theme progression)
+  app.get("/api/mountains/unlocked", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const unlocked = await db.query.mountainUnlocks.findMany({
+        where: (mountainUnlocks, { eq }) => eq(mountainUnlocks.userId, req.user!.id),
+        with: {
+          mountain: true
+        }
+      });
+
+      // Return with mountain names for easy lookup
+      const formatted = unlocked.map(u => ({
+        id: u.id,
+        mountainName: u.mountain.name,
+        unlockedAt: u.unlockedAt.toISOString(),
+        unlockedBy: u.unlockedBy
+      }));
+
+      res.json(formatted);
+    } catch (error: any) {
+      console.error('[mountains] Get unlocked error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get player climbing stats
   app.get("/api/climbing/stats", async (req, res) => {
     if (!req.user) {

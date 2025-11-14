@@ -38,66 +38,78 @@ export interface BackgroundConfig {
   id: string;
   name: string;
   image: string;
-  unlockStreak: number;
+  mountainName: string;  // Links to actual mountain in your DB!
   description: string;
   timeOfDay?: 'dawn' | 'day' | 'sunset' | 'night';
-  themeId?: string;  // NEW: Link to custom theme
+  themeId?: string;
 }
 
+/**
+ * BACKGROUNDS LINKED TO MOUNTAINS
+ *
+ * When you unlock a mountain in your expedition/world map,
+ * you also unlock its background + matching theme!
+ *
+ * To add your own:
+ * 1. Add the mountain to your mountains table in the DB
+ * 2. Save your photo to /client/public/backgrounds/your-image.jpg
+ * 3. Add entry here linking mountainName to your DB mountain
+ * 4. Create matching theme (optional)
+ */
 export const backgrounds: BackgroundConfig[] = [
   {
     id: 'starter',
-    name: 'Valley View',
-    image: '/backgrounds/valley.jpg',
-    unlockStreak: 0,
-    description: 'Starting your journey',
+    name: 'Base Camp',
+    image: '/backgrounds/basecamp.jpg',
+    mountainName: 'Training Grounds',  // Default - always unlocked
+    description: 'Where your journey begins',
     timeOfDay: 'day',
-    themeId: 'mountainDusk'  // Default theme
+    themeId: 'mountainDusk'
   },
   {
-    id: 'explorer',
+    id: 'alpine-meadow',
     name: 'Alpine Meadow',
     image: '/backgrounds/meadow.jpg',
-    unlockStreak: 7,
-    description: 'One week strong!',
+    mountainName: 'Alpine Meadow',  // Link to your DB mountain
+    description: 'Fresh mountain meadows',
     timeOfDay: 'day',
-    themeId: 'alpineMeadow'  // Fresh green theme
+    themeId: 'alpineMeadow'
   },
   {
-    id: 'climber',
-    name: 'Mountain Ridge',
-    image: '/backgrounds/ridge.jpg',
-    unlockStreak: 30,
-    description: 'A full month of consistency',
+    id: 'sunset-ridge',
+    name: 'Sunset Ridge',
+    image: '/backgrounds/sunset-ridge.jpg',
+    mountainName: 'Sunset Ridge',
+    description: 'Golden hour magic',
     timeOfDay: 'sunset',
-    themeId: 'sunsetPeak'  // Warm sunset theme
+    themeId: 'sunsetPeak'
   },
   {
-    id: 'veteran',
-    name: 'High Summit',
-    image: '/backgrounds/summit.jpg',
-    unlockStreak: 90,
-    description: '90 days - you\'re unstoppable!',
+    id: 'dawn-summit',
+    name: 'Dawn Summit',
+    image: '/backgrounds/dawn-summit.jpg',
+    mountainName: 'Dawn Peak',
+    description: 'Sunrise on snowy peaks',
     timeOfDay: 'dawn',
-    themeId: 'alpineDawn'  // Pink/purple dawn theme
+    themeId: 'alpineDawn'
   },
   {
-    id: 'legend',
-    name: 'The Peak',
-    image: '/backgrounds/peak.jpg',
-    unlockStreak: 180,
-    description: 'Half a year of dedication',
+    id: 'glacier-pass',
+    name: 'Glacier Pass',
+    image: '/backgrounds/glacier.jpg',
+    mountainName: 'Glacier Pass',
+    description: 'Icy crystalline blues',
     timeOfDay: 'day',
-    themeId: 'glacierBlue'  // Icy blue theme
+    themeId: 'glacierBlue'
   },
   {
-    id: 'master',
-    name: 'Northern Lights Summit',
+    id: 'aurora-peak',
+    name: 'Aurora Peak',
     image: '/backgrounds/aurora.jpg',
-    unlockStreak: 365,
-    description: 'One full year - legendary!',
+    mountainName: 'Aurora Peak',
+    description: 'Northern lights magic',
     timeOfDay: 'night',
-    themeId: 'northernLights'  // Purple/green aurora theme
+    themeId: 'northernLights'
   }
 ];
 
@@ -417,34 +429,43 @@ export type ThemeKey = keyof typeof themes;
 // ============================================================================
 
 /**
- * Get the appropriate background based on current streak
+ * Get background for an unlocked mountain
+ * @param mountainName - Name of the mountain from your DB
  */
-export function getBackgroundForStreak(streakDays: number): BackgroundConfig {
-  // Find the highest unlocked background
-  const unlocked = backgrounds
-    .filter(bg => bg.unlockStreak <= streakDays)
-    .sort((a, b) => b.unlockStreak - a.unlockStreak);
-
-  return unlocked[0] || backgrounds[0];
+export function getBackgroundForMountain(mountainName: string): BackgroundConfig | null {
+  return backgrounds.find(bg => bg.mountainName === mountainName) || null;
 }
 
 /**
- * Get the next background to unlock
+ * Get background for user based on their unlocked mountains
+ * @param unlockedMountains - Array of mountain names the user has unlocked
+ * @returns The most recently unlocked background, or default
  */
-export function getNextBackground(streakDays: number): BackgroundConfig | null {
-  const locked = backgrounds
-    .filter(bg => bg.unlockStreak > streakDays)
-    .sort((a, b) => a.unlockStreak - b.unlockStreak);
+export function getCurrentBackground(unlockedMountains: string[]): BackgroundConfig {
+  // Find all unlocked backgrounds
+  const unlocked = backgrounds.filter(bg =>
+    unlockedMountains.includes(bg.mountainName)
+  );
 
+  // Return most recent (last in array) or default
+  return unlocked[unlocked.length - 1] || backgrounds[0];
+}
+
+/**
+ * Get all locked backgrounds (not yet unlocked)
+ */
+export function getLockedBackgrounds(unlockedMountains: string[]): BackgroundConfig[] {
+  return backgrounds.filter(bg =>
+    !unlockedMountains.includes(bg.mountainName)
+  );
+}
+
+/**
+ * Get the next background to unlock (first locked one)
+ */
+export function getNextBackground(unlockedMountains: string[]): BackgroundConfig | null {
+  const locked = getLockedBackgrounds(unlockedMountains);
   return locked[0] || null;
-}
-
-/**
- * Calculate days until next unlock
- */
-export function daysUntilNextUnlock(streakDays: number): number {
-  const next = getNextBackground(streakDays);
-  return next ? next.unlockStreak - streakDays : 0;
 }
 
 /**

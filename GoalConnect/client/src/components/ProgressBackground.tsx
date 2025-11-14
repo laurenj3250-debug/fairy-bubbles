@@ -1,41 +1,55 @@
 import { useEffect, useState } from 'react';
-import { getBackgroundForStreak, getNextBackground, daysUntilNextUnlock, applyTheme, type BackgroundConfig, type ThemeKey } from '@/themes/config';
+import { useQuery } from '@tanstack/react-query';
+import { getCurrentBackground, getNextBackground, applyTheme, type BackgroundConfig, type ThemeKey } from '@/themes/config';
 
 interface ProgressBackgroundProps {
-  streakDays: number;
   children: React.ReactNode;
+}
+
+interface MountainUnlock {
+  id: number;
+  mountainName: string;
+  unlockedAt: string;
 }
 
 /**
  * ProgressBackground Component
  *
- * Automatically changes the background AND theme based on user's streak progress.
- * Unlocks new mountain scenes + matching color themes as milestones are reached!
+ * Automatically changes the background AND theme based on mountains you've unlocked
+ * in your expedition/world map!
+ *
+ * When you unlock a new mountain, you get:
+ * - New beautiful background photo
+ * - Matching color theme that auto-applies
+ * - Celebration notification
  *
  * Usage:
- * <ProgressBackground streakDays={userStreak}>
+ * <ProgressBackground>
  *   <YourContent />
  * </ProgressBackground>
  */
-export function ProgressBackground({ streakDays, children }: ProgressBackgroundProps) {
+export function ProgressBackground({ children }: ProgressBackgroundProps) {
   const [currentBackground, setCurrentBackground] = useState<BackgroundConfig | null>(null);
   const [nextBackground, setNextBackground] = useState<BackgroundConfig | null>(null);
-  const [daysToUnlock, setDaysToUnlock] = useState<number>(0);
+
+  // Fetch user's unlocked mountains
+  const { data: unlockedMountains = [] } = useQuery<MountainUnlock[]>({
+    queryKey: ['/api/mountains/unlocked'],
+  });
 
   useEffect(() => {
-    const current = getBackgroundForStreak(streakDays);
-    const next = getNextBackground(streakDays);
-    const days = daysUntilNextUnlock(streakDays);
+    const mountainNames = unlockedMountains.map(m => m.mountainName);
+    const current = getCurrentBackground(mountainNames);
+    const next = getNextBackground(mountainNames);
 
     setCurrentBackground(current);
     setNextBackground(next);
-    setDaysToUnlock(days);
 
     // Auto-apply the theme linked to this background!
     if (current?.themeId) {
       applyTheme(current.themeId as ThemeKey);
     }
-  }, [streakDays]);
+  }, [unlockedMountains]);
 
   if (!currentBackground) {
     return <div className="min-h-screen bg-background">{children}</div>;
@@ -81,25 +95,21 @@ export function ProgressBackground({ streakDays, children }: ProgressBackgroundP
         {children}
       </div>
 
-      {/* Unlock notification (shown when close to next milestone) */}
-      {nextBackground && daysToUnlock <= 7 && daysToUnlock > 0 && (
+      {/* Next unlock preview (show available mountains in expedition page) */}
+      {nextBackground && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2">
-          <UnlockNotification
-            nextBackground={nextBackground}
-            daysRemaining={daysToUnlock}
-          />
+          <NextMountainPreview nextBackground={nextBackground} />
         </div>
       )}
     </div>
   );
 }
 
-interface UnlockNotificationProps {
+interface NextMountainPreviewProps {
   nextBackground: BackgroundConfig;
-  daysRemaining: number;
 }
 
-function UnlockNotification({ nextBackground, daysRemaining }: UnlockNotificationProps) {
+function NextMountainPreview({ nextBackground }: NextMountainPreviewProps) {
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (isDismissed) return null;
@@ -116,15 +126,20 @@ function UnlockNotification({ nextBackground, daysRemaining }: UnlockNotificatio
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground">
-            Almost there!
+            Next Mountain
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {daysRemaining} more {daysRemaining === 1 ? 'day' : 'days'} to unlock{' '}
-            <span className="font-medium text-foreground">{nextBackground.name}</span>
+            Unlock <span className="font-medium text-foreground">{nextBackground.mountainName}</span> to reveal this view
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {nextBackground.description}
           </p>
+          <button
+            onClick={() => window.location.href = '/world-map'}
+            className="text-xs text-primary hover:text-primary/80 mt-2 font-medium"
+          >
+            View World Map →
+          </button>
         </div>
         <button
           onClick={() => setIsDismissed(true)}
