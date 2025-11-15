@@ -233,7 +233,9 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
   const totalHabits = habitsWithCompletion.filter(h =>
     h.category !== "adventure" || h.scheduledDay === today
   ).length;
-  const completedHabits = habitsWithCompletion.filter((h) => h.completed).length;
+  const completedHabits = habitsWithCompletion.filter((h) =>
+    h.completed && (h.category !== "adventure" || h.scheduledDay === today)
+  ).length;
 
   // Check if empty
   const isEmpty = totalHabits === 0;
