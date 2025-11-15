@@ -30,6 +30,35 @@ Every time we waste time, we document it here and fix it.
 
 ---
 
+## #3: Created Playwright Tests But Never Ran Them (2025-11-14)
+
+**Time wasted:** Ongoing (tests exist but provide zero value)
+**What happened:** Set up Playwright, wrote test files, but never actually ran them
+**Impact:** No confidence that dashboard works, tests provide zero value if not run
+**Solution:**
+- Run Playwright tests now
+- Add to pre-push hooks (optional - can be slow)
+- Add to GitHub Actions on every PR
+- Actually use `npm run test:ui` during development
+**Status:** ⏳ Fixing now
+**Lesson:** Tests that don't run are worse than no tests (false confidence)
+
+---
+
+## #4: Wrong Default Route (2025-11-14)
+
+**Time wasted:** ~2 minutes (confusion)
+**What happened:** User couldn't see new Base Camp dashboard because `/` went to old Weekly Hub
+**Impact:** User thought new dashboard wasn't working
+**Solution:**
+- Made `/` point to Base Camp dashboard
+- Redirected `/dashboard` → `/`
+- Redirected `/weekly-hub` → `/`
+**Status:** ✅ Fixed
+**Lesson:** New default pages should be... the default
+
+---
+
 ## Template for Future Time Wasters
 
 **Time wasted:** [X minutes/hours]

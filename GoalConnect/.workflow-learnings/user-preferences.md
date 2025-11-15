@@ -77,6 +77,9 @@
 ❌ Accessibility issues (always check WCAG)
 ❌ Breaking mobile responsiveness
 ❌ TypeScript errors in new code
+❌ Creating tests but never running them
+❌ Making user navigate to non-default routes
+❌ Keeping old unused routes/pages around
 
 ---
 

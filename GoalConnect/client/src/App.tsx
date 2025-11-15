@@ -88,13 +88,13 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <Redirect to="/weekly-hub" />
+          <Dashboard />
+          <BottomNav />
         </RequireAuth>
       </Route>
       <Route path="/dashboard">
         <RequireAuth>
-          <Dashboard />
-          <BottomNav />
+          <Redirect to="/" />
         </RequireAuth>
       </Route>
       <Route path="/habits">
@@ -115,16 +115,15 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
-      {/* Redirect /weekly to /weekly-hub */}
+      {/* Redirect old routes to home (Base Camp) */}
       <Route path="/weekly">
         <RequireAuth>
-          <Redirect to="/weekly-hub" />
+          <Redirect to="/" />
         </RequireAuth>
       </Route>
       <Route path="/weekly-hub">
         <RequireAuth>
-          <WeeklyHub />
-          <BottomNav />
+          <Redirect to="/" />
         </RequireAuth>
       </Route>
       <Route path="/alpine-shop">
