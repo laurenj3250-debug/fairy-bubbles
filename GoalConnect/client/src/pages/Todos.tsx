@@ -175,7 +175,7 @@ export default function Todos() {
   return (
     <div className="min-h-screen pb-20 px-4 pt-6 relative">
       {/* Header */}
-      <div className="max-w-4xl mx-auto mb-6">
+      <div className={cn("mx-auto mb-6", view === "week" ? "max-w-[1600px]" : "max-w-4xl")}>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
@@ -435,9 +435,9 @@ export default function Todos() {
             </div>
 
             {/* Sidebar + Week Grid Layout */}
-            <div className="flex gap-4">
+            <div className="flex gap-6">
               {/* Left Sidebar - Unscheduled Tasks */}
-              <div className="w-72 flex-shrink-0">
+              <div className="w-64 flex-shrink-0">
                 <div className="card p-4 sticky top-4">
                   <div className="relative z-10">
                     <h3 className="text-sm font-semibold text-foreground mb-3">Unscheduled Tasks</h3>
@@ -479,7 +479,7 @@ export default function Todos() {
               </div>
 
               {/* Week Grid - Now Wider */}
-              <div className="flex-1 grid grid-cols-7 gap-4">
+              <div className="flex-1 grid grid-cols-7 gap-3">
               {weekDates.map((date, index) => {
                 const dateKey = formatDateKey(date);
                 const dayTodos = todos.filter(t => t.dueDate === dateKey);
@@ -487,7 +487,7 @@ export default function Todos() {
                 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
                 return (
-                  <div key={dateKey} className={cn("card p-3", isToday && "ring-2 ring-primary")}>
+                  <div key={dateKey} className={cn("card p-4", isToday && "ring-2 ring-primary")}>
                     <div className="relative z-10">
                       {/* Day Header */}
                       <div className="text-center mb-3">
