@@ -6,11 +6,18 @@ export async function seedMountaineeringData() {
 
   const db = getDb();
 
-  // Check if data already exists
-  const existingRegions = await db.select().from(schema.worldMapRegions).limit(1);
-  if (existingRegions.length > 0) {
+  // Check if data already exists (check mountains specifically since that's the main content)
+  const existingMountains = await db.select().from(schema.mountains).limit(1);
+  if (existingMountains.length > 0) {
     console.log('[mountaineering-seed] ℹ️  Mountaineering data already seeded');
     return;
+  }
+
+  // If regions exist but mountains don't, we need to clear regions first to avoid conflicts
+  const existingRegions = await db.select().from(schema.worldMapRegions).limit(1);
+  if (existingRegions.length > 0) {
+    console.log('[mountaineering-seed] ⚠️  Regions exist but mountains missing - clearing old data...');
+    await db.delete(schema.worldMapRegions);
   }
 
   // Note: If partial data exists from a failed seed, manually clear it:
