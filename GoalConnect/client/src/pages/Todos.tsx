@@ -155,6 +155,34 @@ export default function Todos() {
 
   const weekDates = getWeekDates();
 
+  // Format week range for display
+  const formatWeekRange = () => {
+    const start = weekDates[0];
+    const end = weekDates[6];
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
+
+  // Calculate weekly stats
+  const getWeeklyStats = () => {
+    const weekStart = formatDateKey(weekDates[0]);
+    const weekEnd = formatDateKey(weekDates[6]);
+
+    const weekTodos = todos.filter(t => {
+      if (!t.dueDate) return false;
+      return t.dueDate >= weekStart && t.dueDate <= weekEnd;
+    });
+
+    const completed = weekTodos.filter(t => t.completed).length;
+    const pending = weekTodos.filter(t => !t.completed).length;
+    const totalTokens = weekTodos
+      .filter(t => t.completed)
+      .reduce((sum, t) => sum + getTaskGrade(t.difficulty).points, 0);
+
+    return { completed, pending, totalTokens, total: weekTodos.length };
+  };
+
+  const weeklyStats = getWeeklyStats();
+
   // Quick add todo mutation
   const quickAddTodoMutation = useMutation({
     mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
@@ -407,157 +435,195 @@ export default function Todos() {
         {/* Week View */}
         {view === "week" && (
           <div>
-            {/* Week Navigation */}
-            <div className="card mb-4">
+            {/* Enhanced Week Header Bar */}
+            <div className="rounded-2xl bg-gradient-to-r from-slate-900/85 via-slate-900/75 to-slate-900/85 border border-white/10 px-6 py-4 mb-6 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
               <div className="relative z-10 flex items-center justify-between">
-                <button
-                  onClick={() => setWeekOffset(weekOffset - 1)}
-                  className="p-2 hover:bg-muted/50 rounded-lg transition-all"
-                >
-                  <ChevronLeft className="w-5 h-5 text-foreground" />
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setWeekOffset(weekOffset - 1)}
+                    className="h-8 w-8 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.14em] text-orange-200/80 mb-1">
+                      Expedition week
+                    </div>
+                    <div className="text-lg font-semibold tracking-wide">
+                      {formatWeekRange()}
+                    </div>
 
-                <div className="text-center">
-                  <p className="text-foreground font-semibold">
-                    {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
-                  {weekOffset > 0 && <p className="text-xs text-muted-foreground">{weekOffset} week{weekOffset > 1 ? 's' : ''} ahead</p>}
-                  {weekOffset < 0 && <p className="text-xs text-muted-foreground">{Math.abs(weekOffset)} week{Math.abs(weekOffset) > 1 ? 's' : ''} ago</p>}
-                </div>
+                    {/* Ridge tracker - 7 dots */}
+                    <div className="mt-2 flex gap-1">
+                      {weekDates.map((d) => {
+                        const dateKey = formatDateKey(d);
+                        const isToday = formatDateKey(new Date()) === dateKey;
+                        const dayTodos = todos.filter(t => t.dueDate === dateKey);
+                        const hasCompleted = dayTodos.some(t => t.completed);
 
-                <button
-                  onClick={() => setWeekOffset(weekOffset + 1)}
-                  className="p-2 hover:bg-muted/50 rounded-lg transition-all"
-                >
-                  <ChevronRight className="w-5 h-5 text-foreground" />
-                </button>
-              </div>
-            </div>
-
-            {/* Sidebar + Week Grid Layout */}
-            <div className="flex gap-6">
-              {/* Left Sidebar - Unscheduled Tasks */}
-              <div className="w-64 flex-shrink-0">
-                <div className="card p-4 sticky top-4">
-                  <div className="relative z-10">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Unscheduled Tasks</h3>
-                    <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
-                      {todos.filter(t => !t.dueDate && !t.completed).map((todo) => {
-                        const gradeInfo = getTaskGrade(todo.difficulty);
                         return (
-                          <div
-                            key={todo.id}
-                            className="bg-muted/30 rounded-lg p-3 text-xs hover:bg-muted/50 transition-colors cursor-move"
-                          >
-                            <button
-                              onClick={() => toggleTodoMutation.mutate(todo.id)}
-                              className="flex items-start gap-2 w-full text-left mb-1"
-                            >
-                              <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-foreground break-words">{todo.title}</p>
-                              </div>
-                            </button>
-                            <div className="flex items-center justify-between text-[10px] text-muted-foreground ml-6">
-                              <span className="text-[hsl(var(--accent))]">{gradeInfo.points} tokens</span>
-                              <button
-                                onClick={() => deleteTodoMutation.mutate(todo.id)}
-                                className="hover:text-destructive transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
+                          <span
+                            key={dateKey}
+                            className={cn(
+                              "h-1.5 w-4 rounded-full transition",
+                              isToday
+                                ? "bg-orange-400"
+                                : hasCompleted
+                                ? "bg-emerald-400/60"
+                                : "bg-white/10 hover:bg-white/20"
+                            )}
+                          />
                         );
                       })}
-                      {todos.filter(t => !t.dueDate && !t.completed).length === 0 && (
-                        <p className="text-muted-foreground text-xs text-center py-4">No unscheduled tasks</p>
-                      )}
                     </div>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-slate-300/80">
+                    {weeklyStats.pending} pending · <span className="text-emerald-300/90">{weeklyStats.completed} completed</span>
+                  </span>
+                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200/90">
+                    {weeklyStats.totalTokens} tokens this week
+                  </span>
+                  <button
+                    onClick={() => setWeekOffset(weekOffset + 1)}
+                    className="h-8 w-8 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Horizontal scroll container */}
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {/* Unscheduled Tasks Card */}
+              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-gradient-to-b from-slate-900/85 to-slate-900/80 border border-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl p-4">
+                <div className="relative z-10 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.16em] text-slate-300/80">
+                        Unscheduled
+                      </div>
+                      <div className="font-semibold">Basecamp Tasks</div>
+                    </div>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-800/80 border border-white/10 text-xs">
+                      🧺
+                    </span>
+                  </div>
+
+                  {todos.filter(t => !t.dueDate && !t.completed).length === 0 ? (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Drop ideas here to sort them into the week later.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {todos.filter(t => !t.dueDate && !t.completed).map((todo) => {
+                        const gradeInfo = getTaskGrade(todo.difficulty);
+                        return (
+                          <button
+                            key={todo.id}
+                            onClick={() => toggleTodoMutation.mutate(todo.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-500/40 text-[11px] hover:bg-slate-700/80 transition-colors"
+                          >
+                            <span className="truncate max-w-[140px]">{todo.title}</span>
+                            <span className="flex items-center gap-0.5 text-emerald-300/90">
+                              ⛰
+                              <span>{gradeInfo.points}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Week Grid - Now Wider */}
-              <div className="flex-1 grid grid-cols-7 gap-3">
-              {weekDates.map((date, index) => {
+              {/* Day Cards - Horizontal Scroll */}
+              {weekDates.map((date) => {
                 const dateKey = formatDateKey(date);
-                const dayTodos = todos.filter(t => t.dueDate === dateKey);
+                const dayTodos = todos.filter(t => t.dueDate === dateKey && !t.completed);
                 const isToday = formatDateKey(new Date()) === dateKey;
-                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
                 return (
-                  <div key={dateKey} className={cn("card p-4", isToday && "ring-2 ring-primary")}>
+                  <div
+                    key={dateKey}
+                    className={cn(
+                      "min-w-[170px] flex-shrink-0 rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl p-4 flex flex-col gap-3 transition-all",
+                      isToday
+                        ? "bg-gradient-to-b from-orange-500/35 via-orange-400/20 to-slate-900/85 border-orange-400/60"
+                        : "bg-gradient-to-b from-slate-900/85 via-slate-900/80 to-slate-900/85 border-white/10 hover:border-orange-400/50 hover:-translate-y-0.5"
+                    )}
+                  >
                     <div className="relative z-10">
-                      {/* Day Header */}
-                      <div className="text-center mb-3">
-                        <p className="text-xs text-muted-foreground font-medium">{dayNames[date.getDay()]}</p>
-                        <p className={cn("text-lg font-bold", isToday ? "text-primary" : "text-foreground")}>
-                          {date.getDate()}
-                        </p>
-                      </div>
-
-                      {/* Quick Add */}
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const input = e.currentTarget.elements.namedItem(`todo-${dateKey}`) as HTMLInputElement;
-                          const title = input.value.trim();
-                          if (title) {
-                            quickAddTodoMutation.mutate({ title, dueDate: dateKey });
-                            input.value = '';
-                          }
-                        }}
-                        className="mb-3"
-                      >
-                        <input
-                          type="text"
-                          name={`todo-${dateKey}`}
-                          placeholder="Add task..."
-                          className="w-full px-2 py-1.5 text-xs bg-muted/50 border border-card-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </form>
-
-                      {/* Todos for this day */}
-                      <div className="space-y-2">
-                        {dayTodos.map((todo) => {
-                          const gradeInfo = getTaskGrade(todo.difficulty);
-                          return (
-                            <div
-                              key={todo.id}
-                              className={cn(
-                                "bg-muted/30 rounded-lg p-2 text-xs",
-                                todo.completed && "opacity-50"
-                              )}
-                            >
-                              <button
-                                onClick={() => toggleTodoMutation.mutate(todo.id)}
-                                className="flex items-start gap-2 w-full text-left"
-                              >
-                                {todo.completed ? (
-                                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                                ) : (
-                                  <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn("text-foreground break-words", todo.completed && "line-through")}>
-                                    {todo.title}
-                                  </p>
-                                  <p className="text-[hsl(var(--accent))] mt-0.5">{gradeInfo.points} tokens</p>
-                                </div>
-                              </button>
-                            </div>
-                          );
-                        })}
-                        {dayTodos.length === 0 && (
-                          <p className="text-muted-foreground text-xs text-center py-2">No tasks</p>
+                      {/* Day header */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-300/80">
+                            {dayNames[date.getDay()]}
+                          </div>
+                          <div className="text-2xl font-semibold leading-none">
+                            {date.getDate()}
+                          </div>
+                        </div>
+                        {isToday && (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-orange-500/20 border border-orange-400/60 text-orange-100">
+                            Today
+                          </span>
                         )}
                       </div>
+
+                      {/* Tasks pills */}
+                      <div className="flex-1 mt-3 space-y-2 min-h-[120px]">
+                        {dayTodos.length === 0 ? (
+                          <p className="text-[11px] text-slate-400">
+                            Rest day · no tasks ✨
+                          </p>
+                        ) : (
+                          <>
+                            {dayTodos.slice(0, 3).map((todo) => {
+                              const gradeInfo = getTaskGrade(todo.difficulty);
+                              return (
+                                <button
+                                  key={todo.id}
+                                  onClick={() => toggleTodoMutation.mutate(todo.id)}
+                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-600/50 text-xs hover:bg-slate-700/80 transition-colors w-full"
+                                >
+                                  <span className="truncate">{todo.title}</span>
+                                  <span className="flex items-center gap-0.5 text-emerald-300/90 text-[11px] shrink-0 ml-1">
+                                    ⛰<span>{gradeInfo.points}</span>
+                                  </span>
+                                </button>
+                              );
+                            })}
+                            {dayTodos.length > 3 && (
+                              <div className="text-[11px] text-slate-400">
+                                +{dayTodos.length - 3} more…
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Add task button */}
+                      <button
+                        onClick={() => {
+                          const title = prompt('Enter task name:');
+                          if (title?.trim()) {
+                            quickAddTodoMutation.mutate({ title: title.trim(), dueDate: dateKey });
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 bg-slate-800/80 border border-slate-500/60 text-slate-100 hover:bg-orange-500/70 hover:border-orange-400 hover:text-slate-900 transition-colors w-full"
+                      >
+                        <span className="text-sm">＋</span>
+                        Add task
+                      </button>
                     </div>
                   </div>
                 );
               })}
-              </div>
             </div>
           </div>
         )}
