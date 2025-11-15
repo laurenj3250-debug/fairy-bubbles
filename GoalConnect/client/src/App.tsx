@@ -94,13 +94,14 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <DashboardNew />
+          <WeeklyHub />
           <BottomNav />
         </RequireAuth>
       </Route>
       <Route path="/dashboard">
         <RequireAuth>
-          <Redirect to="/" />
+          <DashboardNew />
+          <BottomNav />
         </RequireAuth>
       </Route>
       <Route path="/habits">

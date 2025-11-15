@@ -23,7 +23,7 @@ async function takeAuthenticatedScreenshot() {
   try {
     await page.goto(`${TEST_URL}${route}`, {
       waitUntil: 'networkidle',
-      timeout: 30000
+      timeout: 60000
     });
 
     // Wait a bit for any animations
