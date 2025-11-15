@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Todo } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TodoDialog } from "@/components/TodoDialog";
-import { ProgressRing } from "@/components/ProgressRing";
 import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -16,41 +15,6 @@ interface Subtask {
   title: string;
   completed: boolean;
 }
-
-// Utility: Safe JSON parsing for subtasks
-const parseSubtasks = (subtasksJson: string | null): Subtask[] => {
-  try {
-    const parsed = JSON.parse(subtasksJson || "[]");
-    if (!Array.isArray(parsed)) return [];
-
-    // Validate structure
-    return parsed.filter(
-      item => item &&
-              typeof item.id === 'string' &&
-              typeof item.title === 'string' &&
-              typeof item.completed === 'boolean'
-    );
-  } catch (error) {
-    console.error('Failed to parse subtasks:', error);
-    return [];
-  }
-};
-
-// Utility: Check if a todo is overdue (normalized to midnight)
-const isTaskOverdue = (dueDate: string | null, completed: boolean): boolean => {
-  if (!dueDate || completed) return false;
-
-  // Parse date as YYYY-MM-DD in local timezone
-  const [year, month, day] = dueDate.split('-').map(Number);
-  const due = new Date(year, month - 1, day);
-  const today = new Date();
-
-  // Normalize to midnight for fair comparison
-  due.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-
-  return due < today;
-};
 
 export default function Todos() {
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
@@ -105,7 +69,7 @@ export default function Todos() {
       const todo = todos.find(t => t.id === todoId);
       if (!todo) return;
 
-      const subtasks = parseSubtasks(todo.subtasks);
+      const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
       const updatedSubtasks = subtasks.map(st =>
         st.id === subtaskId ? { ...st, completed: !st.completed } : st
       );
@@ -119,23 +83,22 @@ export default function Todos() {
     },
   });
 
-  // Filter and sort todos (memoized for performance)
-  const sortedTodos = useMemo(() => {
-    const filtered = todos.filter(todo => {
-      if (filter === "pending") return !todo.completed;
-      if (filter === "completed") return todo.completed;
-      return true;
-    });
+  // Filter todos
+  const filteredTodos = todos.filter(todo => {
+    if (filter === "pending") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
 
-    return [...filtered].sort((a, b) => {
-      if (a.dueDate && !b.dueDate) return -1;
-      if (!a.dueDate && b.dueDate) return 1;
-      if (a.dueDate && b.dueDate) {
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-  }, [todos, filter]);
+  // Sort by due date (null dates last), then by created date
+  const sortedTodos = [...filteredTodos].sort((a, b) => {
+    if (a.dueDate && !b.dueDate) return -1;
+    if (!a.dueDate && b.dueDate) return 1;
+    if (a.dueDate && b.dueDate) {
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   const pendingCount = todos.filter(t => !t.completed).length;
   const completedCount = todos.filter(t => t.completed).length;
@@ -192,25 +155,6 @@ export default function Todos() {
 
   const weekDates = getWeekDates();
 
-  // Get category color based on difficulty
-  const getCategoryColor = (difficulty: string) => {
-    if (difficulty === "easy") return { class: "expedition-hold-mind", color: "#8b5cf6" };
-    if (difficulty === "medium") return { class: "expedition-hold-foundation", color: "#fb923c" };
-    if (difficulty === "hard") return { class: "expedition-hold-adventure", color: "#14b8a6" };
-    return { class: "expedition-hold-mind", color: "#8b5cf6" };
-  };
-
-  // Calculate daily progress: tasks completed today / total tasks due today
-  const getDailyProgress = () => {
-    const today = formatDateKey(new Date());
-    const todayTodos = todos.filter(t => t.dueDate === today);
-    if (todayTodos.length === 0) return 0;
-    const completedToday = todayTodos.filter(t => t.completed).length;
-    return (completedToday / todayTodos.length) * 100;
-  };
-
-  const dailyProgress = getDailyProgress();
-
   // Quick add todo mutation
   const quickAddTodoMutation = useMutation({
     mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
@@ -229,28 +173,25 @@ export default function Todos() {
   });
 
   return (
-    <div className="min-h-screen pb-20 px-4 pt-6 relative z-10">
-      {/* Solid background overlay to prevent El Capitan image bleed-through */}
-      <div className="fixed inset-0 bg-background" style={{ zIndex: 1 }} />
-
+    <div className="min-h-screen pb-20 px-4 pt-6 relative">
       {/* Header */}
-      <div className="max-w-4xl mx-auto mb-6 relative z-10">
+      <div className="max-w-4xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-1 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
               <ListTodo className="w-8 h-8 text-primary" />
               Expedition Tasks
             </h1>
-            <p className="expedition-subheading ml-11">
+            <p className="text-muted-foreground text-sm">
               {pendingCount} pending, {completedCount} completed
             </p>
           </div>
           <Button
             onClick={() => setTodoDialogOpen(true)}
-            className="bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="bg-primary hover:bg-primary/90"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Manage
+            New Task
           </Button>
         </div>
 
@@ -327,7 +268,7 @@ export default function Todos() {
 
         {/* List View */}
         {view === "list" && (
-          <div className="relative z-10">
+          <>
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
@@ -354,49 +295,25 @@ export default function Todos() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {sortedTodos.map((todo) => {
                   const dueDateInfo = formatDueDate(todo.dueDate);
                   const gradeInfo = getTaskGrade(todo.difficulty);
-                  const categoryColor = getCategoryColor(todo.difficulty);
 
-                  const subtasks = parseSubtasks(todo.subtasks);
+                  const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
                   const completedSubtasks = subtasks.filter(st => st.completed).length;
                   const isFadingOut = fadingOutTodos.has(todo.id);
-                  const isOverdue = isTaskOverdue(todo.dueDate, todo.completed);
-
-                  // Calculate progress for this specific todo (subtasks or 100% if no subtasks)
-                  const todoProgress = subtasks.length > 0
-                    ? (completedSubtasks / subtasks.length) * 100
-                    : todo.completed ? 100 : 0;
 
                   return (
-                    <div key={todo.id} className="flex items-center justify-center">
-                      <ProgressRing
-                        progress={todoProgress}
-                        size={280}
-                        strokeWidth={4}
-                        color={categoryColor.color}
-                        className={cn(
-                          "transition-all w-full max-w-[280px]",
-                          isFadingOut && "animate-fade-out"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "expedition-hold relative",
-                            categoryColor.class,
-                            todo.completed && !isFadingOut && "expedition-hold-completed",
-                            isOverdue && "expedition-hold-skipped",
-                            "w-full max-w-[16rem] p-4 sm:p-5 transition-all"
-                          )}
-                        >
-                          {/* Token Badge */}
-                          <div className="expedition-hold-badge">
-                            {gradeInfo.points}
-                          </div>
-
-                          <div className="relative z-10 flex items-start gap-4">
+                    <div
+                      key={todo.id}
+                      className={cn(
+                        "card transition-all",
+                        isFadingOut && "animate-fade-out",
+                        todo.completed && !isFadingOut && "opacity-60"
+                      )}
+                    >
+                      <div className="relative z-10 flex items-start gap-4">
                         {/* Checkbox */}
                         <button
                           onClick={() => toggleTodoMutation.mutate(todo.id)}
@@ -411,16 +328,16 @@ export default function Todos() {
                           {todo.completed && <CheckCircle className="w-5 h-5" />}
                         </button>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <h3
-                              className={cn(
-                                "hold-name",
-                                todo.completed && "line-through opacity-60"
-                              )}
-                            >
-                              {todo.title}
-                            </h3>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className={cn(
+                              "text-foreground font-semibold mb-1",
+                              todo.completed && "line-through opacity-60"
+                            )}
+                          >
+                            {todo.title}
+                          </h3>
 
                           {/* Subtasks */}
                           {subtasks.length > 0 && (
@@ -465,36 +382,31 @@ export default function Todos() {
                           </div>
                         </div>
 
-                            {/* Delete button */}
-                            <button
-                              onClick={() => {
-                                if (confirm("Delete this task?")) {
-                                  deleteTodoMutation.mutate(todo.id);
-                                }
-                              }}
-                              disabled={deleteTodoMutation.isPending || isFadingOut}
-                              className={cn(
-                                "flex-shrink-0 p-2 text-muted-foreground hover:bg-muted/50 rounded-lg transition-all",
-                                (deleteTodoMutation.isPending || isFadingOut) && "opacity-50 cursor-not-allowed"
-                              )}
-                              title="Delete task"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </ProgressRing>
+                        {/* Delete button */}
+                        <button
+                          onClick={() => {
+                            if (confirm("Delete this task?")) {
+                              deleteTodoMutation.mutate(todo.id);
+                            }
+                          }}
+                          disabled={deleteTodoMutation.isPending}
+                          className="flex-shrink-0 p-2 text-muted-foreground hover:bg-muted/50 rounded-lg transition-all"
+                          title="Delete task"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* Week View */}
         {view === "week" && (
-          <div className="relative z-10">
+          <div>
             {/* Week Navigation */}
             <div className="card mb-4">
               <div className="relative z-10 flex items-center justify-between">
@@ -652,9 +564,7 @@ export default function Todos() {
       </div>
 
       {/* Todo Dialog */}
-      <div className="relative z-10">
-        <TodoDialog open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
-      </div>
+      <TodoDialog open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
     </div>
   );
 }
