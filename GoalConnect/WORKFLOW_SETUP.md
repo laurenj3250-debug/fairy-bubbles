@@ -54,11 +54,16 @@
 - Accessibility verification
 - Design review checklist
 
-### 7. **Pre-Commit Hooks** (Optional)
-🔒 **Git hooks** that run before commits:
+### 7. **Git Hooks** (Automatic)
+🔒 **Pre-commit hooks** that run before commits:
 - TypeScript type checking
 - Code formatting (Prettier)
 - Linting (ESLint)
+
+🚀 **Pre-push hooks** that run before pushing:
+- TypeScript type checking
+- Production build test
+- Prevents broken deployments
 
 ---
 

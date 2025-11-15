@@ -31,11 +31,12 @@ git push
 ```bash
 # Development
 npm run dev              # Start dev server (localhost:5000)
-npm run build            # Production build
+npm run build            # Production build (catches build errors!)
 npm run start            # Run production build
 
-# Quality Checks
+# Quality Checks (run BEFORE pushing!)
 npm run check            # TypeScript type check
+npm run build            # Test production build
 npm run test             # Run all Playwright tests
 npm run test:ui          # Interactive test UI
 npm run test:headed      # See browser while testing
