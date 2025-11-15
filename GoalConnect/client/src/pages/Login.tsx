@@ -4,7 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { Github } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,11 +15,19 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const [, setLocation] = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
 
   useEffect(() => {
     emailRef.current?.focus();
   }, []);
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (user) {
+      console.log("[Login] User already authenticated, redirecting to /");
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,19 +35,25 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await signIn(email, password);
+      console.log("[Login] Calling signIn...");
+      const result = await signIn(email, password);
+      console.log("[Login] signIn returned:", result);
 
-      if (error) {
-        setError(error);
+      if (result.error) {
+        console.log("[Login] Error from signIn:", result.error);
+        setError(result.error);
+        setIsSubmitting(false);
         return;
       }
 
-      // Success - redirect to app
-      setLocation("/");
+      // Success - the useEffect will handle navigation when user state updates
+      console.log("[Login] Login successful, waiting for user state to update");
+      // Note: Don't set isSubmitting to false here - keep the loading state
+      // until the redirect happens via useEffect
     } catch (err) {
+      console.error("[Login] Exception during handleSubmit:", err);
       const message = err instanceof Error ? err.message : "Unable to sign in";
       setError(message);
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -82,6 +98,25 @@ export default function LoginPage() {
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Signing in…" : "Sign in"}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => window.location.href = '/api/auth/github'}
+            >
+              <Github className="mr-2 h-4 w-4" />
+              Sign in with GitHub
             </Button>
           </form>
         </CardContent>

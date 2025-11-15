@@ -4,7 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { Github } from "lucide-react";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -49,19 +51,19 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await signUp(email, password, name);
+      const result = await signUp(email, password, name);
 
-      if (error) {
-        setError(error);
+      if (result.error) {
+        setError(result.error);
+        setIsSubmitting(false);
         return;
       }
 
-      // Auto-login successful - redirect to app
-      setLocation("/");
+      // Auto-login successful - the useEffect will handle navigation when user state updates
+      // Note: Keep isSubmitting true until redirect happens
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to create account";
       setError(message);
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -151,6 +153,25 @@ export default function SignupPage() {
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Creating account…" : "Sign up"}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => window.location.href = '/api/auth/github'}
+            >
+              <Github className="mr-2 h-4 w-4" />
+              Sign up with GitHub
             </Button>
           </form>
         </CardContent>

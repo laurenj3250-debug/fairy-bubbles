@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { ProgressBackground } from "@/components/ProgressBackground";
-import Dashboard from "@/pages/DashboardBaseCamp";
+// Dashboard removed
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
@@ -26,7 +26,10 @@ import { useQuery } from "@tanstack/react-query";
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
+  console.log("[RequireAuth] Checking auth:", { loading, hasUser: !!user });
+
   if (loading) {
+    console.log("[RequireAuth] Still loading, showing spinner");
     return (
       <div style={{
         position: "fixed",
@@ -52,9 +55,11 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    console.log("[RequireAuth] No user, redirecting to /login");
     return <Redirect to="/login" />;
   }
 
+  console.log("[RequireAuth] User authenticated, rendering children");
   return <>{children}</>;
 }
 
@@ -88,7 +93,7 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <Dashboard />
+          <WeeklyHub />
           <BottomNav />
         </RequireAuth>
       </Route>
@@ -115,7 +120,7 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
-      {/* Redirect old routes to home (Base Camp) */}
+      {/* Redirect /weekly to / */}
       <Route path="/weekly">
         <RequireAuth>
           <Redirect to="/" />

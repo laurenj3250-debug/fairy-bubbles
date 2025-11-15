@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("[AuthContext] Attempting login for:", email);
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -83,17 +84,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
+      console.log("[AuthContext] Login response:", { status: response.status, ok: response.ok, data });
 
       if (!response.ok) {
+        console.log("[AuthContext] Login failed:", data.error);
         return { error: data.error || "Invalid email or password" };
       }
 
       if (data.user) {
+        console.log("[AuthContext] Setting user:", data.user);
         setUser(data.user);
+      } else {
+        console.warn("[AuthContext] Login succeeded but no user in response");
       }
 
+      console.log("[AuthContext] Login successful, returning empty object");
       return {};
     } catch (error) {
+      console.error("[AuthContext] Login exception:", error);
       return { error: error instanceof Error ? error.message : "Failed to sign in" };
     }
   };
