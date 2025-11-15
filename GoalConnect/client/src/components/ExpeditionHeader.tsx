@@ -48,9 +48,9 @@ export function ExpeditionHeader({
         }}
       />
 
-      {/* Left: Season progress */}
+      {/* Left: Expedition progress */}
       <div className="flex items-center gap-2 text-xs font-medium text-foreground relative z-10">
-        <span className="text-muted-foreground">Season:</span>
+        <span className="text-muted-foreground">Expedition:</span>
         <span className="font-mono font-bold">
           {seasonProgress.current}/{seasonProgress.total} days
         </span>
