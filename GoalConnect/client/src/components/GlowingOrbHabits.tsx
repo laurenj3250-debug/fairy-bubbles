@@ -70,21 +70,7 @@ export function GlowingOrbHabits() {
   // Get the first 6 habits for display
   const displayHabits = habits.slice(0, 6);
 
-  const getOrbColor = (habit: Habit, completed: boolean) => {
-    const streak = habit.streak?.streak || 0;
-
-    if (completed) {
-      // Completed today - bright glow
-      if (streak >= 30) return "from-emerald-400 to-teal-500";
-      if (streak >= 14) return "from-cyan-400 to-blue-500";
-      if (streak >= 7) return "from-blue-400 to-indigo-500";
-      return "from-green-400 to-emerald-500";
-    } else {
-      // Not completed - dimmer
-      if (streak >= 7) return "from-slate-600 to-slate-700";
-      return "from-slate-500 to-slate-600";
-    }
-  };
+  // Remove hardcoded colors - use theme variables via inline styles instead
 
   const getOrbSize = (index: number) => {
     // Vary sizes for visual interest
@@ -105,7 +91,6 @@ export function GlowingOrbHabits() {
       <div className="flex flex-wrap gap-4 justify-center p-6">
         {displayHabits.map((habit, index) => {
           const completed = isCompleted(habit.id);
-          const orbColor = getOrbColor(habit, completed);
           const orbSize = getOrbSize(index);
 
           return (
@@ -120,14 +105,14 @@ export function GlowingOrbHabits() {
                 onClick={(e) => handleOrbClick(habit.id, e)}
                 className={`
                   ${orbSize}
+                  climbing-hold
                   rounded-full
-                  bg-gradient-to-br ${orbColor}
                   glowing-orb
                   interactive-glow
                   cursor-pointer
                   relative
                   overflow-hidden
-                  ${completed ? "opacity-100" : "opacity-50"}
+                  ${completed ? "completed opacity-100" : "opacity-50"}
                 `}
                 style={{
                   animation: completed

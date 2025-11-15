@@ -26,13 +26,6 @@ const CATEGORY_LABELS = {
   training: "TRAINING",
 } as const;
 
-const CATEGORY_TINTS = {
-  mind: "hsl(220, 70%, 50%)",      // Blue
-  foundation: "hsl(210, 10%, 50%)", // Gray
-  adventure: "hsl(28, 85%, 48%)",   // Orange
-  training: "hsl(160, 50%, 40%)",   // Green
-} as const;
-
 // Organic hold shapes - varied border-radius patterns
 const HOLD_SHAPES = [
   "50% 40% 45% 55% / 55% 45% 40% 50%",
@@ -303,7 +296,6 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
                   <div className="space-y-3">
                     {categoryHabits.map((habit, index) => {
                       const holdShape = HOLD_SHAPES[index % HOLD_SHAPES.length];
-                      const tintColor = CATEGORY_TINTS[categoryKey];
 
                       return (
                         <motion.div
@@ -315,7 +307,6 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
                           )}
                           style={{
                             borderRadius: holdShape,
-                            '--hold-tint': tintColor,
                           } as React.CSSProperties}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
