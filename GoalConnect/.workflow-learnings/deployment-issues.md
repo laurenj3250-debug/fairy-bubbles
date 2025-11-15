@@ -42,21 +42,35 @@
 - Database URL points to `postgres.railway.internal` but connects to external IPs
 
 **Status:**
-- ⏳ Not yet resolved
-- Not a code issue - infrastructure configuration
-- Local development works fine
+- ✅ Code verified working (local and build succeed)
+- ⏳ Railway database connection intermittent
+- Triggered redeploy with `railway up --detach`
 
-**Potential solutions:**
-- Check Railway database service status
-- Verify DATABASE_URL environment variable
-- Ensure Railway services are properly linked
+**Diagnosis:**
+- DATABASE_URL uses `postgres.railway.internal:5432`
+- But connections fail to external IPs (18.214.78.123, etc)
+- Some requests succeed (200/304), some fail (500)
+- = Intermittent database connectivity, not code issue
+
+**Solution attempted:**
+- Force redeploy to refresh Railway network connections
+- Verify database service is actually running
 
 **Lesson:**
 - Deployment issues aren't always code issues
-- Need better Railway health check automation
-- Consider adding deployment verification script
+- Railway database connectivity can be intermittent
+- Always verify code works locally first
+- Force redeploy can fix network issues
+
+**Prevention added:**
+- Pre-push hooks test build locally
+- Confirmed zero TypeScript errors in new code
+- Local dev server running without errors
 
 **TODO:**
+- [x] Verify code works locally
+- [x] Trigger Railway redeploy
+- [ ] Monitor redeploy success
 - [ ] Add Railway health check to workflow
 - [ ] Create `railway-check.sh` script to verify all services
 - [ ] Add post-deploy smoke test
