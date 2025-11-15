@@ -197,7 +197,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.01,
       bestSeasonStart: "July",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 1, min_summits: 0, min_habit_streak: 0 })
+      unlockRequirements: JSON.stringify({ min_level: 1, min_summits: 0, min_habit_streak: 0 }),
+      backgroundImage: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=1920&q=80", // Mount Fuji sunset
+      themeColors: JSON.stringify({
+        primary: "#E74C3C",     // Fuji red
+        secondary: "#34495E",   // Deep blue-grey
+        accent: "#F39C12",      // Sunrise orange
+        gradient: "from-red-900 via-orange-800 to-purple-900"
+      })
     },
     {
       name: "Mount Kilimanjaro (Uhuru Peak)",
@@ -214,7 +221,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.02,
       bestSeasonStart: "January",
       bestSeasonEnd: "March",
-      unlockRequirements: JSON.stringify({ min_level: 3, min_summits: 1 })
+      unlockRequirements: JSON.stringify({ min_level: 3, min_summits: 1 }),
+      backgroundImage: "https://images.unsplash.com/photo-1589182373726-e4f658ab50b0?w=1920&q=80", // Kilimanjaro glaciers
+      themeColors: JSON.stringify({
+        primary: "#2C3E50",     // Dark slate
+        secondary: "#E67E22",   // African sunset orange
+        accent: "#ECF0F1",      // Ice white
+        gradient: "from-orange-900 via-slate-800 to-blue-900"
+      })
     },
     {
       name: "Mount Toubkal",
@@ -839,6 +853,13 @@ export async function seedMountaineeringData() {
         min_summits: 30,
         min_habit_streak: 100,
         required_climbs: [] // Will be filled with IDs of prerequisite 7000m+ peaks
+      }),
+      backgroundImage: "https://images.unsplash.com/photo-1571336944958-1e79a3a44e5c?w=1920&q=80", // Everest from basecamp
+      themeColors: JSON.stringify({
+        primary: "#1A237E",     // Deep Himalayan blue
+        secondary: "#FFD54F",   // Prayer flag gold
+        accent: "#E1F5FE",      // Ice blue
+        gradient: "from-blue-950 via-indigo-900 to-slate-900"
       })
     },
     {
@@ -884,6 +905,33 @@ export async function seedMountaineeringData() {
       })
     }
   ];
+
+  // Add default backgrounds and themes for mountains that don't have them
+  const defaultBackgrounds = [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80", // Mountain landscape 1
+    "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=1920&q=80", // Mountain landscape 2
+    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80", // Mountain landscape 3
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80", // Mountain landscape 4
+    "https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?w=1920&q=80", // Mountain landscape 5
+  ];
+
+  const defaultThemes = [
+    { primary: "#1565C0", secondary: "#F57C00", accent: "#E3F2FD", gradient: "from-blue-900 via-slate-800 to-gray-900" },
+    { primary: "#2E7D32", secondary: "#FFB300", accent: "#E8F5E9", gradient: "from-green-900 via-teal-800 to-blue-900" },
+    { primary: "#6A1B9A", secondary: "#FF6F00", accent: "#F3E5F5", gradient: "from-purple-900 via-indigo-800 to-blue-900" },
+    { primary: "#C62828", secondary: "#FFA000", accent: "#FFEBEE", gradient: "from-red-900 via-orange-800 to-yellow-900" },
+    { primary: "#00838F", secondary: "#FB8C00", accent: "#E0F7FA", gradient: "from-cyan-900 via-blue-800 to-indigo-900" },
+  ];
+
+  mountains.forEach((mountain, index) => {
+    if (!mountain.backgroundImage) {
+      mountain.backgroundImage = defaultBackgrounds[index % defaultBackgrounds.length];
+    }
+    if (!mountain.themeColors) {
+      const theme = defaultThemes[index % defaultThemes.length];
+      mountain.themeColors = JSON.stringify(theme);
+    }
+  });
 
   console.log('[mountaineering-seed] 🏔️  Seeding mountains...');
   const insertedMountains = await db.insert(schema.mountains).values(mountains).returning();
