@@ -19,6 +19,7 @@ import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
+import { useMountainTheme } from "@/hooks/useMountainTheme";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -161,6 +162,10 @@ function AppRoutes() {
 }
 
 function App() {
+  // Initialize mountain theme at app root to ensure CSS variables are set
+  // before any components render (fixes climbing holds color initialization)
+  useMountainTheme();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
