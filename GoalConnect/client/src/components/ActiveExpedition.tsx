@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Mountain, ArrowUp, Flag, AlertCircle, Unlock, Trophy } from "lucide-react";
+import { Mountain, ArrowUp, Flag, AlertCircle, Unlock, Trophy, Palette } from "lucide-react";
 import { useState } from "react";
 import EnergyBar from "./EnergyBar";
 import { useToast } from "@/hooks/use-toast";
@@ -132,6 +132,30 @@ export default function ActiveExpedition() {
               });
             }, 2000 + (data.unlockedMountains?.length || 0) * 500 + (index * 500));
           });
+        }
+
+        // Show mountain background unlock (most important - last toast)
+        if (data.mountainBackground) {
+          const baseDelay = 2000 + (data.unlockedMountains?.length || 0) * 500 + (data.newAchievements?.length || 0) * 500;
+          setTimeout(() => {
+            toast({
+              title: (
+                <div className="flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-500" />
+                  <span>Mountain Theme Unlocked!</span>
+                </div>
+              ),
+              description: (
+                <div className="mt-2">
+                  <div className="font-bold">{data.mountainBackground.name} Theme</div>
+                  <div className="text-sm text-muted-foreground">
+                    New background and color scheme available in settings
+                  </div>
+                </div>
+              ),
+              duration: 8000,
+            });
+          }, baseDelay + 500);
         }
       } else {
         // Normal day advancement

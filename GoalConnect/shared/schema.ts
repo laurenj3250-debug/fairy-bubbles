@@ -490,6 +490,10 @@ export const mountains = pgTable("mountains", {
   mapPositionX: integer("map_position_x"),
   mapPositionY: integer("map_position_y"),
 
+  // Theme/Background unlocked when summit reached
+  backgroundImage: text("background_image"), // URL to mountain background
+  themeColors: text("theme_colors").default("{}"), // JSON: {primary, secondary, accent, gradient}
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -682,6 +686,16 @@ export const mountainUnlocks = pgTable("mountain_unlocks", {
   unlockedBy: varchar("unlocked_by", { length: 50 }).notNull(), // "level", "achievement", "previous_climb", etc.
 });
 
+// Mountain Backgrounds (Unlocked when summit is reached)
+export const mountainBackgrounds = pgTable("mountain_backgrounds", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  mountainId: integer("mountain_id").notNull().references(() => mountains.id),
+  expeditionId: integer("expedition_id").references(() => playerExpeditions.id), // Which expedition unlocked it
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  isActive: boolean("is_active").notNull().default(false), // Currently selected background
+});
+
 // TypeScript types for mountaineering tables
 export type WorldMapRegion = typeof worldMapRegions.$inferSelect;
 export type Mountain = typeof mountains.$inferSelect;
@@ -694,6 +708,7 @@ export type PlayerExpedition = typeof playerExpeditions.$inferSelect;
 export type ExpeditionEvent = typeof expeditionEvents.$inferSelect;
 export type ExpeditionGearLoadout = typeof expeditionGearLoadout.$inferSelect;
 export type MountainUnlock = typeof mountainUnlocks.$inferSelect;
+export type MountainBackground = typeof mountainBackgrounds.$inferSelect;
 
 // Insert schemas for mountaineering tables
 export const insertWorldMapRegionSchema = createInsertSchema(worldMapRegions).omit({ id: true, createdAt: true });

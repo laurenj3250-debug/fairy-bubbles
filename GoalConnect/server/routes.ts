@@ -3365,6 +3365,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
+      // Unlock mountain background/theme (summit reward)
+      const mountainResult = await db.query(
+        `SELECT m.id, m.name, m.elevation, m.background_image, m.theme_colors
+         FROM mountains m
+         JOIN routes r ON m.id = r.mountain_id
+         WHERE r.id = $1`,
+        [exp.route_id]
+      );
+
+      let mountainBackground = null;
+      if (mountainResult.rows.length > 0) {
+        const mountain = mountainResult.rows[0];
+
+        // Check if background already unlocked
+        const existingBackground = await db.query(
+          `SELECT id FROM mountain_backgrounds
+           WHERE user_id = $1 AND mountain_id = $2`,
+          [userId, mountain.id]
+        );
+
+        if (existingBackground.rows.length === 0) {
+          // Unlock the background
+          await db.query(
+            `INSERT INTO mountain_backgrounds (user_id, mountain_id, expedition_id, is_active)
+             VALUES ($1, $2, $3, false)
+             ON CONFLICT DO NOTHING`,
+            [userId, mountain.id, expeditionId]
+          );
+
+          mountainBackground = {
+            id: mountain.id,
+            name: mountain.name,
+            elevation: mountain.elevation,
+            backgroundImage: mountain.background_image,
+            themeColors: mountain.theme_colors ? JSON.parse(mountain.theme_colors) : {}
+          };
+        }
+      }
+
       // Create summit event
       await db.query(
         `INSERT INTO expedition_events
@@ -3408,7 +3447,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           elevation: exp.mountain_elevation
         },
         unlockedMountains: newUnlocks,
-        newAchievements: newAchievements
+        newAchievements: newAchievements,
+        mountainBackground: mountainBackground  // New background/theme unlocked
       });
     } catch (error: any) {
       console.error('[expeditions] Complete expedition error:', error);
