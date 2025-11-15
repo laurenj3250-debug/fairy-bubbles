@@ -10,6 +10,9 @@ import { getWeatherFromStreak, WEATHER_INFO } from "@/lib/weatherEffects";
 import { WeatherOverlay } from "@/components/WeatherOverlay";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { RouteStatsPanel } from "@/components/RouteStatsPanel";
+import { StreakFlame } from "@/components/StreakFlame";
+import { TokenReward } from "@/components/TokenReward";
 
 // Mountain-themed color palette based on terrain and elevation
 const habitColors = [
@@ -167,8 +170,9 @@ export default function HabitsMountain() {
     return Math.max(max, streak);
   }, 0);
 
-  // Calculate missed days (approximate based on incomplete habits)
+  // Calculate stats for the panel and weather
   const completedToday = habits.filter(h => isCompletedToday(h.id)).length;
+  const inProgress = habits.filter(h => !isCompletedToday(h.id)).length;
   const missedDaysThisWeek = habits.length > 0
     ? Math.min(Math.floor((habits.length - completedToday) / habits.length * 7), 7)
     : 0;
@@ -194,9 +198,12 @@ export default function HabitsMountain() {
       {/* Weather overlay with animated effects */}
       <WeatherOverlay weather={weather} />
 
+      {/* Vertical vignette for depth */}
+      <div className="fixed inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 pointer-events-none z-0" />
+
       <div className="relative z-10 max-w-5xl mx-auto p-6">
         {/* Back Button */}
-        <div className="mb-4">
+        <div className="mb-6">
           <Link href="/weekly-hub">
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="w-4 h-4" />
@@ -205,86 +212,94 @@ export default function HabitsMountain() {
           </Link>
         </div>
 
-        {/* Header */}
-        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 mb-6 shadow-lg topo-pattern">
-          <div className="flex items-center justify-between mb-4 relative z-10">
+        {/* Hero Header */}
+        <div className="mb-8 relative">
+          <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
-                <Mountain className="w-9 h-9 text-[hsl(var(--accent))]" />
-                Manage Habits
+              {/* Giant title with gradient */}
+              <h1
+                className="font-heading text-5xl md:text-6xl font-bold mb-3"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--cliff-orange)) 0%, hsl(40 90% 65%) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Your Routes
               </h1>
-              <p className="text-sm text-muted-foreground">
-                {habits.length} {habits.length === 1 ? 'habit' : 'habits'} building your expedition strength
+
+              {/* Subtitle */}
+              <p className="text-base text-foreground/70 max-w-2xl font-medium">
+                {habits.length} {habits.length === 1 ? 'route' : 'routes'} building your expedition strength • {completedToday} sent today
               </p>
             </div>
-            <Button
-              onClick={handleCreateNew}
-              className="rounded-xl px-6 py-6 bg-primary hover:bg-primary/90 text-primary-foreground border border-card-border shadow-lg transition-all duration-300 hover:scale-105"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              <span className="font-semibold">New Habit</span>
-            </Button>
-          </div>
 
-          {/* Weather Conditions Display */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl border border-border mb-4 relative z-10">
+            {/* Date Navigator - compact, top right */}
+            <div className="flex items-center gap-2 bg-card/60 backdrop-blur-sm rounded-xl p-2 border border-card-border shadow-lg">
+              <button
+                onClick={goToPreviousDay}
+                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all"
+              >
+                <ChevronLeft className="w-4 h-4 text-foreground" />
+              </button>
+
+              <div className="px-3 text-sm font-medium text-foreground min-w-[120px] text-center">
+                {selectedDateDisplay}
+              </div>
+
+              <button
+                onClick={goToNextDay}
+                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all"
+              >
+                <ChevronRight className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Panel */}
+        <div className="mb-8">
+          <RouteStatsPanel
+            sent={completedToday}
+            inProgress={inProgress}
+            total={habits.length}
+          />
+        </div>
+
+        {/* New Habit Button */}
+        <div className="mb-6">
+          <Button
+            onClick={handleCreateNew}
+            className="rounded-full px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            <span className="font-semibold">New Route</span>
+          </Button>
+        </div>
+
+        {/* Weather Badge - Compact */}
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-3 bg-card/40 backdrop-blur-sm rounded-xl border border-card-border shadow-lg">
             <span className="text-2xl">{weatherInfo.emoji}</span>
-            <div className="flex-1">
+            <div>
               <div className="text-sm font-bold text-foreground">{weatherInfo.name}</div>
               <div className="text-xs text-muted-foreground">{weatherInfo.description}</div>
             </div>
             {longestStreak >= 7 && (
-              <Badge className="bg-muted/80 text-[hsl(var(--accent))] border-border">
+              <Badge className="bg-muted/80 text-[hsl(var(--accent))] border-border ml-2">
                 Perfect Conditions
               </Badge>
             )}
             {missedDaysThisWeek >= 3 && (
-              <Badge className="bg-muted/80 text-destructive border-border">
+              <Badge className="bg-muted/80 text-destructive border-border ml-2">
                 Storm Warning
               </Badge>
             )}
           </div>
-
-          {/* Date Navigator */}
-          <div className="flex items-center justify-between gap-4 bg-muted/50 rounded-xl p-4 border border-border relative z-10">
-            <button
-              onClick={goToPreviousDay}
-              className="w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all border border-border"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
-
-            <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span className="text-lg font-bold text-foreground">
-                  {selectedDateDisplay}
-                </span>
-              </div>
-              {!isToday && (
-                <button
-                  onClick={goToToday}
-                  className="text-xs text-[hsl(var(--accent))] hover:text-primary transition-colors font-semibold"
-                >
-                  Jump to Today
-                </button>
-              )}
-              {isFuture && (
-                <span className="text-xs text-muted-foreground">
-                  Future Date
-                </span>
-              )}
-            </div>
-
-            <button
-              onClick={goToNextDay}
-              className="w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all border border-border"
-            >
-              <ChevronRight className="w-5 h-5 text-foreground" />
-            </button>
-          </div>
         </div>
 
+        {/* Habits/Routes */}
         {habits.length === 0 ? (
           <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-12 text-center shadow-lg topo-pattern">
             <div className="relative z-10">
