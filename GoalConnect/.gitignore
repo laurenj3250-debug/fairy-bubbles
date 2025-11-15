@@ -8,3 +8,4 @@ vite.config.ts.*
 .local/
 .env.*
 !.env.example
+playwright/.auth/
