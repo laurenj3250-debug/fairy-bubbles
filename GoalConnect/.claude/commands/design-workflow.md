@@ -62,10 +62,29 @@ When asked to implement a design:
 
 ## Mountain Climbing Theme Guidelines
 
-**Color Palette:**
-- Primary: Orange/amber tones (sunrise, energy)
+### 🎨 CRITICAL DESIGN PRINCIPLE
+**ALL COLOR SCHEMES MUST BE THEME-DEPENDENT**
+
+- **NEVER** use hardcoded rainbow colors per category (e.g., blue for mind, orange for adventure)
+- **ALWAYS** derive colors from the active mountain theme (El Capitan, Mt. Toubkal, Mt. Whitney)
+- **ALWAYS** use CSS custom properties: `--hold-tint`, `--hold-glow`, `--particle-color`, `--particle-type`
+- **Goal**: Beautiful, "climby, dopamine-spiky" design - NOT minimal or boring
+
+**Example:**
+```css
+/* ✅ CORRECT - Theme-adaptive */
+background: hsl(var(--hold-tint) / 0.3);
+box-shadow: 0 0 30px hsl(var(--hold-glow) / 0.4);
+
+/* ❌ WRONG - Hardcoded category colors */
+background: hsl(220, 70%, 50%); /* blue for mind */
+background: hsl(28, 85%, 48%); /* orange for adventure */
+```
+
+**Color Palette (Theme-Derived):**
+- Primary: Derived from mountain theme (varies per theme)
 - Background: Dark grays with subtle mountain textures
-- Accent: Gold for achievements and progress
+- Accent: Theme-dependent glow colors
 - Text: Light colors on dark backgrounds
 
 **Visual Elements:**

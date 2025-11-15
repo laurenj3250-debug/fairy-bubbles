@@ -1,5 +1,35 @@
 # GoalConnect (Mountain Habit) - Project Roadmap
 
+## 🎨 Core Design Principles
+
+### Theme-Dependent Color System
+**CRITICAL PRINCIPLE:** All color schemes MUST be dependent on the selected mountain theme background.
+
+- **DO NOT** use individual rainbow colors per category (mind, foundation, adventure, training)
+- **DO** derive all colors from the active mountain theme (El Capitan, Mt. Toubkal, Mt. Whitney)
+- **DO** use CSS custom properties set by `useMountainTheme` hook:
+  - `--hold-tint`: Primary color tint from theme
+  - `--hold-glow`: Glow/accent color from theme
+  - `--particle-color`: Particle effect color from theme
+  - `--particle-type`: Particle type (chalk/dust/snow) from theme
+
+### Visual Style Requirements
+- **Beautiful over minimal**: Design should be "climby, beautiful, dopamine-spiky" - something users want to look at
+- **Glass climbing holds**: Habits in Today's Pitch use glassmorphism with theme-tinted holds
+- **Pastel timeline cards**: To-do list items use soft, theme-adapted pastel cards (separate from habits)
+- **Theme consistency**: Every visual element derives color from the mountain theme, creating a cohesive experience
+
+### Implementation Pattern
+```css
+/* CORRECT - Theme-adaptive */
+background: radial-gradient(circle, hsl(var(--hold-glow) / 0.4), transparent);
+border: 2px solid hsl(var(--hold-tint) / 0.5);
+
+/* INCORRECT - Hardcoded colors */
+background: radial-gradient(circle, rgba(255, 100, 50, 0.4), transparent);
+border: 2px solid hsl(28, 85%, 48%);
+```
+
 ## Current Status (November 2024)
 
 ### ✅ Completed
