@@ -65,7 +65,7 @@ export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
 
   if (isCollapsed) {
     return (
-      <div className={cn("card", className)}>
+      <div className={cn("glass-card interactive-glow p-6", className)}>
         <button
           onClick={() => setIsCollapsed(false)}
           className="w-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors relative z-10"
@@ -78,7 +78,7 @@ export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
   }
 
   return (
-    <div className={cn("card", className)}>
+    <div className={cn("glass-card interactive-glow p-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
@@ -118,7 +118,7 @@ export function TodaysTasksPanel({ className }: TodaysTasksPanelProps) {
           return (
             <div
               key={todo.id}
-              className="p-3 rounded-xl border border-border/50 bg-muted/10 hover:border-[hsl(var(--accent))]/40 transition-all duration-300 cursor-pointer"
+              className="glass-card interactive-glow p-3 cursor-pointer"
               onClick={(e) => handleToggle(e, todo.id)}
             >
               <div className="flex items-start gap-3">

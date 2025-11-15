@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Habit, HabitLog } from "@shared/schema";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { GraniteTexture } from "./GraniteTexture";
+import { useParticleSystem } from "@/utils/particles";
+import { motion } from "framer-motion";
 
 interface RoutesPanelEnhancedProps {
   className?: string;
@@ -18,6 +20,8 @@ interface RouteProgress {
 
 export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
   const [expandedRouteId, setExpandedRouteId] = useState<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particleSystem = useParticleSystem(canvasRef);
 
   const { data: habits = [] } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -76,6 +80,11 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
     setExpandedRouteId(expandedRouteId === routeId ? null : routeId);
   };
 
+  // Check if all routes are complete for golden glow
+  const allRoutesComplete = useMemo(() => {
+    return routeProgress.length > 0 && routeProgress.every((r) => r.completed >= r.target);
+  }, [routeProgress]);
+
   if (habits.length === 0) {
     return null;
   }
@@ -83,6 +92,13 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
   return (
     <div className={cn("relative bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg overflow-hidden", className)}>
       <GraniteTexture />
+
+      {/* Particle canvas */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none z-20"
+        style={{ width: '100%', height: '100%' }}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
@@ -92,8 +108,8 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
         </div>
       </div>
 
-      {/* Route list */}
-      <div className="space-y-3 relative z-10">
+      {/* Route list - Rope Ladder */}
+      <div className="relative z-10">
         {routeProgress.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground text-sm">
@@ -104,116 +120,147 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
           </div>
         )}
 
-        {routeProgress.map(({ habit, completed, target, pitches }) => {
-          const isComplete = completed >= target;
-          const isExpanded = expandedRouteId === habit.id;
-
-          return (
+        {routeProgress.length > 0 && (
+          <div className={cn("rope-ladder relative", allRoutesComplete && "all-complete")}>
+            {/* Rope line */}
             <div
-              key={habit.id}
               className={cn(
-                "route-item rounded-xl border transition-all duration-300",
-                "bg-muted/10",
-                isComplete
-                  ? "border-[#46B3A9]/60 bg-[#46B3A9]/10"
-                  : "border-border/50 hover:border-border"
+                "absolute left-8 top-0 bottom-0 w-1 rounded-full transition-all duration-500",
+                allRoutesComplete
+                  ? "bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.6)]"
+                  : "bg-gradient-to-b from-muted-foreground/30 to-muted-foreground/20"
               )}
-            >
-              {/* Route header - always visible */}
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-lg">{habit.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">
-                      {habit.title}
-                    </div>
-                    {habit.grade && (
-                      <div className="text-xs text-muted-foreground">{habit.grade}</div>
-                    )}
-                  </div>
-                  {isComplete && (
-                    <div className="flex-shrink-0">
-                      <div className="bg-[#46B3A9]/20 text-[#46B3A9] text-xs px-2 py-1 rounded-full flex items-center gap-1 font-semibold border border-[#46B3A9]/30">
-                        <Check className="w-3 h-3" />
-                        Sent!
-                      </div>
-                    </div>
-                  )}
-                </div>
+            />
 
-                {/* Pitches visualization */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 flex-1">
-                    {pitches.map((filled, i) => (
-                      <span
-                        key={i}
-                        className={cn(
-                          "text-base transition-all duration-300",
-                          filled ? "text-[#46B3A9] scale-110" : "text-muted-foreground/30"
-                        )}
-                      >
-                        {filled ? "●" : "○"}
-                      </span>
-                    ))}
-                  </div>
+            {/* Ladder rungs */}
+            <div className="space-y-4 relative">
+              {routeProgress.map(({ habit, completed, target, pitches }, index) => {
+                const isComplete = completed >= target;
+                const isExpanded = expandedRouteId === habit.id;
 
-                  <div className="text-xs text-muted-foreground font-mono">
-                    ({completed}/{target})
-                  </div>
-
-                  <button
-                    onClick={() => handleToggleExpand(habit.id)}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                return (
+                  <motion.div
+                    key={habit.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="relative pl-16"
                   >
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+                    {/* Rung */}
+                    <div
+                      className={cn(
+                        "ladder-rung rounded-lg p-4 transition-all duration-300",
+                        isComplete && "completed"
+                      )}
+                    >
+                      {/* Rung connection to rope */}
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-1 bg-gradient-to-r from-muted-foreground/40 to-transparent" />
 
-                {/* Progress bar */}
-                <div className="mt-3 h-1.5 bg-muted/20 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full transition-all duration-500 rounded-full",
-                      isComplete ? "bg-[#46B3A9]" : "bg-primary"
-                    )}
-                    style={{
-                      width: `${Math.min((completed / target) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
+                      <div className="flex items-center gap-3">
+                        {/* Habit icon and status */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-2xl">{habit.icon}</span>
+                          {isComplete && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-6 h-6 rounded-full bg-[#46B3A9] text-white flex items-center justify-center"
+                            >
+                              <Check className="w-4 h-4" />
+                            </motion.div>
+                          )}
+                        </div>
 
-              {/* Expanded details */}
-              {isExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-border/30">
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div className="flex justify-between">
-                      <span>Category:</span>
-                      <span className="text-foreground font-medium">{habit.category || "Training"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Cadence:</span>
-                      <span className="text-foreground font-medium">{habit.cadence || "Daily"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Effort:</span>
-                      <span className="text-foreground font-medium">{habit.effort || "Medium"}</span>
-                    </div>
-                    {habit.description && (
-                      <div className="mt-2 pt-2 border-t border-border/20">
-                        <p className="text-foreground">{habit.description}</p>
+                        {/* Habit info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-foreground text-base">
+                            {habit.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                            {habit.grade && <span>{habit.grade}</span>}
+                            <span>•</span>
+                            <span>{habit.category || "Training"}</span>
+                          </div>
+                        </div>
+
+                        {/* Progress indicator */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-0.5">
+                            {pitches.map((filled, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: filled ? 1.2 : 1 }}
+                                className={cn(
+                                  "w-2 h-2 rounded-full transition-all",
+                                  filled
+                                    ? "bg-[#46B3A9] shadow-[0_0_8px_rgba(70,179,169,0.6)]"
+                                    : "bg-muted-foreground/20"
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {completed}/{target}
+                          </span>
+                          <button
+                            onClick={() => handleToggleExpand(habit.id)}
+                            className="text-muted-foreground hover:text-foreground transition-colors ml-1"
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="mt-3 pt-3 border-t border-border/30"
+                        >
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <div className="flex justify-between">
+                              <span>Cadence:</span>
+                              <span className="text-foreground font-medium">{habit.cadence || "Daily"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Effort:</span>
+                              <span className="text-foreground font-medium">{habit.effort || "Medium"}</span>
+                            </div>
+                            {habit.description && (
+                              <div className="mt-2 pt-2 border-t border-border/20">
+                                <p className="text-foreground">{habit.description}</p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          );
-        })}
+
+            {/* All routes complete celebration */}
+            {allRoutesComplete && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 text-center p-4 rounded-xl bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30"
+              >
+                <div className="text-2xl mb-2">🏆</div>
+                <div className="text-foreground font-bold">All Routes Sent!</div>
+                <div className="text-sm text-muted-foreground mt-1">This week's climbing crushed!</div>
+              </motion.div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -26,6 +26,12 @@ I will read these files in this order:
 
 ## While Working
 
+**When I make UI changes:**
+1. IMMEDIATELY run `/visual-check` to capture screenshots
+2. READ the screenshot to see what actually renders
+3. Compare to design requirements
+4. Fix visual issues before moving on
+
 **When I hit an issue:**
 1. Check if we've seen it before in learnings
 2. Apply the documented solution

@@ -36,7 +36,7 @@ export function WeekOverviewStreak() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Week Overview */}
-      <div className="card">
+      <div className="glass-card interactive-glow p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">This Week</h2>
 
         <div className="week-calendar">
@@ -51,8 +51,8 @@ export function WeekOverviewStreak() {
               <div
                 key={dateStr}
                 className={`
-                  week-day
-                  ${completionRate === 100 ? 'week-day-completed' : ''}
+                  week-day interactive-glow
+                  ${completionRate === 100 ? 'week-day-completed glowing-orb' : ''}
                   ${isToday ? 'week-day-today' : ''}
                   ${!isPast && !isToday ? 'opacity-40' : ''}
                 `}
@@ -75,19 +75,19 @@ export function WeekOverviewStreak() {
       </div>
 
       {/* Streak Counter */}
-      <div className="card bg-gradient-to-br from-accent/10 to-primary/10 border-accent/20">
+      <div className="glass-card interactive-glow p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Current Streak</h2>
 
         <div className="flex items-center justify-center py-6">
           <div className="relative">
             {/* Flame icon background */}
             <div className="absolute -inset-4 flex items-center justify-center">
-              <Flame className="w-32 h-32 text-accent/20" />
+              <Flame className="w-32 h-32 text-amber-400/30" style={{ animation: 'glow-pulse 2s ease-in-out infinite' }} />
             </div>
 
             {/* Streak number */}
             <div className="relative text-center">
-              <div className="streak-display animate-pulse-success">
+              <div className="streak-display text-glow" style={{ animation: 'glow-pulse 3s ease-in-out infinite' }}>
                 {currentStreak}
               </div>
               <div className="text-sm text-muted-foreground mt-2">
@@ -98,20 +98,20 @@ export function WeekOverviewStreak() {
         </div>
 
         {/* Longest streak */}
-        <div className="border-t border-border pt-4 mt-4">
+        <div className="border-t border-white/10 pt-4 mt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Longest streak:</span>
             <span className="font-semibold text-foreground">{longestStreak} days</span>
           </div>
           {currentStreak === longestStreak && longestStreak > 0 && (
-            <p className="text-xs text-success mt-2 text-center">
-              You're on your best streak ever!
+            <p className="text-xs text-emerald-400 mt-2 text-center">
+              You're on your best streak ever! 🌟
             </p>
           )}
         </div>
 
         {/* Motivational message */}
-        <div className="bg-card/50 rounded-lg p-3 mt-4">
+        <div className="glass-card p-3 mt-4">
           <p className="text-sm text-muted-foreground text-center">
             {currentStreak === 0 && "Start your streak today!"}
             {currentStreak >= 1 && currentStreak < 7 && "Keep it going!"}

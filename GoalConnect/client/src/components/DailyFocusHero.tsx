@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CheckCircle2, Circle } from "lucide-react";
+import { GlowingOrbHabits } from "./GlowingOrbHabits";
+import { useMountainTheme } from "@/hooks/useMountainTheme";
 
 interface Habit {
   id: number;
@@ -23,6 +25,7 @@ interface HabitLog {
  * what you need to accomplish today.
  */
 export function DailyFocusHero() {
+  const { theme } = useMountainTheme();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   // Fetch all habits
@@ -62,20 +65,25 @@ export function DailyFocusHero() {
   }
 
   return (
-    <div className={`card animate-fade-in ${isFullyComplete ? 'animate-celebration' : ''}`}>
+    <div className={`glass-card interactive-glow p-8 animate-fade-in ${isFullyComplete ? 'animate-celebration' : ''}`}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Today's Pitch</h1>
-            <p className="text-sm text-accent/80 font-medium tracking-wide uppercase">
+            <h1 className="text-3xl font-bold text-glow">Today's Pitch</h1>
+            <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">
               {format(new Date(), 'EEEE, MMMM d')}
             </p>
+            {theme && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Expedition: {theme.mountainName}
+              </p>
+            )}
           </div>
 
           {/* Completion Circle */}
           <div
-            className="completion-circle"
+            className="completion-circle glowing-orb"
             style={{ '--progress': `${completionPercentage}%` } as React.CSSProperties}
           >
             <div className="completion-circle-inner">
@@ -92,11 +100,11 @@ export function DailyFocusHero() {
         </div>
 
         {/* What's Next Message */}
-        <div className="bg-secondary/50 rounded-lg p-4">
+        <div className="glass-card p-4">
           {isFullyComplete ? (
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-success-foreground" />
+              <div className="w-12 h-12 rounded-full glowing-orb bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
               <div>
                 <p className="font-semibold text-success">All done for today!</p>
@@ -113,7 +121,7 @@ export function DailyFocusHero() {
                   {remainingHabits.length} {remainingHabits.length === 1 ? 'habit' : 'habits'} remaining
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Next up: {remainingHabits[0]?.name}
+                  Next up: {remainingHabits[0]?.title}
                 </p>
               </div>
             </div>
@@ -122,26 +130,8 @@ export function DailyFocusHero() {
           )}
         </div>
 
-        {/* Habits Checklist */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <span>Objectives</span>
-            <span className="text-xs text-muted-foreground font-normal">({totalCount} moves)</span>
-          </h2>
-
-          <div className="space-y-2">
-            {habitsWithStatus.map((habit) => (
-              <HabitChecklistItem key={habit.id} habit={habit} />
-            ))}
-          </div>
-
-          {habitsWithStatus.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No habits configured yet.</p>
-              <p className="text-sm mt-2">Add habits to start tracking your progress!</p>
-            </div>
-          )}
-        </div>
+        {/* Glowing Orbs - NEW! */}
+        <GlowingOrbHabits />
       </div>
     </div>
   );

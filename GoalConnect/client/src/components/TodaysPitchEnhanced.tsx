@@ -1,12 +1,14 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Habit, HabitLog } from "@shared/schema";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GraniteTexture } from "./GraniteTexture";
 import { DayPickerModal } from "./DayPickerModal";
+import { useParticleSystem, type ParticleType } from "@/utils/particles";
+import { motion } from "framer-motion";
 
 interface TodaysPitchEnhancedProps {
   className?: string;
@@ -23,6 +25,22 @@ const CATEGORY_LABELS = {
   adventure: "ADVENTURE",
   training: "TRAINING",
 } as const;
+
+const CATEGORY_TINTS = {
+  mind: "hsl(220, 70%, 50%)",      // Blue
+  foundation: "hsl(210, 10%, 50%)", // Gray
+  adventure: "hsl(28, 85%, 48%)",   // Orange
+  training: "hsl(160, 50%, 40%)",   // Green
+} as const;
+
+// Organic hold shapes - varied border-radius patterns
+const HOLD_SHAPES = [
+  "50% 40% 45% 55% / 55% 45% 40% 50%",
+  "45% 55% 50% 40% / 40% 50% 55% 45%",
+  "55% 45% 40% 50% / 50% 40% 55% 45%",
+  "40% 50% 55% 45% / 45% 55% 40% 50%",
+  "50% 45% 55% 40% / 55% 40% 45% 50%",
+];
 
 function getEffortIcon(effort: string): string {
   switch (effort) {
@@ -41,6 +59,8 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
   const { toast } = useToast();
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const [schedulingHabit, setSchedulingHabit] = useState<Habit | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particleSystem = useParticleSystem(canvasRef);
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -152,7 +172,32 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
     return groups;
   }, [habitsWithCompletion, today]);
 
-  const handleToggle = (habitId: number) => {
+  const handleToggle = (habitId: number, event: React.MouseEvent) => {
+    const wasCompleted = habitsWithCompletion.find((h) => h.id === habitId)?.completed;
+
+    // If completing (not uncompleting), emit particles
+    if (!wasCompleted && particleSystem && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      // Get particle type and color from theme
+      const particleType = (document.documentElement.getAttribute('data-particle-type') || 'chalk') as ParticleType;
+      const particleColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--particle-color')
+        .trim() || '28 70% 65%';
+
+      // Convert HSL to RGB for particle color
+      const rgbColor = `hsl(${particleColor})`;
+
+      particleSystem.emit({
+        type: particleType,
+        x,
+        y,
+        count: 15,
+      });
+    }
+
     toggleHabitMutation.mutate({ habitId });
   };
 
@@ -228,7 +273,14 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
           </div>
         )}
 
-        {/* Habits grouped by category */}
+        {/* Particle canvas */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none z-20"
+          style={{ width: '100%', height: '100%' }}
+        />
+
+        {/* Habits grouped by category - Climbing Holds */}
         {!isEmpty && (
           <div className="space-y-6 relative z-10">
             {Object.entries(groupedHabits).map(([category, categoryHabits]) => {
@@ -245,56 +297,68 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
                     </h3>
                   </div>
 
-                  {/* Category habits */}
-                  <div className="space-y-2">
-                    {categoryHabits.map((habit) => (
-                      <div
-                        key={habit.id}
-                        onClick={() => handleToggle(habit.id)}
-                        className={cn(
-                          "habit-row relative cursor-pointer transition-all duration-200",
-                          "rounded-xl p-4 border",
-                          "bg-muted/10 border-border/50",
-                          "hover:scale-[1.01] active:scale-[0.99]",
-                          "hover:shadow-md",
-                          habit.completed && "bg-[#46B3A9]/10 border-[#46B3A9]/30"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Checkbox - large tap target */}
-                          <button
-                            className={cn(
-                              "w-12 h-12 rounded-lg border-2 transition-all font-bold text-xl flex items-center justify-center flex-shrink-0",
-                              habit.completed
-                                ? "bg-[#46B3A9]/30 border-[#46B3A9] text-[#46B3A9]"
-                                : "border-muted-foreground/30 hover:border-[#46B3A9] hover:bg-[#46B3A9]/10 text-muted-foreground"
-                            )}
-                          >
-                            {habit.completed ? "✓" : " "}
-                          </button>
+                  {/* Category habits - Glass climbing holds */}
+                  <div className="space-y-3">
+                    {categoryHabits.map((habit, index) => {
+                      const holdShape = HOLD_SHAPES[index % HOLD_SHAPES.length];
+                      const tintColor = CATEGORY_TINTS[categoryKey];
 
-                          {/* Habit info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-foreground font-semibold text-base">
-                              {habit.title}
+                      return (
+                        <motion.div
+                          key={habit.id}
+                          className={cn(
+                            "climbing-hold relative cursor-pointer",
+                            "p-5 min-h-[100px]",
+                            habit.completed && "completed"
+                          )}
+                          style={{
+                            borderRadius: holdShape,
+                            '--hold-tint': tintColor,
+                          } as React.CSSProperties}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={(e) => handleToggle(habit.id, e)}
+                        >
+                          {/* Hold bolt at top */}
+                          <div className="hold-bolt" />
+
+                          <div className="flex items-center gap-4">
+                            {/* Completion indicator */}
+                            <div
+                              className={cn(
+                                "w-14 h-14 rounded-full border-3 transition-all font-bold text-2xl flex items-center justify-center flex-shrink-0",
+                                habit.completed
+                                  ? "bg-gradient-to-br from-white/30 to-white/10 border-white/50 text-white shadow-lg"
+                                  : "border-white/20 hover:border-white/40 text-white/60"
+                              )}
+                            >
+                              {habit.completed ? "✓" : ""}
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {CATEGORY_LABELS[categoryKey]}
+
+                            {/* Habit info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-foreground font-bold text-lg drop-shadow-sm">
+                                {habit.title}
+                              </div>
+                              <div className="text-sm text-foreground/80 mt-1 flex items-center gap-2">
+                                <span>{habit.icon}</span>
+                                <span>{CATEGORY_LABELS[categoryKey]}</span>
+                              </div>
+                            </div>
+
+                            {/* Grade + Effort */}
+                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                              <span className="text-sm font-bold text-foreground bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/30">
+                                {habit.grade || "5.9"}
+                              </span>
+                              <span className="text-xl text-foreground/90" title={`${habit.effort || "medium"} effort`}>
+                                {getEffortIcon(habit.effort || "medium")}
+                              </span>
                             </div>
                           </div>
-
-                          {/* Grade + Effort */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-sm font-bold text-foreground bg-muted/30 px-3 py-1 rounded-lg">
-                              {habit.grade || "5.9"}
-                            </span>
-                            <span className="text-lg text-foreground" title={`${habit.effort || "medium"} effort`}>
-                              {getEffortIcon(habit.effort || "medium")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
               );

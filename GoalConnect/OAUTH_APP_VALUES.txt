@@ -1,0 +1,27 @@
+GitHub OAuth App Registration Values
+====================================
+
+Copy and paste these into the form at:
+https://github.com/settings/applications/new
+
+Application name:
+GoalConnect (Dev)
+
+Homepage URL:
+http://localhost:5000
+
+Application description:
+Climbing habit tracker with gamification and RPG elements
+
+Authorization callback URL:
+http://localhost:5000/api/auth/github/callback
+
+====================================
+After creating:
+1. Copy the Client ID
+2. Generate a new client secret
+3. Copy the Client Secret
+4. Run: code .env
+5. Replace the placeholder values
+6. Restart: npm run dev
+====================================

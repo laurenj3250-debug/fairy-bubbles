@@ -41,7 +41,10 @@ Every time we waste time, we document it here and fix it.
 - Add to GitHub Actions on every PR
 - Actually use `npm run test:ui` during development
 **Status:** ⏳ Fixing now
+**Update:** Ran tests - FOUND CRITICAL ISSUE! Page renders completely blank!
+**Root cause:** Tests hit auth wall, redirect to login, show blank page
 **Lesson:** Tests that don't run are worse than no tests (false confidence)
+**Real lesson:** Visual tests catch what TypeScript can't - BLANK PAGES!
 
 ---
 

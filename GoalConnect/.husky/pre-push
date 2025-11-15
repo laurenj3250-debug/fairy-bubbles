@@ -16,11 +16,19 @@ npm run build || {
   exit 1
 }
 
-# 3. Run tests (if you want - can be slow)
-# echo "🧪 Running tests..."
-# npm run test || {
-#   echo "❌ Tests failed. Fix them before pushing."
-#   exit 1
+# 3. Playwright visual tests (with screenshots)
+echo "📸 Running visual tests with Playwright..."
+npm run test || {
+  echo "⚠️  Playwright tests failed. Check test-results/ for screenshots."
+  echo "   Review screenshots before pushing to see what's broken."
+  exit 1
+}
+
+# 4. Design review (optional - can comment out if too slow)
+# echo "🎨 Running design review..."
+# /design-review || {
+#   echo "⚠️  Design issues found. Review and fix before pushing."
 # }
 
 echo "✅ All pre-push checks passed!"
+echo "📸 Playwright screenshots saved in test-results/"

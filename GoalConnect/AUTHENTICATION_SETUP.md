@@ -1,0 +1,371 @@
+# Authentication & Playwright Setup - Complete
+
+This document summarizes the authentication and Playwright tools added to GoalConnect.
+
+## ✅ What Was Implemented
+
+### 1. Screenshot Script (`scripts/screenshot-all-pages.ts`)
+Automatically captures screenshots of all pages at multiple viewports.
+
+**Features:**
+- Supports desktop, tablet, and mobile viewports
+- Uses saved authentication
+- Configurable page list
+- Full-page screenshots
+- Saves to `screenshots/` directory
+
+**Usage:**
+```bash
+npm run screenshot
+```
+
+### 2. GitHub OAuth Integration
+Full GitHub OAuth authentication flow.
+
+**Files Created:**
+- `server/github-auth.ts` - OAuth implementation
+- `docs/GITHUB_OAUTH_SETUP.md` - Setup guide
+
+**Files Modified:**
+- `server/index.ts` - Integrated GitHub auth
+- `client/src/pages/Login.tsx` - Added GitHub button
+- `client/src/pages/Signup.tsx` - Added GitHub button
+- `.env.example` - Added GitHub env vars
+
+**Features:**
+- GitHub OAuth login/signup
+- Automatic user creation
+- Session management
+- Fallback to email/password
+- RPG data initialization for new users
+
+### 3. Helper Scripts (`scripts/browse-authenticated.sh`)
+Convenient launcher for Playwright with authentication.
+
+**Modes:**
+- `codegen` - Interactive browser with code generation
+- `debug` - Step-through debugging
+- `headed` - Visible browser tests
+- `ui` - Playwright UI mode
+- `screenshot` - Screenshot capture
+
+**Viewports:**
+- `desktop` - 1440x900 (default)
+- `tablet` - 768x1024
+- `mobile` - 375x667
+- Custom - Any width,height
+
+**Usage:**
+```bash
+npm run browse              # Desktop codegen
+npm run browse:mobile       # Mobile codegen
+npm run browse:tablet       # Tablet codegen
+./scripts/browse-authenticated.sh ui
+```
+
+### 4. Documentation
+Complete guides for all features.
+
+**Files Created:**
+- `docs/PLAYWRIGHT_AUTH_GUIDE.md` - Complete Playwright auth guide
+- `docs/GITHUB_OAUTH_SETUP.md` - GitHub OAuth setup
+- `docs/QUICK_REFERENCE.md` - Fast command reference
+- `AUTHENTICATION_SETUP.md` - This file
+
+### 5. Package.json Scripts
+Added convenient npm scripts:
+
+```json
+{
+  "screenshot": "tsx scripts/screenshot-all-pages.ts",
+  "browse": "./scripts/browse-authenticated.sh",
+  "browse:mobile": "./scripts/browse-authenticated.sh codegen mobile",
+  "browse:tablet": "./scripts/browse-authenticated.sh codegen tablet"
+}
+```
+
+## 🎯 How to Use Everything
+
+### Viewing App with Authentication
+
+**Quick start:**
+```bash
+# Desktop view
+npm run browse
+
+# Mobile view
+npm run browse:mobile
+
+# Take screenshots
+npm run screenshot
+```
+
+**Step by step:**
+1. Make sure dev server is running:
+   ```bash
+   npm run dev
+   ```
+
+2. In another terminal, launch authenticated browser:
+   ```bash
+   npm run browse
+   ```
+
+3. Browser opens with:
+   - Your app loaded
+   - Authentication already done
+   - Playwright inspector for code generation
+   - Ability to click around and test
+
+### Setting Up GitHub OAuth
+
+**Quick start:**
+1. Go to https://github.com/settings/developers
+2. Create new OAuth app
+3. Copy Client ID and Secret
+4. Add to `.env`:
+   ```bash
+   GITHUB_CLIENT_ID=your_id
+   GITHUB_CLIENT_SECRET=your_secret
+   ```
+5. Restart server
+
+**Detailed guide:**
+See `docs/GITHUB_OAUTH_SETUP.md`
+
+### Writing Tests with Auth
+
+Tests automatically use saved authentication:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+// Already authenticated!
+test('view habits', async ({ page }) => {
+  await page.goto('/habits');
+  await expect(page.getByText('My Habits')).toBeVisible();
+});
+```
+
+### Taking Screenshots
+
+**All pages:**
+```bash
+npm run screenshot
+```
+
+**Manual screenshot:**
+```bash
+# 1. Launch interactive browser
+npm run browse
+
+# 2. Navigate to page you want
+# 3. Take screenshot in Playwright inspector
+```
+
+**Configure pages to capture:**
+Edit `scripts/screenshot-all-pages.ts`:
+
+```typescript
+const PAGES_TO_SCREENSHOT = [
+  { name: 'home', url: '/', viewports: ['desktop', 'mobile'] },
+  { name: 'habits', url: '/habits', viewports: ['desktop'] },
+  // Add more...
+];
+```
+
+## 📁 Files Structure
+
+```
+GoalConnect/
+├── server/
+│   ├── github-auth.ts          ✨ NEW - GitHub OAuth
+│   └── index.ts                📝 MODIFIED - Integrated OAuth
+├── client/src/pages/
+│   ├── Login.tsx               📝 MODIFIED - GitHub button
+│   └── Signup.tsx              📝 MODIFIED - GitHub button
+├── scripts/
+│   ├── screenshot-all-pages.ts ✨ NEW - Screenshot tool
+│   └── browse-authenticated.sh ✨ NEW - Helper script
+├── docs/
+│   ├── PLAYWRIGHT_AUTH_GUIDE.md    ✨ NEW
+│   ├── GITHUB_OAUTH_SETUP.md       ✨ NEW
+│   ├── QUICK_REFERENCE.md          ✨ NEW
+│   └── ...
+├── tests/
+│   └── auth.setup.ts           ✅ EXISTING - Already set up
+├── playwright/.auth/
+│   └── user.json               🔐 Generated by auth setup
+├── screenshots/                📸 Generated by screenshot script
+├── .env.example                📝 MODIFIED - GitHub vars
+├── package.json                📝 MODIFIED - New scripts
+└── AUTHENTICATION_SETUP.md     ✨ NEW - This file
+```
+
+## 🚀 Quick Commands Reference
+
+```bash
+# Development
+npm run dev                 # Start server
+npm run build              # Production build
+
+# Testing
+npm test                   # Run all tests
+npm run test:ui            # Playwright UI
+npm run test:debug         # Debug mode
+
+# Authenticated Browsing
+npm run browse             # Desktop interactive
+npm run browse:mobile      # Mobile interactive
+npm run browse:tablet      # Tablet interactive
+
+# Screenshots
+npm run screenshot         # Capture all pages
+
+# Database
+npm run db:push            # Push schema
+npm run db:migrate         # Run migrations
+```
+
+## 🔐 Authentication Methods
+
+### 1. Email/Password (Built-in)
+- Already configured
+- Test user: `playwright-test@test.com`
+- Password: `testpass123`
+
+### 2. GitHub OAuth (Optional)
+- Requires GitHub OAuth app setup
+- See `docs/GITHUB_OAUTH_SETUP.md`
+- Optional - app works without it
+
+## 🎭 Playwright Features
+
+### Existing Features
+✅ Auth setup file (`tests/auth.setup.ts`)
+✅ Session persistence (`playwright/.auth/user.json`)
+✅ All tests use authentication
+✅ Example tests (habits, goals, dashboard)
+
+### New Features
+✨ Screenshot script
+✨ Interactive browser launcher
+✨ Multiple viewport presets
+✨ Comprehensive documentation
+
+## 📚 Documentation Map
+
+1. **QUICK_REFERENCE.md** - Start here for fast commands
+2. **PLAYWRIGHT_AUTH_GUIDE.md** - Deep dive into Playwright
+3. **GITHUB_OAUTH_SETUP.md** - GitHub OAuth step-by-step
+4. **AUTHENTICATION_SETUP.md** - This file (implementation summary)
+
+## 💡 Common Workflows
+
+### Testing a New Feature
+```bash
+# 1. Make code changes
+# 2. Start dev server
+npm run dev
+
+# 3. Test interactively
+npm run browse
+
+# 4. Take screenshots for docs
+npm run screenshot
+
+# 5. Write automated test
+# (edit tests/feature.spec.ts)
+
+# 6. Run tests
+npm test
+```
+
+### Creating GitHub App Mockups
+```bash
+# 1. Set up GitHub OAuth (one-time)
+# See docs/GITHUB_OAUTH_SETUP.md
+
+# 2. Start dev server
+npm run dev
+
+# 3. Browse with GitHub auth
+npm run browse
+
+# 4. Click "Sign in with GitHub"
+# 5. Test the OAuth flow
+# 6. Take screenshots
+```
+
+### Viewing on Different Devices
+```bash
+# Desktop
+npm run browse
+
+# Mobile
+npm run browse:mobile
+
+# Tablet
+npm run browse:tablet
+
+# Custom (e.g., iPhone 14 Pro)
+./scripts/browse-authenticated.sh codegen 393,852
+```
+
+## 🐛 Troubleshooting
+
+### Script Permission Denied
+```bash
+chmod +x scripts/browse-authenticated.sh
+```
+
+### Auth Session Expired
+```bash
+rm -rf playwright/.auth/user.json
+npx playwright test tests/auth.setup.ts
+```
+
+### GitHub OAuth Not Working
+1. Check environment variables:
+   ```bash
+   echo $GITHUB_CLIENT_ID
+   echo $GITHUB_CLIENT_SECRET
+   ```
+2. Verify callback URL matches GitHub app settings
+3. See `docs/GITHUB_OAUTH_SETUP.md`
+
+### Screenshot Script Errors
+1. Make sure dev server is running
+2. Check auth file exists: `playwright/.auth/user.json`
+3. Run auth setup if needed:
+   ```bash
+   npx playwright test tests/auth.setup.ts
+   ```
+
+## 🎉 What's Next?
+
+### Recommended Next Steps
+1. ✅ Set up GitHub OAuth (optional but cool)
+2. ✅ Take screenshots of your app
+3. ✅ Try the interactive browser
+4. ✅ Update screenshot script with your pages
+5. ✅ Write more tests using the auth setup
+
+### Ideas for Enhancement
+- Add more OAuth providers (Google, Twitter, etc.)
+- Video recording in tests
+- Automated screenshot comparison
+- CI/CD integration for screenshots
+- Performance monitoring with Playwright
+
+## 📞 Support
+
+- Documentation: `docs/` folder
+- Playwright: https://playwright.dev
+- GitHub OAuth: https://docs.github.com/en/apps/oauth-apps
+
+---
+
+**Created:** $(date)
+**Project:** GoalConnect
+**Tools:** Playwright, GitHub OAuth, TypeScript, Express

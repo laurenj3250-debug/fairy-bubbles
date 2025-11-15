@@ -15,6 +15,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
+import { configureGitHubAuth } from "./github-auth";
 import { runMigrations } from "./migrate";
 import { seedGameData } from "./seed-game-data";
 
@@ -51,6 +52,7 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: false }));
 
 configureSimpleAuth(app);
+configureGitHubAuth(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
