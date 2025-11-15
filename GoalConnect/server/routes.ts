@@ -2990,6 +2990,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mountainData = mountain.rows[0];
       const routeData = route.rows[0];
 
+      // Check required gear for this route
+      const requiredGear = await db.query(
+        `SELECT rg.gear_id, rg.is_required, g.name, g.category
+         FROM route_gear_requirements rg
+         JOIN alpine_gear g ON rg.gear_id = g.id
+         WHERE rg.route_id = $1 AND rg.is_required = true`,
+        [routeId]
+      );
+
+      if (requiredGear.rows.length > 0) {
+        // Get user's gear inventory
+        const userGear = await db.query(
+          `SELECT gear_id FROM player_gear_inventory WHERE user_id = $1`,
+          [userId]
+        );
+
+        const ownedGearIds = new Set(userGear.rows.map((g: any) => g.gear_id));
+        const missingGear = requiredGear.rows.filter((gear: any) => !ownedGearIds.has(gear.gear_id));
+
+        if (missingGear.length > 0) {
+          const missingGearNames = missingGear.map((g: any) => g.name).join(', ');
+          return res.status(400).json({
+            error: "Missing required gear for this route",
+            missingGear: missingGear.map((g: any) => ({
+              id: g.gear_id,
+              name: g.name,
+              category: g.category
+            })),
+            message: `This route requires: ${missingGearNames}. Visit the Alpine Shop to purchase the necessary equipment.`
+          });
+        }
+
+        // Validate that provided gearIds includes all required gear
+        const providedGearSet = new Set(gearIds || []);
+        const missingFromLoadout = requiredGear.rows.filter((gear: any) => !providedGearSet.has(gear.gear_id));
+
+        if (missingFromLoadout.length > 0) {
+          const missingNames = missingFromLoadout.map((g: any) => g.name).join(', ');
+          return res.status(400).json({
+            error: "Required gear not included in loadout",
+            missingFromLoadout: missingFromLoadout.map((g: any) => ({
+              id: g.gear_id,
+              name: g.name,
+              category: g.category
+            })),
+            message: `You own this gear but didn't include it in your loadout: ${missingNames}`
+          });
+        }
+      }
+
       // Deduct starting energy (20 energy to begin expedition)
       const newEnergy = currentEnergy - 20;
       await storage.updatePlayerClimbingStats(userId, {
@@ -3245,6 +3295,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.addPoints(userId, tokensEarned, "expedition_summit", expeditionId, `Summited ${exp.mountain_name}`);
 
+      // Check for mountain unlocks based on new level and summit count
+      const unlockedMountains = await db.query(
+        `SELECT m.id, m.name, m.elevation, m.difficulty_tier, m.unlock_requirements
+         FROM mountains m
+         WHERE m.required_climbing_level <= $1
+         AND NOT EXISTS (
+           SELECT 1 FROM mountain_unlocks mu
+           WHERE mu.user_id = $2 AND mu.mountain_id = m.id
+         )`,
+        [newLevel, userId]
+      );
+
+      const newUnlocks = [];
+      for (const mountain of unlockedMountains.rows) {
+        // Create unlock record
+        await db.query(
+          `INSERT INTO mountain_unlocks (user_id, mountain_id, unlocked_by)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (user_id, mountain_id) DO NOTHING`,
+          [userId, mountain.id, newLevel > (stats?.climbingLevel || 1) ? 'level' : 'previous_climb']
+        );
+
+        newUnlocks.push({
+          id: mountain.id,
+          name: mountain.name,
+          elevation: mountain.elevation,
+          tier: mountain.difficulty_tier
+        });
+      }
+
+      // Check for achievements
+      const currentAchievements = JSON.parse(stats?.achievements || '[]');
+      const newAchievements = [];
+
+      // Achievement definitions
+      const achievementChecks = [
+        { id: 'first_summit', name: 'First Summit', condition: summitsReached === 1, description: 'Reached your first summit' },
+        { id: 'five_summits', name: 'Mountain Veteran', condition: summitsReached === 5, description: 'Reached 5 summits' },
+        { id: 'ten_summits', name: 'Peak Bagger', condition: summitsReached === 10, description: 'Reached 10 summits' },
+        { id: 'twenty_summits', name: 'Mountaineer', condition: summitsReached === 20, description: 'Reached 20 summits' },
+        { id: 'fifty_summits', name: 'Alpine Legend', condition: summitsReached === 50, description: 'Reached 50 summits' },
+        { id: 'level_5', name: 'Intermediate Climber', condition: newLevel === 5, description: 'Reached level 5' },
+        { id: 'level_10', name: 'Advanced Climber', condition: newLevel === 10, description: 'Reached level 10' },
+        { id: 'level_15', name: 'Expert Climber', condition: newLevel === 15, description: 'Reached level 15' },
+        { id: 'level_20', name: 'Elite Climber', condition: newLevel === 20, description: 'Reached level 20' },
+        { id: 'elevation_10k', name: '10K Club', condition: (stats?.totalElevationClimbed || 0) + exp.elevation_gain >= 10000, description: 'Climbed 10,000m total elevation' },
+        { id: 'elevation_50k', name: '50K Club', condition: (stats?.totalElevationClimbed || 0) + exp.elevation_gain >= 50000, description: 'Climbed 50,000m total elevation' },
+        { id: 'elevation_100k', name: 'Everest×11', condition: (stats?.totalElevationClimbed || 0) + exp.elevation_gain >= 100000, description: 'Climbed 100,000m total elevation' },
+      ];
+
+      for (const achievement of achievementChecks) {
+        if (achievement.condition && !currentAchievements.includes(achievement.id)) {
+          currentAchievements.push(achievement.id);
+          newAchievements.push({
+            id: achievement.id,
+            name: achievement.name,
+            description: achievement.description,
+            unlockedAt: new Date().toISOString()
+          });
+        }
+      }
+
+      // Update achievements if any new ones were earned
+      if (newAchievements.length > 0) {
+        await db.query(
+          `UPDATE player_climbing_stats SET achievements = $1 WHERE user_id = $2`,
+          [JSON.stringify(currentAchievements), userId]
+        );
+      }
+
       // Create summit event
       await db.query(
         `INSERT INTO expedition_events
@@ -3286,7 +3406,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mountain: {
           name: exp.mountain_name,
           elevation: exp.mountain_elevation
-        }
+        },
+        unlockedMountains: newUnlocks,
+        newAchievements: newAchievements
       });
     } catch (error: any) {
       console.error('[expeditions] Complete expedition error:', error);

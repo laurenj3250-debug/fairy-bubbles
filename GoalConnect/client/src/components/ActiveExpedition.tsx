@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Mountain, ArrowUp, Flag, AlertCircle } from "lucide-react";
+import { Mountain, ArrowUp, Flag, AlertCircle, Unlock, Trophy } from "lucide-react";
 import { useState } from "react";
 import EnergyBar from "./EnergyBar";
 import { useToast } from "@/hooks/use-toast";
@@ -73,16 +73,71 @@ export default function ActiveExpedition() {
       queryClient.invalidateQueries({ queryKey: ["/api/expeditions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/climbing/stats"] });
 
-      toast({
-        title: "Day " + data.expedition.currentDay,
-        description: data.message,
-      });
-
-      // Check if summit reached (this would redirect to complete endpoint)
-      if (data.expedition.status === "completed") {
+      // Check if summit reached (this would have redirected to complete endpoint)
+      if (data.success && data.expedition?.status === "completed") {
+        // Summit reached!
         toast({
           title: "🏔️ SUMMIT REACHED!",
-          description: "You've reached the peak!",
+          description: `${data.mountain.name} - ${data.mountain.elevation.toLocaleString()}m`,
+        });
+
+        // Show mountain unlocks if any
+        if (data.unlockedMountains && data.unlockedMountains.length > 0) {
+          data.unlockedMountains.forEach((mountain: any, index: number) => {
+            setTimeout(() => {
+              toast({
+                title: (
+                  <div className="flex items-center gap-2">
+                    <Unlock className="w-5 h-5 text-green-500" />
+                    <span>Mountain Unlocked!</span>
+                  </div>
+                ),
+                description: (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Mountain className="w-4 h-4 text-primary" />
+                    <div>
+                      <div className="font-bold">{mountain.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {mountain.elevation.toLocaleString()}m • {mountain.tier}
+                      </div>
+                    </div>
+                  </div>
+                ),
+                duration: 6000,
+              });
+            }, 1500 + (index * 500));
+          });
+        }
+
+        // Show achievements if any
+        if (data.newAchievements && data.newAchievements.length > 0) {
+          data.newAchievements.forEach((achievement: any, index: number) => {
+            setTimeout(() => {
+              toast({
+                title: (
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    <span>Achievement Unlocked!</span>
+                  </div>
+                ),
+                description: (
+                  <div className="mt-2">
+                    <div className="font-bold">{achievement.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {achievement.description}
+                    </div>
+                  </div>
+                ),
+                duration: 6000,
+              });
+            }, 2000 + (data.unlockedMountains?.length || 0) * 500 + (index * 500));
+          });
+        }
+      } else {
+        // Normal day advancement
+        toast({
+          title: "Day " + data.expedition.currentDay,
+          description: data.message,
         });
       }
     },
