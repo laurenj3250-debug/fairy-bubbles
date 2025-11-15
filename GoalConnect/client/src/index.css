@@ -85,6 +85,30 @@
   h4 { @apply text-xl md:text-2xl font-medium; }
   h5 { @apply text-lg md:text-xl font-medium; }
   h6 { @apply text-base md:text-lg font-medium; }
+
+  /* Expedition subheading: Sans, 14-16px, Medium, dimmed */
+  .expedition-subheading {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem; /* 14px */
+    font-weight: 500;
+    color: #F6E4D2;
+    opacity: 0.85;
+  }
+
+  @media (min-width: 768px) {
+    .expedition-subheading {
+      font-size: 1rem; /* 16px */
+    }
+  }
+
+  /* Hold names: Sans, 14px, Medium, center-aligned, solid white */
+  .hold-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem; /* 14px */
+    font-weight: 500;
+    color: #FFFFFF;
+    text-align: center;
+  }
 }
 
 /* ============================================================================
