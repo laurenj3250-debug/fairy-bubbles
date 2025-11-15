@@ -14,6 +14,7 @@ import { DailyQuests } from "@/components/DailyQuests";
 import { StreakFreeze } from "@/components/StreakFreeze";
 import { Altimeter } from "@/components/Altimeter";
 import { ClimbingInspirationTile } from "@/components/ClimbingInspirationTile";
+import ActiveExpedition from "@/components/ActiveExpedition";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -203,6 +204,9 @@ export default function DashboardNew() {
 
       {/* Main Canvas - Desktop-first layout (1440x900 optimized) */}
       <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-6 relative z-10">
+        {/* Active Expedition (if exists) */}
+        <ActiveExpedition />
+
         {/* Row 1: Hero Band - Today's Pitch (left 62%) + Routes (right 34%) with 4% gap */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[420px]">
           {/* Today's Pitch - Expanded Preview */}

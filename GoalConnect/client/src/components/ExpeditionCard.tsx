@@ -4,12 +4,15 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import EnergyBar from "./EnergyBar";
 
 interface ClimbingStats {
   climbingLevel: number;
   summits: number;
   totalXp: number;
   currentStreak: number;
+  currentEnergy: number;
+  maxEnergy: number;
 }
 
 interface Mountain {
@@ -101,6 +104,16 @@ export function ExpeditionCard() {
             <div className="text-xs text-muted-foreground mb-1">Gear</div>
             <div className="text-2xl font-bold text-orange-400">{inventory.length}</div>
           </div>
+        </div>
+
+        {/* Energy Bar */}
+        <div className="mb-4 bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-xl px-4 py-3 border border-yellow-500/20">
+          <div className="text-xs text-muted-foreground mb-2 font-medium">Energy</div>
+          <EnergyBar
+            currentEnergy={stats?.currentEnergy || 0}
+            maxEnergy={stats?.maxEnergy || 100}
+            showLabel={true}
+          />
         </div>
 
         {/* Next Mountain Unlock */}

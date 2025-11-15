@@ -597,6 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let result;
       let xpAwarded = 0;
+      let energyAwarded = 0;
 
       if (existingLog) {
         // Toggle existing log
@@ -609,15 +610,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Award or deduct points based on toggle direction
         if (newCompleted && !existingLog.completed) {
-          // Completing: award 10 tokens
-          await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
-          console.log('[toggle] Awarded 10 tokens for completing habit');
-          xpAwarded = 10;
+          // Completing: award tokens/XP/energy based on effort
+          const habit = await storage.getHabit(habitId);
+          const effort = habit?.effort || 'medium';
+
+          const effortRewards = {
+            light: { tokens: 10, xp: 10, energy: 5 },
+            medium: { tokens: 10, xp: 15, energy: 10 },
+            heavy: { tokens: 10, xp: 20, energy: 15 }
+          };
+
+          const rewards = effortRewards[effort];
+
+          await storage.addPoints(userId, rewards.tokens, "habit_complete", result.id, `Completed habit`);
+          console.log('[toggle] Awarded tokens/XP/energy for', effort, 'effort');
+          xpAwarded = rewards.xp;
+          energyAwarded = rewards.energy;
         } else if (!newCompleted && existingLog.completed) {
-          // Uncompleting: deduct 10 tokens
-          await storage.spendPoints(userId, 10, `Uncompleted habit`);
-          console.log('[toggle] Deducted 10 tokens for uncompleting habit');
-          xpAwarded = -10;
+          // Uncompleting: deduct tokens/XP/energy based on effort
+          const habit = await storage.getHabit(habitId);
+          const effort = habit?.effort || 'medium';
+
+          const effortRewards = {
+            light: { tokens: 10, xp: 10, energy: 5 },
+            medium: { tokens: 10, xp: 15, energy: 10 },
+            heavy: { tokens: 10, xp: 20, energy: 15 }
+          };
+
+          const rewards = effortRewards[effort];
+
+          await storage.spendPoints(userId, rewards.tokens, `Uncompleted habit`);
+          console.log('[toggle] Deducted tokens/XP/energy for', effort, 'effort');
+          xpAwarded = -rewards.xp;
+          energyAwarded = -rewards.energy;
         }
       } else {
         // Create new log as completed
@@ -631,33 +656,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         result = await storage.createHabitLog(validated);
 
-        // Award 10 tokens for completing the habit
-        await storage.addPoints(userId, 10, "habit_complete", result.id, `Completed habit`);
-        console.log('[toggle] Created log and awarded 10 tokens');
-        xpAwarded = 10;
+        // Get habit to determine effort level for rewards
+        const habit = await storage.getHabit(habitId);
+        const effort = habit?.effort || 'medium';
+
+        // Award tokens and XP based on effort level
+        const effortRewards = {
+          light: { tokens: 10, xp: 10, energy: 5 },
+          medium: { tokens: 10, xp: 15, energy: 10 },
+          heavy: { tokens: 10, xp: 20, energy: 15 }
+        };
+
+        const rewards = effortRewards[effort];
+
+        await storage.addPoints(userId, rewards.tokens, "habit_complete", result.id, `Completed habit`);
+        console.log('[toggle] Created log and awarded tokens/XP for', effort, 'effort');
+        xpAwarded = rewards.xp;
+        energyAwarded = rewards.energy;
       }
 
-      // Award or deduct XP (simple system: 10 XP per habit, 100 XP per level)
+      // Award or deduct XP and Energy (effort-based: light=10/5, medium=15/10, heavy=20/15 XP/energy, 100 XP per level)
       try {
         let stats = await storage.getPlayerClimbingStats(userId);
         if (!stats) {
-          // Initialize stats if they don't exist
-          stats = { climbingLevel: 1, totalXp: 0 };
+          // Initialize stats if they don't exist with default energy
+          stats = { climbingLevel: 1, totalXp: 0, currentEnergy: 100, maxEnergy: 100 };
         }
 
         const newTotalXp = Math.max(0, (stats.totalXp || 0) + xpAwarded);
         const newLevel = Math.floor(newTotalXp / 100) + 1;
         const oldLevel = stats.climbingLevel || 1;
 
+        // Calculate new energy (cap at maxEnergy)
+        const maxEnergy = stats.maxEnergy || 100;
+        const currentEnergy = stats.currentEnergy || 0;
+        const newEnergy = Math.max(0, Math.min(maxEnergy, currentEnergy + energyAwarded));
+
         await storage.updatePlayerClimbingStats(userId, {
           totalXp: newTotalXp,
-          climbingLevel: newLevel
+          climbingLevel: newLevel,
+          currentEnergy: newEnergy
         });
 
-        console.log('[toggle] XP updated:', { oldXp: stats.totalXp, newXp: newTotalXp, oldLevel, newLevel });
+        console.log('[toggle] XP and Energy updated:', {
+          oldXp: stats.totalXp,
+          newXp: newTotalXp,
+          oldLevel,
+          newLevel,
+          oldEnergy: currentEnergy,
+          newEnergy,
+          energyAwarded
+        });
       } catch (xpError: any) {
         // Don't fail the entire request if XP update fails
-        console.error('[toggle] XP update failed (non-fatal):', xpError.message);
+        console.error('[toggle] XP/Energy update failed (non-fatal):', xpError.message);
       }
 
       // Check for linked goal/route and update progress
@@ -699,7 +751,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[toggle] Success:', result);
       res.json({
         ...result,
-        xpAwarded: result.completed ? 10 : 0,  // Changed from tokensAwarded
+        xpAwarded,  // Actual XP awarded based on effort
+        energyAwarded,  // Energy awarded based on effort
         routeProgress
       });
     } catch (error: any) {
@@ -2875,7 +2928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // EXPEDITION ROUTES
   // =============================================
 
-  // POST /api/expeditions - Create and complete an expedition
+  // POST /api/expeditions - Start a new expedition (in_progress status)
   app.post("/api/expeditions", async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -2883,15 +2936,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      const { routeId, mountainId, gearIds, teamSize } = req.body;
+      const { routeId, mountainId, gearIds } = req.body;
 
       if (!routeId) {
         return res.status(400).json({ error: "Route ID is required" });
       }
 
-      // Get user's current climbing level
-      const stats = await storage.getPlayerClimbingStats(userId);
-      const userLevel = stats?.climbingLevel || 1;
+      // Check for existing active expedition
+      const activeExpedition = await db.query(
+        `SELECT id FROM player_expeditions WHERE user_id = $1 AND status = 'in_progress'`,
+        [userId]
+      );
+
+      if (activeExpedition.rows.length > 0) {
+        return res.status(400).json({ error: "You already have an active expedition. Complete or retreat from it first." });
+      }
+
+      // Get user's current climbing stats
+      let stats = await storage.getPlayerClimbingStats(userId);
+      if (!stats) {
+        stats = { climbingLevel: 1, totalXp: 0, currentEnergy: 100, maxEnergy: 100 };
+      }
+
+      // Validate energy (need at least 20 to start)
+      const currentEnergy = stats.currentEnergy || 0;
+      if (currentEnergy < 20) {
+        return res.status(400).json({
+          error: "Not enough energy to start expedition. Complete more habits to gain energy!",
+          currentEnergy,
+          required: 20
+        });
+      }
 
       // Get mountain and route details
       const mountain = await db.query(
@@ -2904,67 +2979,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const route = await db.query(
-        `SELECT * FROM routes WHERE id = $1`,
-        [routeId]
+        `SELECT * FROM routes WHERE id = $1 AND mountain_id = $2`,
+        [routeId, mountainId]
       );
 
       if (route.rows.length === 0) {
-        return res.status(404).json({ error: "Route not found" });
+        return res.status(404).json({ error: "Route not found for this mountain" });
       }
 
       const mountainData = mountain.rows[0];
       const routeData = route.rows[0];
 
-      // Calculate success probability
-      let successChance = 50; // Base 50%
+      // Deduct starting energy (20 energy to begin expedition)
+      const newEnergy = currentEnergy - 20;
+      await storage.updatePlayerClimbingStats(userId, {
+        currentEnergy: newEnergy
+      });
 
-      // Level bonus: +10% if level meets or exceeds requirement
-      if (userLevel >= mountainData.required_climbing_level) {
-        successChance += 10;
-      }
-
-      // Gear bonus: +5% per item (max 25%)
-      const gearBonus = Math.min((gearIds?.length || 0) * 5, 25);
-      successChance += gearBonus;
-
-      // Team size bonus: +10% for larger teams
-      if (teamSize >= 3) {
-        successChance += 10;
-      }
-
-      // Cap at 90%
-      successChance = Math.min(successChance, 90);
-
-      // Determine success
-      const success = Math.random() * 100 < successChance;
-
-      // Calculate XP rewards based on difficulty tier
-      const xpRewards: Record<string, number> = {
-        beginner: 50,
-        intermediate: 100,
-        advanced: 200,
-        expert: 250,
-        elite: 300,
-      };
-
-      const baseXp = xpRewards[mountainData.difficulty_tier] || 100;
-      const xpEarned = Math.round(baseXp * (success ? 1.5 : 0.5));
-
-      // Create expedition record
+      // Create expedition record (in_progress status)
       const expeditionResult = await db.query(
         `INSERT INTO player_expeditions
-         (user_id, route_id, status, start_date, completion_date, summit_reached, experience_earned, current_progress, notes)
-         VALUES ($1, $2, $3, NOW(), NOW(), $4, $5, $6, $7)
+         (user_id, route_id, status, start_date, current_progress, current_altitude, current_day, energy_spent, summit_reached)
+         VALUES ($1, $2, 'in_progress', NOW(), 0, 0, 0, 20, false)
          RETURNING *`,
-        [
-          userId,
-          routeId,
-          success ? 'completed' : 'failed',
-          success,
-          xpEarned,
-          100,
-          success ? 'Successfully reached the summit!' : 'Expedition failed, but learned valuable lessons.'
-        ]
+        [userId, routeId]
       );
 
       const expeditionId = expeditionResult.rows[0].id;
@@ -2972,53 +3010,389 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save gear loadout if provided
       if (gearIds && gearIds.length > 0) {
         for (const gearId of gearIds) {
+          // Get gear condition from inventory
+          const gearResult = await db.query(
+            `SELECT condition FROM player_gear_inventory WHERE user_id = $1 AND gear_id = $2`,
+            [userId, gearId]
+          );
+
+          const condition = gearResult.rows[0]?.condition || 100;
+
           await db.query(
-            `INSERT INTO expedition_gear_loadout (expedition_id, gear_id)
-             VALUES ($1, $2)`,
-            [expeditionId, gearId]
+            `INSERT INTO expedition_gear_loadout (expedition_id, gear_id, quantity, condition_before)
+             VALUES ($1, $2, 1, $3)`,
+            [expeditionId, gearId, condition]
           );
         }
       }
 
-      // Award XP to player
-      await db.query(
-        `UPDATE player_climbing_stats
-         SET total_xp = total_xp + $1,
-             climbing_level = FLOOR((total_xp + $1) / 100) + 1
-         WHERE user_id = $2`,
-        [xpEarned, userId]
-      );
-
-      // Create expedition event
+      // Create starting event
       await db.query(
         `INSERT INTO expedition_events
-         (expedition_id, event_type, event_day, description, altitude, energy_change)
-         VALUES ($1, $2, 1, $3, $4, 0)`,
+         (expedition_id, event_type, event_day, event_description)
+         VALUES ($1, 'rest_day', 0, $2)`,
         [
           expeditionId,
-          success ? 'summit' : 'failure',
-          success ? 'Reached the summit!' : 'Expedition unsuccessful',
-          success ? mountainData.elevation : Math.floor(mountainData.elevation * 0.7)
+          `Arrived at basecamp for ${mountainData.name} via ${routeData.route_name}. Preparing for the climb ahead.`
         ]
       );
 
+      console.log('[expeditions] Started expedition:', {
+        expeditionId,
+        userId,
+        mountain: mountainData.name,
+        route: routeData.route_name,
+        energySpent: 20,
+        newEnergy
+      });
+
       res.json({
-        success,
         expedition: expeditionResult.rows[0],
-        xpEarned,
-        successChance,
+        energySpent: 20,
+        newEnergy,
         mountain: {
+          id: mountainData.id,
           name: mountainData.name,
           elevation: mountainData.elevation,
           tier: mountainData.difficulty_tier
         },
         route: {
-          name: routeData.name,
-          grade: routeData.difficulty_grade
+          id: routeData.id,
+          name: routeData.route_name,
+          estimatedDays: routeData.estimated_days,
+          elevationGain: routeData.elevation_gain
         }
       });
     } catch (error: any) {
       console.error('[expeditions] Create expedition error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/expeditions/:id/advance - Advance expedition by one day
+  app.post("/api/expeditions/:id/advance", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const expeditionId = parseInt(req.params.id);
+
+      // Get expedition
+      const expedition = await db.query(
+        `SELECT e.*, r.estimated_days, r.elevation_gain, r.route_name, m.name as mountain_name, m.elevation as mountain_elevation
+         FROM player_expeditions e
+         JOIN routes r ON e.route_id = r.id
+         JOIN mountains m ON r.mountain_id = m.id
+         WHERE e.id = $1 AND e.user_id = $2`,
+        [expeditionId, userId]
+      );
+
+      if (expedition.rows.length === 0) {
+        return res.status(404).json({ error: "Expedition not found" });
+      }
+
+      const exp = expedition.rows[0];
+
+      if (exp.status !== 'in_progress') {
+        return res.status(400).json({ error: "Expedition is not in progress" });
+      }
+
+      // Check energy (need 5 to advance)
+      const stats = await storage.getPlayerClimbingStats(userId);
+      const currentEnergy = stats?.currentEnergy || 0;
+
+      if (currentEnergy < 5) {
+        return res.status(400).json({
+          error: "Not enough energy to continue. Complete more habits or retreat from the expedition.",
+          currentEnergy,
+          required: 5
+        });
+      }
+
+      // Deduct energy
+      await storage.updatePlayerClimbingStats(userId, {
+        currentEnergy: currentEnergy - 5
+      });
+
+      // Calculate progress increase (100% / estimated days)
+      const progressPerDay = 100 / (exp.estimated_days || 5);
+      const newProgress = Math.min(100, (exp.current_progress || 0) + progressPerDay);
+      const newDay = (exp.current_day || 0) + 1;
+      const newAltitude = Math.floor((newProgress / 100) * exp.elevation_gain);
+      const newEnergySpent = (exp.energy_spent || 0) + 5;
+
+      // Check if summit reached
+      if (newProgress >= 100) {
+        // Summit! Complete the expedition
+        return res.redirect(307, `/api/expeditions/${expeditionId}/complete`);
+      }
+
+      // Update expedition
+      await db.query(
+        `UPDATE player_expeditions
+         SET current_progress = $1, current_day = $2, current_altitude = $3, energy_spent = $4, updated_at = NOW()
+         WHERE id = $5`,
+        [newProgress, newDay, newAltitude, newEnergySpent, expeditionId]
+      );
+
+      // Create progress event
+      const camp = Math.floor(newProgress / 25); // 0=basecamp, 1=camp1, 2=camp2, 3=camp3, 4=summit
+      const campNames = ['Basecamp', 'Camp 1', 'Camp 2', 'Camp 3', 'High Camp'];
+      await db.query(
+        `INSERT INTO expedition_events
+         (expedition_id, event_type, event_day, event_description)
+         VALUES ($1, 'acclimatization', $2, $3)`,
+        [
+          expeditionId,
+          newDay,
+          `Advanced to ${campNames[camp]} at ${newAltitude}m. Progress: ${Math.round(newProgress)}%`
+        ]
+      );
+
+      console.log('[expeditions] Advanced expedition:', {
+        expeditionId,
+        newDay,
+        newProgress: Math.round(newProgress),
+        newAltitude,
+        energySpent: 5
+      });
+
+      res.json({
+        expedition: {
+          id: expeditionId,
+          currentDay: newDay,
+          currentProgress: newProgress,
+          currentAltitude: newAltitude,
+          energySpent: newEnergySpent,
+          status: 'in_progress'
+        },
+        energySpent: 5,
+        newEnergy: currentEnergy - 5,
+        progressIncrease: progressPerDay,
+        message: `Day ${newDay}: Advanced to ${campNames[camp]}`
+      });
+    } catch (error: any) {
+      console.error('[expeditions] Advance expedition error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/expeditions/:id/complete - Complete expedition (summit reached)
+  app.post("/api/expeditions/:id/complete", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const expeditionId = parseInt(req.params.id);
+
+      // Get expedition with mountain/route details
+      const expedition = await db.query(
+        `SELECT e.*, r.technical_difficulty, r.physical_difficulty, r.elevation_gain, r.route_name,
+                m.name as mountain_name, m.elevation as mountain_elevation, m.difficulty_tier
+         FROM player_expeditions e
+         JOIN routes r ON e.route_id = r.id
+         JOIN mountains m ON r.mountain_id = m.id
+         WHERE e.id = $1 AND e.user_id = $2`,
+        [expeditionId, userId]
+      );
+
+      if (expedition.rows.length === 0) {
+        return res.status(404).json({ error: "Expedition not found" });
+      }
+
+      const exp = expedition.rows[0];
+
+      // Calculate XP reward based on difficulty
+      const difficultyMultiplier: Record<string, number> = {
+        novice: 50,
+        intermediate: 100,
+        advanced: 200,
+        expert: 300,
+        elite: 500
+      };
+
+      const baseXp = difficultyMultiplier[exp.difficulty_tier] || 100;
+      const xpEarned = baseXp;
+
+      // Calculate token reward
+      const tokensEarned = Math.floor(baseXp / 2);
+
+      // Update expedition to completed
+      await db.query(
+        `UPDATE player_expeditions
+         SET status = 'completed', summit_reached = true, completion_date = NOW(),
+             experience_earned = $1, current_progress = 100, updated_at = NOW()
+         WHERE id = $2`,
+        [xpEarned, expeditionId]
+      );
+
+      // Award XP and tokens
+      const stats = await storage.getPlayerClimbingStats(userId);
+      const newTotalXp = (stats?.totalXp || 0) + xpEarned;
+      const newLevel = Math.floor(newTotalXp / 100) + 1;
+      const summitsReached = (stats?.summitsReached || 0) + 1;
+
+      await storage.updatePlayerClimbingStats(userId, {
+        totalXp: newTotalXp,
+        climbingLevel: newLevel,
+        summitsReached: summitsReached,
+        totalElevationClimbed: (stats?.totalElevationClimbed || 0) + exp.elevation_gain
+      });
+
+      await storage.addPoints(userId, tokensEarned, "expedition_summit", expeditionId, `Summited ${exp.mountain_name}`);
+
+      // Create summit event
+      await db.query(
+        `INSERT INTO expedition_events
+         (expedition_id, event_type, event_day, event_description)
+         VALUES ($1, 'success', $2, $3)`,
+        [
+          expeditionId,
+          exp.current_day + 1,
+          `🏔️ SUMMIT! Reached the peak of ${exp.mountain_name} (${exp.mountain_elevation}m) via ${exp.route_name}!`
+        ]
+      );
+
+      console.log('[expeditions] Completed expedition:', {
+        expeditionId,
+        userId,
+        mountain: exp.mountain_name,
+        xpEarned,
+        tokensEarned,
+        newLevel
+      });
+
+      res.json({
+        success: true,
+        expedition: {
+          id: expeditionId,
+          status: 'completed',
+          summitReached: true
+        },
+        rewards: {
+          xp: xpEarned,
+          tokens: tokensEarned,
+          levelUp: newLevel > (stats?.climbingLevel || 1)
+        },
+        stats: {
+          totalSummits: summitsReached,
+          climbingLevel: newLevel,
+          totalXp: newTotalXp
+        },
+        mountain: {
+          name: exp.mountain_name,
+          elevation: exp.mountain_elevation
+        }
+      });
+    } catch (error: any) {
+      console.error('[expeditions] Complete expedition error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/expeditions/:id/retreat - Retreat from expedition (failed)
+  app.post("/api/expeditions/:id/retreat", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const expeditionId = parseInt(req.params.id);
+
+      // Get expedition
+      const expedition = await db.query(
+        `SELECT e.*, r.route_name, m.name as mountain_name
+         FROM player_expeditions e
+         JOIN routes r ON e.route_id = r.id
+         JOIN mountains m ON r.mountain_id = m.id
+         WHERE e.id = $1 AND e.user_id = $2`,
+        [expeditionId, userId]
+      );
+
+      if (expedition.rows.length === 0) {
+        return res.status(404).json({ error: "Expedition not found" });
+      }
+
+      const exp = expedition.rows[0];
+
+      // Calculate partial XP (30% of what would have been earned)
+      const partialXp = Math.floor(((exp.current_progress || 0) / 100) * 50); // Max 50 XP for retreat
+
+      // Refund 50% of energy spent
+      const energyRefund = Math.floor((exp.energy_spent || 0) * 0.5);
+      const stats = await storage.getPlayerClimbingStats(userId);
+      const currentEnergy = stats?.currentEnergy || 0;
+      const maxEnergy = stats?.maxEnergy || 100;
+      const newEnergy = Math.min(maxEnergy, currentEnergy + energyRefund);
+
+      // Update expedition to failed
+      await db.query(
+        `UPDATE player_expeditions
+         SET status = 'failed', summit_reached = false, completion_date = NOW(),
+             experience_earned = $1, updated_at = NOW()
+         WHERE id = $2`,
+        [partialXp, expeditionId]
+      );
+
+      // Award partial XP and refund energy
+      if (partialXp > 0) {
+        const newTotalXp = (stats?.totalXp || 0) + partialXp;
+        const newLevel = Math.floor(newTotalXp / 100) + 1;
+
+        await storage.updatePlayerClimbingStats(userId, {
+          totalXp: newTotalXp,
+          climbingLevel: newLevel,
+          currentEnergy: newEnergy
+        });
+      } else {
+        await storage.updatePlayerClimbingStats(userId, {
+          currentEnergy: newEnergy
+        });
+      }
+
+      // Create retreat event
+      await db.query(
+        `INSERT INTO expedition_events
+         (expedition_id, event_type, event_day, event_description)
+         VALUES ($1, 'rescue', $2, $3)`,
+        [
+          expeditionId,
+          exp.current_day,
+          `Retreated from ${exp.mountain_name} at ${Math.round(exp.current_progress || 0)}% progress. The mountain will be here when conditions improve.`
+        ]
+      );
+
+      console.log('[expeditions] Retreated from expedition:', {
+        expeditionId,
+        userId,
+        mountain: exp.mountain_name,
+        progress: exp.current_progress,
+        partialXp,
+        energyRefund
+      });
+
+      res.json({
+        success: false,
+        expedition: {
+          id: expeditionId,
+          status: 'failed',
+          summitReached: false,
+          progress: exp.current_progress
+        },
+        rewards: {
+          xp: partialXp,
+          energyRefund
+        },
+        newEnergy,
+        message: "Weather conditions forced a retreat. The mountain will be here when you're ready to return."
+      });
+    } catch (error: any) {
+      console.error('[expeditions] Retreat expedition error:', error);
       res.status(500).json({ error: error.message });
     }
   });
