@@ -117,9 +117,11 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        serif: ["var(--font-serif)"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Fraunces", "Georgia", "serif"],
         mono: ["var(--font-mono)"],
+        heading: ["Fraunces", "Georgia", "serif"], // For headings and titles
+        body: ["Inter", "system-ui", "sans-serif"], // For body text
         altitude: ["var(--font-altitude)", "sans-serif"],
         technical: ["var(--font-technical)", "monospace"],
       },
