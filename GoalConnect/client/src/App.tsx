@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { ProgressBackground } from "@/components/ProgressBackground";
-// Dashboard removed
+import DashboardNew from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
@@ -94,7 +94,7 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <WeeklyHub />
+          <DashboardNew />
           <BottomNav />
         </RequireAuth>
       </Route>
