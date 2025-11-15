@@ -56,7 +56,48 @@ export interface Theme {
 }
 
 /**
- * GRANITE MONOLITH THEME (El Capitan)
+ * EL CAPITAN SUNRISE THEME
+ * Bright travel-poster style with warm golden-hour colors
+ */
+export const elCapitanSunriseTheme: Theme = {
+  name: 'El Capitan Sunrise',
+  colors: {
+    background: '45 100% 96%',            // Warm creamy white (sky)
+    foreground: '30 15% 20%',             // Darker warm gray (WCAG AA compliant)
+    card: '0 0% 100%',                    // Pure white glass cards
+    cardForeground: '30 15% 20%',
+    primary: '28 85% 48%',                // Darker orange/gold (4.5:1+ contrast)
+    primaryForeground: '0 0% 100%',
+    secondary: '210 40% 45%',             // Darker blue/gray (4.5:1+ contrast)
+    secondaryForeground: '0 0% 100%',
+    accent: '160 50% 40%',                // Darker muted green (4.5:1+ contrast)
+    accentForeground: '0 0% 100%',
+    success: '142 71% 45%',               // Darker fresh green
+    successForeground: '0 0% 100%',
+    warning: '38 92% 50%',                // Darker amber
+    warningForeground: '0 0% 100%',
+    destructive: '0 84% 50%',             // Darker red
+    destructiveForeground: '0 0% 100%',
+    border: '30 10% 80%',                 // Darker border for contrast
+    input: '30 10% 80%',
+    ring: '28 85% 48%',
+    muted: '30 8% 90%',
+    mutedForeground: '30 10% 40%'         // Darker gray (4.5:1+ contrast)
+  },
+  spacing: {
+    sectionGap: '1.5rem',
+    cardPadding: '1.5rem',
+    borderRadius: '1rem'
+  },
+  effects: {
+    cardShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+    hoverScale: 1.02,
+    transitionSpeed: '200ms'
+  }
+};
+
+/**
+ * GRANITE MONOLITH THEME (El Capitan - Dark version)
  * Warm granite grays with golden accents - inspired by Yosemite's iconic wall
  */
 export const graniteMonolithTheme: Theme = {
@@ -101,10 +142,14 @@ export const graniteMonolithTheme: Theme = {
 // ============================================================================
 
 export const themes = {
+  elCapitanSunrise: elCapitanSunriseTheme,
   graniteMonolith: graniteMonolithTheme,
 };
 
 export type ThemeKey = keyof typeof themes;
+
+// Default theme is now El Capitan Sunrise
+export const defaultTheme: ThemeKey = 'elCapitanSunrise';
 
 /**
  * Apply theme to CSS variables

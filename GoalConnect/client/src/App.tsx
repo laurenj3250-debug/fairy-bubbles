@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { ProgressBackground } from "@/components/ProgressBackground";
-import Dashboard from "@/pages/DashboardNew";
+import Dashboard from "@/pages/DashboardBaseCamp";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";

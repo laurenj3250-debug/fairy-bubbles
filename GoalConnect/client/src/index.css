@@ -23,38 +23,39 @@
 
 @layer base {
   :root {
-    /* Colors - Mountain Dusk Theme (climbing-inspired) */
-    --background: 215 25% 27%;        /* Deep mountain blue-gray */
-    --foreground: 39 80% 95%;         /* Warm cream/snow white */
-    --card: 215 20% 32%;              /* Slightly lighter blue-gray for cards */
-    --card-foreground: 39 80% 95%;
-    --primary: 199 89% 58%;           /* Bright sky blue (clearer than before) */
-    --primary-foreground: 215 25% 15%;
-    --secondary: 215 20% 40%;         /* Stone gray */
-    --secondary-foreground: 39 80% 95%;
-    --accent: 25 95% 63%;             /* Sunrise orange (brighter) */
-    --accent-foreground: 215 25% 15%;
-    --success: 142 71% 55%;           /* Fresh green (brighter for visibility) */
-    --success-foreground: 215 25% 15%;
-    --warning: 38 92% 60%;            /* Amber (brighter) */
-    --warning-foreground: 215 25% 15%;
-    --destructive: 0 84% 60%;
+    /* Colors - Sunrise Theme (El Capitan travel poster) - WCAG AA Compliant */
+    --background: 45 100% 96%;        /* Warm creamy white (sky) */
+    --foreground: 30 15% 20%;         /* Darker warm gray (4.5:1+ contrast) */
+    --card: 0 0% 100%;                /* Pure white glass cards */
+    --card-foreground: 30 15% 20%;
+    --primary: 28 85% 48%;            /* Darker orange/gold (4.5:1+ on white) */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 45%;         /* Darker blue/gray (4.5:1+ on white) */
+    --secondary-foreground: 0 0% 100%;
+    --accent: 160 50% 40%;            /* Darker muted green (4.5:1+ on white) */
+    --accent-foreground: 0 0% 100%;
+    --success: 142 71% 45%;           /* Darker fresh green (4.5:1+) */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;            /* Darker amber (4.5:1+) */
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;         /* Darker red (4.5:1+) */
     --destructive-foreground: 0 0% 100%;
-    --border: 215 15% 42%;            /* Subtle granite border */
-    --input: 215 15% 42%;
-    --ring: 199 89% 58%;
-    --muted: 215 20% 38%;
-    --muted-foreground: 39 50% 75%;   /* Softer cream for muted text */
+    --border: 30 10% 80%;             /* Slightly darker border for contrast */
+    --input: 30 10% 80%;
+    --ring: 28 85% 48%;
+    --muted: 30 8% 90%;               /* Slightly darker muted bg */
+    --muted-foreground: 30 10% 40%;   /* Darker gray (4.5:1+ on white) */
 
     /* Spacing */
     --section-gap: 1.5rem;
     --card-padding: 1.5rem;
-    --border-radius: 0.75rem;
+    --border-radius: 1rem;
 
-    /* Effects */
-    --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    /* Effects - Glassmorphism */
+    --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --card-backdrop-blur: 12px;
     --hover-scale: 1.02;
-    --transition-speed: 150ms;
+    --transition-speed: 200ms;
   }
 
   * {

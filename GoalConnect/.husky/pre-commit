@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Run lint-staged (formats and lints staged files)
+npx lint-staged
+
+# Run TypeScript check
+npm run check
