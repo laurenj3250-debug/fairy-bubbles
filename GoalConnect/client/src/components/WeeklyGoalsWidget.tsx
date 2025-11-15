@@ -6,6 +6,7 @@ import type { Goal } from "@shared/schema";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { BoltLadder } from "./BoltLadder";
 
 export function WeeklyGoalsWidget() {
   const { data: goals = [] } = useQuery<Goal[]>({
@@ -51,7 +52,7 @@ export function WeeklyGoalsWidget() {
           style={{ fontFamily: "'Comfortaa', cursive", textShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}
         >
           <Target className="w-5 h-5 text-blue-400" />
-          This Week's Goals
+          Current Goals
         </h3>
         <Badge className="bg-blue-500/20 text-blue-200 border-blue-400/30">
           {weeklyGoals.length}
@@ -81,6 +82,14 @@ export function WeeklyGoalsWidget() {
             urgencyColor = "text-green-200";
             urgencyBg = "bg-green-500/20";
             urgencyBorder = "border-green-400/30";
+          }
+
+          // Determine color for BoltLadder based on urgency
+          let boltColor = "#fb923c"; // default orange
+          if (progress >= 75) {
+            boltColor = "#4ade80"; // green
+          } else if (progress >= 50) {
+            boltColor = "#60a5fa"; // blue
           }
 
           return (
@@ -118,16 +127,12 @@ export function WeeklyGoalsWidget() {
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    progress >= 75 ? "bg-green-400" : progress >= 50 ? "bg-blue-400" : "bg-orange-400"
-                  )}
-                  style={{ width: `${Math.min(progress, 100)}%` }}
-                />
-              </div>
+              {/* BoltLadder Component */}
+              <BoltLadder
+                completed={goal.currentValue}
+                target={goal.targetValue}
+                color={boltColor}
+              />
             </div>
           );
         })}

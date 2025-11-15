@@ -103,7 +103,7 @@ export function WeekAtAGlance() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Target className="w-4 h-4 text-blue-400" />
-                Goals Due This Week
+                Upcoming Goals
               </h3>
               <Badge className="bg-blue-500/20 text-blue-200 border-blue-400/30">
                 {weeklyGoals.length}

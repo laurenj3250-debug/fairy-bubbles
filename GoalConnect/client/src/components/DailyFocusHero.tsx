@@ -70,10 +70,7 @@ export function DailyFocusHero() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-glow">Today's Pitch</h1>
-            <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">
-              {format(new Date(), 'EEEE, MMMM d')}
-            </p>
+            <h1 className="text-3xl font-bold text-glow">{format(new Date(), 'EEEE, MMMM d')}</h1>
             {theme && (
               <p className="text-xs text-muted-foreground mt-1">
                 Expedition: {theme.mountainName}
@@ -81,52 +78,25 @@ export function DailyFocusHero() {
             )}
           </div>
 
-          {/* Completion Circle */}
-          <div
-            className="completion-circle glowing-orb"
-            style={{ '--progress': `${completionPercentage}%` } as React.CSSProperties}
+          <a
+            href="/habits"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-sm font-medium"
           >
-            <div className="completion-circle-inner">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-foreground">
-                  {completionPercentage}%
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {completedCount}/{totalCount}
-                </div>
-              </div>
-            </div>
-          </div>
+            <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 4v16m8-8H4" />
+            </svg>
+            Manage
+          </a>
         </div>
 
-        {/* What's Next Message */}
-        <div className="glass-card p-4">
+        {/* Habits displayed as climbing holds */}
+        <div>
           {isFullyComplete ? (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full glowing-orb bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-success">All done for today!</p>
-                <p className="text-sm text-muted-foreground">You crushed it! Take a well-deserved break.</p>
-              </div>
-            </div>
+            <div className="hidden"></div>
           ) : remainingHabits.length > 0 ? (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
-                <Circle className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">
-                  {remainingHabits.length} {remainingHabits.length === 1 ? 'habit' : 'habits'} remaining
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Next up: {remainingHabits[0]?.title}
-                </p>
-              </div>
-            </div>
+            <div className="hidden"></div>
           ) : (
-            <p className="text-muted-foreground text-center">No habits scheduled for today</p>
+            <p className="text-muted-foreground text-center hidden">No habits scheduled for today</p>
           )}
         </div>
 

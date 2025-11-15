@@ -1,5 +1,4 @@
 import { DailyFocusHero } from "@/components/DailyFocusHero";
-import { WeekOverviewStreak } from "@/components/WeekOverviewStreak";
 import { GoalsSection } from "@/components/GoalsSection";
 import { TodaysTasksPanel } from "@/components/TodaysTasksPanel";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
@@ -107,10 +106,7 @@ export default function WeeklyHub() {
         {/* Hero: Daily Focus - BIGGEST section */}
         <DailyFocusHero />
 
-        {/* Week Overview + Streak - Side by side */}
-        <WeekOverviewStreak />
-
-        {/* Active Goals - Collapsible, takes minimal space */}
+        {/* Active Goals */}
         <GoalsSection />
 
         {/* Optional sections - Can be toggled or moved to separate views */}

@@ -48,12 +48,8 @@ export function ExpeditionHeader({
         }}
       />
 
-      {/* Left: Expedition progress */}
+      {/* Left: Empty space for balance */}
       <div className="flex items-center gap-2 text-xs font-medium text-foreground relative z-10">
-        <span className="text-muted-foreground">Expedition:</span>
-        <span className="font-mono font-bold">
-          {seasonProgress.current}/{seasonProgress.total} days
-        </span>
       </div>
 
       {/* Center: Climbing grade/rank */}

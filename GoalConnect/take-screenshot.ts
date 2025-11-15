@@ -1,4 +1,5 @@
 import { chromium } from '@playwright/test';
+import * as fs from 'fs';
 
 /**
  * Simple screenshot utility for GoalConnect
@@ -18,9 +19,21 @@ async function takeScreenshot() {
   console.log(`💾 Saving to: ${outputFile}`);
 
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
+
+  // Load authentication state if it exists
+  const authFile = 'playwright/.auth/user.json';
+  const contextOptions: any = {
     viewport: { width: 1920, height: 1080 },
-  });
+  };
+
+  if (fs.existsSync(authFile)) {
+    contextOptions.storageState = authFile;
+    console.log('🔐 Using stored authentication');
+  } else {
+    console.log('⚠️  No auth file found. Run "npx playwright test --project=setup" first to authenticate.');
+  }
+
+  const context = await browser.newContext(contextOptions);
   const page = await context.newPage();
 
   try {

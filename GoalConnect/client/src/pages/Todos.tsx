@@ -21,6 +21,7 @@ export default function Todos() {
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const [view, setView] = useState<"list" | "week">("list");
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, 1 = next week, -1 = last week
+  const [fadingOutTodos, setFadingOutTodos] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
@@ -38,8 +39,19 @@ export default function Todos() {
         return await apiRequest(`/api/todos/${id}/complete`, "POST");
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+    onSuccess: (data: any, id: number) => {
+      const todo = todos.find(t => t.id === id);
+      // If completing a task, trigger fade-out animation
+      if (todo && !todo.completed) {
+        setFadingOutTodos((prev) => new Set(prev).add(id));
+        // Remove from DOM after animation completes (400ms)
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+        }, 400);
+      } else {
+        // If uncompleting, just refresh normally
+        queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      }
     },
   });
 
@@ -290,13 +302,15 @@ export default function Todos() {
 
                   const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
                   const completedSubtasks = subtasks.filter(st => st.completed).length;
+                  const isFadingOut = fadingOutTodos.has(todo.id);
 
                   return (
                     <div
                       key={todo.id}
                       className={cn(
                         "card transition-all",
-                        todo.completed && "opacity-60"
+                        isFadingOut && "animate-fade-out",
+                        todo.completed && !isFadingOut && "opacity-60"
                       )}
                     >
                       <div className="relative z-10 flex items-start gap-4">
@@ -407,7 +421,6 @@ export default function Todos() {
                   <p className="text-foreground font-semibold">
                     {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
-                  {weekOffset === 0 && <p className="text-xs text-muted-foreground">This week</p>}
                   {weekOffset > 0 && <p className="text-xs text-muted-foreground">{weekOffset} week{weekOffset > 1 ? 's' : ''} ahead</p>}
                   {weekOffset < 0 && <p className="text-xs text-muted-foreground">{Math.abs(weekOffset)} week{Math.abs(weekOffset) > 1 ? 's' : ''} ago</p>}
                 </div>
@@ -421,8 +434,52 @@ export default function Todos() {
               </div>
             </div>
 
-            {/* Week Grid */}
-            <div className="grid grid-cols-7 gap-3">
+            {/* Sidebar + Week Grid Layout */}
+            <div className="flex gap-4">
+              {/* Left Sidebar - Unscheduled Tasks */}
+              <div className="w-72 flex-shrink-0">
+                <div className="card p-4 sticky top-4">
+                  <div className="relative z-10">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Unscheduled Tasks</h3>
+                    <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+                      {todos.filter(t => !t.dueDate && !t.completed).map((todo) => {
+                        const gradeInfo = getTaskGrade(todo.difficulty);
+                        return (
+                          <div
+                            key={todo.id}
+                            className="bg-muted/30 rounded-lg p-3 text-xs hover:bg-muted/50 transition-colors cursor-move"
+                          >
+                            <button
+                              onClick={() => toggleTodoMutation.mutate(todo.id)}
+                              className="flex items-start gap-2 w-full text-left mb-1"
+                            >
+                              <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-foreground break-words">{todo.title}</p>
+                              </div>
+                            </button>
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground ml-6">
+                              <span className="text-[hsl(var(--accent))]">{gradeInfo.points} tokens</span>
+                              <button
+                                onClick={() => deleteTodoMutation.mutate(todo.id)}
+                                className="hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {todos.filter(t => !t.dueDate && !t.completed).length === 0 && (
+                        <p className="text-muted-foreground text-xs text-center py-4">No unscheduled tasks</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Week Grid - Now Wider */}
+              <div className="flex-1 grid grid-cols-7 gap-4">
               {weekDates.map((date, index) => {
                 const dateKey = formatDateKey(date);
                 const dayTodos = todos.filter(t => t.dueDate === dateKey);
@@ -500,6 +557,7 @@ export default function Todos() {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         )}

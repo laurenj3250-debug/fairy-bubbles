@@ -1,54 +1,83 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
+import { Plus } from "lucide-react";
+
+// Mountain-themed color palette - same as HabitsMountain page
+const habitColors = [
+  { bg: "linear-gradient(135deg, #475569 0%, #334155 100%)", name: "Stone Peak", border: "#64748b" },
+  { bg: "linear-gradient(135deg, #64748b 0%, #475569 100%)", name: "Granite Ridge", border: "#94a3b8" },
+  { bg: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", name: "Forest Base", border: "#14b8a6" },
+  { bg: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)", name: "Glacier Ice", border: "#3b82f6" },
+  { bg: "linear-gradient(135deg, #0e7490 0%, #155e75 100%)", name: "Deep Ice", border: "#06b6d4" },
+  { bg: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)", name: "Sky Ridge", border: "#3b82f6" },
+  { bg: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)", name: "Snowmelt Stream", border: "#22d3ee" },
+  { bg: "linear-gradient(135deg, #78716c 0%, #57534e 100%)", name: "Rocky Cliff", border: "#a8a29e" },
+];
+
+// Get consistent color for a habit based on its ID
+const getHabitColor = (id: number) => {
+  return habitColors[id % habitColors.length];
+};
 
 interface Habit {
   id: number;
-  name: string;
+  title: string;
   description?: string;
   categoryId?: number;
+  cadence?: "daily" | "weekly";
+  targetPerWeek?: number;
   streak?: {
     streak: number;
   };
 }
 
-interface CompletionStatus {
+interface HabitLog {
+  id: number;
   habitId: number;
-  completedAt: string | null;
+  completed: boolean;
+  habit?: Habit;
 }
 
 export function GlowingOrbHabits() {
   const queryClient = useQueryClient();
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
-  const { data: habits = [] } = useQuery<Habit[]>({
-    queryKey: ["/api/habits-with-data"],
+  const { data: allHabits = [] } = useQuery<Habit[]>({
+    queryKey: ["/api/habits"],
   });
 
-  const { data: completions = [] } = useQuery<CompletionStatus[]>({
-    queryKey: ["/api/habits/today"],
+  const { data: habitLogs = [] } = useQuery<HabitLog[]>({
+    queryKey: [`/api/habit-logs/${today}`],
   });
 
   const toggleMutation = useMutation({
     mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
-      const response = await fetch(`/api/habits/${habitId}/toggle`, {
+      const response = await fetch(`/api/habit-logs/toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed }),
+        body: JSON.stringify({ habitId, date: today }),
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to toggle habit");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habits/today"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
     },
   });
 
   const isCompleted = (habitId: number) => {
-    return completions.some((c) => c.habitId === habitId && c.completedAt);
+    const log = habitLogs.find((l) => l.habitId === habitId);
+    return log?.completed || false;
   };
+
+  const habits = allHabits.map(habit => ({
+    ...habit,
+    completed: isCompleted(habit.id)
+  }));
 
   const handleOrbClick = (habitId: number, event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -69,29 +98,17 @@ export function GlowingOrbHabits() {
 
   // Get the first 6 habits for display
   const displayHabits = habits.slice(0, 6);
-
-  // Remove hardcoded colors - use theme variables via inline styles instead
-
-  const getOrbSize = (index: number) => {
-    // Vary sizes for visual interest
-    const sizes = ["w-16 h-16", "w-20 h-20", "w-18 h-18", "w-16 h-16", "w-20 h-20", "w-18 h-18"];
-    return sizes[index] || "w-16 h-16";
-  };
+  const completedCount = habits.filter(h => h.completed).length;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Today's Habits</h3>
-        <div className="text-sm text-muted-foreground">
-          {completions.filter((c) => c.completedAt).length} / {habits.length} completed
-        </div>
-      </div>
 
-      {/* Glowing Orbs Grid */}
-      <div className="flex flex-wrap gap-4 justify-center p-6">
+      {/* Climbing Route - Horizontal row of big holds */}
+      <div className="flex gap-6 justify-center p-4 flex-wrap">
         {displayHabits.map((habit, index) => {
-          const completed = isCompleted(habit.id);
-          const orbSize = getOrbSize(index);
+          const completed = habit.completed;
+          const streakDays = habit.streak?.streak || 0;
+          const color = getHabitColor(habit.id);
 
           return (
             <motion.div
@@ -99,99 +116,45 @@ export function GlowingOrbHabits() {
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
-              className="flex flex-col items-center gap-2 group"
+              className="flex flex-col items-center gap-3 cursor-pointer"
+              onClick={(e) => handleOrbClick(habit.id, e)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <div
-                onClick={(e) => handleOrbClick(habit.id, e)}
-                className={`
-                  ${orbSize}
-                  climbing-hold
-                  rounded-full
-                  glowing-orb
-                  interactive-glow
-                  cursor-pointer
-                  relative
-                  overflow-hidden
-                  ${completed ? "completed opacity-100" : "opacity-50"}
-                `}
-                style={{
-                  animation: completed
-                    ? "orb-glow 2s ease-in-out infinite"
-                    : "none",
-                }}
-              >
-                {/* Ripple effects */}
-                {ripples
-                  .filter((r) => r.id)
-                  .map((ripple) => (
-                    <div
-                      key={ripple.id}
-                      className="ripple-effect"
-                      style={{
-                        left: ripple.x,
-                        top: ripple.y,
-                      }}
-                    />
-                  ))}
-
-                {/* Sparkles for completed habits */}
-                {completed && (
-                  <>
-                    <div
-                      className="sparkle"
-                      style={{ top: "20%", left: "30%", animationDelay: "0s" }}
-                    />
-                    <div
-                      className="sparkle"
-                      style={{ top: "60%", left: "70%", animationDelay: "0.5s" }}
-                    />
-                    <div
-                      className="sparkle"
-                      style={{ top: "40%", left: "80%", animationDelay: "1s" }}
-                    />
-                  </>
-                )}
-
-                {/* Inner glow */}
-                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/30 to-transparent" />
-
-                {/* Checkmark for completed */}
-                {completed && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    <svg
-                      className="w-8 h-8 text-white"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Habit name */}
-              <div className="text-xs text-center max-w-[80px] opacity-0 group-hover:opacity-100 transition-opacity">
-                {habit.name}
-              </div>
-
-              {/* Streak indicator */}
-              {habit.streak && habit.streak.streak > 0 && (
+              {/* Hold with name centered ON IT */}
+              <div className="relative w-72 h-48 flex items-center justify-center">
+                {/* The climbing hold - THE MAIN OBJECT */}
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="text-xs font-bold text-amber-400"
+                  className="absolute inset-0 flex items-center justify-center"
+                  animate={completed ? {
+                    filter: [
+                      `brightness(1.8) saturate(2) drop-shadow(0 0 25px ${color.border})`,
+                      `brightness(2.2) saturate(2.5) drop-shadow(0 0 40px ${color.border})`,
+                      `brightness(1.8) saturate(2) drop-shadow(0 0 25px ${color.border})`,
+                    ]
+                  } : {
+                    filter: "brightness(0.6) saturate(0.5)"
+                  }}
+                  transition={{ duration: 1.2, repeat: completed ? Infinity : 0, repeatDelay: 0.5 }}
                 >
-                  {habit.streak.streak}🔥
+                  <ClimbingHoldSVG
+                    variant={index}
+                    size={280}
+                    gradient={color.bg}
+                    borderColor={color.border}
+                  />
                 </motion.div>
-              )}
+
+                {/* Habit name centered ON the hold */}
+                <div
+                  className="relative z-20 px-4 py-2 text-base font-bold text-center drop-shadow-2xl pointer-events-none max-w-[150px]"
+                  style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.3)' }}
+                >
+                  {habit.title}
+                </div>
+
+              </div>
+
             </motion.div>
           );
         })}

@@ -9,6 +9,7 @@ import { GraniteTexture } from "./GraniteTexture";
 import { DayPickerModal } from "./DayPickerModal";
 import { useParticleSystem, type ParticleType } from "@/utils/particles";
 import { motion } from "framer-motion";
+import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
 
 interface TodaysPitchEnhancedProps {
   className?: string;
@@ -292,59 +293,76 @@ export function TodaysPitchEnhanced({ className, selectedDate }: TodaysPitchEnha
                     </h3>
                   </div>
 
-                  {/* Category habits - Glass climbing holds */}
-                  <div className="space-y-3">
+                  {/* Category habits - Glowing holds with text below */}
+                  <div className="space-y-8">
                     {categoryHabits.map((habit, index) => {
-                      const holdShape = HOLD_SHAPES[index % HOLD_SHAPES.length];
-
                       return (
                         <motion.div
                           key={habit.id}
-                          className={cn(
-                            "climbing-hold relative cursor-pointer",
-                            "p-5 min-h-[100px]",
-                            habit.completed && "completed"
-                          )}
-                          style={{
-                            borderRadius: holdShape,
-                          } as React.CSSProperties}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          className="flex flex-col items-center gap-3 cursor-pointer group"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={(e) => handleToggle(habit.id, e)}
+                          animate={habit.completed ? {
+                            rotate: [0, -5, 5, -5, 0],
+                            scale: [1, 1.1, 1],
+                          } : {}}
+                          transition={{ duration: 0.5 }}
                         >
-                          {/* Hold bolt at top */}
-                          <div className="hold-bolt" />
-
-                          <div className="flex items-center gap-4">
-                            {/* Completion indicator */}
-                            <div
+                          {/* Glowing SVG Hold - positioned above */}
+                          <div className="relative">
+                            <motion.div
                               className={cn(
-                                "w-14 h-14 rounded-full border-3 transition-all font-bold text-2xl flex items-center justify-center flex-shrink-0",
-                                habit.completed
-                                  ? "bg-gradient-to-br from-white/30 to-white/10 border-white/50 text-white shadow-lg"
-                                  : "border-white/20 hover:border-white/40 text-white/60"
+                                "transition-all duration-500",
+                                habit.completed && "brightness-125"
                               )}
+                              animate={habit.completed ? {
+                                filter: [
+                                  "brightness(1) saturate(1)",
+                                  "brightness(1.5) saturate(1.5)",
+                                  "brightness(1.2) saturate(1.2)",
+                                ]
+                              } : {}}
+                              transition={{ duration: 0.8, repeat: habit.completed ? Infinity : 0, repeatDelay: 2 }}
                             >
-                              {habit.completed ? "✓" : ""}
-                            </div>
+                              <ClimbingHoldSVG variant={index} size={140} />
+                            </motion.div>
 
-                            {/* Habit info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-foreground font-bold text-lg drop-shadow-sm">
-                                {habit.title}
-                              </div>
-                              <div className="text-sm text-foreground/80 mt-1 flex items-center gap-2">
-                                <span>{habit.icon}</span>
-                                <span>{CATEGORY_LABELS[categoryKey]}</span>
-                              </div>
-                            </div>
+                            {/* Hold bolt at top center */}
+                            <div
+                              className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-gray-800 border-2 border-gray-600 shadow-inner z-20"
+                              style={{
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5), 0 1px 2px rgba(255,255,255,0.1)'
+                              }}
+                            />
 
-                            {/* Grade + Effort */}
-                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                              <span className="text-sm font-bold text-foreground bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/30">
+                            {/* Completion checkmark overlay */}
+                            {habit.completed && (
+                              <motion.div
+                                className="absolute inset-0 flex items-center justify-center z-30"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                              >
+                                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/60 flex items-center justify-center shadow-2xl">
+                                  <span className="text-3xl text-white">✓</span>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+
+                          {/* Habit info below the hold */}
+                          <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                            <div className="text-foreground font-bold text-lg text-center drop-shadow-sm">
+                              {habit.title}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <span>{habit.icon}</span>
+                              <span>{CATEGORY_LABELS[categoryKey]}</span>
+                              <span className="px-2 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-bold">
                                 {habit.grade || "5.9"}
                               </span>
-                              <span className="text-xl text-foreground/90" title={`${habit.effort || "medium"} effort`}>
+                              <span title={`${habit.effort || "medium"} effort`}>
                                 {getEffortIcon(habit.effort || "medium")}
                               </span>
                             </div>

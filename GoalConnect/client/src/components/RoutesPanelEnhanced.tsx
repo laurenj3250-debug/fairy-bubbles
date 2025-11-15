@@ -102,7 +102,7 @@ export function RoutesPanelEnhanced({ className }: RoutesPanelEnhancedProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
-        <h2 className="text-xl font-bold text-foreground">This Week's Routes</h2>
+        <h2 className="text-xl font-bold text-foreground">Active Routes</h2>
         <div className="text-xs text-muted-foreground">
           {routeProgress.filter((r) => r.completed >= r.target).length}/{routeProgress.length} sent
         </div>

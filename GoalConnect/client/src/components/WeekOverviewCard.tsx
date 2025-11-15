@@ -81,7 +81,7 @@ export function WeekOverviewCard({
     <>
       <GlassCard className="h-full">
         <GlassCardHeader>
-          <GlassCardTitle>This Week</GlassCardTitle>
+          <GlassCardTitle>Weekly Overview</GlassCardTitle>
         </GlassCardHeader>
 
         <GlassCardContent className="space-y-4">

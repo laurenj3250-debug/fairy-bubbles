@@ -37,7 +37,7 @@ export function WeekOverviewStreak() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Week Overview */}
       <div className="glass-card interactive-glow p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">This Week</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Weekly Summary</h2>
 
         <div className="week-calendar">
           {weekDays.map((date) => {

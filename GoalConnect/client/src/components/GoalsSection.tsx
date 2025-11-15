@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Plus, Target } from "lucide-react";
+import { Plus, Target, Check } from "lucide-react";
+import { BoltLadder } from "./BoltLadder";
 
 interface Goal {
   id: number;
@@ -19,8 +19,6 @@ interface Goal {
  * Uses simple horizontal progress bars (not confusing vertical routes).
  */
 export function GoalsSection() {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
     queryKey: ['/api/goals'],
   });
@@ -38,11 +36,8 @@ export function GoalsSection() {
 
   return (
     <div className="glass-card interactive-glow p-6">
-      {/* Header - Always visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between hover:opacity-70 transition-opacity"
-      >
+      {/* Header */}
+      <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Target className="w-5 h-5 text-primary" />
@@ -56,59 +51,31 @@ export function GoalsSection() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              // Navigate to goals page or open create modal
-              window.location.href = '/goals';
-            }}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
-            aria-label="Add new goal"
-          >
-            <Plus className="w-5 h-5 text-muted-foreground" />
-          </button>
+        <button
+          onClick={() => window.location.href = '/goals'}
+          className="p-2 rounded-lg hover:bg-secondary transition-colors"
+          aria-label="Add new goal"
+        >
+          <Plus className="w-5 h-5 text-muted-foreground" />
+        </button>
+      </div>
 
-          {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-          )}
-        </div>
-      </button>
-
-      {/* Collapsible content */}
-      <div className={`collapsible ${isExpanded ? 'collapsible-open' : 'collapsible-closed'}`}>
-        {isExpanded ? (
-          <div className="mt-6 space-y-4">
-            {activeGoals.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No active routes yet.</p>
-                <button
-                  onClick={() => window.location.href = '/goals'}
-                  className="btn btn-primary mt-4"
-                >
-                  Chart Your First Route
-                </button>
-              </div>
-            ) : (
-              activeGoals.map((goal) => (
-                <GoalCard key={goal.id} goal={goal} />
-              ))
-            )}
+      {/* Goals list - always visible */}
+      <div className="mt-6 space-y-4">
+        {activeGoals.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No active routes yet.</p>
+            <button
+              onClick={() => window.location.href = '/goals'}
+              className="btn btn-primary mt-4"
+            >
+              Chart Your First Route
+            </button>
           </div>
         ) : (
-          // Collapsed view - show compact preview
-          <div className="mt-4 space-y-2">
-            {activeGoals.slice(0, 2).map((goal) => (
-              <GoalCompactCard key={goal.id} goal={goal} />
-            ))}
-            {activeGoals.length > 2 && (
-              <p className="text-xs text-muted-foreground text-center pt-2">
-                +{activeGoals.length - 2} more {activeGoals.length - 2 === 1 ? 'route' : 'routes'}
-              </p>
-            )}
-          </div>
+          activeGoals.map((goal) => (
+            <GoalCard key={goal.id} goal={goal} />
+          ))
         )}
       </div>
     </div>
@@ -125,43 +92,47 @@ function GoalCard({ goal }: GoalCardProps) {
     : 0;
 
   return (
-    <div className="glass-card interactive-glow p-4 space-y-3">
-      <div>
-        <h3 className="font-semibold text-foreground">{goal.title}</h3>
-        {goal.description && (
-          <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
-        )}
-      </div>
+    <div className="glass-card interactive-glow p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-3">
+          <div>
+            <h3 className="font-semibold text-foreground">{goal.title}</h3>
+            {goal.description && (
+              <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
+            )}
+          </div>
 
-      {/* Progress bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {goal.currentValue} / {goal.targetValue} {goal.unit}
-          </span>
-          <span className="font-medium text-foreground">
-            {progressPercentage}%
-          </span>
+          {/* Bolt Ladder */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {goal.currentValue} / {goal.targetValue} {goal.unit}
+              </span>
+              <span className="font-medium text-foreground">
+                {progressPercentage}%
+              </span>
+            </div>
+
+            <BoltLadder
+              completed={goal.currentValue}
+              target={goal.targetValue}
+              color={progressPercentage >= 80 ? "#10b981" : progressPercentage >= 50 ? "#fb923c" : "#64748b"}
+            />
+          </div>
         </div>
 
-        <div className="progress-bar">
-          <div
-            className={`progress-fill ${progressPercentage === 100 ? 'progress-fill-success' : ''}`}
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
+        {/* Action button - small circle with check */}
+        <button
+          onClick={() => {
+            // TODO: Open progress log modal
+            console.log('Log progress for goal:', goal.id);
+          }}
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110"
+          aria-label="Send pitch"
+        >
+          <Check className="w-5 h-5 text-white stroke-[3]" />
+        </button>
       </div>
-
-      {/* Action button */}
-      <button
-        onClick={() => {
-          // TODO: Open progress log modal
-          console.log('Log progress for goal:', goal.id);
-        }}
-        className="btn btn-secondary w-full text-sm"
-      >
-        Send Pitch
-      </button>
     </div>
   );
 }
@@ -172,19 +143,18 @@ function GoalCompactCard({ goal }: GoalCardProps) {
     : 0;
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/30 transition-colors">
-      <div className="flex-1 min-w-0">
+    <div className="p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+      <div className="flex items-center justify-between mb-1">
         <p className="text-sm font-medium text-foreground truncate">{goal.title}</p>
-        <div className="progress-bar mt-1 h-1.5">
-          <div
-            className="progress-fill"
-            style={{ width: `${progressPercentage}%` }}
-          />
+        <div className="flex-shrink-0 text-sm font-medium text-muted-foreground ml-2">
+          {progressPercentage}%
         </div>
       </div>
-      <div className="flex-shrink-0 text-sm font-medium text-muted-foreground">
-        {progressPercentage}%
-      </div>
+      <BoltLadder
+        completed={goal.currentValue}
+        target={goal.targetValue}
+        color={progressPercentage >= 80 ? "#10b981" : progressPercentage >= 50 ? "#fb923c" : "#64748b"}
+      />
     </div>
   );
 }
