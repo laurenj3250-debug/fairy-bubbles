@@ -544,6 +544,27 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_continent ON mountains(continent)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_region_id ON mountains(region_id)`);
         console.log('[migrate] ✅ Mountains table and indexes created/verified');
+
+        // Add background_image and theme_colors columns if they don't exist
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name='mountains' AND column_name='background_image'
+            ) THEN
+              ALTER TABLE mountains ADD COLUMN background_image TEXT;
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name='mountains' AND column_name='theme_colors'
+            ) THEN
+              ALTER TABLE mountains ADD COLUMN theme_colors TEXT DEFAULT '{}';
+            END IF;
+          END $$;
+        `);
+        console.log('[migrate] ✅ Mountains table updated with background_image and theme_colors columns');
       } catch (error) {
         console.error('[migrate] ⚠️  Failed to create mountains table:', error);
       }
@@ -755,6 +776,25 @@ export async function runMigrations() {
         console.log('[migrate] ✅ Mountain unlocks table and indexes created/verified');
       } catch (error) {
         console.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
+      }
+
+      try {
+        // Create mountain_backgrounds table for unlockable themes
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS mountain_backgrounds (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            mountain_id INTEGER NOT NULL REFERENCES mountains(id) ON DELETE CASCADE,
+            expedition_id INTEGER REFERENCES player_expeditions(id) ON DELETE SET NULL,
+            unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            is_active BOOLEAN NOT NULL DEFAULT false
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_backgrounds_user_id ON mountain_backgrounds(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_backgrounds_mountain_id ON mountain_backgrounds(mountain_id)`);
+        console.log('[migrate] ✅ Mountain backgrounds table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create mountain_backgrounds table:', error);
       }
 
       // ========== GAMIFICATION TABLES ==========
