@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Target, Check } from "lucide-react";
 import { BoltLadder } from "./BoltLadder";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getToday } from "@/lib/utils";
 
 interface Goal {
   id: number;
+  userId: number;
   title: string;
   description: string;
   currentValue: number;
@@ -21,6 +24,8 @@ interface Goal {
 export function GoalsSection() {
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
     queryKey: ['/api/goals'],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const activeGoals = goals.filter(g => g.currentValue < g.targetValue);
@@ -91,6 +96,30 @@ function GoalCard({ goal }: GoalCardProps) {
     ? Math.round((goal.currentValue / goal.targetValue) * 100)
     : 0;
 
+  const addProgressMutation = useMutation({
+    mutationFn: async () => {
+      const today = getToday();
+      return apiRequest("/api/goal-updates", "POST", {
+        goalId: goal.id,
+        userId: goal.userId,
+        value: 1,
+        date: today,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+    },
+    onError: () => {
+      alert("Failed to add progress");
+    },
+  });
+
+  const handleAddProgress = () => {
+    if (!addProgressMutation.isPending) {
+      addProgressMutation.mutate();
+    }
+  };
+
   return (
     <div className="glass-card interactive-glow p-4">
       <div className="flex items-start justify-between gap-3">
@@ -123,12 +152,10 @@ function GoalCard({ goal }: GoalCardProps) {
 
         {/* Action button - small circle with check */}
         <button
-          onClick={() => {
-            // TODO: Open progress log modal
-            console.log('Log progress for goal:', goal.id);
-          }}
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110"
-          aria-label="Send pitch"
+          onClick={handleAddProgress}
+          disabled={addProgressMutation.isPending}
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          aria-label="Add +1 progress"
         >
           <Check className="w-5 h-5 text-white stroke-[3]" />
         </button>

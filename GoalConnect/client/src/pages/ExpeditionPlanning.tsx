@@ -26,13 +26,13 @@ interface Mountain {
 interface Route {
   id: number;
   mountainId: number;
-  name: string;
-  difficultyGrade: string;
-  lengthMeters: number;
+  routeName: string;
+  gradeValue: string;
   elevationGain: number;
-  typicalDays: number;
-  description: string;
+  estimatedDays: number;
+  routeDescription: string;
   hazards: string;
+  terrainTypes: string;
 }
 
 interface GearItem {
@@ -268,30 +268,26 @@ export default function ExpeditionPlanning() {
                       } ${!canAttempt ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-bold text-white">{route.name}</h4>
+                        <h4 className="font-bold text-white">{route.routeName}</h4>
                         <Badge variant="outline" className="text-xs">
-                          {route.difficultyGrade}
+                          {route.gradeValue}
                         </Badge>
                       </div>
-                      <p className="text-sm text-slate-400 mb-3">{route.description}</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-slate-500">Distance:</span>
-                          <span className="text-white ml-1">{(route.lengthMeters / 1000).toFixed(1)} km</span>
-                        </div>
+                      <p className="text-sm text-slate-400 mb-3">{route.routeDescription}</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-slate-500">Elevation:</span>
                           <span className="text-white ml-1">{route.elevationGain} m</span>
                         </div>
                         <div>
                           <span className="text-slate-500">Duration:</span>
-                          <span className="text-white ml-1">{route.typicalDays} days</span>
+                          <span className="text-white ml-1">{route.estimatedDays} days</span>
                         </div>
                       </div>
                       {route.hazards && (
                         <div className="mt-2 text-xs text-amber-400 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" />
-                          {route.hazards}
+                          {JSON.parse(route.hazards).join(', ')}
                         </div>
                       )}
                     </button>
@@ -439,11 +435,11 @@ export default function ExpeditionPlanning() {
                   <div className="bg-slate-900/40 rounded-lg p-3 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Estimated Duration:</span>
-                      <span className="text-white font-bold">{selectedRouteData.typicalDays} days</span>
+                      <span className="text-white font-bold">{selectedRouteData.estimatedDays} days</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Difficulty:</span>
-                      <span className="text-white font-bold">{selectedRouteData.difficultyGrade}</span>
+                      <span className="text-white font-bold">{selectedRouteData.gradeValue}</span>
                     </div>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import { Home, TrendingUp, Activity, Globe, BookOpen, CheckSquare, Target } from "lucide-react";
+import { Home, TrendingUp, Activity, Globe, BookOpen, CheckSquare, Target, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -7,6 +7,7 @@ const navItems = [
   { path: "/world-map", label: "Explore", icon: Globe },
   { path: "/goals", label: "Routes", icon: Target },
   { path: "/dream-scroll", label: "Journal", icon: BookOpen },
+  { path: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function BottomNav() {

@@ -274,7 +274,7 @@ export default function Goals() {
 
       <GoalDialog
         open={goalDialogOpen}
-        onOpenChange={handleCloseDialog}
+        onClose={handleCloseDialog}
         goal={editingGoal}
       />
       <GoalProgressDialog

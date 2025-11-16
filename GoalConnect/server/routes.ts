@@ -2,6 +2,9 @@ import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ensureDatabaseInitialized } from "./init-db";
+import { getDb } from "./db";
+import { eq, sql } from "drizzle-orm";
+import * as schema from "@shared/schema";
 import {
   insertHabitSchema,
   insertHabitLogSchema,
@@ -20,16 +23,12 @@ import {
   getStreakMultiplier,
 } from "./pet-utils";
 import { requireUser } from "./simple-auth";
-import { RNGService } from "./rng-service";
-import { CombatEngine } from "./combat-engine";
 import multer from "multer";
 import path from "path";
 import AdmZip from "adm-zip";
 import fs from "fs";
 
 const getUserId = (req: Request) => requireUser(req).id;
-const rngService = new RNGService(storage);
-const combatEngine = new CombatEngine(storage);
 
 // Configure multer for sprite uploads
 const spriteStorage = multer.diskStorage({
@@ -1463,378 +1462,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ========== D&D RPG ROUTES ==========
-
-  // Biomes
-  app.get("/api/biomes", async (req, res) => {
-    try {
-      const biomes = await storage.getBiomes();
-      res.json(biomes);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch biomes" });
-    }
-  });
-
-  app.get("/api/biomes/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const biome = await storage.getBiome(id);
-      if (!biome) {
-        return res.status(404).json({ error: "Biome not found" });
-      }
-      res.json(biome);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch biome" });
-    }
-  });
-
-  // Biome Level Objects
-  app.get("/api/biomes/:id/level-objects", async (req, res) => {
-    try {
-      const biomeId = parseInt(req.params.id);
-      const levelObjects = await storage.getBiomeLevelObjects(biomeId);
-      res.json(levelObjects);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch level objects" });
-    }
-  });
-
-  app.post("/api/biomes/:id/level-objects/batch", async (req, res) => {
-    try {
-      const biomeId = parseInt(req.params.id);
-      const levelObjects = req.body;
-
-      // Validate that it's an array
-      if (!Array.isArray(levelObjects)) {
-        return res.status(400).json({ error: "Expected an array of level objects" });
-      }
-
-      // Delete all existing level objects for this biome
-      await storage.deleteBiomeLevelObjects(biomeId);
-
-      // Insert all new level objects
-      const created = await storage.createBiomeLevelObjects(
-        levelObjects.map((obj: any) => ({
-          ...obj,
-          biomeId,
-        }))
-      );
-
-      res.json(created);
-    } catch (error) {
-      console.error("Failed to save level objects:", error);
-      res.status(500).json({ error: "Failed to save level objects" });
-    }
-  });
-
-  app.delete("/api/biomes/:id/level-objects/:objectId", async (req, res) => {
-    try {
-      const objectId = parseInt(req.params.objectId);
-      await storage.deleteBiomeLevelObject(objectId);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete level object" });
-    }
-  });
-
-  // Creature Species (Compendium/Pokédex)
-  app.get("/api/creatures/species", async (req, res) => {
-    try {
-      const species = await storage.getCreatureSpecies();
-      res.json(species);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch species" });
-    }
-  });
-
-  app.get("/api/creatures/species/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const species = await storage.getCreatureSpeciesById(id);
-      if (!species) {
-        return res.status(404).json({ error: "Species not found" });
-      }
-      res.json(species);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch species" });
-    }
-  });
-
-  // User Creatures (Collection)
-  app.get("/api/creatures", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const creatures = await storage.getUserCreatures(userId);
-      res.json(creatures);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch creatures" });
-    }
-  });
-
-  app.get("/api/creatures/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      const creature = await storage.getUserCreature(id);
-      if (!creature || creature.userId !== userId) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-      res.json(creature);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch creature" });
-    }
-  });
-
-  app.patch("/api/creatures/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-
-      const existing = await storage.getUserCreature(id);
-      if (!existing || existing.userId !== userId) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-
-      const creature = await storage.updateUserCreature(id, req.body);
-      res.json(creature);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to update creature" });
-    }
-  });
-
-  // Party Management
-  app.get("/api/party", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const party = await storage.getParty(userId);
-      res.json(party);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch party" });
-    }
-  });
-
-  app.post("/api/party/:creatureId", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const creatureId = parseInt(req.params.creatureId);
-      const { position } = req.body;
-
-      const creature = await storage.addToParty(userId, creatureId, position);
-      if (!creature) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-
-      res.json(creature);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to add to party" });
-    }
-  });
-
-  app.delete("/api/party/:creatureId", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const creatureId = parseInt(req.params.creatureId);
-
-      const creature = await storage.getUserCreature(creatureId);
-      if (!creature || creature.userId !== userId) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-
-      await storage.removeFromParty(creatureId);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to remove from party" });
-    }
-  });
-
-  // Items & Inventory
-  app.get("/api/items", async (req, res) => {
-    try {
-      const items = await storage.getItems();
-      res.json(items);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch items" });
-    }
-  });
-
-  app.get("/api/inventory", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const inventory = await storage.getUserInventory(userId);
-      res.json(inventory);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch inventory" });
-    }
-  });
-
-  app.post("/api/creatures/:id/equip", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const creatureId = parseInt(req.params.id);
-      const { itemId } = req.body;
-
-      // Verify ownership
-      const creature = await storage.getUserCreature(creatureId);
-      if (!creature || creature.userId !== userId) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-
-      const equipped = await storage.equipItem(creatureId, itemId);
-      res.json(equipped);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to equip item" });
-    }
-  });
-
-  app.delete("/api/creatures/:id/equip", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const creatureId = parseInt(req.params.id);
-
-      const creature = await storage.getUserCreature(creatureId);
-      if (!creature || creature.userId !== userId) {
-        return res.status(404).json({ error: "Creature not found" });
-      }
-
-      await storage.unequipItem(creatureId);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to unequip item" });
-    }
-  });
-
-  // Daily Progress & Threshold
-  app.get("/api/daily-progress", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-      let progress = await storage.getDailyProgress(userId, date);
-      if (!progress) {
-        progress = await storage.updateDailyProgress(userId, date, {
-          habitPointsEarned: 0,
-          threshold1Reached: false,
-          threshold2Reached: false,
-          threshold3Reached: false,
-          runsAvailable: 999, // TESTING: infinite runs
-          runsUsed: 0,
-        });
-      } else {
-        // TESTING: Override runs available to 999
-        progress = { ...progress, runsAvailable: 999 };
-      }
-
-      res.json(progress);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch daily progress" });
-    }
-  });
-
-  // Player Stats
-  app.get("/api/player-stats", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-
-      let stats = await storage.getPlayerStats(userId);
-      if (!stats) {
-        stats = await storage.createPlayerStats(userId);
-      }
-
-      res.json(stats);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch player stats" });
-    }
-  });
-
-  // Encounters
-  app.get("/api/encounters", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const encounters = await storage.getEncounters(userId);
-      res.json(encounters);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch encounters" });
-    }
-  });
-
-  // Runs & Events (RNG System)
-  app.get("/api/runs", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const runs = await rngService.getAvailableRuns(userId, date);
-      res.json(runs);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch runs" });
-    }
-  });
-
-  app.post("/api/runs/use", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { biomeId } = req.body;
-      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-      if (!biomeId) {
-        return res.status(400).json({ error: "biomeId is required" });
-      }
-
-      const result = await rngService.useRun(userId, biomeId, date);
-
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-
-      res.json(result.event);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to use run" });
-    }
-  });
-
-  // Combat System
-  app.post("/api/combat/start", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { encounterId } = req.body;
-
-      if (!encounterId) {
-        return res.status(400).json({ error: "encounterId is required" });
-      }
-
-      const state = await combatEngine.initializeCombat(userId, encounterId);
-      res.json(state);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to start combat" });
-    }
-  });
-
-  app.post("/api/combat/action", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { state, action } = req.body;
-
-      if (!state || !action) {
-        return res.status(400).json({ error: "state and action are required" });
-      }
-
-      const result = await combatEngine.executeAction(userId, state, action);
-      res.json(result);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to execute combat action" });
-    }
-  });
-
-  // Shards
-  app.get("/api/shards", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const shards = await storage.getShards(userId);
-      res.json(shards);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch shards" });
-    }
-  });
-
   // Sprite Upload (stores in database)
   app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
     console.log('[sprites] ========== UPLOAD REQUEST STARTED ==========');
@@ -2124,74 +1751,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('[sprites] Get all error:', error);
       res.status(500).json({ error: error.message || "Failed to get sprites" });
-    }
-  });
-
-  // ========== GAME DATA ROUTES ==========
-
-  // Get all biomes
-  app.get("/api/game/biomes", async (req, res) => {
-    try {
-      const biomes = await storage.getBiomes();
-      res.json(biomes);
-    } catch (error: any) {
-      console.error('[game] Get biomes error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Create biome
-  app.post("/api/game/biomes", async (req, res) => {
-    try {
-      const biome = await storage.createBiome(req.body);
-      res.json(biome);
-    } catch (error: any) {
-      console.error('[game] Create biome error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get all creature species
-  app.get("/api/game/creatures", async (req, res) => {
-    try {
-      const creatures = await storage.getCreatureSpecies();
-      res.json(creatures);
-    } catch (error: any) {
-      console.error('[game] Get creatures error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Create creature species
-  app.post("/api/game/creatures", async (req, res) => {
-    try {
-      const creature = await storage.createCreatureSpecies(req.body);
-      res.json(creature);
-    } catch (error: any) {
-      console.error('[game] Create creature error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get all items
-  app.get("/api/game/items", async (req, res) => {
-    try {
-      const items = await storage.getItems();
-      res.json(items);
-    } catch (error: any) {
-      console.error('[game] Get items error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Create item
-  app.post("/api/game/items", async (req, res) => {
-    try {
-      const item = await storage.createItem(req.body);
-      res.json(item);
-    } catch (error: any) {
-      console.error('[game] Create item error:', error);
-      res.status(500).json({ error: error.message });
     }
   });
 
@@ -2858,6 +2417,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(formatted);
     } catch (error: any) {
       console.error('[mountains] Get unlocked error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get routes for a specific mountain
+  app.get("/api/mountains/:mountainId/routes", async (req, res) => {
+    try {
+      const mountainId = parseInt(req.params.mountainId);
+      const routes = await storage.getRoutesByMountainId(mountainId);
+      res.json(routes);
+    } catch (error: any) {
+      console.error('[routes] Get by mountain error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get user's backgrounds (unlocked and locked)
+  app.get("/api/user/backgrounds", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const db = getDb();
+
+      // Get all mountains with background images
+      const allMountains = await db
+        .select()
+        .from(schema.mountains)
+        .where(sql`${schema.mountains.backgroundImage} IS NOT NULL`)
+        .orderBy(schema.mountains.elevation);
+
+      // Get user's unlocked backgrounds
+      const unlockedBackgrounds = await db
+        .select()
+        .from(schema.mountainBackgrounds)
+        .where(eq(schema.mountainBackgrounds.userId, userId));
+
+      // Combine the data
+      const result = allMountains.map(mountain => {
+        const userBackground = unlockedBackgrounds.find(ub => ub.mountainId === mountain.id);
+        return {
+          id: mountain.id,
+          name: mountain.name,
+          elevation: mountain.elevation,
+          country: mountain.country,
+          backgroundImage: mountain.backgroundImage,
+          themeColors: mountain.themeColors,
+          difficultyTier: mountain.difficultyTier,
+          isActive: userBackground?.isActive || false,
+          unlocked: !!userBackground,
+          unlockedAt: userBackground?.unlockedAt || null
+        };
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('[backgrounds] Get user backgrounds error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Activate a background
+  app.patch("/api/user/backgrounds/:mountainId/activate", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const mountainId = parseInt(req.params.mountainId);
+      const db = getDb();
+
+      // Check if user has unlocked this background
+      const unlocked = await db
+        .select()
+        .from(schema.mountainBackgrounds)
+        .where(
+          sql`${schema.mountainBackgrounds.userId} = ${userId} AND ${schema.mountainBackgrounds.mountainId} = ${mountainId}`
+        );
+
+      if (unlocked.length === 0) {
+        return res.status(403).json({ error: "Background not unlocked. Summit this mountain first!" });
+      }
+
+      // Deactivate all other backgrounds
+      await db
+        .update(schema.mountainBackgrounds)
+        .set({ isActive: false })
+        .where(eq(schema.mountainBackgrounds.userId, userId));
+
+      // Activate the selected background
+      await db
+        .update(schema.mountainBackgrounds)
+        .set({ isActive: true })
+        .where(
+          sql`${schema.mountainBackgrounds.userId} = ${userId} AND ${schema.mountainBackgrounds.mountainId} = ${mountainId}`
+        );
+
+      // Get the mountain data to return
+      const mountain = await db
+        .select()
+        .from(schema.mountains)
+        .where(eq(schema.mountains.id, mountainId));
+
+      res.json({ ...mountain[0], unlocked: true, isActive: true });
+    } catch (error: any) {
+      console.error('[backgrounds] Activate background error:', error);
       res.status(500).json({ error: error.message });
     }
   });

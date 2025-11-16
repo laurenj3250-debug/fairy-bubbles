@@ -1,0 +1,332 @@
+{
+  "mountain_themes": {
+    "mount_fuji": {
+      "name": "Mount Fuji",
+      "primary": "#E74C3C",
+      "secondary": "#34495E",
+      "accent": "#F39C12",
+      "gradient": "from-red-900 via-orange-800 to-purple-900",
+      "description": "Fuji red (Japanese flag), volcanic grey, sunrise orange"
+    },
+    "kilimanjaro": {
+      "name": "Mount Kilimanjaro",
+      "primary": "#2C3E50",
+      "secondary": "#E67E22",
+      "accent": "#ECF0F1",
+      "gradient": "from-orange-900 via-slate-800 to-blue-900",
+      "description": "Dark slate, African sunset orange, glacial ice white"
+    },
+    "toubkal": {
+      "name": "Mount Toubkal",
+      "primary": "#D4915D",
+      "secondary": "#8B4513",
+      "accent": "#F4E4C1",
+      "gradient": "from-amber-800 via-orange-700 to-red-900",
+      "description": "Atlas desert sand, Berber clay, sun-bleached rock"
+    },
+    "whitney": {
+      "name": "Mount Whitney",
+      "primary": "#4682B4",
+      "secondary": "#B0C4DE",
+      "accent": "#FFD700",
+      "gradient": "from-blue-600 via-slate-400 to-amber-200",
+      "description": "Sierra Nevada blue, high alpine grey, California gold"
+    },
+    "kenya": {
+      "name": "Mount Kenya",
+      "primary": "#228B22",
+      "secondary": "#8B4513",
+      "accent": "#E8F5E9",
+      "gradient": "from-green-800 via-brown-700 to-slate-300",
+      "description": "Equatorial forest green, volcanic earth, glacial mist"
+    },
+    "orizaba": {
+      "name": "Pico de Orizaba",
+      "primary": "#8B0000",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-red-900 via-slate-700 to-blue-100",
+      "description": "Volcanic red, dark basalt, snow white"
+    },
+    "mont_blanc": {
+      "name": "Mont Blanc",
+      "primary": "#E8F4F8",
+      "secondary": "#4A90A4",
+      "accent": "#FFE4B5",
+      "gradient": "from-cyan-100 via-blue-400 to-orange-200",
+      "description": "Alpine snow, glacial blue, alpenglow"
+    },
+    "gran_paradiso": {
+      "name": "Gran Paradiso",
+      "primary": "#87CEEB",
+      "secondary": "#6B8E23",
+      "accent": "#FFFAF0",
+      "gradient": "from-sky-400 via-green-600 to-amber-50",
+      "description": "Italian sky blue, Alpine meadow green, limestone white"
+    },
+    "island_peak": {
+      "name": "Island Peak",
+      "primary": "#4169E1",
+      "secondary": "#B8860B",
+      "accent": "#F0FFFF",
+      "gradient": "from-blue-600 via-yellow-700 to-cyan-50",
+      "description": "Himalayan sky, prayer flag gold, ice blue"
+    },
+    "mera_peak": {
+      "name": "Mera Peak",
+      "primary": "#6495ED",
+      "secondary": "#CD853F",
+      "accent": "#F5F5DC",
+      "gradient": "from-blue-500 via-orange-600 to-stone-100",
+      "description": "High altitude blue, sherpa brown, mountain mist"
+    },
+    "rainier": {
+      "name": "Mount Rainier",
+      "primary": "#4682B4",
+      "secondary": "#2F4F4F",
+      "accent": "#E6F3F7",
+      "gradient": "from-blue-600 via-slate-700 to-cyan-50",
+      "description": "Pacific Northwest blue, volcanic rock, glacier white"
+    },
+    "elbrus": {
+      "name": "Mount Elbrus",
+      "primary": "#B0E0E6",
+      "secondary": "#708090",
+      "accent": "#FFFAFA",
+      "gradient": "from-cyan-200 via-slate-500 to-slate-50",
+      "description": "Caucasus ice blue, steel grey, snow white"
+    },
+    "baker": {
+      "name": "Mount Baker",
+      "primary": "#87CEEB",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-sky-300 via-slate-700 to-blue-50",
+      "description": "Cascade sky, volcanic ash, glacial ice"
+    },
+    "shasta": {
+      "name": "Mount Shasta",
+      "primary": "#DDA0DD",
+      "secondary": "#8B4513",
+      "accent": "#F5F5F5",
+      "gradient": "from-purple-300 via-orange-800 to-slate-100",
+      "description": "Lenticular cloud purple, volcanic earth, mystical white"
+    },
+    "chopicalqui": {
+      "name": "Chopicalqui",
+      "primary": "#00CED1",
+      "secondary": "#DAA520",
+      "accent": "#F0FFFF",
+      "gradient": "from-cyan-500 via-yellow-600 to-cyan-50",
+      "description": "Andean ice blue, Quechua gold, glacial azure"
+    },
+    "aoraki": {
+      "name": "Aoraki / Mount Cook",
+      "primary": "#5F9EA0",
+      "secondary": "#8B4513",
+      "accent": "#E0FFFF",
+      "gradient": "from-cyan-600 via-orange-800 to-cyan-100",
+      "description": "Southern Alps teal, Māori brown, cloud white"
+    },
+    "denali": {
+      "name": "Denali",
+      "primary": "#B0E0E6",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-blue-200 via-slate-700 to-blue-50",
+      "description": "Arctic ice, Alaskan slate, polar white"
+    },
+    "cho_oyu": {
+      "name": "Cho Oyu",
+      "primary": "#40E0D0",
+      "secondary": "#8B7355",
+      "accent": "#E0FFFF",
+      "gradient": "from-cyan-400 via-stone-600 to-cyan-100",
+      "description": "Turquoise goddess, Tibetan earth, high altitude mist"
+    },
+    "vinson": {
+      "name": "Mount Vinson",
+      "primary": "#E0FFFF",
+      "secondary": "#4682B4",
+      "accent": "#F0F8FF",
+      "gradient": "from-cyan-100 via-blue-600 to-slate-50",
+      "description": "Antarctic ice, polar blue, frozen white"
+    },
+    "gasherbrum_ii": {
+      "name": "Gasherbrum II",
+      "primary": "#F0E68C",
+      "secondary": "#4169E1",
+      "accent": "#FFFAF0",
+      "gradient": "from-yellow-200 via-blue-600 to-orange-50",
+      "description": "Shining wall gold, Karakoram blue, snow glow"
+    },
+    "broad_peak": {
+      "name": "Broad Peak",
+      "primary": "#F5DEB3",
+      "secondary": "#4682B4",
+      "accent": "#FFFAFA",
+      "gradient": "from-amber-200 via-blue-500 to-slate-50",
+      "description": "Broad plateau wheat, glacial blue, summit white"
+    },
+    "shishapangma": {
+      "name": "Shishapangma",
+      "primary": "#87CEEB",
+      "secondary": "#CD853F",
+      "accent": "#F0FFFF",
+      "gradient": "from-sky-300 via-orange-600 to-cyan-50",
+      "description": "Tibetan sky, prayer stone tan, ice field white"
+    },
+    "manaslu": {
+      "name": "Manaslu",
+      "primary": "#6A5ACD",
+      "secondary": "#DAA520",
+      "accent": "#E6E6FA",
+      "gradient": "from-purple-500 via-yellow-600 to-purple-100",
+      "description": "Mountain of spirit purple, Buddhist gold, ethereal lavender"
+    },
+    "dhaulagiri": {
+      "name": "Dhaulagiri",
+      "primary": "#F0F8FF",
+      "secondary": "#4682B4",
+      "accent": "#E6F3F7",
+      "gradient": "from-blue-50 via-blue-600 to-cyan-100",
+      "description": "White mountain snow, deep blue sky, glacial shimmer"
+    },
+    "nanga_parbat": {
+      "name": "Nanga Parbat",
+      "primary": "#8B0000",
+      "secondary": "#696969",
+      "accent": "#FFFAF0",
+      "gradient": "from-red-900 via-slate-600 to-orange-50",
+      "description": "Killer mountain red, German grey, dangerous white"
+    },
+    "makalu": {
+      "name": "Makalu",
+      "primary": "#2F4F4F",
+      "secondary": "#4169E1",
+      "accent": "#F0F8FF",
+      "gradient": "from-slate-700 via-blue-600 to-blue-50",
+      "description": "Great black slate, pyramid blue, summit ice"
+    },
+    "lhotse": {
+      "name": "Lhotse",
+      "primary": "#4682B4",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-blue-600 via-slate-700 to-blue-50",
+      "description": "South face blue, Lhotse wall grey, ice field white"
+    },
+    "kangchenjunga": {
+      "name": "Kangchenjunga",
+      "primary": "#FFD700",
+      "secondary": "#8B4513",
+      "accent": "#FFFAF0",
+      "gradient": "from-yellow-400 via-orange-800 to-amber-50",
+      "description": "Five treasures gold, sacred earth brown, untouched summit"
+    },
+    "everest": {
+      "name": "Mount Everest",
+      "primary": "#000000",
+      "secondary": "#FFD700",
+      "accent": "#F0F8FF",
+      "gradient": "from-slate-900 via-yellow-500 to-blue-50",
+      "description": "Death zone black, summit gold, goddess white"
+    },
+    "k2": {
+      "name": "K2",
+      "primary": "#2F4F4F",
+      "secondary": "#DC143C",
+      "accent": "#E0E0E0",
+      "gradient": "from-slate-800 via-red-700 to-slate-300",
+      "description": "Savage mountain grey, danger red, harsh steel"
+    },
+    "annapurna": {
+      "name": "Annapurna I",
+      "primary": "#8B4513",
+      "secondary": "#FF4500",
+      "accent": "#FFF8DC",
+      "gradient": "from-orange-800 via-red-600 to-amber-100",
+      "description": "Harvest brown, killer mountain red, goddess cream"
+    },
+    "ama_dablam": {
+      "name": "Ama Dablam",
+      "primary": "#4169E1",
+      "secondary": "#DAA520",
+      "accent": "#FFFAF0",
+      "gradient": "from-blue-600 via-yellow-600 to-orange-50",
+      "description": "Himalayan blue, mother's necklace gold, sacred white"
+    },
+    "matterhorn": {
+      "name": "Matterhorn",
+      "primary": "#8B4513",
+      "secondary": "#4682B4",
+      "accent": "#F5F5F5",
+      "gradient": "from-orange-900 via-blue-600 to-slate-100",
+      "description": "Alpine rock brown, Swiss sky blue, summit snow"
+    },
+    "eiger": {
+      "name": "Eiger",
+      "primary": "#2F4F4F",
+      "secondary": "#B22222",
+      "accent": "#E8E8E8",
+      "gradient": "from-slate-800 via-red-800 to-slate-200",
+      "description": "Murder wall grey, death red, ice face white"
+    },
+    "grandes_jorasses": {
+      "name": "Grandes Jorasses",
+      "primary": "#4682B4",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-blue-700 via-slate-800 to-cyan-50",
+      "description": "Walker Spur blue, north face black, shroud white"
+    },
+    "aconcagua": {
+      "name": "Aconcagua",
+      "primary": "#D2691E",
+      "secondary": "#4682B4",
+      "accent": "#FFF8DC",
+      "gradient": "from-orange-700 via-blue-600 to-amber-50",
+      "description": "Stone sentinel brown, Andean sky, summit cornsilk"
+    },
+    "cotopaxi": {
+      "name": "Cotopaxi",
+      "primary": "#FF4500",
+      "secondary": "#2F4F4F",
+      "accent": "#F0F8FF",
+      "gradient": "from-red-600 via-slate-700 to-blue-50",
+      "description": "Volcanic fire, crater black, snow cone white"
+    },
+    "huayna_potosi": {
+      "name": "Huayna Potosi",
+      "primary": "#4169E1",
+      "secondary": "#8B4513",
+      "accent": "#F0FFFF",
+      "gradient": "from-blue-600 via-orange-800 to-cyan-100",
+      "description": "Bolivian sky, Cordillera Real earth, glacier azure"
+    },
+    "chimborazo": {
+      "name": "Chimborazo",
+      "primary": "#87CEEB",
+      "secondary": "#8B4513",
+      "accent": "#FFFAF0",
+      "gradient": "from-sky-400 via-orange-800 to-orange-50",
+      "description": "Equatorial sky, volcanic brown, farthest point white"
+    },
+    "damavand": {
+      "name": "Damavand",
+      "primary": "#FFD700",
+      "secondary": "#8B0000",
+      "accent": "#F5F5DC",
+      "gradient": "from-yellow-400 via-red-800 to-stone-100",
+      "description": "Persian gold, volcanic maroon, sulfur beige"
+    },
+    "pisco": {
+      "name": "Nevado Pisco",
+      "primary": "#00CED1",
+      "secondary": "#F4A460",
+      "accent": "#F0FFFF",
+      "gradient": "from-cyan-500 via-orange-400 to-cyan-50",
+      "description": "Cordillera Blanca turquoise, Pisco tan, acclimatization ice"
+    }
+  }
+}

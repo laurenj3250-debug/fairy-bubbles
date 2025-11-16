@@ -198,7 +198,7 @@ export async function seedMountaineeringData() {
       bestSeasonStart: "July",
       bestSeasonEnd: "September",
       unlockRequirements: JSON.stringify({ min_level: 1, min_summits: 0, min_habit_streak: 0 }),
-      backgroundImage: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=1920&q=80", // Mount Fuji sunset
+      backgroundImage: "/backgrounds/fuji.png",
       themeColors: JSON.stringify({
         primary: "#E74C3C",     // Fuji red
         secondary: "#34495E",   // Deep blue-grey
@@ -222,7 +222,7 @@ export async function seedMountaineeringData() {
       bestSeasonStart: "January",
       bestSeasonEnd: "March",
       unlockRequirements: JSON.stringify({ min_level: 3, min_summits: 1 }),
-      backgroundImage: "https://images.unsplash.com/photo-1589182373726-e4f658ab50b0?w=1920&q=80", // Kilimanjaro glaciers
+      backgroundImage: "/backgrounds/kilimanjaro.png",
       themeColors: JSON.stringify({
         primary: "#2C3E50",     // Dark slate
         secondary: "#E67E22",   // African sunset orange
@@ -245,7 +245,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.01,
       bestSeasonStart: "May",
       bestSeasonEnd: "October",
-      unlockRequirements: JSON.stringify({ min_level: 2, min_summits: 1 })
+      unlockRequirements: JSON.stringify({ min_level: 2, min_summits: 1 }),
+      backgroundImage: "/backgrounds/toubkal.png",
+      themeColors: JSON.stringify({
+        primary: "#D35400",
+        secondary: "#8B4513",
+        accent: "#F4D03F",
+        gradient: "from-orange-800 via-amber-700 to-yellow-600"
+      })
     },
     {
       name: "Mount Whitney",
@@ -262,7 +269,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.005,
       bestSeasonStart: "July",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 2, min_summits: 0 })
+      unlockRequirements: JSON.stringify({ min_level: 2, min_summits: 0 }),
+      backgroundImage: "/backgrounds/whitney.png",
+      themeColors: JSON.stringify({
+        primary: "#95A5A6",
+        secondary: "#34495E",
+        accent: "#3498DB",
+        gradient: "from-slate-700 via-blue-800 to-sky-600"
+      })
     },
     {
       name: "Mount Kenya (Batian)",
@@ -279,7 +293,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.03,
       bestSeasonStart: "January",
       bestSeasonEnd: "March",
-      unlockRequirements: JSON.stringify({ min_level: 4, min_summits: 2 })
+      unlockRequirements: JSON.stringify({ min_level: 4, min_summits: 2 }),
+      backgroundImage: "/backgrounds/kenya.png",
+      themeColors: JSON.stringify({
+        primary: "#16A085",
+        secondary: "#8B4513",
+        accent: "#E8F8F5",
+        gradient: "from-teal-800 via-green-700 to-cyan-100"
+      })
     },
     {
       name: "Pico de Orizaba",
@@ -296,7 +317,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.02,
       bestSeasonStart: "November",
       bestSeasonEnd: "March",
-      unlockRequirements: JSON.stringify({ min_level: 5, min_summits: 2 })
+      unlockRequirements: JSON.stringify({ min_level: 5, min_summits: 2 }),
+      backgroundImage: "/backgrounds/orizaba.png",
+      themeColors: JSON.stringify({
+        primary: "#E67E22",
+        secondary: "#2C3E50",
+        accent: "#F4ECE6",
+        gradient: "from-orange-700 via-slate-800 to-amber-50"
+      })
     },
     {
       name: "Mont Blanc",
@@ -313,7 +341,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.15,
       bestSeasonStart: "June",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 6, min_summits: 3 })
+      unlockRequirements: JSON.stringify({ min_level: 6, min_summits: 3 }),
+      backgroundImage: "/backgrounds/blanc.png",
+      themeColors: JSON.stringify({
+        primary: "#ECF0F1",
+        secondary: "#3498DB",
+        accent: "#F39C12",
+        gradient: "from-slate-100 via-blue-400 to-amber-500"
+      })
     },
     {
       name: "Gran Paradiso",
@@ -330,7 +365,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.05,
       bestSeasonStart: "June",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 5, min_summits: 2 })
+      unlockRequirements: JSON.stringify({ min_level: 5, min_summits: 2 }),
+      backgroundImage: "/backgrounds/paradiso.png",
+      themeColors: JSON.stringify({
+        primary: "#3498DB",
+        secondary: "#27AE60",
+        accent: "#F8F9FA",
+        gradient: "from-blue-600 via-emerald-500 to-slate-50"
+      })
     },
     {
       name: "Island Peak (Imja Tse)",
@@ -347,7 +389,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.08,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 3 })
+      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 3 }),
+      backgroundImage: "/backgrounds/island.png",
+      themeColors: JSON.stringify({
+        primary: "#5DADE2",
+        secondary: "#2C3E50",
+        accent: "#F8C471",
+        gradient: "from-blue-400 via-slate-800 to-amber-300"
+      })
     },
     {
       name: "Mera Peak",
@@ -364,7 +413,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.05,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 4 })
+      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 4 }),
+      backgroundImage: "/backgrounds/mera.png",
+      themeColors: JSON.stringify({
+        primary: "#85C1E9",
+        secondary: "#F8F9FA",
+        accent: "#F1C40F",
+        gradient: "from-blue-300 via-slate-50 to-yellow-400"
+      })
     },
 
     // ========== INTERMEDIATE TIER (30 mountains) ==========
@@ -383,7 +439,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.12,
       bestSeasonStart: "May",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 5 })
+      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 5 }),
+      backgroundImage: "/backgrounds/rainier.png",
+      themeColors: JSON.stringify({
+        primary: "#AED6F1",
+        secondary: "#34495E",
+        accent: "#D5DBDB",
+        gradient: "from-blue-300 via-slate-700 to-slate-300"
+      })
     },
     {
       name: "Mount Elbrus",
@@ -400,7 +463,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.18,
       bestSeasonStart: "June",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 10, min_summits: 6 })
+      unlockRequirements: JSON.stringify({ min_level: 10, min_summits: 6 }),
+      backgroundImage: "/backgrounds/elbrus.png",
+      themeColors: JSON.stringify({
+        primary: "#AED6F1",
+        secondary: "#566573",
+        accent: "#D5D8DC",
+        gradient: "from-blue-200 via-slate-600 to-slate-200"
+      })
     },
     {
       name: "Aconcagua",
@@ -417,7 +487,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.25,
       bestSeasonStart: "December",
       bestSeasonEnd: "February",
-      unlockRequirements: JSON.stringify({ min_level: 12, min_summits: 7 })
+      unlockRequirements: JSON.stringify({ min_level: 12, min_summits: 7 }),
+      backgroundImage: "/backgrounds/aconcagua.png",
+      themeColors: JSON.stringify({
+        primary: "#95A5A6",
+        secondary: "#5D6D7E",
+        accent: "#FAD7A0",
+        gradient: "from-slate-400 via-slate-600 to-amber-200"
+      })
     },
     {
       name: "Mount Baker",
@@ -434,7 +511,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.08,
       bestSeasonStart: "May",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 4 })
+      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 4 }),
+      backgroundImage: "/backgrounds/baker.png",
+      themeColors: JSON.stringify({
+        primary: "#5DADE2",
+        secondary: "#AAB7B8",
+        accent: "#FDEBD0",
+        gradient: "from-blue-400 via-slate-300 to-amber-100"
+      })
     },
     {
       name: "Cotopaxi",
@@ -451,7 +535,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.10,
       bestSeasonStart: "December",
       bestSeasonEnd: "January",
-      unlockRequirements: JSON.stringify({ min_level: 10, min_summits: 6 })
+      unlockRequirements: JSON.stringify({ min_level: 10, min_summits: 6 }),
+      backgroundImage: "/backgrounds/cotopaxi.png",
+      themeColors: JSON.stringify({
+        primary: "#E67E22",
+        secondary: "#2C3E50",
+        accent: "#F8F9FA",
+        gradient: "from-orange-600 via-slate-900 to-slate-100"
+      })
     },
     {
       name: "Mount Shasta",
@@ -468,7 +559,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.06,
       bestSeasonStart: "May",
       bestSeasonEnd: "July",
-      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 4 })
+      unlockRequirements: JSON.stringify({ min_level: 7, min_summits: 4 }),
+      backgroundImage: "/backgrounds/shasta.png",
+      themeColors: JSON.stringify({
+        primary: "#9B59B6",
+        secondary: "#ECF0F1",
+        accent: "#1ABC9C",
+        gradient: "from-purple-700 via-slate-100 to-teal-500"
+      })
     },
     {
       name: "Huayna Potosi",
@@ -485,7 +583,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.12,
       bestSeasonStart: "May",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 9, min_summits: 5 })
+      unlockRequirements: JSON.stringify({ min_level: 9, min_summits: 5 }),
+      backgroundImage: "/backgrounds/potosi.png",
+      themeColors: JSON.stringify({
+        primary: "#5499C7",
+        secondary: "#273746",
+        accent: "#F8C471",
+        gradient: "from-blue-500 via-slate-900 to-amber-300"
+      })
     },
     {
       name: "Chopicalqui",
@@ -502,7 +607,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.15,
       bestSeasonStart: "May",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 11, min_summits: 7 })
+      unlockRequirements: JSON.stringify({ min_level: 11, min_summits: 7 }),
+      backgroundImage: "/backgrounds/chopicalqui.png",
+      themeColors: JSON.stringify({
+        primary: "#5DADE2",
+        secondary: "#E8F8F5",
+        accent: "#48C9B0",
+        gradient: "from-blue-400 via-cyan-50 to-teal-400"
+      })
     },
     {
       name: "Nevado Pisco",
@@ -519,7 +631,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.08,
       bestSeasonStart: "May",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 9, min_summits: 5 })
+      unlockRequirements: JSON.stringify({ min_level: 9, min_summits: 5 }),
+      backgroundImage: "/backgrounds/pisco.png",
+      themeColors: JSON.stringify({
+        primary: "#3498DB",
+        secondary: "#F8F9FA",
+        accent: "#52BE80",
+        gradient: "from-blue-600 via-slate-50 to-emerald-500"
+      })
     },
     {
       name: "Aoraki / Mount Cook",
@@ -536,7 +655,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.35,
       bestSeasonStart: "December",
       bestSeasonEnd: "February",
-      unlockRequirements: JSON.stringify({ min_level: 13, min_summits: 8 })
+      unlockRequirements: JSON.stringify({ min_level: 13, min_summits: 8 }),
+      backgroundImage: "/backgrounds/cook.png",
+      themeColors: JSON.stringify({
+        primary: "#5DADE2",
+        secondary: "#34495E",
+        accent: "#A3E4D7",
+        gradient: "from-blue-400 via-slate-700 to-teal-200"
+      })
     },
     {
       name: "Damavand",
@@ -553,7 +679,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.03,
       bestSeasonStart: "June",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 5 })
+      unlockRequirements: JSON.stringify({ min_level: 8, min_summits: 5 }),
+      backgroundImage: "/backgrounds/damavand.png",
+      themeColors: JSON.stringify({
+        primary: "#E74C3C",
+        secondary: "#F4D03F",
+        accent: "#D5DBDB",
+        gradient: "from-red-700 via-yellow-500 to-slate-200"
+      })
     },
     {
       name: "Ama Dablam",
@@ -570,7 +703,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.45,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 18, min_summits: 12 })
+      unlockRequirements: JSON.stringify({ min_level: 18, min_summits: 12 }),
+      backgroundImage: "/backgrounds/dablam.png",
+      themeColors: JSON.stringify({
+        primary: "#F39C12",
+        secondary: "#2C3E50",
+        accent: "#AED6F1",
+        gradient: "from-amber-600 via-slate-900 to-blue-300"
+      })
     },
 
     // ========== ADVANCED TIER (30 mountains) ==========
@@ -589,7 +729,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.50,
       bestSeasonStart: "May",
       bestSeasonEnd: "July",
-      unlockRequirements: JSON.stringify({ min_level: 20, min_summits: 10 })
+      unlockRequirements: JSON.stringify({ min_level: 20, min_summits: 10 }),
+      backgroundImage: "/backgrounds/denali.png",
+      themeColors: JSON.stringify({
+        primary: "#D6EAF8",
+        secondary: "#212F3C",
+        accent: "#85C1E9",
+        gradient: "from-blue-100 via-slate-900 to-blue-300"
+      })
     },
     {
       name: "Matterhorn",
@@ -606,7 +753,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 1.20,
       bestSeasonStart: "July",
       bestSeasonEnd: "September",
-      unlockRequirements: JSON.stringify({ min_level: 16, min_summits: 10 })
+      unlockRequirements: JSON.stringify({ min_level: 16, min_summits: 10 }),
+      backgroundImage: "/backgrounds/matterhorn.png",
+      themeColors: JSON.stringify({
+        primary: "#566573",
+        secondary: "#E74C3C",
+        accent: "#ECF0F1",
+        gradient: "from-slate-600 via-red-700 to-slate-100"
+      })
     },
     {
       name: "Eiger (North Face)",
@@ -623,7 +777,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 2.50,
       bestSeasonStart: "July",
       bestSeasonEnd: "August",
-      unlockRequirements: JSON.stringify({ min_level: 25, min_summits: 15 })
+      unlockRequirements: JSON.stringify({ min_level: 25, min_summits: 15 }),
+      backgroundImage: "/backgrounds/eiger.png",
+      themeColors: JSON.stringify({
+        primary: "#2C3E50",
+        secondary: "#E8F8F5",
+        accent: "#E74C3C",
+        gradient: "from-slate-900 via-cyan-50 to-red-700"
+      })
     },
     {
       name: "Cho Oyu",
@@ -640,7 +801,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 1.30,
       bestSeasonStart: "September",
       bestSeasonEnd: "October",
-      unlockRequirements: JSON.stringify({ min_level: 35, min_summits: 18, required_climbs: [] })
+      unlockRequirements: JSON.stringify({ min_level: 35, min_summits: 18, required_climbs: [] }),
+      backgroundImage: "/backgrounds/cho.png",
+      themeColors: JSON.stringify({
+        primary: "#48C9B0",
+        secondary: "#F8F9FA",
+        accent: "#F4D03F",
+        gradient: "from-teal-400 via-slate-50 to-yellow-400"
+      })
     },
     {
       name: "Mount Vinson",
@@ -657,7 +825,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 0.10,
       bestSeasonStart: "November",
       bestSeasonEnd: "January",
-      unlockRequirements: JSON.stringify({ min_level: 22, min_summits: 12 })
+      unlockRequirements: JSON.stringify({ min_level: 22, min_summits: 12 }),
+      backgroundImage: "/backgrounds/vinson.png",
+      themeColors: JSON.stringify({
+        primary: "#EBF5FB",
+        secondary: "#5DADE2",
+        accent: "#AEB6BF",
+        gradient: "from-blue-50 via-blue-400 to-slate-400"
+      })
     },
     {
       name: "Gasherbrum II",
@@ -674,7 +849,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 2.20,
       bestSeasonStart: "June",
       bestSeasonEnd: "August",
-      unlockRequirements: JSON.stringify({ min_level: 38, min_summits: 20 })
+      unlockRequirements: JSON.stringify({ min_level: 38, min_summits: 20 }),
+      backgroundImage: "/backgrounds/gasherbrum.png",
+      themeColors: JSON.stringify({
+        primary: "#F8F9FA",
+        secondary: "#5499C7",
+        accent: "#AAB7B8",
+        gradient: "from-slate-50 via-blue-500 to-slate-400"
+      })
     },
     {
       name: "Broad Peak",
@@ -691,7 +873,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 3.10,
       bestSeasonStart: "June",
       bestSeasonEnd: "August",
-      unlockRequirements: JSON.stringify({ min_level: 40, min_summits: 22 })
+      unlockRequirements: JSON.stringify({ min_level: 40, min_summits: 22 }),
+      backgroundImage: "/backgrounds/broad.png",
+      themeColors: JSON.stringify({
+        primary: "#D5DBDB",
+        secondary: "#2874A6",
+        accent: "#85929E",
+        gradient: "from-slate-200 via-blue-700 to-slate-500"
+      })
     },
     {
       name: "Shishapangma",
@@ -708,7 +897,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 1.80,
       bestSeasonStart: "September",
       bestSeasonEnd: "October",
-      unlockRequirements: JSON.stringify({ min_level: 36, min_summits: 19 })
+      unlockRequirements: JSON.stringify({ min_level: 36, min_summits: 19 }),
+      backgroundImage: "/backgrounds/shishapangma.png",
+      themeColors: JSON.stringify({
+        primary: "#5DADE2",
+        secondary: "#D5DBDB",
+        accent: "#F39C12",
+        gradient: "from-blue-400 via-slate-200 to-amber-600"
+      })
     },
     {
       name: "Manaslu",
@@ -725,7 +921,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 5.50,
       bestSeasonStart: "September",
       bestSeasonEnd: "October",
-      unlockRequirements: JSON.stringify({ min_level: 37, min_summits: 20 })
+      unlockRequirements: JSON.stringify({ min_level: 37, min_summits: 20 }),
+      backgroundImage: "/backgrounds/manaslu.png",
+      themeColors: JSON.stringify({
+        primary: "#9B59B6",
+        secondary: "#ECF0F1",
+        accent: "#F4D03F",
+        gradient: "from-purple-600 via-slate-100 to-yellow-400"
+      })
     },
     {
       name: "Dhaulagiri",
@@ -742,7 +945,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 3.80,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 42, min_summits: 23 })
+      unlockRequirements: JSON.stringify({ min_level: 42, min_summits: 23 }),
+      backgroundImage: "/backgrounds/dhaulagiri.png",
+      themeColors: JSON.stringify({
+        primary: "#ECF0F1",
+        secondary: "#154360",
+        accent: "#5DADE2",
+        gradient: "from-slate-100 via-blue-900 to-blue-400"
+      })
     },
 
     // ========== EXPERT TIER (15 mountains) ==========
@@ -761,7 +971,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 5.50,
       bestSeasonStart: "June",
       bestSeasonEnd: "August",
-      unlockRequirements: JSON.stringify({ min_level: 44, min_summits: 25 })
+      unlockRequirements: JSON.stringify({ min_level: 44, min_summits: 25 }),
+      backgroundImage: "/backgrounds/parbat.png",
+      themeColors: JSON.stringify({
+        primary: "#E74C3C",
+        secondary: "#2C3E50",
+        accent: "#F8F9FA",
+        gradient: "from-red-700 via-slate-900 to-slate-100"
+      })
     },
     {
       name: "Makalu",
@@ -778,7 +995,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 4.80,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 46, min_summits: 26 })
+      unlockRequirements: JSON.stringify({ min_level: 46, min_summits: 26 }),
+      backgroundImage: "/backgrounds/makalu.png",
+      themeColors: JSON.stringify({
+        primary: "#2C3E50",
+        secondary: "#AED6F1",
+        accent: "#F39C12",
+        gradient: "from-slate-900 via-blue-300 to-amber-600"
+      })
     },
     {
       name: "Lhotse",
@@ -795,7 +1019,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 2.80,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 47, min_summits: 28 })
+      unlockRequirements: JSON.stringify({ min_level: 47, min_summits: 28 }),
+      backgroundImage: "/backgrounds/lhotse.png",
+      themeColors: JSON.stringify({
+        primary: "#5499C7",
+        secondary: "#D5DBDB",
+        accent: "#F8C471",
+        gradient: "from-blue-500 via-slate-200 to-amber-300"
+      })
     },
     {
       name: "Grandes Jorasses (North Face)",
@@ -812,7 +1043,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 1.80,
       bestSeasonStart: "July",
       bestSeasonEnd: "August",
-      unlockRequirements: JSON.stringify({ min_level: 28, min_summits: 16 })
+      unlockRequirements: JSON.stringify({ min_level: 28, min_summits: 16 }),
+      backgroundImage: "/backgrounds/jorasses.png",
+      themeColors: JSON.stringify({
+        primary: "#34495E",
+        secondary: "#AED6F1",
+        accent: "#BDC3C7",
+        gradient: "from-slate-700 via-blue-300 to-slate-300"
+      })
     },
     {
       name: "Kangchenjunga",
@@ -829,7 +1067,14 @@ export async function seedMountaineeringData() {
       fatalityRate: 4.00,
       bestSeasonStart: "April",
       bestSeasonEnd: "May",
-      unlockRequirements: JSON.stringify({ min_level: 48, min_summits: 30 })
+      unlockRequirements: JSON.stringify({ min_level: 48, min_summits: 30 }),
+      backgroundImage: "/backgrounds/kangchenjunga.png",
+      themeColors: JSON.stringify({
+        primary: "#F4D03F",
+        secondary: "#F8F9FA",
+        accent: "#E74C3C",
+        gradient: "from-yellow-400 via-slate-50 to-red-700"
+      })
     },
 
     // ========== ELITE TIER (8 mountains - the 8000m death zone peaks) ==========
@@ -852,14 +1097,14 @@ export async function seedMountaineeringData() {
         min_level: 50,
         min_summits: 30,
         min_habit_streak: 100,
-        required_climbs: [] // Will be filled with IDs of prerequisite 7000m+ peaks
+        required_climbs: []
       }),
-      backgroundImage: "https://images.unsplash.com/photo-1571336944958-1e79a3a44e5c?w=1920&q=80", // Everest from basecamp
+      backgroundImage: "/backgrounds/everest.png",
       themeColors: JSON.stringify({
-        primary: "#1A237E",     // Deep Himalayan blue
-        secondary: "#FFD54F",   // Prayer flag gold
-        accent: "#E1F5FE",      // Ice blue
-        gradient: "from-blue-950 via-indigo-900 to-slate-900"
+        primary: "#2C3E50",
+        secondary: "#F39C12",
+        accent: "#ECF0F1",
+        gradient: "from-slate-900 via-amber-600 to-slate-100"
       })
     },
     {
@@ -881,6 +1126,13 @@ export async function seedMountaineeringData() {
         min_level: 55,
         min_summits: 35,
         min_habit_streak: 150
+      }),
+      backgroundImage: "/backgrounds/k2.png",
+      themeColors: JSON.stringify({
+        primary: "#212F3C",
+        secondary: "#E74C3C",
+        accent: "#85929E",
+        gradient: "from-slate-950 via-red-800 to-slate-500"
       })
     },
     {
@@ -902,6 +1154,37 @@ export async function seedMountaineeringData() {
         min_level: 52,
         min_summits: 32,
         min_habit_streak: 120
+      }),
+      backgroundImage: "/backgrounds/annapurna.png",
+      themeColors: JSON.stringify({
+        primary: "#E74C3C",
+        secondary: "#34495E",
+        accent: "#F8F9FA",
+        gradient: "from-red-800 via-slate-800 to-slate-100"
+      })
+    },
+    {
+      name: "Chimborazo",
+      elevation: 6263,
+      country: "Ecuador",
+      mountainRange: "Andes",
+      continent: "South America",
+      latitude: -1.4692,
+      longitude: -78.8175,
+      difficultyTier: "intermediate",
+      requiredClimbingLevel: 11,
+      description: "The point on Earth's surface farthest from its center due to equatorial bulge.",
+      firstAscentYear: 1880,
+      fatalityRate: 0.10,
+      bestSeasonStart: "December",
+      bestSeasonEnd: "January",
+      unlockRequirements: JSON.stringify({ min_level: 11, min_summits: 6 }),
+      backgroundImage: "/backgrounds/chimborazo.png",
+      themeColors: JSON.stringify({
+        primary: "#87CEEB",
+        secondary: "#8B4513",
+        accent: "#FFFAF0",
+        gradient: "from-sky-400 via-orange-800 to-orange-50"
       })
     }
   ];

@@ -14,10 +14,12 @@ import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
 import DreamScroll from "@/pages/DreamScrollMountain";
+import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useMountainTheme } from "@/hooks/useMountainTheme";
 import { useEffect } from "react";
@@ -157,6 +159,12 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
+      <Route path="/settings">
+        <RequireAuth>
+          <Settings />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -170,18 +178,20 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <ProgressBackground>
-            <Toaster />
-            <AppRoutes />
-          </ProgressBackground>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </TooltipProvider>
+        <BackgroundProvider>
+          <TooltipProvider>
+            <ProgressBackground>
+              <Toaster />
+              <AppRoutes />
+            </ProgressBackground>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+          </TooltipProvider>
+        </BackgroundProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

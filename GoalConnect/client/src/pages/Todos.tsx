@@ -18,7 +18,7 @@ interface Subtask {
 
 export default function Todos() {
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
-  const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "completed">("pending");
   const [view, setView] = useState<"list" | "week">("list");
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, 1 = next week, -1 = last week
   const [fadingOutTodos, setFadingOutTodos] = useState<Set<number>>(new Set());
@@ -436,20 +436,20 @@ export default function Todos() {
         {view === "week" && (
           <div>
             {/* Enhanced Week Header Bar */}
-            <div className="rounded-2xl bg-gradient-to-r from-slate-900/85 via-slate-900/75 to-slate-900/85 border border-white/10 px-6 py-4 mb-6 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+            <div className="rounded-2xl bg-gradient-to-r from-orange-900/20 via-amber-900/15 to-orange-900/20 border border-orange-400/30 px-6 py-4 mb-6 shadow-[0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl">
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setWeekOffset(weekOffset - 1)}
-                    className="h-8 w-8 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition"
+                    className="h-8 w-8 rounded-full border border-orange-400/30 flex items-center justify-center hover:bg-orange-400/20 transition"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.14em] text-orange-200/80 mb-1">
+                    <div className="text-xs uppercase tracking-[0.14em] text-orange-300/90 mb-1">
                       Expedition week
                     </div>
-                    <div className="text-lg font-semibold tracking-wide">
+                    <div className="text-lg font-semibold tracking-wide text-foreground">
                       {formatWeekRange()}
                     </div>
 
@@ -480,15 +480,15 @@ export default function Todos() {
                 </div>
 
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="text-slate-300/80">
-                    {weeklyStats.pending} pending · <span className="text-emerald-300/90">{weeklyStats.completed} completed</span>
+                  <span className="text-foreground/80">
+                    {weeklyStats.pending} pending · <span className="text-emerald-400">{weeklyStats.completed} completed</span>
                   </span>
-                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200/90">
+                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
                     {weeklyStats.totalTokens} tokens this week
                   </span>
                   <button
                     onClick={() => setWeekOffset(weekOffset + 1)}
-                    className="h-8 w-8 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition"
+                    className="h-8 w-8 rounded-full border border-orange-400/30 flex items-center justify-center hover:bg-orange-400/20 transition"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -499,22 +499,22 @@ export default function Todos() {
             {/* Horizontal scroll container */}
             <div className="flex gap-4 overflow-x-auto pb-2">
               {/* Unscheduled Tasks Card */}
-              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-gradient-to-b from-slate-900/85 to-slate-900/80 border border-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl p-4">
+              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-gradient-to-b from-amber-900/15 to-orange-900/10 border border-orange-400/25 shadow-[0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4">
                 <div className="relative z-10 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.16em] text-slate-300/80">
+                      <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                         Unscheduled
                       </div>
-                      <div className="font-semibold">Basecamp Tasks</div>
+                      <div className="font-semibold text-foreground">Basecamp Tasks</div>
                     </div>
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-800/80 border border-white/10 text-xs">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 border border-orange-400/30 text-xs">
                       🧺
                     </span>
                   </div>
 
                   {todos.filter(t => !t.dueDate && !t.completed).length === 0 ? (
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Drop ideas here to sort them into the week later.
                     </p>
                   ) : (
@@ -525,10 +525,10 @@ export default function Todos() {
                           <button
                             key={todo.id}
                             onClick={() => toggleTodoMutation.mutate(todo.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-500/40 text-[11px] hover:bg-slate-700/80 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/20 border border-orange-400/40 text-[11px] hover:bg-amber-900/30 transition-colors text-foreground"
                           >
                             <span className="truncate max-w-[140px]">{todo.title}</span>
-                            <span className="flex items-center gap-0.5 text-emerald-300/90">
+                            <span className="flex items-center gap-0.5 text-emerald-400">
                               ⛰
                               <span>{gradeInfo.points}</span>
                             </span>
@@ -551,25 +551,25 @@ export default function Todos() {
                   <div
                     key={dateKey}
                     className={cn(
-                      "min-w-[170px] flex-shrink-0 rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl p-4 flex flex-col gap-3 transition-all",
+                      "min-w-[170px] flex-shrink-0 rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 flex flex-col gap-3 transition-all",
                       isToday
-                        ? "bg-gradient-to-b from-orange-500/35 via-orange-400/20 to-slate-900/85 border-orange-400/60"
-                        : "bg-gradient-to-b from-slate-900/85 via-slate-900/80 to-slate-900/85 border-white/10 hover:border-orange-400/50 hover:-translate-y-0.5"
+                        ? "bg-gradient-to-b from-orange-500/30 via-orange-400/15 to-amber-900/10 border-orange-400/50"
+                        : "bg-gradient-to-b from-amber-900/15 via-orange-900/10 to-amber-900/10 border-orange-400/20 hover:border-orange-400/40 hover:-translate-y-0.5"
                     )}
                   >
                     <div className="relative z-10">
                       {/* Day header */}
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-300/80">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                             {dayNames[date.getDay()]}
                           </div>
-                          <div className="text-2xl font-semibold leading-none">
+                          <div className="text-2xl font-semibold leading-none text-foreground">
                             {date.getDate()}
                           </div>
                         </div>
                         {isToday && (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-orange-500/20 border border-orange-400/60 text-orange-100">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-orange-500/25 border border-orange-400/50 text-orange-100">
                             Today
                           </span>
                         )}
@@ -578,7 +578,7 @@ export default function Todos() {
                       {/* Tasks pills */}
                       <div className="flex-1 mt-3 space-y-2 min-h-[120px]">
                         {dayTodos.length === 0 ? (
-                          <p className="text-[11px] text-slate-400">
+                          <p className="text-[11px] text-muted-foreground">
                             Rest day · no tasks ✨
                           </p>
                         ) : (
@@ -589,17 +589,17 @@ export default function Todos() {
                                 <button
                                   key={todo.id}
                                   onClick={() => toggleTodoMutation.mutate(todo.id)}
-                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-600/50 text-xs hover:bg-slate-700/80 transition-colors w-full"
+                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-amber-900/20 border border-orange-400/40 text-xs hover:bg-amber-900/30 transition-colors w-full text-foreground"
                                 >
                                   <span className="truncate">{todo.title}</span>
-                                  <span className="flex items-center gap-0.5 text-emerald-300/90 text-[11px] shrink-0 ml-1">
+                                  <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] shrink-0 ml-1">
                                     ⛰<span>{gradeInfo.points}</span>
                                   </span>
                                 </button>
                               );
                             })}
                             {dayTodos.length > 3 && (
-                              <div className="text-[11px] text-slate-400">
+                              <div className="text-[11px] text-muted-foreground">
                                 +{dayTodos.length - 3} more…
                               </div>
                             )}
@@ -615,7 +615,7 @@ export default function Todos() {
                             quickAddTodoMutation.mutate({ title: title.trim(), dueDate: dateKey });
                           }
                         }}
-                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 bg-slate-800/80 border border-slate-500/60 text-slate-100 hover:bg-orange-500/70 hover:border-orange-400 hover:text-slate-900 transition-colors w-full"
+                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 bg-orange-500/15 border border-orange-400/40 text-foreground hover:bg-orange-500/30 hover:border-orange-400/60 transition-colors w-full"
                       >
                         <span className="text-sm">＋</span>
                         Add task

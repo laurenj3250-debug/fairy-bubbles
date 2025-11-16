@@ -149,11 +149,19 @@ export default function ActiveExpedition() {
                 <div className="mt-2">
                   <div className="font-bold">{data.mountainBackground.name} Theme</div>
                   <div className="text-sm text-muted-foreground">
-                    New background and color scheme available in settings
+                    New background and color scheme available
                   </div>
                 </div>
               ),
               duration: 8000,
+              action: (
+                <button
+                  onClick={() => window.location.href = '/settings'}
+                  className="px-3 py-1 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded transition-colors"
+                >
+                  View Settings
+                </button>
+              ),
             });
           }, baseDelay + 500);
         }
