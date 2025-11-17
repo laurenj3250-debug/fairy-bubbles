@@ -27,6 +27,7 @@ import multer from "multer";
 import path from "path";
 import AdmZip from "adm-zip";
 import fs from "fs";
+import { calculateMissionParameters, calculateBaseXP, calculateBasePoints } from "./mission-calculator";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -3303,6 +3304,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching current mission:", error);
       res.status(500).json({ error: "Failed to fetch current mission" });
+    }
+  });
+
+  // Get next mountain to attempt
+  app.get("/api/expedition-missions/next", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const db = getDb();
+
+      // Get user's current mountain index from climbing stats
+      let [climbingStats] = await db
+        .select()
+        .from(schema.playerClimbingStats)
+        .where(eq(schema.playerClimbingStats.userId, userId))
+        .limit(1);
+
+      // Create climbing stats if they don't exist
+      if (!climbingStats) {
+        [climbingStats] = await db
+          .insert(schema.playerClimbingStats)
+          .values({ userId })
+          .returning();
+      }
+
+      const currentIndex = climbingStats.currentMountainIndex || 1;
+
+      // Get all mountains ordered by id (sequential progression)
+      const allMountains = await db
+        .select()
+        .from(schema.mountains)
+        .orderBy(schema.mountains.id);
+
+      // Get the mountain at current index (1-based)
+      const nextMountain = allMountains[currentIndex - 1];
+
+      if (!nextMountain) {
+        return res.status(404).json({ error: "No more mountains available" });
+      }
+
+      // Check if user meets level requirement
+      const meetsLevelRequirement = climbingStats.climbingLevel >= nextMountain.requiredClimbingLevel;
+
+      // Calculate mission parameters
+      const missionParams = calculateMissionParameters(nextMountain);
+
+      res.json({
+        mountain: nextMountain,
+        missionParams,
+        meetsLevelRequirement,
+        userLevel: climbingStats.climbingLevel,
+        requiredLevel: nextMountain.requiredClimbingLevel,
+      });
+    } catch (error) {
+      console.error("Error fetching next mountain:", error);
+      res.status(500).json({ error: "Failed to fetch next mountain" });
     }
   });
 
