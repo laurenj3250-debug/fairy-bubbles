@@ -370,6 +370,7 @@ export const playerClimbingStats = pgTable("player_climbing_stats", {
   // Progression
   climbingLevel: integer("climbing_level").notNull().default(1),
   totalExperience: integer("total_experience").notNull().default(0),
+  currentMountainIndex: integer("current_mountain_index").notNull().default(1),
 
   // Achievements
   summitsReached: integer("summits_reached").notNull().default(0),
@@ -481,6 +482,37 @@ export const mountainBackgrounds = pgTable("mountain_backgrounds", {
   isActive: boolean("is_active").notNull().default(false), // Currently selected background
 });
 
+// Expedition Missions (Time-based habit challenges to unlock mountains)
+export const expeditionMissions = pgTable("expedition_missions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mountainId: integer("mountain_id").notNull().references(() => mountains.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 20 }).notNull()
+    .$type<"active" | "completed" | "failed">(),
+
+  // Mission parameters
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  completionDate: timestamp("completion_date"),
+  totalDays: integer("total_days").notNull(),
+  currentDay: integer("current_day").notNull().default(1),
+  requiredCompletionPercent: integer("required_completion_percent").notNull(), // 75, 80, 90, 100
+
+  // Progress tracking
+  daysCompleted: integer("days_completed").notNull().default(0),
+  perfectDays: integer("perfect_days").notNull().default(0),
+  totalHabitsCompleted: integer("total_habits_completed").notNull().default(0),
+  totalHabitsPossible: integer("total_habits_possible").notNull().default(0),
+
+  // Rewards earned (for completed missions)
+  xpEarned: integer("xp_earned").default(0),
+  pointsEarned: integer("points_earned").default(0),
+  bonusesEarned: text("bonuses_earned").default("[]"), // JSON array of bonus types
+
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // TypeScript types for mountaineering tables
 export type WorldMapRegion = typeof worldMapRegions.$inferSelect;
 export type Mountain = typeof mountains.$inferSelect;
@@ -494,6 +526,7 @@ export type ExpeditionEvent = typeof expeditionEvents.$inferSelect;
 export type ExpeditionGearLoadout = typeof expeditionGearLoadout.$inferSelect;
 export type MountainUnlock = typeof mountainUnlocks.$inferSelect;
 export type MountainBackground = typeof mountainBackgrounds.$inferSelect;
+export type ExpeditionMission = typeof expeditionMissions.$inferSelect;
 
 // Insert schemas for mountaineering tables
 export const insertWorldMapRegionSchema = createInsertSchema(worldMapRegions).omit({ id: true, createdAt: true });

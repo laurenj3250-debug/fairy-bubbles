@@ -557,6 +557,53 @@ export async function runMigrations() {
         console.error('[migrate] ⚠️  Failed to create mountain_backgrounds table:', error);
       }
 
+      try {
+        // Create expedition_missions table if it doesn't exist
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS expedition_missions (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            mountain_id INTEGER NOT NULL REFERENCES mountains(id) ON DELETE CASCADE,
+            status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'completed', 'failed')),
+
+            start_date TIMESTAMP NOT NULL DEFAULT NOW(),
+            completion_date TIMESTAMP,
+            total_days INTEGER NOT NULL,
+            current_day INTEGER NOT NULL DEFAULT 1,
+            required_completion_percent INTEGER NOT NULL,
+
+            days_completed INTEGER NOT NULL DEFAULT 0,
+            perfect_days INTEGER NOT NULL DEFAULT 0,
+            total_habits_completed INTEGER NOT NULL DEFAULT 0,
+            total_habits_possible INTEGER NOT NULL DEFAULT 0,
+
+            xp_earned INTEGER DEFAULT 0,
+            points_earned INTEGER DEFAULT 0,
+            bonuses_earned TEXT DEFAULT '[]',
+
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_missions_user_id ON expedition_missions(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_missions_status ON expedition_missions(user_id, status)`);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_expedition_missions_active ON expedition_missions(user_id) WHERE status = 'active'`);
+        console.log('[migrate] ✅ Expedition missions table and indexes created/verified');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to create expedition_missions table:', error);
+      }
+
+      try {
+        // Add current_mountain_index to player_climbing_stats
+        await db.execute(sql`
+          ALTER TABLE player_climbing_stats
+          ADD COLUMN IF NOT EXISTS current_mountain_index INTEGER NOT NULL DEFAULT 1
+        `);
+        console.log('[migrate] ✅ current_mountain_index column added to player_climbing_stats');
+      } catch (error) {
+        console.error('[migrate] ⚠️  Failed to add current_mountain_index:', error);
+      }
+
       // ========== GAMIFICATION TABLES ==========
 
       try {
