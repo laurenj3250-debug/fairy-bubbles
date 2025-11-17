@@ -3366,6 +3366,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start a new expedition mission
+  app.post("/api/expedition-missions/start", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { mountainId } = req.body;
+      const db = getDb();
+
+      if (!mountainId) {
+        return res.status(400).json({ error: "Mountain ID required" });
+      }
+
+      // Check if user already has an active mission
+      const [existingMission] = await db
+        .select()
+        .from(schema.expeditionMissions)
+        .where(
+          and(
+            eq(schema.expeditionMissions.userId, userId),
+            eq(schema.expeditionMissions.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (existingMission) {
+        return res.status(400).json({ error: "Already have an active mission" });
+      }
+
+      // Get mountain details
+      const [mountain] = await db
+        .select()
+        .from(schema.mountains)
+        .where(eq(schema.mountains.id, mountainId))
+        .limit(1);
+
+      if (!mountain) {
+        return res.status(404).json({ error: "Mountain not found" });
+      }
+
+      // Check user level requirement
+      const [climbingStats] = await db
+        .select()
+        .from(schema.playerClimbingStats)
+        .where(eq(schema.playerClimbingStats.userId, userId))
+        .limit(1);
+
+      if (climbingStats && climbingStats.climbingLevel < mountain.requiredClimbingLevel) {
+        return res.status(403).json({
+          error: "Level too low",
+          required: mountain.requiredClimbingLevel,
+          current: climbingStats.climbingLevel,
+        });
+      }
+
+      // Calculate mission parameters
+      const missionParams = calculateMissionParameters(mountain);
+
+      // Create mission
+      const [newMission] = await db
+        .insert(schema.expeditionMissions)
+        .values({
+          userId,
+          mountainId,
+          status: "active",
+          totalDays: missionParams.totalDays,
+          requiredCompletionPercent: missionParams.requiredCompletionPercent,
+        })
+        .returning();
+
+      res.json({
+        mission: newMission,
+        mountain,
+      });
+    } catch (error) {
+      console.error("Error starting mission:", error);
+      res.status(500).json({ error: "Failed to start mission" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
