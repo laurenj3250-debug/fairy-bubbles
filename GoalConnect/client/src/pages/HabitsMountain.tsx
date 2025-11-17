@@ -194,14 +194,8 @@ export default function HabitsMountain() {
   }
 
   return (
-    <div className="min-h-screen pb-24" data-weather={weather}>
-      {/* Weather overlay with animated effects */}
-      <WeatherOverlay weather={weather} />
-
-      {/* Vertical vignette for depth */}
-      <div className="fixed inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 pointer-events-none z-0" />
-
-      <div className="relative z-10 max-w-5xl mx-auto p-6">
+    <div className="min-h-screen pb-24">
+      <div className="max-w-5xl mx-auto p-6">
         {/* Back Button */}
         <div className="mb-6">
           <Link href="/weekly-hub">
@@ -212,36 +206,41 @@ export default function HabitsMountain() {
           </Link>
         </div>
 
-        {/* Hero Header */}
-        <div className="mb-8 relative">
-          <div className="flex items-start justify-between">
+        {/* Hero Header - Soft glass */}
+        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-8 mb-8 relative overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
+            }}
+          />
+
+          <div className="flex items-start justify-between relative z-10">
             <div>
-              {/* Giant title with gradient */}
               <h1
-                className="font-heading text-5xl md:text-6xl font-bold mb-3"
+                className="text-4xl font-bold mb-2"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(var(--cliff-orange)) 0%, hsl(40 90% 65%) 100%)',
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}
               >
-                Your Routes
+                Daily Routes
               </h1>
 
-              {/* Subtitle */}
-              <p className="text-base text-foreground/70 max-w-2xl font-medium">
-                {habits.length} {habits.length === 1 ? 'route' : 'routes'} building your expedition strength • {completedToday} sent today
+              <p className="text-sm text-foreground/60">
+                {habits.length} {habits.length === 1 ? 'route' : 'routes'} • {completedToday} sent today
               </p>
             </div>
 
-            {/* Date Navigator - compact, top right */}
-            <div className="flex items-center gap-2 bg-card/60 backdrop-blur-sm rounded-xl p-2 border border-card-border shadow-lg">
+            {/* Date Navigator - soft glass */}
+            <div className="flex items-center gap-2 bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl p-2 shadow-lg">
               <button
                 onClick={goToPreviousDay}
-                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-lg bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-all"
               >
-                <ChevronLeft className="w-4 h-4 text-foreground" />
+                <ChevronLeft className="w-4 h-4" style={{ color: 'hsl(var(--foreground))' }} />
               </button>
 
               <div className="px-3 text-sm font-medium text-foreground min-w-[120px] text-center">
@@ -250,9 +249,9 @@ export default function HabitsMountain() {
 
               <button
                 onClick={goToNextDay}
-                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-lg bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-all"
               >
-                <ChevronRight className="w-4 h-4 text-foreground" />
+                <ChevronRight className="w-4 h-4" style={{ color: 'hsl(var(--foreground))' }} />
               </button>
             </div>
           </div>
@@ -411,26 +410,26 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
   return (
     <div
-      className={`bg-card/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border shadow-lg topo-pattern ${
-        completed ? 'border-[hsl(var(--accent))] shadow-[hsl(var(--accent))]/20' : 'border-card-border'
+      className={`bg-background/40 backdrop-blur-xl rounded-2xl p-6 relative overflow-hidden transition-all duration-500 border shadow-lg ${
+        completed ? 'border-foreground/20 shadow-xl' : 'border-foreground/10'
       } ${isCompleting ? 'scale-98' : 'scale-100 hover:scale-[1.02]'}`}
     >
-      {/* Gradient background accent */}
+      {/* Soft gradient overlay */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
-          background: color.bg,
+          background: `radial-gradient(circle at top left, hsl(var(--accent) / 0.3), transparent 70%)`
         }}
       />
 
       <div className="flex items-start gap-5 relative z-10">
         {/* Left side: Elevation Icon */}
         <div
-          className="w-20 h-20 rounded-xl flex items-center justify-center text-4xl flex-shrink-0 border-2"
+          className="w-20 h-20 rounded-xl flex items-center justify-center text-4xl flex-shrink-0 border shadow-lg"
           style={{
-            background: `linear-gradient(135deg, ${color.border}40 0%, ${color.border}20 100%)`,
-            borderColor: color.border,
-            boxShadow: `0 4px 20px ${color.border}40`,
+            background: `linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.1))`,
+            borderColor: 'hsl(var(--foreground) / 0.15)',
+            boxShadow: '0 4px 20px hsl(var(--accent) / 0.15)',
           }}
         >
           {habit.icon}
@@ -472,16 +471,19 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                   return (
                     <div
                       key={i}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold transition-all duration-500 border-2 ${
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold transition-all duration-500 border ${
                         isCompleted
-                          ? 'border-[hsl(var(--accent))]/50 shadow-lg'
-                          : 'border-border'
+                          ? 'shadow-lg'
+                          : ''
                       }`}
                       style={{
-                        background: isCompleted ? color.bg : 'hsl(var(--muted))',
+                        background: isCompleted
+                          ? `linear-gradient(135deg, hsl(var(--accent) / 0.8), hsl(var(--primary) / 0.6))`
+                          : 'hsl(var(--muted))',
                         color: 'hsl(var(--foreground))',
                         transform: isCompleted ? 'scale(1)' : 'scale(0.9)',
-                        boxShadow: isCompleted ? `0 4px 15px ${color.border}60` : 'none',
+                        boxShadow: isCompleted ? '0 4px 15px hsl(var(--accent) / 0.3)' : 'none',
+                        borderColor: isCompleted ? 'hsl(var(--accent) / 0.4)' : 'hsl(var(--foreground) / 0.1)',
                       }}
                     >
                       {isCompleted && '✓'}
@@ -491,7 +493,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
               </div>
               <p className="text-sm text-muted-foreground font-semibold">
                 {progress}/{target} this week {weeklyProgress?.isComplete && (
-                  <span className="ml-2 text-[hsl(var(--accent))]">
+                  <span className="ml-2" style={{ color: 'hsl(var(--accent))' }}>
                     ✓ Complete!
                   </span>
                 )}
@@ -516,11 +518,11 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                   style={{
                     width: `${completionRate}%`,
                     background: completionRate >= 70
-                      ? 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)'
+                      ? `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))`
                       : completionRate >= 40
-                      ? 'hsl(var(--accent))'
-                      : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                    boxShadow: '0 0 8px hsl(var(--accent) / 0.5)',
+                      ? `linear-gradient(90deg, hsl(var(--accent)), hsl(var(--secondary)))`
+                      : `linear-gradient(90deg, hsl(var(--secondary)), hsl(var(--accent)))`,
+                    boxShadow: '0 0 8px hsl(var(--accent) / 0.4)',
                   }}
                 />
               </div>
@@ -538,21 +540,22 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           <button
             onClick={handleToggleWithFeedback}
             disabled={isCompleting}
-            className={`px-6 py-4 rounded-xl font-bold text-foreground transition-all duration-500 border-2 ${
+            className={`px-6 py-4 rounded-xl font-bold transition-all duration-500 border shadow-lg hover:shadow-xl ${
               completed
-                ? 'border-[hsl(var(--accent))]/50'
-                : 'border-border hover:border-border/80'
+                ? 'text-white'
+                : 'text-foreground'
             }`}
             style={{
               background: completed
-                ? 'hsl(var(--accent))'
-                : 'hsl(var(--muted))',
+                ? `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))`
+                : 'hsl(var(--background) / 0.6)',
               cursor: isCompleting ? 'not-allowed' : 'pointer',
               transform: isCompleting ? 'scale(1.05)' : 'scale(1)',
               boxShadow: completed
-                ? '0 4px 20px hsl(var(--accent) / 0.4)'
-                : '0 2px 10px rgba(0,0,0,0.2)',
+                ? '0 4px 20px hsl(var(--accent) / 0.3)'
+                : '0 2px 10px hsl(var(--foreground) / 0.1)',
               minWidth: '100px',
+              borderColor: completed ? 'hsl(var(--accent) / 0.4)' : 'hsl(var(--foreground) / 0.15)',
             }}
           >
             {isCompleting ? (

@@ -11,12 +11,12 @@ interface RouteStatsPanelProps {
 
 export function RouteStatsPanel({ sent, inProgress, total }: RouteStatsPanelProps) {
   return (
-    <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg relative overflow-hidden">
-      {/* Soft teal glow */}
+    <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl p-6 shadow-lg relative overflow-hidden">
+      {/* Soft gradient overlay */}
       <div
-        className="absolute inset-0 opacity-5"
+        className="absolute inset-0 opacity-10 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at 50% 50%, hsl(180 70% 50%), transparent 70%)',
+          background: 'radial-gradient(circle at center, hsl(var(--accent) / 0.3), transparent 70%)',
         }}
       />
 

@@ -346,12 +346,23 @@ export default function Todos() {
                         <button
                           onClick={() => toggleTodoMutation.mutate(todo.id)}
                           disabled={toggleTodoMutation.isPending}
-                          className={cn(
-                            "mt-1 flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all",
-                            todo.completed
-                              ? "bg-green-500 border-green-400 text-white"
-                              : "border-card-border hover:border-primary hover:bg-primary/20"
-                          )}
+                          className="mt-1 flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all text-white"
+                          style={{
+                            background: todo.completed ? 'hsl(var(--accent))' : 'transparent',
+                            borderColor: todo.completed ? 'hsl(var(--accent) / 0.8)' : 'hsl(var(--foreground) / 0.2)'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!todo.completed) {
+                              e.currentTarget.style.borderColor = 'hsl(var(--primary))';
+                              e.currentTarget.style.background = 'hsl(var(--primary) / 0.2)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!todo.completed) {
+                              e.currentTarget.style.borderColor = 'hsl(var(--foreground) / 0.2)';
+                              e.currentTarget.style.background = 'transparent';
+                            }
+                          }}
                         >
                           {todo.completed && <CheckCircle className="w-5 h-5" />}
                         </button>
@@ -378,7 +389,7 @@ export default function Todos() {
                                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
                                 >
                                   {subtask.completed ? (
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+                                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(var(--accent))' }} />
                                   ) : (
                                     <Circle className="w-4 h-4 flex-shrink-0" />
                                   )}
@@ -436,17 +447,26 @@ export default function Todos() {
         {view === "week" && (
           <div>
             {/* Enhanced Week Header Bar */}
-            <div className="rounded-2xl bg-gradient-to-r from-orange-900/20 via-amber-900/15 to-orange-900/20 border border-orange-400/30 px-6 py-4 mb-6 shadow-[0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+            <div className="rounded-2xl bg-background/40 backdrop-blur-xl border border-foreground/10 px-6 py-4 mb-6 shadow-xl relative overflow-hidden">
+              {/* Soft gradient overlay */}
+              <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle at left, hsl(var(--secondary) / 0.3), transparent 70%)`
+                }}
+              />
+
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setWeekOffset(weekOffset - 1)}
-                    className="h-8 w-8 rounded-full border border-orange-400/30 flex items-center justify-center hover:bg-orange-400/20 transition"
+                    className="h-8 w-8 rounded-full border border-foreground/20 flex items-center justify-center hover:bg-foreground/10 transition"
+                    style={{ color: 'hsl(var(--foreground))' }}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.14em] text-orange-300/90 mb-1">
+                    <div className="text-xs uppercase tracking-[0.14em] mb-1" style={{ color: 'hsl(var(--foreground) / 0.7)' }}>
                       Expedition week
                     </div>
                     <div className="text-lg font-semibold tracking-wide text-foreground">
@@ -464,14 +484,14 @@ export default function Todos() {
                         return (
                           <span
                             key={dateKey}
-                            className={cn(
-                              "h-1.5 w-4 rounded-full transition",
-                              isToday
-                                ? "bg-orange-400"
+                            className="h-1.5 w-4 rounded-full transition"
+                            style={{
+                              background: isToday
+                                ? 'hsl(var(--primary))'
                                 : hasCompleted
-                                ? "bg-emerald-400/60"
-                                : "bg-white/10 hover:bg-white/20"
-                            )}
+                                ? 'hsl(var(--accent) / 0.6)'
+                                : 'hsl(var(--foreground) / 0.1)'
+                            }}
                           />
                         );
                       })}
@@ -481,14 +501,19 @@ export default function Todos() {
 
                 <div className="flex items-center gap-3 text-xs">
                   <span className="text-foreground/80">
-                    {weeklyStats.pending} pending · <span className="text-emerald-400">{weeklyStats.completed} completed</span>
+                    {weeklyStats.pending} pending · <span style={{ color: 'hsl(var(--accent))' }}>{weeklyStats.completed} completed</span>
                   </span>
-                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
+                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full border" style={{
+                    background: 'hsl(var(--accent) / 0.15)',
+                    borderColor: 'hsl(var(--accent) / 0.3)',
+                    color: 'hsl(var(--accent))'
+                  }}>
                     {weeklyStats.totalTokens} tokens this week
                   </span>
                   <button
                     onClick={() => setWeekOffset(weekOffset + 1)}
-                    className="h-8 w-8 rounded-full border border-orange-400/30 flex items-center justify-center hover:bg-orange-400/20 transition"
+                    className="h-8 w-8 rounded-full border border-foreground/20 flex items-center justify-center hover:bg-foreground/10 transition"
+                    style={{ color: 'hsl(var(--foreground))' }}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -499,7 +524,15 @@ export default function Todos() {
             {/* Horizontal scroll container */}
             <div className="flex gap-4 overflow-x-auto pb-2">
               {/* Unscheduled Tasks Card */}
-              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-gradient-to-b from-amber-900/15 to-orange-900/10 border border-orange-400/25 shadow-[0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4">
+              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-background/40 backdrop-blur-xl border border-foreground/10 shadow-lg p-4 relative overflow-hidden">
+                {/* Soft gradient overlay */}
+                <div
+                  className="absolute inset-0 opacity-10 pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle at top, hsl(var(--accent) / 0.3), transparent 70%)`
+                  }}
+                />
+
                 <div className="relative z-10 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -508,7 +541,10 @@ export default function Todos() {
                       </div>
                       <div className="font-semibold text-foreground">Basecamp Tasks</div>
                     </div>
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 border border-orange-400/30 text-xs">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs" style={{
+                      background: 'hsl(var(--accent) / 0.15)',
+                      borderColor: 'hsl(var(--accent) / 0.3)'
+                    }}>
                       🧺
                     </span>
                   </div>
@@ -525,10 +561,14 @@ export default function Todos() {
                           <button
                             key={todo.id}
                             onClick={() => toggleTodoMutation.mutate(todo.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/20 border border-orange-400/40 text-[11px] hover:bg-amber-900/30 transition-colors text-foreground"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] hover:bg-foreground/5 transition-colors text-foreground"
+                            style={{
+                              background: 'hsl(var(--background) / 0.6)',
+                              borderColor: 'hsl(var(--accent) / 0.4)'
+                            }}
                           >
                             <span className="truncate max-w-[140px]">{todo.title}</span>
-                            <span className="flex items-center gap-0.5 text-emerald-400">
+                            <span className="flex items-center gap-0.5" style={{ color: 'hsl(var(--accent))' }}>
                               ⛰
                               <span>{gradeInfo.points}</span>
                             </span>
@@ -550,13 +590,23 @@ export default function Todos() {
                 return (
                   <div
                     key={dateKey}
-                    className={cn(
-                      "min-w-[170px] flex-shrink-0 rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 flex flex-col gap-3 transition-all",
-                      isToday
-                        ? "bg-gradient-to-b from-orange-500/30 via-orange-400/15 to-amber-900/10 border-orange-400/50"
-                        : "bg-gradient-to-b from-amber-900/15 via-orange-900/10 to-amber-900/10 border-orange-400/20 hover:border-orange-400/40 hover:-translate-y-0.5"
-                    )}
+                    className="min-w-[170px] flex-shrink-0 rounded-2xl border shadow-lg hover:shadow-xl backdrop-blur-xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5 relative overflow-hidden"
+                    style={{
+                      background: 'hsl(var(--background) / 0.4)',
+                      borderColor: isToday ? 'hsl(var(--primary) / 0.4)' : 'hsl(var(--foreground) / 0.1)',
+                      boxShadow: isToday ? '0 4px 20px hsl(var(--primary) / 0.2)' : undefined
+                    }}
                   >
+                    {/* Soft gradient overlay for today */}
+                    {isToday && (
+                      <div
+                        className="absolute inset-0 opacity-10 pointer-events-none"
+                        style={{
+                          background: `radial-gradient(circle at top, hsl(var(--primary) / 0.4), transparent 70%)`
+                        }}
+                      />
+                    )}
+
                     <div className="relative z-10">
                       {/* Day header */}
                       <div className="flex items-center justify-between">
@@ -569,7 +619,10 @@ export default function Todos() {
                           </div>
                         </div>
                         {isToday && (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-orange-500/25 border border-orange-400/50 text-orange-100">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] border text-white" style={{
+                            background: 'hsl(var(--primary) / 0.3)',
+                            borderColor: 'hsl(var(--primary) / 0.5)'
+                          }}>
                             Today
                           </span>
                         )}

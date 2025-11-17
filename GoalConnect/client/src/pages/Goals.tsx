@@ -130,103 +130,174 @@ export default function Goals() {
 
   return (
     <div className="min-h-screen pb-24">
-      <div className="relative z-10 max-w-5xl mx-auto p-6">
-        {/* Header */}
-        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-6 mb-6 relative overflow-hidden">
+      <div className="max-w-5xl mx-auto p-6">
+        {/* Header - Glass morphism with soft shadows */}
+        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-8 mb-8 relative overflow-hidden">
+          {/* Soft gradient overlay */}
+          <div
+            className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at top left,
+                hsl(var(--primary) / 0.3),
+                transparent 60%)`
+            }}
+          />
+
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">
-                Your Routes
+              <h1
+                className="text-4xl font-bold mb-2"
+                style={{
+                  background: `linear-gradient(135deg,
+                    hsl(var(--primary)),
+                    hsl(var(--accent)))`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Your Summits
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Track your progress towards your climbing goals
+              <p className="text-sm text-foreground/60">
+                Track your journey to each peak
               </p>
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-6 py-6 bg-primary hover:bg-primary/90 text-white shadow-lg transition-all duration-300 hover:scale-105"
+              className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: `linear-gradient(135deg,
+                  hsl(var(--primary)),
+                  hsl(var(--accent)))`,
+                color: 'white'
+              }}
             >
               <Plus className="w-5 h-5 mr-2" />
-              <span className="font-semibold">New Route</span>
+              <span className="font-semibold">New Summit</span>
             </Button>
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
-            <div className="flex items-center gap-3 mb-2 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-primary" />
+        {/* Stats Overview - Soft glass cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
+            <div
+              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at center, hsl(var(--primary) / 0.4), transparent 70%)`
+              }}
+            />
+            <div className="flex items-center gap-4 relative z-10">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.1))`,
+                  border: '1px solid hsl(var(--primary) / 0.3)'
+                }}
+              >
+                <Trophy className="w-7 h-7" style={{ color: 'hsl(var(--primary))' }} />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{completedGoals}</div>
-                <div className="text-xs text-muted-foreground">Sent</div>
+                <div className="text-3xl font-bold text-foreground">{completedGoals}</div>
+                <div className="text-sm text-foreground/60">Summited</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
-            <div className="flex items-center gap-3 mb-2 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-[hsl(var(--accent))]" />
+          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
+            <div
+              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at center, hsl(var(--accent) / 0.4), transparent 70%)`
+              }}
+            />
+            <div className="flex items-center gap-4 relative z-10">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--accent) / 0.2), hsl(var(--accent) / 0.1))`,
+                  border: '1px solid hsl(var(--accent) / 0.3)'
+                }}
+              >
+                <TrendingUp className="w-7 h-7" style={{ color: 'hsl(var(--accent))' }} />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{inProgressGoals}</div>
-                <div className="text-xs text-muted-foreground">In Progress</div>
+                <div className="text-3xl font-bold text-foreground">{inProgressGoals}</div>
+                <div className="text-sm text-foreground/60">Climbing</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-5 relative">
-            <div className="flex items-center gap-3 mb-2 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-[hsl(var(--accent))]/20 flex items-center justify-center">
-                <Target className="w-5 h-5 text-[hsl(var(--accent))]" />
+          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
+            <div
+              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at center, hsl(var(--secondary) / 0.4), transparent 70%)`
+              }}
+            />
+            <div className="flex items-center gap-4 relative z-10">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--secondary) / 0.2), hsl(var(--secondary) / 0.1))`,
+                  border: '1px solid hsl(var(--secondary) / 0.3)'
+                }}
+              >
+                <Target className="w-7 h-7" style={{ color: 'hsl(var(--secondary))' }} />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{goals.length}</div>
-                <div className="text-xs text-muted-foreground">Total Routes</div>
+                <div className="text-3xl font-bold text-foreground">{goals.length}</div>
+                <div className="text-sm text-foreground/60">Total Peaks</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* View Tabs */}
-        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-2 flex gap-2 mb-6 relative">
+        {/* View Tabs - Soft glass toggle */}
+        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 flex gap-2 mb-8">
           <Button
-            variant={activeView === "all" ? "default" : "ghost"}
+            variant="ghost"
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
+              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "all"
-                ? "bg-primary text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
             )}
+            style={activeView === "all" ? {
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            } : {}}
             onClick={() => setActiveView("all")}
           >
             <Target className="w-4 h-4 mr-2" />
-            All Routes
+            All Peaks
           </Button>
           <Button
-            variant={activeView === "weekly" ? "default" : "ghost"}
+            variant="ghost"
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
+              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "weekly"
-                ? "bg-primary text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
             )}
+            style={activeView === "weekly" ? {
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            } : {}}
             onClick={() => setActiveView("weekly")}
           >
             <Calendar className="w-4 h-4 mr-2" />
             This Week
           </Button>
           <Button
-            variant={activeView === "monthly" ? "default" : "ghost"}
+            variant="ghost"
             className={cn(
-              "flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition-all duration-300 relative z-10",
+              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
               activeView === "monthly"
-                ? "bg-primary text-white shadow-lg"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
             )}
+            style={activeView === "monthly" ? {
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            } : {}}
             onClick={() => setActiveView("monthly")}
           >
             <Calendar className="w-4 h-4 mr-2" />
@@ -236,29 +307,42 @@ export default function Goals() {
 
         {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-12 text-center relative">
+          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-16 text-center relative overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at center, hsl(var(--primary) / 0.3), transparent 70%)`
+              }}
+            />
             <div className="relative z-10">
-              <Target className="w-16 h-16 mx-auto mb-6 text-primary" />
+              <Target
+                className="w-20 h-20 mx-auto mb-6"
+                style={{ color: 'hsl(var(--primary) / 0.6)' }}
+              />
               <h2 className="text-3xl font-bold text-foreground mb-4">
-                No Routes Yet
+                No Peaks Yet
               </h2>
-              <p className="text-muted-foreground mb-8 text-lg">
+              <p className="text-foreground/60 mb-8 text-lg max-w-md mx-auto">
                 {activeView === "all"
-                  ? "Create your first route and start tracking your progress"
+                  ? "Begin your journey by choosing your first summit to conquer"
                   : activeView === "weekly"
-                  ? "No routes due this week"
-                  : "No routes due this month"}
+                  ? "No summits planned for this week"
+                  : "No summits planned for this month"}
               </p>
               <Button
                 onClick={handleCreateNew}
-                className="rounded-full px-8 py-6 text-lg bg-primary hover:bg-primary/90 text-white shadow-lg"
+                className="rounded-full px-8 py-4 text-lg shadow-xl hover:scale-105 transition-all duration-300"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  color: 'white'
+                }}
               >
-                Create First Route
+                Choose Your First Summit
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {filteredGoals.map((goal) => (
               <GoalCard
                 key={goal.id}
@@ -351,42 +435,61 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
   return (
     <div
-      className={`bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern p-4 relative overflow-hidden transition-all duration-500 hover:scale-101 ${
-        isHighPriority ? 'ring-2 ring-red-400/50' : ''
-      }`}
-      style={isHighPriority ? {
-        boxShadow: '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.15)',
-      } : {}}
+      className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group"
     >
-      {/* Accent bar */}
+      {/* Soft gradient overlay based on progress */}
       <div
-        className={`absolute top-0 left-0 right-0 ${urgencyColor} ${isHighPriority ? 'h-1.5' : 'h-1'}`}
+        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
+        style={{
+          background: isComplete
+            ? `radial-gradient(circle at top right, hsl(var(--primary) / 0.4), transparent 70%)`
+            : `radial-gradient(circle at top right, hsl(var(--accent) / 0.3), transparent 70%)`
+        }}
       />
 
       <div className="flex items-start gap-3 relative z-10">
         {/* Left side: Main content */}
         <div className="flex-1">
-          {/* Priority, Category & Points Badges */}
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+          {/* Priority, Category & Points Badges - Soft glass pills */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
             {/* Priority Badge */}
-            <Badge
-              className={`${priorityStyle.bg} ${priorityStyle.text} border ${priorityStyle.border} font-bold uppercase text-xs`}
+            <div
+              className="px-3 py-1.5 rounded-full text-xs font-bold uppercase backdrop-blur-sm"
+              style={{
+                background: isHighPriority
+                  ? 'linear-gradient(135deg, hsl(var(--accent) / 0.2), hsl(var(--accent) / 0.1))'
+                  : 'hsl(var(--foreground) / 0.05)',
+                border: isHighPriority
+                  ? '1px solid hsl(var(--accent) / 0.4)'
+                  : '1px solid hsl(var(--foreground) / 0.1)',
+                color: isHighPriority ? 'hsl(var(--accent))' : 'hsl(var(--foreground) / 0.6)'
+              }}
             >
-              {priorityStyle.icon} {goal.priority || "medium"} priority
-            </Badge>
+              {priorityStyle.icon} {goal.priority || "medium"}
+            </div>
 
             {goal.category && (
-              <Badge
-                className={`${borderColor} bg-card/50 ${textColor} border`}
+              <div
+                className="px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm"
+                style={{
+                  background: 'hsl(var(--primary) / 0.1)',
+                  border: '1px solid hsl(var(--primary) / 0.2)',
+                  color: 'hsl(var(--primary))'
+                }}
               >
                 {goal.category}
-              </Badge>
+              </div>
             )}
-            <Badge
-              className="bg-primary/20 text-primary border border-primary/30"
+            <div
+              className="px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm"
+              style={{
+                background: 'hsl(var(--secondary) / 0.15)',
+                border: '1px solid hsl(var(--secondary) / 0.3)',
+                color: 'hsl(var(--secondary))'
+              }}
             >
               🪙 {goal.difficulty === 'easy' ? 5 : goal.difficulty === 'hard' ? 15 : 10} tokens
-            </Badge>
+            </div>
           </div>
 
           {/* Goal Title */}
@@ -402,41 +505,60 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           )}
 
           {/* Progress Info */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-4 mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-foreground">{goal.currentValue}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-lg text-foreground">{goal.targetValue}</span>
-              <span className="text-sm text-muted-foreground">{goal.unit}</span>
+              <span className="text-2xl font-bold text-foreground">{goal.currentValue}</span>
+              <span className="text-foreground/40">/</span>
+              <span className="text-lg text-foreground/80">{goal.targetValue}</span>
+              <span className="text-sm text-foreground/50">{goal.unit}</span>
             </div>
 
-            <div className={`px-3 py-1 rounded-full border ${borderColor} bg-card/50`}>
-              <span className="text-foreground font-bold text-base">{progress}%</span>
+            <div
+              className="px-4 py-1.5 rounded-full backdrop-blur-sm"
+              style={{
+                background: isComplete
+                  ? 'linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.1))'
+                  : 'hsl(var(--accent) / 0.15)',
+                border: isComplete
+                  ? '1px solid hsl(var(--primary) / 0.3)'
+                  : '1px solid hsl(var(--accent) / 0.2)',
+                color: isComplete ? 'hsl(var(--primary))' : 'hsl(var(--accent))'
+              }}
+            >
+              <span className="font-bold text-base">{progress}%</span>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-2.5 bg-muted/50 rounded-full overflow-hidden mb-3">
+          {/* Progress Bar - Soft gradient */}
+          <div className="w-full h-3 rounded-full overflow-hidden mb-4" style={{ background: 'hsl(var(--foreground) / 0.08)' }}>
             <div
-              className={`h-full rounded-full transition-all duration-500 ${urgencyColor}`}
+              className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${Math.min(progress, 100)}%`,
+                background: isComplete
+                  ? `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))`
+                  : `linear-gradient(90deg, hsl(var(--accent) / 0.8), hsl(var(--secondary) / 0.8))`,
+                boxShadow: isComplete
+                  ? '0 0 12px hsl(var(--primary) / 0.4)'
+                  : '0 0 10px hsl(var(--accent) / 0.3)'
               }}
             />
           </div>
 
-          {/* Quick +1 Progress Button */}
+          {/* Quick +1 Progress Button - Soft gradient */}
           {!isComplete && (
             <div className="mb-4">
               <button
                 onClick={handleQuickPlusOne}
                 disabled={isAddingProgress}
-                className={cn(
-                  "w-full px-3 py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border text-sm",
-                  isAddingProgress
-                    ? "bg-muted/50 border-border text-muted-foreground cursor-not-allowed"
-                    : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30 hover:scale-102"
-                )}
+                className="w-full px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all text-sm shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: isAddingProgress
+                    ? 'hsl(var(--foreground) / 0.1)'
+                    : `linear-gradient(135deg, hsl(var(--accent) / 0.2), hsl(var(--primary) / 0.2))`,
+                  border: '1px solid hsl(var(--accent) / 0.3)',
+                  color: isAddingProgress ? 'hsl(var(--foreground) / 0.5)' : 'hsl(var(--accent))'
+                }}
               >
                 {isAddingProgress ? "Adding..." : `+1 ${goal.unit}`}
                 <PlusCircle className="w-4 h-4" />
@@ -444,16 +566,21 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
             </div>
           )}
 
-          {/* Deadline */}
+          {/* Deadline - Soft colors */}
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground">
-              Due: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <Calendar className="w-4 h-4" style={{ color: 'hsl(var(--foreground) / 0.4)' }} />
+            <span className="text-foreground/70">
+              {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
             {daysUntil >= 0 && (
               <>
-                <span className="text-muted-foreground">•</span>
-                <span className={cn("font-semibold", textColor)}>
+                <span className="text-foreground/30">•</span>
+                <span
+                  className="font-semibold"
+                  style={{
+                    color: daysUntil <= 1 ? 'hsl(var(--accent))' : 'hsl(var(--foreground) / 0.7)'
+                  }}
+                >
                   {daysUntil === 0 ? (
                     <span className="flex items-center gap-1">
                       <AlertCircle className="w-4 h-4" />
@@ -472,18 +599,26 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
         {/* Right side: Actions */}
         <div className="flex flex-col gap-2 items-end">
-          {/* Status Icon */}
+          {/* Status Icon - Soft glow */}
           {isComplete && (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl border border-primary/50 bg-primary/20">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-xl"
+              style={{
+                background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))`,
+                border: '2px solid hsl(var(--primary) / 0.4)',
+                boxShadow: '0 4px 20px hsl(var(--primary) / 0.3)'
+              }}
+            >
               🏆
             </div>
           )}
 
-          {/* Mini actions */}
+          {/* Mini actions - Soft hover states */}
           {!isComplete && (
             <button
               onClick={onAddProgress}
-              className="text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1 flex items-center gap-1 font-semibold"
+              className="text-xs font-semibold px-3 py-1.5 flex items-center gap-1 transition-all rounded-lg hover:bg-foreground/5"
+              style={{ color: 'hsl(var(--primary))' }}
             >
               <PlusCircle className="w-3 h-3" />
               Add Progress
@@ -491,14 +626,16 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
           )}
           <button
             onClick={onEdit}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 flex items-center gap-1"
+            className="text-xs px-3 py-1.5 flex items-center gap-1 transition-all rounded-lg hover:bg-foreground/5"
+            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
           >
             <Edit className="w-3 h-3" />
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 flex items-center gap-1"
+            className="text-xs px-3 py-1.5 flex items-center gap-1 transition-all rounded-lg hover:bg-foreground/5"
+            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
           >
             <Trash2 className="w-3 h-3" />
             Delete

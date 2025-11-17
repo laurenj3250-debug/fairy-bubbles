@@ -4,21 +4,18 @@ import { motion } from "framer-motion";
 import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
 import { Plus } from "lucide-react";
 
-// Mountain-themed color palette - same as HabitsMountain page
-const habitColors = [
-  { bg: "linear-gradient(135deg, #475569 0%, #334155 100%)", name: "Stone Peak", border: "#64748b" },
-  { bg: "linear-gradient(135deg, #64748b 0%, #475569 100%)", name: "Granite Ridge", border: "#94a3b8" },
-  { bg: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", name: "Forest Base", border: "#14b8a6" },
-  { bg: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)", name: "Glacier Ice", border: "#3b82f6" },
-  { bg: "linear-gradient(135deg, #0e7490 0%, #155e75 100%)", name: "Deep Ice", border: "#06b6d4" },
-  { bg: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)", name: "Sky Ridge", border: "#3b82f6" },
-  { bg: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)", name: "Snowmelt Stream", border: "#22d3ee" },
-  { bg: "linear-gradient(135deg, #78716c 0%, #57534e 100%)", name: "Rocky Cliff", border: "#a8a29e" },
-];
-
-// Get consistent color for a habit based on its ID
+// Get climbing hold color variations using mountain theme colors
 const getHabitColor = (id: number) => {
-  return habitColors[id % habitColors.length];
+  // Rotate through different combinations of primary, accent, and secondary
+  const variations = [
+    { bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))", border: "hsl(var(--primary))" },
+    { bg: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))", border: "hsl(var(--accent))" },
+    { bg: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)))", border: "hsl(var(--secondary))" },
+    { bg: "linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.9))", border: "hsl(var(--primary) / 0.8)" },
+    { bg: "linear-gradient(135deg, hsl(var(--accent) / 0.8), hsl(var(--secondary) / 0.9))", border: "hsl(var(--accent) / 0.8)" },
+    { bg: "linear-gradient(135deg, hsl(var(--secondary) / 0.8), hsl(var(--primary) / 0.9))", border: "hsl(var(--secondary) / 0.8)" },
+  ];
+  return variations[id % variations.length];
 };
 
 interface Habit {
@@ -96,78 +93,99 @@ export function GlowingOrbHabits() {
     toggleMutation.mutate({ habitId, completed: !completed });
   };
 
-  // Get the first 6 habits for display
-  const displayHabits = habits.slice(0, 6);
   const completedCount = habits.filter(h => h.completed).length;
 
   return (
     <div className="space-y-4">
+      {/* Progress Summary */}
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground">
+          {completedCount}/{habits.length} holds sent today
+        </p>
+      </div>
 
-      {/* Climbing Route - Horizontal row of big holds */}
-      <div className="flex gap-6 justify-center p-4 flex-wrap">
-        {displayHabits.map((habit, index) => {
+      {/* Climbing Wall - Grid of holds */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        {habits.map((habit, index) => {
           const completed = habit.completed;
-          const streakDays = habit.streak?.streak || 0;
           const color = getHabitColor(habit.id);
 
           return (
-            <motion.div
+            <motion.button
               key={habit.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
-              className="flex flex-col items-center gap-3 cursor-pointer"
+              transition={{ delay: index * 0.05 }}
               onClick={(e) => handleOrbClick(habit.id, e)}
+              className="relative flex flex-col items-center gap-2 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Hold with name centered ON IT */}
-              <div className="relative w-72 h-48 flex items-center justify-center">
-                {/* The climbing hold - THE MAIN OBJECT */}
+              {/* Climbing Hold */}
+              <div className="relative w-20 h-20">
                 <motion.div
                   className="absolute inset-0 flex items-center justify-center"
                   animate={completed ? {
-                    filter: [
-                      `brightness(1.8) saturate(2) drop-shadow(0 0 25px ${color.border})`,
-                      `brightness(2.2) saturate(2.5) drop-shadow(0 0 40px ${color.border})`,
-                      `brightness(1.8) saturate(2) drop-shadow(0 0 25px ${color.border})`,
-                    ]
+                    filter: `brightness(1.2) saturate(1.5) drop-shadow(0 2px 8px ${color.border})`
                   } : {
-                    filter: "brightness(0.6) saturate(0.5)"
+                    filter: "brightness(0.7) saturate(0.6) grayscale(0.3)"
                   }}
-                  transition={{ duration: 1.2, repeat: completed ? Infinity : 0, repeatDelay: 0.5 }}
                 >
                   <ClimbingHoldSVG
-                    variant={index}
-                    size={280}
+                    variant={index % 3}
+                    size={80}
                     gradient={color.bg}
                     borderColor={color.border}
                   />
                 </motion.div>
 
-                {/* Habit name centered ON the hold */}
-                <div
-                  className="relative z-20 px-4 py-2 text-base font-bold text-center drop-shadow-2xl pointer-events-none max-w-[150px]"
-                  style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.3)' }}
-                >
-                  {habit.title}
-                </div>
+                {/* Chalk mark when completed */}
+                {completed && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm" />
+                  </motion.div>
+                )}
 
+                {/* Check mark */}
+                {completed && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <svg className="w-8 h-8 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </motion.div>
+                )}
               </div>
 
-            </motion.div>
+              {/* Habit name */}
+              <span className={`text-sm font-medium text-center max-w-[90px] line-clamp-2 ${completed ? 'text-foreground' : 'text-muted-foreground'}`}>
+                {habit.title}
+              </span>
+            </motion.button>
           );
         })}
       </div>
 
-      {/* View all habits link */}
-      {habits.length > 6 && (
-        <div className="text-center">
+      {/* Add new habit */}
+      {habits.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">No holds on your wall yet</p>
           <a
             href="/habits"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition text-white shadow-lg hover:scale-105 hover:shadow-xl"
+            style={{
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            }}
           >
-            View all {habits.length} habits →
+            <Plus className="w-4 h-4" />
+            Add Your First Hold
           </a>
         </div>
       )}

@@ -44,7 +44,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen pb-20">
       <div className="container max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -53,12 +53,22 @@ export default function Settings() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-slate-400">Customize your climbing experience</p>
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            Settings
+          </h1>
+          <p className="text-muted-foreground">Customize your climbing experience</p>
         </div>
 
         {/* Unlocked Backgrounds */}
-        <Card className="bg-slate-800/60 border-slate-700/50 mb-8">
+        <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 mb-8 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mountain className="w-5 h-5" />
@@ -79,9 +89,9 @@ export default function Settings() {
               </div>
             ) : unlockedBackgrounds.length === 0 ? (
               <div className="text-center py-12">
-                <Mountain className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                <p className="text-slate-400 mb-2">No backgrounds unlocked yet</p>
-                <p className="text-sm text-slate-500">Complete expeditions to unlock mountain backgrounds</p>
+                <Mountain className="w-16 h-16 mx-auto mb-4" style={{ color: 'hsl(var(--foreground) / 0.3)' }} />
+                <p className="text-muted-foreground mb-2">No backgrounds unlocked yet</p>
+                <p className="text-sm text-muted-foreground/70">Complete expeditions to unlock mountain backgrounds</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -92,9 +102,12 @@ export default function Settings() {
                     disabled={bg.isActive || activateBackgroundMutation.isPending}
                     className={`relative group rounded-xl overflow-hidden transition-all ${
                       bg.isActive
-                        ? 'ring-2 ring-green-500 scale-[1.02]'
+                        ? 'ring-2 scale-[1.02]'
                         : 'hover:scale-105 hover:shadow-xl cursor-pointer'
                     } ${activateBackgroundMutation.isPending ? 'opacity-50' : ''}`}
+                    style={{
+                      ringColor: bg.isActive ? 'hsl(var(--accent))' : undefined
+                    }}
                   >
                     {/* Background Image */}
                     <div className="aspect-video relative">
@@ -103,11 +116,18 @@ export default function Settings() {
                         alt={bg.name}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: 'linear-gradient(to top, hsl(var(--background) / 0.9), hsl(var(--background) / 0.4), transparent)'
+                        }}
+                      />
 
                       {/* Active Badge */}
                       {bg.isActive && (
-                        <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 text-white shadow-lg" style={{
+                          background: 'hsl(var(--accent))'
+                        }}>
                           <Check className="w-3 h-3" />
                           Active
                         </div>
@@ -129,8 +149,13 @@ export default function Settings() {
 
                     {/* Hover Overlay */}
                     {!bg.isActive && (
-                      <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 text-slate-900 px-4 py-2 rounded-lg font-semibold">
+                      <div className="absolute inset-0 transition-colors flex items-center justify-center" style={{
+                        background: 'transparent'
+                      }} onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--primary) / 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-semibold text-white shadow-lg" style={{
+                          background: 'hsl(var(--primary) / 0.9)'
+                        }}>
                           Select
                         </div>
                       </div>
@@ -144,7 +169,7 @@ export default function Settings() {
 
         {/* Locked Backgrounds */}
         {lockedBackgrounds.length > 0 && (
-          <Card className="bg-slate-800/60 border-slate-700/50">
+          <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="w-5 h-5" />
@@ -168,19 +193,19 @@ export default function Settings() {
                         alt={bg.name}
                         className="w-full h-full object-cover filter grayscale"
                       />
-                      <div className="absolute inset-0 bg-slate-900/80" />
+                      <div className="absolute inset-0" style={{ background: 'hsl(var(--background) / 0.8)' }} />
 
                       {/* Lock Icon */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-slate-800/90 rounded-full p-4">
-                          <Lock className="w-8 h-8 text-slate-400" />
+                        <div className="rounded-full p-4 backdrop-blur-sm" style={{ background: 'hsl(var(--background) / 0.6)' }}>
+                          <Lock className="w-8 h-8" style={{ color: 'hsl(var(--foreground) / 0.4)' }} />
                         </div>
                       </div>
 
                       {/* Mountain Info */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-bold text-lg mb-1">{bg.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <h3 className="text-foreground font-bold text-lg mb-1">{bg.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-foreground/70">
                           <span>{bg.elevation.toLocaleString()}m</span>
                           <span>•</span>
                           <span>{bg.country}</span>
@@ -188,7 +213,7 @@ export default function Settings() {
                         <Badge variant="outline" className="mt-2 text-xs">
                           {bg.difficultyTier}
                         </Badge>
-                        <p className="text-xs text-slate-400 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                           Summit to unlock
                         </p>
                       </div>
