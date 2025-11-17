@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ensureDatabaseInitialized } from "./init-db";
 import { getDb } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import * as schema from "@shared/schema";
+import { format } from "date-fns";
 import {
   insertHabitSchema,
   insertHabitLogSchema,
@@ -3258,6 +3259,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[expeditions] Get expeditions error:', error);
       res.status(500).json({ error: error.message });
     }
+  });
+
+  // GET /api/combo-stats - Get user combo statistics
+  app.get("/api/combo-stats", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const db = getDb();
+    const stats = await db.query.userComboStats.findFirst({
+      where: eq(schema.userComboStats.userId, req.user.id),
+    });
+
+    res.json(stats || {
+      currentCombo: 0,
+      dailyHighScore: 0,
+      lastCompletionTime: null,
+      comboExpiresAt: null,
+    });
+  });
+
+  // GET /api/expeditions/active - Get active expeditions
+  app.get("/api/expeditions/active", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const db = getDb();
+    const expeditions = await db.query.playerExpeditions.findMany({
+      where: and(
+        eq(schema.playerExpeditions.userId, req.user.id),
+        eq(schema.playerExpeditions.status, "in_progress")
+      ),
+      with: {
+        route: {
+          with: {
+            mountain: true,
+          },
+        },
+      },
+      limit: 5,
+    });
+
+    res.json(expeditions);
+  });
+
+  // GET /api/daily-quests/today - Get today's daily quests
+  app.get("/api/daily-quests/today", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const today = format(new Date(), "yyyy-MM-dd");
+    const db = getDb();
+
+    const quests = await db.query.userDailyQuests.findMany({
+      where: and(
+        eq(schema.userDailyQuests.userId, req.user.id),
+        eq(schema.userDailyQuests.questDate, today)
+      ),
+      with: {
+        quest: true,
+      },
+    });
+
+    res.json(quests.map(uq => ({
+      ...uq,
+      title: uq.quest.title,
+      description: uq.quest.description,
+      targetValue: uq.quest.targetValue,
+      rewardTokens: uq.quest.rewardTokens,
+    })));
+  });
+
+  // GET /api/climbing-stats - Get climbing statistics
+  app.get("/api/climbing-stats", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const db = getDb();
+    const stats = await db.query.playerClimbingStats.findFirst({
+      where: eq(schema.playerClimbingStats.userId, req.user.id),
+    });
+
+    res.json(stats || {
+      climbingLevel: 1,
+      totalExperience: 0,
+      summitsReached: 0,
+      totalElevationClimbed: 0,
+      currentEnergy: 100,
+      maxEnergy: 100,
+      trainingDaysCompleted: 0,
+    });
   });
 
   const httpServer = createServer(app);
