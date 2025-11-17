@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ensureDatabaseInitialized } from "./init-db";
 import { getDb } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import {
   insertHabitSchema,
@@ -3257,6 +3257,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('[expeditions] Get expeditions error:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // =============================================
+  // EXPEDITION MISSIONS ROUTES
+  // =============================================
+
+  // Get current active expedition mission
+  app.get("/api/expedition-missions/current", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const db = getDb();
+
+      const [activeMission] = await db
+        .select()
+        .from(schema.expeditionMissions)
+        .where(
+          and(
+            eq(schema.expeditionMissions.userId, userId),
+            eq(schema.expeditionMissions.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (!activeMission) {
+        return res.json(null);
+      }
+
+      // Get mountain details
+      const [mountain] = await db
+        .select()
+        .from(schema.mountains)
+        .where(eq(schema.mountains.id, activeMission.mountainId))
+        .limit(1);
+
+      res.json({
+        ...activeMission,
+        mountain,
+      });
+    } catch (error) {
+      console.error("Error fetching current mission:", error);
+      res.status(500).json({ error: "Failed to fetch current mission" });
     }
   });
 
