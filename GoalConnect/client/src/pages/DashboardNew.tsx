@@ -15,6 +15,12 @@ import { StreakFreeze } from "@/components/StreakFreeze";
 import { Altimeter } from "@/components/Altimeter";
 import { ClimbingInspirationTile } from "@/components/ClimbingInspirationTile";
 import ActiveExpedition from "@/components/ActiveExpedition";
+import TodoCompletionHeatmap from "@/components/TodoCompletionHeatmap";
+import PointsEarnedHeatmap from "@/components/PointsEarnedHeatmap";
+import StreakComboWidget from "@/components/StreakComboWidget";
+import DailyQuestsWidget from "@/components/DailyQuestsWidget";
+import ExpeditionProgressWidget from "@/components/ExpeditionProgressWidget";
+import MoodEnergyHeatmap from "@/components/MoodEnergyHeatmap";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -284,6 +290,23 @@ export default function DashboardNew() {
               <span>Week View</span>
             </button>
           </div>
+        </div>
+
+        {/* New Widgets Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <StreakComboWidget />
+          <ExpeditionProgressWidget />
+        </div>
+
+        {/* Heatmaps Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TodoCompletionHeatmap />
+          <PointsEarnedHeatmap />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MoodEnergyHeatmap />
+          <DailyQuestsWidget />
         </div>
 
         {/* Bottom strip: Recent events / notifications (optional) */}
