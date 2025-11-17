@@ -57,7 +57,7 @@ export default function StreakComboWidget() {
             {currentCombo}x
           </div>
           <div className="text-xs text-slate-400 uppercase tracking-wider">Current Combo</div>
-          {comboActive && (
+          {comboActive && comboStats?.comboExpiresAt && (
             <div className="mt-2 text-xs text-orange-400">
               ⏱ {Math.floor(differenceInMinutes(parseISO(comboStats.comboExpiresAt), new Date()) / 60)}h {differenceInMinutes(parseISO(comboStats.comboExpiresAt), new Date()) % 60}m left
             </div>

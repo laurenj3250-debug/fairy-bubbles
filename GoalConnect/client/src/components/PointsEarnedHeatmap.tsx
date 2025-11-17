@@ -49,15 +49,16 @@ export default function PointsEarnedHeatmap() {
       <div className="grid grid-cols-[repeat(13,1fr)] gap-1">
         {heatmapData.map((day) => {
           const intensity = Math.min(day.earned / (maxEarned * 0.5), 1);
-          const bgColor = intensity === 0
-            ? "bg-slate-800/50"
-            : `bg-amber-500`;
-          const opacity = Math.floor(intensity * 100);
+          const opacity = intensity === 0 ? 0.2 : Math.max(intensity, 0.2);
+          const backgroundColor = intensity === 0
+            ? "rgb(30, 41, 59)" // slate-800
+            : `rgba(245, 158, 11, ${opacity})`; // amber-500
 
           return (
             <div
               key={day.date}
-              className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${bgColor}/${opacity || 20} hover:ring-2 hover:ring-amber-400/50 transition-all cursor-pointer relative group`}
+              className="w-3 h-3 md:w-4 md:h-4 rounded-sm hover:ring-2 hover:ring-amber-400/50 transition-all cursor-pointer relative group"
+              style={{ backgroundColor }}
               title={`${day.date}: +${day.earned} earned, -${day.spent} spent, net: ${day.net}`}
             />
           );

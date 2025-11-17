@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 
 export default function DailyQuestsWidget() {
-  const today = format(new Date(), "yyyy-MM-dd");
-
   const { data: userQuests } = useQuery<any[]>({
     queryKey: ["/api/daily-quests/today"],
   });

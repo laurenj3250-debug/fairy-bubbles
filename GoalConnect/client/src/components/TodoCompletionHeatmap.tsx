@@ -39,14 +39,16 @@ export default function TodoCompletionHeatmap() {
       <div className="grid grid-cols-[repeat(13,1fr)] gap-1">
         {heatmapData.map((day) => {
           const intensity = Math.min(day.completed / 5, 1); // Max 5 todos = full intensity
-          const bgColor = intensity === 0
-            ? "bg-slate-800/50"
-            : `bg-emerald-500/${Math.floor(intensity * 100)}`;
+          const opacity = intensity === 0 ? 0.5 : intensity;
+          const backgroundColor = intensity === 0
+            ? "rgb(30, 41, 59)" // slate-800
+            : `rgba(16, 185, 129, ${opacity})`; // emerald-500
 
           return (
             <div
               key={day.date}
-              className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${bgColor} hover:ring-2 hover:ring-emerald-400/50 transition-all cursor-pointer`}
+              className="w-3 h-3 md:w-4 md:h-4 rounded-sm hover:ring-2 hover:ring-emerald-400/50 transition-all cursor-pointer"
+              style={{ backgroundColor }}
               title={`${day.date}: ${day.completed} todos completed`}
             />
           );

@@ -57,17 +57,23 @@ export default function MoodEnergyHeatmap() {
         <div className="grid grid-cols-[repeat(13,1fr)] gap-1">
           {heatmapData.map((day) => {
             const intensity = day.avgMood / 5; // 1-5 scale
-            const color = intensity === 0
-              ? "bg-slate-800/50"
-              : intensity <= 0.4 ? "bg-red-500"
-              : intensity <= 0.6 ? "bg-yellow-500"
-              : "bg-emerald-500";
-            const opacity = Math.floor(intensity * 100) || 20;
+            const opacity = intensity === 0 ? 0.2 : Math.max(intensity, 0.2);
+            let backgroundColor;
+            if (intensity === 0) {
+              backgroundColor = "rgb(30, 41, 59)"; // slate-800
+            } else if (intensity <= 0.4) {
+              backgroundColor = `rgba(239, 68, 68, ${opacity})`; // red-500
+            } else if (intensity <= 0.6) {
+              backgroundColor = `rgba(234, 179, 8, ${opacity})`; // yellow-500
+            } else {
+              backgroundColor = `rgba(16, 185, 129, ${opacity})`; // emerald-500
+            }
 
             return (
               <div
                 key={`mood-${day.date}`}
-                className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${color}/${opacity} hover:ring-2 hover:ring-pink-400/50 transition-all cursor-pointer`}
+                className="w-3 h-3 md:w-4 md:h-4 rounded-sm hover:ring-2 hover:ring-pink-400/50 transition-all cursor-pointer"
+                style={{ backgroundColor }}
                 title={`${day.date}: Mood ${day.avgMood.toFixed(1)}/5 (${day.count} logs)`}
               />
             );
@@ -84,17 +90,23 @@ export default function MoodEnergyHeatmap() {
         <div className="grid grid-cols-[repeat(13,1fr)] gap-1">
           {heatmapData.map((day) => {
             const intensity = day.avgEnergy / 5; // 1-5 scale
-            const color = intensity === 0
-              ? "bg-slate-800/50"
-              : intensity <= 0.4 ? "bg-orange-500"
-              : intensity <= 0.6 ? "bg-yellow-500"
-              : "bg-cyan-500";
-            const opacity = Math.floor(intensity * 100) || 20;
+            const opacity = intensity === 0 ? 0.2 : Math.max(intensity, 0.2);
+            let backgroundColor;
+            if (intensity === 0) {
+              backgroundColor = "rgb(30, 41, 59)"; // slate-800
+            } else if (intensity <= 0.4) {
+              backgroundColor = `rgba(249, 115, 22, ${opacity})`; // orange-500
+            } else if (intensity <= 0.6) {
+              backgroundColor = `rgba(234, 179, 8, ${opacity})`; // yellow-500
+            } else {
+              backgroundColor = `rgba(6, 182, 212, ${opacity})`; // cyan-500
+            }
 
             return (
               <div
                 key={`energy-${day.date}`}
-                className={`w-3 h-3 md:w-4 md:h-4 rounded-sm ${color}/${opacity} hover:ring-2 hover:ring-amber-400/50 transition-all cursor-pointer`}
+                className="w-3 h-3 md:w-4 md:h-4 rounded-sm hover:ring-2 hover:ring-amber-400/50 transition-all cursor-pointer"
+                style={{ backgroundColor }}
                 title={`${day.date}: Energy ${day.avgEnergy.toFixed(1)}/5 (${day.count} logs)`}
               />
             );
