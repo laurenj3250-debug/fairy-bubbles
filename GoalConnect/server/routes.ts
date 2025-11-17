@@ -3409,13 +3409,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check user level requirement
-      const [climbingStats] = await db
+      let [climbingStats] = await db
         .select()
         .from(schema.playerClimbingStats)
         .where(eq(schema.playerClimbingStats.userId, userId))
         .limit(1);
 
-      if (climbingStats && climbingStats.climbingLevel < mountain.requiredClimbingLevel) {
+      // Create climbing stats if they don't exist (consistent with /next endpoint)
+      if (!climbingStats) {
+        [climbingStats] = await db
+          .insert(schema.playerClimbingStats)
+          .values({ userId })
+          .returning();
+      }
+
+      if (climbingStats.climbingLevel < mountain.requiredClimbingLevel) {
         return res.status(403).json({
           error: "Level too low",
           required: mountain.requiredClimbingLevel,
