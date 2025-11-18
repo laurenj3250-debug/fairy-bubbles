@@ -13,6 +13,7 @@ import WeeklyHub from "@/pages/WeeklyHub";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
+import ExpeditionMissions from "@/pages/ExpeditionMissions";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
@@ -150,6 +151,12 @@ function AppRoutes() {
       <Route path="/expedition/plan/:mountainId">
         <RequireAuth>
           <ExpeditionPlanning />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/expedition-missions">
+        <RequireAuth>
+          <ExpeditionMissions />
           <BottomNav />
         </RequireAuth>
       </Route>
