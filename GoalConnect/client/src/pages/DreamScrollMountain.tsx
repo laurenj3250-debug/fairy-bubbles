@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Mountain, Plus, Trash2, Edit, Check, X, Tag, Target, TrendingUp } from "lucide-react";
@@ -54,13 +54,20 @@ export default function DreamScrollMountain() {
   // Fetch all dream scroll items
   const { data: allItems = [], isLoading, isError, error } = useQuery<DreamScrollItem[]>({
     queryKey: ["/api/dream-scroll"],
-    onSuccess: (data) => {
-      console.log('[DreamScrollMountain] Successfully loaded', data?.length, 'items');
-    },
-    onError: (err) => {
-      console.error('[DreamScrollMountain] Failed to load:', err);
-    },
   });
+
+  // Log when data changes (replaces onSuccess/onError)
+  useEffect(() => {
+    if (allItems && !isLoading) {
+      console.log('[DreamScrollMountain] Successfully loaded', allItems.length, 'items');
+    }
+  }, [allItems, isLoading]);
+
+  useEffect(() => {
+    if (isError && error) {
+      console.error('[DreamScrollMountain] Failed to load:', error);
+    }
+  }, [isError, error]);
 
   console.log('[DreamScrollMountain] Query state:', { isLoading, isError, itemCount: allItems?.length });
 
@@ -156,8 +163,8 @@ export default function DreamScrollMountain() {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
         tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
-        priority: editPriority,
-        cost: editCost || undefined,
+        priority: editPriority as any,
+        cost: editCost as any,
       });
     }
   };
@@ -167,9 +174,9 @@ export default function DreamScrollMountain() {
       createMutation.mutate({
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        category: selectedCategory,
-        priority: editPriority,
-        cost: editCost || undefined,
+        category: selectedCategory as any,
+        priority: editPriority as any,
+        cost: editCost as any,
         tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
       });
     }
@@ -232,8 +239,9 @@ export default function DreamScrollMountain() {
         {/* Category Tabs */}
         <div className="flex flex-wrap gap-3">
           {CATEGORIES.map(category => {
-            const itemCount = allItems.filter(i => i.category === category.value).length;
-            const completedCount = allItems.filter(i => i.category === category.value && i.completed).length;
+            // TODO: Fix category type mismatch between CATEGORIES and DreamScrollItem
+            const itemCount = allItems.filter((i: any) => i.category === category.value).length;
+            const completedCount = allItems.filter((i: any) => i.category === category.value && i.completed).length;
             const isSelected = selectedCategory === category.value;
 
             return (

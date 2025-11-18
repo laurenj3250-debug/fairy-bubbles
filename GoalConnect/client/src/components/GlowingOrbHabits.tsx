@@ -116,7 +116,7 @@ export function GlowingOrbHabits() {
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              onClick={(e) => handleOrbClick(habit.id, e)}
+              onClick={(e) => handleOrbClick(habit.id, e as any)}
               className="relative flex flex-col items-center gap-2 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

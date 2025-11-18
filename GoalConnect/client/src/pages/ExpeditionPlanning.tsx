@@ -44,6 +44,15 @@ interface GearItem {
   tier: string;
 }
 
+interface ClimbingStats {
+  climbingLevel: number;
+  summits: number;
+  currentStreak: number;
+  totalXp: number;
+  totalDistance?: number;
+  totalElevationGain?: number;
+}
+
 export default function ExpeditionPlanning() {
   const [, params] = useRoute("/expedition/plan/:mountainId");
   const [, setLocation] = useLocation();
@@ -54,14 +63,14 @@ export default function ExpeditionPlanning() {
   const [teamSize, setTeamSize] = useState(1);
 
   // Fetch mountain details
-  const { data: mountains = [] } = useQuery({
+  const { data: mountains = [] } = useQuery<Mountain[]>({
     queryKey: ["/api/mountains"],
   });
 
   const mountain = mountains.find((m: Mountain) => m.id === mountainId);
 
   // Fetch routes for this mountain
-  const { data: routes = [] } = useQuery({
+  const { data: routes = [] } = useQuery<Route[]>({
     queryKey: [`/api/mountains/${mountainId}/routes`],
     enabled: !!mountainId,
   });
@@ -72,7 +81,7 @@ export default function ExpeditionPlanning() {
   });
 
   // Fetch player stats
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<ClimbingStats>({
     queryKey: ["/api/climbing/stats"],
   });
 

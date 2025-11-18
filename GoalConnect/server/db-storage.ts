@@ -175,6 +175,8 @@ export class DbStorage implements IStorage {
       unit: row.unit,
       deadline: row.deadline,
       category: row.category,
+      difficulty: row.difficulty || "medium",
+      priority: row.priority || "medium",
     };
     
     const percentBefore = (row.previous_value / goal.targetValue) * 100;
@@ -453,14 +455,14 @@ export class DbStorage implements IStorage {
   }
 
   async createTodo(todo: InsertTodo): Promise<Todo> {
-    const results = await this.db.insert(schema.todos).values(todo).returning();
+    const results = await this.db.insert(schema.todos).values(todo as any).returning();
     return results[0];
   }
 
   async updateTodo(id: number, update: Partial<Todo>): Promise<Todo | undefined> {
     const results = await this.db
       .update(schema.todos)
-      .set(update)
+      .set(update as any)
       .where(eq(schema.todos.id, id))
       .returning();
     return results[0];
@@ -503,20 +505,20 @@ export class DbStorage implements IStorage {
 
   // Sprite Management
   async createSprite(sprite: InsertSprite): Promise<Sprite> {
-    const [created] = await this.db.insert(schema.sprites).values(sprite).returning();
+    const [created] = await this.db.insert(schema.sprites).values(sprite as any).returning();
     return created;
   }
 
   async upsertSprite(sprite: InsertSprite): Promise<Sprite> {
     const [upserted] = await this.db
       .insert(schema.sprites)
-      .values(sprite)
+      .values(sprite as any)
       .onConflictDoUpdate({
         target: schema.sprites.filename,
         set: {
           data: sprite.data,
           mimeType: sprite.mimeType,
-          category: sprite.category,
+          category: sprite.category as any,
           name: sprite.name,
         },
       })
@@ -552,7 +554,7 @@ export class DbStorage implements IStorage {
   async updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined> {
     const [updated] = await this.db
       .update(schema.sprites)
-      .set(updates)
+      .set(updates as any)
       .where(eq(schema.sprites.filename, filename))
       .returning();
     return updated;
@@ -564,7 +566,7 @@ export class DbStorage implements IStorage {
 
   // Dream Scroll Management
   async createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem> {
-    const [created] = await this.db.insert(schema.dreamScrollItems).values(item).returning();
+    const [created] = await this.db.insert(schema.dreamScrollItems).values(item as any).returning();
     return created;
   }
 
@@ -586,7 +588,7 @@ export class DbStorage implements IStorage {
   async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
     const [updated] = await this.db
       .update(schema.dreamScrollItems)
-      .set(updates)
+      .set(updates as any)
       .where(eq(schema.dreamScrollItems.id, id))
       .returning();
     return updated;
@@ -615,7 +617,7 @@ export class DbStorage implements IStorage {
 
   // Dream Scroll Tag Management
   async createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag> {
-    const [created] = await this.db.insert(schema.dreamScrollTags).values(tag).returning();
+    const [created] = await this.db.insert(schema.dreamScrollTags).values(tag as any).returning();
     return created;
   }
 
@@ -733,12 +735,9 @@ export class DbStorage implements IStorage {
         .values({
           userId,
           climbingLevel: 1,
-          totalXp: 0,
-          summits: 0,
-          totalDistance: 0,
-          totalElevationGain: 0,
-          currentStreak: 0,
-          longestStreak: 0,
+          totalExperience: 0,
+          summitsReached: 0,
+          totalElevationClimbed: 0,
         })
         .returning();
       return newStats;
@@ -774,7 +773,7 @@ export class DbStorage implements IStorage {
         dailyHighScore: 0,
         lastCompletionTime: null,
         comboExpiresAt: null,
-      })
+      } as any)
       .returning();
     return stats;
   }
@@ -782,7 +781,7 @@ export class DbStorage implements IStorage {
   async updateComboStats(userId: number, data: Partial<any>): Promise<any> {
     const [updated] = await this.db
       .update(schema.userComboStats)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() } as any)
       .where(eq(schema.userComboStats.userId, userId))
       .returning();
     return updated;
@@ -847,7 +846,7 @@ export class DbStorage implements IStorage {
   async updateUserDailyQuest(id: number, data: Partial<any>): Promise<any> {
     const [updated] = await this.db
       .update(schema.userDailyQuests)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() } as any)
       .where(eq(schema.userDailyQuests.id, id))
       .returning();
     return updated;
@@ -878,7 +877,7 @@ export class DbStorage implements IStorage {
   async updateStreakFreeze(userId: number, data: Partial<any>): Promise<any> {
     const [updated] = await this.db
       .update(schema.streakFreezes)
-      .set({ ...data, updatedAt: new Date().toISOString() })
+      .set({ ...data, updatedAt: new Date() } as any)
       .where(eq(schema.streakFreezes.userId, userId))
       .returning();
     return updated;

@@ -159,6 +159,7 @@ export class MemStorage implements IStorage {
       id: 1,
       name: userName,
       email: userEmail,
+      password: "", // Empty for seed user
       createdAt: new Date(),
     };
     this.users.set(1, user);
@@ -257,6 +258,12 @@ export class MemStorage implements IStorage {
       color: habit.color,
       cadence: habit.cadence as Habit['cadence'],
       targetPerWeek: habit.targetPerWeek ?? null,
+      difficulty: (habit.difficulty ?? "medium") as Habit['difficulty'],
+      linkedGoalId: habit.linkedGoalId ?? null,
+      category: (habit.category ?? "training") as Habit['category'],
+      effort: (habit.effort ?? "medium") as Habit['effort'],
+      grade: habit.grade ?? "5.9",
+      scheduledDay: habit.scheduledDay ?? null,
     };
     this.habits.set(id, newHabit);
     return newHabit;
@@ -272,6 +279,9 @@ export class MemStorage implements IStorage {
       description: habit.description ?? existing.description,
       cadence: (habit.cadence ?? existing.cadence) as Habit['cadence'],
       targetPerWeek: habit.targetPerWeek !== undefined ? habit.targetPerWeek : existing.targetPerWeek,
+      difficulty: (habit.difficulty ?? existing.difficulty) as Habit['difficulty'],
+      category: (habit.category ?? existing.category) as Habit['category'],
+      effort: (habit.effort ?? existing.effort) as Habit['effort'],
     };
     this.habits.set(id, updated);
     return updated;
@@ -308,6 +318,8 @@ export class MemStorage implements IStorage {
       date: log.date,
       completed: log.completed ?? false,
       note: log.note ?? null,
+      mood: log.mood ?? null,
+      energyLevel: log.energyLevel ?? null,
     };
     this.habitLogs.set(id, newLog);
     return newLog;
@@ -627,7 +639,7 @@ export class MemStorage implements IStorage {
       userId: todo.userId,
       title: todo.title,
       dueDate: todo.dueDate ?? null,
-      difficulty: todo.difficulty ?? "medium",
+      difficulty: (todo.difficulty ?? "medium") as Todo['difficulty'],
       subtasks: todo.subtasks ?? "[]",
       completed: false,
       completedAt: null,
@@ -645,7 +657,7 @@ export class MemStorage implements IStorage {
       ...todo,
       ...update,
       dueDate: update.dueDate ?? todo.dueDate,
-      difficulty: update.difficulty ?? todo.difficulty,
+      difficulty: (update.difficulty ?? todo.difficulty) as Todo['difficulty'],
       subtasks: update.subtasks ?? todo.subtasks,
       completedAt: update.completedAt ?? todo.completedAt,
     };
@@ -680,6 +692,39 @@ export class MemStorage implements IStorage {
     );
 
     return updated;
+  }
+
+  // Sprite Management stubs
+  async createSprite(sprite: InsertSprite): Promise<Sprite> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async upsertSprite(sprite: InsertSprite): Promise<Sprite> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getSprites(): Promise<Sprite[]> {
+    return [];
+  }
+
+  async getSpritesMetadata(): Promise<Omit<Sprite, 'data'>[]> {
+    return [];
+  }
+
+  async getSpriteById(id: number): Promise<Sprite | undefined> {
+    return undefined;
+  }
+
+  async getSpriteByFilename(filename: string): Promise<Sprite | undefined> {
+    return undefined;
+  }
+
+  async updateSprite(filename: string, updates: { category?: string; name?: string | null; rarity?: string | null }): Promise<Sprite | undefined> {
+    return undefined;
+  }
+
+  async deleteSprite(filename: string): Promise<void> {
+    // noop
   }
 
   // Mountaineering - stub implementations for MemStorage

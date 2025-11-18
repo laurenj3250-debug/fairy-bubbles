@@ -168,7 +168,7 @@ export async function seedMountaineeringData() {
   ];
 
   console.log('[mountaineering-seed] 🎒 Seeding alpine gear...');
-  const insertedGear = await db.insert(schema.alpineGear).values(gear).returning();
+  const insertedGear = await db.insert(schema.alpineGear).values(gear as any).returning();
   console.log(`[mountaineering-seed] ✅ Created ${insertedGear.length} gear items`);
 
   // Create gear lookup map
@@ -1217,7 +1217,7 @@ export async function seedMountaineeringData() {
   });
 
   console.log('[mountaineering-seed] 🏔️  Seeding mountains...');
-  const insertedMountains = await db.insert(schema.mountains).values(mountains).returning();
+  const insertedMountains = await db.insert(schema.mountains).values(mountains as any).returning();
   console.log(`[mountaineering-seed] ✅ Created ${insertedMountains.length} mountains`);
 
   // Create mountain lookup map

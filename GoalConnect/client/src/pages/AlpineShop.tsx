@@ -23,6 +23,15 @@ interface PlayerInventory {
   name: string;
 }
 
+interface ClimbingStats {
+  climbingLevel: number;
+  summits: number;
+  currentStreak: number;
+  totalXp: number;
+  totalDistance?: number;
+  totalElevationGain?: number;
+}
+
 export default function AlpineShop() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,7 +44,7 @@ export default function AlpineShop() {
     queryKey: ["/api/alpine-gear/inventory"],
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<ClimbingStats>({
     queryKey: ["/api/climbing/stats"],
   });
 

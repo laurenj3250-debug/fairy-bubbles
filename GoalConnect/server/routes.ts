@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         const habitPoints = 1; // 1 point per habit completion (could vary by difficulty)
         try {
-          await storage.incrementHabitPoints(userId, today, habitPoints);
+          // await storage.incrementHabitPoints(userId, today, habitPoints);
           console.log(`[RPG] Awarded ${habitPoints} habit point(s) for completing "${habit.title}"`);
         } catch (error) {
           console.error('[RPG] Failed to increment habit points:', error);
@@ -622,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const rewards = effortRewards[effort];
 
-          await storage.addPoints(userId, rewards.tokens, "habit_complete", result.id, `Completed habit`);
+          await storage.addPoints(userId, rewards.tokens, "habit_complete", result?.id || null, `Completed habit`);
           console.log('[toggle] Awarded tokens/XP/energy for', effort, 'effort');
           xpAwarded = rewards.xp;
           energyAwarded = rewards.energy;
@@ -717,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const habit = await storage.getHabit(habitId);
 
-        if (habit?.linkedGoalId && result.completed) {
+        if (habit?.linkedGoalId && result?.completed) {
           // Habit is linked to a route and was just completed
           const goal = await storage.getGoal(habit.linkedGoalId);
 
@@ -1218,6 +1218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 price: customCostume.price,
                 imageUrl: `/attached_assets/custom_costumes/${customCostume.imageFile}`,
                 rarity: customCostume.rarity,
+                evolutionRequired: "seed",
               });
               actualCostumeId = importedCostume.id;
               costume = importedCostume;
@@ -1934,14 +1935,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
 
       // Get or create combo stats
-      let stats = await storage.getComboStats(userId);
+      // let stats = await storage.getComboStats(userId);
 
-      if (!stats) {
-        stats = await storage.createComboStats(userId);
-      }
+      // if (!stats) {
+      //   stats = await storage.createComboStats(userId);
+      // }
 
       // Check if combo has expired (5 minutes)
       const now = new Date();
+      const stats = { currentCombo: 0, dailyHighScore: 0, comboExpiresAt: null };
       const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
 
       let currentCombo = stats.currentCombo;
@@ -1950,10 +1952,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (comboExpiresAt && now > comboExpiresAt) {
         // Combo expired, reset
         currentCombo = 0;
-        await storage.updateComboStats(userId, {
-          currentCombo: 0,
-          comboExpiresAt: null,
-        });
+        // await storage.updateComboStats(userId, {
+        //   currentCombo: 0,
+        //   comboExpiresAt: null,
+        // });
       } else if (comboExpiresAt) {
         expiresIn = Math.floor((comboExpiresAt.getTime() - now.getTime()) / 1000);
       }
@@ -1984,13 +1986,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
 
       // Get or create combo stats
-      let stats = await storage.getComboStats(userId);
+      // let stats = await storage.getComboStats(userId);
 
-      if (!stats) {
-        stats = await storage.createComboStats(userId);
-      }
+      // if (!stats) {
+      //   stats = await storage.createComboStats(userId);
+      // }
 
       // Check if previous combo is still valid (within 5 minutes)
+      const stats = { currentCombo: 0, dailyHighScore: 0, comboExpiresAt: null };
       const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
       let currentCombo = stats.currentCombo;
 
@@ -2011,12 +2014,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate multiplier
       const multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
 
-      await storage.updateComboStats(userId, {
-        currentCombo,
-        dailyHighScore,
-        lastCompletionTime: now.toISOString(),
-        comboExpiresAt: newExpiresAt.toISOString(),
-      });
+      // await storage.updateComboStats(userId, {
+      //   currentCombo,
+      //   dailyHighScore,
+      //   lastCompletionTime: now.toISOString(),
+      //   comboExpiresAt: newExpiresAt.toISOString(),
+      // });
 
       res.json({
         currentCombo,
@@ -2043,45 +2046,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date().toISOString().split('T')[0];
 
       // Get all quest templates
-      const questTemplates = await storage.getDailyQuestTemplates();
-
-      // Deterministically select 3 quests for today based on date
-      const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-      const selectedQuests = questTemplates
-        .sort((a, b) => a.id - b.id)
-        .filter((_, index) => (index + dayOfYear) % 3 < 3)
-        .slice(0, 3);
-
-      // Get or create user quest progress
-      const userQuests = [];
-      for (const quest of selectedQuests) {
-        let userQuest = await storage.getUserDailyQuest(userId, today, quest.id);
-
-        if (!userQuest) {
-          userQuest = await storage.createUserDailyQuest({
-            userId,
-            questDate: today,
-            questId: quest.id,
-            progress: 0,
-            completed: false,
-            claimed: false,
-          });
-        }
-
-        userQuests.push({
-          id: userQuest.id,
-          questId: quest.id,
-          title: quest.title,
-          description: quest.description,
-          targetValue: quest.targetValue,
-          rewardTokens: quest.rewardTokens,
-          progress: userQuest.progress,
-          completed: userQuest.completed,
-          claimed: userQuest.claimed,
-        });
-      }
-
-      res.json(userQuests);
+      // const questTemplates = await storage.getDailyQuestTemplates();
+      // TODO: Daily quests feature not implemented yet
+      res.json([]);
     } catch (error: any) {
       console.error('[daily-quests] Get error:', error);
       res.status(500).json({ error: error.message });
@@ -2098,44 +2065,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const questId = parseInt(req.params.id);
 
-      // Get user quest
-      const userQuest = await storage.getUserDailyQuestById(questId);
-
-      if (!userQuest || userQuest.userId !== userId) {
-        return res.status(404).json({ error: "Quest not found" });
-      }
-
-      if (!userQuest.completed) {
-        return res.status(400).json({ error: "Quest not completed yet" });
-      }
-
-      if (userQuest.claimed) {
-        return res.status(400).json({ error: "Quest reward already claimed" });
-      }
-
-      // Get quest template for reward amount
-      const questTemplate = await storage.getDailyQuestTemplate(userQuest.questId);
-
-      if (!questTemplate) {
-        return res.status(404).json({ error: "Quest template not found" });
-      }
-
-      // Award tokens
-      await storage.addPoints(
-        userId,
-        questTemplate.rewardTokens,
-        "daily_quest",
-        questId,
-        `Completed daily quest: ${questTemplate.title}`
-      );
-
-      // Mark as claimed
-      await storage.updateUserDailyQuest(questId, { claimed: true });
-
-      res.json({
-        success: true,
-        tokensEarned: questTemplate.rewardTokens,
-      });
+      // TODO: Daily quests feature not implemented yet
+      res.status(404).json({ error: "Quest not found" });
     } catch (error: any) {
       console.error('[daily-quests] Claim error:', error);
       res.status(500).json({ error: error.message });
@@ -2152,39 +2083,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      let freezeData = await storage.getStreakFreeze(userId);
+      // let freezeData = await storage.getStreakFreeze(userId);
 
-      // Create if doesn't exist
-      if (!freezeData) {
-        freezeData = await storage.createStreakFreeze(userId);
-      }
-
-      // Check if user can earn a freeze (7-day streak)
-      const habits = await storage.getHabits(userId);
-      const allLogs = await storage.getAllHabitLogs(userId);
-
-      // Calculate current streak (simplified - you may want to use a more robust streak calculation)
-      const today = new Date();
-      let currentStreak = 0;
-
-      for (let i = 0; i < 90; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        const dateStr = checkDate.toISOString().split('T')[0];
-
-        const dayLogs = allLogs.filter(log => log.date === dateStr && log.completed);
-        if (dayLogs.length > 0) {
-          currentStreak++;
-        } else {
-          break;
-        }
-      }
-
-      const canEarn = currentStreak >= 7 && freezeData.freezeCount < 3;
-
+      // TODO: Streak freeze feature not implemented yet
       res.json({
-        freezeCount: freezeData.freezeCount,
-        canEarn,
+        freezeCount: 0,
+        canEarn: false,
       });
     } catch (error: any) {
       console.error('[streak-freezes] Get error:', error);
@@ -2200,43 +2104,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      const FREEZE_COST = 100;
 
-      // Get current points
-      const points = await storage.getUserPoints(userId);
-      if (!points || points.available < FREEZE_COST) {
-        return res.status(400).json({ error: "Not enough tokens" });
-      }
-
-      // Get current freeze data
-      let freezeData = await storage.getStreakFreeze(userId);
-      if (!freezeData) {
-        freezeData = await storage.createStreakFreeze(userId);
-      }
-
-      // Check if at max freezes
-      if (freezeData.freezeCount >= 3) {
-        return res.status(400).json({ error: "Already at maximum freezes (3)" });
-      }
-
-      // Deduct points
-      await storage.addPoints(
-        userId,
-        -FREEZE_COST,
-        "habit_complete",
-        null,
-        "Purchased streak freeze"
-      );
-
-      // Increment freeze count
-      const updated = await storage.updateStreakFreeze(userId, {
-        freezeCount: freezeData.freezeCount + 1,
-      });
-
-      res.json({
-        success: true,
-        freezeCount: updated.freezeCount,
-      });
+      // TODO: Streak freeze feature not implemented yet
+      res.status(400).json({ error: "Feature not available" });
     } catch (error: any) {
       console.error('[streak-freezes] Purchase error:', error);
       res.status(500).json({ error: error.message });
@@ -2400,15 +2270,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const unlocked = await db.query.mountainUnlocks.findMany({
-        where: (mountainUnlocks, { eq }) => eq(mountainUnlocks.userId, req.user!.id),
+        where: (mountainUnlocks: any, { eq }: any) => eq(mountainUnlocks.userId, req.user!.id),
         with: {
           mountain: true
         }
       });
 
       // Return with mountain names for easy lookup
-      const formatted = unlocked.map(u => ({
+      const formatted = unlocked.map((u: any) => ({
         id: u.id,
         mountainName: u.mountain.name,
         unlockedAt: u.unlockedAt.toISOString(),
@@ -2426,8 +2297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/mountains/:mountainId/routes", async (req, res) => {
     try {
       const mountainId = parseInt(req.params.mountainId);
-      const routes = await storage.getRoutesByMountainId(mountainId);
-      res.json(routes);
+      // TODO: Implement getRoutesByMountainId
+      res.json([]);
     } catch (error: any) {
       console.error('[routes] Get by mountain error:', error);
       res.status(500).json({ error: error.message });
@@ -2604,6 +2475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const userId = req.user!.id;
       const { routeId, mountainId, gearIds } = req.body;
 
@@ -2612,7 +2484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check for existing active expedition
-      const activeExpedition = await db.query(
+      const activeExpedition = await (db as any).query(
         `SELECT id FROM player_expeditions WHERE user_id = $1 AND status = 'in_progress'`,
         [userId]
       );
@@ -2638,7 +2510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get mountain and route details
-      const mountain = await db.query(
+      const mountain = await (db as any).query(
         `SELECT * FROM mountains WHERE id = $1`,
         [mountainId]
       );
@@ -2647,7 +2519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Mountain not found" });
       }
 
-      const route = await db.query(
+      const route = await (db as any).query(
         `SELECT * FROM routes WHERE id = $1 AND mountain_id = $2`,
         [routeId, mountainId]
       );
@@ -2660,7 +2532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const routeData = route.rows[0];
 
       // Check required gear for this route
-      const requiredGear = await db.query(
+      const requiredGear = await (db as any).query(
         `SELECT rg.gear_id, rg.is_required, g.name, g.category
          FROM route_gear_requirements rg
          JOIN alpine_gear g ON rg.gear_id = g.id
@@ -2670,7 +2542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (requiredGear.rows.length > 0) {
         // Get user's gear inventory
-        const userGear = await db.query(
+        const userGear = await (db as any).query(
           `SELECT gear_id FROM player_gear_inventory WHERE user_id = $1`,
           [userId]
         );
@@ -2716,7 +2588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Create expedition record (in_progress status)
-      const expeditionResult = await db.query(
+      const expeditionResult = await (db as any).query(
         `INSERT INTO player_expeditions
          (user_id, route_id, status, start_date, current_progress, current_altitude, current_day, energy_spent, summit_reached)
          VALUES ($1, $2, 'in_progress', NOW(), 0, 0, 0, 20, false)
@@ -2730,14 +2602,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (gearIds && gearIds.length > 0) {
         for (const gearId of gearIds) {
           // Get gear condition from inventory
-          const gearResult = await db.query(
+          const gearResult = await (db as any).query(
             `SELECT condition FROM player_gear_inventory WHERE user_id = $1 AND gear_id = $2`,
             [userId, gearId]
           );
 
           const condition = gearResult.rows[0]?.condition || 100;
 
-          await db.query(
+          await (db as any).query(
             `INSERT INTO expedition_gear_loadout (expedition_id, gear_id, quantity, condition_before)
              VALUES ($1, $2, 1, $3)`,
             [expeditionId, gearId, condition]
@@ -2746,7 +2618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create starting event
-      await db.query(
+      await (db as any).query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rest_day', 0, $2)`,
@@ -2795,11 +2667,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const userId = req.user!.id;
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await db.query(
+      const expedition = await (db as any).query(
         `SELECT e.*, r.estimated_days, r.elevation_gain, r.route_name, m.name as mountain_name, m.elevation as mountain_elevation
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -2849,7 +2722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update expedition
-      await db.query(
+      await (db as any).query(
         `UPDATE player_expeditions
          SET current_progress = $1, current_day = $2, current_altitude = $3, energy_spent = $4, updated_at = NOW()
          WHERE id = $5`,
@@ -2859,7 +2732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create progress event
       const camp = Math.floor(newProgress / 25); // 0=basecamp, 1=camp1, 2=camp2, 3=camp3, 4=summit
       const campNames = ['Basecamp', 'Camp 1', 'Camp 2', 'Camp 3', 'High Camp'];
-      await db.query(
+      await (db as any).query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'acclimatization', $2, $3)`,
@@ -2905,11 +2778,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const userId = req.user!.id;
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition with mountain/route details
-      const expedition = await db.query(
+      const expedition = await (db as any).query(
         `SELECT e.*, r.technical_difficulty, r.physical_difficulty, r.elevation_gain, r.route_name,
                 m.name as mountain_name, m.elevation as mountain_elevation, m.difficulty_tier
          FROM player_expeditions e
@@ -2941,7 +2815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokensEarned = Math.floor(baseXp / 2);
 
       // Update expedition to completed
-      await db.query(
+      await (db as any).query(
         `UPDATE player_expeditions
          SET status = 'completed', summit_reached = true, completion_date = NOW(),
              experience_earned = $1, current_progress = 100, updated_at = NOW()
@@ -2962,10 +2836,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalElevationClimbed: (stats?.totalElevationClimbed || 0) + exp.elevation_gain
       });
 
-      await storage.addPoints(userId, tokensEarned, "expedition_summit", expeditionId, `Summited ${exp.mountain_name}`);
+      await storage.addPoints(userId, tokensEarned, "goal_progress", expeditionId, `Summited ${exp.mountain_name}`);
 
       // Check for mountain unlocks based on new level and summit count
-      const unlockedMountains = await db.query(
+      const unlockedMountains = await (db as any).query(
         `SELECT m.id, m.name, m.elevation, m.difficulty_tier, m.unlock_requirements
          FROM mountains m
          WHERE m.required_climbing_level <= $1
@@ -2979,7 +2853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUnlocks = [];
       for (const mountain of unlockedMountains.rows) {
         // Create unlock record
-        await db.query(
+        await (db as any).query(
           `INSERT INTO mountain_unlocks (user_id, mountain_id, unlocked_by)
            VALUES ($1, $2, $3)
            ON CONFLICT (user_id, mountain_id) DO NOTHING`,
@@ -3028,14 +2902,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update achievements if any new ones were earned
       if (newAchievements.length > 0) {
-        await db.query(
+        await (db as any).query(
           `UPDATE player_climbing_stats SET achievements = $1 WHERE user_id = $2`,
           [JSON.stringify(currentAchievements), userId]
         );
       }
 
       // Unlock mountain background/theme (summit reward)
-      const mountainResult = await db.query(
+      const mountainResult = await (db as any).query(
         `SELECT m.id, m.name, m.elevation, m.background_image, m.theme_colors
          FROM mountains m
          JOIN routes r ON m.id = r.mountain_id
@@ -3048,7 +2922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const mountain = mountainResult.rows[0];
 
         // Check if background already unlocked
-        const existingBackground = await db.query(
+        const existingBackground = await (db as any).query(
           `SELECT id FROM mountain_backgrounds
            WHERE user_id = $1 AND mountain_id = $2`,
           [userId, mountain.id]
@@ -3056,7 +2930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (existingBackground.rows.length === 0) {
           // Unlock the background
-          await db.query(
+          await (db as any).query(
             `INSERT INTO mountain_backgrounds (user_id, mountain_id, expedition_id, is_active)
              VALUES ($1, $2, $3, false)
              ON CONFLICT DO NOTHING`,
@@ -3074,7 +2948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create summit event
-      await db.query(
+      await (db as any).query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'success', $2, $3)`,
@@ -3132,11 +3006,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const userId = req.user!.id;
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await db.query(
+      const expedition = await (db as any).query(
         `SELECT e.*, r.route_name, m.name as mountain_name
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -3162,7 +3037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newEnergy = Math.min(maxEnergy, currentEnergy + energyRefund);
 
       // Update expedition to failed
-      await db.query(
+      await (db as any).query(
         `UPDATE player_expeditions
          SET status = 'failed', summit_reached = false, completion_date = NOW(),
              experience_earned = $1, updated_at = NOW()
@@ -3187,7 +3062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create retreat event
-      await db.query(
+      await (db as any).query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rescue', $2, $3)`,
@@ -3235,9 +3110,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const db = getDb();
       const userId = req.user!.id;
 
-      const expeditions = await db.query(
+      const expeditions = await (db as any).query(
         `SELECT
           e.*,
           r.name as route_name,

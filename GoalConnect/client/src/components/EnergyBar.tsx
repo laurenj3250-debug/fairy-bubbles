@@ -35,8 +35,7 @@ export default function EnergyBar({
       <div className="flex-1 min-w-[100px]">
         <Progress
           value={percentage}
-          className="h-2"
-          indicatorClassName={getEnergyColor()}
+          className={`h-2 ${getEnergyColor()}`}
         />
       </div>
     </div>

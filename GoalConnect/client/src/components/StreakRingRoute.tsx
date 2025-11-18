@@ -49,7 +49,7 @@ export function StreakRingRoute({ habitId, className }: StreakRingRouteProps) {
   const prevStreakRef = useRef(0);
 
   // Fetch habit streak data
-  const { data: streakData } = useQuery({
+  const { data: streakData } = useQuery<{ currentStreak: number }>({
     queryKey: [`/api/habits/${habitId}/streak`],
     enabled: !!habitId,
   });

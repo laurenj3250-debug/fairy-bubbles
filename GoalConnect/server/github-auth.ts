@@ -119,34 +119,35 @@ async function findOrCreateGitHubUser(githubUser: GitHubUser): Promise<Authentic
   console.log('[github-auth] ✅ New GitHub user created:', email);
 
   // Initialize RPG data for new user
-  try {
-    await storage.createPlayerStats(newUser.id);
-    console.log('[github-auth] ✅ Player stats initialized');
+  // TODO: Re-enable when creature system is fully implemented
+  // try {
+  //   await storage.createPlayerStats(newUser.id);
+  //   console.log('[github-auth] ✅ Player stats initialized');
 
-    const allSpecies = await storage.getCreatureSpecies();
-    if (allSpecies.length > 0) {
-      const starterSpecies = allSpecies[0];
-      const wisMod = Math.floor((starterSpecies.baseWis - 10) / 2);
-      const maxHp = (1 * 5) + (1 * Math.max(0, wisMod));
+  //   const allSpecies = await storage.getCreatureSpecies();
+  //   if (allSpecies.length > 0) {
+  //     const starterSpecies = allSpecies[0];
+  //     const wisMod = Math.floor((starterSpecies.baseWis - 10) / 2);
+  //     const maxHp = (1 * 5) + (1 * Math.max(0, wisMod));
 
-      await storage.createUserCreature({
-        userId: newUser.id,
-        speciesId: starterSpecies.id,
-        level: 1,
-        experience: 0,
-        hp: maxHp,
-        currentHp: maxHp,
-        str: starterSpecies.baseStr,
-        dex: starterSpecies.baseDex,
-        wis: starterSpecies.baseWis,
-        isInParty: true,
-        partyPosition: 1,
-      });
-      console.log('[github-auth] ✅ Starter creature given:', starterSpecies.name);
-    }
-  } catch (error) {
-    console.error('[github-auth] ⚠️  Failed to initialize RPG data:', error);
-  }
+  //     await storage.createUserCreature({
+  //       userId: newUser.id,
+  //       speciesId: starterSpecies.id,
+  //       level: 1,
+  //       experience: 0,
+  //       hp: maxHp,
+  //       currentHp: maxHp,
+  //       str: starterSpecies.baseStr,
+  //       dex: starterSpecies.baseDex,
+  //       wis: starterSpecies.baseWis,
+  //       isInParty: true,
+  //       partyPosition: 1,
+  //     });
+  //     console.log('[github-auth] ✅ Starter creature given:', starterSpecies.name);
+  //   }
+  // } catch (error) {
+  //   console.error('[github-auth] ⚠️  Failed to initialize RPG data:', error);
+  // }
 
   return {
     id: newUser.id,

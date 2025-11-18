@@ -31,6 +31,15 @@ interface Mountain {
   regionId: number;
 }
 
+interface ClimbingStats {
+  climbingLevel: number;
+  summits: number;
+  currentStreak: number;
+  totalXp: number;
+  totalDistance?: number;
+  totalElevationGain?: number;
+}
+
 export default function WorldMap() {
   const [selectedRegion, setSelectedRegion] = useState<number | null>(null);
 
@@ -42,7 +51,7 @@ export default function WorldMap() {
     queryKey: ["/api/mountains"],
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<ClimbingStats>({
     queryKey: ["/api/climbing/stats"],
   });
 

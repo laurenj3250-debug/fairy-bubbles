@@ -205,8 +205,8 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
   useEffect(() => {
     const completedToday = todayLogs.filter((log) => log.completed);
     const tokensFromLogs = completedToday.reduce((sum, log) => {
-      const habit = habits.find((h) => h.id === log.habitId);
-      return sum + (habit?.coinsReward || 10);
+      // Default XP per habit is 10
+      return sum + 10;
     }, 0);
     setTodayTokens(tokensFromLogs);
   }, [todayLogs, habits]);

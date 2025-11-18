@@ -11,6 +11,11 @@ interface Habit {
   icon: string;
 }
 
+interface HabitWithStatus extends Habit {
+  completed: boolean;
+  logId?: number;
+}
+
 interface HabitLog {
   id: number;
   habitId: number;
@@ -108,7 +113,7 @@ export function DailyFocusHero() {
 }
 
 interface HabitChecklistItemProps {
-  habit: Habit;
+  habit: HabitWithStatus;
 }
 
 function HabitChecklistItem({ habit }: HabitChecklistItemProps) {

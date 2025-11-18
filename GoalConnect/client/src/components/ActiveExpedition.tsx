@@ -86,23 +86,8 @@ export default function ActiveExpedition() {
           data.unlockedMountains.forEach((mountain: any, index: number) => {
             setTimeout(() => {
               toast({
-                title: (
-                  <div className="flex items-center gap-2">
-                    <Unlock className="w-5 h-5 text-green-500" />
-                    <span>Mountain Unlocked!</span>
-                  </div>
-                ),
-                description: (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Mountain className="w-4 h-4 text-primary" />
-                    <div>
-                      <div className="font-bold">{mountain.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {mountain.elevation.toLocaleString()}m • {mountain.tier}
-                      </div>
-                    </div>
-                  </div>
-                ),
+                title: "🔓 Mountain Unlocked!",
+                description: `${mountain.name} - ${mountain.elevation.toLocaleString()}m • ${mountain.tier}`,
                 duration: 6000,
               });
             }, 1500 + (index * 500));
@@ -114,20 +99,8 @@ export default function ActiveExpedition() {
           data.newAchievements.forEach((achievement: any, index: number) => {
             setTimeout(() => {
               toast({
-                title: (
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-yellow-500" />
-                    <span>Achievement Unlocked!</span>
-                  </div>
-                ),
-                description: (
-                  <div className="mt-2">
-                    <div className="font-bold">{achievement.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {achievement.description}
-                    </div>
-                  </div>
-                ),
+                title: "🏆 Achievement Unlocked!",
+                description: `${achievement.name}: ${achievement.description}`,
                 duration: 6000,
               });
             }, 2000 + (data.unlockedMountains?.length || 0) * 500 + (index * 500));
@@ -139,29 +112,9 @@ export default function ActiveExpedition() {
           const baseDelay = 2000 + (data.unlockedMountains?.length || 0) * 500 + (data.newAchievements?.length || 0) * 500;
           setTimeout(() => {
             toast({
-              title: (
-                <div className="flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-purple-500" />
-                  <span>Mountain Theme Unlocked!</span>
-                </div>
-              ),
-              description: (
-                <div className="mt-2">
-                  <div className="font-bold">{data.mountainBackground.name} Theme</div>
-                  <div className="text-sm text-muted-foreground">
-                    New background and color scheme available
-                  </div>
-                </div>
-              ),
+              title: "🎨 Mountain Theme Unlocked!",
+              description: `${data.mountainBackground.name} Theme - New background and color scheme available in Settings`,
               duration: 8000,
-              action: (
-                <button
-                  onClick={() => window.location.href = '/settings'}
-                  className="px-3 py-1 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded transition-colors"
-                >
-                  View Settings
-                </button>
-              ),
             });
           }, baseDelay + 500);
         }

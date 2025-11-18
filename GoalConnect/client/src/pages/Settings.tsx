@@ -102,12 +102,9 @@ export default function Settings() {
                     disabled={bg.isActive || activateBackgroundMutation.isPending}
                     className={`relative group rounded-xl overflow-hidden transition-all ${
                       bg.isActive
-                        ? 'ring-2 scale-[1.02]'
+                        ? 'ring-2 ring-[hsl(var(--accent))] scale-[1.02]'
                         : 'hover:scale-105 hover:shadow-xl cursor-pointer'
                     } ${activateBackgroundMutation.isPending ? 'opacity-50' : ''}`}
-                    style={{
-                      ringColor: bg.isActive ? 'hsl(var(--accent))' : undefined
-                    }}
                   >
                     {/* Background Image */}
                     <div className="aspect-video relative">

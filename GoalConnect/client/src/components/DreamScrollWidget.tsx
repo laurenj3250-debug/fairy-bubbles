@@ -26,7 +26,7 @@ export function DreamScrollWidget() {
   // Fetch items for selected category
   const { data: items = [], isLoading } = useQuery<DreamScrollItem[]>({
     queryKey: ["/api/dream-scroll/category", selectedCategory],
-    queryFn: () => apiRequest(`/api/dream-scroll/category/${selectedCategory}`),
+    queryFn: () => apiRequest(`/api/dream-scroll/category/${selectedCategory}`, "GET"),
   });
 
   const createMutation = useMutation({
