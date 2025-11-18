@@ -3526,8 +3526,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .where(eq(schema.expeditionMissions.id, mission.id));
 
-        // Check if mission is complete
-        if (mission.currentDay >= mission.totalDays) {
+        // Check if mission is complete (just finished the final day)
+        if (mission.currentDay + 1 > mission.totalDays) {
           return res.json({
             status: "mission_complete",
             completionPercent,
@@ -3539,7 +3539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "day_complete",
           completionPercent,
           meetsGoal: true,
-          daysRemaining: mission.totalDays - mission.currentDay,
+          daysRemaining: mission.totalDays - (mission.currentDay + 1),
         });
       } else {
         // Failed mission
