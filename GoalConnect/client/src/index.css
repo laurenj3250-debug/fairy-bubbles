@@ -24,28 +24,28 @@
 
 @layer base {
   :root {
-    /* Colors - Sunrise Theme (El Capitan travel poster) - WCAG AA Compliant */
-    --background: 45 100% 96%;        /* Warm creamy white (sky) */
-    --foreground: 30 15% 20%;         /* Darker warm gray (4.5:1+ contrast) */
-    --card: 0 0% 100%;                /* Pure white glass cards */
-    --card-foreground: 30 15% 20%;
-    --primary: 28 85% 48%;            /* Darker orange/gold (4.5:1+ on white) */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 45%;         /* Darker blue/gray (4.5:1+ on white) */
-    --secondary-foreground: 0 0% 100%;
-    --accent: 160 50% 40%;            /* Darker muted green (4.5:1+ on white) */
-    --accent-foreground: 0 0% 100%;
-    --success: 142 71% 45%;           /* Darker fresh green (4.5:1+) */
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;            /* Darker amber (4.5:1+) */
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 50%;         /* Darker red (4.5:1+) */
+    /* Colors - BOLD & VIBRANT Climbing Theme */
+    --background: 45 30% 12%;         /* Deep warm charcoal (night at base camp) */
+    --foreground: 40 20% 95%;         /* Bright warm white (high contrast) */
+    --card: 40 20% 18%;               /* Rich warm dark cards */
+    --card-foreground: 40 20% 95%;
+    --primary: 25 95% 58%;            /* BRIGHT sunset orange/gold */
+    --primary-foreground: 30 15% 10%;
+    --secondary: 200 85% 55%;         /* VIBRANT sky blue */
+    --secondary-foreground: 220 30% 10%;
+    --accent: 160 80% 50%;            /* ELECTRIC teal/green */
+    --accent-foreground: 160 30% 10%;
+    --success: 142 85% 55%;           /* BRIGHT neon green */
+    --success-foreground: 142 30% 10%;
+    --warning: 38 100% 60%;           /* BOLD amber/yellow */
+    --warning-foreground: 38 30% 10%;
+    --destructive: 0 90% 60%;         /* VIVID red */
     --destructive-foreground: 0 0% 100%;
-    --border: 30 10% 80%;             /* Slightly darker border for contrast */
-    --input: 30 10% 80%;
-    --ring: 28 85% 48%;
-    --muted: 30 8% 90%;               /* Slightly darker muted bg */
-    --muted-foreground: 30 10% 40%;   /* Darker gray (4.5:1+ on white) */
+    --border: 40 15% 30%;             /* Visible borders with contrast */
+    --input: 40 15% 25%;
+    --ring: 25 95% 58%;
+    --muted: 40 12% 22%;              /* Distinct muted sections */
+    --muted-foreground: 40 15% 65%;   /* Clear readable muted text */
 
     /* Spacing */
     --section-gap: 1.5rem;

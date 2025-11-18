@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { motion } from "framer-motion";
 import { Pitch } from "./Pitch";
 import { format } from "date-fns";
 import type { Habit, HabitLog } from "@shared/schema";

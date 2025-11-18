@@ -96,67 +96,28 @@ export default function BaseCamp() {
   return (
     <div className="min-h-screen pb-24 relative overflow-hidden">
       {/* Main Container */}
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-8">
         {/* Mountain Header - Shows current expedition */}
         <MountainHeader seasonProgress={seasonProgress} currentStreak={currentStreak} />
 
         {/* Active Expedition (if exists) */}
         <ActiveExpedition />
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column (70%) - TODAY'S ROUTE - Main Focus */}
-          <div className="lg:col-span-8">
-            <div className="glass-card interactive-glow p-6">
-              <ClimbingRouteView habits={habits} habitLogs={todayLogs} date={today} />
-            </div>
-          </div>
-
-          {/* Right Column (30%) - Supporting Widgets */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Active Goals */}
-            <GoalsSection />
-
-            {/* Today's Tasks */}
-            <TodaysTasksPanel />
-
-            {/* Summit Journal (Dream Scroll) */}
-            <DreamScrollWidget />
-
-            {/* Quick Links */}
-            <div className="glass-card p-4">
-              <div className="space-y-2">
-                <a
-                  href="/habits"
-                  className="block px-4 py-3 rounded-lg bg-muted/20 hover:bg-muted/40 text-center transition-colors"
-                >
-                  <div className="text-sm font-medium text-foreground">Manage Habits</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Add, edit, or archive your habits
-                  </div>
-                </a>
-                <a
-                  href="/weekly"
-                  className="block px-4 py-3 rounded-lg bg-muted/20 hover:bg-muted/40 text-center transition-colors"
-                >
-                  <div className="text-sm font-medium text-foreground">Week View</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    See your weekly progress
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
+        {/* Main Climbing Route - Full Width Hero */}
+        <div className="glass-card interactive-glow p-8 rounded-3xl">
+          <ClimbingRouteView habits={habits} habitLogs={todayLogs} date={today} />
         </div>
 
-        {/* Link to full analytics */}
-        <div className="glass-card p-4 text-center">
-          <a href="/habits" className="block">
-            <p className="text-sm font-medium text-foreground">View Detailed Analytics</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Explore patterns, streaks, and climbing stats
-            </p>
-          </a>
+        {/* Supporting Widgets - Stacked layout */}
+        <div className="space-y-6">
+          {/* Active Goals - Full width on top */}
+          <GoalsSection />
+
+          {/* Summit Journal and Tasks - Side by side below */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DreamScrollWidget />
+            <TodaysTasksPanel />
+          </div>
         </div>
       </div>
     </div>

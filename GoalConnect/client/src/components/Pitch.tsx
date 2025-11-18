@@ -71,19 +71,22 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
       {/* Clickable Pitch Card */}
       <motion.button
         className={cn(
-          "w-full text-left px-6 py-5 rounded-2xl transition-all duration-300 cursor-pointer relative overflow-hidden",
-          "border-2 shadow-lg hover:shadow-xl",
+          "w-full text-left px-8 py-6 rounded-3xl transition-all duration-300 cursor-pointer relative overflow-hidden",
+          "border-2 shadow-xl hover:shadow-2xl",
           completed
-            ? "bg-card/40 border-success/30 opacity-80"
-            : "bg-card/60 backdrop-blur-sm hover:bg-card/80 hover:translate-x-1"
+            ? "bg-card/30 border-success/40 opacity-75"
+            : "bg-card/70 backdrop-blur-md hover:bg-card/90 hover:translate-x-2"
         )}
         style={{
-          borderLeftWidth: "6px",
+          borderLeftWidth: "8px",
           borderLeftColor: difficulty.border,
+          boxShadow: completed
+            ? `0 4px 20px ${difficulty.border}40`
+            : `0 4px 16px rgba(0,0,0,0.1), inset 0 0 0 1px ${difficulty.border}20`
         }}
         onClick={onClick}
-        whileHover={{ scale: completed ? 1 : 1.01 }}
-        whileTap={{ scale: 0.99 }}
+        whileHover={{ scale: completed ? 1 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
         {/* Background gradient accent */}
         <div
@@ -132,7 +135,7 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
             {/* Habit Name */}
             <div
               className={cn(
-                "text-lg font-bold mb-2 transition-all",
+                "text-xl font-black mb-3 transition-all",
                 completed ? "line-through text-muted-foreground" : "text-foreground"
               )}
             >
@@ -140,18 +143,18 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
             </div>
 
             {/* Meta Information Row */}
-            <div className="flex flex-wrap items-center gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Difficulty Badge */}
               <div
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-semibold shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-md text-sm"
                 style={{
-                  backgroundColor: `${difficulty.bg}15`,
-                  borderLeft: `3px solid ${difficulty.border}`,
+                  backgroundColor: `${difficulty.bg}25`,
+                  border: `2px solid ${difficulty.border}`,
                   color: difficulty.text,
                 }}
               >
                 <div
-                  className="w-2 h-2 rounded-full animate-pulse"
+                  className="w-2.5 h-2.5 rounded-full animate-pulse"
                   style={{ backgroundColor: difficulty.border }}
                 />
                 <span>{difficulty.label}</span>
@@ -159,16 +162,16 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
 
               {/* Streak Badge */}
               {streak > 0 && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 text-orange-600 font-medium border border-orange-500/20">
-                  <span className="text-base">🔥</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/15 text-orange-600 font-bold border-2 border-orange-500/30 shadow-md text-sm">
+                  <span className="text-lg">🔥</span>
                   <span>{streak} day{streak !== 1 ? 's' : ''}</span>
                 </div>
               )}
 
               {/* New Habit Badge */}
               {streak === 0 && !completed && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-600 font-medium border border-blue-500/20">
-                  <span className="text-base">✨</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/15 text-blue-600 font-bold border-2 border-blue-500/30 shadow-md text-sm">
+                  <span className="text-lg">✨</span>
                   <span>New!</span>
                 </div>
               )}
