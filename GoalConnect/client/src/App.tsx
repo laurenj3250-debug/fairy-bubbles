@@ -13,9 +13,10 @@ import Todos from "@/pages/Todos";
 import WeeklyHub from "@/pages/WeeklyHub";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
-import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
+// ARCHIVED: Alpine Expeditions (System A)
+// import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
+// import ExpeditionLogbook from "@/pages/ExpeditionLogbook";
 import ExpeditionMissions from "@/pages/ExpeditionMissions";
-import ExpeditionLogbook from "@/pages/ExpeditionLogbook";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
@@ -171,12 +172,14 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
+      {/* ARCHIVED: Logbook merged into main Expedition Missions page
       <Route path="/expedition-logbook">
         <RequireAuth>
           <ExpeditionLogbook />
           <BottomNav />
         </RequireAuth>
       </Route>
+      */}
       <Route path="/dream-scroll">
         <RequireAuth>
           <DreamScroll />

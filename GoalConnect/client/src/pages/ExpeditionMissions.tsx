@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Mountain, ArrowRight, Lock, BookOpen } from "lucide-react";
-import { Link } from "wouter";
+import { Mountain, ArrowRight, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SummitCelebration } from "@/components/SummitCelebration";
 import { MissionBriefingModal } from "@/components/MissionBriefingModal";
@@ -91,23 +90,13 @@ export default function ExpeditionMissions() {
 
           {/* Header Content */}
           <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                  <Mountain className="w-8 h-8" />
-                  Expedition Missions
-                </h1>
-                <p className="text-sm text-foreground/70 mt-1">
-                  Unlock mountains through time-based habit challenges
-                </p>
-              </div>
-              <Link href="/expedition-logbook">
-                <button className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/20 hover:bg-background/80 transition-all flex items-center gap-2 text-sm font-medium">
-                  <BookOpen className="w-4 h-4" />
-                  View Logbook
-                </button>
-              </Link>
-            </div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <Mountain className="w-8 h-8" />
+              Expedition Missions
+            </h1>
+            <p className="text-sm text-foreground/70 mt-1">
+              Unlock mountains through time-based habit challenges
+            </p>
           </div>
         </div>
 
