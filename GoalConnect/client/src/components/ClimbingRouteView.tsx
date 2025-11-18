@@ -84,14 +84,25 @@ export function ClimbingRouteView({ habits, habitLogs, date }: ClimbingRouteView
       </div>
 
       {/* Climbing Route with vertical rope line */}
-      <div className="relative pl-10">
-        {/* Vertical rope line */}
-        <div
-          className="absolute left-5 top-0 bottom-0 w-1 opacity-30"
-          style={{
-            background: "linear-gradient(to bottom, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%)",
-          }}
-        />
+      <div className="relative">
+        {/* Vertical rope line - braided effect */}
+        {pitches.length > 0 && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 ml-1">
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                background: "repeating-linear-gradient(0deg, hsl(var(--primary)) 0px, hsl(var(--accent)) 20px, hsl(var(--primary)) 40px)",
+                boxShadow: "0 0 10px rgba(0,0,0,0.2)"
+              }}
+            />
+            <div
+              className="absolute inset-0 opacity-10 blur-sm"
+              style={{
+                background: "linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent)))",
+              }}
+            />
+          </div>
+        )}
 
         {/* Pitches */}
         <div className="space-y-2">
@@ -124,23 +135,52 @@ export function ClimbingRouteView({ habits, habitLogs, date }: ClimbingRouteView
 
         {/* Summit Goal */}
         {totalCount > 0 && (
-          <div
-            className={`mt-8 p-6 rounded-xl border-2 border-dashed text-center transition-all ${
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mt-8 p-8 rounded-2xl text-center transition-all relative overflow-hidden ${
               isFullySummitted
-                ? "border-success bg-success/10 animate-celebration"
-                : "border-[hsl(var(--accent))]/40 bg-[hsl(var(--accent))]/5"
+                ? "bg-gradient-to-br from-success/20 via-success/10 to-success/5 border-2 border-success"
+                : "bg-gradient-to-br from-[hsl(var(--accent))]/10 to-[hsl(var(--accent))]/5 border-2 border-dashed border-[hsl(var(--accent))]/30"
             }`}
           >
-            <div className="text-5xl mb-3">{isFullySummitted ? "🎉" : "🏔️"}</div>
-            <div className="text-xl font-bold mb-2 text-foreground">
-              {isFullySummitted ? "SUMMIT REACHED!" : "SUMMIT TODAY'S ROUTE"}
+            {/* Background decoration */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-[hsl(var(--accent))] rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-[hsl(var(--primary))] rounded-full blur-3xl" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {isFullySummitted
-                ? "Outstanding! All pitches sent today. 🧗"
-                : `Complete all ${totalCount} ${totalCount === 1 ? "pitch" : "pitches"} to send today's route`}
-            </p>
-          </div>
+
+            {/* Content */}
+            <div className="relative z-10">
+              <motion.div
+                className="text-6xl mb-4"
+                animate={isFullySummitted ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
+                transition={{ duration: 0.5 }}
+              >
+                {isFullySummitted ? "🎉" : "🏔️"}
+              </motion.div>
+              <div className={`text-2xl font-black mb-3 ${isFullySummitted ? "text-success" : "text-foreground"}`}>
+                {isFullySummitted ? "SUMMIT REACHED!" : "SUMMIT TODAY'S ROUTE"}
+              </div>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {isFullySummitted
+                  ? "Outstanding climb! All pitches sent today. You're crushing it! 🧗‍♂️"
+                  : `Complete all ${totalCount} ${totalCount === 1 ? "pitch" : "pitches"} to send today's route and reach the summit`}
+              </p>
+
+              {isFullySummitted && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/20 text-success font-semibold"
+                >
+                  <span>🏆</span>
+                  <span>Route Sent!</span>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
         )}
       </div>
     </div>
