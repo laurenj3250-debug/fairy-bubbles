@@ -7,6 +7,7 @@ import { ClimbingRouteView } from "@/components/ClimbingRouteView";
 import { DreamScrollWidget } from "@/components/DreamScrollWidget";
 import { TodaysTasksPanel } from "@/components/TodaysTasksPanel";
 import { GoalsSection } from "@/components/GoalsSection";
+import { PeakLoreCard } from "@/components/PeakLoreCard";
 import ActiveExpedition from "@/components/ActiveExpedition";
 
 /**
@@ -113,10 +114,11 @@ export default function BaseCamp() {
           {/* Active Goals - Full width on top */}
           <GoalsSection />
 
-          {/* Summit Journal and Tasks - Side by side below */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Summit Journal, Tasks, and Peak Lore - Three columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <DreamScrollWidget />
             <TodaysTasksPanel />
+            <PeakLoreCard />
           </div>
         </div>
       </div>

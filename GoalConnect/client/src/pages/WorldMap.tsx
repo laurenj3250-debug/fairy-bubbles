@@ -231,10 +231,10 @@ export default function WorldMap() {
                         </div>
 
                         {unlocked ? (
-                          <Link href={`/expedition/plan/${mountain.id}`}>
+                          <Link href="/expedition-missions">
                             <Button className="w-full">
                               <TrendingUp className="w-4 h-4 mr-2" />
-                              Plan Expedition
+                              View Missions
                             </Button>
                           </Link>
                         ) : (

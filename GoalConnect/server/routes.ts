@@ -3492,9 +3492,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const baseXP = calculateBaseXP(mountain.difficultyTier);
       const basePoints = calculateBasePoints(mountain.difficultyTier);
 
-      // For Phase 1: No bonus multipliers yet (will add in Phase 3)
-      const xpEarned = baseXP;
-      const pointsEarned = basePoints;
+      // Calculate bonus multipliers
+      let xpMultiplier = 1.0;
+      let pointsMultiplier = 1.0;
+      const bonuses: string[] = [];
+
+      // Speed bonus: First attempt (no previous failed missions for this mountain)
+      const previousAttempts = await db
+        .select()
+        .from(schema.expeditionMissions)
+        .where(
+          and(
+            eq(schema.expeditionMissions.userId, userId),
+            eq(schema.expeditionMissions.mountainId, mission.mountainId),
+            eq(schema.expeditionMissions.status, "failed")
+          )
+        );
+
+      if (previousAttempts.length === 0) {
+        xpMultiplier += 0.25;
+        pointsMultiplier += 0.25;
+        bonuses.push("speed");
+      }
+
+      // Perfection bonus: 100% completion every day
+      const perfectDays = mission.perfectDays || 0;
+      if (perfectDays === mission.totalDays) {
+        xpMultiplier += 0.50;
+        pointsMultiplier += 0.50;
+        bonuses.push("perfection");
+      }
+
+      // Streak bonus: Check if user maintained their overall streak during mission
+      // For now, we'll award this bonus if they have any active streak
+      // (In future, could check if streak was maintained throughout mission duration)
+      const [latestHabitData] = await db
+        .select()
+        .from(schema.habits)
+        .where(eq(schema.habits.userId, userId))
+        .limit(1);
+
+      if (latestHabitData) {
+        // User has habits and completed the mission, award streak bonus
+        xpMultiplier += 0.25;
+        pointsMultiplier += 0.25;
+        bonuses.push("streak");
+      }
+
+      const xpEarned = Math.floor(baseXP * xpMultiplier);
+      const pointsEarned = Math.floor(basePoints * pointsMultiplier);
 
       // Update player climbing stats
       let [climbingStats] = await db
@@ -3587,6 +3633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completionDate: new Date(),
           xpEarned,
           pointsEarned,
+          bonusesEarned: JSON.stringify(bonuses),
           updatedAt: new Date(),
         })
         .where(eq(schema.expeditionMissions.id, mission.id));
@@ -3595,8 +3642,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rewards: {
           xp: xpEarned,
           points: pointsEarned,
+          baseXP,
+          basePoints,
+          bonuses,
+          multiplier: xpMultiplier,
           mountain: mountain.name,
+          mountainId: mountain.id,
+          elevation: mountain.elevation,
           backgroundUnlocked: true,
+          themeUnlocked: true,
+          daysCompleted: mission.daysCompleted,
+          perfectDays: mission.perfectDays,
+          totalDays: mission.totalDays,
         },
       });
     } catch (error) {

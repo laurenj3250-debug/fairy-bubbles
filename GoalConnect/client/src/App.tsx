@@ -15,6 +15,7 @@ import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
 import ExpeditionMissions from "@/pages/ExpeditionMissions";
+import ExpeditionLogbook from "@/pages/ExpeditionLogbook";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
 import SignupPage from "@/pages/Signup";
@@ -156,15 +157,23 @@ function AppRoutes() {
           <BottomNav />
         </RequireAuth>
       </Route>
+      {/* ARCHIVED: Alpine Expeditions (System A) - Kept for reference
       <Route path="/expedition/plan/:mountainId">
         <RequireAuth>
           <ExpeditionPlanning />
           <BottomNav />
         </RequireAuth>
       </Route>
+      */}
       <Route path="/expedition-missions">
         <RequireAuth>
           <ExpeditionMissions />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/expedition-logbook">
+        <RequireAuth>
+          <ExpeditionLogbook />
           <BottomNav />
         </RequireAuth>
       </Route>

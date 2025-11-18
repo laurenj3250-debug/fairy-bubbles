@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Mountain, ArrowRight, Lock } from "lucide-react";
+import { Mountain, ArrowRight, Lock, BookOpen } from "lucide-react";
+import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { SummitCelebration } from "@/components/SummitCelebration";
+import { MissionBriefingModal } from "@/components/MissionBriefingModal";
 
 interface Mission {
   id: number;
@@ -44,6 +48,8 @@ interface NextMountain {
 }
 
 export default function ExpeditionMissions() {
+  const [celebrationRewards, setCelebrationRewards] = useState<any>(null);
+
   const { data: currentMission } = useQuery<Mission | null>({
     queryKey: ["/api/expedition-missions/current"],
   });
@@ -53,7 +59,22 @@ export default function ExpeditionMissions() {
     enabled: !currentMission,
   });
 
+  // Check for celebration data in sessionStorage (set by mission completion)
+  useEffect(() => {
+    const celebrationData = sessionStorage.getItem('summit-celebration');
+    if (celebrationData) {
+      try {
+        const rewards = JSON.parse(celebrationData);
+        setCelebrationRewards(rewards);
+        sessionStorage.removeItem('summit-celebration');
+      } catch (e) {
+        console.error('Failed to parse celebration data:', e);
+      }
+    }
+  }, []);
+
   return (
+    <>
     <div className="min-h-screen pb-20 px-4 pt-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
@@ -70,13 +91,23 @@ export default function ExpeditionMissions() {
 
           {/* Header Content */}
           <div className="relative z-10">
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <Mountain className="w-8 h-8" />
-              Expedition Missions
-            </h1>
-            <p className="text-sm text-foreground/70 mt-1">
-              Unlock mountains through time-based habit challenges
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                  <Mountain className="w-8 h-8" />
+                  Expedition Missions
+                </h1>
+                <p className="text-sm text-foreground/70 mt-1">
+                  Unlock mountains through time-based habit challenges
+                </p>
+              </div>
+              <Link href="/expedition-logbook">
+                <button className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/20 hover:bg-background/80 transition-all flex items-center gap-2 text-sm font-medium">
+                  <BookOpen className="w-4 h-4" />
+                  View Logbook
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -88,6 +119,16 @@ export default function ExpeditionMissions() {
         )}
       </div>
     </div>
+
+    {/* Summit Celebration Modal */}
+    {celebrationRewards && (
+      <SummitCelebration
+        isOpen={!!celebrationRewards}
+        onClose={() => setCelebrationRewards(null)}
+        rewards={celebrationRewards}
+      />
+    )}
+    </>
   );
 }
 
@@ -202,6 +243,12 @@ function ActiveMissionCard({ mission }: { mission: Mission }) {
 function NextMountainCard({ nextMountain }: { nextMountain: NextMountain }) {
   const { mountain, missionParams, meetsLevelRequirement, userLevel, requiredLevel } =
     nextMountain;
+  const [showBriefing, setShowBriefing] = useState(false);
+
+  // Get habit count
+  const { data: habits = [] } = useQuery<any[]>({
+    queryKey: ["/api/habits"],
+  });
 
   const startMission = async () => {
     try {
@@ -213,7 +260,8 @@ function NextMountainCard({ nextMountain }: { nextMountain: NextMountain }) {
       });
 
       if (response.ok) {
-        window.location.reload(); // Simple reload for Phase 1
+        setShowBriefing(false);
+        window.location.reload();
       }
     } catch (error) {
       console.error("Failed to start mission:", error);
@@ -221,6 +269,7 @@ function NextMountainCard({ nextMountain }: { nextMountain: NextMountain }) {
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -297,7 +346,7 @@ function NextMountainCard({ nextMountain }: { nextMountain: NextMountain }) {
 
         {/* Start Button */}
         <button
-          onClick={startMission}
+          onClick={() => setShowBriefing(true)}
           disabled={!meetsLevelRequirement}
           className={`
             w-full px-6 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2
@@ -325,5 +374,18 @@ function NextMountainCard({ nextMountain }: { nextMountain: NextMountain }) {
         </button>
       </div>
     </motion.div>
+
+    {/* Mission Briefing Modal */}
+    <MissionBriefingModal
+      isOpen={showBriefing}
+      onClose={() => setShowBriefing(false)}
+      onConfirm={startMission}
+      mountain={mountain}
+      missionParams={missionParams}
+      meetsLevelRequirement={meetsLevelRequirement}
+      userLevel={userLevel}
+      habitCount={habits.length}
+    />
+    </>
   );
 }
