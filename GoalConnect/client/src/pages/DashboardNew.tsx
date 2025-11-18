@@ -15,6 +15,7 @@ import { StreakFreeze } from "@/components/StreakFreeze";
 import { Altimeter } from "@/components/Altimeter";
 import { ClimbingInspirationTile } from "@/components/ClimbingInspirationTile";
 import ActiveExpedition from "@/components/ActiveExpedition";
+import CurrentExpeditionWidget from "@/components/CurrentExpeditionWidget";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -216,6 +217,9 @@ export default function DashboardNew() {
 
           {/* Routes & Goals Compact */}
           <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* Current Expedition Widget */}
+            <CurrentExpeditionWidget />
+
             {/* Altimeter - shows current elevation/altitude */}
             <Altimeter compact={false} />
 
