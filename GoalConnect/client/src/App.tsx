@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { ProgressBackground } from "@/components/ProgressBackground";
+import BaseCamp from "@/pages/BaseCamp";
 import DashboardNew from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
 import Goals from "@/pages/Goals";
@@ -96,6 +97,13 @@ function AppRoutes() {
 
       {/* Protected routes */}
       <Route path="/">
+        <RequireAuth>
+          <BaseCamp />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      {/* Legacy routes - kept during migration */}
+      <Route path="/weekly-hub-old">
         <RequireAuth>
           <WeeklyHub />
           <BottomNav />
