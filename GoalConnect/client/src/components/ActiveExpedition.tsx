@@ -192,25 +192,41 @@ export default function ActiveExpedition() {
   const campNames = ["Basecamp", "Camp 1", "Camp 2", "Camp 3", "Summit Push"];
 
   return (
-    <div className="bg-gradient-to-br from-primary/10 to-blue-500/5 border-2 border-primary/30 rounded-2xl p-6 shadow-lg mb-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
-            <Mountain className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Active Expedition</h3>
-            <p className="text-sm text-muted-foreground">
-              {activeExpedition.mountain_name} • {activeExpedition.route_name}
-            </p>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-muted-foreground">Day</div>
-          <div className="text-2xl font-bold text-primary">{activeExpedition.current_day || 0}</div>
-        </div>
+    <div className="bg-background/40 backdrop-blur-xl border-2 border-foreground/10 rounded-3xl p-6 shadow-xl mb-6 relative overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'
+          }}
+        />
       </div>
+
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'
+              }}
+            >
+              <Mountain className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Active Expedition</h3>
+              <p className="text-sm text-foreground/70">
+                {activeExpedition.mountain_name} • {activeExpedition.route_name}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-foreground/60">Day</div>
+            <div className="text-2xl font-bold text-foreground">{activeExpedition.current_day || 0}</div>
+          </div>
+        </div>
 
       {/* Progress Bar */}
       <div className="mb-4">
@@ -226,45 +242,56 @@ export default function ActiveExpedition() {
         </div>
       </div>
 
-      {/* Energy Display */}
-      <div className="mb-4 bg-background/50 rounded-lg p-3">
-        <EnergyBar
-          currentEnergy={stats?.currentEnergy || 0}
-          maxEnergy={stats?.maxEnergy || 100}
-          showLabel={true}
-        />
-        {stats && stats.currentEnergy < 5 && (
-          <div className="flex items-center gap-2 mt-2 text-xs text-orange-400">
-            <AlertCircle className="w-4 h-4" />
-            <span>Low energy! Complete habits or retreat.</span>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button
-          onClick={handleAdvance}
-          disabled={isAdvancing || advanceMutation.isPending || (stats?.currentEnergy || 0) < 5}
-          className="flex-1"
-        >
-          {isAdvancing || advanceMutation.isPending ? (
-            "Advancing..."
-          ) : (
-            <>
-              <ArrowUp className="w-4 h-4 mr-2" />
-              Continue Expedition (-5 energy)
-            </>
+        {/* Energy Display */}
+        <div className="mb-4 bg-background/60 backdrop-blur-md border border-foreground/10 rounded-2xl p-3 shadow-md">
+          <EnergyBar
+            currentEnergy={stats?.currentEnergy || 0}
+            maxEnergy={stats?.maxEnergy || 100}
+            showLabel={true}
+          />
+          {stats && stats.currentEnergy < 5 && (
+            <div
+              className="flex items-center gap-2 mt-2 text-xs"
+              style={{ color: 'hsl(25 100% 50%)' }}
+            >
+              <AlertCircle className="w-4 h-4" />
+              <span>Low energy! Complete habits or retreat.</span>
+            </div>
           )}
-        </Button>
-        <Button
-          onClick={handleRetreat}
-          variant="outline"
-          disabled={retreatMutation.isPending}
-        >
-          <Flag className="w-4 h-4 mr-2" />
-          Retreat
-        </Button>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleAdvance}
+            disabled={isAdvancing || advanceMutation.isPending || (stats?.currentEnergy || 0) < 5}
+            className={`
+              flex-1 px-6 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2
+              transition-all shadow-lg hover:shadow-xl text-white
+              ${(isAdvancing || advanceMutation.isPending || (stats?.currentEnergy || 0) < 5) ? "opacity-40 cursor-not-allowed" : ""}
+            `}
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'
+            }}
+          >
+            {isAdvancing || advanceMutation.isPending ? (
+              "Advancing..."
+            ) : (
+              <>
+                <ArrowUp className="w-4 h-4" />
+                Continue Expedition (-5 energy)
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleRetreat}
+            disabled={retreatMutation.isPending}
+            className="px-4 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 bg-background/60 backdrop-blur-md border border-foreground/10 text-foreground hover:bg-background/80 transition-all shadow-md"
+          >
+            <Flag className="w-4 h-4" />
+            Retreat
+          </button>
+        </div>
       </div>
     </div>
   );
