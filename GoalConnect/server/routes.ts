@@ -3601,6 +3601,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Mountain not found" });
       }
 
+      // Validate mission is actually complete
+      const daysCompleted = mission.daysCompleted || 0;
+      const requiredDays = Math.ceil(mission.totalDays * mission.requiredCompletionPercent / 100);
+      if (daysCompleted < requiredDays) {
+        return res.status(400).json({
+          error: "Mission not yet complete",
+          daysCompleted,
+          requiredDays,
+        });
+      }
+
       // Calculate rewards
       const baseXP = calculateBaseXP(mountain.difficultyTier);
       const basePoints = calculateBasePoints(mountain.difficultyTier);
@@ -3610,11 +3621,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pointsEarned = basePoints;
 
       // Update player climbing stats
-      const [climbingStats] = await db
+      let [climbingStats] = await db
         .select()
         .from(schema.playerClimbingStats)
         .where(eq(schema.playerClimbingStats.userId, userId))
         .limit(1);
+
+      // Create climbing stats if they don't exist (consistent with /next and /start endpoints)
+      if (!climbingStats) {
+        [climbingStats] = await db
+          .insert(schema.playerClimbingStats)
+          .values({ userId })
+          .returning();
+      }
 
       if (climbingStats) {
         const newXP = climbingStats.totalExperience + xpEarned;
@@ -3634,11 +3653,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Award points
-      const [userPoints] = await db
+      let [userPoints] = await db
         .select()
         .from(schema.userPoints)
         .where(eq(schema.userPoints.userId, userId))
         .limit(1);
+
+      // Create user points if they don't exist (consistent with getUserPoints in db-storage.ts)
+      if (!userPoints) {
+        [userPoints] = await db
+          .insert(schema.userPoints)
+          .values({
+            userId,
+            totalEarned: 0,
+            totalSpent: 0,
+            available: 0,
+          })
+          .returning();
+      }
 
       if (userPoints) {
         await db
@@ -3650,13 +3682,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(schema.userPoints.userId, userId));
       }
 
-      // Unlock mountain background
-      await db.insert(schema.mountainBackgrounds).values({
-        userId,
-        mountainId: mountain.id,
-        unlockedAt: new Date(),
-        isActive: false,
-      });
+      // Unlock mountain background (check for duplicates first)
+      const [existingBackground] = await db
+        .select()
+        .from(schema.mountainBackgrounds)
+        .where(
+          and(
+            eq(schema.mountainBackgrounds.userId, userId),
+            eq(schema.mountainBackgrounds.mountainId, mountain.id)
+          )
+        )
+        .limit(1);
+
+      if (!existingBackground) {
+        await db.insert(schema.mountainBackgrounds).values({
+          userId,
+          mountainId: mountain.id,
+          unlockedAt: new Date(),
+          isActive: false,
+        });
+      }
 
       // Mark mission as completed
       await db
