@@ -3456,6 +3456,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check daily progress for active mission
+  app.post("/api/expedition-missions/check-progress", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { date } = req.body; // Format: YYYY-MM-DD
+      const db = getDb();
+
+      if (!date) {
+        return res.status(400).json({ error: "Date required" });
+      }
+
+      // Get active mission
+      const [mission] = await db
+        .select()
+        .from(schema.expeditionMissions)
+        .where(
+          and(
+            eq(schema.expeditionMissions.userId, userId),
+            eq(schema.expeditionMissions.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (!mission) {
+        return res.status(404).json({ error: "No active mission" });
+      }
+
+      // Get user's habits
+      const userHabits = await db
+        .select()
+        .from(schema.habits)
+        .where(eq(schema.habits.userId, userId));
+
+      // Get completed habits for the date
+      const completedLogs = await db
+        .select()
+        .from(schema.habitLogs)
+        .where(
+          and(
+            eq(schema.habitLogs.userId, userId),
+            eq(schema.habitLogs.date, date),
+            eq(schema.habitLogs.completed, true)
+          )
+        );
+
+      const totalHabits = userHabits.length;
+      const completedHabits = completedLogs.length;
+      const completionPercent = totalHabits > 0 ? (completedHabits / totalHabits) * 100 : 0;
+      const meetsGoal = completionPercent >= mission.requiredCompletionPercent;
+
+      // Update mission progress
+      if (meetsGoal) {
+        const isPerfectDay = completionPercent === 100;
+
+        await db
+          .update(schema.expeditionMissions)
+          .set({
+            daysCompleted: mission.daysCompleted + 1,
+            currentDay: mission.currentDay + 1,
+            perfectDays: isPerfectDay ? mission.perfectDays + 1 : mission.perfectDays,
+            totalHabitsCompleted: mission.totalHabitsCompleted + completedHabits,
+            totalHabitsPossible: mission.totalHabitsPossible + totalHabits,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.expeditionMissions.id, mission.id));
+
+        // Check if mission is complete
+        if (mission.currentDay >= mission.totalDays) {
+          return res.json({
+            status: "mission_complete",
+            completionPercent,
+            meetsGoal: true,
+          });
+        }
+
+        return res.json({
+          status: "day_complete",
+          completionPercent,
+          meetsGoal: true,
+          daysRemaining: mission.totalDays - mission.currentDay,
+        });
+      } else {
+        // Failed mission
+        await db
+          .update(schema.expeditionMissions)
+          .set({
+            status: "failed",
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.expeditionMissions.id, mission.id));
+
+        return res.json({
+          status: "mission_failed",
+          completionPercent,
+          meetsGoal: false,
+          required: mission.requiredCompletionPercent,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking progress:", error);
+      res.status(500).json({ error: "Failed to check progress" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
