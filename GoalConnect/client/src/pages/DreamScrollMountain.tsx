@@ -226,12 +226,28 @@ export default function DreamScrollMountain() {
     <div className="min-h-screen pb-24">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-6 shadow-lg topo-pattern">
+        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-8 relative overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
+            }}
+          />
           <div className="flex items-center gap-3 mb-2 relative z-10">
-            <Target className="w-9 h-9 text-[hsl(var(--accent))]" />
-            <h1 className="text-4xl font-bold text-foreground">Notes & Ideas</h1>
+            <Target className="w-9 h-9" style={{ color: 'hsl(var(--accent))' }} />
+            <h1
+              className="text-4xl font-bold"
+              style={{
+                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              Notes & Ideas
+            </h1>
           </div>
-          <p className="text-muted-foreground relative z-10">
+          <p className="text-foreground/60 relative z-10">
             Capture your thoughts, dreams, and plans
           </p>
         </div>
@@ -249,17 +265,24 @@ export default function DreamScrollMountain() {
                 key={category.value}
                 onClick={() => setSelectedCategory(category.value)}
                 className={cn(
-                  "px-5 py-3 rounded-xl font-semibold transition-all duration-300 border-2",
+                  "px-5 py-3 rounded-xl font-semibold transition-all duration-300 backdrop-blur-xl border shadow-lg hover:scale-105",
                   isSelected
-                    ? `${category.bgColor} ${category.borderColor} shadow-lg`
-                    : "bg-card/40 border-card-border hover:bg-card/60"
+                    ? "text-white"
+                    : "bg-background/30 border-foreground/10 hover:bg-background/40"
                 )}
+                style={isSelected ? {
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  borderColor: 'hsl(var(--primary) / 0.4)'
+                } : {}}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{category.emoji}</span>
-                  <span className="text-foreground">{category.label}</span>
+                  <span className={isSelected ? "text-white" : "text-foreground"}>{category.label}</span>
                   {itemCount > 0 && (
-                    <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full text-muted-foreground">
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{
+                      background: isSelected ? 'rgba(255,255,255,0.2)' : 'hsl(var(--foreground) / 0.1)',
+                      color: isSelected ? 'white' : 'hsl(var(--foreground) / 0.7)'
+                    }}>
                       {completedCount}/{itemCount}
                     </span>
                   )}
@@ -271,21 +294,28 @@ export default function DreamScrollMountain() {
 
         {/* Stats Bar */}
         {categoryItems.length > 0 && (
-          <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
+          <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border border-foreground/10 shadow-lg relative overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-5 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at left, hsl(var(--accent) / 0.3), transparent 70%)`
+              }}
+            />
             <div className="flex items-center justify-between mb-2 relative z-10">
-              <span className="text-sm text-muted-foreground">Progress</span>
+              <span className="text-sm text-foreground/70">Progress</span>
               <span className="text-sm font-bold text-foreground">{completionRate}%</span>
             </div>
-            <div className="w-full h-3 bg-muted/50 rounded-full overflow-hidden relative z-10">
+            <div className="w-full h-3 rounded-full overflow-hidden relative z-10" style={{ background: 'hsl(var(--foreground) / 0.08)' }}>
               <div
                 className="h-full transition-all duration-500 rounded-full"
                 style={{
                   width: `${completionRate}%`,
-                  background: 'hsl(var(--accent))'
+                  background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  boxShadow: '0 0 10px hsl(var(--accent) / 0.4)'
                 }}
               />
             </div>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground relative z-10">
+            <div className="flex justify-between mt-2 text-xs text-foreground/60 relative z-10">
               <span>{completedItems.length} completed</span>
               <span>{activeItems.length} remaining</span>
             </div>
@@ -293,7 +323,13 @@ export default function DreamScrollMountain() {
         )}
 
         {/* Tag Management */}
-        <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-card-border shadow-lg topo-pattern">
+        <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border border-foreground/10 shadow-lg relative overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-5 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at right, hsl(var(--secondary) / 0.3), transparent 70%)`
+            }}
+          />
           <div className="flex items-center justify-between mb-3 relative z-10">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Tag className="w-4 h-4" />
@@ -301,7 +337,12 @@ export default function DreamScrollMountain() {
             </h3>
             <button
               onClick={() => setIsCreatingTag(!isCreatingTag)}
-              className="text-xs px-3 py-1.5 bg-muted/50 hover:bg-muted text-[hsl(var(--accent))] rounded-lg transition-colors border border-border"
+              className="text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105 border"
+              style={{
+                background: 'hsl(var(--accent) / 0.15)',
+                color: 'hsl(var(--accent))',
+                borderColor: 'hsl(var(--accent) / 0.3)'
+              }}
             >
               <Plus className="w-3 h-3 inline mr-1" />
               New Tag
@@ -315,21 +356,36 @@ export default function DreamScrollMountain() {
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
                 placeholder="Tag name..."
-                className="flex-1 bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
+                style={{
+                  background: 'hsl(var(--foreground) / 0.05)',
+                  borderColor: 'hsl(var(--foreground) / 0.1)',
+                  focusRingColor: 'hsl(var(--primary))'
+                }}
               />
               <select
                 value={newTagColor}
                 onChange={(e) => setNewTagColor(e.target.value)}
-                className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
+                style={{
+                  background: 'hsl(var(--foreground) / 0.05)',
+                  borderColor: 'hsl(var(--foreground) / 0.1)'
+                }}
               >
                 {TAG_COLORS.map((color, i) => (
-                  <option key={i} value={color} className="bg-muted">{`Color ${i + 1}`}</option>
+                  <option key={i} value={color}>{`Color ${i + 1}`}</option>
                 ))}
               </select>
               <button
                 onClick={handleCreateTag}
                 disabled={!newTagName.trim() || createTagMutation.isPending}
-                className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground rounded-lg text-sm"
+                className="px-4 py-2 rounded-lg text-sm transition-all hover:scale-105"
+                style={{
+                  background: !newTagName.trim() || createTagMutation.isPending
+                    ? 'hsl(var(--foreground) / 0.1)'
+                    : `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  color: 'white'
+                }}
               >
                 Add
               </button>
@@ -338,7 +394,11 @@ export default function DreamScrollMountain() {
                   setIsCreatingTag(false);
                   setNewTagName("");
                 }}
-                className="px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg text-sm"
+                className="px-4 py-2 rounded-lg text-sm transition-colors"
+                style={{
+                  background: 'hsl(var(--foreground) / 0.05)',
+                  color: 'hsl(var(--foreground))'
+                }}
               >
                 Cancel
               </button>
@@ -347,7 +407,7 @@ export default function DreamScrollMountain() {
 
           <div className="flex flex-wrap gap-2 relative z-10">
             {categoryTags.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No tags yet. Create one to organize your goals!</p>
+              <p className="text-xs text-foreground/60">No tags yet. Create one to organize your goals!</p>
             ) : (
               categoryTags.map(tag => (
                 <div key={tag.id} className="flex items-center gap-1">
@@ -360,7 +420,16 @@ export default function DreamScrollMountain() {
                         deleteTagMutation.mutate(tag.id);
                       }
                     }}
-                    className="text-destructive/60 hover:text-destructive"
+                    className="transition-colors"
+                    style={{
+                      color: 'hsl(var(--destructive) / 0.6)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--destructive))';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--destructive) / 0.6)';
+                    }}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -372,7 +441,13 @@ export default function DreamScrollMountain() {
 
         {/* Add New Item */}
         {isAdding ? (
-          <div className="bg-card/40 backdrop-blur-sm rounded-xl p-5 border border-card-border shadow-lg topo-pattern">
+          <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-5 border border-foreground/10 shadow-lg relative overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-5 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at top, hsl(var(--primary) / 0.3), transparent 70%)`
+              }}
+            />
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2 relative z-10">
               <Plus className="w-5 h-5" />
               Add to {currentCategory?.label}
@@ -383,14 +458,22 @@ export default function DreamScrollMountain() {
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Title..."
-                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 border"
+                style={{
+                  background: 'hsl(var(--foreground) / 0.05)',
+                  borderColor: 'hsl(var(--foreground) / 0.1)'
+                }}
               />
               <textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Description (optional)..."
                 rows={2}
-                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 border"
+                style={{
+                  background: 'hsl(var(--foreground) / 0.05)',
+                  borderColor: 'hsl(var(--foreground) / 0.1)'
+                }}
               />
               {categoryTags.length > 0 && (
                 <div>
@@ -415,26 +498,34 @@ export default function DreamScrollMountain() {
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-2">Priority</label>
+                  <label className="text-xs text-foreground/70 block mb-2">Priority</label>
                   <select
                     value={editPriority}
                     onChange={(e) => setEditPriority(e.target.value)}
-                    className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
+                    style={{
+                      background: 'hsl(var(--foreground) / 0.05)',
+                      borderColor: 'hsl(var(--foreground) / 0.1)'
+                    }}
                   >
                     {PRIORITY_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value} className="bg-muted">{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-2">Difficulty</label>
+                  <label className="text-xs text-foreground/70 block mb-2">Difficulty</label>
                   <select
                     value={editCost || "easy"}
                     onChange={(e) => setEditCost(e.target.value)}
-                    className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
+                    style={{
+                      background: 'hsl(var(--foreground) / 0.05)',
+                      borderColor: 'hsl(var(--foreground) / 0.1)'
+                    }}
                   >
                     {DIFFICULTY_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value} className="bg-muted">
+                      <option key={opt.value} value={opt.value}>
                         {opt.emoji} {opt.label}
                       </option>
                     ))}
@@ -445,7 +536,13 @@ export default function DreamScrollMountain() {
                 <button
                   onClick={handleAddItem}
                   disabled={!editTitle.trim() || createMutation.isPending}
-                  className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground rounded-lg font-semibold"
+                  className="flex-1 px-4 py-2.5 rounded-lg font-semibold transition-all hover:scale-105"
+                  style={{
+                    background: !editTitle.trim() || createMutation.isPending
+                      ? 'hsl(var(--foreground) / 0.1)'
+                      : `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                    color: 'white'
+                  }}
                 >
                   Add Goal
                 </button>
@@ -458,7 +555,11 @@ export default function DreamScrollMountain() {
                     setEditPriority("medium");
                     setEditCost(null);
                   }}
-                  className="px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-lg"
+                  className="px-4 py-2.5 rounded-lg transition-colors"
+                  style={{
+                    background: 'hsl(var(--foreground) / 0.05)',
+                    color: 'hsl(var(--foreground))'
+                  }}
                 >
                   Cancel
                 </button>
@@ -468,7 +569,20 @@ export default function DreamScrollMountain() {
         ) : (
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full py-4 bg-muted/20 hover:bg-muted/30 border-2 border-dashed border-border rounded-xl text-[hsl(var(--accent))] font-semibold transition-all"
+            className="w-full py-4 border-2 border-dashed rounded-2xl font-semibold transition-all hover:scale-[1.02]"
+            style={{
+              background: 'hsl(var(--foreground) / 0.03)',
+              borderColor: 'hsl(var(--foreground) / 0.1)',
+              color: 'hsl(var(--accent))'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'hsl(var(--foreground) / 0.05)';
+              e.currentTarget.style.borderColor = 'hsl(var(--accent) / 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'hsl(var(--foreground) / 0.03)';
+              e.currentTarget.style.borderColor = 'hsl(var(--foreground) / 0.1)';
+            }}
           >
             <Plus className="w-5 h-5 inline mr-2" />
             Add New Goal
@@ -478,10 +592,16 @@ export default function DreamScrollMountain() {
         {/* Items List */}
         <div className="space-y-3">
           {activeItems.length === 0 && completedItems.length === 0 ? (
-            <div className="bg-card/40 backdrop-blur-sm rounded-xl p-12 text-center border border-card-border shadow-lg topo-pattern">
+            <div className="bg-background/40 backdrop-blur-xl rounded-3xl p-12 text-center border border-foreground/10 shadow-xl relative overflow-hidden">
+              <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle at center, hsl(var(--accent) / 0.3), transparent 70%)`
+                }}
+              />
               <div className="relative z-10">
-                <Mountain className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No goals yet. Add your first objective!</p>
+                <Mountain className="w-16 h-16 mx-auto mb-4" style={{ color: 'hsl(var(--foreground) / 0.4)' }} />
+                <p className="text-foreground/60">No goals yet. Add your first objective!</p>
               </div>
             </div>
           ) : (
@@ -517,8 +637,14 @@ export default function DreamScrollMountain() {
 
               {/* Completed Items */}
               {completedItems.length > 0 && (
-                <details className="bg-card/40 backdrop-blur-sm rounded-xl border border-card-border overflow-hidden shadow-lg topo-pattern">
-                  <summary className="p-4 cursor-pointer text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 relative z-10">
+                <details className="bg-background/40 backdrop-blur-xl rounded-2xl border border-foreground/10 overflow-hidden shadow-lg relative">
+                  <div
+                    className="absolute inset-0 opacity-5 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at bottom, hsl(var(--primary) / 0.2), transparent 70%)`
+                    }}
+                  />
+                  <summary className="p-4 cursor-pointer hover:bg-foreground/5 transition-colors flex items-center gap-2 relative z-10" style={{ color: 'hsl(var(--foreground) / 0.7)' }}>
                     <TrendingUp className="w-4 h-4" />
                     <span className="font-semibold">Completed ({completedItems.length})</span>
                   </summary>
@@ -569,19 +695,33 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
 
   if (isEditing) {
     return (
-      <div className="bg-card/40 backdrop-blur-sm rounded-xl p-4 border border-[hsl(var(--accent))]/50 shadow-lg topo-pattern">
+      <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border shadow-lg relative overflow-hidden" style={{ borderColor: 'hsl(var(--accent) / 0.5)' }}>
+        <div
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at top, hsl(var(--accent) / 0.3), transparent 70%)`
+          }}
+        />
         <div className="space-y-3 relative z-10">
           <input
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 border"
+            style={{
+              background: 'hsl(var(--foreground) / 0.05)',
+              borderColor: 'hsl(var(--foreground) / 0.1)'
+            }}
           />
           <textarea
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
             rows={2}
-            className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 border"
+            style={{
+              background: 'hsl(var(--foreground) / 0.05)',
+              borderColor: 'hsl(var(--foreground) / 0.1)'
+            }}
           />
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -602,13 +742,21 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
           <div className="flex gap-2">
             <button
               onClick={handleSaveEdit}
-              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
+              className="px-4 py-2 rounded-lg transition-all hover:scale-105"
+              style={{
+                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                color: 'white'
+              }}
             >
               Save
             </button>
             <button
               onClick={() => setEditingItem(null)}
-              className="px-4 py-2 bg-muted/50 hover:bg-muted text-foreground rounded-lg"
+              className="px-4 py-2 rounded-lg transition-colors"
+              style={{
+                background: 'hsl(var(--foreground) / 0.05)',
+                color: 'hsl(var(--foreground))'
+              }}
             >
               Cancel
             </button>
@@ -620,30 +768,45 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
 
   return (
     <div className={cn(
-      "bg-card/40 backdrop-blur-sm rounded-xl p-4 border transition-all shadow-lg topo-pattern",
-      item.completed ? "border-primary/30 bg-primary/10" : "border-card-border hover:border-border"
-    )}>
+      "bg-background/40 backdrop-blur-xl rounded-2xl p-4 border transition-all shadow-lg relative overflow-hidden hover:shadow-xl",
+      item.completed ? "" : ""
+    )}
+      style={{
+        borderColor: item.completed ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--foreground) / 0.1)'
+      }}
+    >
+      <div
+        className="absolute inset-0 opacity-5 pointer-events-none"
+        style={{
+          background: item.completed
+            ? `radial-gradient(circle at top right, hsl(var(--primary) / 0.3), transparent 70%)`
+            : `radial-gradient(circle at top right, hsl(var(--accent) / 0.2), transparent 70%)`
+        }}
+      />
       <div className="flex items-start gap-3 relative z-10">
         <button
           onClick={onToggle}
           className={cn(
-            "w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all mt-0.5",
-            item.completed
-              ? "bg-primary border-primary"
-              : "border-border hover:border-border/80"
+            "w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all mt-0.5"
           )}
+          style={{
+            background: item.completed ? 'hsl(var(--primary))' : 'transparent',
+            borderColor: item.completed ? 'hsl(var(--primary))' : 'hsl(var(--foreground) / 0.2)'
+          }}
         >
-          {item.completed && <Check className="w-4 h-4 text-primary-foreground" />}
+          {item.completed && <Check className="w-4 h-4 text-white" />}
         </button>
         <div className="flex-1">
           <h4 className={cn(
             "font-semibold mb-1",
-            item.completed ? "text-muted-foreground line-through" : "text-foreground"
-          )}>
+            item.completed ? "line-through" : "text-foreground"
+          )}
+            style={item.completed ? { color: 'hsl(var(--foreground) / 0.5)' } : {}}
+          >
             {item.title}
           </h4>
           {item.description && (
-            <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+            <p className="text-sm mb-2" style={{ color: 'hsl(var(--foreground) / 0.6)' }}>{item.description}</p>
           )}
           {itemTagObjects.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -654,7 +817,7 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
               ))}
             </div>
           )}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs" style={{ color: 'hsl(var(--foreground) / 0.6)' }}>
             {item.priority && (
               <span className={PRIORITY_OPTIONS.find(p => p.value === item.priority)?.color}>
                 {PRIORITY_OPTIONS.find(p => p.value === item.priority)?.label}
@@ -670,13 +833,21 @@ function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTi
         <div className="flex gap-1">
           <button
             onClick={onEdit}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2 transition-colors hover:bg-foreground/5 rounded-lg"
+            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+            className="p-2 transition-colors hover:bg-foreground/5 rounded-lg"
+            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'hsl(var(--destructive))';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'hsl(var(--foreground) / 0.5)';
+            }}
           >
             <Trash2 className="w-4 h-4" />
           </button>

@@ -204,67 +204,93 @@ export default function Todos() {
     <div className="min-h-screen pb-20 px-4 pt-6 relative">
       {/* Header */}
       <div className={cn("mx-auto mb-6", view === "week" ? "max-w-[1600px]" : "max-w-4xl")}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-              <ListTodo className="w-8 h-8 text-primary" />
-              Expedition Tasks
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {pendingCount} pending, {completedCount} completed
-            </p>
+        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-6 relative overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
+            }}
+          />
+          <div className="flex items-center justify-between relative z-10">
+            <div>
+              <h1
+                className="text-3xl font-bold mb-2"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Expedition Tasks
+              </h1>
+              <p className="text-sm text-foreground/60">
+                {pendingCount} pending, {completedCount} completed
+              </p>
+            </div>
+            <Button
+              onClick={() => setTodoDialogOpen(true)}
+              className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                color: 'white'
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Task
+            </Button>
           </div>
-          <Button
-            onClick={() => setTodoDialogOpen(true)}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Task
-          </Button>
         </div>
 
         {/* View and Filters */}
-        <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 mb-6 inline-flex gap-2 flex-wrap">
           {/* View Toggle */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setView("list")}
-              className={cn(
-                "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
-                view === "list"
-                  ? "bg-primary/20 text-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              )}
-            >
-              <ListTodo className="w-4 h-4" />
-              List
-            </button>
-            <button
-              onClick={() => setView("week")}
-              className={cn(
-                "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
-                view === "week"
-                  ? "bg-primary/20 text-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              )}
-            >
-              <CalendarDays className="w-4 h-4" />
-              Week
-            </button>
-          </div>
+          <button
+            onClick={() => setView("list")}
+            className={cn(
+              "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+              view === "list"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+            )}
+            style={view === "list" ? {
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            } : {}}
+          >
+            <ListTodo className="w-4 h-4" />
+            List
+          </button>
+          <button
+            onClick={() => setView("week")}
+            className={cn(
+              "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+              view === "week"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+            )}
+            style={view === "week" ? {
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+            } : {}}
+          >
+            <CalendarDays className="w-4 h-4" />
+            Week
+          </button>
 
           {/* Filters (only in list view) */}
           {view === "list" && (
             <>
-              <div className="w-px bg-border" />
+              <div className="w-px bg-foreground/10" />
               <button
                 onClick={() => setFilter("all")}
                 className={cn(
                   "px-4 py-2 rounded-xl font-medium transition-all",
                   filter === "all"
-                    ? "bg-primary/20 text-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    ? "text-white shadow-lg"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
                 )}
+                style={filter === "all" ? {
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+                } : {}}
               >
                 All ({todos.length})
               </button>
@@ -273,9 +299,12 @@ export default function Todos() {
                 className={cn(
                   "px-4 py-2 rounded-xl font-medium transition-all",
                   filter === "pending"
-                    ? "bg-primary/20 text-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    ? "text-white shadow-lg"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
                 )}
+                style={filter === "pending" ? {
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+                } : {}}
               >
                 Pending ({pendingCount})
               </button>
@@ -284,9 +313,12 @@ export default function Todos() {
                 className={cn(
                   "px-4 py-2 rounded-xl font-medium transition-all",
                   filter === "completed"
-                    ? "bg-primary/20 text-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    ? "text-white shadow-lg"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
                 )}
+                style={filter === "completed" ? {
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+                } : {}}
               >
                 Completed ({completedCount})
               </button>
@@ -302,10 +334,16 @@ export default function Todos() {
                 <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
               </div>
             ) : sortedTodos.length === 0 ? (
-              <div className="card p-12">
+              <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-12 text-center relative overflow-hidden">
+                <div
+                  className="absolute inset-0 opacity-10 pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle at center, hsl(var(--primary) / 0.3), transparent 70%)`
+                  }}
+                />
                 <div className="relative z-10 text-center">
-                  <ListTodo className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
+                  <ListTodo className="w-16 h-16 mx-auto mb-4" style={{ color: 'hsl(var(--primary) / 0.6)' }} />
+                  <p className="text-foreground/60 mb-4">
                     {filter === "all" && "No tasks yet. Create your first one!"}
                     {filter === "pending" && "No pending tasks. Great job!"}
                     {filter === "completed" && "No completed tasks yet."}
@@ -313,8 +351,11 @@ export default function Todos() {
                   {filter === "all" && (
                     <Button
                       onClick={() => setTodoDialogOpen(true)}
-                      variant="outline"
-                      className="border-card-border"
+                      className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
+                      style={{
+                        background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                        color: 'white'
+                      }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create Task
@@ -336,11 +377,17 @@ export default function Todos() {
                     <div
                       key={todo.id}
                       className={cn(
-                        "card transition-all",
+                        "bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-4 transition-all relative overflow-hidden",
                         isFadingOut && "animate-fade-out",
                         todo.completed && !isFadingOut && "opacity-60"
                       )}
                     >
+                      <div
+                        className="absolute inset-0 opacity-5 pointer-events-none"
+                        style={{
+                          background: `radial-gradient(circle at top right, hsl(var(--accent) / 0.2), transparent 70%)`
+                        }}
+                      />
                       <div className="relative z-10 flex items-start gap-4">
                         {/* Checkbox */}
                         <button
@@ -408,13 +455,19 @@ export default function Todos() {
 
                           <div className="flex flex-wrap items-center gap-2">
                             {dueDateInfo && (
-                              <Badge className="bg-muted/50 text-foreground border-0">
+                              <Badge className="border-0" style={{
+                                background: 'hsl(var(--foreground) / 0.08)',
+                                color: 'hsl(var(--foreground))'
+                              }}>
                                 <Calendar className="w-3 h-3 mr-1" />
                                 <span className={dueDateInfo.color}>{dueDateInfo.text}</span>
                               </Badge>
                             )}
                             {todo.difficulty && (
-                              <Badge className="bg-[hsl(var(--accent))]/20 text-[hsl(var(--accent))] border-0">
+                              <Badge className="border-0" style={{
+                                background: 'hsl(var(--accent) / 0.2)',
+                                color: 'hsl(var(--accent))'
+                              }}>
                                 {gradeInfo.label} • {gradeInfo.points} tokens
                               </Badge>
                             )}
@@ -429,7 +482,8 @@ export default function Todos() {
                             }
                           }}
                           disabled={deleteTodoMutation.isPending}
-                          className="flex-shrink-0 p-2 text-muted-foreground hover:bg-muted/50 rounded-lg transition-all"
+                          className="flex-shrink-0 p-2 hover:bg-foreground/5 rounded-lg transition-all"
+                          style={{ color: 'hsl(var(--foreground) / 0.5)' }}
                           title="Delete task"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -536,7 +590,7 @@ export default function Todos() {
                 <div className="relative z-10 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      <div className="text-xs uppercase tracking-[0.16em] text-foreground/60">
                         Unscheduled
                       </div>
                       <div className="font-semibold text-foreground">Basecamp Tasks</div>
@@ -550,7 +604,7 @@ export default function Todos() {
                   </div>
 
                   {todos.filter(t => !t.dueDate && !t.completed).length === 0 ? (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-foreground/60 mt-1">
                       Drop ideas here to sort them into the week later.
                     </p>
                   ) : (
@@ -611,7 +665,7 @@ export default function Todos() {
                       {/* Day header */}
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-foreground/60">
                             {dayNames[date.getDay()]}
                           </div>
                           <div className="text-2xl font-semibold leading-none text-foreground">
@@ -631,7 +685,7 @@ export default function Todos() {
                       {/* Tasks pills */}
                       <div className="flex-1 mt-3 space-y-2 min-h-[120px]">
                         {dayTodos.length === 0 ? (
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-[11px] text-foreground/60">
                             Rest day · no tasks ✨
                           </p>
                         ) : (
@@ -642,17 +696,27 @@ export default function Todos() {
                                 <button
                                   key={todo.id}
                                   onClick={() => toggleTodoMutation.mutate(todo.id)}
-                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-amber-900/20 border border-orange-400/40 text-xs hover:bg-amber-900/30 transition-colors w-full text-foreground"
+                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-colors w-full text-foreground"
+                                  style={{
+                                    background: 'hsl(var(--primary) / 0.15)',
+                                    borderColor: 'hsl(var(--primary) / 0.3)'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'hsl(var(--primary) / 0.25)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'hsl(var(--primary) / 0.15)';
+                                  }}
                                 >
                                   <span className="truncate">{todo.title}</span>
-                                  <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] shrink-0 ml-1">
+                                  <span className="flex items-center gap-0.5 text-[11px] shrink-0 ml-1" style={{ color: 'hsl(var(--accent))' }}>
                                     ⛰<span>{gradeInfo.points}</span>
                                   </span>
                                 </button>
                               );
                             })}
                             {dayTodos.length > 3 && (
-                              <div className="text-[11px] text-muted-foreground">
+                              <div className="text-[11px] text-foreground/60">
                                 +{dayTodos.length - 3} more…
                               </div>
                             )}
@@ -668,7 +732,19 @@ export default function Todos() {
                             quickAddTodoMutation.mutate({ title: title.trim(), dueDate: dateKey });
                           }
                         }}
-                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 bg-orange-500/15 border border-orange-400/40 text-foreground hover:bg-orange-500/30 hover:border-orange-400/60 transition-colors w-full"
+                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 border text-foreground transition-colors w-full"
+                        style={{
+                          background: 'hsl(var(--primary) / 0.15)',
+                          borderColor: 'hsl(var(--primary) / 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'hsl(var(--primary) / 0.25)';
+                          e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'hsl(var(--primary) / 0.15)';
+                          e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.3)';
+                        }}
                       >
                         <span className="text-sm">＋</span>
                         Add task

@@ -16,14 +16,14 @@ import { TokenReward } from "@/components/TokenReward";
 
 // Mountain-themed color palette based on terrain and elevation
 const habitColors = [
-  { bg: "linear-gradient(135deg, #475569 0%, #334155 100%)", name: "Stone Peak", border: "#64748b" },
-  { bg: "linear-gradient(135deg, #64748b 0%, #475569 100%)", name: "Granite Ridge", border: "#94a3b8" },
-  { bg: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", name: "Forest Base", border: "#14b8a6" },
-  { bg: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)", name: "Glacier Ice", border: "#3b82f6" },
-  { bg: "linear-gradient(135deg, #0e7490 0%, #155e75 100%)", name: "Deep Ice", border: "#06b6d4" },
-  { bg: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)", name: "Sky Ridge", border: "#3b82f6" },
-  { bg: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)", name: "Snowmelt Stream", border: "#22d3ee" },
-  { bg: "linear-gradient(135deg, #78716c 0%, #57534e 100%)", name: "Rocky Cliff", border: "#a8a29e" },
+  { bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))", name: "Stone Peak", border: "hsl(var(--primary) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))", name: "Granite Ridge", border: "hsl(var(--accent) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)))", name: "Forest Base", border: "hsl(var(--secondary) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))", name: "Glacier Ice", border: "hsl(var(--primary) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))", name: "Deep Ice", border: "hsl(var(--accent) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)))", name: "Sky Ridge", border: "hsl(var(--secondary) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.8))", name: "Snowmelt Stream", border: "hsl(var(--primary) / 0.4)" },
+  { bg: "linear-gradient(135deg, hsl(var(--accent) / 0.7), hsl(var(--secondary) / 0.7))", name: "Rocky Cliff", border: "hsl(var(--accent) / 0.4)" },
 ];
 
 // Get consistent color for a habit based on its ID
@@ -279,19 +279,33 @@ export default function HabitsMountain() {
 
         {/* Weather Badge - Compact */}
         <div className="mb-6">
-          <div className="inline-flex items-center gap-3 px-4 py-3 bg-card/40 backdrop-blur-sm rounded-xl border border-card-border shadow-lg">
-            <span className="text-2xl">{weatherInfo.emoji}</span>
-            <div>
+          <div className="inline-flex items-center gap-3 px-4 py-3 bg-background/40 backdrop-blur-xl rounded-xl border border-foreground/10 shadow-lg relative overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at left, hsl(var(--accent) / 0.3), transparent 70%)`
+              }}
+            />
+            <span className="text-2xl relative z-10">{weatherInfo.emoji}</span>
+            <div className="relative z-10">
               <div className="text-sm font-bold text-foreground">{weatherInfo.name}</div>
-              <div className="text-xs text-muted-foreground">{weatherInfo.description}</div>
+              <div className="text-xs text-foreground/60">{weatherInfo.description}</div>
             </div>
             {longestStreak >= 7 && (
-              <Badge className="bg-muted/80 text-[hsl(var(--accent))] border-border ml-2">
+              <Badge className="relative z-10" style={{
+                background: 'hsl(var(--accent) / 0.2)',
+                color: 'hsl(var(--accent))',
+                border: '1px solid hsl(var(--accent) / 0.3)'
+              }}>
                 Perfect Conditions
               </Badge>
             )}
             {missedDaysThisWeek >= 3 && (
-              <Badge className="bg-muted/80 text-destructive border-border ml-2">
+              <Badge className="relative z-10" style={{
+                background: 'hsl(var(--destructive) / 0.2)',
+                color: 'hsl(var(--destructive))',
+                border: '1px solid hsl(var(--destructive) / 0.3)'
+              }}>
                 Storm Warning
               </Badge>
             )}
@@ -300,18 +314,28 @@ export default function HabitsMountain() {
 
         {/* Habits/Routes */}
         {habits.length === 0 ? (
-          <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl p-12 text-center shadow-lg topo-pattern">
+          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl p-12 text-center shadow-xl relative overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at center, hsl(var(--accent) / 0.3), transparent 70%)`
+              }}
+            />
             <div className="relative z-10">
-              <Mountain className="w-16 h-16 mx-auto mb-6 text-[hsl(var(--accent))]" />
+              <Mountain className="w-16 h-16 mx-auto mb-6" style={{ color: 'hsl(var(--accent))' }} />
               <h2 className="text-3xl font-bold text-foreground mb-4">
                 Start Your Ascent
               </h2>
-              <p className="text-muted-foreground mb-8 text-lg">
+              <p className="text-foreground/60 mb-8 text-lg">
                 Build habits to strengthen your expedition and unlock new mountains
               </p>
               <Button
                 onClick={handleCreateNew}
-                className="rounded-xl px-8 py-6 text-lg bg-muted hover:bg-muted/80 text-foreground border border-card-border shadow-lg"
+                className="rounded-xl px-8 py-6 text-lg shadow-xl hover:scale-105 transition-all duration-300"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  color: 'white'
+                }}
               >
                 Create First Habit
               </Button>
@@ -445,8 +469,13 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Streak & Energy Display */}
           <div className="flex items-center gap-3 mb-3">
             {streak && streak.streak > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-muted/50 border-border">
-                <TrendingUp className="w-4 h-4 text-[hsl(var(--accent))]" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur-sm"
+                style={{
+                  background: 'hsl(var(--accent) / 0.15)',
+                  borderColor: 'hsl(var(--accent) / 0.3)'
+                }}
+              >
+                <TrendingUp className="w-4 h-4" style={{ color: 'hsl(var(--accent))' }} />
                 <span className="text-foreground font-bold text-xs">
                   {streak.streak} day{streak.streak > 1 ? 's' : ''}
                 </span>
@@ -454,8 +483,13 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
             )}
 
             {/* Energy Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-muted/50 border-border">
-              <Zap className="w-4 h-4 text-[hsl(var(--accent))]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border backdrop-blur-sm"
+              style={{
+                background: 'hsl(var(--accent) / 0.15)',
+                borderColor: 'hsl(var(--accent) / 0.3)'
+              }}
+            >
+              <Zap className="w-4 h-4" style={{ color: 'hsl(var(--accent))' }} />
               <span className="text-foreground font-bold text-xs">
                 {energyInfo.energy} energy
               </span>
@@ -512,7 +546,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
                   {completionRate}%
                 </span>
               </div>
-              <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--foreground) / 0.08)' }}>
                 <div
                   className="h-full transition-all duration-500 rounded-full"
                   style={{
@@ -530,7 +564,7 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           )}
 
           {/* Details */}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground/60">
             {isWeekly ? `${target}× per week` : 'Daily habit'} • {habit.difficulty || 'medium'}
           </p>
         </div>
@@ -601,13 +635,15 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
           {/* Mini actions */}
           <button
             onClick={onEdit}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+            className="text-xs px-2 py-1 transition-colors hover:bg-foreground/5 rounded-lg"
+            style={{ color: 'hsl(var(--foreground) / 0.6)' }}
           >
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1"
+            className="text-xs px-2 py-1 transition-colors hover:bg-foreground/5 rounded-lg"
+            style={{ color: 'hsl(var(--foreground) / 0.6)' }}
           >
             Delete
           </button>
