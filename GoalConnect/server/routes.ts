@@ -3564,6 +3564,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete an expedition mission and award rewards
+  app.post("/api/expedition-missions/complete", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const db = getDb();
+
+      // Get active mission
+      const [mission] = await db
+        .select()
+        .from(schema.expeditionMissions)
+        .where(
+          and(
+            eq(schema.expeditionMissions.userId, userId),
+            eq(schema.expeditionMissions.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (!mission) {
+        return res.status(404).json({ error: "No active mission to complete" });
+      }
+
+      // Get mountain details
+      const [mountain] = await db
+        .select()
+        .from(schema.mountains)
+        .where(eq(schema.mountains.id, mission.mountainId))
+        .limit(1);
+
+      if (!mountain) {
+        return res.status(404).json({ error: "Mountain not found" });
+      }
+
+      // Calculate rewards
+      const baseXP = calculateBaseXP(mountain.difficultyTier);
+      const basePoints = calculateBasePoints(mountain.difficultyTier);
+
+      // For Phase 1: No bonus multipliers yet (will add in Phase 3)
+      const xpEarned = baseXP;
+      const pointsEarned = basePoints;
+
+      // Update player climbing stats
+      const [climbingStats] = await db
+        .select()
+        .from(schema.playerClimbingStats)
+        .where(eq(schema.playerClimbingStats.userId, userId))
+        .limit(1);
+
+      if (climbingStats) {
+        const newXP = climbingStats.totalExperience + xpEarned;
+        const newLevel = Math.floor(newXP / 100) + 1; // Simple leveling formula
+
+        await db
+          .update(schema.playerClimbingStats)
+          .set({
+            totalExperience: newXP,
+            climbingLevel: newLevel,
+            summitsReached: climbingStats.summitsReached + 1,
+            totalElevationClimbed: climbingStats.totalElevationClimbed + mountain.elevation,
+            currentMountainIndex: climbingStats.currentMountainIndex + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.playerClimbingStats.userId, userId));
+      }
+
+      // Award points
+      const [userPoints] = await db
+        .select()
+        .from(schema.userPoints)
+        .where(eq(schema.userPoints.userId, userId))
+        .limit(1);
+
+      if (userPoints) {
+        await db
+          .update(schema.userPoints)
+          .set({
+            totalEarned: userPoints.totalEarned + pointsEarned,
+            available: userPoints.available + pointsEarned,
+          })
+          .where(eq(schema.userPoints.userId, userId));
+      }
+
+      // Unlock mountain background
+      await db.insert(schema.mountainBackgrounds).values({
+        userId,
+        mountainId: mountain.id,
+        unlockedAt: new Date(),
+        isActive: false,
+      });
+
+      // Mark mission as completed
+      await db
+        .update(schema.expeditionMissions)
+        .set({
+          status: "completed",
+          completionDate: new Date(),
+          xpEarned,
+          pointsEarned,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.expeditionMissions.id, mission.id));
+
+      res.json({
+        rewards: {
+          xp: xpEarned,
+          points: pointsEarned,
+          mountain: mountain.name,
+          backgroundUnlocked: true,
+        },
+      });
+    } catch (error) {
+      console.error("Error completing mission:", error);
+      res.status(500).json({ error: "Failed to complete mission" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
