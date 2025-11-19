@@ -122,6 +122,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET user-level streak (perfect days streak) - MUST come before /api/habits/:id
+  app.get("/api/habits/streak", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const habits = await storage.getHabits(userId);
+      const allLogs = await storage.getAllHabitLogs(userId);
+
+      if (habits.length === 0) {
+        return res.json({ currentStreak: 0, longestStreak: 0 });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      // Helper function to check if a day is "perfect" (all habits completed)
+      const isPerfectDay = (dateString: string): boolean => {
+        const logsForDay = allLogs.filter(log =>
+          log.date === dateString && log.completed
+        );
+        return logsForDay.length === habits.length;
+      };
+
+      // Calculate current streak (going backwards from today)
+      let currentStreak = 0;
+      let checkDate = new Date();
+
+      while (true) {
+        const dateString = checkDate.toISOString().split('T')[0];
+
+        if (!isPerfectDay(dateString)) {
+          // If it's today and not perfect yet, check yesterday
+          if (currentStreak === 0 && dateString === today) {
+            checkDate.setDate(checkDate.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+
+        if (currentStreak > 365) break; // Safety limit
+      }
+
+      // Calculate longest streak ever
+      let longestStreak = currentStreak;
+      let tempStreak = 0;
+
+      // Check each day going back
+      let scanDate = new Date();
+      scanDate.setDate(scanDate.getDate() - 365); // Scan last year
+      const endDate = new Date();
+
+      while (scanDate <= endDate) {
+        const dateString = scanDate.toISOString().split('T')[0];
+
+        if (isPerfectDay(dateString)) {
+          tempStreak++;
+          longestStreak = Math.max(longestStreak, tempStreak);
+        } else {
+          tempStreak = 0;
+        }
+
+        scanDate.setDate(scanDate.getDate() + 1);
+      }
+
+      res.json({ currentStreak, longestStreak });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get user streak" });
+    }
+  });
+
   app.get("/api/habits/:id", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -362,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET streak for a habit
+  // GET streak for a specific habit
   app.get("/api/habits/:habitId/streak", async (req, res) => {
     try {
       const userId = getUserId(req);
