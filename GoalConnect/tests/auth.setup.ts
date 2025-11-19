@@ -10,7 +10,7 @@ if (!fs.existsSync(authDir)) {
   fs.mkdirSync(authDir, { recursive: true });
 }
 
-setup('authenticate', async ({ page }) => {
+setup('authenticate', async ({ page, context }) => {
   console.log('🔐 Starting authentication setup...');
 
   // Listen to console messages from the browser
@@ -20,13 +20,17 @@ setup('authenticate', async ({ page }) => {
 
   // Set longer timeout for initial page load
   page.setDefaultTimeout(60000);
+  context.setDefaultTimeout(60000);
 
-  // Go to login page and wait for network to be idle
+  // Go to login page with simpler wait strategy to avoid browser crash
   console.log('📄 Loading login page...');
   await page.goto('/login', {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded', // Changed from 'networkidle' to avoid timeout issues
     timeout: 30000
   });
+
+  // Wait a bit for page to stabilize
+  await page.waitForTimeout(1000);
 
   // Wait for React to mount (check if #root has children)
   console.log('⏳ Waiting for React to mount...');
