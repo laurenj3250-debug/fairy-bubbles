@@ -1,6 +1,9 @@
-import { pgTable, serial, integer, text, boolean, timestamp, varchar, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, varchar, uniqueIndex, decimal, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Frequency type enum for flexible habit scheduling
+export const frequencyTypeEnum = pgEnum('frequency_type', ['daily', 'weekly', 'custom']);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -17,8 +20,16 @@ export const habits = pgTable("habits", {
   description: text("description").notNull().default(""),
   icon: text("icon").notNull(),
   color: text("color").notNull(),
-  cadence: varchar("cadence", { length: 10 }).notNull().$type<"daily" | "weekly">(),
+  // OLD FIELDS - Kept for backward compatibility during migration
+  cadence: varchar("cadence", { length: 10 }).$type<"daily" | "weekly">(),
   targetPerWeek: integer("target_per_week"),
+  // NEW FREQUENCY FIELDS - Flexible frequency model
+  frequencyNumerator: integer("frequency_numerator"),
+  frequencyDenominator: integer("frequency_denominator"),
+  frequencyType: frequencyTypeEnum('frequency_type'),
+  // NEW SCORING FIELDS - Habit strength tracking
+  currentScore: decimal("current_score", { precision: 10, scale: 8 }).default('0').notNull(),
+  scoreHistory: jsonb("score_history").$type<Array<{date: string, score: number, completed: boolean}>>().default([]).notNull(),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
   linkedGoalId: integer("linked_goal_id").references(() => goals.id),
   // Weekly Hub fields
