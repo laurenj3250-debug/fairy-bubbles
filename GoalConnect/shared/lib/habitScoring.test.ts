@@ -45,6 +45,63 @@ describe('computeHabitScore', () => {
     // Daily should score higher for single completion
     expect(dailyScore).toBeGreaterThan(weeklyScore)
   })
+
+  it('should always return score between 0 and 1', () => {
+    let score = 0
+    for (let i = 0; i < 1000; i++) {
+      score = computeHabitScore(1.0, score, true)
+      expect(score).toBeGreaterThanOrEqual(0)
+      expect(score).toBeLessThan(1.0)
+    }
+  })
+
+  it('should handle monthly habits with minimal decay', () => {
+    const monthlyFreq = 1.0 / 30.0
+    let score = 0.8
+
+    // Monthly habit should decay very slowly
+    score = computeHabitScore(monthlyFreq, score, false)
+    expect(score).toBeGreaterThan(0.79) // Less than 1% decay
+  })
+
+  it('should throw error for zero frequency', () => {
+    expect(() => computeHabitScore(0, 0, true)).toThrow('Invalid frequency')
+  })
+
+  it('should throw error for negative frequency', () => {
+    expect(() => computeHabitScore(-1, 0, true)).toThrow('Invalid frequency')
+  })
+
+  it('should throw error for NaN frequency', () => {
+    expect(() => computeHabitScore(NaN, 0, true)).toThrow('Invalid frequency')
+  })
+
+  it('should throw error for Infinity frequency', () => {
+    expect(() => computeHabitScore(Infinity, 0, true)).toThrow('Invalid frequency')
+  })
+
+  it('should throw error for NaN previousScore', () => {
+    expect(() => computeHabitScore(1.0, NaN, true)).toThrow('Invalid previousScore')
+  })
+
+  it('should clamp previousScore > 1.0', () => {
+    const score = computeHabitScore(1.0, 1.5, false)
+    expect(score).toBeLessThan(1.0)
+    expect(Number.isFinite(score)).toBe(true)
+  })
+
+  it('should clamp previousScore < 0', () => {
+    const score = computeHabitScore(1.0, -0.5, true)
+    expect(score).toBeGreaterThanOrEqual(0)
+    expect(Number.isFinite(score)).toBe(true)
+  })
+
+  it('should handle very large frequency', () => {
+    const score = computeHabitScore(100, 0, true)
+    expect(Number.isFinite(score)).toBe(true)
+    expect(score).toBeGreaterThanOrEqual(0)
+    expect(score).toBeLessThan(1.0)
+  })
 })
 
 describe('HabitScoreHistory', () => {
@@ -78,5 +135,33 @@ describe('HabitScoreHistory', () => {
 
     expect(scores.length).toBe(3)
     expect(scores[1].score).toBeLessThan(scores[0].score) // Decayed during gap
+  })
+
+  it('should handle empty completions map', () => {
+    const completions = new Map()
+    const history = new HabitScoreHistory(1.0)
+    const scores = history.computeScores(completions, '2025-01-01', '2025-01-03')
+
+    expect(scores.length).toBe(3)
+    expect(scores.every(s => s.completed === false)).toBe(true)
+    expect(scores.every(s => s.score === 0)).toBe(true)
+  })
+
+  it('should throw error for invalid frequency in constructor', () => {
+    expect(() => new HabitScoreHistory(0)).toThrow('Invalid frequency')
+    expect(() => new HabitScoreHistory(-1)).toThrow('Invalid frequency')
+    expect(() => new HabitScoreHistory(NaN)).toThrow('Invalid frequency')
+  })
+
+  it('should throw error for invalid date format', () => {
+    const history = new HabitScoreHistory(1.0)
+    const completions = new Map()
+    expect(() => history.computeScores(completions, 'invalid', '2025-01-03')).toThrow('Invalid date format')
+  })
+
+  it('should throw error when startDate > endDate', () => {
+    const history = new HabitScoreHistory(1.0)
+    const completions = new Map()
+    expect(() => history.computeScores(completions, '2025-01-05', '2025-01-03')).toThrow('must be before or equal')
   })
 })
