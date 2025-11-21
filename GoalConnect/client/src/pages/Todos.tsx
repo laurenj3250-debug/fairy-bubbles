@@ -5,10 +5,15 @@ import type { Todo, Project, Label } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TodoDialogEnhanced } from "@/components/TodoDialogEnhanced";
-import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays, Edit } from "lucide-react";
+import { QuickAddModal } from "@/components/QuickAddModal";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { SortableTaskList } from "@/components/SortableTaskList";
+import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays, Edit, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getTaskGrade } from "@/lib/climbingRanks";
+import { useFocusManagement, FOCUS_RING_STYLES } from "@/hooks/useFocusManagement";
+import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 
 interface Subtask {
   id: string;
@@ -42,6 +47,13 @@ export default function Todos() {
   const [filterProjectId, setFilterProjectId] = useState<number | null>(null);
   const [filterLabelId, setFilterLabelId] = useState<number | null>(null);
   const [filterPriority, setFilterPriority] = useState<number | null>(null);
+
+  // Keyboard shortcuts modals
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+
+  // Manual sort (drag & drop) toggle
+  const [isManualSort, setIsManualSort] = useState(false);
 
   const { toast } = useToast();
 
@@ -124,6 +136,56 @@ export default function Todos() {
     },
   });
 
+  // Reorder todos mutation (drag & drop)
+  const reorderTodosMutation = useMutation({
+    mutationFn: async ({ activeId, overId }: { activeId: number; overId: number }) => {
+      return await apiRequest("/api/todos/reorder", "PATCH", { activeId, overId });
+    },
+    onMutate: async ({ activeId, overId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/todos-with-metadata"] });
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueryData(["/api/todos-with-metadata"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/todos-with-metadata"], (old: TodoWithMetadata[] | undefined) => {
+        if (!old) return old;
+
+        const activeIndex = old.findIndex(t => t.id === activeId);
+        const overIndex = old.findIndex(t => t.id === overId);
+
+        if (activeIndex === -1 || overIndex === -1) return old;
+
+        const newTodos = [...old];
+        const [movedItem] = newTodos.splice(activeIndex, 1);
+        newTodos.splice(overIndex, 0, movedItem);
+
+        return newTodos;
+      });
+
+      return { previousTodos };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/todos-with-metadata"], context.previousTodos);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reorder tasks. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
+    },
+  });
+
+  const handleReorder = (activeId: number, overId: number) => {
+    reorderTodosMutation.mutate({ activeId, overId });
+  };
+
   // Filter todos
   const filteredTodos = todos.filter(todo => {
     // Status filter
@@ -142,8 +204,14 @@ export default function Todos() {
     return true;
   });
 
-  // Sort by due date (null dates last), then by created date
+  // Sort by manual position (if enabled), or by due date (null dates last), then by created date
   const sortedTodos = [...filteredTodos].sort((a, b) => {
+    if (isManualSort) {
+      // Sort by position field when in manual sort mode
+      return (a.position || 0) - (b.position || 0);
+    }
+
+    // Default sorting: by due date, then created date
     if (a.dueDate && !b.dueDate) return -1;
     if (!a.dueDate && b.dueDate) return 1;
     if (a.dueDate && b.dueDate) {
@@ -154,6 +222,86 @@ export default function Todos() {
 
   const pendingCount = todos.filter(t => !t.completed).length;
   const completedCount = todos.filter(t => t.completed).length;
+
+  // Focus management for keyboard navigation (must come after sortedTodos)
+  const { focusedTask, focusedIndex, focusNext, focusPrevious } = useFocusManagement(sortedTodos);
+
+  // Keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: 'k',
+      ctrl: true,
+      meta: true,
+      description: 'Quick add task',
+      action: () => setQuickAddOpen(true),
+    },
+    {
+      key: '?',
+      description: 'Show keyboard shortcuts',
+      action: () => setShortcutsHelpOpen(true),
+    },
+    {
+      key: 'ArrowDown',
+      description: 'Navigate to next task',
+      action: () => focusNext(),
+    },
+    {
+      key: 'ArrowUp',
+      description: 'Navigate to previous task',
+      action: () => focusPrevious(),
+    },
+    {
+      key: 'Enter',
+      description: 'Open focused task',
+      action: () => {
+        if (focusedTask && view === 'list') {
+          handleEditTodo(focusedTask);
+        }
+      },
+    },
+    {
+      key: 'e',
+      description: 'Edit focused task',
+      action: () => {
+        if (focusedTask && view === 'list') {
+          handleEditTodo(focusedTask);
+        }
+      },
+    },
+    {
+      key: ' ',
+      description: 'Toggle complete/incomplete',
+      action: () => {
+        if (focusedTask && view === 'list') {
+          toggleTodoMutation.mutate(focusedTask.id);
+        }
+      },
+    },
+    {
+      key: 'Delete',
+      description: 'Delete focused task',
+      action: () => {
+        if (focusedTask && view === 'list') {
+          if (confirm(`Delete "${focusedTask.title}"?`)) {
+            deleteTodoMutation.mutate(focusedTask.id);
+          }
+        }
+      },
+    },
+    {
+      key: 'Backspace',
+      description: 'Delete focused task',
+      action: () => {
+        if (focusedTask && view === 'list') {
+          if (confirm(`Delete "${focusedTask.title}"?`)) {
+            deleteTodoMutation.mutate(focusedTask.id);
+          }
+        }
+      },
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts, { enabled: view === 'list' });
 
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate) return null;
@@ -280,17 +428,32 @@ export default function Todos() {
                 {pendingCount} pending, {completedCount} completed
               </p>
             </div>
-            <Button
-              onClick={() => setTodoDialogOpen(true)}
-              className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-              style={{
-                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                color: 'white'
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setQuickAddOpen(true)}
+                className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  color: 'white'
+                }}
+                title="Quick add task (⌘K)"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Task
+                <span className="ml-2 text-xs opacity-75">⌘K</span>
+              </Button>
+              <Button
+                onClick={() => setShortcutsHelpOpen(true)}
+                className="rounded-full px-4 py-3 shadow-lg transition-all duration-300 hover:scale-105"
+                style={{
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
+                  color: 'white'
+                }}
+                title="Keyboard shortcuts (?)"
+              >
+                ?
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -463,13 +626,14 @@ export default function Todos() {
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedTodos.map((todo) => {
+                {sortedTodos.map((todo, index) => {
                   const dueDateInfo = formatDueDate(todo.dueDate);
                   const gradeInfo = getTaskGrade(todo.difficulty);
 
                   const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
                   const completedSubtasks = subtasks.filter(st => st.completed).length;
                   const isFadingOut = fadingOutTodos.has(todo.id);
+                  const isFocused = focusedTask?.id === todo.id;
 
                   return (
                     <div
@@ -477,7 +641,8 @@ export default function Todos() {
                       className={cn(
                         "bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-4 transition-all relative overflow-hidden",
                         isFadingOut && "animate-fade-out",
-                        todo.completed && !isFadingOut && "opacity-60"
+                        todo.completed && !isFadingOut && "opacity-60",
+                        isFocused && FOCUS_RING_STYLES
                       )}
                     >
                       <div
@@ -911,6 +1076,18 @@ export default function Todos() {
         open={todoDialogOpen}
         onOpenChange={handleCloseDialog}
         editTodo={editingTodo}
+      />
+
+      {/* Quick Add Modal */}
+      <QuickAddModal
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+      />
+
+      {/* Keyboard Shortcuts Help */}
+      <KeyboardShortcutsHelp
+        open={shortcutsHelpOpen}
+        onOpenChange={setShortcutsHelpOpen}
       />
     </div>
   );
