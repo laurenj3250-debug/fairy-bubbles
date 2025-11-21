@@ -515,7 +515,25 @@ export function registerHabitRoutes(app: Express) {
         }
       }
 
-      res.json(logResult);
+      // NEW: Update habit score after logging
+      try {
+        const { updateHabitScore } = await import("../services/habitScoring");
+        const scoreResult = await updateHabitScore(habitId, date);
+
+        // Return score info with log response
+        return res.json({
+          ...logResult,
+          score: {
+            current: scoreResult.newScore,
+            change: scoreResult.scoreChange,
+            percentage: Math.round(scoreResult.newScore * 100)
+          }
+        });
+      } catch (scoreError: any) {
+        console.error('Score update failed:', scoreError);
+        // Don't fail the whole request if scoring fails (graceful degradation)
+        return res.json(logResult);
+      }
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to toggle habit log" });
     }
