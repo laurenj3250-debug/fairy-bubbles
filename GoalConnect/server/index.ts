@@ -7,6 +7,17 @@ import { log as logger } from "./lib/logger";
 //
 // Railway and Supabase PostgreSQL use self-signed certificates
 // This must be set before the pg library is loaded
+
+// DEBUG: Log DATABASE_URL host for diagnostics
+if (process.env.DATABASE_URL) {
+  try {
+    const dbUrl = new URL(process.env.DATABASE_URL);
+    logger.info(`[TLS] Database host: ${dbUrl.hostname}`);
+  } catch (e) {
+    logger.warn('[TLS] Could not parse DATABASE_URL');
+  }
+}
+
 if (process.env.DATABASE_URL && (
   process.env.DATABASE_URL.includes('supabase.com') ||
   process.env.DATABASE_URL.includes('railway.app') ||
