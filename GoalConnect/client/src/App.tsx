@@ -9,7 +9,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import BaseCamp from "@/pages/BaseCamp";
 import DashboardNew from "@/pages/DashboardNew";
-import Habits from "@/pages/HabitsMountain";
+import Habits from "@/pages/Habits";
 import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
@@ -22,6 +22,7 @@ import WorldMap from "@/pages/WorldMap";
 import ExpeditionMissions from "@/pages/ExpeditionMissions";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
+import ImportSettings from "@/pages/ImportSettings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
@@ -198,6 +199,12 @@ function AppRoutes() {
       <Route path="/settings">
         <RequireAuth>
           <Settings />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/settings/import">
+        <RequireAuth>
+          <ImportSettings />
           <BottomNav />
         </RequireAuth>
       </Route>
