@@ -15,6 +15,13 @@
       "when": 1763724466236,
       "tag": "0001_sudden_adam_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763746726096,
+      "tag": "0002_remarkable_rockslide",
+      "breakpoints": true
     }
   ]
 }

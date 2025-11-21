@@ -34,6 +34,7 @@ import { registerTodosEnhancedRoutes } from "./routes/todos-enhanced";
 import { registerRecurrenceRoutes } from "./routes/recurrence";
 import { registerHabitRoutes } from "./routes/habits";
 import { registerGoalRoutes } from "./routes/goals";
+import { registerImportRoutes } from "./routes/import";
 import {
   DatabaseError,
   ValidationError,
@@ -2847,6 +2848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register modular routes
   registerHabitRoutes(app);
   registerGoalRoutes(app);
+  registerImportRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

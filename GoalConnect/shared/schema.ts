@@ -63,6 +63,10 @@ export const habitLogs = pgTable("habit_logs", {
   quantityCompleted: integer("quantity_completed"), // "5 problems sent"
   sessionType: text("session_type"), // "outdoor", "gym", "home"
   incrementValue: integer("increment_value").notNull().default(1), // How much to add to currentValue
+  // EXTERNAL DATA INTEGRATION - Track auto-completion source
+  autoCompleteSource: varchar("auto_complete_source", { length: 20 }), // 'apple_watch', 'kilter_board', NULL
+  linkedWorkoutId: integer("linked_workout_id").references(() => externalWorkouts.id, { onDelete: "set null" }),
+  linkedSessionId: integer("linked_session_id").references(() => climbingSessions.id, { onDelete: "set null" }),
 }, (table) => {
   return {
     habitUserDateIdx: uniqueIndex("habit_logs_habit_id_user_id_date_key").on(table.habitId, table.userId, table.date),
@@ -748,3 +752,118 @@ export const streakFreezes = pgTable("streak_freezes", {
 
 export type StreakFreeze = typeof streakFreezes.$inferSelect;
 export type InsertStreakFreeze = typeof streakFreezes.$inferInsert;
+
+// ========== EXTERNAL DATA INTEGRATION ==========
+
+// Source type enums
+export const workoutSourceEnum = pgEnum('workout_source', ['apple_watch', 'strava', 'other']);
+export const climbingSourceEnum = pgEnum('climbing_source', ['kilter_board', 'tension_board', 'moonboard']);
+export const syncFrequencyEnum = pgEnum('sync_frequency', ['manual', 'daily', 'weekly']);
+export const syncStatusEnum = pgEnum('sync_status', ['idle', 'syncing', 'error']);
+
+// External Workouts - Imported from Apple Watch, Strava, etc.
+export const externalWorkouts = pgTable("external_workouts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sourceType: workoutSourceEnum("source_type").notNull(),
+  externalId: text("external_id").notNull(), // Unique ID from source for deduplication
+  workoutType: text("workout_type").notNull(), // 'HKWorkoutActivityTypeClimbing', etc.
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  heartRateAvg: integer("heart_rate_avg"), // bpm
+  heartRateMax: integer("heart_rate_max"), // bpm
+  heartRateMin: integer("heart_rate_min"), // bpm
+  caloriesBurned: integer("calories_burned"), // kcal
+  distanceKm: decimal("distance_km", { precision: 10, scale: 2 }), // For cardio activities
+  metadata: jsonb("metadata").default({}).notNull(), // Additional fields
+  linkedHabitId: integer("linked_habit_id").references(() => habits.id, { onDelete: "set null" }),
+  importedAt: timestamp("imported_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // Deduplication constraint
+    userSourceExternalIdx: uniqueIndex("external_workouts_user_source_external_key").on(table.userId, table.sourceType, table.externalId),
+  };
+});
+
+// Climbing Sessions - Kilter Board, Tension Board, etc.
+export const climbingSessions = pgTable("climbing_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sourceType: climbingSourceEnum("source_type").notNull(),
+  externalId: text("external_id").notNull(), // Composite of session date + source
+  sessionDate: varchar("session_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  sessionStartTime: timestamp("session_start_time"),
+  durationMinutes: integer("duration_minutes"),
+  problemsAttempted: integer("problems_attempted").notNull().default(0),
+  problemsSent: integer("problems_sent").notNull().default(0),
+  averageGrade: varchar("average_grade", { length: 10 }), // 'V4', '6b', etc.
+  maxGrade: varchar("max_grade", { length: 10 }), // Hardest send
+  boardAngle: integer("board_angle"), // Degrees of overhang
+  climbs: jsonb("climbs").default([]).notNull(), // Array of climb objects
+  linkedHabitId: integer("linked_habit_id").references(() => habits.id, { onDelete: "set null" }),
+  importedAt: timestamp("imported_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // Deduplication constraint
+    userSourceExternalIdx: uniqueIndex("climbing_sessions_user_source_external_key").on(table.userId, table.sourceType, table.externalId),
+  };
+});
+
+// Data Source Connections - Manage API credentials and sync config
+export const dataSourceConnections = pgTable("data_source_connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sourceType: varchar("source_type", { length: 20 }).notNull(), // 'kilter_board', 'apple_watch', 'strava'
+  isActive: boolean("is_active").notNull().default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncStatus: syncStatusEnum("sync_status").notNull().default("idle"),
+  syncError: text("sync_error"), // Last error message if any
+  credentials: jsonb("credentials"), // ENCRYPTED credentials
+  syncFrequency: syncFrequencyEnum("sync_frequency").notNull().default("manual"),
+  autoCompleteHabits: boolean("auto_complete_habits").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One connection per source per user
+    userSourceIdx: uniqueIndex("data_source_connections_user_source_key").on(table.userId, table.sourceType),
+  };
+});
+
+// Habit Data Mappings - User-configured rules for matching external data to habits
+export const habitDataMappings = pgTable("habit_data_mappings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  habitId: integer("habit_id").notNull().references(() => habits.id, { onDelete: "cascade" }),
+  sourceType: varchar("source_type", { length: 20 }).notNull(), // 'apple_watch', 'kilter_board'
+  matchCriteria: jsonb("match_criteria").notNull(), // { workoutType: 'Climbing', minDuration: 20 }
+  autoComplete: boolean("auto_complete").notNull().default(true),
+  autoIncrement: boolean("auto_increment").notNull().default(false), // For cumulative goals
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One mapping per habit per source
+    habitSourceIdx: uniqueIndex("habit_data_mappings_habit_source_key").on(table.habitId, table.sourceType),
+  };
+});
+
+// TypeScript types for external data tables
+export type ExternalWorkout = typeof externalWorkouts.$inferSelect;
+export type ClimbingSession = typeof climbingSessions.$inferSelect;
+export type DataSourceConnection = typeof dataSourceConnections.$inferSelect;
+export type HabitDataMapping = typeof habitDataMappings.$inferSelect;
+
+// Insert schemas
+export const insertExternalWorkoutSchema = createInsertSchema(externalWorkouts).omit({ id: true, importedAt: true, createdAt: true });
+export const insertClimbingSessionSchema = createInsertSchema(climbingSessions).omit({ id: true, importedAt: true, createdAt: true });
+export const insertDataSourceConnectionSchema = createInsertSchema(dataSourceConnections).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertHabitDataMappingSchema = createInsertSchema(habitDataMappings).omit({ id: true, createdAt: true, updatedAt: true });
+
+export type InsertExternalWorkout = z.infer<typeof insertExternalWorkoutSchema>;
+export type InsertClimbingSession = z.infer<typeof insertClimbingSessionSchema>;
+export type InsertDataSourceConnection = z.infer<typeof insertDataSourceConnectionSchema>;
+export type InsertHabitDataMapping = z.infer<typeof insertHabitDataMappingSchema>;
