@@ -65,7 +65,7 @@ export function ClimbingRouteView({ habits, habitLogs, date }: ClimbingRouteView
   const isFullySummitted = completedCount === totalCount && totalCount > 0;
 
   return (
-    <div className="climbing-route-view">
+    <div className="climbing-route-view" role="region" aria-label="Today's climbing route">
       {/* Route Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -106,15 +106,16 @@ export function ClimbingRouteView({ habits, habitLogs, date }: ClimbingRouteView
         )}
 
         {/* Pitches */}
-        <div className="space-y-2">
+        <div className="space-y-2" role="list" aria-label="Habits to complete">
           {pitches.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No habits scheduled for today</p>
               <a
                 href="/habits"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-sm font-medium"
+                aria-label="Add your first habit to start climbing"
               >
-                <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path d="M12 4v16m8-8H4" />
                 </svg>
                 Add Your First Habit
@@ -122,14 +123,15 @@ export function ClimbingRouteView({ habits, habitLogs, date }: ClimbingRouteView
             </div>
           ) : (
             pitches.map((pitch, index) => (
-              <Pitch
-                key={pitch.habit.id}
-                habit={pitch.habit}
-                completed={pitch.completed}
-                streak={pitch.streak}
-                onClick={() => handlePitchClick(pitch.habit.id, pitch.completed)}
-                index={index}
-              />
+              <div key={pitch.habit.id} role="listitem">
+                <Pitch
+                  habit={pitch.habit}
+                  completed={pitch.completed}
+                  streak={pitch.streak}
+                  onClick={() => handlePitchClick(pitch.habit.id, pitch.completed)}
+                  index={index}
+                />
+              </div>
             ))
           )}
         </div>

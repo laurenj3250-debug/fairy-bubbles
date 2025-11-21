@@ -320,6 +320,10 @@ export class MemStorage implements IStorage {
       note: log.note ?? null,
       mood: log.mood ?? null,
       energyLevel: log.energyLevel ?? null,
+      durationMinutes: log.durationMinutes ?? null,
+      quantityCompleted: log.quantityCompleted ?? null,
+      sessionType: log.sessionType ?? null,
+      incrementValue: log.incrementValue ?? 1,
     };
     this.habitLogs.set(id, newLog);
     return newLog;

@@ -98,20 +98,21 @@ export function SortableTaskList({
       onDragCancel={handleDragCancel}
     >
       <SortableContext items={todos.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3">
+        <div className="space-y-3" role="list" aria-label="Task list">
           {todos.map((todo) => (
-            <SortableTaskItem
-              key={todo.id}
-              todo={todo}
-              isDraggable={isDraggable}
-              onToggle={onToggle}
-              onToggleSubtask={onToggleSubtask}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              isFadingOut={fadingOutTodos.has(todo.id)}
-              isToggling={isToggling}
-              isDeletingDisabled={isDeletingDisabled}
-            />
+            <div key={todo.id} role="listitem">
+              <SortableTaskItem
+                todo={todo}
+                isDraggable={isDraggable}
+                onToggle={onToggle}
+                onToggleSubtask={onToggleSubtask}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                isFadingOut={fadingOutTodos.has(todo.id)}
+                isToggling={isToggling}
+                isDeletingDisabled={isDeletingDisabled}
+              />
+            </div>
           ))}
         </div>
       </SortableContext>

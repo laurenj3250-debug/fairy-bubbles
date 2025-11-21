@@ -1,4 +1,5 @@
 import { mountains } from "../shared/schema";
+import { CLIMBING, GAMIFICATION } from "../shared/constants";
 
 export interface MissionParameters {
   totalDays: number;
@@ -14,42 +15,34 @@ export function calculateMissionParameters(mountain: typeof mountains.$inferSele
 
   // Base duration from elevation (scaled for habit tracking)
   let baseDays: number;
-  if (elevation < 4000) {
-    baseDays = 3; // Single-day climbs
-  } else if (elevation < 5500) {
-    baseDays = 7; // Week-long expeditions
-  } else if (elevation < 7000) {
-    baseDays = 14; // Multi-week climbs
-  } else if (elevation < 8000) {
-    baseDays = 21; // Major expeditions
+  if (elevation < CLIMBING.MISSION_DURATIONS.SINGLE_DAY_THRESHOLD) {
+    baseDays = CLIMBING.MISSION_DURATIONS.SINGLE_DAY_DURATION; // Single-day climbs
+  } else if (elevation < CLIMBING.MISSION_DURATIONS.WEEK_LONG_THRESHOLD) {
+    baseDays = CLIMBING.MISSION_DURATIONS.WEEK_LONG_DURATION; // Week-long expeditions
+  } else if (elevation < CLIMBING.MISSION_DURATIONS.MULTI_WEEK_THRESHOLD) {
+    baseDays = CLIMBING.MISSION_DURATIONS.MULTI_WEEK_DURATION; // Multi-week climbs
+  } else if (elevation < CLIMBING.MISSION_DURATIONS.MAJOR_EXPEDITION_THRESHOLD) {
+    baseDays = CLIMBING.MISSION_DURATIONS.MAJOR_EXPEDITION_DURATION; // Major expeditions
   } else {
-    baseDays = 30; // 8000m peaks
+    baseDays = CLIMBING.MISSION_DURATIONS.EIGHT_THOUSANDER_DURATION; // 8000m peaks
   }
 
   // Difficulty tier multiplier
-  const tierMultiplier: Record<string, number> = {
-    novice: 0.8,
-    intermediate: 1.0,
-    advanced: 1.2,
-    expert: 1.4,
-    elite: 1.5,
-  };
-
-  const multiplier = tierMultiplier[difficultyTier] || 1.0;
+  const multiplier = CLIMBING.DIFFICULTY_MULTIPLIERS[difficultyTier as keyof typeof CLIMBING.DIFFICULTY_MULTIPLIERS] || 1.0;
   const totalDays = Math.round(baseDays * multiplier);
 
   // Completion requirement based on fatality rate
   let requiredCompletionPercent: number;
   const fatalityNum = fatalityRate ? parseFloat(fatalityRate) : 0;
 
-  if (fatalityNum === 0 || fatalityNum < 0.01) {
-    requiredCompletionPercent = 75; // Easy
-  } else if (fatalityNum < 0.03) {
-    requiredCompletionPercent = 80; // Moderate
-  } else if (fatalityNum < 0.05) {
-    requiredCompletionPercent = 90; // Challenging
+  if (fatalityNum === 0 || fatalityNum < CLIMBING.COMPLETION_REQUIREMENTS.EASY_THRESHOLD) {
+    requiredCompletionPercent = CLIMBING.COMPLETION_REQUIREMENTS.EASY_COMPLETION; // Easy
+  } else if (fatalityNum < CLIMBING.COMPLETION_REQUIREMENTS.MODERATE_THRESHOLD) {
+    requiredCompletionPercent = CLIMBING.COMPLETION_REQUIREMENTS.MODERATE_COMPLETION; // Moderate
+  } else if (fatalityNum < CLIMBING.COMPLETION_REQUIREMENTS.CHALLENGING_THRESHOLD) {
+    requiredCompletionPercent = CLIMBING.COMPLETION_REQUIREMENTS.CHALLENGING_COMPLETION; // Challenging
   } else {
-    requiredCompletionPercent = 100; // Dangerous - perfection required
+    requiredCompletionPercent = CLIMBING.COMPLETION_REQUIREMENTS.DANGEROUS_COMPLETION; // Dangerous - perfection required
   }
 
   return {
@@ -62,26 +55,14 @@ export function calculateMissionParameters(mountain: typeof mountains.$inferSele
  * Calculate base XP reward for completing a mountain
  */
 export function calculateBaseXP(difficultyTier: string): number {
-  const xpMap: Record<string, number> = {
-    novice: 75,
-    intermediate: 225,
-    advanced: 550,
-    expert: 1000,
-    elite: 2250,
-  };
-  return xpMap[difficultyTier] || 100;
+  const tierUpper = difficultyTier.toUpperCase() as keyof typeof GAMIFICATION.XP_REWARDS;
+  return GAMIFICATION.XP_REWARDS[tierUpper] || GAMIFICATION.DEFAULT_XP;
 }
 
 /**
  * Calculate base points reward for completing a mountain
  */
 export function calculateBasePoints(difficultyTier: string): number {
-  const pointsMap: Record<string, number> = {
-    novice: 100,
-    intermediate: 300,
-    advanced: 650,
-    expert: 1200,
-    elite: 3000,
-  };
-  return pointsMap[difficultyTier] || 150;
+  const tierUpper = difficultyTier.toUpperCase() as keyof typeof GAMIFICATION.POINTS_REWARDS;
+  return GAMIFICATION.POINTS_REWARDS[tierUpper] || GAMIFICATION.DEFAULT_POINTS;
 }

@@ -130,9 +130,10 @@ export function SortableTaskItem({
             {...listeners}
             className="mt-1 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 hover:bg-foreground/5 rounded transition-colors"
             style={{ color: 'hsl(var(--foreground) / 0.4)' }}
+            aria-label={`Drag to reorder task: ${todo.title}`}
             title="Drag to reorder"
           >
-            <GripVertical className="w-5 h-5" />
+            <GripVertical className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
 
@@ -145,6 +146,9 @@ export function SortableTaskItem({
             background: todo.completed ? 'hsl(var(--accent))' : 'transparent',
             borderColor: todo.completed ? 'hsl(var(--accent) / 0.8)' : 'hsl(var(--foreground) / 0.2)'
           }}
+          aria-label={`Mark task ${todo.completed ? 'incomplete' : 'complete'}: ${todo.title}`}
+          aria-checked={todo.completed}
+          role="checkbox"
           onMouseEnter={(e) => {
             if (!todo.completed) {
               e.currentTarget.style.borderColor = 'hsl(var(--primary))';
@@ -158,7 +162,7 @@ export function SortableTaskItem({
             }
           }}
         >
-          {todo.completed && <CheckCircle className="w-5 h-5" />}
+          {todo.completed && <CheckCircle className="w-5 h-5" aria-hidden="true" />}
         </button>
 
         {/* Content */}
@@ -180,11 +184,14 @@ export function SortableTaskItem({
                   key={subtask.id}
                   onClick={() => onToggleSubtask(todo.id, subtask.id)}
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
+                  aria-label={`Mark subtask ${subtask.completed ? 'incomplete' : 'complete'}: ${subtask.title}`}
+                  aria-checked={subtask.completed}
+                  role="checkbox"
                 >
                   {subtask.completed ? (
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(var(--accent))' }} />
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(var(--accent))' }} aria-hidden="true" />
                   ) : (
-                    <Circle className="w-4 h-4 flex-shrink-0" />
+                    <Circle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                   )}
                   <span className={cn(subtask.completed && "line-through opacity-60")}>
                     {subtask.title}
@@ -285,9 +292,10 @@ export function SortableTaskItem({
             onClick={() => onEdit(todo)}
             className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
             style={{ color: 'hsl(var(--primary))' }}
+            aria-label={`Edit task: ${todo.title}`}
             title="Edit task"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-4 h-4" aria-hidden="true" />
           </button>
 
           {/* Delete button */}
@@ -300,9 +308,10 @@ export function SortableTaskItem({
             disabled={isDeletingDisabled}
             className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
             style={{ color: 'hsl(var(--foreground) / 0.5)' }}
+            aria-label={`Delete task: ${todo.title}`}
             title="Delete task"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

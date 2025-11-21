@@ -1,13 +1,28 @@
-// CRITICAL: Set this BEFORE any imports
+import { log as logger } from "./lib/logger";
+
+// CRITICAL: TLS Certificate Verification Configuration
+// SECURITY NOTE: TLS verification should ONLY be disabled when absolutely necessary
+// and only for specific known providers (Supabase) that use self-signed certificates.
+// For production environments, ensure you understand the security implications.
+//
 // Railway/Supabase PostgreSQL uses self-signed certificates
 // This must be set before the pg library is loaded
-// We set it for both production and development since Supabase requires it
 if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('supabase.com')) {
+  // Only disable for Supabase which is known to use self-signed certs
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  console.log('[SSL] Disabled TLS verification for Supabase database');
+  logger.warn('[SSL WARNING] TLS verification disabled for Supabase database connection');
+  logger.warn('[SSL WARNING] This is required for Supabase but reduces security');
+  logger.warn('[SSL WARNING] Ensure DATABASE_URL is from a trusted Supabase instance');
+} else if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_TLS === 'true') {
+  // In production, require explicit opt-in via environment variable
+  // This ensures developers are aware of the security implications
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  logger.warn('[SSL WARNING] TLS verification disabled in production via ALLOW_INSECURE_TLS');
+  logger.warn('[SSL WARNING] This should only be used with trusted database providers');
+  logger.warn('[SSL WARNING] Consider using proper SSL certificates instead');
 } else if (process.env.NODE_ENV === 'production') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  console.log('[SSL] Disabled TLS verification for production database');
+  // In production, default to secure TLS verification
+  logger.info('[SSL] TLS verification enabled (secure mode)');
 }
 
 import "./load-env";
@@ -17,17 +32,18 @@ import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
 import { configureGitHubAuth } from "./github-auth";
 import { runMigrations } from "./migrate";
+import { setupSwagger } from "./lib/swagger";
 import cron from "node-cron";
 import { processRecurringTasks } from "./lib/recurrenceScheduler";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('Uncaught Exception', error);
   // Don't exit the process, just log the error
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection', new Error(String(reason)), { promise });
   // Don't exit the process, just log the error
 });
 
@@ -54,6 +70,9 @@ app.use(express.urlencoded({ extended: false }));
 
 configureSimpleAuth(app);
 configureGitHubAuth(app);
+
+// Setup API documentation (Swagger UI)
+setupSwagger(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -91,7 +110,7 @@ app.use((req, res, next) => {
     try {
       await runMigrations();
     } catch (error) {
-      console.error('[startup] Failed to run migrations:', error);
+      logger.error('[startup] Failed to run migrations', error instanceof Error ? error : new Error(String(error)));
       // Continue anyway - the app might still work with existing schema
     }
   }
@@ -108,7 +127,7 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error('Express error handler:', err);
+    logger.error('Express error handler', err instanceof Error ? err : new Error(String(err)));
     res.status(status).json({ message });
   });
 
@@ -135,15 +154,15 @@ app.use((req, res, next) => {
 
     // Set up recurrence scheduler - runs every hour
     cron.schedule('0 * * * *', async () => {
-      console.log('[Cron] Running recurrence scheduler...');
+      logger.info('[Cron] Running recurrence scheduler...');
       try {
         const results = await processRecurringTasks();
-        console.log(`[Cron] Recurrence scheduler complete: ${results.created} tasks created`);
+        logger.info(`[Cron] Recurrence scheduler complete: ${results.created} tasks created`);
       } catch (error) {
-        console.error('[Cron] Error running recurrence scheduler:', error);
+        logger.error('[Cron] Error running recurrence scheduler', error instanceof Error ? error : new Error(String(error)));
       }
     });
 
-    console.log('[Cron] Recurrence scheduler initialized (runs every hour)');
+    logger.info('[Cron] Recurrence scheduler initialized (runs every hour)');
   });
 })();

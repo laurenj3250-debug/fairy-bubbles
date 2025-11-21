@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { ProgressBackground } from "@/components/ProgressBackground";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import BaseCamp from "@/pages/BaseCamp";
 import DashboardNew from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
@@ -210,24 +212,29 @@ function App() {
   useMountainTheme();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BackgroundProvider>
-          <TooltipProvider>
-            <ProgressBackground>
-              <Toaster />
-              <AppRoutes />
-            </ProgressBackground>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
-          </TooltipProvider>
-        </BackgroundProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary fallbackMessage="GoalConnect encountered an error">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BackgroundProvider>
+            <TooltipProvider>
+              <ErrorBoundary fallbackMessage="Page failed to load">
+                <ProgressBackground>
+                  <Toaster />
+                  <OfflineIndicator />
+                  <AppRoutes />
+                </ProgressBackground>
+              </ErrorBoundary>
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+            </TooltipProvider>
+          </BackgroundProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

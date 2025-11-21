@@ -27,6 +27,15 @@ export const habits = pgTable("habits", {
   grade: text("grade").default("5.9"), // e.g., "5.9", "5.11"
   // Adventure scheduling
   scheduledDay: varchar("scheduled_day", { length: 10 }), // ISO date string (YYYY-MM-DD) for which day this week
+  // CUMULATIVE GOALS - NEW
+  goalType: varchar("goal_type", { length: 20 }).notNull().default("binary").$type<"binary" | "cumulative">(),
+  targetValue: integer("target_value"), // "50 climbs by June"
+  currentValue: integer("current_value").notNull().default(0), // Running total
+  targetDate: varchar("target_date", { length: 10 }), // "2025-06-15"
+  createdDate: varchar("created_date", { length: 10 }), // When goal was set (for external authority)
+  isLocked: boolean("is_locked").notNull().default(false), // Prevent easy editing
+  primaryGoalAchieved: boolean("primary_goal_achieved").notNull().default(false), // "Send 6b on kilter" achieved?
+  primaryGoalAchievedDate: varchar("primary_goal_achieved_date", { length: 10 }), // When was it achieved
 });
 
 export const habitLogs = pgTable("habit_logs", {
@@ -38,10 +47,29 @@ export const habitLogs = pgTable("habit_logs", {
   note: text("note"),
   mood: integer("mood"), // 1-5 scale
   energyLevel: integer("energy_level"), // 1-5 scale
+  // HYBRID LOGGING - Optional session details
+  durationMinutes: integer("duration_minutes"), // "90 min session"
+  quantityCompleted: integer("quantity_completed"), // "5 problems sent"
+  sessionType: text("session_type"), // "outdoor", "gym", "home"
+  incrementValue: integer("increment_value").notNull().default(1), // How much to add to currentValue
 }, (table) => {
   return {
     habitUserDateIdx: uniqueIndex("habit_logs_habit_id_user_id_date_key").on(table.habitId, table.userId, table.date),
   };
+});
+
+// MULTI-METRICS - Track multiple dimensions of one habit
+export const habitMetrics = pgTable("habit_metrics", {
+  id: serial("id").primaryKey(),
+  habitId: integer("habit_id").notNull().references(() => habits.id, { onDelete: "cascade" }),
+  metricType: varchar("metric_type", { length: 30 }).notNull().$type<"days" | "minutes" | "problems" | "trips" | "distance" | "lessons" | "cards" | "sessions" | "custom">(),
+  label: text("label").notNull(), // "Days climbed", "Minutes", "Problems sent"
+  unit: text("unit").notNull(), // "days", "min", "problems", "trips"
+  targetValue: integer("target_value").notNull(), // 40 days, 2000 minutes, etc.
+  currentValue: integer("current_value").notNull().default(0),
+  color: text("color").notNull().default("#3b82f6"), // For progress bar
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const goals = pgTable("goals", {
@@ -214,6 +242,7 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Habit = typeof habits.$inferSelect;
 export type HabitLog = typeof habitLogs.$inferSelect;
+export type HabitMetric = typeof habitMetrics.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type GoalUpdate = typeof goalUpdates.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
@@ -230,6 +259,9 @@ export type InsertHabit = z.infer<typeof insertHabitSchema>;
 
 export const insertHabitLogSchema = createInsertSchema(habitLogs).omit({ id: true });
 export type InsertHabitLog = z.infer<typeof insertHabitLogSchema>;
+
+export const insertHabitMetricSchema = createInsertSchema(habitMetrics).omit({ id: true, createdAt: true });
+export type InsertHabitMetric = z.infer<typeof insertHabitMetricSchema>;
 
 export const insertGoalSchema = createInsertSchema(goals).omit({ id: true }).extend({
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),

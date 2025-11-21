@@ -73,3 +73,12 @@ export function getDb(): Database {
 
   return cachedDb;
 }
+
+// Export raw pool for executing raw SQL queries
+export function getPool(): pkg.Pool {
+  if (!pool) {
+    // Initialize db first to ensure pool exists
+    getDb();
+  }
+  return pool!;
+}

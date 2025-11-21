@@ -92,6 +92,27 @@ export default function Todos() {
         return await apiRequest(`/api/todos/${id}/complete`, "POST");
       }
     },
+    onMutate: async (id: number) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/todos-with-metadata"] });
+
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData(["/api/todos-with-metadata"]);
+
+      // Optimistically update
+      queryClient.setQueryData(["/api/todos-with-metadata"], (old: TodoWithMetadata[] | undefined) => {
+        if (!old) return old;
+        return old.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      });
+
+      return { previousTodos };
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/todos-with-metadata"], context.previousTodos);
+      }
+    },
     onSuccess: (data: any, id: number) => {
       const todo = todos.find(t => t.id === id);
       // If completing a task, trigger fade-out animation
@@ -99,11 +120,12 @@ export default function Todos() {
         setFadingOutTodos((prev) => new Set(prev).add(id));
         // Remove from DOM after animation completes (400ms)
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+          // Only invalidate specific query keys
+          queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
         }, 400);
       } else {
-        // If uncompleting, just refresh normally
-        queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+        // Optimistic update already applied, just invalidate to sync with server
+        queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
       }
     },
   });
@@ -112,8 +134,35 @@ export default function Todos() {
     mutationFn: async (id: number) => {
       return await apiRequest(`/api/todos/${id}`, "DELETE");
     },
+    onMutate: async (id: number) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/todos-with-metadata"] });
+
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData(["/api/todos-with-metadata"]);
+
+      // Optimistically remove from cache
+      queryClient.setQueryData(["/api/todos-with-metadata"], (old: TodoWithMetadata[] | undefined) => {
+        if (!old) return old;
+        return old.filter(t => t.id !== id);
+      });
+
+      return { previousTodos };
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/todos-with-metadata"], context.previousTodos);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      // Optimistic update already applied, just invalidate to sync
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
     },
   });
 
@@ -131,8 +180,37 @@ export default function Todos() {
         subtasks: JSON.stringify(updatedSubtasks),
       });
     },
+    onMutate: async ({ todoId, subtaskId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/todos-with-metadata"] });
+
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData(["/api/todos-with-metadata"]);
+
+      // Optimistically update subtask
+      queryClient.setQueryData(["/api/todos-with-metadata"], (old: TodoWithMetadata[] | undefined) => {
+        if (!old) return old;
+        return old.map(t => {
+          if (t.id !== todoId) return t;
+          const subtasks: Subtask[] = JSON.parse(t.subtasks || "[]");
+          const updatedSubtasks = subtasks.map(st =>
+            st.id === subtaskId ? { ...st, completed: !st.completed } : st
+          );
+          return { ...t, subtasks: JSON.stringify(updatedSubtasks) };
+        });
+      });
+
+      return { previousTodos };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/todos-with-metadata"], context.previousTodos);
+      }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      // Optimistic update already applied, just invalidate to sync
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
     },
   });
 
@@ -395,13 +473,14 @@ export default function Todos() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      // Use specific query key for targeted invalidation
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
       toast({ title: "Added!", description: "Task added successfully" });
     },
   });
 
   return (
-    <div className="min-h-screen pb-20 px-4 pt-6 relative">
+    <div className="min-h-screen pb-20 px-4 pt-6 relative" role="main" aria-label="Tasks page">
       {/* Header */}
       <div className={cn("mx-auto mb-6", view === "week" ? "max-w-[1600px]" : "max-w-4xl")}>
         <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-6 relative overflow-hidden">
@@ -436,11 +515,12 @@ export default function Todos() {
                   background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
                   color: 'white'
                 }}
+                aria-label="Quick add new task (Command K or Control K)"
                 title="Quick add task (⌘K)"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                 New Task
-                <span className="ml-2 text-xs opacity-75">⌘K</span>
+                <span className="ml-2 text-xs opacity-75" aria-hidden="true">⌘K</span>
               </Button>
               <Button
                 onClick={() => setShortcutsHelpOpen(true)}
@@ -449,6 +529,7 @@ export default function Todos() {
                   background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
                   color: 'white'
                 }}
+                aria-label="Show keyboard shortcuts help"
                 title="Keyboard shortcuts (?)"
               >
                 ?
@@ -610,8 +691,9 @@ export default function Todos() {
         {view === "list" && (
           <>
             {isLoading ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12" role="status" aria-live="polite">
                 <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
+                <span className="sr-only">Loading tasks</span>
               </div>
             ) : sortedTodos.length === 0 ? (
               <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-12 text-center relative overflow-hidden">

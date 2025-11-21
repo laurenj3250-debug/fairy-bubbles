@@ -34,16 +34,15 @@ export default function BaseCamp() {
     queryKey: [`/api/habit-logs/${today}`],
   });
 
-  // Fetch all habit logs for streak calculation
+  // Fetch all habit logs for streak calculation - OPTIMIZED BATCH ENDPOINT
   const { data: allLogs = [] } = useQuery<HabitLog[]>({
     queryKey: ["/api/habit-logs/all"],
     queryFn: async () => {
       if (habits.length === 0) return [];
-      const logsPromises = habits.map((h) =>
-        fetch(`/api/habit-logs?habitId=${h.id}`).then((res) => res.json())
-      );
-      const logsArrays = await Promise.all(logsPromises);
-      return logsArrays.flat();
+      // Use batch endpoint to fetch all logs in a single request (fixes N+1 query problem)
+      const habitIds = habits.map(h => h.id).join(',');
+      const response = await fetch(`/api/habit-logs?habitIds=${habitIds}`);
+      return response.json();
     },
     enabled: habits.length > 0,
   });
@@ -88,8 +87,10 @@ export default function BaseCamp() {
 
   if (habitsLoading || logsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-foreground text-xl animate-pulse">Loading base camp...</div>
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
+        <div className="text-foreground text-xl animate-pulse" aria-label="Loading base camp">
+          Loading base camp...
+        </div>
       </div>
     );
   }
@@ -97,7 +98,7 @@ export default function BaseCamp() {
   return (
     <div className="min-h-screen pb-24 relative overflow-hidden">
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-8" role="main" aria-label="Base camp dashboard">
         {/* Mountain Header - Shows current expedition */}
         <MountainHeader seasonProgress={seasonProgress} currentStreak={currentStreak} />
 

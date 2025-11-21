@@ -7,11 +7,55 @@ import { eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { users } from "@shared/schema";
 import { storage } from "./storage";
+import {
+  loginRateLimiter,
+  registerRateLimiter,
+  recordFailedLogin,
+  resetFailedLogins,
+  checkAccountLock,
+  getFailedAttempts
+} from "./security/rate-limiter";
 
 const PgSession = connectPgSimple(session);
 const MemoryStore = createMemoryStore(session);
 
-const SESSION_SECRET = process.env.SESSION_SECRET || "railway-goalconnect-secret-change-in-production";
+// SECURITY: Validate session secret in production
+// A cryptographically strong session secret is critical for session security
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+
+  // In production, fail hard if no secure secret is provided
+  if (process.env.NODE_ENV === 'production') {
+    if (!secret) {
+      throw new Error(
+        'CRITICAL SECURITY ERROR: SESSION_SECRET environment variable must be set in production. ' +
+        'Generate a secure secret using: openssl rand -base64 32'
+      );
+    }
+
+    // Validate secret strength in production
+    if (secret.length < 32) {
+      throw new Error(
+        'CRITICAL SECURITY ERROR: SESSION_SECRET must be at least 32 characters long in production. ' +
+        'Current length: ' + secret.length + '. Generate a secure secret using: openssl rand -base64 32'
+      );
+    }
+
+    console.log('[auth] ✅ Session secret validated (length: ' + secret.length + ' chars)');
+    return secret;
+  }
+
+  // In development, allow a default but warn
+  if (!secret) {
+    console.warn('[auth] ⚠️  WARNING: Using default SESSION_SECRET in development mode');
+    console.warn('[auth] ⚠️  For production, set SESSION_SECRET environment variable');
+    return "dev-secret-change-in-production-" + Math.random().toString(36);
+  }
+
+  return secret;
+}
+
+const SESSION_SECRET = getSessionSecret();
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface AuthenticatedUser {
@@ -51,6 +95,66 @@ async function comparePassword(password: string, hash: string): Promise<boolean>
 }
 
 /**
+ * Validate password strength
+ * Requirements:
+ * - Minimum 12 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ */
+interface PasswordValidation {
+  valid: boolean;
+  errors: string[];
+  entropy: number;
+}
+
+function validatePasswordStrength(password: string): PasswordValidation {
+  const errors: string[] = [];
+
+  // Check minimum length
+  if (password.length < 12) {
+    errors.push("Password must be at least 12 characters long");
+  }
+
+  // Check for uppercase letter
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Password must contain at least one uppercase letter");
+  }
+
+  // Check for lowercase letter
+  if (!/[a-z]/.test(password)) {
+    errors.push("Password must contain at least one lowercase letter");
+  }
+
+  // Check for number
+  if (!/[0-9]/.test(password)) {
+    errors.push("Password must contain at least one number");
+  }
+
+  // Check for special character
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    errors.push("Password must contain at least one special character (!@#$%^&*()_+-=[]{}etc.)");
+  }
+
+  // Calculate password entropy (bits)
+  // Entropy = log2(characterSet^length)
+  let charSet = 0;
+  if (/[a-z]/.test(password)) charSet += 26;
+  if (/[A-Z]/.test(password)) charSet += 26;
+  if (/[0-9]/.test(password)) charSet += 10;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) charSet += 32;
+
+  const entropy = Math.floor(Math.log2(Math.pow(charSet, password.length)));
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    entropy
+  };
+}
+
+/**
  * Find user by email
  */
 async function findUserByEmail(email: string) {
@@ -80,10 +184,17 @@ async function handleRegister(req: Request, res: Response) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Validate password length
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    // Validate password strength (SECURITY: Strong password requirements)
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      console.log('[auth] Password validation failed:', passwordValidation.errors);
+      return res.status(400).json({
+        error: "Password does not meet security requirements",
+        details: passwordValidation.errors
+      });
     }
+
+    console.log('[auth] Password validation passed (entropy: ' + passwordValidation.entropy + ' bits)');
 
     // Check if user already exists
     const existingUser = await findUserByEmail(email.toLowerCase());
@@ -169,6 +280,7 @@ async function handleRegister(req: Request, res: Response) {
 
 /**
  * Handle user login
+ * SECURITY: Implements account lockout after failed attempts
  */
 async function handleLogin(req: Request, res: Response) {
   try {
@@ -178,17 +290,52 @@ async function handleLogin(req: Request, res: Response) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
+    const normalizedEmail = email.toLowerCase();
+
+    // SECURITY: Check if account is locked
+    const lockedUntil = checkAccountLock(normalizedEmail);
+    if (lockedUntil) {
+      const remainingMinutes = Math.ceil((lockedUntil.getTime() - Date.now()) / (60 * 1000));
+      const attemptCount = getFailedAttempts(normalizedEmail);
+      console.warn(`[security] Login attempt blocked for locked account: ${normalizedEmail} (${attemptCount} failed attempts)`);
+
+      return res.status(423).json({
+        error: "Account temporarily locked due to too many failed login attempts",
+        lockedUntil: lockedUntil.toISOString(),
+        retryAfterMinutes: remainingMinutes,
+        message: `Please try again in ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`
+      });
+    }
+
     // Find user
-    const user = await findUserByEmail(email.toLowerCase());
+    const user = await findUserByEmail(normalizedEmail);
     if (!user) {
+      // SECURITY: Record failed attempt even if user doesn't exist
+      // This prevents timing attacks to enumerate valid emails
+      recordFailedLogin(normalizedEmail);
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     // Check password
     const isValidPassword = await comparePassword(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      // SECURITY: Record failed login attempt
+      recordFailedLogin(normalizedEmail);
+      const attempts = getFailedAttempts(normalizedEmail);
+
+      console.warn(`[security] Failed login for ${normalizedEmail} (${attempts} attempts)`);
+
+      // Provide helpful feedback about impending lockout
+      let errorMessage = "Invalid email or password";
+      if (attempts >= 4) {
+        errorMessage += ". Warning: Account will be locked after 5 failed attempts.";
+      }
+
+      return res.status(401).json({ error: errorMessage });
     }
+
+    // SECURITY: Reset failed attempts on successful login
+    resetFailedLogins(normalizedEmail);
 
     // Create session
     req.session.user = {
@@ -329,11 +476,17 @@ export function configureSimpleAuth(app: Express) {
     next();
   });
 
-  // Auth routes
-  app.post("/api/auth/register", handleRegister);
-  app.post("/api/auth/login", handleLogin);
+  // Auth routes with rate limiting
+  // SECURITY: Apply rate limiting to prevent brute force attacks
+  app.post("/api/auth/register", registerRateLimiter, handleRegister);
+  app.post("/api/auth/login", loginRateLimiter, handleLogin);
   app.post("/api/auth/logout", handleLogout);
   app.get("/api/auth/session", handleSession);
+
+  console.log("[auth] ✅ Rate limiting enabled on auth endpoints");
+  console.log("[auth]    - Login: 5 attempts per 15 minutes per IP");
+  console.log("[auth]    - Register: 3 attempts per hour per IP");
+  console.log("[auth]    - Account lockout: Progressive (5/10/20 failed attempts)");
 
   // Protect all /api/* routes except auth endpoints
   app.use((req, res, next) => {

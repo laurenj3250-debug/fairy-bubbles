@@ -1,0 +1,6 @@
+# Exclude development assets from production builds
+*.zip
+*.pdf
+*.skill
+.DS_Store
+MRI anesthesia /

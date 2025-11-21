@@ -2,7 +2,7 @@ import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ensureDatabaseInitialized } from "./init-db";
-import { getDb } from "./db";
+import { getDb, getPool } from "./db";
 import { eq, sql, and } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import {
@@ -32,6 +32,18 @@ import { registerProjectRoutes } from "./routes/projects";
 import { registerLabelRoutes } from "./routes/labels";
 import { registerTodosEnhancedRoutes } from "./routes/todos-enhanced";
 import { registerRecurrenceRoutes } from "./routes/recurrence";
+import { registerHabitRoutes } from "./routes/habits";
+import { registerGoalRoutes } from "./routes/goals";
+import {
+  DatabaseError,
+  ValidationError,
+  NotFoundError,
+  AuthorizationError,
+  getErrorMessage,
+  formatErrorForLogging
+} from "./errors";
+import { parseNumericId, validateNumericId } from "./validation";
+import { sendError, asyncHandler } from "./error-handler";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -80,32 +92,46 @@ async function updatePetFromHabits(userId: number) {
 
     if (!pet) {
       // Create default pet if doesn't exist
-      pet = await storage.createVirtualPet({
-        userId,
-        name: "Forest Friend",
-        species: "Gremlin",
-        happiness: 50,
-        health: 100,
-        level: 1,
-        experience: 0,
-        evolution: "seed",
-      });
+      try {
+        pet = await storage.createVirtualPet({
+          userId,
+          name: "Forest Friend",
+          species: "Gremlin",
+          happiness: 50,
+          health: 100,
+          level: 1,
+          experience: 0,
+          evolution: "seed",
+        });
+      } catch (createError) {
+        const errorLog = formatErrorForLogging(createError);
+        console.error("[updatePetFromHabits] Failed to create default pet:", errorLog);
+        throw new DatabaseError(getErrorMessage(createError), "createVirtualPet");
+      }
     }
 
     const stats = calculatePetStats(habits, allLogs, pet);
 
     // Update pet with new stats
-    await storage.updateVirtualPet(pet.id, {
-      experience: stats.experience,
-      level: stats.level,
-      happiness: stats.happiness,
-      evolution: stats.evolution,
-    });
+    try {
+      await storage.updateVirtualPet(pet.id, {
+        experience: stats.experience,
+        level: stats.level,
+        happiness: stats.happiness,
+        evolution: stats.evolution,
+      });
+    } catch (updateError) {
+      const errorLog = formatErrorForLogging(updateError);
+      console.error("[updatePetFromHabits] Failed to update pet stats:", errorLog);
+      throw new DatabaseError(getErrorMessage(updateError), "updateVirtualPet");
+    }
 
     return { stats, leveledUp: stats.leveledUp, evolved: stats.evolved };
   } catch (error) {
-    console.error("Failed to update pet stats:", error);
-    return null;
+    const errorLog = formatErrorForLogging(error);
+    console.error("[updatePetFromHabits] Pet update failed:", errorLog);
+    // Re-throw instead of swallowing - let caller decide how to handle
+    throw error instanceof DatabaseError ? error : new DatabaseError(getErrorMessage(error), "updatePetFromHabits");
   }
 }
 
@@ -113,981 +139,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   try {
     await ensureDatabaseInitialized();
   } catch (error) {
-    console.error("[routes] Database initialization check failed:", error);
+    const errorLog = formatErrorForLogging(error);
+    console.error("[routes] Database initialization check failed:", errorLog);
+    throw new DatabaseError(getErrorMessage(error), "ensureDatabaseInitialized");
   }
 
-  app.get("/api/habits", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habits = await storage.getHabits(userId);
-      res.json(habits);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch habits" });
-    }
-  });
-
-  // GET user-level streak (perfect days streak) - MUST come before /api/habits/:id
-  app.get("/api/habits/streak", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habits = await storage.getHabits(userId);
-      const allLogs = await storage.getAllHabitLogs(userId);
-
-      if (habits.length === 0) {
-        return res.json({ currentStreak: 0, longestStreak: 0 });
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // Helper function to check if a day is "perfect" (all habits completed)
-      const isPerfectDay = (dateString: string): boolean => {
-        const logsForDay = allLogs.filter(log =>
-          log.date === dateString && log.completed
-        );
-        return logsForDay.length === habits.length;
-      };
-
-      // Calculate current streak (going backwards from today)
-      let currentStreak = 0;
-      let checkDate = new Date();
-
-      while (true) {
-        const dateString = checkDate.toISOString().split('T')[0];
-
-        if (!isPerfectDay(dateString)) {
-          // If it's today and not perfect yet, check yesterday
-          if (currentStreak === 0 && dateString === today) {
-            checkDate.setDate(checkDate.getDate() - 1);
-            continue;
-          }
-          break;
-        }
-
-        currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-
-        if (currentStreak > 365) break; // Safety limit
-      }
-
-      // Calculate longest streak ever
-      let longestStreak = currentStreak;
-      let tempStreak = 0;
-
-      // Check each day going back
-      let scanDate = new Date();
-      scanDate.setDate(scanDate.getDate() - 365); // Scan last year
-      const endDate = new Date();
-
-      while (scanDate <= endDate) {
-        const dateString = scanDate.toISOString().split('T')[0];
-
-        if (isPerfectDay(dateString)) {
-          tempStreak++;
-          longestStreak = Math.max(longestStreak, tempStreak);
-        } else {
-          tempStreak = 0;
-        }
-
-        scanDate.setDate(scanDate.getDate() + 1);
-      }
-
-      res.json({ currentStreak, longestStreak });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to get user streak" });
-    }
-  });
-
-  app.get("/api/habits/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      const habit = await storage.getHabit(id);
-      if (!habit) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-      // Verify ownership
-      if (habit.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      res.json(habit);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch habit" });
-    }
-  });
-
-  app.post("/api/habits", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const validated = insertHabitSchema.parse({ ...req.body, userId });
-      const habit = await storage.createHabit(validated);
-      res.status(201).json(habit);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Invalid habit data" });
-    }
-  });
-
-  app.patch("/api/habits/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before update
-      const existing = await storage.getHabit(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const habit = await storage.updateHabit(id, req.body);
-      res.json(habit);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to update habit" });
-    }
-  });
-
-  // Schedule adventure habit for a specific day
-  app.patch("/api/habits/:id/schedule", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      const { scheduledDay } = req.body;
-
-      // Verify ownership
-      const existing = await storage.getHabit(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Validate that it's an adventure habit
-      if (existing.category !== "adventure") {
-        return res.status(400).json({ error: "Only adventure habits can be scheduled" });
-      }
-
-      // Update scheduledDay (can be null to clear schedule)
-      const habit = await storage.updateHabit(id, { scheduledDay });
-      res.json(habit);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to schedule habit" });
-    }
-  });
-
-  app.delete("/api/habits/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before delete
-      const existing = await storage.getHabit(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const deleted = await storage.deleteHabit(id);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete habit" });
-    }
-  });
-
-  // GET all habits with enriched data (streak, weekly progress, history) - BATCH ENDPOINT
-  app.get("/api/habits-with-data", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habits = await storage.getHabits(userId);
-      const allLogs = await storage.getAllHabitLogs(userId);
-
-      // Calculate week boundaries once
-      const now = new Date();
-      const dayOfWeek = now.getDay();
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = new Date(now);
-      monday.setDate(now.getDate() + mondayOffset);
-      monday.setHours(0, 0, 0, 0);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      sunday.setHours(23, 59, 59, 999);
-      const today = new Date().toISOString().split('T')[0];
-
-      const habitsWithData = habits.map(habit => {
-        const habitLogs = allLogs.filter(log => log.habitId === habit.id && log.completed);
-
-        // Calculate streak
-        let streak = 0;
-        let checkDate = new Date();
-        const sortedLogs = habitLogs.sort((a, b) => b.date.localeCompare(a.date));
-
-        while (true) {
-          const dateString = checkDate.toISOString().split('T')[0];
-          const hasLog = sortedLogs.some(log => log.date === dateString);
-
-          if (!hasLog) {
-            if (streak === 0 && dateString === today) {
-              checkDate.setDate(checkDate.getDate() - 1);
-              continue;
-            }
-            break;
-          }
-
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-          if (streak > 365) break;
-        }
-
-        // Calculate weekly progress
-        let weeklyProgress = null;
-        if (habit.cadence === 'weekly') {
-          const weekLogs = allLogs.filter(log => {
-            if (log.habitId !== habit.id || !log.completed) return false;
-            const logDate = new Date(log.date);
-            return logDate >= monday && logDate <= sunday;
-          });
-          const completedDates = weekLogs.map(log => log.date);
-          const progress = completedDates.length;
-          const target = habit.targetPerWeek || 7;
-
-          weeklyProgress = {
-            habitId: habit.id,
-            weekStart: monday.toISOString().split('T')[0],
-            weekEnd: sunday.toISOString().split('T')[0],
-            targetPerWeek: target,
-            completedDates,
-            progress,
-            isComplete: progress >= target,
-          };
-        }
-
-        // Calculate 7-day history
-        const history = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateString = date.toISOString().split('T')[0];
-          const completed = habitLogs.some(log => log.date === dateString);
-          history.push({
-            date: dateString,
-            completed,
-            dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
-          });
-        }
-
-        return {
-          ...habit,
-          streak: { habitId: habit.id, streak },
-          weeklyProgress,
-          history: { habitId: habit.id, history }
-        };
-      });
-
-      res.json(habitsWithData);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to get habits with data" });
-    }
-  });
-
-  // GET weekly progress for a habit
-  app.get("/api/habits/:habitId/weekly-progress", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habitId = parseInt(req.params.habitId);
-
-      const habit = await storage.getHabit(habitId);
-      if (!habit || habit.userId !== userId) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-
-      // Get current week's logs (Monday to Sunday)
-      const now = new Date();
-      const dayOfWeek = now.getDay(); // 0 = Sunday
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = new Date(now);
-      monday.setDate(now.getDate() + mondayOffset);
-      monday.setHours(0, 0, 0, 0);
-
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      sunday.setHours(23, 59, 59, 999);
-
-      // Get all logs for this user
-      const allLogs = await storage.getAllHabitLogs(userId);
-      const weekLogs = allLogs.filter(log => {
-        if (log.habitId !== habitId || !log.completed) return false;
-        const logDate = new Date(log.date);
-        return logDate >= monday && logDate <= sunday;
-      });
-
-      const completedDates = weekLogs.map(log => log.date);
-      const progress = completedDates.length;
-      const target = habit.targetPerWeek || 7;
-
-      res.json({
-        habitId,
-        weekStart: monday.toISOString().split('T')[0],
-        weekEnd: sunday.toISOString().split('T')[0],
-        targetPerWeek: target,
-        completedDates,
-        progress,
-        isComplete: progress >= target,
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to get weekly progress" });
-    }
-  });
-
-  // GET streak for a specific habit
-  app.get("/api/habits/:habitId/streak", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habitId = parseInt(req.params.habitId);
-
-      const habit = await storage.getHabit(habitId);
-      if (!habit || habit.userId !== userId) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-
-      const allLogs = await storage.getAllHabitLogs(userId);
-      const habitLogs = allLogs
-        .filter(log => log.habitId === habitId && log.completed)
-        .sort((a, b) => b.date.localeCompare(a.date)); // Sort descending
-
-      let streak = 0;
-      const today = new Date().toISOString().split('T')[0];
-      let checkDate = new Date();
-
-      // Calculate streak going backwards from today
-      while (true) {
-        const dateString = checkDate.toISOString().split('T')[0];
-        const hasLog = habitLogs.some(log => log.date === dateString);
-
-        if (!hasLog) {
-          // If it's today and no log yet, keep checking
-          if (streak === 0 && dateString === today) {
-            checkDate.setDate(checkDate.getDate() - 1);
-            continue;
-          }
-          break;
-        }
-
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-
-        if (streak > 365) break; // Safety limit
-      }
-
-      res.json({ habitId, streak });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to get streak" });
-    }
-  });
-
-  // GET completion history for a habit (last 7 days)
-  app.get("/api/habits/:habitId/history", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const habitId = parseInt(req.params.habitId);
-
-      const habit = await storage.getHabit(habitId);
-      if (!habit || habit.userId !== userId) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-
-      const allLogs = await storage.getAllHabitLogs(userId);
-      const habitLogs = allLogs.filter(log => log.habitId === habitId && log.completed);
-
-      // Get last 7 days (including today)
-      const history = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateString = date.toISOString().split('T')[0];
-        const completed = habitLogs.some(log => log.date === dateString);
-        history.push({
-          date: dateString,
-          completed,
-          dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' })
-        });
-      }
-
-      res.json({ habitId, history });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to get completion history" });
-    }
-  });
-
-  // GET habit logs by date (path parameter) - for React Query default queryFn
-  app.get("/api/habit-logs/:date", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { date } = req.params;
-      const logs = await storage.getHabitLogsByDate(userId, date);
-      res.json(logs);
-    } catch (error: any) {
-      console.error('Error fetching habit logs by date:', error);
-      res.status(500).json({ error: error.message || "Failed to fetch habit logs by date" });
-    }
-  });
-
-  app.get("/api/habit-logs", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { habitId, date } = req.query;
-
-      if (date && typeof date === "string") {
-        const logs = await storage.getHabitLogsByDate(userId, date);
-        return res.json(logs);
-      }
-      
-      if (habitId && typeof habitId === "string") {
-        const logs = await storage.getHabitLogs(parseInt(habitId));
-        return res.json(logs);
-      }
-      
-      // Return all logs if no filter specified
-      const allLogs = await storage.getAllHabitLogs(userId);
-      res.json(allLogs);
-    } catch (error: any) {
-      console.error('Error fetching habit logs:', error);
-      res.status(500).json({ error: error.message || "Failed to fetch habit logs" });
-    }
-  });
-
-  app.post("/api/habit-logs", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const validated = insertHabitLogSchema.parse({ ...req.body, userId });
-      const log = await storage.createHabitLog(validated);
-
-      // Award points for completing a habit
-      const habit = await storage.getHabit(validated.habitId);
-      if (habit && validated.completed) {
-        // Calculate streak for bonus coins
-        const allLogs = await storage.getAllHabitLogs(userId);
-        const currentStreak = calculateStreak(allLogs);
-        const coins = calculateCoinsEarned(habit, currentStreak);
-
-        await storage.addPoints(
-          userId,
-          coins,
-          "habit_complete",
-          log.id,
-          `Completed "${habit.title}"`
-        );
-
-        // Award RPG habit points for daily progress (unlocks runs)
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        const habitPoints = 1; // 1 point per habit completion (could vary by difficulty)
-        try {
-          // await storage.incrementHabitPoints(userId, today, habitPoints);
-          console.log(`[RPG] Awarded ${habitPoints} habit point(s) for completing "${habit.title}"`);
-        } catch (error) {
-          console.error('[RPG] Failed to increment habit points:', error);
-          // Don't fail the request if RPG system fails
-        }
-      }
-
-      // Auto-update pet stats
-      const petUpdate = await updatePetFromHabits(userId);
-
-      res.status(201).json({
-        ...log,
-        petUpdate: petUpdate ? {
-          leveledUp: petUpdate.leveledUp,
-          evolved: petUpdate.evolved,
-        } : null,
-      });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Invalid habit log data" });
-    }
-  });
-
-  app.patch("/api/habit-logs/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before update
-      const existing = await storage.getHabitLog(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Habit log not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const log = await storage.updateHabitLog(id, req.body);
-
-      // Auto-update pet stats after changing a log
-      const petUpdate = await updatePetFromHabits(userId);
-
-      res.json({
-        ...log,
-        petUpdate: petUpdate ? {
-          leveledUp: petUpdate.leveledUp,
-          evolved: petUpdate.evolved,
-        } : null,
-      });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to update habit log" });
-    }
-  });
-
-  app.delete("/api/habit-logs/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before delete
-      const existing = await storage.getHabitLog(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Habit log not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const deleted = await storage.deleteHabitLog(id);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete habit log" });
-    }
-  });
-
-  // Toggle habit completion endpoint
-  // Core loop: Toggle habit log + award/deduct tokens + award XP
-  app.post("/api/habit-logs/toggle", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const { habitId, date } = req.body;
-
-      console.log('[toggle] Request:', { userId, habitId, date });
-
-      if (!habitId || !date) {
-        return res.status(400).json({ error: "habitId and date are required" });
-      }
-
-      // Find existing log for this habit on this date
-      const existingLogs = await storage.getHabitLogsByDate(userId, date);
-      console.log('[toggle] Existing logs for date:', existingLogs.length);
-      const existingLog = existingLogs.find(log => log.habitId === habitId);
-      console.log('[toggle] Existing log found:', existingLog ? 'yes' : 'no');
-
-      let result;
-      let xpAwarded = 0;
-      let energyAwarded = 0;
-
-      if (existingLog) {
-        // Toggle existing log
-        const newCompleted = !existingLog.completed;
-        console.log('[toggle] Toggling existing log from', existingLog.completed, 'to', newCompleted);
-
-        result = await storage.updateHabitLog(existingLog.id, {
-          completed: newCompleted
-        });
-
-        // Award or deduct points based on toggle direction
-        if (newCompleted && !existingLog.completed) {
-          // Completing: award tokens/XP/energy based on effort
-          const habit = await storage.getHabit(habitId);
-          const effort = habit?.effort || 'medium';
-
-          const effortRewards = {
-            light: { tokens: 10, xp: 10, energy: 5 },
-            medium: { tokens: 10, xp: 15, energy: 10 },
-            heavy: { tokens: 10, xp: 20, energy: 15 }
-          };
-
-          const rewards = effortRewards[effort];
-
-          await storage.addPoints(userId, rewards.tokens, "habit_complete", result?.id || null, `Completed habit`);
-          console.log('[toggle] Awarded tokens/XP/energy for', effort, 'effort');
-          xpAwarded = rewards.xp;
-          energyAwarded = rewards.energy;
-        } else if (!newCompleted && existingLog.completed) {
-          // Uncompleting: deduct tokens/XP/energy based on effort
-          const habit = await storage.getHabit(habitId);
-          const effort = habit?.effort || 'medium';
-
-          const effortRewards = {
-            light: { tokens: 10, xp: 10, energy: 5 },
-            medium: { tokens: 10, xp: 15, energy: 10 },
-            heavy: { tokens: 10, xp: 20, energy: 15 }
-          };
-
-          const rewards = effortRewards[effort];
-
-          await storage.spendPoints(userId, rewards.tokens, `Uncompleted habit`);
-          console.log('[toggle] Deducted tokens/XP/energy for', effort, 'effort');
-          xpAwarded = -rewards.xp;
-          energyAwarded = -rewards.energy;
-        }
-      } else {
-        // Create new log as completed
-        console.log('[toggle] Creating new completed log');
-        const validated = insertHabitLogSchema.parse({
-          habitId,
-          userId,
-          date,
-          completed: true,
-          note: null
-        });
-        result = await storage.createHabitLog(validated);
-
-        // Get habit to determine effort level for rewards
-        const habit = await storage.getHabit(habitId);
-        const effort = habit?.effort || 'medium';
-
-        // Award tokens and XP based on effort level
-        const effortRewards = {
-          light: { tokens: 10, xp: 10, energy: 5 },
-          medium: { tokens: 10, xp: 15, energy: 10 },
-          heavy: { tokens: 10, xp: 20, energy: 15 }
-        };
-
-        const rewards = effortRewards[effort];
-
-        await storage.addPoints(userId, rewards.tokens, "habit_complete", result.id, `Completed habit`);
-        console.log('[toggle] Created log and awarded tokens/XP for', effort, 'effort');
-        xpAwarded = rewards.xp;
-        energyAwarded = rewards.energy;
-      }
-
-      // Award or deduct XP and Energy (effort-based: light=10/5, medium=15/10, heavy=20/15 XP/energy, 100 XP per level)
-      try {
-        let stats = await storage.getPlayerClimbingStats(userId);
-        if (!stats) {
-          // Initialize stats if they don't exist with default energy
-          stats = { climbingLevel: 1, totalXp: 0, currentEnergy: 100, maxEnergy: 100 };
-        }
-
-        const newTotalXp = Math.max(0, (stats.totalXp || 0) + xpAwarded);
-        const newLevel = Math.floor(newTotalXp / 100) + 1;
-        const oldLevel = stats.climbingLevel || 1;
-
-        // Calculate new energy (cap at maxEnergy)
-        const maxEnergy = stats.maxEnergy || 100;
-        const currentEnergy = stats.currentEnergy || 0;
-        const newEnergy = Math.max(0, Math.min(maxEnergy, currentEnergy + energyAwarded));
-
-        await storage.updatePlayerClimbingStats(userId, {
-          totalXp: newTotalXp,
-          climbingLevel: newLevel,
-          currentEnergy: newEnergy
-        });
-
-        console.log('[toggle] XP and Energy updated:', {
-          oldXp: stats.totalXp,
-          newXp: newTotalXp,
-          oldLevel,
-          newLevel,
-          oldEnergy: currentEnergy,
-          newEnergy,
-          energyAwarded
-        });
-      } catch (xpError: any) {
-        // Don't fail the entire request if XP update fails
-        console.error('[toggle] XP/Energy update failed (non-fatal):', xpError.message);
-      }
-
-      // Check for linked goal/route and update progress
-      let routeProgress = null;
-      try {
-        const habit = await storage.getHabit(habitId);
-
-        if (habit?.linkedGoalId && result?.completed) {
-          // Habit is linked to a route and was just completed
-          const goal = await storage.getGoal(habit.linkedGoalId);
-
-          if (goal) {
-            // Increment goal progress
-            const newValue = (goal.currentValue || 0) + 1;
-            await storage.updateGoal(habit.linkedGoalId, {
-              currentValue: newValue
-            });
-
-            // Calculate pitch progress (12 pitches per route)
-            const totalPitches = 12;
-            const percentage = Math.round((newValue / goal.targetValue) * 100);
-            const completedPitches = Math.floor((percentage / 100) * totalPitches);
-
-            routeProgress = {
-              routeName: goal.title,
-              pitch: completedPitches,
-              totalPitches,
-              percentage: Math.min(percentage, 100)
-            };
-
-            console.log('[toggle] Route progress updated:', routeProgress);
-          }
-        }
-      } catch (routeError: any) {
-        // Don't fail the entire request if route update fails
-        console.error('[toggle] Route update failed (non-fatal):', routeError.message);
-      }
-
-      console.log('[toggle] Success:', result);
-      res.json({
-        ...result,
-        xpAwarded,  // Actual XP awarded based on effort
-        energyAwarded,  // Energy awarded based on effort
-        routeProgress
-      });
-    } catch (error: any) {
-      console.error('[toggle] Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      res.status(500).json({ error: error.message || "Failed to toggle habit log" });
-    }
-  });
-
-  /* TEMPORARILY DISABLED COMPLEX FEATURES - TO BE RE-ADDED AFTER CORE LOOP IS STABLE
-
-  Features removed from toggle endpoint:
-  - Combo stats (5-minute window multipliers)
-  - XP/leveling system
-  - Mountain unlocks
-  - Pet stat updates
-  - Daily quest progress
-  - Linked goal increments/decrements
-  - Reward details calculation
-  - Streak multipliers
-
-  These will be re-added one at a time after the core loop is working reliably.
-  */
-
-  app.get("/api/goals", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const goals = await storage.getGoals(userId);
-      res.json(goals);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch goals" });
-    }
-  });
-
-  // Get abandoned goals (no updates in 90+ days and not completed)
-  app.get("/api/goals/abandoned", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const goals = await storage.getGoals(userId);
-
-      // Filter incomplete goals
-      const incompleteGoals = goals.filter(
-        goal => goal.currentValue < goal.targetValue
-      );
-
-      // For each incomplete goal, get the most recent update
-      const abandonedGoals = [];
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
-      for (const goal of incompleteGoals) {
-        const updates = await storage.getGoalUpdates(goal.id);
-
-        // If no updates, use a very old date to consider it abandoned
-        if (updates.length === 0) {
-          abandonedGoals.push({
-            ...goal,
-            lastUpdateDate: null,
-            daysSinceUpdate: 999,
-          });
-          continue;
-        }
-
-        // Get the most recent update
-        const sortedUpdates = updates.sort((a, b) => b.date.localeCompare(a.date));
-        const lastUpdate = sortedUpdates[0];
-        const lastUpdateDate = new Date(lastUpdate.date);
-        const daysSinceUpdate = Math.floor(
-          (Date.now() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        // Include if last update was more than 90 days ago
-        if (daysSinceUpdate >= 90) {
-          abandonedGoals.push({
-            ...goal,
-            lastUpdateDate: lastUpdate.date,
-            daysSinceUpdate,
-          });
-        }
-      }
-
-      res.json(abandonedGoals);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to fetch abandoned goals" });
-    }
-  });
-
-  app.get("/api/goals/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      const goal = await storage.getGoal(id);
-      if (!goal) {
-        return res.status(404).json({ error: "Goal not found" });
-      }
-      // Verify ownership
-      if (goal.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      res.json(goal);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch goal" });
-    }
-  });
-
-  app.post("/api/goals", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const validated = insertGoalSchema.parse({ ...req.body, userId });
-      const goal = await storage.createGoal(validated);
-      res.status(201).json(goal);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Invalid goal data" });
-    }
-  });
-
-  app.patch("/api/goals/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before update
-      const existing = await storage.getGoal(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Goal not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const goal = await storage.updateGoal(id, req.body);
-      res.json(goal);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to update goal" });
-    }
-  });
-
-  app.delete("/api/goals/:id", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-      // Verify ownership before delete
-      const existing = await storage.getGoal(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Goal not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const deleted = await storage.deleteGoal(id);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete goal" });
-    }
-  });
-
-  // Reactivate an abandoned goal by adding a new update
-  app.post("/api/goals/:id/reactivate", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const id = parseInt(req.params.id);
-
-      // Verify ownership
-      const existing = await storage.getGoal(id);
-      if (!existing) {
-        return res.status(404).json({ error: "Goal not found" });
-      }
-      if (existing.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Add a new update with current value to "reactivate" the goal
-      const today = new Date().toISOString().split('T')[0];
-      const update = await storage.createGoalUpdate({
-        goalId: id,
-        userId,
-        date: today,
-        value: existing.currentValue,
-        note: "Goal reactivated from abandoned gear",
-      });
-
-      res.json({ success: true, goal: existing, update });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to reactivate goal" });
-    }
-  });
-
-  app.get("/api/goal-updates/:goalId", async (req, res) => {
-    try {
-      const goalId = parseInt(req.params.goalId);
-      const updates = await storage.getGoalUpdates(goalId);
-      res.json(updates);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch goal updates" });
-    }
-  });
-
-  app.post("/api/goal-updates", async (req, res) => {
-    try {
-      const userId = getUserId(req);
-      const validated = insertGoalUpdateSchema.parse({ ...req.body, userId });
-
-      // Create update and get milestone info in a single atomic operation
-      const result = await storage.createGoalUpdate(validated);
-
-      // Check if milestones were crossed and award points
-      if (result.milestonesCrossed && result.milestonesCrossed > 0 && result.goal) {
-        // Base points per milestone
-        let points = result.milestonesCrossed * 5; // 5 points per 10% milestone
-
-        // Calculate urgency multiplier based on days until deadline
-        const today = new Date();
-        const deadline = new Date(result.goal.deadline);
-        const daysUntil = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-        let urgencyMultiplier = 1.0;
-        if (daysUntil <= 3) {
-          urgencyMultiplier = 2.5; // Last 3 days
-        } else if (daysUntil <= 7) {
-          urgencyMultiplier = 2.0; // Last week
-        } else if (daysUntil <= 14) {
-          urgencyMultiplier = 1.5; // Last 2 weeks
-        }
-
-        // Calculate priority multiplier
-        const priorityMultipliers = {
-          high: 1.5,
-          medium: 1.0,
-          low: 0.75
-        };
-        const priorityMultiplier = priorityMultipliers[result.goal.priority] || 1.0;
-
-        // Apply both multipliers
-        points = Math.round(points * urgencyMultiplier * priorityMultiplier);
-
-        // Build description with multiplier info
-        let description = `Progress on "${result.goal.title}": ${result.goal.currentValue}/${result.goal.targetValue} ${result.goal.unit}`;
-        if (urgencyMultiplier > 1.0 || priorityMultiplier !== 1.0) {
-          const multipliers = [];
-          if (urgencyMultiplier > 1.0) multipliers.push(`${urgencyMultiplier}x urgency`);
-          if (priorityMultiplier !== 1.0) multipliers.push(`${priorityMultiplier}x priority`);
-          description += ` (${multipliers.join(", ")})`;
-        }
-
-        await storage.addPoints(
-          userId,
-          points,
-          "goal_progress",
-          result.update.id,
-          description
-        );
-      }
-
-      res.status(201).json(result.update);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Invalid goal update data" });
-    }
-  });
-
+  // Habit routes moved to routes/habits.ts
   app.get("/api/settings", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -1111,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validated = insertUserSettingsSchema.parse({ ...req.body, userId });
       const settings = await storage.updateUserSettings(validated);
       res.json(settings);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || "Invalid settings data" });
     }
   });
@@ -1199,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const pet = await storage.updateVirtualPet(id, req.body);
       res.json(pet);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || "Failed to update pet" });
     }
   });
@@ -1331,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userCostume = await storage.purchaseCostume(userId, actualCostumeId);
       res.status(201).json(userCostume);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || "Failed to purchase costume" });
     }
   });
@@ -1351,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const equipped = await storage.equipCostume(userId, costumeId);
       res.json(equipped);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || "Failed to equip costume" });
     }
   });
@@ -1366,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getUserId(req);
       const unequipped = await storage.unequipCostume(userId, costumeId);
       res.json(unequipped);
-    } catch (error: any) {
+    } catch (error) {
       res.status(400).json({ error: error.message || "Failed to unequip costume" });
     }
   });
@@ -1442,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(abandonedTodos);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({ error: error.message || "Failed to fetch abandoned todos" });
     }
   });
@@ -1471,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validated = insertTodoSchema.parse({ ...req.body, userId });
       const todo = await storage.createTodo(validated);
       res.status(201).json(todo);
-    } catch (error: any) {
+    } catch (error) {
       if (error.name === "ZodError") {
         return res.status(400).json({ error: "Invalid todo data", details: error.errors });
       }
@@ -1493,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const updated = await storage.updateTodo(id, req.body);
       res.json(updated);
-    } catch (error: any) {
+    } catch (error) {
       if (error.name === "ZodError") {
         return res.status(400).json({ error: "Invalid todo data", details: error.errors });
       }
@@ -1656,7 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Delete the ZIP file after extraction
             fs.unlinkSync(file.path);
             console.log(`[sprites] Deleted ZIP file: ${file.originalname}`);
-          } catch (error: any) {
+          } catch (error) {
             console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error.message);
             throw error;
           }
@@ -1704,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         files: uploadedFiles,
         count: uploadedFiles.length,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] ========== UPLOAD FAILED ==========');
       console.error('[sprites] Error type:', error.constructor.name);
       console.error('[sprites] Error message:', error.message);
@@ -1725,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json(spriteList);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] List error:', error);
       res.status(500).json({ error: error.message || "Failed to list sprites" });
     }
@@ -1746,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set('Content-Type', sprite.mimeType);
       res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
       res.send(imageBuffer);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] File serve error:', error);
       res.status(500).json({ error: error.message || "Failed to serve sprite" });
     }
@@ -1772,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('[sprites] Organization saved:', sprites.length, 'sprites');
       res.json({ success: true, count: sprites.length });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] Organize error:', error);
       res.status(500).json({ error: error.message || "Failed to save organization" });
     }
@@ -1808,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedFiles: deleted,
         failedFiles: failed,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] Delete error:', error);
       res.status(500).json({ error: error.message || "Failed to delete sprites" });
     }
@@ -1819,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const metadata = await storage.getSpritesMetadata();
       res.json(metadata);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] Get metadata error:', error);
       res.status(500).json({ error: error.message || "Failed to get sprite metadata" });
     }
@@ -1846,7 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: `data:${sprite.mimeType};base64,${sprite.data}`,
         mimeType: sprite.mimeType,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] Get by ID error:', error);
       res.status(500).json({ error: error.message || "Failed to get sprite" });
     }
@@ -1874,7 +931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
         res.json(spriteData);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[sprites] Get all error:', error);
       res.status(500).json({ error: error.message || "Failed to get sprites" });
     }
@@ -1891,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const items = await storage.getDreamScrollItems(req.user!.id);
       res.json(items);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Get items error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -1907,7 +964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category } = req.params;
       const items = await storage.getDreamScrollItemsByCategory(req.user!.id, category);
       res.json(items);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Get by category error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -1929,7 +986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cost: req.body.cost,
       });
       res.json(item);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Create error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -1950,7 +1007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(item);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Update error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -1971,7 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(item);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Toggle error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -1987,7 +1044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       await storage.deleteDreamScrollItem(id);
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll] Delete error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2005,7 +1062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category } = req.params;
       const tags = await storage.getDreamScrollTags(req.user!.id, category);
       res.json(tags);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll-tags] Get tags error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2025,7 +1082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         color: req.body.color || 'bg-gray-500/20 text-gray-300',
       });
       res.json(tag);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll-tags] Create tag error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2041,7 +1098,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       await storage.deleteDreamScrollTag(id);
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[dream-scroll-tags] Delete tag error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2093,7 +1150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         multiplier,
         expiresIn,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[combo] Get stats error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2151,7 +1208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         multiplier,
         expiresIn: 300, // 5 minutes in seconds
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[combo] Register error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2173,7 +1230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // const questTemplates = await storage.getDailyQuestTemplates();
       // TODO: Daily quests feature not implemented yet
       res.json([]);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[daily-quests] Get error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2191,7 +1248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Daily quests feature not implemented yet
       res.status(404).json({ error: "Quest not found" });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[daily-quests] Claim error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2214,7 +1271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         freezeCount: 0,
         canEarn: false,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[streak-freezes] Get error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2231,7 +1288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Streak freeze feature not implemented yet
       res.status(400).json({ error: "Feature not available" });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[streak-freezes] Purchase error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2244,7 +1301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const gear = await storage.getAllAlpineGear();
       res.json(gear);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[alpine-gear] Get all gear error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2259,7 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const inventory = await storage.getPlayerGearInventory(req.user!.id);
       res.json(inventory);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[alpine-gear] Get inventory error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2275,7 +1332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { gearId } = req.body;
       const result = await storage.purchaseGear(req.user!.id, gearId);
       res.json(result);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[alpine-gear] Purchase error:', error);
       res.status(400).json({ error: error.message });
     }
@@ -2310,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       res.json(stats);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[gear] Get stats error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2345,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json(gearCollection);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[gear] Get collection error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2358,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const regions = await storage.getAllRegions();
       res.json(regions);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[mountains] Get regions error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2369,7 +1426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const mountains = await storage.getAllMountains();
       res.json(mountains);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[mountains] Get all error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2381,7 +1438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const regionId = parseInt(req.params.regionId);
       const mountains = await storage.getMountainsByRegion(regionId);
       res.json(mountains);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[mountains] Get by region error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2411,7 +1468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json(formatted);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[mountains] Get unlocked error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2423,7 +1480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mountainId = parseInt(req.params.mountainId);
       // TODO: Implement getRoutesByMountainId
       res.json([]);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[routes] Get by mountain error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2470,7 +1527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(result);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[backgrounds] Get user backgrounds error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2520,7 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(schema.mountains.id, mountainId));
 
       res.json({ ...mountain[0], unlocked: true, isActive: true });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[backgrounds] Activate background error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2535,7 +1592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const stats = await storage.getPlayerClimbingStats(req.user!.id);
       res.json(stats);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[climbing] Get stats error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2582,7 +1639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         xpNeededForNextLevel,
         progressPercent: Math.round((xpInCurrentLevel / xpNeededForNextLevel) * 100),
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[user] Get level progress error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2600,6 +1657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const db = getDb();
+      const pool = getPool();
       const userId = req.user!.id;
       const { routeId, mountainId, gearIds } = req.body;
 
@@ -2608,7 +1666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check for existing active expedition
-      const activeExpedition = await (db as any).query(
+      const activeExpedition = await pool.query(
         `SELECT id FROM player_expeditions WHERE user_id = $1 AND status = 'in_progress'`,
         [userId]
       );
@@ -2634,7 +1692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get mountain and route details
-      const mountain = await (db as any).query(
+      const mountain = await pool.query(
         `SELECT * FROM mountains WHERE id = $1`,
         [mountainId]
       );
@@ -2643,7 +1701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Mountain not found" });
       }
 
-      const route = await (db as any).query(
+      const route = await pool.query(
         `SELECT * FROM routes WHERE id = $1 AND mountain_id = $2`,
         [routeId, mountainId]
       );
@@ -2656,7 +1714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const routeData = route.rows[0];
 
       // Check required gear for this route
-      const requiredGear = await (db as any).query(
+      const requiredGear = await pool.query(
         `SELECT rg.gear_id, rg.is_required, g.name, g.category
          FROM route_gear_requirements rg
          JOIN alpine_gear g ON rg.gear_id = g.id
@@ -2666,7 +1724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (requiredGear.rows.length > 0) {
         // Get user's gear inventory
-        const userGear = await (db as any).query(
+        const userGear = await pool.query(
           `SELECT gear_id FROM player_gear_inventory WHERE user_id = $1`,
           [userId]
         );
@@ -2712,7 +1770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Create expedition record (in_progress status)
-      const expeditionResult = await (db as any).query(
+      const expeditionResult = await pool.query(
         `INSERT INTO player_expeditions
          (user_id, route_id, status, start_date, current_progress, current_altitude, current_day, energy_spent, summit_reached)
          VALUES ($1, $2, 'in_progress', NOW(), 0, 0, 0, 20, false)
@@ -2726,14 +1784,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (gearIds && gearIds.length > 0) {
         for (const gearId of gearIds) {
           // Get gear condition from inventory
-          const gearResult = await (db as any).query(
+          const gearResult = await pool.query(
             `SELECT condition FROM player_gear_inventory WHERE user_id = $1 AND gear_id = $2`,
             [userId, gearId]
           );
 
           const condition = gearResult.rows[0]?.condition || 100;
 
-          await (db as any).query(
+          await pool.query(
             `INSERT INTO expedition_gear_loadout (expedition_id, gear_id, quantity, condition_before)
              VALUES ($1, $2, 1, $3)`,
             [expeditionId, gearId, condition]
@@ -2742,7 +1800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create starting event
-      await (db as any).query(
+      await pool.query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rest_day', 0, $2)`,
@@ -2778,7 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           elevationGain: routeData.elevation_gain
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[expeditions] Create expedition error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2796,7 +1854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await (db as any).query(
+      const expedition = await pool.query(
         `SELECT e.*, r.estimated_days, r.elevation_gain, r.route_name, m.name as mountain_name, m.elevation as mountain_elevation
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -2846,7 +1904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update expedition
-      await (db as any).query(
+      await pool.query(
         `UPDATE player_expeditions
          SET current_progress = $1, current_day = $2, current_altitude = $3, energy_spent = $4, updated_at = NOW()
          WHERE id = $5`,
@@ -2856,7 +1914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create progress event
       const camp = Math.floor(newProgress / 25); // 0=basecamp, 1=camp1, 2=camp2, 3=camp3, 4=summit
       const campNames = ['Basecamp', 'Camp 1', 'Camp 2', 'Camp 3', 'High Camp'];
-      await (db as any).query(
+      await pool.query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'acclimatization', $2, $3)`,
@@ -2889,7 +1947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         progressIncrease: progressPerDay,
         message: `Day ${newDay}: Advanced to ${campNames[camp]}`
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[expeditions] Advance expedition error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -2907,7 +1965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition with mountain/route details
-      const expedition = await (db as any).query(
+      const expedition = await pool.query(
         `SELECT e.*, r.technical_difficulty, r.physical_difficulty, r.elevation_gain, r.route_name,
                 m.name as mountain_name, m.elevation as mountain_elevation, m.difficulty_tier
          FROM player_expeditions e
@@ -2939,7 +1997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokensEarned = Math.floor(baseXp / 2);
 
       // Update expedition to completed
-      await (db as any).query(
+      await pool.query(
         `UPDATE player_expeditions
          SET status = 'completed', summit_reached = true, completion_date = NOW(),
              experience_earned = $1, current_progress = 100, updated_at = NOW()
@@ -2963,7 +2021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addPoints(userId, tokensEarned, "goal_progress", expeditionId, `Summited ${exp.mountain_name}`);
 
       // Check for mountain unlocks based on new level and summit count
-      const unlockedMountains = await (db as any).query(
+      const unlockedMountains = await pool.query(
         `SELECT m.id, m.name, m.elevation, m.difficulty_tier, m.unlock_requirements
          FROM mountains m
          WHERE m.required_climbing_level <= $1
@@ -2977,7 +2035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUnlocks = [];
       for (const mountain of unlockedMountains.rows) {
         // Create unlock record
-        await (db as any).query(
+        await pool.query(
           `INSERT INTO mountain_unlocks (user_id, mountain_id, unlocked_by)
            VALUES ($1, $2, $3)
            ON CONFLICT (user_id, mountain_id) DO NOTHING`,
@@ -3026,14 +2084,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update achievements if any new ones were earned
       if (newAchievements.length > 0) {
-        await (db as any).query(
+        await pool.query(
           `UPDATE player_climbing_stats SET achievements = $1 WHERE user_id = $2`,
           [JSON.stringify(currentAchievements), userId]
         );
       }
 
       // Unlock mountain background/theme (summit reward)
-      const mountainResult = await (db as any).query(
+      const mountainResult = await pool.query(
         `SELECT m.id, m.name, m.elevation, m.background_image, m.theme_colors
          FROM mountains m
          JOIN routes r ON m.id = r.mountain_id
@@ -3046,7 +2104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const mountain = mountainResult.rows[0];
 
         // Check if background already unlocked
-        const existingBackground = await (db as any).query(
+        const existingBackground = await pool.query(
           `SELECT id FROM mountain_backgrounds
            WHERE user_id = $1 AND mountain_id = $2`,
           [userId, mountain.id]
@@ -3054,7 +2112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (existingBackground.rows.length === 0) {
           // Unlock the background
-          await (db as any).query(
+          await pool.query(
             `INSERT INTO mountain_backgrounds (user_id, mountain_id, expedition_id, is_active)
              VALUES ($1, $2, $3, false)
              ON CONFLICT DO NOTHING`,
@@ -3072,7 +2130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create summit event
-      await (db as any).query(
+      await pool.query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'success', $2, $3)`,
@@ -3117,7 +2175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newAchievements: newAchievements,
         mountainBackground: mountainBackground  // New background/theme unlocked
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[expeditions] Complete expedition error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -3135,7 +2193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await (db as any).query(
+      const expedition = await pool.query(
         `SELECT e.*, r.route_name, m.name as mountain_name
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -3161,7 +2219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newEnergy = Math.min(maxEnergy, currentEnergy + energyRefund);
 
       // Update expedition to failed
-      await (db as any).query(
+      await pool.query(
         `UPDATE player_expeditions
          SET status = 'failed', summit_reached = false, completion_date = NOW(),
              experience_earned = $1, updated_at = NOW()
@@ -3186,7 +2244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create retreat event
-      await (db as any).query(
+      await pool.query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rescue', $2, $3)`,
@@ -3221,7 +2279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newEnergy,
         message: "Weather conditions forced a retreat. The mountain will be here when you're ready to return."
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('[expeditions] Retreat expedition error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -3234,10 +2292,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const db = getDb();
+      const pool = getPool();
       const userId = req.user!.id;
 
-      const expeditions = await (db as any).query(
+      const expeditions = await pool.query(
         `SELECT
           e.*,
           r.name as route_name,
@@ -3255,7 +2313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       res.json(expeditions.rows);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[expeditions] Get expeditions error:', error);
       res.status(500).json({ error: error.message });
     }
@@ -3785,6 +2843,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to complete mission" });
     }
   });
+
+  // Register modular routes
+  registerHabitRoutes(app);
+  registerGoalRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

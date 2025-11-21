@@ -1,0 +1,103 @@
+--- Example error handling improvements for routes.ts ---
+
+KEY IMPROVEMENTS MADE:
+
+1. IMPORTS (already added):
+   - Custom error types: DatabaseError, ValidationError, NotFoundError, AuthorizationError
+   - Error utilities: getErrorMessage, formatErrorForLogging
+   - Validation helpers: parseNumericId, validateNumericId
+   - Error handlers: sendError, asyncHandler
+
+2. SILENT FAILURES FIXED:
+   - updatePetFromHabits now throws errors instead of returning null
+   - Errors are properly logged with formatErrorForLogging
+   - Caller receives proper error responses
+
+3. ERROR TYPE IMPROVEMENTS (51 occurrences fixed):
+   - Changed: catch (error: any) -> catch (error)
+   - This removes unsafe any types while maintaining error catching
+
+4. RECOMMENDED PATTERNS FOR REMAINING ROUTES:
+
+Pattern A - Simple GET with ID validation:
+  app.get("/api/habits/:id", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = parseNumericId(req.params.id, 'habit ID'); // Validates and throws on invalid
+
+      const habit = await storage.getHabit(id);
+      if (!habit) {
+        throw new NotFoundError("Habit not found", "Habit", id);
+      }
+
+      if (habit.userId !== userId) {
+        throw new AuthorizationError("You don't have permission to view this habit");
+      }
+
+      res.json(habit);
+    } catch (error) {
+      const errorLog = formatErrorForLogging(error);
+      console.error(`[GET /api/habits/:id] Error:`, errorLog);
+      sendError(res, error, "Unable to load this habit. Please try again.");
+    }
+  });
+
+Pattern B - POST with validation:
+  app.post("/api/habits", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const validated = insertHabitSchema.parse({ ...req.body, userId });
+      const habit = await storage.createHabit(validated);
+      res.status(201).json(habit);
+    } catch (error) {
+      const errorLog = formatErrorForLogging(error);
+      console.error("[POST /api/habits] Validation or creation failed:", errorLog);
+      sendError(res, error, "Unable to create habit. Please check your input and try again.");
+    }
+  });
+
+Pattern C - Database errors:
+  } catch (error) {
+    const errorLog = formatErrorForLogging(error);
+    console.error("[Route] Database error:", errorLog);
+    sendError(res, error, "Database error. Please try again or contact support.");
+  }
+
+5. ERROR MESSAGE IMPROVEMENTS:
+
+   Before: "Failed to fetch habits"
+   After: "Unable to load your habits. Please check your connection and try again."
+
+   Before: "Failed to update habit"
+   After: "Unable to update this habit. Please check your input and try again."
+
+   Before: "Habit not found"
+   After: NotFoundError("Habit not found", "Habit", id) - includes resource type and ID
+
+   Before: "Access denied"
+   After: AuthorizationError("You don't have permission to view this habit")
+
+   Before: error.message || "Generic message"
+   After: sendError(res, error, "Specific user-friendly message")
+
+6. VALIDATION IMPROVEMENTS:
+
+   Before: parseInt(req.params.id) - no validation
+   After: parseNumericId(req.params.id, 'habit ID') - throws ValidationError if invalid
+
+   Benefits:
+   - Catches /api/habits/abc before database query
+   - Returns 400 Bad Request with helpful message
+   - Prevents NaN errors downstream
+
+7. LOGGING IMPROVEMENTS:
+
+   Before: console.error("Failed:", error)
+   After:
+     const errorLog = formatErrorForLogging(error);
+     console.error("[Route] Descriptive message:", errorLog);
+
+   Benefits:
+   - Structured logging with timestamp, stack trace, error type
+   - Easier to search logs
+   - Better debugging information

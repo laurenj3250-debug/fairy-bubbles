@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QUERY_CONFIG } from "@shared/constants";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -50,9 +51,11 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: true, // Refetch when switching tabs/devices
+      // Disabled globally for better performance - enable selectively for critical queries
+      // like auth status or notifications if needed
+      refetchOnWindowFocus: false,
       refetchOnMount: true, // Refetch when component mounts
-      staleTime: 30000, // Consider data stale after 30 seconds
+      staleTime: QUERY_CONFIG.STALE_TIME, // Consider data stale after 30 seconds
       retry: false,
     },
     mutations: {

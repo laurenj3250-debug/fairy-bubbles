@@ -46,13 +46,21 @@ interface PitchProps {
   streak?: number;
   onClick: () => void;
   index: number;
+  metrics?: Array<{
+    id: number;
+    label: string;
+    currentValue: number;
+    targetValue: number;
+    unit: string;
+    color: string;
+  }>;
 }
 
 /**
  * Pitch - A single habit represented as a climbing hold on the vertical route
  * Uses YDS climbing grades for difficulty visualization
  */
-export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchProps) {
+export function Pitch({ habit, completed, streak = 0, onClick, index, metrics }: PitchProps) {
   // Map habit difficulty to climbing difficulty (default to moderate if not set)
   // Ensure the difficulty key is valid, otherwise default to moderate
   let difficultyKey: Difficulty = "moderate";
@@ -60,6 +68,10 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
     difficultyKey = habit.difficulty as Difficulty;
   }
   const difficulty = DIFFICULTY_COLORS[difficultyKey];
+
+  // Check if this is a cumulative goal
+  const isCumulative = habit.goalType === "cumulative";
+  const hasMetrics = metrics && metrics.length > 0;
 
   return (
     <motion.div
@@ -85,6 +97,16 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
             : `0 4px 16px rgba(0,0,0,0.1), inset 0 0 0 1px ${difficulty.border}20`
         }}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        aria-label={`${habit.title}, ${difficulty.label}, ${completed ? 'completed' : 'not completed'}${streak > 0 ? `, ${streak} day streak` : ''}`}
+        aria-pressed={completed}
+        role="button"
+        tabIndex={0}
         whileHover={{ scale: completed ? 1 : 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -176,6 +198,69 @@ export function Pitch({ habit, completed, streak = 0, onClick, index }: PitchPro
                 </div>
               )}
             </div>
+
+            {/* Cumulative Goal Progress */}
+            {isCumulative && hasMetrics && (
+              <div className="mt-4 space-y-2">
+                {/* Primary Goal Achievement */}
+                {habit.primaryGoalAchieved && (
+                  <div className="flex items-center gap-2 text-success font-semibold text-sm mb-2">
+                    <span className="text-xl">🎯</span>
+                    <span>{habit.title} — ACHIEVED!</span>
+                    {habit.primaryGoalAchievedDate && (
+                      <span className="text-xs text-muted-foreground">
+                        on {new Date(habit.primaryGoalAchievedDate).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Multi-Metric Progress Bars */}
+                {metrics.map((metric) => {
+                  const percentage = Math.min(100, Math.round((metric.currentValue / metric.targetValue) * 100));
+                  const isComplete = percentage >= 100;
+
+                  return (
+                    <div key={metric.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground font-medium">{metric.label}</span>
+                        <span className={cn("font-bold", isComplete ? "text-success" : "text-foreground")}>
+                          {metric.currentValue}/{metric.targetValue} {metric.unit} ({percentage}%)
+                        </span>
+                      </div>
+                      <div className="h-2 bg-card/50 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: metric.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Days Left / Deadline */}
+                {habit.targetDate && (
+                  <div className="text-xs text-muted-foreground mt-2">
+                    {(() => {
+                      const today = new Date();
+                      const deadline = new Date(habit.targetDate);
+                      const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                      if (daysLeft < 0) {
+                        return <span className="text-destructive">⚠️ {Math.abs(daysLeft)} days overdue</span>;
+                      } else if (daysLeft === 0) {
+                        return <span className="text-warning">🔔 Due today!</span>;
+                      } else {
+                        return <span>📅 {daysLeft} days left until {new Date(habit.targetDate).toLocaleDateString()}</span>;
+                      }
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Completion Indicator */}
