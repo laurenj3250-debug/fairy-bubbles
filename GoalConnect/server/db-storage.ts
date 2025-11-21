@@ -31,7 +31,10 @@ import type {
 import type { IStorage } from "./storage";
 
 export class DbStorage implements IStorage {
-  private readonly db = getDb();
+  // Lazy-load database to avoid calling getDb() at module initialization time
+  private get db() {
+    return getDb();
+  }
 
   // Habits
   async getHabits(userId: number): Promise<Habit[]> {
