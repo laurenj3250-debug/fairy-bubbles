@@ -1,7 +1,9 @@
 import type { Express } from "express";
-import { db } from "@db";
+import { getDb } from "../db.js";
 import { labels, taskLabels, todos } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
+
+const db = getDb();
 
 export function registerLabelRoutes(app: Express) {
   // GET /api/labels - Get all labels for user
@@ -239,9 +241,10 @@ export function registerLabelRoutes(app: Express) {
           .returning();
 
         res.json(newTaskLabel);
-      } catch (error: any) {
+      } catch (error) {
         // If duplicate key, just return success
-        if (error.code === '23505') {
+        const pgError = error as { code?: string };
+        if (pgError.code === '23505') {
           res.json({ success: true, message: "Label already applied" });
         } else {
           throw error;

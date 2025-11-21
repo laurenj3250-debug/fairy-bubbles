@@ -1,7 +1,9 @@
 import type { Express } from "express";
-import { db } from "@db";
+import { getDb } from "../db.js";
 import { projects } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+
+const db = getDb();
 
 export function registerProjectRoutes(app: Express) {
   // GET /api/projects - Get all projects for user

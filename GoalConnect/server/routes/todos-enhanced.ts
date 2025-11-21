@@ -1,7 +1,9 @@
 import type { Express } from "express";
-import { db } from "@db";
+import { getDb } from "../db.js";
 import { todos, projects, labels, taskLabels } from "@shared/schema";
 import { eq, inArray } from "drizzle-orm";
+
+const db = getDb();
 
 export function registerTodosEnhancedRoutes(app: Express) {
   // GET /api/todos-with-metadata - Get todos with projects and labels
