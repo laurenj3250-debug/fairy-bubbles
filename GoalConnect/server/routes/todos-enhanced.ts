@@ -1,30 +1,28 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { getDb } from "../db.js";
 import { todos, projects, labels, taskLabels } from "@shared/schema";
 import { eq, inArray } from "drizzle-orm";
-
-const db = getDb();
+import { requireUser } from "../simple-auth";
 
 export function registerTodosEnhancedRoutes(app: Express) {
   // GET /api/todos-with-metadata - Get todos with projects and labels
   app.get("/api/todos-with-metadata", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       // Get all todos for user
       const userTodos = await db
         .select()
         .from(todos)
-        .where(eq(todos.userId, req.user.id))
+        .where(eq(todos.userId, user.id))
         .orderBy(todos.createdAt);
 
       // Get all projects for user
       const userProjects = await db
         .select()
         .from(projects)
-        .where(eq(projects.userId, req.user.id));
+        .where(eq(projects.userId, user.id));
 
       // Get all task-label relationships for user's tasks
       const todoIds = userTodos.map(t => t.id);
@@ -39,7 +37,7 @@ export function registerTodosEnhancedRoutes(app: Express) {
       const userLabels = await db
         .select()
         .from(labels)
-        .where(eq(labels.userId, req.user.id));
+        .where(eq(labels.userId, user.id));
 
       // Enhance todos with project and label data
       const enhancedTodos = userTodos.map(todo => {
