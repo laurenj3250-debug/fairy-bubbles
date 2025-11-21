@@ -5,7 +5,7 @@ import type { Todo, Project, Label } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TodoDialogEnhanced } from "@/components/TodoDialogEnhanced";
-import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getTaskGrade } from "@/lib/climbingRanks";
@@ -32,14 +32,41 @@ const getPriorityColor = (priority: number) => {
 
 export default function Todos() {
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<TodoWithMetadata | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("pending");
   const [view, setView] = useState<"list" | "week">("list");
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, 1 = next week, -1 = last week
   const [fadingOutTodos, setFadingOutTodos] = useState<Set<number>>(new Set());
+
+  // New filters for projects, labels, and priorities
+  const [filterProjectId, setFilterProjectId] = useState<number | null>(null);
+  const [filterLabelId, setFilterLabelId] = useState<number | null>(null);
+  const [filterPriority, setFilterPriority] = useState<number | null>(null);
+
   const { toast } = useToast();
+
+  const handleEditTodo = (todo: TodoWithMetadata) => {
+    setEditingTodo(todo);
+    setTodoDialogOpen(true);
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    setTodoDialogOpen(open);
+    if (!open) {
+      setEditingTodo(null);
+    }
+  };
 
   const { data: todos = [], isLoading } = useQuery<TodoWithMetadata[]>({
     queryKey: ["/api/todos-with-metadata"],
+  });
+
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+  });
+
+  const { data: labels = [] } = useQuery<Label[]>({
+    queryKey: ["/api/labels"],
   });
 
   const toggleTodoMutation = useMutation({
@@ -99,8 +126,19 @@ export default function Todos() {
 
   // Filter todos
   const filteredTodos = todos.filter(todo => {
-    if (filter === "pending") return !todo.completed;
-    if (filter === "completed") return todo.completed;
+    // Status filter
+    if (filter === "pending" && todo.completed) return false;
+    if (filter === "completed" && !todo.completed) return false;
+
+    // Project filter
+    if (filterProjectId !== null && todo.projectId !== filterProjectId) return false;
+
+    // Label filter
+    if (filterLabelId !== null && !todo.labels?.some(l => l.id === filterLabelId)) return false;
+
+    // Priority filter
+    if (filterPriority !== null && todo.priority !== filterPriority) return false;
+
     return true;
   });
 
@@ -336,6 +374,52 @@ export default function Todos() {
               >
                 Completed ({completedCount})
               </button>
+
+              {/* New Filters: Project, Label, Priority */}
+              {projects.length > 0 && (
+                <>
+                  <div className="w-px bg-foreground/10" />
+                  <select
+                    value={filterProjectId || ""}
+                    onChange={(e) => setFilterProjectId(e.target.value ? parseInt(e.target.value) : null)}
+                    className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">All Projects</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.icon} {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {labels.length > 0 && (
+                <select
+                  value={filterLabelId || ""}
+                  onChange={(e) => setFilterLabelId(e.target.value ? parseInt(e.target.value) : null)}
+                  className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">All Labels</option>
+                  {labels.map((label) => (
+                    <option key={label.id} value={label.id}>
+                      #{label.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <select
+                value={filterPriority || ""}
+                onChange={(e) => setFilterPriority(e.target.value ? parseInt(e.target.value) : null)}
+                className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">All Priorities</option>
+                <option value="1">🚩 P1 - Urgent</option>
+                <option value="2">🚩 P2 - High</option>
+                <option value="3">🚩 P3 - Medium</option>
+                <option value="4">🏳️ P4 - Low</option>
+              </select>
             </>
           )}
         </div>
@@ -525,20 +609,33 @@ export default function Todos() {
                           </div>
                         </div>
 
-                        {/* Delete button */}
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this task?")) {
-                              deleteTodoMutation.mutate(todo.id);
-                            }
-                          }}
-                          disabled={deleteTodoMutation.isPending}
-                          className="flex-shrink-0 p-2 hover:bg-foreground/5 rounded-lg transition-all"
-                          style={{ color: 'hsl(var(--foreground) / 0.5)' }}
-                          title="Delete task"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Action buttons */}
+                        <div className="flex-shrink-0 flex gap-1">
+                          {/* Edit button */}
+                          <button
+                            onClick={() => handleEditTodo(todo)}
+                            className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
+                            style={{ color: 'hsl(var(--primary))' }}
+                            title="Edit task"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          {/* Delete button */}
+                          <button
+                            onClick={() => {
+                              if (confirm("Delete this task?")) {
+                                deleteTodoMutation.mutate(todo.id);
+                              }
+                            }}
+                            disabled={deleteTodoMutation.isPending}
+                            className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
+                            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
+                            title="Delete task"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -810,7 +907,11 @@ export default function Todos() {
       </div>
 
       {/* Todo Dialog */}
-      <TodoDialogEnhanced open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
+      <TodoDialogEnhanced
+        open={todoDialogOpen}
+        onOpenChange={handleCloseDialog}
+        editTodo={editingTodo}
+      />
     </div>
   );
 }

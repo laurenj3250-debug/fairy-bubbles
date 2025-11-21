@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
 import { ProjectSelector } from "./ProjectSelector";
 import { LabelPicker } from "./LabelPicker";
 import { PriorityPicker } from "./PriorityPicker";
+import type { Todo, Project, Label } from "@shared/schema";
+
+interface TodoWithMetadata extends Todo {
+  project: Project | null;
+  labels: Label[];
+}
 
 interface TodoDialogEnhancedProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editTodo?: TodoWithMetadata | null;
 }
 
 interface Subtask {
@@ -17,7 +24,7 @@ interface Subtask {
   completed: boolean;
 }
 
-export function TodoDialogEnhanced({ open, onOpenChange }: TodoDialogEnhancedProps) {
+export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: TodoDialogEnhancedProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [dateOption, setDateOption] = useState<string>("none");
@@ -32,6 +39,41 @@ export function TodoDialogEnhanced({ open, onOpenChange }: TodoDialogEnhancedPro
   const [labelIds, setLabelIds] = useState<number[]>([]);
   const [priority, setPriority] = useState<number>(4); // Default P4 (low)
   const [notes, setNotes] = useState("");
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editTodo && open) {
+      setTitle(editTodo.title);
+      setDifficulty(editTodo.difficulty as "easy" | "medium" | "hard");
+      setProjectId(editTodo.projectId);
+      setLabelIds(editTodo.labels?.map(l => l.id) || []);
+      setPriority(editTodo.priority || 4);
+      setNotes(editTodo.notes || "");
+      setSubtasks(editTodo.subtasks ? JSON.parse(editTodo.subtasks) : []);
+
+      // Handle due date
+      if (editTodo.dueDate) {
+        setDateOption("custom");
+        setCustomDate(editTodo.dueDate);
+      } else {
+        setDateOption("none");
+        setCustomDate("");
+      }
+    } else if (!open) {
+      // Reset when closing without editing
+      if (!editTodo) {
+        setTitle("");
+        setDateOption("none");
+        setCustomDate("");
+        setDifficulty("medium");
+        setSubtasks([]);
+        setProjectId(null);
+        setLabelIds([]);
+        setPriority(4);
+        setNotes("");
+      }
+    }
+  }, [editTodo, open]);
 
   if (!open) return null;
 
@@ -110,29 +152,65 @@ export function TodoDialogEnhanced({ open, onOpenChange }: TodoDialogEnhancedPro
     setSubmitting(true);
 
     try {
-      // Create the task
-      const newTodo = await apiRequest("/api/todos", "POST", {
-        title,
-        difficulty,
-        dueDate: getDueDate(),
-        subtasks: JSON.stringify(subtasks),
-        completed: false,
-        projectId,
-        priority,
-        notes: notes.trim() || null,
-      });
+      if (editTodo) {
+        // Update existing task
+        await apiRequest(`/api/todos/${editTodo.id}`, "PATCH", {
+          title,
+          difficulty,
+          dueDate: getDueDate(),
+          subtasks: JSON.stringify(subtasks),
+          projectId,
+          priority,
+          notes: notes.trim() || null,
+        });
 
-      // Add labels if any selected
-      if (labelIds.length > 0 && newTodo.id) {
+        // Get current labels
+        const currentLabelIds = editTodo.labels?.map(l => l.id) || [];
+
+        // Remove labels that were deselected
+        const labelsToRemove = currentLabelIds.filter(id => !labelIds.includes(id));
         await Promise.all(
-          labelIds.map((labelId) =>
-            apiRequest(`/api/tasks/${newTodo.id}/labels`, "POST", { labelId })
+          labelsToRemove.map((labelId) =>
+            apiRequest(`/api/tasks/${editTodo.id}/labels/${labelId}`, "DELETE")
           )
         );
+
+        // Add new labels
+        const labelsToAdd = labelIds.filter(id => !currentLabelIds.includes(id));
+        await Promise.all(
+          labelsToAdd.map((labelId) =>
+            apiRequest(`/api/tasks/${editTodo.id}/labels`, "POST", { labelId })
+          )
+        );
+
+        toast({ title: "Updated!", description: "Task updated successfully" });
+      } else {
+        // Create new task
+        const newTodo = await apiRequest("/api/todos", "POST", {
+          title,
+          difficulty,
+          dueDate: getDueDate(),
+          subtasks: JSON.stringify(subtasks),
+          completed: false,
+          projectId,
+          priority,
+          notes: notes.trim() || null,
+        });
+
+        // Add labels if any selected
+        if (labelIds.length > 0 && newTodo.id) {
+          await Promise.all(
+            labelIds.map((labelId) =>
+              apiRequest(`/api/tasks/${newTodo.id}/labels`, "POST", { labelId })
+            )
+          );
+        }
+
+        toast({ title: "Created!", description: "Task created successfully" });
       }
 
-      toast({ title: "Created!", description: "Task created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
 
       // Reset form
       setTitle("");
@@ -168,7 +246,7 @@ export function TodoDialogEnhanced({ open, onOpenChange }: TodoDialogEnhancedPro
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold mb-6 text-foreground">
-          Create New Task
+          {editTodo ? "Edit Task" : "Create New Task"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -360,7 +438,10 @@ export function TodoDialogEnhanced({ open, onOpenChange }: TodoDialogEnhancedPro
               disabled={submitting}
               className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Creating..." : "Create Task"}
+              {submitting
+                ? (editTodo ? "Updating..." : "Creating...")
+                : (editTodo ? "Update Task" : "Create Task")
+              }
             </button>
           </div>
         </form>
