@@ -7,9 +7,12 @@ import { LabelPicker } from "./LabelPicker";
 import { PriorityPicker } from "./PriorityPicker";
 import { SmartTaskInput } from "./SmartTaskInput";
 import { TaskInputAutocomplete } from "./TaskInputAutocomplete";
+import { RecurrencePicker } from "./RecurrencePicker";
 import { useQuery } from "@tanstack/react-query";
 import type { ParsedTask } from "@/lib/nlp/taskParser";
 import type { Todo, Project, Label } from "@shared/schema";
+import type { RecurrencePattern } from "../../../shared/lib/recurrenceEngine";
+import { calculateNextOccurrence } from "../../../shared/lib/recurrenceEngine";
 
 interface TodoWithMetadata extends Todo {
   project: Project | null;
@@ -43,6 +46,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
   const [labelIds, setLabelIds] = useState<number[]>([]);
   const [priority, setPriority] = useState<number>(4); // Default P4 (low)
   const [notes, setNotes] = useState("");
+  const [recurringPattern, setRecurringPattern] = useState<RecurrencePattern | null>(null);
 
   // Smart input mode
   const [useSmartInput, setUseSmartInput] = useState(true);
@@ -112,6 +116,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
       setPriority(editTodo.priority || 4);
       setNotes(editTodo.notes || "");
       setSubtasks(editTodo.subtasks ? JSON.parse(editTodo.subtasks) : []);
+      setRecurringPattern(editTodo.recurringPattern ? JSON.parse(editTodo.recurringPattern) : null);
       setUseSmartInput(false); // Switch to classic form when editing
 
       // Handle due date
@@ -134,6 +139,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
         setLabelIds([]);
         setPriority(4);
         setNotes("");
+        setRecurringPattern(null);
         setSmartInputValue("");
         setUseSmartInput(true);
       }
@@ -217,6 +223,11 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
     setSubmitting(true);
 
     try {
+      // Calculate next recurrence date if pattern is set
+      const nextRecurrence = recurringPattern
+        ? calculateNextOccurrence(recurringPattern, getDueDate() || new Date())
+        : null;
+
       if (editTodo) {
         // Update existing task
         await apiRequest(`/api/todos/${editTodo.id}`, "PATCH", {
@@ -227,6 +238,8 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
           projectId,
           priority,
           notes: notes.trim() || null,
+          recurringPattern: recurringPattern ? JSON.stringify(recurringPattern) : null,
+          nextRecurrence: nextRecurrence ? nextRecurrence.toISOString().split('T')[0] : null,
         });
 
         // Get current labels
@@ -260,6 +273,8 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
           projectId,
           priority,
           notes: notes.trim() || null,
+          recurringPattern: recurringPattern ? JSON.stringify(recurringPattern) : null,
+          nextRecurrence: nextRecurrence ? nextRecurrence.toISOString().split('T')[0] : null,
         });
 
         // Add labels if any selected
@@ -288,6 +303,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
       setLabelIds([]);
       setPriority(4);
       setNotes("");
+      setRecurringPattern(null);
       onOpenChange(false);
     } catch (error) {
       console.error("Error creating todo:", error);
@@ -536,6 +552,15 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
               placeholder="Add any additional notes..."
               rows={3}
               className="w-full px-4 py-3 border border-foreground/20 rounded-xl bg-background text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+          </div>
+
+          {/* Recurrence */}
+          <div>
+            <RecurrencePicker
+              value={recurringPattern}
+              onChange={setRecurringPattern}
+              startDate={getDueDate() ? new Date(getDueDate()!) : new Date()}
             />
           </div>
 

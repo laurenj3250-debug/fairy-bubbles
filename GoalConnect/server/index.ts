@@ -17,6 +17,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
 import { configureGitHubAuth } from "./github-auth";
 import { runMigrations } from "./migrate";
+import cron from "node-cron";
+import { processRecurringTasks } from "./lib/recurrenceScheduler";
 
 // Global error handlers for uncaught exceptions and rejections
 process.on('uncaughtException', (error) => {
@@ -130,5 +132,18 @@ app.use((req, res, next) => {
 
   server.listen(port, host, () => {
     log(`serving on ${host}:${port}`);
+
+    // Set up recurrence scheduler - runs every hour
+    cron.schedule('0 * * * *', async () => {
+      console.log('[Cron] Running recurrence scheduler...');
+      try {
+        const results = await processRecurringTasks();
+        console.log(`[Cron] Recurrence scheduler complete: ${results.created} tasks created`);
+      } catch (error) {
+        console.error('[Cron] Error running recurrence scheduler:', error);
+      }
+    });
+
+    console.log('[Cron] Recurrence scheduler initialized (runs every hour)');
   });
 })();

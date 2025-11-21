@@ -1,11 +1,14 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Calendar, Edit, Trash2, CheckCircle, Circle, CheckCircle2 } from 'lucide-react';
+import { GripVertical, Calendar, Edit, Trash2, CheckCircle, Circle, CheckCircle2, Repeat } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Todo, Project, Label } from '@shared/schema';
 import { getTaskGrade } from '@/lib/climbingRanks';
 import { useState } from 'react';
+import type { RecurrencePattern } from '../../../shared/lib/recurrenceEngine';
+import { patternToString } from '../../../shared/lib/recurrenceEngine';
+import { format, parseISO } from 'date-fns';
 
 interface Subtask {
   id: string;
@@ -96,6 +99,11 @@ export function SortableTaskItem({
   const gradeInfo = getTaskGrade(todo.difficulty);
   const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
   const completedSubtasks = subtasks.filter(st => st.completed).length;
+
+  // Parse recurrence pattern
+  const recurringPattern: RecurrencePattern | null = todo.recurringPattern
+    ? JSON.parse(todo.recurringPattern)
+    : null;
 
   return (
     <div
@@ -192,6 +200,27 @@ export function SortableTaskItem({
           )}
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* Recurring Indicator */}
+            {recurringPattern && (
+              <Badge className="border-0" style={{
+                background: 'hsl(var(--primary) / 0.15)',
+                color: 'hsl(var(--primary))'
+              }} title={patternToString(recurringPattern)}>
+                <Repeat className="w-3 h-3 mr-1" />
+                {patternToString(recurringPattern).split(' ')[0]}
+              </Badge>
+            )}
+
+            {/* Next Recurrence Date */}
+            {recurringPattern && todo.nextRecurrence && (
+              <Badge className="border-0" style={{
+                background: 'hsl(var(--accent) / 0.15)',
+                color: 'hsl(var(--accent))'
+              }}>
+                Next: {format(parseISO(todo.nextRecurrence), 'MMM d')}
+              </Badge>
+            )}
+
             {dueDateInfo && (
               <Badge className="border-0" style={{
                 background: 'hsl(var(--foreground) / 0.08)',

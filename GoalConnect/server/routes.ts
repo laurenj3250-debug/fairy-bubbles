@@ -31,6 +31,7 @@ import { calculateMissionParameters, calculateBaseXP, calculateBasePoints } from
 import { registerProjectRoutes } from "./routes/projects";
 import { registerLabelRoutes } from "./routes/labels";
 import { registerTodosEnhancedRoutes } from "./routes/todos-enhanced";
+import { registerRecurrenceRoutes } from "./routes/recurrence";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -3789,6 +3790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerProjectRoutes(app);
   registerLabelRoutes(app);
   registerTodosEnhancedRoutes(app);
+  registerRecurrenceRoutes(app);
 
   const httpServer = createServer(app);
 
