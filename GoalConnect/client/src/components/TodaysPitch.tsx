@@ -6,6 +6,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Sparkles, Mountain, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { HabitScoreIndicator } from "./HabitScoreIndicator";
 
 interface TodaysPitchProps {
   className?: string;
@@ -355,8 +356,16 @@ export function TodaysPitch({ className }: TodaysPitchProps) {
 
                         {/* Habit info */}
                         <div className="flex-1">
-                          <div className="text-foreground font-medium text-sm">
-                            {habit.title}
+                          <div className="flex items-center gap-2">
+                            <div className="text-foreground font-medium text-sm">
+                              {habit.title}
+                            </div>
+                            {habit.currentScore && parseFloat(habit.currentScore) > 0 && (
+                              <HabitScoreIndicator
+                                score={parseFloat(habit.currentScore)}
+                                size="sm"
+                              />
+                            )}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-muted-foreground">

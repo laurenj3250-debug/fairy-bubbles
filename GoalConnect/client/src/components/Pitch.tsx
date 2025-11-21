@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Habit } from "@shared/schema";
+import { HabitScoreIndicator } from "./HabitScoreIndicator";
 
 // YDS Climbing Difficulty Color System
 export const DIFFICULTY_COLORS = {
@@ -166,6 +167,14 @@ export function Pitch({ habit, completed, streak = 0, onClick, index, metrics }:
 
             {/* Meta Information Row */}
             <div className="flex flex-wrap items-center gap-3">
+              {/* Habit Score */}
+              {habit.currentScore && parseFloat(habit.currentScore) > 0 && (
+                <HabitScoreIndicator
+                  score={parseFloat(habit.currentScore)}
+                  size="md"
+                />
+              )}
+
               {/* Difficulty Badge */}
               <div
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-md text-sm"
