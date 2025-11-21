@@ -2,17 +2,23 @@ import { log as logger } from "./lib/logger";
 
 // CRITICAL: TLS Certificate Verification Configuration
 // SECURITY NOTE: TLS verification should ONLY be disabled when absolutely necessary
-// and only for specific known providers (Supabase) that use self-signed certificates.
+// and only for specific known providers that use self-signed certificates.
 // For production environments, ensure you understand the security implications.
 //
-// Railway/Supabase PostgreSQL uses self-signed certificates
+// Railway and Supabase PostgreSQL use self-signed certificates
 // This must be set before the pg library is loaded
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('supabase.com')) {
-  // Only disable for Supabase which is known to use self-signed certs
+if (process.env.DATABASE_URL && (
+  process.env.DATABASE_URL.includes('supabase.com') ||
+  process.env.DATABASE_URL.includes('railway.app') ||
+  process.env.DATABASE_URL.includes('railway.internal')
+)) {
+  // Disable TLS verification for known providers with self-signed certs
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  logger.warn('[SSL WARNING] TLS verification disabled for Supabase database connection');
-  logger.warn('[SSL WARNING] This is required for Supabase but reduces security');
-  logger.warn('[SSL WARNING] Ensure DATABASE_URL is from a trusted Supabase instance');
+
+  const provider = process.env.DATABASE_URL.includes('supabase.com') ? 'Supabase' : 'Railway';
+  logger.warn(`[SSL WARNING] TLS verification disabled for ${provider} database connection`);
+  logger.warn('[SSL WARNING] This is required for providers using self-signed certificates');
+  logger.warn('[SSL WARNING] Ensure DATABASE_URL is from a trusted source');
 } else if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_TLS === 'true') {
   // In production, require explicit opt-in via environment variable
   // This ensures developers are aware of the security implications
