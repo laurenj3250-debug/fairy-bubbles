@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Sparkles, ListChecks } from "lucide-react";
 import { ProjectSelector } from "./ProjectSelector";
 import { LabelPicker } from "./LabelPicker";
 import { PriorityPicker } from "./PriorityPicker";
+import { SmartTaskInput } from "./SmartTaskInput";
+import { TaskInputAutocomplete } from "./TaskInputAutocomplete";
+import { useQuery } from "@tanstack/react-query";
+import type { ParsedTask } from "@/lib/nlp/taskParser";
 import type { Todo, Project, Label } from "@shared/schema";
 
 interface TodoWithMetadata extends Todo {
@@ -40,6 +44,64 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
   const [priority, setPriority] = useState<number>(4); // Default P4 (low)
   const [notes, setNotes] = useState("");
 
+  // Smart input mode
+  const [useSmartInput, setUseSmartInput] = useState(true);
+  const [smartInputValue, setSmartInputValue] = useState("");
+
+  // Fetch projects and labels for smart input
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+  });
+
+  const { data: labels = [] } = useQuery<any[]>({
+    queryKey: ["/api/labels"],
+  });
+
+  // Handle smart input parsed changes
+  const handleSmartInputParsed = (parsed: ParsedTask) => {
+    setTitle(parsed.title);
+
+    // Set due date
+    if (parsed.dueDate) {
+      setDateOption("custom");
+      setCustomDate(parsed.dueDate);
+    } else {
+      setDateOption("none");
+      setCustomDate("");
+    }
+
+    // Set project
+    if (parsed.projectName) {
+      const project = projects.find(
+        (p) => p.name.toLowerCase() === parsed.projectName?.toLowerCase()
+      );
+      setProjectId(project?.id || null);
+    } else {
+      setProjectId(null);
+    }
+
+    // Set labels
+    if (parsed.labelNames && parsed.labelNames.length > 0) {
+      const matchedLabelIds = parsed.labelNames
+        .map((name) => {
+          const label = labels.find(
+            (l) => l.name.toLowerCase() === name.toLowerCase()
+          );
+          return label?.id;
+        })
+        .filter((id): id is number => id !== undefined);
+      setLabelIds(matchedLabelIds);
+    } else {
+      setLabelIds([]);
+    }
+
+    // Set priority
+    setPriority(parsed.priority || 4);
+
+    // Set notes
+    setNotes(parsed.notes || "");
+  };
+
   // Populate form when editing
   useEffect(() => {
     if (editTodo && open) {
@@ -50,6 +112,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
       setPriority(editTodo.priority || 4);
       setNotes(editTodo.notes || "");
       setSubtasks(editTodo.subtasks ? JSON.parse(editTodo.subtasks) : []);
+      setUseSmartInput(false); // Switch to classic form when editing
 
       // Handle due date
       if (editTodo.dueDate) {
@@ -71,6 +134,8 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
         setLabelIds([]);
         setPriority(4);
         setNotes("");
+        setSmartInputValue("");
+        setUseSmartInput(true);
       }
     }
   }, [editTodo, open]);
@@ -245,26 +310,76 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background rounded-2xl p-8 w-[90%] max-w-[600px] max-h-[90vh] overflow-auto z-[999999] shadow-2xl border border-foreground/10"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-6 text-foreground">
-          {editTodo ? "Edit Task" : "Create New Task"}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">
+            {editTodo ? "Edit Task" : "Create New Task"}
+          </h2>
+
+          {/* Toggle Smart Input / Classic Form */}
+          {!editTodo && (
+            <div className="flex gap-2 bg-foreground/5 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setUseSmartInput(true)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  useSmartInput
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                Smart Input
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseSmartInput(false)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  !useSmartInput
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-foreground/60 hover:text-foreground"
+                }`}
+              >
+                <ListChecks className="w-4 h-4" />
+                Classic Form
+              </button>
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Title */}
-          <div>
-            <label className="block mb-2 font-medium text-foreground text-sm">
-              What needs to be done?
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Finish project proposal"
-              required
-              autoFocus
-              className="w-full px-4 py-3 border border-foreground/20 rounded-xl bg-background text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+          {/* Smart Input Mode */}
+          {useSmartInput && !editTodo ? (
+            <div>
+              <label className="block mb-2 font-medium text-foreground text-sm">
+                Describe your task
+              </label>
+              <SmartTaskInput
+                value={smartInputValue}
+                onChange={setSmartInputValue}
+                onParsedChange={handleSmartInputParsed}
+                autoFocus
+              />
+            </div>
+          ) : (
+            /* Classic Form Mode */
+            <>
+              {/* Title */}
+              <div>
+                <label className="block mb-2 font-medium text-foreground text-sm">
+                  What needs to be done?
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Finish project proposal"
+                  required
+                  autoFocus
+                  className="w-full px-4 py-3 border border-foreground/20 rounded-xl bg-background text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </>
+          )}
 
           {/* Project Selector */}
           <div>
