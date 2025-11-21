@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { X, Mountain, Zap, Brain, Footprints } from "lucide-react";
 import type { Habit, Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { FrequencySelector } from "./FrequencySelector";
+import { FrequencyType } from "@shared/lib/habitFrequency";
 
 interface HabitCreateDialogProps {
   open: boolean;
@@ -131,8 +133,11 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
   const [category, setCategory] = useState<"training" | "mind" | "foundation" | "adventure">("training");
   const [effort, setEffort] = useState<"light" | "medium" | "heavy">("medium");
   const [grade, setGrade] = useState("5.9");
-  const [cadence, setCadence] = useState<"daily" | "weekly">("daily");
-  const [targetPerWeek, setTargetPerWeek] = useState(3);
+  const [frequency, setFrequency] = useState({
+    numerator: 1,
+    denominator: 1,
+    type: FrequencyType.DAILY
+  });
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,8 +150,16 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
     setCategory(template.category);
     setEffort(template.effort);
     setGrade(template.grade);
-    setCadence(template.cadence);
-    setTargetPerWeek(template.targetPerWeek || 3);
+    // Convert old template cadence to new frequency format
+    if (template.cadence === "daily") {
+      setFrequency({ numerator: 1, denominator: 1, type: FrequencyType.DAILY });
+    } else if (template.cadence === "weekly") {
+      setFrequency({
+        numerator: template.targetPerWeek || 1,
+        denominator: 7,
+        type: FrequencyType.WEEKLY
+      });
+    }
     setShowTemplates(false);
   };
 
@@ -161,8 +174,29 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         setCategory((habit.category as any) || "training");
         setEffort((habit.effort as any) || "medium");
         setGrade(habit.grade || "5.9");
-        setCadence(habit.cadence || "daily");
-        setTargetPerWeek(habit.targetPerWeek || 3);
+
+        // Load frequency from new fields or fall back to old cadence fields
+        if (habit.frequencyNumerator && habit.frequencyDenominator && habit.frequencyType) {
+          setFrequency({
+            numerator: habit.frequencyNumerator,
+            denominator: habit.frequencyDenominator,
+            type: habit.frequencyType as FrequencyType
+          });
+        } else if (habit.cadence === "weekly") {
+          setFrequency({
+            numerator: habit.targetPerWeek || 1,
+            denominator: 7,
+            type: FrequencyType.WEEKLY
+          });
+        } else {
+          // Default to daily
+          setFrequency({
+            numerator: 1,
+            denominator: 1,
+            type: FrequencyType.DAILY
+          });
+        }
+
         setLinkedGoalId(habit.linkedGoalId || null);
       } else {
         // New habit - show templates
@@ -172,8 +206,11 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         setCategory("training");
         setEffort("medium");
         setGrade("5.9");
-        setCadence("daily");
-        setTargetPerWeek(3);
+        setFrequency({
+          numerator: 1,
+          denominator: 1,
+          type: FrequencyType.DAILY
+        });
         setLinkedGoalId(null);
       }
       setError(null);
@@ -205,8 +242,13 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
         category,
         effort,
         grade,
-        cadence,
-        targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
+        // New frequency fields
+        frequencyNumerator: frequency.numerator,
+        frequencyDenominator: frequency.denominator,
+        frequencyType: frequency.type,
+        // Keep old fields for backward compatibility (will be auto-populated by server if needed)
+        cadence: frequency.type === FrequencyType.DAILY ? "daily" : frequency.denominator === 7 ? "weekly" : null,
+        targetPerWeek: frequency.denominator === 7 ? frequency.numerator : null,
         difficulty: effort === "light" ? "easy" : effort === "medium" ? "medium" : "hard",
         linkedGoalId: linkedGoalId,
       };
@@ -444,77 +486,30 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
             </div>
 
             {/* Grade (Advanced) */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Grade
-                </label>
-                <select
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-xl bg-card/40 text-foreground cursor-pointer hover:border-primary/50 focus:outline-none focus:border-primary/50 transition-colors"
-                >
-                  {GRADE_OPTIONS.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Frequency
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCadence("daily")}
-                    className={cn(
-                      "px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all",
-                      cadence === "daily"
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-card-border bg-card/40 text-muted-foreground hover:border-primary/30"
-                    )}
-                  >
-                    Daily
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCadence("weekly")}
-                    className={cn(
-                      "px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all",
-                      cadence === "weekly"
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-card-border bg-card/40 text-muted-foreground hover:border-primary/30"
-                    )}
-                  >
-                    Weekly
-                  </button>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Grade
+              </label>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-card-border rounded-xl bg-card/40 text-foreground cursor-pointer hover:border-primary/50 focus:outline-none focus:border-primary/50 transition-colors"
+              >
+                {GRADE_OPTIONS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Weekly target */}
-            {cadence === "weekly" && (
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Times per week: <span className="text-primary">{targetPerWeek}x</span>
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="7"
-                  value={targetPerWeek}
-                  onChange={(e) => setTargetPerWeek(parseInt(e.target.value))}
-                  className="w-full h-2 bg-muted/20 rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>1</span>
-                  <span>7</span>
-                </div>
-              </div>
-            )}
+            {/* Frequency Selector */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Frequency
+              </label>
+              <FrequencySelector value={frequency} onChange={setFrequency} />
+            </div>
 
             {/* Link to Route (Goal) */}
             <div className="bg-primary/5 border-2 border-primary/20 rounded-xl p-4">
