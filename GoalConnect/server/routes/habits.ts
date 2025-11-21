@@ -201,7 +201,7 @@ export function registerHabitRoutes(app: Express) {
         habits.map(async (habit) => {
           const logs = allLogs.filter((log) => log.habitId === habit.id);
           const streak = calculateStreak(logs);
-          const weeklyCompletion = calculateWeeklyCompletion(logs);
+          const weeklyCompletion = calculateWeeklyCompletion([habit], logs);
 
           // Get last 30 days of logs for history
           const thirtyDaysAgo = new Date();
@@ -269,7 +269,7 @@ export function registerHabitRoutes(app: Express) {
       }
 
       const logs = await storage.getHabitLogs(habitId);
-      const weeklyCompletion = calculateWeeklyCompletion(logs);
+      const weeklyCompletion = calculateWeeklyCompletion([habit], logs);
 
       res.json({ habitId, weeklyCompletion });
     } catch (error: any) {
