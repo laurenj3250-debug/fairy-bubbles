@@ -583,6 +583,25 @@ export default function Todos() {
                 <option value="3">🚩 P3 - Medium</option>
                 <option value="4">🏳️ P4 - Low</option>
               </select>
+
+              {/* Manual Sort Toggle */}
+              <div className="w-px bg-foreground/10" />
+              <button
+                onClick={() => setIsManualSort(!isManualSort)}
+                className={cn(
+                  "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+                  isManualSort
+                    ? "text-white shadow-lg"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                )}
+                style={isManualSort ? {
+                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+                } : {}}
+                title="Enable drag & drop to manually reorder tasks"
+              >
+                <GripVertical className="w-4 h-4" />
+                Manual Sort
+              </button>
             </>
           )}
         </div>
@@ -625,190 +644,22 @@ export default function Todos() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                {sortedTodos.map((todo, index) => {
-                  const dueDateInfo = formatDueDate(todo.dueDate);
-                  const gradeInfo = getTaskGrade(todo.difficulty);
-
-                  const subtasks: Subtask[] = JSON.parse(todo.subtasks || "[]");
-                  const completedSubtasks = subtasks.filter(st => st.completed).length;
-                  const isFadingOut = fadingOutTodos.has(todo.id);
-                  const isFocused = focusedTask?.id === todo.id;
-
-                  return (
-                    <div
-                      key={todo.id}
-                      className={cn(
-                        "bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-4 transition-all relative overflow-hidden",
-                        isFadingOut && "animate-fade-out",
-                        todo.completed && !isFadingOut && "opacity-60",
-                        isFocused && FOCUS_RING_STYLES
-                      )}
-                    >
-                      <div
-                        className="absolute inset-0 opacity-5 pointer-events-none"
-                        style={{
-                          background: `radial-gradient(circle at top right, hsl(var(--accent) / 0.2), transparent 70%)`
-                        }}
-                      />
-                      <div className="relative z-10 flex items-start gap-4">
-                        {/* Checkbox */}
-                        <button
-                          onClick={() => toggleTodoMutation.mutate(todo.id)}
-                          disabled={toggleTodoMutation.isPending}
-                          className="mt-1 flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all text-white"
-                          style={{
-                            background: todo.completed ? 'hsl(var(--accent))' : 'transparent',
-                            borderColor: todo.completed ? 'hsl(var(--accent) / 0.8)' : 'hsl(var(--foreground) / 0.2)'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!todo.completed) {
-                              e.currentTarget.style.borderColor = 'hsl(var(--primary))';
-                              e.currentTarget.style.background = 'hsl(var(--primary) / 0.2)';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!todo.completed) {
-                              e.currentTarget.style.borderColor = 'hsl(var(--foreground) / 0.2)';
-                              e.currentTarget.style.background = 'transparent';
-                            }
-                          }}
-                        >
-                          {todo.completed && <CheckCircle className="w-5 h-5" />}
-                        </button>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <h3
-                            className={cn(
-                              "text-foreground font-semibold mb-1",
-                              todo.completed && "line-through opacity-60"
-                            )}
-                          >
-                            {todo.title}
-                          </h3>
-
-                          {/* Subtasks */}
-                          {subtasks.length > 0 && (
-                            <div className="mt-2 mb-2 space-y-1">
-                              {subtasks.map((subtask) => (
-                                <button
-                                  key={subtask.id}
-                                  onClick={() => toggleSubtaskMutation.mutate({ todoId: todo.id, subtaskId: subtask.id })}
-                                  disabled={toggleSubtaskMutation.isPending}
-                                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
-                                >
-                                  {subtask.completed ? (
-                                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(var(--accent))' }} />
-                                  ) : (
-                                    <Circle className="w-4 h-4 flex-shrink-0" />
-                                  )}
-                                  <span className={cn(subtask.completed && "line-through opacity-60")}>
-                                    {subtask.title}
-                                  </span>
-                                </button>
-                              ))}
-                              {subtasks.length > 0 && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {completedSubtasks}/{subtasks.length} completed
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            {dueDateInfo && (
-                              <Badge className="border-0" style={{
-                                background: 'hsl(var(--foreground) / 0.08)',
-                                color: 'hsl(var(--foreground))'
-                              }}>
-                                <Calendar className="w-3 h-3 mr-1" />
-                                <span className={dueDateInfo.color}>{dueDateInfo.text}</span>
-                              </Badge>
-                            )}
-                            {todo.difficulty && (
-                              <Badge className="border-0" style={{
-                                background: 'hsl(var(--accent) / 0.2)',
-                                color: 'hsl(var(--accent))'
-                              }}>
-                                {gradeInfo.label} • {gradeInfo.points} tokens
-                              </Badge>
-                            )}
-                            {/* Project Badge */}
-                            {todo.project && (
-                              <Badge
-                                className="border-0"
-                                style={{
-                                  background: `${todo.project.color}15`,
-                                  color: todo.project.color,
-                                }}
-                              >
-                                {todo.project.icon} {todo.project.name}
-                              </Badge>
-                            )}
-                            {/* Priority Badge */}
-                            {todo.priority && todo.priority < 4 && (
-                              <Badge
-                                className="border-0"
-                                style={{
-                                  background: getPriorityColor(todo.priority) + '20',
-                                  color: getPriorityColor(todo.priority),
-                                }}
-                              >
-                                P{todo.priority}
-                              </Badge>
-                            )}
-                            {/* Label Badges */}
-                            {todo.labels?.map((label) => (
-                              <Badge
-                                key={label.id}
-                                className="border-0"
-                                style={{
-                                  background: `${label.color}15`,
-                                  color: label.color,
-                                }}
-                              >
-                                #{label.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex-shrink-0 flex gap-1">
-                          {/* Edit button */}
-                          <button
-                            onClick={() => handleEditTodo(todo)}
-                            className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
-                            style={{ color: 'hsl(var(--primary))' }}
-                            title="Edit task"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          {/* Delete button */}
-                          <button
-                            onClick={() => {
-                              if (confirm("Delete this task?")) {
-                                deleteTodoMutation.mutate(todo.id);
-                              }
-                            }}
-                            disabled={deleteTodoMutation.isPending}
-                            className="p-2 hover:bg-foreground/5 rounded-lg transition-all"
-                            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
-                            title="Delete task"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <SortableTaskList
+                todos={sortedTodos}
+                isDraggable={isManualSort && view === "list"}
+                onReorder={handleReorder}
+                onToggle={(id) => toggleTodoMutation.mutate(id)}
+                onToggleSubtask={(todoId, subtaskId) => toggleSubtaskMutation.mutate({ todoId, subtaskId })}
+                onEdit={handleEditTodo}
+                onDelete={(id) => deleteTodoMutation.mutate(id)}
+                fadingOutTodos={fadingOutTodos}
+                isToggling={toggleTodoMutation.isPending}
+                isDeletingDisabled={deleteTodoMutation.isPending}
+              />
             )}
           </>
         )}
+
 
         {/* Week View */}
         {view === "week" && (

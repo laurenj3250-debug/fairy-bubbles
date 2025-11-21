@@ -1538,6 +1538,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder todos (drag & drop)
+  app.patch("/api/todos/reorder", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { activeId, overId } = req.body;
+
+      if (!activeId || !overId) {
+        return res.status(400).json({ error: "Missing activeId or overId" });
+      }
+
+      const db = getDb();
+
+      // Get all todos for this user, ordered by current position
+      const userTodos = await db
+        .select()
+        .from(schema.todos)
+        .where(eq(schema.todos.userId, userId))
+        .orderBy(schema.todos.position);
+
+      // Find the indices of the active and over items
+      const activeIndex = userTodos.findIndex(t => t.id === activeId);
+      const overIndex = userTodos.findIndex(t => t.id === overId);
+
+      if (activeIndex === -1 || overIndex === -1) {
+        return res.status(404).json({ error: "Todo not found" });
+      }
+
+      // Reorder the array
+      const reorderedTodos = [...userTodos];
+      const [movedItem] = reorderedTodos.splice(activeIndex, 1);
+      reorderedTodos.splice(overIndex, 0, movedItem);
+
+      // Update positions in database using a transaction
+      await db.transaction(async (tx) => {
+        for (let i = 0; i < reorderedTodos.length; i++) {
+          await tx
+            .update(schema.todos)
+            .set({ position: i })
+            .where(eq(schema.todos.id, reorderedTodos[i].id));
+        }
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[API] Error reordering todos:", error);
+      res.status(500).json({ error: "Failed to reorder todos" });
+    }
+  });
+
   // Sprite Upload (stores in database)
   app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
     console.log('[sprites] ========== UPLOAD REQUEST STARTED ==========');
