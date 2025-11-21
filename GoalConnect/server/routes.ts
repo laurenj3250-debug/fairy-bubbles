@@ -28,6 +28,9 @@ import path from "path";
 import AdmZip from "adm-zip";
 import fs from "fs";
 import { calculateMissionParameters, calculateBaseXP, calculateBasePoints } from "./mission-calculator";
+import { registerProjectRoutes } from "./routes/projects";
+import { registerLabelRoutes } from "./routes/labels";
+import { registerTodosEnhancedRoutes } from "./routes/todos-enhanced";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -3732,6 +3735,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to complete mission" });
     }
   });
+
+  // Register task management routes
+  registerProjectRoutes(app);
+  registerLabelRoutes(app);
+  registerTodosEnhancedRoutes(app);
 
   const httpServer = createServer(app);
 

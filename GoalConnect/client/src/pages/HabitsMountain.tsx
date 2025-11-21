@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Mountain, TrendingUp, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Mountain, TrendingUp, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, ArrowLeft, BarChart3 } from "lucide-react";
 import { HabitCreateDialog as HabitDialog } from "@/components/HabitCreateDialog";
 import { getToday, formatDateInput } from "@/lib/utils";
 import { getWeatherFromStreak, WEATHER_INFO } from "@/lib/weatherEffects";
@@ -266,8 +266,8 @@ export default function HabitsMountain() {
           />
         </div>
 
-        {/* New Habit Button */}
-        <div className="mb-6">
+        {/* Action Buttons */}
+        <div className="mb-6 flex flex-wrap gap-3">
           <Button
             onClick={handleCreateNew}
             className="rounded-full px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105"
@@ -275,6 +275,15 @@ export default function HabitsMountain() {
             <Plus className="w-5 h-5 mr-2" />
             <span className="font-semibold">New Route</span>
           </Button>
+
+          <Link href="/habit-insights">
+            <Button
+              className="rounded-full px-8 py-6 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg transition-all duration-300 hover:scale-105"
+            >
+              <BarChart3 className="w-5 h-5 mr-2" />
+              <span className="font-semibold">View Insights</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Weather Badge - Compact */}

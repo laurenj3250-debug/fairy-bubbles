@@ -124,6 +124,71 @@ export const userPoints = pgTable("user_points", {
   available: integer("available").notNull().default(0),
 });
 
+// Projects (organize tasks into projects/areas)
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#3b82f6"),
+  icon: text("icon").default("📁"),
+  parentId: integer("parent_id").references((): any => projects.id, { onDelete: "set null" }),
+  position: integer("position").notNull().default(0),
+  archived: boolean("archived").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Labels (flexible tagging system)
+export const labels = pgTable("labels", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#gray"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Task-Label junction (many-to-many)
+export const taskLabels = pgTable("task_labels", {
+  taskId: integer("task_id").notNull().references(() => todos.id, { onDelete: "cascade" }),
+  labelId: integer("label_id").notNull().references(() => labels.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: { name: "task_labels_pkey", columns: [table.taskId, table.labelId] }
+}));
+
+// Saved filters/views
+export const savedFilters = pgTable("saved_filters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  icon: text("icon").default("🔍"),
+  filterConfig: text("filter_config").notNull(), // JSON string
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Task comments
+export const taskComments = pgTable("task_comments", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull().references(() => todos.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Productivity stats
+export const taskProductivityStats = pgTable("task_productivity_stats", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  karmaPoints: integer("karma_points").default(0).notNull(),
+  tasksCompletedToday: integer("tasks_completed_today").default(0).notNull(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  lastCompletionDate: varchar("last_completion_date", { length: 10 }),
+  totalCompleted: integer("total_completed").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -134,6 +199,14 @@ export const todos = pgTable("todos", {
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
   subtasks: text("subtasks").notNull().default("[]"), // JSON string of subtasks
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // New columns for Todoist-level features
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+  priority: integer("priority").default(4).notNull(), // 1=P1 (urgent), 4=P4 (low)
+  recurringPattern: text("recurring_pattern"), // cron-like pattern
+  nextRecurrence: varchar("next_recurrence", { length: 10 }), // YYYY-MM-DD
+  position: integer("position").default(0).notNull(),
+  notes: text("notes"), // long-form notes
+  parentTaskId: integer("parent_task_id").references((): any => todos.id, { onDelete: "cascade" }),
 });
 
 // TypeScript types inferred from tables
@@ -178,6 +251,29 @@ export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema
 
 export const insertTodoSchema = createInsertSchema(todos).omit({ id: true, createdAt: true, completedAt: true });
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
+
+// Task Management types
+export type Project = typeof projects.$inferSelect;
+export type Label = typeof labels.$inferSelect;
+export type TaskLabel = typeof taskLabels.$inferSelect;
+export type SavedFilter = typeof savedFilters.$inferSelect;
+export type TaskComment = typeof taskComments.$inferSelect;
+export type TaskProductivityStats = typeof taskProductivityStats.$inferSelect;
+
+export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true });
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+export const insertLabelSchema = createInsertSchema(labels).omit({ id: true, createdAt: true });
+export type InsertLabel = z.infer<typeof insertLabelSchema>;
+
+export const insertTaskLabelSchema = createInsertSchema(taskLabels).omit({ createdAt: true });
+export type InsertTaskLabel = z.infer<typeof insertTaskLabelSchema>;
+
+export const insertSavedFilterSchema = createInsertSchema(savedFilters).omit({ id: true, createdAt: true });
+export type InsertSavedFilter = z.infer<typeof insertSavedFilterSchema>;
+
+export const insertTaskCommentSchema = createInsertSchema(taskComments).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertTaskComment = z.infer<typeof insertTaskCommentSchema>;
 
 
 // Sprites (stored in database for persistence)

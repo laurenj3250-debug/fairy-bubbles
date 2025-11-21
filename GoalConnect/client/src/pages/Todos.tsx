@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Todo } from "@shared/schema";
+import type { Todo, Project, Label } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TodoDialog } from "@/components/TodoDialog";
+import { TodoDialogEnhanced } from "@/components/TodoDialogEnhanced";
 import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,20 @@ interface Subtask {
   completed: boolean;
 }
 
+interface TodoWithMetadata extends Todo {
+  project: Project | null;
+  labels: Label[];
+}
+
+const getPriorityColor = (priority: number) => {
+  switch (priority) {
+    case 1: return '#ef4444'; // Red
+    case 2: return '#f97316'; // Orange
+    case 3: return '#3b82f6'; // Blue
+    default: return '#6b7280'; // Gray
+  }
+};
+
 export default function Todos() {
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("pending");
@@ -24,8 +38,8 @@ export default function Todos() {
   const [fadingOutTodos, setFadingOutTodos] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
-  const { data: todos = [], isLoading } = useQuery<Todo[]>({
-    queryKey: ["/api/todos"],
+  const { data: todos = [], isLoading } = useQuery<TodoWithMetadata[]>({
+    queryKey: ["/api/todos-with-metadata"],
   });
 
   const toggleTodoMutation = useMutation({
@@ -471,6 +485,43 @@ export default function Todos() {
                                 {gradeInfo.label} • {gradeInfo.points} tokens
                               </Badge>
                             )}
+                            {/* Project Badge */}
+                            {todo.project && (
+                              <Badge
+                                className="border-0"
+                                style={{
+                                  background: `${todo.project.color}15`,
+                                  color: todo.project.color,
+                                }}
+                              >
+                                {todo.project.icon} {todo.project.name}
+                              </Badge>
+                            )}
+                            {/* Priority Badge */}
+                            {todo.priority && todo.priority < 4 && (
+                              <Badge
+                                className="border-0"
+                                style={{
+                                  background: getPriorityColor(todo.priority) + '20',
+                                  color: getPriorityColor(todo.priority),
+                                }}
+                              >
+                                P{todo.priority}
+                              </Badge>
+                            )}
+                            {/* Label Badges */}
+                            {todo.labels?.map((label) => (
+                              <Badge
+                                key={label.id}
+                                className="border-0"
+                                style={{
+                                  background: `${label.color}15`,
+                                  color: label.color,
+                                }}
+                              >
+                                #{label.name}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
 
@@ -759,7 +810,7 @@ export default function Todos() {
       </div>
 
       {/* Todo Dialog */}
-      <TodoDialog open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
+      <TodoDialogEnhanced open={todoDialogOpen} onOpenChange={setTodoDialogOpen} />
     </div>
   );
 }

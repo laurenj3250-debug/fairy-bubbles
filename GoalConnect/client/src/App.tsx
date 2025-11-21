@@ -8,6 +8,7 @@ import { ProgressBackground } from "@/components/ProgressBackground";
 import BaseCamp from "@/pages/BaseCamp";
 import DashboardNew from "@/pages/DashboardNew";
 import Habits from "@/pages/HabitsMountain";
+import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
 import WeeklyHub from "@/pages/WeeklyHub";
@@ -120,6 +121,12 @@ function AppRoutes() {
       <Route path="/habits">
         <RequireAuth>
           <Habits />
+          <BottomNav />
+        </RequireAuth>
+      </Route>
+      <Route path="/habit-insights">
+        <RequireAuth>
+          <HabitInsights />
           <BottomNav />
         </RequireAuth>
       </Route>
