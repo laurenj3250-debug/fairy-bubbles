@@ -1,16 +1,14 @@
 import type { Express } from "express";
 import { getDb } from "../db.js";
 import { projects } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
-
-const db = getDb();
+import { eq, and } from "drizzle-orm";
+import { requireUser } from "../simple-auth";
 
 export function registerProjectRoutes(app: Express) {
   // GET /api/projects - Get all projects for user
   app.get("/api/projects", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const userProjects = await db
@@ -18,7 +16,7 @@ export function registerProjectRoutes(app: Express) {
         .from(projects)
         .where(
           and(
-            eq(projects.userId, req.user.id),
+            eq(projects.userId, user.id),
             eq(projects.archived, false)
           )
         )
@@ -33,9 +31,8 @@ export function registerProjectRoutes(app: Express) {
 
   // POST /api/projects - Create new project
   app.post("/api/projects", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const { name, color, icon, parentId } = req.body;
@@ -47,7 +44,7 @@ export function registerProjectRoutes(app: Express) {
       const [newProject] = await db
         .insert(projects)
         .values({
-          userId: req.user.id,
+          userId: user.id,
           name: name.trim(),
           color: color || "#3b82f6",
           icon: icon || "📁",
@@ -64,9 +61,8 @@ export function registerProjectRoutes(app: Express) {
 
   // PATCH /api/projects/:id - Update project
   app.patch("/api/projects/:id", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const projectId = parseInt(req.params.id);
@@ -81,7 +77,7 @@ export function registerProjectRoutes(app: Express) {
         .where(
           and(
             eq(projects.id, projectId),
-            eq(projects.userId, req.user.id)
+            eq(projects.userId, user.id)
           )
         )
         .returning();
@@ -99,9 +95,8 @@ export function registerProjectRoutes(app: Express) {
 
   // DELETE /api/projects/:id - Delete project
   app.delete("/api/projects/:id", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const projectId = parseInt(req.params.id);
@@ -111,7 +106,7 @@ export function registerProjectRoutes(app: Express) {
         .where(
           and(
             eq(projects.id, projectId),
-            eq(projects.userId, req.user.id)
+            eq(projects.userId, user.id)
           )
         )
         .returning();
@@ -129,9 +124,8 @@ export function registerProjectRoutes(app: Express) {
 
   // PATCH /api/projects/:id/archive - Archive/unarchive project
   app.patch("/api/projects/:id/archive", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const projectId = parseInt(req.params.id);
@@ -143,7 +137,7 @@ export function registerProjectRoutes(app: Express) {
         .where(
           and(
             eq(projects.id, projectId),
-            eq(projects.userId, req.user.id)
+            eq(projects.userId, user.id)
           )
         )
         .returning();

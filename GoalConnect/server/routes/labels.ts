@@ -2,21 +2,19 @@ import type { Express } from "express";
 import { getDb } from "../db.js";
 import { labels, taskLabels, todos } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
-
-const db = getDb();
+import { requireUser } from "../simple-auth";
 
 export function registerLabelRoutes(app: Express) {
   // GET /api/labels - Get all labels for user
   app.get("/api/labels", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const userLabels = await db
         .select()
         .from(labels)
-        .where(eq(labels.userId, req.user.id))
+        .where(eq(labels.userId, user.id))
         .orderBy(labels.name);
 
       res.json(userLabels);
@@ -28,9 +26,8 @@ export function registerLabelRoutes(app: Express) {
 
   // POST /api/labels - Create new label
   app.post("/api/labels", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const { name, color } = req.body;
@@ -45,7 +42,7 @@ export function registerLabelRoutes(app: Express) {
         .from(labels)
         .where(
           and(
-            eq(labels.userId, req.user.id),
+            eq(labels.userId, user.id),
             eq(labels.name, name.trim())
           )
         )
@@ -58,7 +55,7 @@ export function registerLabelRoutes(app: Express) {
       const [newLabel] = await db
         .insert(labels)
         .values({
-          userId: req.user.id,
+          userId: user.id,
           name: name.trim(),
           color: color || "#gray",
         })
@@ -73,9 +70,8 @@ export function registerLabelRoutes(app: Express) {
 
   // PATCH /api/labels/:id - Update label
   app.patch("/api/labels/:id", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const labelId = parseInt(req.params.id);
@@ -90,7 +86,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(labels.id, labelId),
-            eq(labels.userId, req.user.id)
+            eq(labels.userId, user.id)
           )
         )
         .returning();
@@ -108,9 +104,8 @@ export function registerLabelRoutes(app: Express) {
 
   // DELETE /api/labels/:id - Delete label
   app.delete("/api/labels/:id", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const labelId = parseInt(req.params.id);
@@ -120,7 +115,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(labels.id, labelId),
-            eq(labels.userId, req.user.id)
+            eq(labels.userId, user.id)
           )
         )
         .returning();
@@ -138,9 +133,8 @@ export function registerLabelRoutes(app: Express) {
 
   // GET /api/tasks/:taskId/labels - Get labels for a task
   app.get("/api/tasks/:taskId/labels", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const taskId = parseInt(req.params.taskId);
@@ -152,7 +146,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(todos.id, taskId),
-            eq(todos.userId, req.user.id)
+            eq(todos.userId, user.id)
           )
         )
         .limit(1);
@@ -186,9 +180,8 @@ export function registerLabelRoutes(app: Express) {
 
   // POST /api/tasks/:taskId/labels - Add label to task
   app.post("/api/tasks/:taskId/labels", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const taskId = parseInt(req.params.taskId);
@@ -205,7 +198,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(todos.id, taskId),
-            eq(todos.userId, req.user.id)
+            eq(todos.userId, user.id)
           )
         )
         .limit(1);
@@ -221,7 +214,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(labels.id, labelId),
-            eq(labels.userId, req.user.id)
+            eq(labels.userId, user.id)
           )
         )
         .limit(1);
@@ -258,9 +251,8 @@ export function registerLabelRoutes(app: Express) {
 
   // DELETE /api/tasks/:taskId/labels/:labelId - Remove label from task
   app.delete("/api/tasks/:taskId/labels/:labelId", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).send("Not authenticated");
-    }
+    const user = requireUser(req);
+    const db = getDb();
 
     try {
       const taskId = parseInt(req.params.taskId);
@@ -273,7 +265,7 @@ export function registerLabelRoutes(app: Express) {
         .where(
           and(
             eq(todos.id, taskId),
-            eq(todos.userId, req.user.id)
+            eq(todos.userId, user.id)
           )
         )
         .limit(1);
