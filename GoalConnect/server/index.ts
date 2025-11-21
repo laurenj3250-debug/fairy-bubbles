@@ -134,12 +134,20 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  // Serve attached assets (costume images, etc.) as static files
-  app.use("/attached_assets", express.static("attached_assets"));
+  // CRITICAL: Serve static files BEFORE error handler
+  // In production, all static assets are in dist/public
+  if (app.get("env") !== "development") {
+    // Serve attached assets (costume images, etc.) from dist/public/attached_assets
+    app.use("/attached_assets", express.static("dist/public/attached_assets"));
 
-  // Serve background images from client/public/backgrounds
-  app.use("/backgrounds", express.static("client/public/backgrounds"));
+    // Serve background images from dist/public/backgrounds
+    app.use("/backgrounds", express.static("dist/public/backgrounds"));
 
+    // Serve all other static files (JS, CSS, etc.)
+    serveStatic(app);
+  }
+
+  // Error handler AFTER static file serving
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -148,13 +156,10 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup Vite dev server in development
+  // IMPORTANT: This must be AFTER error handler so the catch-all doesn't block errors
   if (app.get("env") === "development") {
     await setupVite(app, server);
-  } else {
-    serveStatic(app);
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
