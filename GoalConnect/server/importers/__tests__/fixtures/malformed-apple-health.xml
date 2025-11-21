@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HealthData locale="en_US">
+ <ExportDate value="2025-11-21 10:00:00 -0800"/>
+
+ <!-- Missing required attributes -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeClimbing"
+  duration="30"
+  sourceName="Apple Watch">
+  <!-- Missing startDate and endDate -->
+ </Workout>
+
+ <!-- Malformed XML - unclosed tag will cause parse error -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeRunning"
+  duration="20"
+  startDate="2025-11-20 09:00:00 -0800"
+  endDate="2025-11-20 09:20:00 -0800"

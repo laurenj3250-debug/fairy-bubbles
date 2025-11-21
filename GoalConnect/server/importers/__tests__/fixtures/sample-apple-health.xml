@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HealthData [
+<!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary)*)>
+<!ELEMENT ExportDate EMPTY>
+<!ELEMENT Me EMPTY>
+<!ELEMENT Record ((MetadataEntry|HeartRateVariabilityMetadataList)*)>
+<!ELEMENT Workout ((MetadataEntry|WorkoutEvent|WorkoutRoute|WorkoutStatistics)*)>
+<!ELEMENT MetadataEntry EMPTY>
+<!ELEMENT WorkoutStatistics EMPTY>
+]>
+<HealthData locale="en_US">
+ <ExportDate value="2025-11-21 10:00:00 -0800"/>
+ <Me HKCharacteristicTypeIdentifierDateOfBirth="1990-01-15" HKCharacteristicTypeIdentifierBiologicalSex="HKBiologicalSexFemale"/>
+
+ <!-- Climbing Workout with Heart Rate Stats -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeClimbing"
+  duration="52.5"
+  durationUnit="min"
+  totalEnergyBurned="387.5"
+  totalEnergyBurnedUnit="kcal"
+  sourceName="Apple Watch"
+  sourceVersion="10.1"
+  device="&lt;&lt;HKDevice: 0x123, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,4, software:10.1&gt;&gt;"
+  creationDate="2025-11-20 10:15:30 -0800"
+  startDate="2025-11-20 09:00:00 -0800"
+  endDate="2025-11-20 09:52:30 -0800">
+  <MetadataEntry key="HKIndoorWorkout" value="1"/>
+  <MetadataEntry key="HKWeatherTemperature" value="68 degF"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" startDate="2025-11-20 09:00:00 -0800" endDate="2025-11-20 09:52:30 -0800" average="142" minimum="115" maximum="178" sum="0" unit="count/min"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierActiveEnergyBurned" startDate="2025-11-20 09:00:00 -0800" endDate="2025-11-20 09:52:30 -0800" sum="387.5" unit="kcal"/>
+ </Workout>
+
+ <!-- Functional Strength Training -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeFunctionalStrengthTraining"
+  duration="35.25"
+  durationUnit="min"
+  totalEnergyBurned="245.8"
+  totalEnergyBurnedUnit="kcal"
+  sourceName="Fitness+"
+  sourceVersion="5.0"
+  creationDate="2025-11-19 19:30:00 -0800"
+  startDate="2025-11-19 18:30:00 -0800"
+  endDate="2025-11-19 19:05:15 -0800">
+  <MetadataEntry key="HKIndoorWorkout" value="1"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" startDate="2025-11-19 18:30:00 -0800" endDate="2025-11-19 19:05:15 -0800" average="135" minimum="95" maximum="165" unit="count/min"/>
+ </Workout>
+
+ <!-- Running Workout with Distance -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeRunning"
+  duration="28.5"
+  durationUnit="min"
+  totalDistance="5.2"
+  totalDistanceUnit="km"
+  totalEnergyBurned="320"
+  totalEnergyBurnedUnit="kcal"
+  sourceName="Apple Watch"
+  sourceVersion="10.1"
+  creationDate="2025-11-18 08:00:00 -0800"
+  startDate="2025-11-18 07:30:00 -0800"
+  endDate="2025-11-18 07:58:30 -0800">
+  <MetadataEntry key="HKIndoorWorkout" value="0"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" startDate="2025-11-18 07:30:00 -0800" endDate="2025-11-18 07:58:30 -0800" average="155" minimum="110" maximum="182" unit="count/min"/>
+ </Workout>
+
+ <!-- Traditional Strength Training -->
+ <Workout
+  workoutActivityType="HKWorkoutActivityTypeTraditionalStrengthTraining"
+  duration="45"
+  durationUnit="min"
+  totalEnergyBurned="200"
+  totalEnergyBurnedUnit="kcal"
+  sourceName="Apple Watch"
+  sourceVersion="10.1"
+  creationDate="2025-11-17 17:00:00 -0800"
+  startDate="2025-11-17 16:00:00 -0800"
+  endDate="2025-11-17 16:45:00 -0800">
+  <MetadataEntry key="HKIndoorWorkout" value="1"/>
+ </Workout>
+
+ <!-- Some Record elements (should be ignored) -->
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Apple Watch" unit="count/min" value="72" startDate="2025-11-20 08:00:00 -0800" endDate="2025-11-20 08:00:00 -0800"/>
+ <Record type="HKQuantityTypeIdentifierStepCount" sourceName="iPhone" unit="count" value="8500" startDate="2025-11-20 00:00:00 -0800" endDate="2025-11-20 23:59:59 -0800"/>
+
+</HealthData>

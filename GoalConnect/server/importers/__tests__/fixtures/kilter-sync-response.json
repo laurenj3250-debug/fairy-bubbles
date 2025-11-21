@@ -1,0 +1,186 @@
+{
+  "PUT": {
+    "climbs": [
+      {
+        "uuid": "climb-uuid-001",
+        "layout_id": 1,
+        "setter_id": 5432,
+        "setter_username": "route_setter_pro",
+        "name": "Crimpy Delights",
+        "description": "Technical crimps with a dynamic finish",
+        "frames": "p1083r15p1117r15p1151r16p1185r13",
+        "angle": 40,
+        "quality_average": 4.2,
+        "difficulty_average": 9,
+        "benchmark_difficulty": null,
+        "is_draft": false,
+        "created_at": "2025-11-15T08:30:00Z"
+      },
+      {
+        "uuid": "climb-uuid-002",
+        "layout_id": 1,
+        "setter_id": 1234,
+        "setter_username": "gym_setter",
+        "name": "Slab Master",
+        "description": "Balance and footwork required",
+        "frames": "p2000r12p2034r12p2068r15",
+        "angle": 25,
+        "quality_average": 3.8,
+        "difficulty_average": 5,
+        "benchmark_difficulty": "V3",
+        "is_draft": false,
+        "created_at": "2025-11-10T14:00:00Z"
+      },
+      {
+        "uuid": "climb-uuid-003",
+        "layout_id": 1,
+        "setter_id": 5432,
+        "setter_username": "route_setter_pro",
+        "name": "Power Endurance",
+        "description": "Long moves on big holds",
+        "frames": "p3000r10p3034r10p3068r15p3102r13",
+        "angle": 45,
+        "quality_average": 4.5,
+        "difficulty_average": 12,
+        "benchmark_difficulty": "V6",
+        "is_draft": false,
+        "created_at": "2025-11-18T09:15:00Z"
+      },
+      {
+        "uuid": "climb-uuid-004",
+        "layout_id": 1,
+        "setter_id": 9999,
+        "setter_username": "comp_setter",
+        "name": "Coordination Test",
+        "description": "Dyno to sloper",
+        "frames": "p4000r15p4034r12",
+        "angle": 40,
+        "quality_average": 4.0,
+        "difficulty_average": 7,
+        "benchmark_difficulty": "V4",
+        "is_draft": false,
+        "created_at": "2025-11-19T11:00:00Z"
+      }
+    ],
+    "ascents": [
+      {
+        "uuid": "ascent-001",
+        "climb_uuid": "climb-uuid-001",
+        "user_id": 67890,
+        "angle": 40,
+        "is_mirror": false,
+        "attempt_id": null,
+        "bid_count": 3,
+        "quality": 5,
+        "difficulty": 9,
+        "is_benchmark": false,
+        "comment": "Finally got it!",
+        "climbed_at": "2025-11-20T14:30:00Z",
+        "created_at": "2025-11-20T14:35:00Z"
+      },
+      {
+        "uuid": "ascent-002",
+        "climb_uuid": "climb-uuid-002",
+        "user_id": 67890,
+        "angle": 25,
+        "is_mirror": false,
+        "attempt_id": null,
+        "bid_count": 1,
+        "quality": 4,
+        "difficulty": 5,
+        "is_benchmark": true,
+        "comment": "Flash!",
+        "climbed_at": "2025-11-20T14:45:00Z",
+        "created_at": "2025-11-20T14:50:00Z"
+      },
+      {
+        "uuid": "ascent-003",
+        "climb_uuid": "climb-uuid-004",
+        "user_id": 67890,
+        "angle": 40,
+        "is_mirror": false,
+        "attempt_id": null,
+        "bid_count": 2,
+        "quality": 4,
+        "difficulty": 7,
+        "is_benchmark": true,
+        "comment": "",
+        "climbed_at": "2025-11-20T15:10:00Z",
+        "created_at": "2025-11-20T15:15:00Z"
+      },
+      {
+        "uuid": "ascent-004",
+        "climb_uuid": "climb-uuid-003",
+        "user_id": 67890,
+        "angle": 45,
+        "is_mirror": false,
+        "attempt_id": null,
+        "bid_count": 5,
+        "quality": 5,
+        "difficulty": 12,
+        "is_benchmark": true,
+        "comment": "Project complete!",
+        "climbed_at": "2025-11-19T10:00:00Z",
+        "created_at": "2025-11-19T10:05:00Z"
+      },
+      {
+        "uuid": "ascent-005",
+        "climb_uuid": "climb-uuid-002",
+        "user_id": 67890,
+        "angle": 30,
+        "is_mirror": true,
+        "attempt_id": null,
+        "bid_count": 1,
+        "quality": 4,
+        "difficulty": 6,
+        "is_benchmark": false,
+        "comment": "Mirror mode",
+        "climbed_at": "2025-11-19T10:30:00Z",
+        "created_at": "2025-11-19T10:35:00Z"
+      }
+    ],
+    "attempts": [
+      {
+        "uuid": "attempt-001",
+        "climb_uuid": "climb-uuid-001",
+        "user_id": 67890,
+        "angle": 40,
+        "is_mirror": false,
+        "bid_count": 1,
+        "created_at": "2025-11-20T14:00:00Z"
+      },
+      {
+        "uuid": "attempt-002",
+        "climb_uuid": "climb-uuid-001",
+        "user_id": 67890,
+        "angle": 40,
+        "is_mirror": false,
+        "bid_count": 2,
+        "created_at": "2025-11-20T14:15:00Z"
+      },
+      {
+        "uuid": "attempt-003",
+        "climb_uuid": "climb-uuid-003",
+        "user_id": 67890,
+        "angle": 45,
+        "is_mirror": false,
+        "bid_count": 4,
+        "created_at": "2025-11-19T09:30:00Z"
+      }
+    ],
+    "walls": [
+      {
+        "uuid": "wall-001",
+        "name": "Main Board",
+        "product_id": 1
+      }
+    ],
+    "users": [
+      {
+        "id": 67890,
+        "username": "climber@example.com",
+        "name": "Test Climber"
+      }
+    ]
+  }
+}
