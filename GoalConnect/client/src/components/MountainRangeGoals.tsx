@@ -10,12 +10,12 @@ interface Goal {
   unit: string;
 }
 
-// Match the habits orbs color palette
+// Match the habits orbs color palette - ULTRA GLOW
 const ROUTE_COLORS = [
-  { trail: "#4ECDC4", glow: "#4ECDC4", bg: "rgba(78, 205, 196, 0.15)" },
-  { trail: "#FF6B6B", glow: "#FF6B6B", bg: "rgba(255, 107, 107, 0.15)" },
-  { trail: "#A855F7", glow: "#A855F7", bg: "rgba(168, 85, 247, 0.15)" },
-  { trail: "#FBBF24", glow: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)" },
+  { trail: "#4ECDC4", bright: "#7FFFEF", glow: "#4ECDC4", bg: "rgba(78, 205, 196, 0.2)" },
+  { trail: "#FF6B6B", bright: "#FF9999", glow: "#FF6B6B", bg: "rgba(255, 107, 107, 0.2)" },
+  { trail: "#A855F7", bright: "#D08FFF", glow: "#A855F7", bg: "rgba(168, 85, 247, 0.2)" },
+  { trail: "#FBBF24", bright: "#FFD966", glow: "#FBBF24", bg: "rgba(251, 191, 36, 0.2)" },
 ];
 
 // Cubic bezier interpolation
@@ -178,16 +178,47 @@ export function MountainRangeGoals() {
                   key={goal.id}
                   className="flex flex-col rounded-lg p-3 relative overflow-hidden transition-all hover:scale-[1.02]"
                   style={{
-                    background: `linear-gradient(135deg, ${colors.bg}, transparent)`,
-                    border: `1px solid ${colors.trail}20`,
-                    boxShadow: `0 0 20px ${colors.trail}10`,
+                    background: `linear-gradient(135deg, ${colors.bg}, ${colors.bg}50, transparent)`,
+                    border: `1px solid ${colors.trail}40`,
+                    boxShadow: `0 0 30px ${colors.trail}30, 0 0 60px ${colors.trail}15, inset 0 1px 0 rgba(255,255,255,0.1)`,
                   }}
                 >
-                  {/* Corner glow */}
+                  {/* Corner glow - MEGA */}
                   <div
-                    className="absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-20"
+                    className="absolute -top-8 -right-8 w-28 h-28 rounded-full blur-2xl opacity-40"
+                    style={{ background: `radial-gradient(circle, ${colors.bright} 0%, ${colors.trail} 50%, transparent 70%)` }}
+                  />
+                  {/* Bottom glow */}
+                  <div
+                    className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full blur-xl opacity-25"
                     style={{ background: colors.trail }}
                   />
+
+                  {/* Floating particles - ULTRA GLOW */}
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-1.5 h-1.5 rounded-full pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle, ${colors.bright} 0%, ${colors.trail} 70%)`,
+                        boxShadow: `0 0 8px ${colors.trail}, 0 0 16px ${colors.trail}80`,
+                        left: `${10 + i * 12}%`,
+                        top: `${25 + (i % 4) * 18}%`,
+                      }}
+                      animate={{
+                        y: [0, -20, 0],
+                        x: [0, (i % 2 === 0 ? 8 : -8), 0],
+                        opacity: [0.5, 1, 0.5],
+                        scale: [0.7, 1.4, 0.7],
+                      }}
+                      transition={{
+                        duration: 2.5 + i * 0.4,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: i * 0.3,
+                      }}
+                    />
+                  ))}
 
                   {/* Route label */}
                   <div className="flex items-center justify-between mb-2 relative z-10">
@@ -214,13 +245,24 @@ export function MountainRangeGoals() {
                       preserveAspectRatio="xMidYMid meet"
                     >
                       <defs>
-                        {/* Glow filter */}
-                        <filter id={`routeGlow-${index}`} x="-50%" y="-50%" width="200%" height="200%">
-                          <feGaussianBlur stdDeviation="2.5" result="blur" />
-                          <feFlood floodColor={colors.glow} floodOpacity="0.7" />
-                          <feComposite in2="blur" operator="in" result="glow" />
+                        {/* MEGA Glow filter */}
+                        <filter id={`routeGlow-${index}`} x="-100%" y="-100%" width="300%" height="300%">
+                          {/* Outer bloom */}
+                          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1" />
+                          <feFlood floodColor={colors.bright} floodOpacity="0.4" />
+                          <feComposite in2="blur1" operator="in" result="glow1" />
+                          {/* Mid glow */}
+                          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur2" />
+                          <feFlood floodColor={colors.glow} floodOpacity="0.8" />
+                          <feComposite in2="blur2" operator="in" result="glow2" />
+                          {/* Inner sharp */}
+                          <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur3" />
+                          <feFlood floodColor={colors.bright} floodOpacity="1" />
+                          <feComposite in2="blur3" operator="in" result="glow3" />
                           <feMerge>
-                            <feMergeNode in="glow" />
+                            <feMergeNode in="glow1" />
+                            <feMergeNode in="glow2" />
+                            <feMergeNode in="glow3" />
                             <feMergeNode in="SourceGraphic" />
                           </feMerge>
                         </filter>
@@ -343,13 +385,27 @@ export function MountainRangeGoals() {
                         opacity="0.2"
                       />
 
-                      {/* Progress trail (glowing solid) */}
+                      {/* Progress trail (MEGA glowing solid) */}
                       <g clipPath={`url(#progressClip-${index})`}>
+                        {/* Extra glow layer behind */}
                         <motion.path
                           d={elevationPath}
                           fill="none"
                           stroke={colors.trail}
-                          strokeWidth="2"
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                          opacity="0.3"
+                          filter={`url(#routeGlow-${index})`}
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 1 }}
+                          transition={{ duration: 1.2, ease: "easeOut" }}
+                        />
+                        {/* Main bright trail */}
+                        <motion.path
+                          d={elevationPath}
+                          fill="none"
+                          stroke={colors.bright}
+                          strokeWidth="3"
                           strokeLinecap="round"
                           filter={`url(#routeGlow-${index})`}
                           initial={{ pathLength: 0 }}
@@ -376,24 +432,101 @@ export function MountainRangeGoals() {
                         );
                       })}
 
-                      {/* Current position marker (on the curve) */}
+                      {/* Trail sparkles behind current position - ULTRA SHINY */}
+                      {progress > 0.08 && (
+                        <>
+                          {[0.12, 0.08, 0.05, 0.02].map((offset, i) => {
+                            const sparklePos = getPointOnCurve(
+                              index,
+                              Math.max(0, progress - offset),
+                              chartWidth,
+                              chartHeight
+                            );
+                            return (
+                              <motion.circle
+                                key={i}
+                                cx={sparklePos.x}
+                                cy={sparklePos.y}
+                                r={3.5 - i * 0.7}
+                                fill={i === 0 ? colors.bright : colors.trail}
+                                filter={`url(#routeGlow-${index})`}
+                                animate={{
+                                  opacity: [1 - i * 0.15, 0.4, 1 - i * 0.15],
+                                  scale: [1, 1.5, 1],
+                                }}
+                                transition={{
+                                  duration: 1.2,
+                                  repeat: Infinity,
+                                  delay: i * 0.15,
+                                }}
+                              />
+                            );
+                          })}
+                        </>
+                      )}
+
+                      {/* Current position marker (on the curve) - MEGA GLOW */}
                       {progress > 0.02 && progress < 0.98 && (
                         <motion.g>
+                          {/* Multiple ripple rings */}
                           <motion.circle
                             cx={currentPos.x}
                             cy={currentPos.y}
-                            r="4"
+                            r="10"
+                            fill="none"
+                            stroke={colors.trail}
+                            strokeWidth="0.8"
+                            initial={{ scale: 0.3, opacity: 0.9 }}
+                            animate={{ scale: 2.5, opacity: 0 }}
+                            transition={{ duration: 2.5, repeat: Infinity }}
+                          />
+                          <motion.circle
+                            cx={currentPos.x}
+                            cy={currentPos.y}
+                            r="7"
+                            fill="none"
+                            stroke={colors.bright}
+                            strokeWidth="0.5"
+                            initial={{ scale: 0.5, opacity: 1 }}
+                            animate={{ scale: 2, opacity: 0 }}
+                            transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                          />
+                          {/* Outer glow orb */}
+                          <motion.circle
+                            cx={currentPos.x}
+                            cy={currentPos.y}
+                            r="7"
                             fill={colors.trail}
+                            opacity="0.3"
+                            filter={`url(#routeGlow-${index})`}
+                            animate={{ scale: [1, 1.4, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          />
+                          {/* Main orb */}
+                          <motion.circle
+                            cx={currentPos.x}
+                            cy={currentPos.y}
+                            r="5"
+                            fill={colors.bright}
                             filter={`url(#routeGlow-${index})`}
                             initial={{ scale: 0 }}
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
+                            animate={{ scale: [1, 1.25, 1] }}
+                            transition={{ duration: 1.2, repeat: Infinity }}
                           />
+                          {/* Inner bright core */}
                           <circle
                             cx={currentPos.x}
                             cy={currentPos.y}
-                            r="1.5"
+                            r="2.5"
                             fill="white"
+                          />
+                          {/* Specular highlight */}
+                          <circle
+                            cx={currentPos.x - 1.5}
+                            cy={currentPos.y - 1.5}
+                            r="1"
+                            fill="white"
+                            opacity="0.8"
                           />
                         </motion.g>
                       )}
@@ -435,18 +568,41 @@ export function MountainRangeGoals() {
                     </svg>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="mt-1.5 h-1 rounded-full overflow-hidden bg-white/5">
+                  {/* Progress bar - ULTRA SHINY */}
+                  <div className="mt-1.5 h-1.5 rounded-full overflow-hidden bg-white/10 relative">
+                    {/* Glow behind bar */}
                     <motion.div
-                      className="h-full rounded-full"
+                      className="absolute inset-y-0 left-0 rounded-full"
                       style={{
-                        background: `linear-gradient(90deg, ${colors.trail}, ${colors.trail}80)`,
-                        boxShadow: `0 0 6px ${colors.trail}50`,
+                        background: colors.trail,
+                        filter: "blur(4px)",
+                        opacity: 0.5,
                       }}
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 1, ease: "easeOut" }}
                     />
+                    {/* Main bar */}
+                    <motion.div
+                      className="h-full rounded-full relative overflow-hidden"
+                      style={{
+                        background: `linear-gradient(90deg, ${colors.trail}, ${colors.bright})`,
+                        boxShadow: `0 0 12px ${colors.trail}, 0 0 24px ${colors.trail}60`,
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    >
+                      {/* Shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)`,
+                        }}
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      />
+                    </motion.div>
                   </div>
 
                   {/* Target value */}

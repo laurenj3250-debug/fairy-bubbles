@@ -112,8 +112,7 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <BaseCamp />
-          <BottomNav />
+          <V2Dashboard />
         </RequireAuth>
       </Route>
       {/* Legacy routes - kept during migration */}

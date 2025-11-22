@@ -3,6 +3,9 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlowingOrbHabits } from "@/components/GlowingOrbHabits";
 import { MountainRangeGoals } from "@/components/MountainRangeGoals";
+import { HabitHeatmap } from "@/components/HabitHeatmap";
+import { StreakFlames } from "@/components/StreakFlames";
+import { WeeklyRhythm } from "@/components/WeeklyRhythm";
 
 /**
  * V2Dashboard - New 3-column layout experiment
@@ -75,17 +78,14 @@ export default function V2Dashboard() {
 
         {/* Bottom Row: 3 Widgets */}
         <div className="grid grid-cols-3 gap-6">
-          <div className="glass-card p-6 min-h-[160px]">
-            <h3 className="text-sm font-medium mb-2">Widget 1</h3>
-            <p className="text-muted-foreground text-xs">Habit stats</p>
+          <div className="glass-card p-4 min-h-[160px]">
+            <HabitHeatmap />
           </div>
-          <div className="glass-card p-6 min-h-[160px]">
-            <h3 className="text-sm font-medium mb-2">Widget 2</h3>
-            <p className="text-muted-foreground text-xs">Streak info</p>
+          <div className="glass-card p-4 min-h-[160px]">
+            <StreakFlames />
           </div>
-          <div className="glass-card p-6 min-h-[160px]">
-            <h3 className="text-sm font-medium mb-2">Widget 3</h3>
-            <p className="text-muted-foreground text-xs">Goal graph</p>
+          <div className="glass-card p-4 min-h-[160px]">
+            <WeeklyRhythm />
           </div>
         </div>
       </main>
