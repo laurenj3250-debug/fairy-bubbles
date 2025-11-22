@@ -24,7 +24,7 @@
     "browse": "./scripts/browse-authenticated.sh",
     "browse:mobile": "./scripts/browse-authenticated.sh codegen mobile",
     "browse:tablet": "./scripts/browse-authenticated.sh codegen tablet",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
