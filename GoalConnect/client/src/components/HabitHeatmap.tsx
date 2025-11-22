@@ -16,17 +16,12 @@ interface Habit {
   color?: string;
 }
 
-// Habit colors matching GlowingOrbHabits - ULTRA BRIGHT with gradients
-const HABIT_COLORS = [
-  { solid: "#FF6B6B", bright: "#FF8888", gradient: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #FFB347 100%)" },
-  { solid: "#4ECDC4", bright: "#6EEEE6", gradient: "linear-gradient(135deg, #4ECDC4 0%, #44A08D 50%, #7FEFBD 100%)" },
-  { solid: "#A855F7", bright: "#C77DFF", gradient: "linear-gradient(135deg, #A855F7 0%, #EC4899 50%, #F472B6 100%)" },
-  { solid: "#FBBF24", bright: "#FFD54F", gradient: "linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #FCD34D 100%)" },
-  { solid: "#60A5FA", bright: "#93C5FD", gradient: "linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #818CF8 100%)" },
-  { solid: "#34D399", bright: "#6EE7B7", gradient: "linear-gradient(135deg, #34D399 0%, #10B981 50%, #5EEAD4 100%)" },
-  { solid: "#F472B6", bright: "#F9A8D4", gradient: "linear-gradient(135deg, #F472B6 0%, #EC4899 50%, #FB7185 100%)" },
-  { solid: "#FB923C", bright: "#FDBA74", gradient: "linear-gradient(135deg, #FB923C 0%, #EA580C 50%, #F97316 100%)" },
-];
+// Unified theme color - using CSS variables for consistency
+const THEME_COLOR = {
+  solid: "hsl(var(--primary))",
+  bright: "hsl(var(--warning))",
+  gradient: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--warning)) 100%)"
+};
 
 // Generate last N days as YYYY-MM-DD strings
 function getLastNDays(n: number): string[] {
@@ -98,46 +93,35 @@ export function HabitHeatmap() {
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden">
-      {/* Floating ambient particles - ULTRA GLOW */}
-      {[...Array(12)].map((_, i) => (
+      {/* Floating ambient particles - subtle glow */}
+      {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 rounded-full pointer-events-none"
+          className="absolute w-1.5 h-1.5 rounded-full pointer-events-none bg-primary/60"
           style={{
-            background: `radial-gradient(circle, ${HABIT_COLORS[i % HABIT_COLORS.length].bright} 0%, ${HABIT_COLORS[i % HABIT_COLORS.length].solid} 70%)`,
-            boxShadow: `0 0 12px ${HABIT_COLORS[i % HABIT_COLORS.length].solid}, 0 0 24px ${HABIT_COLORS[i % HABIT_COLORS.length].solid}60, 0 0 36px ${HABIT_COLORS[i % HABIT_COLORS.length].solid}30`,
-            left: `${8 + (i * 8) % 85}%`,
+            left: `${8 + (i * 15) % 85}%`,
             top: `${15 + (i * 12) % 75}%`,
           }}
           animate={{
-            y: [0, -25, 0],
-            x: [0, i % 2 === 0 ? 15 : -15, 0],
-            opacity: [0.4, 0.9, 0.4],
-            scale: [0.6, 1.2, 0.6],
+            y: [0, -15, 0],
+            opacity: [0.3, 0.6, 0.3],
           }}
           transition={{
-            duration: 3 + i * 0.5,
+            duration: 4 + i * 0.5,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: i * 0.3,
+            delay: i * 0.5,
           }}
         />
       ))}
 
-      {/* Header - matching other widgets */}
+      {/* Header - using theme colors */}
       <div className="flex items-center justify-between mb-3 relative z-10">
         <Link href="/habits" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
-          <Flame className="w-5 h-5 text-[#FF6B6B]" />
+          <Flame className="w-5 h-5 text-primary" />
           <h3 className="text-sm font-semibold">This Week</h3>
         </Link>
-        <span
-          className="text-sm font-bold px-2.5 py-1 rounded-full"
-          style={{
-            background: "rgba(255, 107, 107, 0.15)",
-            color: "#FF6B6B",
-            boxShadow: "0 0 8px rgba(255, 107, 107, 0.3)",
-          }}
-        >
+        <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-primary/15 text-primary">
           {totalCompletions}
         </span>
       </div>
@@ -151,7 +135,7 @@ export function HabitHeatmap() {
               key={date}
               className={
                 "w-8 text-center text-xs font-semibold " +
-                (isToday ? "text-[#4ECDC4]" : "text-muted-foreground")
+                (isToday ? "text-primary" : "text-muted-foreground")
               }
             >
               {getDayLabel(date)}
@@ -160,10 +144,10 @@ export function HabitHeatmap() {
         })}
       </div>
 
-      {/* Per-habit rows with glowing style */}
+      {/* Per-habit rows - simplified style */}
       <div className="flex-1 overflow-y-auto space-y-2.5 relative z-10">
         {habits.slice(0, 4).map((habit, habitIndex) => {
-          const colors = HABIT_COLORS[habitIndex % HABIT_COLORS.length];
+          const colors = THEME_COLOR; // Use unified theme color
           const completedDates = completionMap.get(habit.id) || new Set();
           const completedCount = days.filter((d) => completedDates.has(d)).length;
           const allComplete = completedCount === 7;
@@ -174,23 +158,8 @@ export function HabitHeatmap() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: habitIndex * 0.08, type: "spring" }}
-              className="relative flex items-center gap-3 p-2.5 rounded-xl overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${colors.solid}20, ${colors.solid}10, transparent)`,
-                border: `1px solid ${colors.solid}40`,
-                boxShadow: `0 0 20px ${colors.solid}15, inset 0 1px 0 rgba(255,255,255,0.08)`,
-              }}
+              className="relative flex items-center gap-3 p-2.5 rounded-xl overflow-hidden bg-primary/10 border border-primary/20"
             >
-              {/* Corner glow - MEGA */}
-              <div
-                className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-40"
-                style={{ background: `radial-gradient(circle, ${colors.bright} 0%, ${colors.solid} 60%, transparent 80%)` }}
-              />
-              {/* Bottom left glow */}
-              <div
-                className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full blur-xl opacity-25"
-                style={{ background: colors.solid }}
-              />
 
               {/* Habit name */}
               <div

@@ -11,13 +11,13 @@ interface Goal {
   unit: string;
 }
 
-// Match the habits orbs color palette - ULTRA GLOW
-const ROUTE_COLORS = [
-  { trail: "#4ECDC4", bright: "#7FFFEF", glow: "#4ECDC4", bg: "rgba(78, 205, 196, 0.2)" },
-  { trail: "#FF6B6B", bright: "#FF9999", glow: "#FF6B6B", bg: "rgba(255, 107, 107, 0.2)" },
-  { trail: "#A855F7", bright: "#D08FFF", glow: "#A855F7", bg: "rgba(168, 85, 247, 0.2)" },
-  { trail: "#FBBF24", bright: "#FFD966", glow: "#FBBF24", bg: "rgba(251, 191, 36, 0.2)" },
-];
+// Unified theme color - using CSS variables for consistency
+const ROUTE_COLOR = {
+  trail: "hsl(var(--primary))",
+  bright: "hsl(var(--warning))",
+  glow: "hsl(var(--primary))",
+  bg: "hsl(var(--primary) / 0.15)"
+};
 
 // Cubic bezier interpolation
 function cubicBezier(t: number, p0: number, p1: number, p2: number, p3: number) {
@@ -160,7 +160,7 @@ export function MountainRangeGoals() {
         <div className="relative z-10 p-3 h-full">
           <div className="grid grid-cols-2 gap-3 h-full">
             {activeGoals.map((goal, index) => {
-              const colors = ROUTE_COLORS[index % ROUTE_COLORS.length];
+              const colors = ROUTE_COLOR; // Unified theme color
               const progress = Math.min(goal.currentValue / goal.targetValue, 1);
               const pct = Math.round(progress * 100);
               const elevationPath = generateElevationPath(index, chartWidth, chartHeight);

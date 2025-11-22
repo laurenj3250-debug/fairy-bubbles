@@ -4,19 +4,14 @@ import { motion } from "framer-motion";
 import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
 import { Plus } from "lucide-react";
 
-// Vibrant climbing hold colors - more saturated and varied
-const getHabitColor = (id: number) => {
-  const variations = [
-    { bg: "linear-gradient(135deg, #FF6B6B, #FF8E53)", border: "#FF6B6B", glow: "#FF6B6B" }, // Coral/Orange
-    { bg: "linear-gradient(135deg, #4ECDC4, #44A08D)", border: "#4ECDC4", glow: "#4ECDC4" }, // Teal
-    { bg: "linear-gradient(135deg, #A855F7, #EC4899)", border: "#A855F7", glow: "#A855F7" }, // Purple/Pink
-    { bg: "linear-gradient(135deg, #FBBF24, #F59E0B)", border: "#FBBF24", glow: "#FBBF24" }, // Golden
-    { bg: "linear-gradient(135deg, #60A5FA, #3B82F6)", border: "#60A5FA", glow: "#60A5FA" }, // Blue
-    { bg: "linear-gradient(135deg, #34D399, #10B981)", border: "#34D399", glow: "#34D399" }, // Emerald
-    { bg: "linear-gradient(135deg, #F472B6, #EC4899)", border: "#F472B6", glow: "#F472B6" }, // Pink
-    { bg: "linear-gradient(135deg, #FB923C, #EA580C)", border: "#FB923C", glow: "#FB923C" }, // Orange
-  ];
-  return variations[id % variations.length];
+// Unified theme colors - using CSS variables for consistency
+const getHabitColor = () => {
+  // Use primary color (sunset orange) for all habits
+  return {
+    bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--warning)))",
+    border: "hsl(var(--primary))",
+    glow: "hsl(var(--primary))"
+  };
 };
 
 interface Habit {
@@ -80,7 +75,7 @@ export function GlowingOrbHabits() {
 
   const handleOrbClick = (habitId: number, event: React.MouseEvent<HTMLDivElement>) => {
     const completed = isCompleted(habitId);
-    const color = getHabitColor(habitId);
+    const color = getHabitColor();
 
     // Only burst when completing (not uncompleting)
     if (!completed) {
@@ -110,7 +105,7 @@ export function GlowingOrbHabits() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {habits.map((habit, index) => {
           const completed = habit.completed;
-          const color = getHabitColor(habit.id);
+          const color = getHabitColor();
 
           return (
             <motion.button
@@ -329,7 +324,7 @@ export function GlowingOrbHabits() {
               <span
                 className="text-sm font-semibold text-center max-w-[120px] line-clamp-2"
                 style={{
-                  color: completed ? color.bright : 'var(--muted-foreground)',
+                  color: completed ? color.border : 'var(--muted-foreground)',
                   textShadow: completed ? `0 0 8px ${color.glow}60` : 'none',
                 }}
               >
