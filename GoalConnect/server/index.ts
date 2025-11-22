@@ -66,6 +66,39 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
+// EMERGENCY: Clear-Site-Data endpoint to fix stuck service workers
+// Visit /clear-cache to force browser to clear all cached data
+// This path was never cached by the old SW, so it will reach the server
+app.get('/clear-cache', (_req, res) => {
+  logger.info('[Cache] Sending Clear-Site-Data header to force cache clear');
+  // This header tells the browser to clear ALL cached data including SW
+  res.setHeader('Clear-Site-Data', '"cache", "storage"');
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head><title>Cache Cleared</title></head>
+    <body style="font-family: system-ui; padding: 40px; text-align: center;">
+      <h1>Cache Cleared!</h1>
+      <p>Your browser cache and service workers have been cleared.</p>
+      <p><a href="/">Click here to go to the app</a></p>
+      <script>
+        // Also clear from JS side
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister());
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 // CRITICAL: Trust proxy for Railway deployment
 // Railway runs the app behind a proxy, and we need to trust it for:
 // - Secure cookies to work correctly
