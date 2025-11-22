@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
+import { Link } from "wouter";
 
 interface HabitLog {
   id: number;
@@ -123,10 +124,10 @@ export function WeeklyRhythm() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
+        <Link href="/habits" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
           <Calendar className="w-4 h-4 text-blue-400" />
           <h3 className="text-sm font-semibold">Weekly Rhythm</h3>
-        </div>
+        </Link>
       </div>
 
       {/* Main content - chart + stats side by side */}

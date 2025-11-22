@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Flame } from "lucide-react";
+import { Link } from "wouter";
 
 interface HabitLog {
   id: number;
@@ -125,10 +126,10 @@ export function HabitHeatmap() {
 
       {/* Header - matching other widgets */}
       <div className="flex items-center justify-between mb-3 relative z-10">
-        <div className="flex items-center gap-2">
+        <Link href="/habits" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
           <Flame className="w-5 h-5 text-[#FF6B6B]" />
           <h3 className="text-sm font-semibold">This Week</h3>
-        </div>
+        </Link>
         <span
           className="text-sm font-bold px-2.5 py-1 rounded-full"
           style={{

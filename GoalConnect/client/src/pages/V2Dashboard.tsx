@@ -1,4 +1,4 @@
-import { Home, Target, ListTodo, Settings, Mountain } from "lucide-react";
+import { Home, Target, ListTodo, Settings, Mountain, Calendar } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlowingOrbHabits } from "@/components/GlowingOrbHabits";
@@ -7,6 +7,24 @@ import { HabitHeatmap } from "@/components/HabitHeatmap";
 import { PeakLoreWidget } from "@/components/PeakLoreWidget";
 import { WeeklyRhythm } from "@/components/WeeklyRhythm";
 import { TokenCounter } from "@/components/TokenCounter";
+import { TodoPanel } from "@/components/TodoPanel";
+
+// Get time-based greeting
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+// Format today's date nicely
+function formatDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 /**
  * V2Dashboard - New 3-column layout experiment
@@ -63,10 +81,13 @@ export default function V2Dashboard() {
         <div className="glass-card p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Good morning, Climber</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Ready to conquer today's route?
-              </p>
+              <h1 className="text-2xl font-bold">{getGreeting()}, Climber</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <Calendar className="w-4 h-4 text-primary" />
+                <p className="text-muted-foreground text-sm">
+                  {formatDate()}
+                </p>
+              </div>
             </div>
             <TokenCounter />
           </div>
@@ -98,17 +119,7 @@ export default function V2Dashboard() {
 
       {/* === TO-DO PANEL === */}
       <aside className="glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4">To-Do</h2>
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="p-3 rounded-lg bg-muted/30 border border-border/50"
-            >
-              <p className="text-sm">Task placeholder {i}</p>
-            </div>
-          ))}
-        </div>
+        <TodoPanel />
       </aside>
     </div>
   );

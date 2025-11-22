@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Mountain } from "lucide-react";
+import { Link } from "wouter";
 
 interface Goal {
   id: number;
@@ -174,9 +175,9 @@ export function MountainRangeGoals() {
               ];
 
               return (
+                <Link key={goal.id} href="/goals">
                 <div
-                  key={goal.id}
-                  className="flex flex-col rounded-lg p-3 relative overflow-hidden transition-all hover:scale-[1.02]"
+                  className="flex flex-col rounded-lg p-3 relative overflow-hidden transition-all hover:scale-[1.02] cursor-pointer"
                   style={{
                     background: `linear-gradient(135deg, ${colors.bg}, ${colors.bg}50, transparent)`,
                     border: `1px solid ${colors.trail}40`,
@@ -610,6 +611,7 @@ export function MountainRangeGoals() {
                     {goal.currentValue} / {goal.targetValue}{goal.unit ? ` ${goal.unit}` : ''}
                   </div>
                 </div>
+                </Link>
               );
             })}
           </div>
