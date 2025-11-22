@@ -4,7 +4,7 @@ import { getDb } from '../db'
 import { habits, habitLogs } from '@shared/schema'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { HabitScoreHistory, HabitScorePoint } from '@shared/lib/habitScoring'
-import { frequencyToDecimal } from '@shared/lib/habitFrequency'
+import { frequencyToDecimal, FrequencyType } from '@shared/lib/habitFrequency'
 
 /**
  * Result of updating a habit's score
@@ -54,7 +54,7 @@ export async function updateHabitScore(
   const frequency = frequencyToDecimal({
     numerator,
     denominator,
-    type: frequencyType
+    type: frequencyType as FrequencyType
   })
 
   // 3. Get completion logs for the past 30 days

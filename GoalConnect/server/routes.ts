@@ -35,6 +35,8 @@ import { registerRecurrenceRoutes } from "./routes/recurrence";
 import { registerHabitRoutes } from "./routes/habits";
 import { registerGoalRoutes } from "./routes/goals";
 import { registerImportRoutes } from "./routes/import";
+import { registerKilterBoardRoutes } from "./routes/kilter-board";
+import { registerHabitMappingRoutes } from "./routes/habit-mappings";
 import {
   DatabaseError,
   ValidationError,
@@ -170,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.updateUserSettings(validated);
       res.json(settings);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Invalid settings data" });
+      res.status(400).json({ error: getErrorMessage(error) || "Invalid settings data" });
     }
   });
 
@@ -258,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pet = await storage.updateVirtualPet(id, req.body);
       res.json(pet);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Failed to update pet" });
+      res.status(400).json({ error: getErrorMessage(error) || "Failed to update pet" });
     }
   });
 
@@ -390,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userCostume = await storage.purchaseCostume(userId, actualCostumeId);
       res.status(201).json(userCostume);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Failed to purchase costume" });
+      res.status(400).json({ error: getErrorMessage(error) || "Failed to purchase costume" });
     }
   });
 
@@ -410,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const equipped = await storage.equipCostume(userId, costumeId);
       res.json(equipped);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Failed to equip costume" });
+      res.status(400).json({ error: getErrorMessage(error) || "Failed to equip costume" });
     }
   });
 
@@ -425,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const unequipped = await storage.unequipCostume(userId, costumeId);
       res.json(unequipped);
     } catch (error) {
-      res.status(400).json({ error: error.message || "Failed to unequip costume" });
+      res.status(400).json({ error: getErrorMessage(error) || "Failed to unequip costume" });
     }
   });
 
@@ -501,7 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(abandonedTodos);
     } catch (error) {
-      res.status(500).json({ error: error.message || "Failed to fetch abandoned todos" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to fetch abandoned todos" });
     }
   });
 
@@ -530,8 +532,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const todo = await storage.createTodo(validated);
       res.status(201).json(todo);
     } catch (error) {
-      if (error.name === "ZodError") {
-        return res.status(400).json({ error: "Invalid todo data", details: error.errors });
+      if (error instanceof Error && error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid todo data", details: (error as any).errors });
       }
       res.status(500).json({ error: "Failed to create todo" });
     }
@@ -552,8 +554,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateTodo(id, req.body);
       res.json(updated);
     } catch (error) {
-      if (error.name === "ZodError") {
-        return res.status(400).json({ error: "Invalid todo data", details: error.errors });
+      if (error instanceof Error && error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid todo data", details: (error as any).errors });
       }
       res.status(500).json({ error: "Failed to update todo" });
     }
@@ -715,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fs.unlinkSync(file.path);
             console.log(`[sprites] Deleted ZIP file: ${file.originalname}`);
           } catch (error) {
-            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error.message);
+            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, getErrorMessage(error));
             throw error;
           }
         } else {
@@ -764,10 +766,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[sprites] ========== UPLOAD FAILED ==========');
-      console.error('[sprites] Error type:', error.constructor.name);
-      console.error('[sprites] Error message:', error.message);
-      console.error('[sprites] Error stack:', error.stack);
-      res.status(500).json({ error: error.message || "Failed to upload sprites" });
+      console.error('[sprites] Error type:', error instanceof Error ? error.constructor.name : 'Unknown');
+      console.error('[sprites] Error message:', getErrorMessage(error));
+      console.error('[sprites] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to upload sprites" });
     }
   });
 
@@ -785,7 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(spriteList);
     } catch (error) {
       console.error('[sprites] List error:', error);
-      res.status(500).json({ error: error.message || "Failed to list sprites" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to list sprites" });
     }
   });
 
@@ -806,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(imageBuffer);
     } catch (error) {
       console.error('[sprites] File serve error:', error);
-      res.status(500).json({ error: error.message || "Failed to serve sprite" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to serve sprite" });
     }
   });
 
@@ -832,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, count: sprites.length });
     } catch (error) {
       console.error('[sprites] Organize error:', error);
-      res.status(500).json({ error: error.message || "Failed to save organization" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to save organization" });
     }
   });
 
@@ -868,7 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[sprites] Delete error:', error);
-      res.status(500).json({ error: error.message || "Failed to delete sprites" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to delete sprites" });
     }
   });
 
@@ -879,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(metadata);
     } catch (error) {
       console.error('[sprites] Get metadata error:', error);
-      res.status(500).json({ error: error.message || "Failed to get sprite metadata" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprite metadata" });
     }
   });
 
@@ -906,7 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[sprites] Get by ID error:', error);
-      res.status(500).json({ error: error.message || "Failed to get sprite" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprite" });
     }
   });
 
@@ -934,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error('[sprites] Get all error:', error);
-      res.status(500).json({ error: error.message || "Failed to get sprites" });
+      res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprites" });
     }
   });
 
@@ -951,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(items);
     } catch (error) {
       console.error('[dream-scroll] Get items error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -967,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(items);
     } catch (error) {
       console.error('[dream-scroll] Get by category error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -989,7 +991,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(item);
     } catch (error) {
       console.error('[dream-scroll] Create error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1010,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(item);
     } catch (error) {
       console.error('[dream-scroll] Update error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1031,7 +1033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(item);
     } catch (error) {
       console.error('[dream-scroll] Toggle error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1047,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error('[dream-scroll] Delete error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1065,7 +1067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(tags);
     } catch (error) {
       console.error('[dream-scroll-tags] Get tags error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1085,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(tag);
     } catch (error) {
       console.error('[dream-scroll-tags] Create tag error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1101,7 +1103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error('[dream-scroll-tags] Delete tag error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1153,7 +1155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[combo] Get stats error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1211,7 +1213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[combo] Register error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1233,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json([]);
     } catch (error) {
       console.error('[daily-quests] Get error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1251,7 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ error: "Quest not found" });
     } catch (error) {
       console.error('[daily-quests] Claim error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1274,7 +1276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[streak-freezes] Get error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1291,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: "Feature not available" });
     } catch (error) {
       console.error('[streak-freezes] Purchase error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1304,7 +1306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(gear);
     } catch (error) {
       console.error('[alpine-gear] Get all gear error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1319,7 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(inventory);
     } catch (error) {
       console.error('[alpine-gear] Get inventory error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1335,7 +1337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('[alpine-gear] Purchase error:', error);
-      res.status(400).json({ error: error.message });
+      res.status(400).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1370,7 +1372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       console.error('[gear] Get stats error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1405,7 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(gearCollection);
     } catch (error) {
       console.error('[gear] Get collection error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1418,7 +1420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(regions);
     } catch (error) {
       console.error('[mountains] Get regions error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1429,7 +1431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(mountains);
     } catch (error) {
       console.error('[mountains] Get all error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1441,7 +1443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(mountains);
     } catch (error) {
       console.error('[mountains] Get by region error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1471,7 +1473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(formatted);
     } catch (error) {
       console.error('[mountains] Get unlocked error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1483,7 +1485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json([]);
     } catch (error) {
       console.error('[routes] Get by mountain error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1530,7 +1532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('[backgrounds] Get user backgrounds error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1580,7 +1582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...mountain[0], unlocked: true, isActive: true });
     } catch (error) {
       console.error('[backgrounds] Activate background error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1595,7 +1597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       console.error('[climbing] Get stats error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1642,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[user] Get level progress error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1667,7 +1669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check for existing active expedition
-      const activeExpedition = await pool.query(
+      const activeExpedition = await getPool().query(
         `SELECT id FROM player_expeditions WHERE user_id = $1 AND status = 'in_progress'`,
         [userId]
       );
@@ -1693,7 +1695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get mountain and route details
-      const mountain = await pool.query(
+      const mountain = await getPool().query(
         `SELECT * FROM mountains WHERE id = $1`,
         [mountainId]
       );
@@ -1702,7 +1704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Mountain not found" });
       }
 
-      const route = await pool.query(
+      const route = await getPool().query(
         `SELECT * FROM routes WHERE id = $1 AND mountain_id = $2`,
         [routeId, mountainId]
       );
@@ -1715,7 +1717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const routeData = route.rows[0];
 
       // Check required gear for this route
-      const requiredGear = await pool.query(
+      const requiredGear = await getPool().query(
         `SELECT rg.gear_id, rg.is_required, g.name, g.category
          FROM route_gear_requirements rg
          JOIN alpine_gear g ON rg.gear_id = g.id
@@ -1725,7 +1727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (requiredGear.rows.length > 0) {
         // Get user's gear inventory
-        const userGear = await pool.query(
+        const userGear = await getPool().query(
           `SELECT gear_id FROM player_gear_inventory WHERE user_id = $1`,
           [userId]
         );
@@ -1771,7 +1773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Create expedition record (in_progress status)
-      const expeditionResult = await pool.query(
+      const expeditionResult = await getPool().query(
         `INSERT INTO player_expeditions
          (user_id, route_id, status, start_date, current_progress, current_altitude, current_day, energy_spent, summit_reached)
          VALUES ($1, $2, 'in_progress', NOW(), 0, 0, 0, 20, false)
@@ -1785,14 +1787,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (gearIds && gearIds.length > 0) {
         for (const gearId of gearIds) {
           // Get gear condition from inventory
-          const gearResult = await pool.query(
+          const gearResult = await getPool().query(
             `SELECT condition FROM player_gear_inventory WHERE user_id = $1 AND gear_id = $2`,
             [userId, gearId]
           );
 
           const condition = gearResult.rows[0]?.condition || 100;
 
-          await pool.query(
+          await getPool().query(
             `INSERT INTO expedition_gear_loadout (expedition_id, gear_id, quantity, condition_before)
              VALUES ($1, $2, 1, $3)`,
             [expeditionId, gearId, condition]
@@ -1801,7 +1803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create starting event
-      await pool.query(
+      await getPool().query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rest_day', 0, $2)`,
@@ -1839,7 +1841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[expeditions] Create expedition error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1855,7 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await pool.query(
+      const expedition = await getPool().query(
         `SELECT e.*, r.estimated_days, r.elevation_gain, r.route_name, m.name as mountain_name, m.elevation as mountain_elevation
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -1905,7 +1907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update expedition
-      await pool.query(
+      await getPool().query(
         `UPDATE player_expeditions
          SET current_progress = $1, current_day = $2, current_altitude = $3, energy_spent = $4, updated_at = NOW()
          WHERE id = $5`,
@@ -1915,7 +1917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create progress event
       const camp = Math.floor(newProgress / 25); // 0=basecamp, 1=camp1, 2=camp2, 3=camp3, 4=summit
       const campNames = ['Basecamp', 'Camp 1', 'Camp 2', 'Camp 3', 'High Camp'];
-      await pool.query(
+      await getPool().query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'acclimatization', $2, $3)`,
@@ -1950,7 +1952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[expeditions] Advance expedition error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -1966,7 +1968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition with mountain/route details
-      const expedition = await pool.query(
+      const expedition = await getPool().query(
         `SELECT e.*, r.technical_difficulty, r.physical_difficulty, r.elevation_gain, r.route_name,
                 m.name as mountain_name, m.elevation as mountain_elevation, m.difficulty_tier
          FROM player_expeditions e
@@ -1998,7 +2000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokensEarned = Math.floor(baseXp / 2);
 
       // Update expedition to completed
-      await pool.query(
+      await getPool().query(
         `UPDATE player_expeditions
          SET status = 'completed', summit_reached = true, completion_date = NOW(),
              experience_earned = $1, current_progress = 100, updated_at = NOW()
@@ -2022,7 +2024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addPoints(userId, tokensEarned, "goal_progress", expeditionId, `Summited ${exp.mountain_name}`);
 
       // Check for mountain unlocks based on new level and summit count
-      const unlockedMountains = await pool.query(
+      const unlockedMountains = await getPool().query(
         `SELECT m.id, m.name, m.elevation, m.difficulty_tier, m.unlock_requirements
          FROM mountains m
          WHERE m.required_climbing_level <= $1
@@ -2036,7 +2038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUnlocks = [];
       for (const mountain of unlockedMountains.rows) {
         // Create unlock record
-        await pool.query(
+        await getPool().query(
           `INSERT INTO mountain_unlocks (user_id, mountain_id, unlocked_by)
            VALUES ($1, $2, $3)
            ON CONFLICT (user_id, mountain_id) DO NOTHING`,
@@ -2085,14 +2087,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update achievements if any new ones were earned
       if (newAchievements.length > 0) {
-        await pool.query(
+        await getPool().query(
           `UPDATE player_climbing_stats SET achievements = $1 WHERE user_id = $2`,
           [JSON.stringify(currentAchievements), userId]
         );
       }
 
       // Unlock mountain background/theme (summit reward)
-      const mountainResult = await pool.query(
+      const mountainResult = await getPool().query(
         `SELECT m.id, m.name, m.elevation, m.background_image, m.theme_colors
          FROM mountains m
          JOIN routes r ON m.id = r.mountain_id
@@ -2105,7 +2107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const mountain = mountainResult.rows[0];
 
         // Check if background already unlocked
-        const existingBackground = await pool.query(
+        const existingBackground = await getPool().query(
           `SELECT id FROM mountain_backgrounds
            WHERE user_id = $1 AND mountain_id = $2`,
           [userId, mountain.id]
@@ -2113,7 +2115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (existingBackground.rows.length === 0) {
           // Unlock the background
-          await pool.query(
+          await getPool().query(
             `INSERT INTO mountain_backgrounds (user_id, mountain_id, expedition_id, is_active)
              VALUES ($1, $2, $3, false)
              ON CONFLICT DO NOTHING`,
@@ -2131,7 +2133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create summit event
-      await pool.query(
+      await getPool().query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'success', $2, $3)`,
@@ -2178,7 +2180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[expeditions] Complete expedition error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -2194,7 +2196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expeditionId = parseInt(req.params.id);
 
       // Get expedition
-      const expedition = await pool.query(
+      const expedition = await getPool().query(
         `SELECT e.*, r.route_name, m.name as mountain_name
          FROM player_expeditions e
          JOIN routes r ON e.route_id = r.id
@@ -2220,7 +2222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newEnergy = Math.min(maxEnergy, currentEnergy + energyRefund);
 
       // Update expedition to failed
-      await pool.query(
+      await getPool().query(
         `UPDATE player_expeditions
          SET status = 'failed', summit_reached = false, completion_date = NOW(),
              experience_earned = $1, updated_at = NOW()
@@ -2245,7 +2247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create retreat event
-      await pool.query(
+      await getPool().query(
         `INSERT INTO expedition_events
          (expedition_id, event_type, event_day, event_description)
          VALUES ($1, 'rescue', $2, $3)`,
@@ -2282,7 +2284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('[expeditions] Retreat expedition error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -2296,7 +2298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pool = getPool();
       const userId = req.user!.id;
 
-      const expeditions = await pool.query(
+      const expeditions = await getPool().query(
         `SELECT
           e.*,
           r.name as route_name,
@@ -2316,7 +2318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expeditions.rows);
     } catch (error) {
       console.error('[expeditions] Get expeditions error:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
@@ -2849,6 +2851,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerHabitRoutes(app);
   registerGoalRoutes(app);
   registerImportRoutes(app);
+  registerKilterBoardRoutes(app);
+  registerHabitMappingRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

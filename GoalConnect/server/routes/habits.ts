@@ -325,6 +325,22 @@ export function registerHabitRoutes(app: Express) {
 
   // ============ HABIT LOGS ============
 
+  // GET habit logs for a date range (for heatmaps)
+  app.get("/api/habit-logs/range/:startDate/:endDate", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { startDate, endDate } = req.params;
+      const allLogs = await storage.getAllHabitLogs(userId);
+      // Filter logs within date range
+      const filteredLogs = allLogs.filter(log =>
+        log.date >= startDate && log.date <= endDate
+      );
+      res.json(filteredLogs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch habit logs range" });
+    }
+  });
+
   // GET habit logs for a specific date
   app.get("/api/habit-logs/:date", async (req, res) => {
     try {
@@ -478,7 +494,7 @@ export function registerHabitRoutes(app: Express) {
         logResult = updatedLog;
 
         // For cumulative goals: update currentValue
-        if (habit.goalType === "cumulative") {
+        if (habit.goalType === "cumulative" && updatedLog) {
           const delta = updatedLog.completed ? (incrementValue || 1) : -(incrementValue || 1);
           await db.update(habits)
             .set({ currentValue: (habit.currentValue || 0) + delta })

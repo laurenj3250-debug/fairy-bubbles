@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 interface User {
   id: number;
@@ -35,10 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         if (data.authenticated && data.user) {
           setUser(data.user);
+        } else {
+          // Not authenticated - clear any stale query cache
+          queryClient.clear();
         }
+      } else {
+        // Session check failed - clear stale cache
+        queryClient.clear();
       }
     } catch (error) {
       console.error("Failed to check session:", error);
+      // On error, clear cache to prevent stale data issues
+      queryClient.clear();
     } finally {
       setLoading(false);
     }
@@ -114,8 +123,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setUser(null);
+      // Clear all cached queries to prevent stale data on next login
+      queryClient.clear();
     } catch (error) {
       console.error("Failed to sign out:", error);
+      // Still clear cache on error
+      queryClient.clear();
     }
   };
 

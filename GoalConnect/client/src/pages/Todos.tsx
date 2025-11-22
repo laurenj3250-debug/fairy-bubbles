@@ -333,7 +333,9 @@ export default function Todos() {
       description: 'Open focused task',
       action: () => {
         if (focusedTask && view === 'list') {
-          handleEditTodo(focusedTask);
+          // Look up full todo with metadata from sortedTodos
+          const fullTodo = sortedTodos.find(t => t.id === focusedTask.id);
+          if (fullTodo) handleEditTodo(fullTodo);
         }
       },
     },
@@ -342,7 +344,9 @@ export default function Todos() {
       description: 'Edit focused task',
       action: () => {
         if (focusedTask && view === 'list') {
-          handleEditTodo(focusedTask);
+          // Look up full todo with metadata from sortedTodos
+          const fullTodo = sortedTodos.find(t => t.id === focusedTask.id);
+          if (fullTodo) handleEditTodo(fullTodo);
         }
       },
     },

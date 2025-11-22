@@ -335,13 +335,13 @@ export async function parseAppleHealthXML(
 /**
  * Parse a single workout element (exported for testing)
  */
-export function parseWorkoutElement(
+export async function parseWorkoutElement(
   workoutXmlStr: string
-): ParsedWorkout | null {
-  const result = parseAppleHealthXML(
+): Promise<ParsedWorkout | null> {
+  const result = await parseAppleHealthXML(
     `<?xml version="1.0"?><HealthData>${workoutXmlStr}</HealthData>`
   );
-  return result.then ? null : result.workouts[0] || null;
+  return result.workouts[0] || null;
 }
 
 /**

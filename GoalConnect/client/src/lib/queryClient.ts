@@ -55,7 +55,9 @@ export const queryClient = new QueryClient({
       // like auth status or notifications if needed
       refetchOnWindowFocus: false,
       refetchOnMount: true, // Refetch when component mounts
+      refetchOnReconnect: true, // Refetch when network reconnects
       staleTime: QUERY_CONFIG.STALE_TIME, // Consider data stale after 30 seconds
+      gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes (prevents stale cache buildup)
       retry: false,
     },
     mutations: {

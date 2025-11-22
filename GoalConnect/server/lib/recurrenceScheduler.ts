@@ -89,11 +89,11 @@ export async function processRecurringTasks(): Promise<{
           dueDate: newDueDate,
           projectId: task.projectId,
           priority: task.priority,
-          notes: task.notes,
-          subtasks: task.subtasks,
+          notes: task.notes ?? undefined,
+          subtasks: task.subtasks ?? undefined,
           completed: false,
-          recurringPattern: null, // New instances are not recurring themselves
-          nextRecurrence: null,
+          recurringPattern: undefined, // New instances are not recurring themselves
+          nextRecurrence: undefined,
           createdAt: new Date()
         });
 

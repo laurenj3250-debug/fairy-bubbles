@@ -249,7 +249,9 @@ export class MemStorage implements IStorage {
 
   async createHabit(habit: InsertHabit): Promise<Habit> {
     const id = this.nextId++;
-    const newHabit: Habit = {
+    // Note: This in-memory implementation is for testing only
+    // Production uses db-storage.ts with full schema fields
+    const newHabit = {
       id,
       userId: habit.userId,
       title: habit.title,
@@ -264,7 +266,7 @@ export class MemStorage implements IStorage {
       effort: (habit.effort ?? "medium") as Habit['effort'],
       grade: habit.grade ?? "5.9",
       scheduledDay: habit.scheduledDay ?? null,
-    };
+    } as Habit;
     this.habits.set(id, newHabit);
     return newHabit;
   }
@@ -273,7 +275,8 @@ export class MemStorage implements IStorage {
     const existing = this.habits.get(id);
     if (!existing) return undefined;
 
-    const updated: Habit = {
+    // Note: This in-memory implementation is for testing only
+    const updated = {
       ...existing,
       ...habit,
       description: habit.description ?? existing.description,
@@ -282,7 +285,7 @@ export class MemStorage implements IStorage {
       difficulty: (habit.difficulty ?? existing.difficulty) as Habit['difficulty'],
       category: (habit.category ?? existing.category) as Habit['category'],
       effort: (habit.effort ?? existing.effort) as Habit['effort'],
-    };
+    } as Habit;
     this.habits.set(id, updated);
     return updated;
   }
@@ -311,7 +314,8 @@ export class MemStorage implements IStorage {
 
   async createHabitLog(log: InsertHabitLog): Promise<HabitLog> {
     const id = this.nextId++;
-    const newLog: HabitLog = {
+    // Note: This in-memory implementation is for testing only
+    const newLog = {
       id,
       habitId: log.habitId,
       userId: log.userId,
@@ -324,7 +328,7 @@ export class MemStorage implements IStorage {
       quantityCompleted: log.quantityCompleted ?? null,
       sessionType: log.sessionType ?? null,
       incrementValue: log.incrementValue ?? 1,
-    };
+    } as HabitLog;
     this.habitLogs.set(id, newLog);
     return newLog;
   }
@@ -638,7 +642,7 @@ export class MemStorage implements IStorage {
 
   async createTodo(todo: InsertTodo): Promise<Todo> {
     const id = this.nextId++;
-    const newTodo: Todo = {
+    const newTodo = {
       id,
       userId: todo.userId,
       title: todo.title,
@@ -648,7 +652,14 @@ export class MemStorage implements IStorage {
       completed: false,
       completedAt: null,
       createdAt: new Date(),
-    };
+      priority: todo.priority ?? 0,
+      position: 0,
+      projectId: todo.projectId ?? null,
+      recurringPattern: null,
+      nextRecurrence: null,
+      notes: todo.notes ?? null,
+      parentTaskId: null,
+    } as Todo;
     this.todos.set(id, newTodo);
     return newTodo;
   }
