@@ -194,10 +194,10 @@ export function groupIntoSessions(
   // Convert to sessions
   const sessions: ParsedClimbingSession[] = [];
 
-  for (const [date, data] of sessionsByDate) {
+  Array.from(sessionsByDate.entries()).forEach(([date, data]) => {
     const session = buildSession(date, data.ascents, data.attempts, climbMap, userId);
     sessions.push(session);
-  }
+  });
 
   return sessions;
 }
@@ -308,12 +308,12 @@ function getMostCommonValue(values: number[]): number | undefined {
 
   let maxCount = 0;
   let mostCommon: number | undefined;
-  for (const [value, count] of counts) {
+  Array.from(counts.entries()).forEach(([value, count]) => {
     if (count > maxCount) {
       maxCount = count;
       mostCommon = value;
     }
-  }
+  });
 
   return mostCommon;
 }

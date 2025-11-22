@@ -2,12 +2,13 @@
  * Kilter Board API Client
  *
  * Handles authentication and data synchronization with the Kilter Board API.
- * Uses the reverse-engineered API endpoints from the community.
+ * Uses the reverse-engineered API endpoints from the community (BoardLib).
+ * @see https://github.com/lemeryfertitta/BoardLib
  */
 
 import type { KilterAscent, KilterAttempt, KilterClimb } from "./kilter-board-parser";
 
-const KILTER_API_BASE = "https://api.kilterboardapp.com/v1";
+const KILTER_API_BASE = "https://kilterboardapp.com";
 
 // API response types
 export interface KilterLoginResponse {
@@ -59,18 +60,31 @@ export class KilterBoardClient {
    * Authenticate with Kilter Board and get access token
    */
   async login(username: string, password: string): Promise<KilterLoginResponse> {
-    const response = await fetch(`${this.baseUrl}/logins`, {
+    const response = await fetch(`${this.baseUrl}/sessions`, {
       method: "POST",
       headers: {
+        "Accept": "application/json",
         "Content-Type": "application/json",
+        "Connection": "keep-alive",
+        "Accept-Language": "en-AU,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Kilter%20Board/202 CFNetwork/1568.100.1 Darwin/24.0.0",
       },
       body: JSON.stringify({
         username,
         password,
-        tou: true, // Terms of use acceptance
-        pp: true, // Privacy policy acceptance
+        tou: "accepted", // Terms of use acceptance
+        pp: "accepted", // Privacy policy acceptance
+        ua: "app", // User agent type
       }),
     });
+
+    if (response.status === 422) {
+      throw new KilterBoardError(
+        "Invalid username or password. Please check your credentials and try again.",
+        response.status
+      );
+    }
 
     if (!response.ok) {
       const errorData = await this.parseErrorResponse(response);
@@ -81,69 +95,103 @@ export class KilterBoardClient {
     }
 
     const data = await response.json();
-    const login = data.login;
+    const session = data.session;
 
     return {
-      token: login.token,
-      userId: login.user_id,
-      username: login.username,
-      expiresAt: new Date(login.expires_at),
+      token: session.token,
+      userId: session.user_id,
+      username: session.username,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
     };
   }
 
   /**
    * Sync data from Kilter Board API
+   * Uses URL-encoded form data and cookie-based auth as per BoardLib implementation
    */
   async sync(
     token: string,
     options: KilterSyncOptions = {}
   ): Promise<KilterSyncResponse> {
+    const BASE_SYNC_DATE = "1970-01-01 00:00:00.000000";
     const tables: Record<string, string> = {};
 
     if (options.since) {
-      const sinceStr = options.since.toISOString();
+      const sinceStr = options.since.toISOString().replace("T", " ").replace("Z", "");
       tables.ascents = sinceStr;
-      tables.attempts = sinceStr;
-      tables.climbs = "2020-01-01T00:00:00Z"; // Climbs rarely change, use older date
+      tables.bids = sinceStr; // "bids" is the API name for attempts
+      tables.climbs = "2020-01-01 00:00:00.000000"; // Climbs rarely change
     } else if (options.tables) {
       if (options.tables.ascents) tables.ascents = options.tables.ascents;
-      if (options.tables.attempts) tables.attempts = options.tables.attempts;
+      if (options.tables.attempts) tables.bids = options.tables.attempts;
       if (options.tables.climbs) tables.climbs = options.tables.climbs;
+    } else {
+      // Default: sync everything from the beginning
+      tables.ascents = BASE_SYNC_DATE;
+      tables.bids = BASE_SYNC_DATE;
+      tables.climbs = BASE_SYNC_DATE;
     }
 
-    const response = await fetch(`${this.baseUrl}/sync`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        client: {
-          enforces_product_passwords: 1,
-          enforce_hover_time: 1,
-          enforce_minimum_time: 1,
+    const allClimbs: KilterClimb[] = [];
+    const allAscents: KilterAscent[] = [];
+    const allAttempts: KilterAttempt[] = [];
+
+    let complete = false;
+    let pageCount = 0;
+    const maxPages = 100;
+    const currentTables = { ...tables };
+
+    while (!complete && pageCount < maxPages) {
+      // Build URL-encoded form data
+      const payload = Object.entries(currentTables)
+        .map(([table, syncDate]) =>
+          `${encodeURIComponent(table)}=${encodeURIComponent(syncDate)}`
+        )
+        .join("&");
+
+      const response = await fetch(`${this.baseUrl}/sync`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "Kilter%20Board/202 CFNetwork/1568.100.1 Darwin/24.0.0",
+          "Cookie": `token=${token}`,
         },
-        tables: Object.keys(tables).length > 0 ? tables : undefined,
-      }),
-    });
+        body: payload,
+      });
 
-    if (!response.ok) {
-      const errorData = await this.parseErrorResponse(response);
-      throw new KilterBoardError(
-        errorData.message || "Sync failed",
-        response.status
-      );
+      if (!response.ok) {
+        const errorData = await this.parseErrorResponse(response);
+        throw new KilterBoardError(
+          errorData.message || "Sync failed",
+          response.status
+        );
+      }
+
+      const data = await response.json();
+      complete = data._complete === true;
+
+      // Collect data from this page
+      if (data.climbs) allClimbs.push(...data.climbs);
+      if (data.ascents) allAscents.push(...data.ascents);
+      if (data.bids) allAttempts.push(...data.bids);
+
+      // Update sync dates for pagination
+      for (const sync of [...(data.user_syncs || []), ...(data.shared_syncs || [])]) {
+        const tableName = sync.table_name;
+        const lastSync = sync.last_synchronized_at;
+        if (tableName && lastSync && currentTables[tableName]) {
+          currentTables[tableName] = lastSync;
+        }
+      }
+
+      pageCount++;
     }
-
-    const data = await response.json();
-
-    // Extract data from PUT response format
-    const put = data.PUT || {};
 
     return {
-      climbs: put.climbs || [],
-      ascents: put.ascents || [],
-      attempts: put.attempts || [],
+      climbs: allClimbs,
+      ascents: allAscents,
+      attempts: allAttempts,
     };
   }
 
@@ -185,19 +233,14 @@ export class KilterBoardClient {
    */
   async validateToken(token: string): Promise<boolean> {
     try {
-      // Try a minimal sync request to check token validity
-      const response = await fetch(`${this.baseUrl}/sync`, {
-        method: "POST",
+      // Try the explore endpoint to check token validity (lightweight)
+      const response = await fetch(`${this.baseUrl}/explore`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Accept": "application/json",
+          "User-Agent": "Kilter%20Board/202 CFNetwork/1568.100.1 Darwin/24.0.0",
+          "Cookie": `token=${token}`,
         },
-        body: JSON.stringify({
-          client: {
-            enforces_product_passwords: 1,
-          },
-          tables: {},
-        }),
       });
 
       return response.ok;
