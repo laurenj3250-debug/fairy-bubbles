@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 import { GlowingOrbHabits } from "@/components/GlowingOrbHabits";
 import { MountainRangeGoals } from "@/components/MountainRangeGoals";
 import { HabitHeatmap } from "@/components/HabitHeatmap";
-import { StreakFlames } from "@/components/StreakFlames";
+import { PeakLoreWidget } from "@/components/PeakLoreWidget";
 import { WeeklyRhythm } from "@/components/WeeklyRhythm";
+import { TokenCounter } from "@/components/TokenCounter";
 
 /**
  * V2Dashboard - New 3-column layout experiment
@@ -60,10 +61,15 @@ export default function V2Dashboard() {
       <main className="overflow-y-auto p-6 space-y-6">
         {/* Header */}
         <div className="glass-card p-6">
-          <h1 className="text-2xl font-bold">Good morning, Climber</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Ready to conquer today's route?
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Good morning, Climber</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Ready to conquer today's route?
+              </p>
+            </div>
+            <TokenCounter />
+          </div>
         </div>
 
         {/* Top Row: Habits + Goals */}
@@ -82,7 +88,7 @@ export default function V2Dashboard() {
             <HabitHeatmap />
           </div>
           <div className="glass-card p-4 min-h-[160px]">
-            <StreakFlames />
+            <PeakLoreWidget />
           </div>
           <div className="glass-card p-4 min-h-[160px]">
             <WeeklyRhythm />
