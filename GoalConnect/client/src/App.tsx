@@ -26,6 +26,7 @@ import ImportSettings from "@/pages/ImportSettings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
+import V2Dashboard from "@/pages/V2Dashboard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -100,6 +101,13 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+
+      {/* V2 Layout Experiment - no BottomNav (has own nav rail) */}
+      <Route path="/v2">
+        <RequireAuth>
+          <V2Dashboard />
+        </RequireAuth>
+      </Route>
 
       {/* Protected routes */}
       <Route path="/">

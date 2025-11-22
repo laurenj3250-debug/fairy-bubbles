@@ -4,16 +4,17 @@ import { motion } from "framer-motion";
 import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
 import { Plus } from "lucide-react";
 
-// Get climbing hold color variations using mountain theme colors
+// Vibrant climbing hold colors - more saturated and varied
 const getHabitColor = (id: number) => {
-  // Rotate through different combinations of primary, accent, and secondary
   const variations = [
-    { bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))", border: "hsl(var(--primary))" },
-    { bg: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))", border: "hsl(var(--accent))" },
-    { bg: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)))", border: "hsl(var(--secondary))" },
-    { bg: "linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.9))", border: "hsl(var(--primary) / 0.8)" },
-    { bg: "linear-gradient(135deg, hsl(var(--accent) / 0.8), hsl(var(--secondary) / 0.9))", border: "hsl(var(--accent) / 0.8)" },
-    { bg: "linear-gradient(135deg, hsl(var(--secondary) / 0.8), hsl(var(--primary) / 0.9))", border: "hsl(var(--secondary) / 0.8)" },
+    { bg: "linear-gradient(135deg, #FF6B6B, #FF8E53)", border: "#FF6B6B", glow: "#FF6B6B" }, // Coral/Orange
+    { bg: "linear-gradient(135deg, #4ECDC4, #44A08D)", border: "#4ECDC4", glow: "#4ECDC4" }, // Teal
+    { bg: "linear-gradient(135deg, #A855F7, #EC4899)", border: "#A855F7", glow: "#A855F7" }, // Purple/Pink
+    { bg: "linear-gradient(135deg, #FBBF24, #F59E0B)", border: "#FBBF24", glow: "#FBBF24" }, // Golden
+    { bg: "linear-gradient(135deg, #60A5FA, #3B82F6)", border: "#60A5FA", glow: "#60A5FA" }, // Blue
+    { bg: "linear-gradient(135deg, #34D399, #10B981)", border: "#34D399", glow: "#34D399" }, // Emerald
+    { bg: "linear-gradient(135deg, #F472B6, #EC4899)", border: "#F472B6", glow: "#F472B6" }, // Pink
+    { bg: "linear-gradient(135deg, #FB923C, #EA580C)", border: "#FB923C", glow: "#FB923C" }, // Orange
   ];
   return variations[id % variations.length];
 };
@@ -40,6 +41,7 @@ interface HabitLog {
 export function GlowingOrbHabits() {
   const queryClient = useQueryClient();
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [bursts, setBursts] = useState<{ id: number; habitId: number; color: string }[]>([]);
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
   const { data: allHabits = [] } = useQuery<Habit[]>({
@@ -77,19 +79,19 @@ export function GlowingOrbHabits() {
   }));
 
   const handleOrbClick = (habitId: number, event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const completed = isCompleted(habitId);
+    const color = getHabitColor(habitId);
 
-    // Add ripple effect
-    const rippleId = Date.now();
-    setRipples((prev) => [...prev, { id: rippleId, x, y }]);
-    setTimeout(() => {
-      setRipples((prev) => prev.filter((r) => r.id !== rippleId));
-    }, 600);
+    // Only burst when completing (not uncompleting)
+    if (!completed) {
+      const burstId = Date.now();
+      setBursts((prev) => [...prev, { id: burstId, habitId, color: color.glow }]);
+      setTimeout(() => {
+        setBursts((prev) => prev.filter((b) => b.id !== burstId));
+      }, 1000);
+    }
 
     // Toggle habit
-    const completed = isCompleted(habitId);
     toggleMutation.mutate({ habitId, completed: !completed });
   };
 
@@ -123,13 +125,126 @@ export function GlowingOrbHabits() {
             >
               {/* Climbing Hold */}
               <div className="relative w-20 h-20">
+                {/* EXPLOSION BURST on click */}
+                {bursts.filter(b => b.habitId === habit.id).map(burst => (
+                  <div key={burst.id} className="absolute inset-0 pointer-events-none overflow-visible">
+                    {/* Ring explosion */}
+                    <motion.div
+                      className="absolute inset-[-50%] rounded-full"
+                      style={{
+                        border: `4px solid ${burst.color}`,
+                        boxShadow: `0 0 30px ${burst.color}, 0 0 60px ${burst.color}, inset 0 0 30px ${burst.color}`,
+                      }}
+                      initial={{ scale: 0.3, opacity: 1 }}
+                      animate={{ scale: 4, opacity: 0 }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
+                    />
+                    {/* Second ring */}
+                    <motion.div
+                      className="absolute inset-[-50%] rounded-full"
+                      style={{
+                        border: `2px solid ${burst.color}`,
+                        boxShadow: `0 0 20px ${burst.color}`,
+                      }}
+                      initial={{ scale: 0.5, opacity: 0.8 }}
+                      animate={{ scale: 3, opacity: 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+                    />
+                    {/* Particle explosion - 16 particles */}
+                    {[...Array(16)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-4 h-4 rounded-full"
+                        style={{
+                          background: burst.color,
+                          boxShadow: `0 0 15px ${burst.color}, 0 0 30px ${burst.color}`,
+                          left: '50%',
+                          top: '50%',
+                          marginLeft: '-8px',
+                          marginTop: '-8px',
+                        }}
+                        initial={{ scale: 1, x: 0, y: 0, opacity: 1 }}
+                        animate={{
+                          scale: [1, 2, 0],
+                          x: Math.cos(i * 22.5 * Math.PI / 180) * 150,
+                          y: Math.sin(i * 22.5 * Math.PI / 180) * 150,
+                          opacity: [1, 1, 0],
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeOut",
+                        }}
+                      />
+                    ))}
+                    {/* Inner sparkle particles */}
+                    {[...Array(8)].map((_, i) => (
+                      <motion.div
+                        key={`inner-${i}`}
+                        className="absolute w-2 h-2 rounded-full"
+                        style={{
+                          background: '#fff',
+                          boxShadow: `0 0 10px #fff, 0 0 20px ${burst.color}`,
+                          left: '50%',
+                          top: '50%',
+                          marginLeft: '-4px',
+                          marginTop: '-4px',
+                        }}
+                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                        animate={{
+                          scale: [0, 1.5, 0],
+                          x: Math.cos((i * 45 + 22.5) * Math.PI / 180) * 60,
+                          y: Math.sin((i * 45 + 22.5) * Math.PI / 180) * 60,
+                          opacity: [1, 1, 0],
+                        }}
+                        transition={{
+                          duration: 0.5,
+                          ease: "easeOut",
+                          delay: 0.05,
+                        }}
+                      />
+                    ))}
+                    {/* Flash */}
+                    <motion.div
+                      className="absolute inset-[-100%] rounded-full"
+                      style={{
+                        background: `radial-gradient(circle, ${burst.color} 0%, transparent 50%)`,
+                      }}
+                      initial={{ opacity: 1, scale: 0.3 }}
+                      animate={{ opacity: 0, scale: 3 }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                ))}
+
+                {/* Intense glow layer when completed */}
+                {completed && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{
+                      opacity: [0.6, 1, 0.6],
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute inset-[-50%] rounded-full"
+                    style={{
+                      background: `radial-gradient(circle, ${color.border} 0%, transparent 70%)`,
+                      filter: 'blur(20px)',
+                    }}
+                  />
+                )}
+
                 <motion.div
                   className="absolute inset-0 flex items-center justify-center"
                   animate={completed ? {
-                    filter: `brightness(1.2) saturate(1.5) drop-shadow(0 2px 8px ${color.border})`
+                    filter: `brightness(1.4) saturate(1.8) drop-shadow(0 0 20px ${color.border}) drop-shadow(0 0 40px ${color.border})`
                   } : {
-                    filter: "brightness(0.7) saturate(0.6) grayscale(0.3)"
+                    filter: "brightness(0.5) saturate(0.4) grayscale(0.5)"
                   }}
+                  transition={{ duration: 0.3 }}
                 >
                   <ClimbingHoldSVG
                     variant={index % 3}
@@ -139,22 +254,68 @@ export function GlowingOrbHabits() {
                   />
                 </motion.div>
 
-                {/* Chalk mark when completed */}
+                {/* Sparkles burst effect */}
+                {completed && (
+                  <>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full"
+                        style={{
+                          background: color.glow,
+                          boxShadow: `0 0 6px ${color.glow}`,
+                          left: '50%',
+                          top: '50%',
+                        }}
+                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                        animate={{
+                          scale: [0, 1, 0],
+                          x: [0, Math.cos(i * 60 * Math.PI / 180) * 50],
+                          y: [0, Math.sin(i * 60 * Math.PI / 180) * 50],
+                          opacity: [1, 1, 0],
+                        }}
+                        transition={{
+                          duration: 0.6,
+                          delay: i * 0.05,
+                          repeat: Infinity,
+                          repeatDelay: 8,
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* Shimmer effect on completed */}
                 {completed && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute inset-0 flex items-center justify-center"
+                    className="absolute inset-0 rounded-full overflow-hidden pointer-events-none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                   >
-                    <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm" />
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        background: `linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)`,
+                      }}
+                      animate={{
+                        x: ['-100%', '200%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 10,
+                        ease: 'easeInOut',
+                      }}
+                    />
                   </motion.div>
                 )}
 
                 {/* Check mark */}
                 {completed && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     className="absolute inset-0 flex items-center justify-center"
                   >
                     <svg className="w-8 h-8 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
