@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["cd GoalConnect && npm install"]
+cmds = ["cd GoalConnect && npm ci"]
 
 [phases.build]
 cmds = ["cd GoalConnect && npm run build"]
 
 [start]
-cmd = "cd GoalConnect && npm run start"
+cmd = "cd GoalConnect && npm run db:migrate && npm run start"
