@@ -194,8 +194,11 @@ export function HabitHeatmap() {
 
               {/* Habit name */}
               <div
-                className="w-20 text-sm font-semibold truncate"
-                style={{ color: colors.solid }}
+                className="w-24 text-sm font-semibold truncate"
+                style={{
+                  color: colors.bright,
+                  textShadow: `0 0 8px ${colors.solid}80`,
+                }}
                 title={habit.title}
               >
                 {habit.title}

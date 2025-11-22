@@ -10,8 +10,10 @@ import { FrequencyType } from "@shared/lib/habitFrequency";
 
 interface HabitCreateDialogProps {
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   habit?: Habit;
+  editHabit?: Habit;
 }
 
 // Route Templates - Pre-configured climbing routes
@@ -124,8 +126,17 @@ const HABIT_ICONS = [
   "🏃", "🏋️", "🚴", "🏊", "✍️", "💻", "🎨", "🎯"
 ];
 
-export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogProps) {
+export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabit }: HabitCreateDialogProps) {
   const { user } = useAuth();
+
+  // Support both onClose and onOpenChange patterns
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
+
+  // Support both habit and editHabit props
+  const activeHabit = habit || editHabit;
 
   // Form state - properly reset when dialog opens/closes or habit changes
   const [title, setTitle] = useState("");
@@ -166,25 +177,25 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
   // Reset form when dialog opens or habit changes
   useEffect(() => {
     if (open) {
-      if (habit) {
+      if (activeHabit) {
         // Editing existing habit - skip templates
         setShowTemplates(false);
-        setTitle(habit.title || "");
-        setIcon(habit.icon || "⭐");
-        setCategory((habit.category as any) || "training");
-        setEffort((habit.effort as any) || "medium");
-        setGrade(habit.grade || "5.9");
+        setTitle(activeHabit.title || "");
+        setIcon(activeHabit.icon || "⭐");
+        setCategory((activeHabit.category as any) || "training");
+        setEffort((activeHabit.effort as any) || "medium");
+        setGrade(activeHabit.grade || "5.9");
 
         // Load frequency from new fields or fall back to old cadence fields
-        if (habit.frequencyNumerator && habit.frequencyDenominator && habit.frequencyType) {
+        if (activeHabit.frequencyNumerator && activeHabit.frequencyDenominator && activeHabit.frequencyType) {
           setFrequency({
-            numerator: habit.frequencyNumerator,
-            denominator: habit.frequencyDenominator,
-            type: habit.frequencyType as FrequencyType
+            numerator: activeHabit.frequencyNumerator,
+            denominator: activeHabit.frequencyDenominator,
+            type: activeHabit.frequencyType as FrequencyType
           });
-        } else if (habit.cadence === "weekly") {
+        } else if (activeHabit.cadence === "weekly") {
           setFrequency({
-            numerator: habit.targetPerWeek || 1,
+            numerator: activeHabit.targetPerWeek || 1,
             denominator: 7,
             type: FrequencyType.WEEKLY
           });
@@ -197,7 +208,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
           });
         }
 
-        setLinkedGoalId(habit.linkedGoalId || null);
+        setLinkedGoalId(activeHabit.linkedGoalId || null);
       } else {
         // New habit - show templates
         setShowTemplates(true);
@@ -255,8 +266,8 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
 
       console.log("[HabitCreateDialog] Submitting habit:", data);
 
-      if (habit) {
-        await apiRequest(`/api/habits/${habit.id}`, "PATCH", data);
+      if (activeHabit) {
+        await apiRequest(`/api/habits/${activeHabit.id}`, "PATCH", data);
         console.log("[HabitCreateDialog] Habit updated successfully");
       } else {
         await apiRequest("/api/habits", "POST", data);
@@ -268,7 +279,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
 
       // Reset form and close
       setSubmitting(false);
-      onClose();
+      handleClose();
     } catch (error: any) {
       console.error("[HabitCreateDialog] Failed to save habit:", error);
       setError(error.message || "Failed to save route. Please try again.");
@@ -283,7 +294,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
     <>
       {/* Backdrop */}
       <div
-        onClick={onClose}
+        onClick={handleClose}
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[999998]"
       />
 
@@ -297,14 +308,14 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
           <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-foreground mb-1">
-                {habit ? "Edit Route" : "Plan New Route"}
+                {activeHabit ? "Edit Route" : "Plan New Route"}
               </h2>
               <p className="text-sm text-muted-foreground">
                 Build your climbing route
               </p>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 hover:bg-muted/20 rounded-lg transition-colors"
             >
               <X className="w-5 h-5 text-muted-foreground" />
@@ -549,7 +560,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
             <div className="flex gap-3 pt-4 border-t border-card-border">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 px-4 py-3 rounded-xl border-2 border-card-border bg-card/40 text-muted-foreground font-semibold hover:bg-muted/10 transition-colors"
               >
                 Cancel
@@ -564,7 +575,7 @@ export function HabitCreateDialog({ open, onClose, habit }: HabitCreateDialogPro
                     : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
                 )}
               >
-                {submitting ? "Saving..." : habit ? "Update Route" : "Create Route"}
+                {submitting ? "Saving..." : activeHabit ? "Update Route" : "Create Route"}
               </button>
             </div>
           </form>

@@ -33,6 +33,7 @@ interface NextMountain {
     name: string;
     elevation: number;
     country: string;
+    mountainRange: string;
     difficultyTier: string;
     description: string;
     requiredClimbingLevel: number;

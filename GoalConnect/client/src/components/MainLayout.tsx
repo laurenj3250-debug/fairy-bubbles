@@ -1,0 +1,71 @@
+import { Home, Target, ListTodo, Settings, Mountain, Calendar } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
+
+const navItems = [
+  { path: "/", icon: Home, label: "Home" },
+  { path: "/habits", icon: Mountain, label: "Habits" },
+  { path: "/goals", icon: Target, label: "Goals" },
+  { path: "/todos", icon: ListTodo, label: "Tasks" },
+  { path: "/settings", icon: Settings, label: "Settings" },
+];
+
+interface MainLayoutProps {
+  children: ReactNode;
+  showTodoPanel?: boolean;
+  todoPanel?: ReactNode;
+}
+
+/**
+ * MainLayout - Shared layout with nav rail for all pages
+ *
+ * Layout options:
+ * - With todo panel (3-column): nav | content | todo panel
+ * - Without todo panel (2-column): nav | content (full width)
+ */
+export function MainLayout({ children, showTodoPanel = false, todoPanel }: MainLayoutProps) {
+  const [location] = useLocation();
+
+  return (
+    <div className={cn(
+      "h-screen grid overflow-hidden",
+      showTodoPanel ? "grid-cols-[64px_1fr_320px]" : "grid-cols-[64px_1fr]"
+    )}>
+      {/* === NAV RAIL === */}
+      <nav className="glass-card rounded-none border-r border-border/50 flex flex-col items-center py-6 gap-2">
+        {navItems.map(({ path, icon: Icon, label }) => {
+          // Handle both "/" and "/v2" as home
+          const isActive = location === path || (path === "/" && location === "/v2");
+          return (
+            <Link key={path} href={path}>
+              <button
+                className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
+                  isActive
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+                title={label}
+              >
+                <Icon className="w-5 h-5" />
+              </button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* === MAIN CONTENT === */}
+      <main className="overflow-y-auto">
+        {children}
+      </main>
+
+      {/* === OPTIONAL TODO PANEL === */}
+      {showTodoPanel && todoPanel && (
+        <aside className="glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
+          {todoPanel}
+        </aside>
+      )}
+    </div>
+  );
+}

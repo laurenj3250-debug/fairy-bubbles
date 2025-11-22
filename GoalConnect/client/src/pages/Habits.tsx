@@ -66,9 +66,11 @@ export default function Habits() {
     }
   };
 
-  const handleCloseDialog = () => {
-    setHabitDialogOpen(false);
-    setEditingHabit(undefined);
+  const handleCloseDialog = (open?: boolean) => {
+    if (open === false || open === undefined) {
+      setHabitDialogOpen(false);
+      setEditingHabit(undefined);
+    }
   };
 
   // Calculate overall stats
@@ -80,7 +82,7 @@ export default function Habits() {
 
   return (
     <div className="min-h-screen pb-20 px-4 pt-6">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-6 relative overflow-hidden">
           <div
@@ -164,7 +166,7 @@ export default function Habits() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {habits.map((habit) => (
               <HabitCard
                 key={habit.id}

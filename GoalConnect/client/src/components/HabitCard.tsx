@@ -107,7 +107,7 @@ export function HabitCard({
 
           {/* Habit Name & Score */}
           <div>
-            <h3 className="font-semibold text-foreground text-lg">{habit.name}</h3>
+            <h3 className="font-semibold text-foreground text-lg">{habit.title}</h3>
             {score > 0 && (
               <HabitScoreIndicator score={score} size="sm" className="mt-1" />
             )}

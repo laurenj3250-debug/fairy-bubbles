@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BottomNav } from "@/components/BottomNav";
+import { MainLayout } from "@/components/MainLayout";
 import { ProgressBackground } from "@/components/ProgressBackground";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -118,38 +118,44 @@ function AppRoutes() {
       {/* Legacy routes - kept during migration */}
       <Route path="/weekly-hub-old">
         <RequireAuth>
-          <WeeklyHub />
-          <BottomNav />
+          <MainLayout>
+            <WeeklyHub />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/dashboard">
         <RequireAuth>
-          <DashboardNew />
-          <BottomNav />
+          <MainLayout>
+            <DashboardNew />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/habits">
         <RequireAuth>
-          <Habits />
-          <BottomNav />
+          <MainLayout>
+            <Habits />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/habit-insights">
         <RequireAuth>
-          <HabitInsights />
-          <BottomNav />
+          <MainLayout>
+            <HabitInsights />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/goals">
         <RequireAuth>
-          <Goals />
-          <BottomNav />
+          <MainLayout>
+            <Goals />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/todos">
         <RequireAuth>
-          <Todos />
-          <BottomNav />
+          <MainLayout>
+            <Todos />
+          </MainLayout>
         </RequireAuth>
       </Route>
       {/* Redirect /weekly to / */}
@@ -165,54 +171,62 @@ function AppRoutes() {
       </Route>
       <Route path="/alpine-shop">
         <RequireAuth>
-          <AlpineShop />
-          <BottomNav />
+          <MainLayout>
+            <AlpineShop />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/world-map">
         <RequireAuth>
-          <WorldMap />
-          <BottomNav />
+          <MainLayout>
+            <WorldMap />
+          </MainLayout>
         </RequireAuth>
       </Route>
       {/* ARCHIVED: Alpine Expeditions (System A) - Kept for reference
       <Route path="/expedition/plan/:mountainId">
         <RequireAuth>
-          <ExpeditionPlanning />
-          <BottomNav />
+          <MainLayout>
+            <ExpeditionPlanning />
+          </MainLayout>
         </RequireAuth>
       </Route>
       */}
       <Route path="/expedition-missions">
         <RequireAuth>
-          <ExpeditionMissions />
-          <BottomNav />
+          <MainLayout>
+            <ExpeditionMissions />
+          </MainLayout>
         </RequireAuth>
       </Route>
       {/* ARCHIVED: Logbook merged into main Expedition Missions page
       <Route path="/expedition-logbook">
         <RequireAuth>
-          <ExpeditionLogbook />
-          <BottomNav />
+          <MainLayout>
+            <ExpeditionLogbook />
+          </MainLayout>
         </RequireAuth>
       </Route>
       */}
       <Route path="/dream-scroll">
         <RequireAuth>
-          <DreamScroll />
-          <BottomNav />
+          <MainLayout>
+            <DreamScroll />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/settings">
         <RequireAuth>
-          <Settings />
-          <BottomNav />
+          <MainLayout>
+            <Settings />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/settings/import">
         <RequireAuth>
-          <ImportSettings />
-          <BottomNav />
+          <MainLayout>
+            <ImportSettings />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route component={NotFound} />

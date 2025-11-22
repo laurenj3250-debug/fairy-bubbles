@@ -359,8 +359,7 @@ export default function DreamScrollMountain() {
                 className="flex-1 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
                 style={{
                   background: 'hsl(var(--foreground) / 0.05)',
-                  borderColor: 'hsl(var(--foreground) / 0.1)',
-                  focusRingColor: 'hsl(var(--primary))'
+                  borderColor: 'hsl(var(--foreground) / 0.1)'
                 }}
               />
               <select

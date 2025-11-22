@@ -326,7 +326,13 @@ export function GlowingOrbHabits() {
               </div>
 
               {/* Habit name */}
-              <span className={`text-sm font-medium text-center max-w-[90px] line-clamp-2 ${completed ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <span
+                className="text-sm font-semibold text-center max-w-[120px] line-clamp-2"
+                style={{
+                  color: completed ? color.bright : 'var(--muted-foreground)',
+                  textShadow: completed ? `0 0 8px ${color.glow}60` : 'none',
+                }}
+              >
                 {habit.title}
               </span>
             </motion.button>
