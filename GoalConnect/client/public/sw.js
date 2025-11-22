@@ -1,9 +1,9 @@
 // Service Worker for GoalConnect
 // Provides offline support with cache-first strategy for static assets
 
-const CACHE_NAME = 'goalconnect-v1';
-const STATIC_CACHE = 'goalconnect-static-v1';
-const DYNAMIC_CACHE = 'goalconnect-dynamic-v1';
+const CACHE_NAME = 'goalconnect-v2';
+const STATIC_CACHE = 'goalconnect-static-v2';
+const DYNAMIC_CACHE = 'goalconnect-dynamic-v2';
 
 // Static assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -59,16 +59,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip auth endpoints completely - don't intercept at all
+  // This ensures cookies are properly set without any interference
+  if (url.pathname.startsWith('/api/auth/')) {
+    return; // Let the browser handle this normally
+  }
+
   // Skip API requests - always go to network for fresh data
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { credentials: 'same-origin' })
         .then((response) => {
           // Clone the response before caching
           const responseClone = response.clone();
 
-          // Cache API responses for offline fallback (stale-while-revalidate)
-          if (response.ok) {
+          // Only cache GET requests (POST/PUT/DELETE can't be cached)
+          if (response.ok && request.method === 'GET') {
             caches.open(DYNAMIC_CACHE).then((cache) => {
               cache.put(request, responseClone);
             });
