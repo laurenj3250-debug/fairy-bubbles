@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey - Climbing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: hsl(45, 30%, 8%);
+      --bg-card: hsl(45, 25%, 12%);
+      --bg-elevated: hsl(45, 20%, 16%);
+      --climb: #14F0C5;
+      --climb-light: #5EEAD4;
+      --climb-dark: #0D9488;
+      --climb-glow: rgba(20, 240, 197, 0.3);
+      --gold: #FFD700;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --text: #FFFFFF;
+      --text-sec: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+      --border: rgba(255,255,255,0.08);
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 32px; }
+    h1, h2, h3, .heading { font-family: 'Fraunces', serif; font-weight: 700; }
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .nav-title { font-size: 28px; background: linear-gradient(135deg, var(--climb), var(--climb-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-link { padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; text-decoration: none; color: var(--text-sec); }
+    .nav-link:hover { background: var(--bg-elevated); color: var(--text); }
+    .nav-link.active { background: var(--climb); color: #000; }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+    .hero-row { display: flex; gap: 20px; margin-bottom: 24px; }
+    .hero-stat { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; }
+    .hero-stat .icon { font-size: 32px; margin-bottom: 8px; }
+    .hero-stat .value { font-family: 'Fraunces', serif; font-size: 42px; font-weight: 800; color: var(--climb); }
+    .hero-stat .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+    .hero-stat .sub { font-size: 11px; color: var(--text-sec); margin-top: 4px; }
+
+    .chart-container { background: var(--bg-elevated); border-radius: 12px; padding: 20px; height: 220px; position: relative; }
+    .chart-container.tall { height: 280px; }
+    .chart-svg { width: 100%; height: 100%; }
+
+    .legend { display: flex; gap: 20px; justify-content: center; margin-top: 16px; font-size: 11px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+
+    /* Pyramid */
+    .pyramid { display: flex; flex-direction: column; gap: 8px; }
+    .pyramid-row { display: flex; align-items: center; gap: 12px; }
+    .pyramid-grade { width: 35px; font-weight: 700; font-size: 14px; text-align: right; }
+    .pyramid-bar-container { flex: 1; height: 28px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden; }
+    .pyramid-bar { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 12px; font-size: 12px; font-weight: 600; color: #000; }
+    .pyramid-count { width: 35px; font-size: 13px; color: var(--text-sec); }
+
+    /* Swarmplot dots */
+    .swarm-dot { transition: all 0.2s; cursor: pointer; }
+    .swarm-dot:hover { r: 10; filter: brightness(1.3); }
+
+    /* Funnel */
+    .funnel { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 0; }
+    .funnel-stage { display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; font-weight: 700; font-size: 13px; color: #000; position: relative; }
+    .funnel-label { position: absolute; right: -90px; color: var(--text-sec); font-size: 11px; white-space: nowrap; }
+
+    /* Calendar heatmap */
+    .heatmap { display: grid; grid-template-columns: repeat(26, 1fr); gap: 3px; }
+    .heatmap-cell { aspect-ratio: 1; border-radius: 3px; transition: all 0.2s; cursor: pointer; }
+    .heatmap-cell:hover { transform: scale(1.4); z-index: 10; }
+    .heatmap-cell.l0 { background: var(--bg-elevated); }
+    .heatmap-cell.l1 { background: rgba(20, 240, 197, 0.2); }
+    .heatmap-cell.l2 { background: rgba(20, 240, 197, 0.4); }
+    .heatmap-cell.l3 { background: rgba(20, 240, 197, 0.6); }
+    .heatmap-cell.l4 { background: var(--climb); }
+
+    /* Angle matrix */
+    .angle-matrix { display: grid; grid-template-columns: 50px repeat(5, 1fr); gap: 4px; }
+    .matrix-header { font-size: 10px; font-weight: 600; color: var(--text-muted); text-align: center; padding: 8px 4px; }
+    .matrix-row-label { font-size: 11px; font-weight: 600; color: var(--text-sec); display: flex; align-items: center; }
+    .matrix-cell { height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .matrix-cell.sent { background: var(--climb); color: #000; }
+    .matrix-cell.project { background: rgba(20, 240, 197, 0.2); color: var(--climb); border: 1px dashed var(--climb); }
+    .matrix-cell.empty { background: var(--bg-elevated); color: var(--text-muted); }
+
+    @media (max-width: 1100px) { .span-3, .span-4, .span-5 { grid-column: span 6; } .span-7, .span-8 { grid-column: span 12; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <h1 class="nav-title">🧗 Climbing Journey</h1>
+      <div class="nav-links">
+        <a class="nav-link" href="05-mockup-v7-lifting.html">Lifting</a>
+        <a class="nav-link active" href="05-mockup-v7-climbing.html">Climbing</a>
+        <a class="nav-link" href="05-mockup-v7-cycling.html">Cycling</a>
+      </div>
+    </nav>
+
+    <!-- Hero Stats -->
+    <div class="hero-row">
+      <div class="hero-stat">
+        <div class="icon">🏔️</div>
+        <div class="value">V6</div>
+        <div class="label">Max Grade</div>
+        <div class="sub">Outdoor • Bishop, CA</div>
+      </div>
+      <div class="hero-stat">
+        <div class="icon">📱</div>
+        <div class="value">V5</div>
+        <div class="label">Kilter Max</div>
+        <div class="sub">At 40° angle</div>
+      </div>
+      <div class="hero-stat">
+        <div class="icon">⛰️</div>
+        <div class="value">12.4k</div>
+        <div class="label">Vertical Feet</div>
+        <div class="sub">≈ 4 Everests in 2024</div>
+      </div>
+      <div class="hero-stat">
+        <div class="icon">🔥</div>
+        <div class="value">23</div>
+        <div class="label">Day Streak</div>
+        <div class="sub">Personal best!</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- CHART 1: Grade Pyramid -->
+      <div class="card span-5">
+        <div class="card-header">
+          <div class="card-title">Grade Pyramid</div>
+          <span style="font-size: 11px; color: var(--climb); font-weight: 600;">142 Total Sends</span>
+        </div>
+        <div class="pyramid">
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb);">V6</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 5%; background: var(--climb);">1</div>
+            </div>
+            <div class="pyramid-count">1</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb);">V5</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 15%; background: var(--climb);">4</div>
+            </div>
+            <div class="pyramid-count">4</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb-light);">V4</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 35%; background: var(--climb-light);">12</div>
+            </div>
+            <div class="pyramid-count">12</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V3</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 60%; background: rgba(20, 240, 197, 0.7);">28</div>
+            </div>
+            <div class="pyramid-count">28</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V2</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 85%; background: rgba(20, 240, 197, 0.5);">45</div>
+            </div>
+            <div class="pyramid-count">45</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V1</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 100%; background: rgba(20, 240, 197, 0.3);">52</div>
+            </div>
+            <div class="pyramid-count">52</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART 2: SWARMPLOT - Send Distribution (Nivo-style) -->
+      <div class="card span-7">
+        <div class="card-header">
+          <div class="card-title">Send Distribution (Swarmplot)</div>
+          <span style="font-size: 11px; color: var(--text-muted);">Each dot = one send, clustered by grade</span>
+        </div>
+        <div class="chart-container">
+          <svg class="chart-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+            <!-- Y axis (grades) -->
+            <text x="25" y="30" fill="var(--text-muted)" font-size="10" font-weight="600">V6</text>
+            <text x="25" y="55" fill="var(--text-muted)" font-size="10" font-weight="600">V5</text>
+            <text x="25" y="80" fill="var(--text-muted)" font-size="10" font-weight="600">V4</text>
+            <text x="25" y="105" fill="var(--text-muted)" font-size="10" font-weight="600">V3</text>
+            <text x="25" y="130" fill="var(--text-muted)" font-size="10" font-weight="600">V2</text>
+            <text x="25" y="155" fill="var(--text-muted)" font-size="10" font-weight="600">V1</text>
+            <!-- Grid lines -->
+            <line x1="50" y1="27" x2="580" y2="27" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="52" x2="580" y2="52" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="77" x2="580" y2="77" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="102" x2="580" y2="102" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="127" x2="580" y2="127" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="152" x2="580" y2="152" stroke="var(--border)" stroke-width="1"/>
+
+            <!-- V6 dots (1) -->
+            <circle class="swarm-dot" cx="300" cy="27" r="7" fill="var(--climb)" opacity="0.9"/>
+
+            <!-- V5 dots (4) - spread out -->
+            <circle class="swarm-dot" cx="180" cy="52" r="6" fill="var(--climb)" opacity="0.85"/>
+            <circle class="swarm-dot" cx="280" cy="52" r="6" fill="var(--climb)" opacity="0.85"/>
+            <circle class="swarm-dot" cx="380" cy="52" r="6" fill="var(--climb)" opacity="0.85"/>
+            <circle class="swarm-dot" cx="480" cy="52" r="6" fill="var(--climb)" opacity="0.85"/>
+
+            <!-- V4 dots (12) - more clustered -->
+            <circle class="swarm-dot" cx="100" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="140" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="180" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="220" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="260" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="300" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="340" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="380" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="420" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="460" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="500" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+            <circle class="swarm-dot" cx="540" cy="77" r="5" fill="var(--climb-light)" opacity="0.8"/>
+
+            <!-- V3 dots (28) - dense cluster -->
+            <circle class="swarm-dot" cx="70" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="95" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="95" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="120" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="145" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="145" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="170" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="195" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="195" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="220" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="245" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="245" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="270" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="295" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="295" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="320" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="345" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="345" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="370" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="395" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="395" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="420" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="445" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="445" cy="105" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="470" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="495" cy="99" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+            <circle class="swarm-dot" cx="520" cy="102" r="4" fill="rgba(20, 240, 197, 0.7)" opacity="0.75"/>
+
+            <!-- V2 dots (45) - very dense -->
+            <circle class="swarm-dot" cx="60" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="75" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="75" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="90" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="105" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="105" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="120" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="135" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="135" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="150" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="165" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="165" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="180" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="195" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="195" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="210" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="225" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="225" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="240" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="255" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="255" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="270" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="285" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="285" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="300" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="315" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="315" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="330" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="345" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="345" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="360" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="375" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="375" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="390" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="405" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="405" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="420" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="435" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="435" cy="130" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="450" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="465" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="480" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="495" cy="124" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+            <circle class="swarm-dot" cx="510" cy="127" r="3" fill="rgba(20, 240, 197, 0.5)" opacity="0.7"/>
+
+            <!-- V1 dots (52) - densest, almost forming a line -->
+            <circle class="swarm-dot" cx="55" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="65" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="65" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="75" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="85" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="85" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="95" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="105" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="105" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="115" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="125" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="125" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="135" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="145" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="145" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="155" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="165" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="165" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="175" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="185" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="185" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="195" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="205" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="205" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="215" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="225" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="225" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="235" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="245" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="245" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="255" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="265" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="265" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="275" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="285" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="285" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="295" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="305" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="305" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="315" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="325" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="325" cy="155" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="335" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="345" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="355" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="365" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="375" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="385" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="395" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="405" cy="149" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+            <circle class="swarm-dot" cx="415" cy="152" r="2.5" fill="rgba(20, 240, 197, 0.3)" opacity="0.65"/>
+          </svg>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-sec);">
+          💡 Most sends cluster at <strong style="color: var(--climb);">V2-V3</strong> - your comfort zone
+        </div>
+      </div>
+
+      <!-- CHART 3: FUNNEL - Attempts to Sends -->
+      <div class="card span-4">
+        <div class="card-header">
+          <div class="card-title">Send Funnel (This Month)</div>
+        </div>
+        <div class="funnel">
+          <div class="funnel-stage" style="width: 100%; background: linear-gradient(90deg, hsl(170, 70%, 30%), hsl(170, 80%, 40%));">
+            247 Attempts
+            <span class="funnel-label">100%</span>
+          </div>
+          <div class="funnel-stage" style="width: 75%; background: linear-gradient(90deg, hsl(168, 75%, 35%), hsl(168, 85%, 45%));">
+            186 Touches
+            <span class="funnel-label">75%</span>
+          </div>
+          <div class="funnel-stage" style="width: 50%; background: linear-gradient(90deg, hsl(166, 80%, 40%), hsl(166, 90%, 50%));">
+            124 Projects
+            <span class="funnel-label">50%</span>
+          </div>
+          <div class="funnel-stage" style="width: 32%; background: var(--climb); box-shadow: 0 4px 20px var(--climb-glow);">
+            78 Sends
+            <span class="funnel-label">32%</span>
+          </div>
+        </div>
+        <div style="text-align: center; padding: 12px; background: var(--bg-elevated); border-radius: 10px; margin-top: 12px;">
+          <span style="color: var(--climb); font-weight: 600;">32% Send Rate</span>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Above average!</div>
+        </div>
+      </div>
+
+      <!-- CHART 4: Kilter Angle × Grade Matrix -->
+      <div class="card span-8">
+        <div class="card-header">
+          <div class="card-title">Kilter Board: Angle × Grade Matrix</div>
+          <span style="font-size: 11px; color: var(--text-muted);">Your max grade at each angle</span>
+        </div>
+        <div class="angle-matrix">
+          <div class="matrix-header"></div>
+          <div class="matrix-header">0°</div>
+          <div class="matrix-header">20°</div>
+          <div class="matrix-header">40°</div>
+          <div class="matrix-header">50°</div>
+          <div class="matrix-header">70°</div>
+
+          <div class="matrix-row-label">V6</div>
+          <div class="matrix-cell project">🎯</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+
+          <div class="matrix-row-label">V5</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell project">🎯</div>
+          <div class="matrix-cell empty">-</div>
+
+          <div class="matrix-row-label">V4</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell project">🎯</div>
+
+          <div class="matrix-row-label">V3</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+
+          <div class="matrix-row-label">V2</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+        </div>
+        <div style="text-align: center; margin-top: 16px; font-size: 12px;">
+          <span style="color: var(--climb);">✓ Sent</span> &nbsp;•&nbsp;
+          <span style="color: var(--climb);">🎯 Projecting</span> &nbsp;•&nbsp;
+          <span style="color: var(--text-muted);">- Not attempted</span>
+        </div>
+      </div>
+
+      <!-- CHART 5: BUMP CHART - Grade by Angle Race -->
+      <div class="card span-8">
+        <div class="card-header">
+          <div class="card-title">Grade Progression by Angle (Bump Chart)</div>
+          <span style="font-size: 11px; color: var(--text-muted);">Which angle is improving fastest?</span>
+        </div>
+        <div class="chart-container tall">
+          <svg class="chart-svg" viewBox="0 0 600 220" preserveAspectRatio="none">
+            <!-- Grid -->
+            <line x1="50" y1="40" x2="560" y2="40" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="90" x2="560" y2="90" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="140" x2="560" y2="140" stroke="var(--border)" stroke-width="1"/>
+            <line x1="50" y1="190" x2="560" y2="190" stroke="var(--border)" stroke-width="1"/>
+            <!-- Y axis -->
+            <text x="40" y="44" fill="var(--text-muted)" font-size="10" text-anchor="end">V5</text>
+            <text x="40" y="94" fill="var(--text-muted)" font-size="10" text-anchor="end">V4</text>
+            <text x="40" y="144" fill="var(--text-muted)" font-size="10" text-anchor="end">V3</text>
+            <text x="40" y="194" fill="var(--text-muted)" font-size="10" text-anchor="end">V2</text>
+            <!-- 0° line - highest, steadiest -->
+            <path d="M60,140 C120,130 180,100 240,90 C300,80 360,60 420,50 L480,40 L540,40"
+                  fill="none" stroke="var(--climb)" stroke-width="3" stroke-linecap="round"/>
+            <!-- 40° line - catching up -->
+            <path d="M60,190 C120,180 180,160 240,140 C300,120 360,100 420,90 L480,80 L540,65"
+                  fill="none" stroke="var(--climb-light)" stroke-width="3" stroke-linecap="round"/>
+            <!-- 70° line - slowest progress -->
+            <path d="M60,190 C120,188 180,185 240,180 C300,170 360,160 420,150 L480,145 L540,140"
+                  fill="none" stroke="var(--climb-dark)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Current dots -->
+            <circle cx="540" cy="40" r="6" fill="var(--climb)"/>
+            <circle cx="540" cy="65" r="6" fill="var(--climb-light)"/>
+            <circle cx="540" cy="140" r="6" fill="var(--climb-dark)"/>
+            <!-- Labels -->
+            <text x="550" y="44" fill="var(--climb)" font-size="10" font-weight="600">V5</text>
+            <text x="550" y="69" fill="var(--climb-light)" font-size="10" font-weight="600">V4+</text>
+            <text x="550" y="144" fill="var(--climb-dark)" font-size="10" font-weight="600">V3</text>
+            <!-- X axis -->
+            <text x="60" y="210" fill="var(--text-muted)" font-size="9">Mar</text>
+            <text x="180" y="210" fill="var(--text-muted)" font-size="9">May</text>
+            <text x="300" y="210" fill="var(--text-muted)" font-size="9">Jul</text>
+            <text x="420" y="210" fill="var(--text-muted)" font-size="9">Sep</text>
+            <text x="540" y="210" fill="var(--text-muted)" font-size="9">Nov</text>
+          </svg>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div style="width: 16px; height: 3px; background: var(--climb); border-radius: 2px;"></div> 0° (Vertical)</div>
+          <div class="legend-item"><div style="width: 16px; height: 3px; background: var(--climb-light); border-radius: 2px;"></div> 40° (Overhang)</div>
+          <div class="legend-item"><div style="width: 16px; height: 3px; background: var(--climb-dark); border-radius: 2px;"></div> 70° (Steep)</div>
+        </div>
+      </div>
+
+      <!-- Flash Rate Chart -->
+      <div class="card span-4">
+        <div class="card-header">
+          <div class="card-title">Flash Rate by Grade</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V2</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 92%; height: 100%; background: var(--climb); display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-size: 12px; font-weight: 600; color: #000;">92%</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V3</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 78%; height: 100%; background: var(--climb); display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-size: 12px; font-weight: 600; color: #000;">78%</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V4</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 55%; height: 100%; background: var(--climb-light); display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-size: 12px; font-weight: 600; color: #000;">55%</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V5</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 25%; height: 100%; background: var(--climb-dark); display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-size: 12px; font-weight: 600; color: #fff;">25%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART 6: Calendar Heatmap -->
+      <div class="card span-12">
+        <div class="card-header">
+          <div class="card-title">Climbing Activity (6 Months)</div>
+          <span style="font-size: 11px; color: var(--text-sec);">78 climbing days • 23 day streak</span>
+        </div>
+        <div style="padding: 16px 0;">
+          <div class="heatmap">
+            <!-- 26 weeks × 7 days worth of cells -->
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l0"></div>
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div>
+            <div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l0"></div>
+            <div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l0"></div>
+            <div class="heatmap-cell l1"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div>
+            <div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div>
+            <div class="heatmap-cell l0"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
+            <div class="heatmap-cell l1"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div>
+            <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+            <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 10px; color: var(--text-muted);">
+            <span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="heatmap-cell l0" style="width: 14px; height: 14px;"></div> Rest</div>
+          <div class="legend-item"><div class="heatmap-cell l2" style="width: 14px; height: 14px;"></div> Light</div>
+          <div class="legend-item"><div class="heatmap-cell l4" style="width: 14px; height: 14px;"></div> Hard Session</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

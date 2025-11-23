@@ -867,3 +867,45 @@ export type InsertExternalWorkout = z.infer<typeof insertExternalWorkoutSchema>;
 export type InsertClimbingSession = z.infer<typeof insertClimbingSessionSchema>;
 export type InsertDataSourceConnection = z.infer<typeof insertDataSourceConnectionSchema>;
 export type InsertHabitDataMapping = z.infer<typeof insertHabitDataMappingSchema>;
+
+// ========== JOURNEY GOALS ==========
+// Centralized goals for the Journey dashboard (cycling, lifting, climbing)
+
+export const journeyGoalCategoryEnum = pgEnum('journey_goal_category', ['cycling', 'lifting', 'climbing']);
+
+export const journeyGoals = pgTable("journey_goals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: journeyGoalCategoryEnum("category").notNull(),
+  goalKey: varchar("goal_key", { length: 50 }).notNull(), // e.g., 'yearly_miles', 'yearly_workouts', 'total_lift', 'yearly_climbs'
+  targetValue: integer("target_value").notNull(),
+  unit: varchar("unit", { length: 20 }).notNull(), // 'miles', 'workouts', 'lbs', 'climbs'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One goal per key per user
+    userGoalKeyIdx: uniqueIndex("journey_goals_user_goal_key").on(table.userId, table.goalKey),
+  };
+});
+
+// TypeScript types
+export type JourneyGoal = typeof journeyGoals.$inferSelect;
+export type InsertJourneyGoal = typeof journeyGoals.$inferInsert;
+
+// Insert schema
+export const insertJourneyGoalSchema = createInsertSchema(journeyGoals).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Default goals for new users
+export const DEFAULT_JOURNEY_GOALS = {
+  cycling: {
+    yearly_miles: { targetValue: 4000, unit: 'miles' },
+  },
+  lifting: {
+    yearly_workouts: { targetValue: 200, unit: 'workouts' },
+    total_lift: { targetValue: 1000, unit: 'lbs' },
+  },
+  climbing: {
+    yearly_climbs: { targetValue: 300, unit: 'climbs' },
+  },
+} as const;

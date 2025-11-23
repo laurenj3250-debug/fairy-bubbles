@@ -1,0 +1,17 @@
+{"level":"info","message":"[TLS] Database host: aws-1-us-east-1.pooler.supabase.com","service":"goal-connect","timestamp":"2025-11-21T17:48:53.083Z"}
+{"level":"warn","message":"[SSL WARNING] TLS verification disabled for Supabase database connection","service":"goal-connect","timestamp":"2025-11-21T17:48:53.084Z"}
+{"level":"warn","message":"[SSL WARNING] This is required for providers using self-signed certificates","service":"goal-connect","timestamp":"2025-11-21T17:48:53.084Z"}
+{"level":"warn","message":"[SSL WARNING] Ensure DATABASE_URL is from a trusted source","service":"goal-connect","timestamp":"2025-11-21T17:48:53.085Z"}
+{"level":"info","message":"[Cron] Recurrence scheduler initialized (runs every hour)","service":"goal-connect","timestamp":"2025-11-21T17:48:55.424Z"}
+{"level":"info","message":"[TLS] Database host: aws-1-us-east-1.pooler.supabase.com","service":"goal-connect","timestamp":"2025-11-21T21:36:02.591Z"}
+{"level":"warn","message":"[SSL WARNING] TLS verification disabled for Supabase database connection","service":"goal-connect","timestamp":"2025-11-21T21:36:02.592Z"}
+{"level":"warn","message":"[SSL WARNING] This is required for providers using self-signed certificates","service":"goal-connect","timestamp":"2025-11-21T21:36:02.592Z"}
+{"level":"warn","message":"[SSL WARNING] Ensure DATABASE_URL is from a trusted source","service":"goal-connect","timestamp":"2025-11-21T21:36:02.592Z"}
+{"level":"info","message":"[Cron] Recurrence scheduler initialized (runs every hour)","service":"goal-connect","timestamp":"2025-11-21T21:36:04.070Z"}
+{"level":"info","message":"[TLS] Database host: aws-1-us-east-1.pooler.supabase.com","service":"goal-connect","timestamp":"2025-11-21T21:48:05.573Z"}
+{"level":"warn","message":"[SSL WARNING] TLS verification disabled for Supabase database connection","service":"goal-connect","timestamp":"2025-11-21T21:48:05.574Z"}
+{"level":"warn","message":"[SSL WARNING] This is required for providers using self-signed certificates","service":"goal-connect","timestamp":"2025-11-21T21:48:05.574Z"}
+{"level":"warn","message":"[SSL WARNING] Ensure DATABASE_URL is from a trusted source","service":"goal-connect","timestamp":"2025-11-21T21:48:05.574Z"}
+{"level":"info","message":"[Cron] Recurrence scheduler initialized (runs every hour)","service":"goal-connect","timestamp":"2025-11-21T21:48:06.848Z"}
+{"level":"info","message":"[Cron] Running recurrence scheduler...","service":"goal-connect","timestamp":"2025-11-21T22:00:00.004Z"}
+{"error":"column \"project_id\" does not exist","level":"error","message":"[Cron] Error running recurrence scheduler","service":"goal-connect","stack":"error: column \"project_id\" does not exist\n    at /Users/laurenjohnston/fairy-bubbles/GoalConnect/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///Users/laurenjohnston/fairy-bubbles/GoalConnect/node_modules/drizzle-orm/node-postgres/session.js:83:22\n    at async processRecurringTasks (file:///Users/laurenjohnston/fairy-bubbles/GoalConnect/dist/index.js:3486:28)\n    at async file:///Users/laurenjohnston/fairy-bubbles/GoalConnect/dist/index.js:10747:25\n    at async Timeout._onTimeout (/Users/laurenjohnston/fairy-bubbles/GoalConnect/node_modules/node-cron/dist/esm/scheduler/runner.js:70:44)","timestamp":"2025-11-21T22:00:00.169Z"}

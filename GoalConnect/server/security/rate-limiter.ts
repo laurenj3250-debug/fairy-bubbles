@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import type { Request, Response } from 'express';
+import { log } from '../lib/logger';
 
 /**
  * SECURITY: Rate limiting configuration for authentication endpoints
@@ -24,7 +25,7 @@ export const loginRateLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   handler: (req: Request, res: Response) => {
-    console.warn(`[security] Rate limit exceeded for login from IP: ${req.ip}`);
+    log.warn(`[security] Rate limit exceeded for login from IP: ${req.ip}`);
     res.status(429).json({
       error: 'Too many login attempts from this IP address',
       retryAfter: 'Please try again after 15 minutes',
@@ -50,7 +51,7 @@ export const registerRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req: Request, res: Response) => {
-    console.warn(`[security] Rate limit exceeded for registration from IP: ${req.ip}`);
+    log.warn(`[security] Rate limit exceeded for registration from IP: ${req.ip}`);
     res.status(429).json({
       error: 'Too many registration attempts from this IP address',
       retryAfter: 'Please try again after 1 hour',
@@ -103,7 +104,7 @@ export function recordFailedLogin(email: string): void {
       attempts: 1,
       firstAttemptAt: now
     });
-    console.log(`[security] Failed login attempt #1 for ${normalizedEmail}`);
+    log.info(`[security] Failed login attempt #1 for ${normalizedEmail}`);
     return;
   }
 
@@ -113,17 +114,17 @@ export function recordFailedLogin(email: string): void {
   if (attempt.attempts >= 20) {
     // 20+ attempts: 24 hour lockout
     attempt.lockedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    console.warn(`[security] Account ${normalizedEmail} locked for 24 hours after ${attempt.attempts} failed attempts`);
+    log.warn(`[security] Account ${normalizedEmail} locked for 24 hours after ${attempt.attempts} failed attempts`);
   } else if (attempt.attempts >= 10) {
     // 10+ attempts: 1 hour lockout
     attempt.lockedUntil = new Date(now.getTime() + 60 * 60 * 1000);
-    console.warn(`[security] Account ${normalizedEmail} locked for 1 hour after ${attempt.attempts} failed attempts`);
+    log.warn(`[security] Account ${normalizedEmail} locked for 1 hour after ${attempt.attempts} failed attempts`);
   } else if (attempt.attempts >= 5) {
     // 5+ attempts: 15 minute lockout
     attempt.lockedUntil = new Date(now.getTime() + 15 * 60 * 1000);
-    console.warn(`[security] Account ${normalizedEmail} locked for 15 minutes after ${attempt.attempts} failed attempts`);
+    log.warn(`[security] Account ${normalizedEmail} locked for 15 minutes after ${attempt.attempts} failed attempts`);
   } else {
-    console.log(`[security] Failed login attempt #${attempt.attempts} for ${normalizedEmail}`);
+    log.info(`[security] Failed login attempt #${attempt.attempts} for ${normalizedEmail}`);
   }
 
   loginAttempts.set(normalizedEmail, attempt);
@@ -135,7 +136,7 @@ export function recordFailedLogin(email: string): void {
 export function resetFailedLogins(email: string): void {
   const normalizedEmail = email.toLowerCase();
   loginAttempts.delete(normalizedEmail);
-  console.log(`[security] Reset failed login attempts for ${normalizedEmail}`);
+  log.info(`[security] Reset failed login attempts for ${normalizedEmail}`);
 }
 
 /**

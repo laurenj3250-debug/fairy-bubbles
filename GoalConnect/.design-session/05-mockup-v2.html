@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey - Multi-Sport Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --strava-orange: #FC4C02;
+      --strava-gradient: linear-gradient(135deg, #FC4C02 0%, #FF7A45 50%, #FFA940 100%);
+      --lift-purple: #8B5CF6;
+      --lift-gradient: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
+      --climb-teal: #14B8A6;
+      --climb-gradient: linear-gradient(135deg, #14B8A6 0%, #2DD4BF 50%, #5EEAD4 100%);
+      --bike-blue: #3B82F6;
+      --bike-gradient: linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
+      --gold: #FFD700;
+      --green: #22C55E;
+      --bg-dark: #0A0A0F;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-primary: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Ambient Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      transition: all 1s ease;
+    }
+    .orb-1 { width: 500px; height: 500px; top: -150px; right: -100px; }
+    .orb-2 { width: 350px; height: 350px; bottom: 10%; left: -80px; }
+
+    /* Active sport colors */
+    [data-sport="lifting"] .orb-1, [data-sport="lifting"] .orb-2 { background: var(--lift-purple); }
+    [data-sport="climbing"] .orb-1, [data-sport="climbing"] .orb-2 { background: var(--climb-teal); }
+    [data-sport="cycling"] .orb-1, [data-sport="cycling"] .orb-2 { background: var(--bike-blue); }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 32px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .strava-badge {
+      width: 44px; height: 44px;
+      background: var(--strava-gradient);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px;
+      box-shadow: 0 8px 24px rgba(252, 76, 2, 0.3);
+    }
+    .header-text h1 {
+      font-size: 24px; font-weight: 800;
+      background: var(--strava-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-text p { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+    .sync-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .sync-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+
+    /* Sport Tabs */
+    .sport-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      background: var(--glass);
+      padding: 6px;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      width: fit-content;
+    }
+    .sport-tab {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600; font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+    }
+    .sport-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+    .sport-tab.active {
+      color: white;
+      border-color: rgba(255,255,255,0.15);
+    }
+    .sport-tab.active[data-tab="lifting"] { background: rgba(139, 92, 246, 0.2); }
+    .sport-tab.active[data-tab="climbing"] { background: rgba(20, 184, 166, 0.2); }
+    .sport-tab.active[data-tab="cycling"] { background: rgba(59, 130, 246, 0.2); }
+    .tab-icon { font-size: 18px; }
+
+    /* Sport Content */
+    .sport-content { display: none; }
+    .sport-content.active { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Glass Cards */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .card-icon { font-size: 16px; opacity: 0.6; }
+
+    /* Bento Grid */
+    .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Hero Stats */
+    .hero-stat {
+      text-align: center;
+      padding: 28px 20px;
+    }
+    .hero-stat .label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .hero-stat .value {
+      font-size: 42px; font-weight: 900;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .hero-stat .unit { font-size: 16px; font-weight: 600; opacity: 0.6; }
+    .hero-stat .sub { font-size: 12px; color: var(--text-muted); }
+    .hero-stat .sub span { color: var(--green); font-weight: 600; }
+
+    /* Gradient Text by Sport */
+    .lift-gradient { background: var(--lift-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .climb-gradient { background: var(--climb-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .bike-gradient { background: var(--bike-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Progress Bars */
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+    .lift-fill { background: var(--lift-gradient); }
+    .climb-fill { background: var(--climb-gradient); }
+    .bike-fill { background: var(--bike-gradient); }
+
+    /* Charts */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 120px;
+      gap: 8px;
+      padding-top: 16px;
+    }
+    .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar {
+      width: 100%;
+      max-width: 28px;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.3s ease;
+    }
+    .bar:hover { transform: scaleY(1.05); filter: brightness(1.2); }
+    .bar-label { font-size: 11px; color: var(--text-muted); }
+
+    /* Muscle Heatmap */
+    .muscle-map {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      padding: 16px 0;
+    }
+    .body-outline {
+      width: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .muscle-group {
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .muscle-group:hover { transform: scale(1.05); }
+    .m-head { width: 24px; height: 24px; border-radius: 50%; }
+    .m-chest { width: 36px; height: 28px; }
+    .m-arms { width: 50px; height: 16px; border-radius: 8px; }
+    .m-core { width: 32px; height: 24px; }
+    .m-legs { width: 40px; height: 40px; border-radius: 4px 4px 12px 12px; }
+
+    /* Intensity levels */
+    .intensity-high { background: rgba(139, 92, 246, 0.9); box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+    .intensity-med { background: rgba(139, 92, 246, 0.5); }
+    .intensity-low { background: rgba(139, 92, 246, 0.2); }
+
+    /* Grade Pyramid */
+    .pyramid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 0;
+    }
+    .pyramid-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+    .pyramid-grade {
+      width: 32px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+    .pyramid-bar-container {
+      flex: 1;
+      height: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .pyramid-bar {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(0,0,0,0.7);
+    }
+    .pyramid-bar.climb { background: var(--climb-gradient); }
+
+    /* Power Curve */
+    .power-curve {
+      position: relative;
+      height: 140px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 20px 0 0;
+    }
+    .curve-point {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .curve-bar {
+      width: 24px;
+      background: var(--bike-gradient);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+    }
+    .curve-bar::after {
+      content: attr(data-watts);
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--bike-blue);
+      white-space: nowrap;
+    }
+    .curve-label { font-size: 10px; color: var(--text-muted); }
+
+    /* Fitness/Fatigue Chart */
+    .fitness-chart {
+      height: 100px;
+      position: relative;
+      margin-top: 16px;
+    }
+    .chart-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+    }
+    .chart-area {
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 100%);
+      border-radius: 8px 8px 0 0;
+      border-top: 2px solid var(--bike-blue);
+    }
+    .fatigue-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 45%;
+      border-top: 2px dashed #F87171;
+    }
+
+    /* Activity List */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .activity-item:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
+    .activity-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .activity-icon.lift { background: var(--lift-gradient); }
+    .activity-icon.climb { background: var(--climb-gradient); }
+    .activity-icon.bike { background: var(--bike-gradient); }
+    .activity-info { flex: 1; }
+    .activity-name { font-weight: 600; font-size: 13px; }
+    .activity-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .activity-stat { text-align: right; }
+    .activity-value { font-weight: 700; font-size: 13px; }
+    .activity-unit { font-size: 11px; color: var(--text-muted); }
+
+    /* Achievements */
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .achievement {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .achievement:hover { transform: translateY(-2px); border-color: rgba(255,215,0,0.3); }
+    .achievement.earned { background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.05) 100%); border-color: rgba(255,215,0,0.2); }
+    .achievement-emoji { font-size: 28px; margin-bottom: 8px; }
+    .achievement-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .achievement-desc { font-size: 10px; color: var(--text-muted); }
+    .achievement.locked { opacity: 0.4; }
+    .achievement.locked .achievement-emoji { filter: grayscale(1); }
+
+    /* PR Badge */
+    .pr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, var(--gold) 0%, #FFA500 100%);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    /* Epic Card */
+    .epic-card {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+    }
+    .epic-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .epic-card.lift::before { background: var(--lift-gradient); }
+    .epic-card.climb::before { background: var(--climb-gradient); }
+    .epic-card.bike::before { background: var(--bike-gradient); }
+    .epic-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .epic-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+    .epic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .epic-item {
+      text-align: center;
+      padding: 16px 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+    }
+    .epic-item:hover { border-color: rgba(255,255,255,0.15); }
+    .epic-icon { font-size: 28px; margin-bottom: 8px; }
+    .epic-value { font-size: 24px; font-weight: 800; margin-bottom: 2px; }
+    .epic-label { font-size: 11px; color: var(--text-muted); }
+
+    /* Mini Stats Row */
+    .mini-stats { display: flex; gap: 16px; margin-top: 12px; }
+    .mini-stat {
+      flex: 1;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .mini-stat .value { font-size: 20px; font-weight: 800; }
+    .mini-stat .label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .span-3, .span-4, .span-5 { grid-column: span 6; }
+      .span-7, .span-8 { grid-column: span 12; }
+      .epic-grid { grid-template-columns: repeat(2, 1fr); }
+      .achievements-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 700px) {
+      .container { padding: 16px; }
+      .span-3, .span-4, .span-5, .span-6 { grid-column: span 12; }
+      .sport-tabs { width: 100%; }
+      .sport-tab { flex: 1; justify-content: center; padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body data-sport="lifting">
+  <div class="ambient-bg">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="strava-badge">S</div>
+        <div class="header-text">
+          <h1>Strava Journey</h1>
+          <p>Your multi-sport story, beautifully told</p>
+        </div>
+      </div>
+      <div class="sync-badge">
+        <div class="sync-dot"></div>
+        Synced 2 min ago
+      </div>
+    </header>
+
+    <!-- Sport Tabs -->
+    <div class="sport-tabs">
+      <div class="sport-tab active" data-tab="lifting" onclick="switchSport('lifting')">
+        <span class="tab-icon">🏋️</span>
+        Lifting
+      </div>
+      <div class="sport-tab" data-tab="climbing" onclick="switchSport('climbing')">
+        <span class="tab-icon">🧗</span>
+        Climbing
+      </div>
+      <div class="sport-tab" data-tab="cycling" onclick="switchSport('cycling')">
+        <span class="tab-icon">🚴</span>
+        Cycling
+      </div>
+    </div>
+
+    <!-- ==================== LIFTING TAB ==================== -->
+    <div class="sport-content active" id="lifting-content">
+      <!-- Hero Stats -->
+      <div class="bento" style="margin-bottom: 16px;">
+        <div class="card hero-stat span-3">
+          <div class="label">Est. 1RM Squat</div>
+          <div class="value lift-gradient">285<span class="unit">lb</span></div>
+          <div class="sub"><span>+15lb</span> this month</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Est. 1RM Bench</div>
+          <div class="value lift-gradient">205<span class="unit">lb</span></div>
+          <div class="sub"><span>+10lb</span> this month</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Est. 1RM Deadlift</div>
+          <div class="value lift-gradient">365<span class="unit">lb</span></div>
+          <div class="sub"><span>+20lb</span> this month</div>
+        </div>
+        <div class="card hero-stat span-3" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.08) 100%); border-color: rgba(139, 92, 246, 0.3);">
+          <div class="label">Big 3 Total</div>
+          <div class="value lift-gradient">855<span class="unit">lb</span></div>
+          <div class="sub">145lb to 1000lb Club!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="card epic-card lift" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="epic-title">Your Lifting Journey</div>
+            <div class="epic-subtitle">Making weights look easy since 2023</div>
+          </div>
+          <div class="pr-badge">🏆 New Deadlift PR!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🦣</div>
+            <div class="epic-value lift-gradient">2.3x</div>
+            <div class="epic-label">Bodyweight Deadlift</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🚗</div>
+            <div class="epic-value lift-gradient">48</div>
+            <div class="epic-label">Cars Worth of Weight Moved</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">📈</div>
+            <div class="epic-value lift-gradient">Top 15%</div>
+            <div class="epic-label">Strength Level</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🎯</div>
+            <div class="epic-value lift-gradient">85%</div>
+            <div class="epic-label">To 1000lb Club</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Volume Chart -->
+        <div class="card span-8">
+          <div class="card-header">
+            <span class="card-title">Weekly Volume (Tonnage)</span>
+            <span class="card-icon">📊</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-group">
+              <div class="bar" style="height: 65%; background: var(--lift-gradient);"></div>
+              <span class="bar-label">Mon</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 0%; background: var(--lift-gradient); opacity: 0.3;"></div>
+              <span class="bar-label">Tue</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 85%; background: var(--lift-gradient);"></div>
+              <span class="bar-label">Wed</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 0%; background: var(--lift-gradient); opacity: 0.3;"></div>
+              <span class="bar-label">Thu</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 95%; background: var(--lift-gradient);"></div>
+              <span class="bar-label">Fri</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 55%; background: var(--lift-gradient);"></div>
+              <span class="bar-label">Sat</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 0%; background: var(--lift-gradient); opacity: 0.3;"></div>
+              <span class="bar-label">Sun</span>
+            </div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="value lift-gradient">42,850</div>
+              <div class="label">LBS THIS WEEK</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value lift-gradient">156</div>
+              <div class="label">TOTAL SETS</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value" style="color: var(--green);">+8%</div>
+              <div class="label">VS LAST WEEK</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Muscle Heatmap -->
+        <div class="card span-4">
+          <div class="card-header">
+            <span class="card-title">Muscle Distribution</span>
+            <span class="card-icon">🔥</span>
+          </div>
+          <div class="muscle-map">
+            <div class="body-outline">
+              <div class="muscle-group m-head intensity-low"></div>
+              <div class="muscle-group m-chest intensity-high"></div>
+              <div class="muscle-group m-arms intensity-med"></div>
+              <div class="muscle-group m-core intensity-med"></div>
+              <div class="muscle-group m-legs intensity-high"></div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 8px;">FRONT</div>
+            </div>
+            <div class="body-outline">
+              <div class="muscle-group m-head intensity-low"></div>
+              <div class="muscle-group m-chest intensity-high" style="background: rgba(139, 92, 246, 0.7);"></div>
+              <div class="muscle-group m-arms intensity-med"></div>
+              <div class="muscle-group m-core intensity-low"></div>
+              <div class="muscle-group m-legs intensity-med"></div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 8px;">BACK</div>
+            </div>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+            🟣 High &nbsp; 🟣 Med &nbsp; ⚫ Low
+          </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Recent Sessions</span>
+            <span class="card-icon">💪</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Push Day - Chest & Shoulders</div>
+                <div class="activity-meta">Today at 7:30 AM · 1h 12m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--lift-purple);">12,450 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Pull Day - Back & Biceps</div>
+                <div class="activity-meta">Yesterday · 1h 05m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--lift-purple);">11,200 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Leg Day</div>
+                <div class="activity-meta">Nov 19 · 1h 25m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--lift-purple);">18,900 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Streak & Goals -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Goals & Streaks</span>
+            <span class="card-icon">🎯</span>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 13px; font-weight: 600;">Weekly Streak</span>
+              <span style="font-size: 28px; font-weight: 900; color: var(--green);">12 weeks</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill lift-fill" style="width: 80%;"></div></div>
+            <div style="font-size: 11px; color: var(--text-muted);">3 more weeks to beat your record!</div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 13px; font-weight: 600;">1000lb Club Progress</span>
+              <span style="font-size: 16px; font-weight: 700; color: var(--lift-purple);">855 / 1000 lb</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill lift-fill" style="width: 85.5%;"></div></div>
+            <div style="font-size: 11px; color: var(--text-muted);">145 lbs to go - you're so close!</div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card span-12">
+          <div class="card-header">
+            <span class="card-title">Achievements</span>
+            <a href="#" style="color: var(--lift-purple); font-size: 12px; font-weight: 600; text-decoration: none;">See all 18 →</a>
+          </div>
+          <div class="achievements-grid">
+            <div class="achievement earned">
+              <div class="achievement-emoji">🔥</div>
+              <div class="achievement-name">Iron Consistency</div>
+              <div class="achievement-desc">10 week streak</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🦁</div>
+              <div class="achievement-name">2x Bodyweight DL</div>
+              <div class="achievement-desc">Deadlift milestone</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">Volume King</div>
+              <div class="achievement-desc">50k lbs in a week</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">👑</div>
+              <div class="achievement-name">1000lb Club</div>
+              <div class="achievement-desc">145 lbs away</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CLIMBING TAB ==================== -->
+    <div class="sport-content" id="climbing-content">
+      <!-- Hero Stats -->
+      <div class="bento" style="margin-bottom: 16px;">
+        <div class="card hero-stat span-3">
+          <div class="label">Max Boulder Grade</div>
+          <div class="value climb-gradient">V6</div>
+          <div class="sub"><span>↑ from V5</span> this month</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Kilter Board Angle</div>
+          <div class="value climb-gradient">40°</div>
+          <div class="sub">Training at steep!</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Flash Rate</div>
+          <div class="value climb-gradient">68%</div>
+          <div class="sub"><span>+12%</span> improvement</div>
+        </div>
+        <div class="card hero-stat span-3" style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.15) 0%, rgba(45, 212, 191, 0.08) 100%); border-color: rgba(20, 184, 166, 0.3);">
+          <div class="label">Sessions This Month</div>
+          <div class="value climb-gradient">14</div>
+          <div class="sub">Most active month!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="card epic-card climb" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="epic-title">Your Climbing Journey</div>
+            <div class="epic-subtitle">Crushing it on the wall since 2022</div>
+          </div>
+          <div class="pr-badge">🎉 First V6 Send!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🏔️</div>
+            <div class="epic-value climb-gradient">3.2</div>
+            <div class="epic-label">El Caps of Elevation</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🧱</div>
+            <div class="epic-value climb-gradient">847</div>
+            <div class="epic-label">Problems Sent</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">📊</div>
+            <div class="epic-value climb-gradient">Top 22%</div>
+            <div class="epic-label">Of Gym Climbers</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">⏱️</div>
+            <div class="epic-value climb-gradient">186h</div>
+            <div class="epic-label">Time on Wall</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Grade Pyramid -->
+        <div class="card span-7">
+          <div class="card-header">
+            <span class="card-title">Grade Pyramid (Last 90 Days)</span>
+            <span class="card-icon">📐</span>
+          </div>
+          <div class="pyramid">
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V6</div>
+              <div class="pyramid-bar-container">
+                <div class="pyramid-bar climb" style="width: 8%;">1</div>
+              </div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V5</div>
+              <div class="pyramid-bar-container">
+                <div class="pyramid-bar climb" style="width: 25%;">8</div>
+              </div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V4</div>
+              <div class="pyramid-bar-container">
+                <div class="pyramid-bar climb" style="width: 55%;">24</div>
+              </div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V3</div>
+              <div class="pyramid-bar-container">
+                <div class="pyramid-bar climb" style="width: 85%;">52</div>
+              </div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V2</div>
+              <div class="pyramid-bar-container">
+                <div class="pyramid-bar climb" style="width: 100%;">78</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+            💡 Build 3 more V5s before projecting V7
+          </div>
+        </div>
+
+        <!-- Kilter Board -->
+        <div class="card span-5">
+          <div class="card-header">
+            <span class="card-title">Kilter Board Progress</span>
+            <span class="card-icon">📱</span>
+          </div>
+          <div style="text-align: center; padding: 16px 0;">
+            <div style="font-size: 48px; font-weight: 900; background: var(--climb-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">40°</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Current Training Angle</div>
+            <div style="display: flex; justify-content: center; gap: 8px;">
+              <div style="padding: 8px 12px; background: rgba(20, 184, 166, 0.1); border-radius: 8px; font-size: 11px;">
+                <div style="font-weight: 700; color: var(--climb-teal);">V4 @ 40°</div>
+                <div style="color: var(--text-muted);">Consistent</div>
+              </div>
+              <div style="padding: 8px 12px; background: rgba(20, 184, 166, 0.2); border-radius: 8px; font-size: 11px;">
+                <div style="font-weight: 700; color: var(--climb-teal);">V3 @ 50°</div>
+                <div style="color: var(--text-muted);">Projecting</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+            🎯 Goal: Send V4 @ 50° by December
+          </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Recent Sessions</span>
+            <span class="card-icon">🧗</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon climb">🧗</div>
+              <div class="activity-info">
+                <div class="activity-name">Kilter Board Session</div>
+                <div class="activity-meta">Today · 1h 45m · 40°</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--climb-teal);">12 sends</div>
+                <div class="activity-unit">V3-V5</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon climb">🧗</div>
+              <div class="activity-info">
+                <div class="activity-name">Gym Bouldering</div>
+                <div class="activity-meta">Yesterday · 2h 10m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--climb-teal);">18 sends</div>
+                <div class="activity-unit">incl. V6!</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon climb">🧗</div>
+              <div class="activity-info">
+                <div class="activity-name">Outdoor @ Bishop</div>
+                <div class="activity-meta">Nov 17 · 4h 30m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--climb-teal);">6 sends</div>
+                <div class="activity-unit">real rock!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attempt Stats -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Send Efficiency</span>
+            <span class="card-icon">⚡</span>
+          </div>
+          <div class="mini-stats" style="margin-top: 0;">
+            <div class="mini-stat">
+              <div class="value climb-gradient">68%</div>
+              <div class="label">FLASH RATE</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value climb-gradient">2.3</div>
+              <div class="label">AVG ATTEMPTS</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value climb-gradient">89%</div>
+              <div class="label">SEND RATE</div>
+            </div>
+          </div>
+          <div style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary);">Session Streak</span>
+              <span style="font-weight: 700; color: var(--green);">8 weeks</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill climb-fill" style="width: 67%;"></div></div>
+            <div style="font-size: 11px; color: var(--text-muted);">4 more weeks to beat record</div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card span-12">
+          <div class="card-header">
+            <span class="card-title">Achievements</span>
+            <a href="#" style="color: var(--climb-teal); font-size: 12px; font-weight: 600; text-decoration: none;">See all 24 →</a>
+          </div>
+          <div class="achievements-grid">
+            <div class="achievement earned">
+              <div class="achievement-emoji">🎯</div>
+              <div class="achievement-name">First V6</div>
+              <div class="achievement-desc">Grade breakthrough</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">Flash Master</div>
+              <div class="achievement-desc">10 flashes in session</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">📐</div>
+              <div class="achievement-name">Steep Sender</div>
+              <div class="achievement-desc">V4 at 40°</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">🏔️</div>
+              <div class="achievement-name">V7 Club</div>
+              <div class="achievement-desc">Keep projecting!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CYCLING TAB ==================== -->
+    <div class="sport-content" id="cycling-content">
+      <!-- Hero Stats -->
+      <div class="bento" style="margin-bottom: 16px;">
+        <div class="card hero-stat span-3">
+          <div class="label">FTP (Est.)</div>
+          <div class="value bike-gradient">245<span class="unit">W</span></div>
+          <div class="sub"><span>+12W</span> this month</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Power-to-Weight</div>
+          <div class="value bike-gradient">3.5<span class="unit">W/kg</span></div>
+          <div class="sub">Cat 4 level</div>
+        </div>
+        <div class="card hero-stat span-3">
+          <div class="label">Distance This Month</div>
+          <div class="value bike-gradient">847<span class="unit">km</span></div>
+          <div class="sub"><span>+15%</span> vs last month</div>
+        </div>
+        <div class="card hero-stat span-3" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%); border-color: rgba(59, 130, 246, 0.3);">
+          <div class="label">CTL (Fitness)</div>
+          <div class="value bike-gradient">72</div>
+          <div class="sub">Building strong!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="card epic-card bike" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="epic-title">Your Cycling Journey</div>
+            <div class="epic-subtitle">Turning pedals into progress</div>
+          </div>
+          <div class="pr-badge">⚡ New 20min Power PR!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🏔️</div>
+            <div class="epic-value bike-gradient">0.8</div>
+            <div class="epic-label">Everests Climbed</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🌍</div>
+            <div class="epic-value bike-gradient">12,450</div>
+            <div class="epic-label">Lifetime KM</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">⚡</div>
+            <div class="epic-value bike-gradient">3</div>
+            <div class="epic-label">KOMs Held</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🔥</div>
+            <div class="epic-value bike-gradient">+15%</div>
+            <div class="epic-label">FTP Gain (6mo)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Fitness/Fatigue/Form -->
+        <div class="card span-8">
+          <div class="card-header">
+            <span class="card-title">Fitness / Fatigue / Form (PMC)</span>
+            <span class="card-icon">📈</span>
+          </div>
+          <div class="fitness-chart">
+            <div class="chart-line">
+              <div class="chart-area"></div>
+            </div>
+            <div class="fatigue-line"></div>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 24px; margin-top: 16px; font-size: 11px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div style="width: 12px; height: 3px; background: var(--bike-blue); border-radius: 2px;"></div>
+              <span style="color: var(--text-secondary);">CTL (Fitness): 72</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div style="width: 12px; height: 3px; background: #F87171; border-radius: 2px;"></div>
+              <span style="color: var(--text-secondary);">ATL (Fatigue): 58</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div style="width: 12px; height: 8px; background: var(--green); border-radius: 2px;"></div>
+              <span style="color: var(--text-secondary);">TSB (Form): +14</span>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 12px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; font-size: 12px; color: var(--green);">
+            🎯 Form is good! Great time for a hard effort or race.
+          </div>
+        </div>
+
+        <!-- Power Curve -->
+        <div class="card span-4">
+          <div class="card-header">
+            <span class="card-title">Power Curve (90 Day)</span>
+            <span class="card-icon">⚡</span>
+          </div>
+          <div class="power-curve">
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 100%;" data-watts="892W"></div>
+              <span class="curve-label">5s</span>
+            </div>
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 75%;" data-watts="645W"></div>
+              <span class="curve-label">30s</span>
+            </div>
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 55%;" data-watts="412W"></div>
+              <span class="curve-label">1m</span>
+            </div>
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 42%;" data-watts="298W"></div>
+              <span class="curve-label">5m</span>
+            </div>
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 35%;" data-watts="258W"></div>
+              <span class="curve-label">20m</span>
+            </div>
+            <div class="curve-point">
+              <div class="curve-bar" style="height: 28%;" data-watts="212W"></div>
+              <span class="curve-label">1h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Rides -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Recent Rides</span>
+            <span class="card-icon">🚴</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon bike">🚴</div>
+              <div class="activity-info">
+                <div class="activity-name">Morning Interval Session</div>
+                <div class="activity-meta">Today · 1h 32m · 245W avg</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--bike-blue);">48.2 km</div>
+                <div class="activity-unit">TSS: 87</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon bike">🚴</div>
+              <div class="activity-info">
+                <div class="activity-name">Canyon Loop</div>
+                <div class="activity-meta">Yesterday · 2h 45m · 198W avg</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--bike-blue);">72.5 km</div>
+                <div class="activity-unit">TSS: 124</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon bike">🚴</div>
+              <div class="activity-info">
+                <div class="activity-name">FTP Test 🔥</div>
+                <div class="activity-meta">Nov 18 · 1h 05m · New PR!</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value" style="color: var(--bike-blue);">32.1 km</div>
+                <div class="activity-unit">258W 20min</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Volume -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-title">Weekly Training Load</span>
+            <span class="card-icon">📊</span>
+          </div>
+          <div class="bar-chart" style="height: 100px;">
+            <div class="bar-group">
+              <div class="bar" style="height: 70%; background: var(--bike-gradient);"></div>
+              <span class="bar-label">Mon</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 0%; opacity: 0.3;"></div>
+              <span class="bar-label">Tue</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 85%; background: var(--bike-gradient);"></div>
+              <span class="bar-label">Wed</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 45%; background: var(--bike-gradient);"></div>
+              <span class="bar-label">Thu</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 0%; opacity: 0.3;"></div>
+              <span class="bar-label">Fri</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 100%; background: var(--bike-gradient);"></div>
+              <span class="bar-label">Sat</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 55%; background: var(--bike-gradient);"></div>
+              <span class="bar-label">Sun</span>
+            </div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="value bike-gradient">412</div>
+              <div class="label">TSS THIS WEEK</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value bike-gradient">9.2h</div>
+              <div class="label">RIDE TIME</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value bike-gradient">2,450m</div>
+              <div class="label">ELEVATION</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card span-12">
+          <div class="card-header">
+            <span class="card-title">Achievements</span>
+            <a href="#" style="color: var(--bike-blue); font-size: 12px; font-weight: 600; text-decoration: none;">See all 31 →</a>
+          </div>
+          <div class="achievements-grid">
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">FTP Breakthrough</div>
+              <div class="achievement-desc">New 20min PR</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">👑</div>
+              <div class="achievement-name">KOM Hunter</div>
+              <div class="achievement-desc">3 segments owned</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🏔️</div>
+              <div class="achievement-name">Climbing Machine</div>
+              <div class="achievement-desc">10,000m in a month</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">💯</div>
+              <div class="achievement-name">Century Rider</div>
+              <div class="achievement-desc">100km single ride</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchSport(sport) {
+      // Update body data attribute for ambient colors
+      document.body.setAttribute('data-sport', sport);
+
+      // Update tabs
+      document.querySelectorAll('.sport-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === sport);
+      });
+
+      // Update content
+      document.querySelectorAll('.sport-content').forEach(content => {
+        content.classList.toggle('active', content.id === `${sport}-content`);
+      });
+    }
+  </script>
+</body>
+</html>

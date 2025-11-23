@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey - Cycling (Bento)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --background: hsl(45, 30%, 12%);
+      --card-glass: hsla(40, 20%, 18%, 0.4);
+      --card-glass-dim: hsla(40, 20%, 18%, 0.15);
+      --foreground: hsl(40, 20%, 95%);
+      --border: hsla(40, 15%, 50%, 0.15);
+      --border-hover: hsla(40, 15%, 50%, 0.35);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: #9ca3af;
+      --cyan: #06b6d4;
+      --cyan-bright: #22d3ee;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --orange: #f97316;
+      --yellow: #eab308;
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.4);
+      --green: #059669;
+      --green-bright: #10b981;
+      --red: #ef4444;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, .heading {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+    }
+
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Nav - Compact */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .nav-title { font-size: 24px; }
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .nav-tab {
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+    }
+    .nav-tab:hover { color: var(--foreground); background: hsla(40, 15%, 50%, 0.1); }
+    .nav-tab.active {
+      background: var(--cyan);
+      color: white;
+      box-shadow: 0 4px 16px var(--cyan-glow), 0 0 30px rgba(6, 182, 212, 0.3);
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    /* BENTO GRID - Fixed height */
+    .bento {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 12px;
+      min-height: 0;
+    }
+
+    /* Glass Card - Compact */
+    .glass-card {
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .glass-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25), 0 0 30px rgba(6, 182, 212, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .card-label {
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted-foreground);
+      opacity: 0.5;
+      margin-bottom: 4px;
+    }
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    /* =================== HERO - Large cell =================== */
+    .hero-cell {
+      grid-column: span 2;
+      grid-row: span 2;
+      text-align: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.5), transparent 60%);
+      pointer-events: none;
+    }
+    .hero-cell::after {
+      content: '';
+      position: absolute;
+      inset: -50%;
+      background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.15), transparent 50%);
+      pointer-events: none;
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+    .hero-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 52px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      filter: drop-shadow(0 0 20px var(--cyan-glow)) drop-shadow(0 0 40px rgba(6, 182, 212, 0.3));
+    }
+    .hero-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      color: var(--foreground);
+      font-weight: 400;
+      margin-top: 10px;
+      letter-spacing: -0.01em;
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: var(--green-bright);
+      font-weight: 500;
+      margin-top: 6px;
+      letter-spacing: 0;
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+    }
+
+    /* =================== Secondary Stats - Small cells =================== */
+    .stat-cell {
+      text-align: center;
+      justify-content: center;
+      background: var(--card-glass-dim);
+      opacity: 0.85;
+    }
+    .stat-cell:hover { opacity: 1; }
+    .stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 20px currentColor;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      margin-top: 4px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .stat-sub {
+      font-size: 9px;
+      margin-top: 2px;
+      opacity: 0.65;
+      font-weight: 400;
+    }
+    .stat-orange .stat-value { color: var(--orange); }
+    .stat-orange .stat-sub { color: var(--orange); }
+    .stat-purple .stat-value { color: var(--purple); }
+    .stat-purple .stat-sub { color: var(--purple); }
+    .stat-yellow .stat-value { color: var(--yellow); }
+    .stat-yellow .stat-sub { color: var(--yellow); }
+
+    /* =================== Monthly Miles - Wide cell =================== */
+    .monthly-cell {
+      grid-column: span 3;
+    }
+    .mini-bars {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 4px;
+      padding-top: 8px;
+    }
+    .mini-bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .mini-bar-fill {
+      width: 100%;
+      max-width: 24px;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, var(--cyan-bright) 0%, var(--cyan) 100%);
+      min-height: 4px;
+      transition: all 0.2s;
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+    }
+    .mini-bar-fill.green {
+      background: linear-gradient(180deg, var(--green-bright) 0%, var(--green) 100%);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .mini-bar-fill:hover {
+      filter: brightness(1.2);
+      transform: scaleX(1.1);
+      box-shadow: 0 0 15px currentColor;
+    }
+    .mini-bar-label {
+      font-size: 8px;
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    /* =================== Progress Ring =================== */
+    .progress-cell {
+      grid-column: span 2;
+      flex-direction: row;
+      gap: 16px;
+    }
+    .ring-wrapper {
+      width: 90px;
+      height: 90px;
+      position: relative;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 12px var(--cyan-glow));
+    }
+    .ring-wrapper svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .ring-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--cyan);
+      text-shadow: 0 0 15px var(--cyan-glow);
+    }
+    .ring-label { font-size: 8px; color: var(--muted-foreground); font-weight: 400; }
+    .progress-stats { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+    .progress-row { display: flex; justify-content: space-between; font-size: 11px; }
+    .progress-row-label { color: var(--muted-foreground); font-weight: 400; }
+    .progress-row-value { font-weight: 500; font-family: 'Outfit', sans-serif; }
+    .progress-row-value.green { color: var(--green-bright); }
+
+    /* =================== Segment PRs =================== */
+    .segment-cell {
+      grid-row: span 2;
+    }
+    .segment-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .segment-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: hsla(0, 0%, 100%, 0.02);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .segment-item:hover {
+      border-color: var(--purple);
+      transform: translateX(2px);
+    }
+    .segment-item.gold {
+      background: linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(43, 96%, 56%, 0.05));
+      border: 2px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.2), inset 0 0 15px rgba(251, 191, 36, 0.05);
+    }
+    .segment-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .segment-item.gold .segment-rank {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1f2937;
+    }
+    .segment-info { flex: 1; min-width: 0; }
+    .segment-name { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+    .segment-meta { font-size: 9px; color: var(--muted-foreground); font-weight: 400; }
+    .segment-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--purple);
+      font-family: 'Outfit', sans-serif;
+      flex-shrink: 0;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 12px var(--purple-glow);
+    }
+
+    /* =================== Candlestick =================== */
+    .candle-cell {
+      grid-column: span 2;
+    }
+    .candle-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: hsla(160, 84%, 39%, 0.12);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+    .candle-header .green { color: var(--green-bright); font-weight: 600; font-family: 'Outfit', sans-serif; }
+    .candles {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .candle { display: flex; flex-direction: column; align-items: center; }
+    .candle-wick { width: 2px; background: var(--muted-foreground); }
+    .candle-body { width: 14px; border-radius: 2px; min-height: 8px; cursor: pointer; }
+    .candle-body.up {
+      background: var(--green-bright);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+    .candle-body.down {
+      background: var(--red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+
+    /* =================== Cumulative =================== */
+    .cumulative-cell {
+      grid-column: span 2;
+    }
+    .cumulative-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, hsla(160, 84%, 39%, 0.2), hsla(160, 84%, 39%, 0.1));
+      border-radius: 6px;
+      border: 1px solid var(--green);
+      margin-bottom: 8px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+    .cumulative-badge-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--green-bright);
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+    .cumulative-badge-label { font-size: 10px; color: var(--green-bright); font-weight: 400; }
+    .cumulative-chart { flex: 1; position: relative; }
+    .cumulative-chart svg { width: 100%; height: 100%; }
+    .cumulative-text {
+      font-size: 10px;
+      color: #fbbf24;
+      text-align: center;
+      margin-top: 4px;
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    }
+
+    /* =================== Elevation =================== */
+    .elevation-cell {
+      grid-column: span 2;
+    }
+    .elev-chart { flex: 1; position: relative; }
+    .elev-chart svg { width: 100%; height: 100%; }
+    .elev-current { position: absolute; right: 8px; bottom: 8px; text-align: right; }
+    .elev-current-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--orange);
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+    }
+    .elev-current-label { font-size: 9px; color: var(--muted-foreground); font-weight: 400; }
+
+    /* =================== Donut =================== */
+    .donut-cell {
+      flex-direction: row;
+      gap: 12px;
+    }
+    .donut-wrapper {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3)) drop-shadow(0 0 10px rgba(249, 115, 22, 0.2)) drop-shadow(0 0 10px rgba(168, 85, 247, 0.2));
+    }
+    .donut-wrapper svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .donut-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-center-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cyan);
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .donut-center-label { font-size: 7px; color: var(--muted-foreground); font-weight: 400; }
+    .donut-legend { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+    .donut-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 400; }
+    .donut-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* =================== Speed Trend =================== */
+    .speed-cell {}
+    .speed-hero {
+      font-size: 26px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #10b981, #059669);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.4)) drop-shadow(0 0 30px rgba(16, 185, 129, 0.2));
+    }
+    .speed-sub {
+      font-size: 11px;
+      color: var(--green-bright);
+      margin-top: 2px;
+      font-weight: 400;
+      text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .speed-chart { flex: 1; margin-top: 8px; }
+    .speed-chart svg { width: 100%; height: 100%; }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .glass-card { animation: fadeInUp 0.3s ease-out backwards; }
+    .glass-card:nth-child(1) { animation-delay: 0ms; }
+    .glass-card:nth-child(2) { animation-delay: 40ms; }
+    .glass-card:nth-child(3) { animation-delay: 80ms; }
+    .glass-card:nth-child(4) { animation-delay: 120ms; }
+    .glass-card:nth-child(5) { animation-delay: 160ms; }
+    .glass-card:nth-child(6) { animation-delay: 200ms; }
+    .glass-card:nth-child(7) { animation-delay: 240ms; }
+    .glass-card:nth-child(8) { animation-delay: 280ms; }
+    .glass-card:nth-child(9) { animation-delay: 320ms; }
+    .glass-card:nth-child(10) { animation-delay: 360ms; }
+    .glass-card:nth-child(11) { animation-delay: 400ms; }
+    .glass-card:nth-child(12) { animation-delay: 440ms; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Nav -->
+    <nav class="nav">
+      <h1 class="nav-title heading">Journey</h1>
+      <div class="nav-tabs">
+        <button class="nav-tab">Lifting</button>
+        <button class="nav-tab">Climbing</button>
+        <button class="nav-tab active">Cycling</button>
+      </div>
+    </nav>
+
+    <!-- Bento Grid -->
+    <div class="bento">
+      <!-- Row 1 -->
+      <!-- Hero - 2x2 -->
+      <div class="glass-card hero-cell">
+        <div class="hero-value">2,847</div>
+        <div class="hero-label">Yearly Miles</div>
+        <div class="hero-sub">429 mi ahead of pace</div>
+      </div>
+
+      <!-- Elevation stat -->
+      <div class="glass-card stat-cell stat-orange">
+        <div class="stat-value">142k</div>
+        <div class="stat-label">Elevation (ft)</div>
+        <div class="stat-sub">14 Everests!</div>
+      </div>
+
+      <!-- Monthly Miles - 3 cols -->
+      <div class="glass-card monthly-cell">
+        <div class="card-label">THIS YEAR</div>
+        <div class="card-title">Monthly Miles</div>
+        <div class="mini-bars">
+          <div class="mini-bar"><div class="mini-bar-fill" style="height: 46%"></div><span class="mini-bar-label">J</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="height: 39%"></div><span class="mini-bar-label">F</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 63%"></div><span class="mini-bar-label">M</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 77%"></div><span class="mini-bar-label">A</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 92%"></div><span class="mini-bar-label">M</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 100%"></div><span class="mini-bar-label">J</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 97%"></div><span class="mini-bar-label">J</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 90%"></div><span class="mini-bar-label">A</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill green" style="height: 71%"></div><span class="mini-bar-label">S</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="height: 56%"></div><span class="mini-bar-label">O</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="height: 31%"></div><span class="mini-bar-label">N</span></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="height: 4%; opacity: 0.3"></div><span class="mini-bar-label">D</span></div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <!-- Centuries stat -->
+      <div class="glass-card stat-cell stat-purple">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Centuries</div>
+        <div class="stat-sub">100+ mi rides</div>
+      </div>
+
+      <!-- Progress Ring - 2 cols -->
+      <div class="glass-card progress-cell">
+        <div class="ring-wrapper">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--muted)" stroke-width="10"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--cyan)" stroke-width="10" stroke-linecap="round" stroke-dasharray="180" stroke-dashoffset="52"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-value">71%</div>
+            <div class="ring-label">of 4k mi</div>
+          </div>
+        </div>
+        <div class="progress-stats">
+          <div class="progress-row"><span class="progress-row-label">Current</span><span class="progress-row-value">2,847</span></div>
+          <div class="progress-row"><span class="progress-row-label">Pace</span><span class="progress-row-value">2,418</span></div>
+          <div class="progress-row"><span class="progress-row-label">Ahead</span><span class="progress-row-value green">+429</span></div>
+          <div class="progress-row"><span class="progress-row-label">Finish</span><span class="progress-row-value green">Dec 8</span></div>
+        </div>
+      </div>
+
+      <!-- Segment PRs - 2 rows -->
+      <div class="glass-card segment-cell">
+        <div class="card-label">SEGMENT PRS</div>
+        <div class="segment-list">
+          <div class="segment-item gold">
+            <span class="segment-rank">🥇</span>
+            <div class="segment-info">
+              <div class="segment-name">Hawk Hill Climb</div>
+              <div class="segment-meta">1.2 mi • 6.8%</div>
+            </div>
+            <span class="segment-time">8:42</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">2</span>
+            <div class="segment-info">
+              <div class="segment-name">Paradise Sprint</div>
+              <div class="segment-meta">0.8 mi • flat</div>
+            </div>
+            <span class="segment-time">2:15</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">3</span>
+            <div class="segment-info">
+              <div class="segment-name">Camino Alto</div>
+              <div class="segment-meta">2.1 mi • 5.2%</div>
+            </div>
+            <span class="segment-time">12:08</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <!-- Streak stat -->
+      <div class="glass-card stat-cell stat-yellow">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Day Streak</div>
+        <div class="stat-sub">Personal best!</div>
+      </div>
+
+      <!-- Candlestick - 2 cols -->
+      <div class="glass-card candle-cell">
+        <div class="card-label">PERFORMANCE</div>
+        <div class="candle-header">
+          <span>This week: <span class="green">17.8 mph</span> • +8%</span>
+        </div>
+        <div class="candles">
+          <div class="candle"><div class="candle-wick" style="height:8px"></div><div class="candle-body up" style="height:20px"></div><div class="candle-wick" style="height:6px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:6px"></div><div class="candle-body up" style="height:24px"></div><div class="candle-wick" style="height:4px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:12px"></div><div class="candle-body down" style="height:14px"></div><div class="candle-wick" style="height:10px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:5px"></div><div class="candle-body up" style="height:28px"></div><div class="candle-wick" style="height:3px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:10px"></div><div class="candle-body up" style="height:18px"></div><div class="candle-wick" style="height:8px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:12px"></div><div class="candle-body down" style="height:16px"></div><div class="candle-wick" style="height:12px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:4px"></div><div class="candle-body up" style="height:30px"></div><div class="candle-wick" style="height:3px"></div></div>
+          <div class="candle"><div class="candle-wick" style="height:6px"></div><div class="candle-body up" style="height:26px"></div><div class="candle-wick" style="height:4px"></div></div>
+        </div>
+      </div>
+
+      <!-- Cumulative - 2 cols -->
+      <div class="glass-card cumulative-cell">
+        <div class="card-label">YEAR TO DATE</div>
+        <div class="cumulative-badge">
+          <span class="cumulative-badge-value">+14%</span>
+          <span class="cumulative-badge-label">ahead</span>
+        </div>
+        <div class="cumulative-chart">
+          <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cum-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="55" x2="200" y2="5" stroke="var(--muted-foreground)" stroke-width="2" stroke-dasharray="4,2"/>
+            <path d="M0,55 Q50,48 100,30 T200,10 L200,60 L0,60 Z" fill="url(#cum-fill)"/>
+            <path d="M0,55 Q50,48 100,30 T200,10" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+            <circle cx="200" cy="10" r="4" fill="var(--cyan)"/>
+          </svg>
+        </div>
+        <div class="cumulative-text">✨ Dec 8 finish (3 weeks early!)</div>
+      </div>
+
+      <!-- Row 4 -->
+      <!-- Elevation chart - 2 cols -->
+      <div class="glass-card elevation-cell">
+        <div class="card-label">CLIMBING</div>
+        <div class="card-title">Monthly Elevation</div>
+        <div class="elev-chart">
+          <svg viewBox="0 0 200 50" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="mtn-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--orange)" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="var(--orange)" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,40 L33,32 L66,24 L100,5 L133,16 L166,28 L200,34 L200,50 L0,50 Z" fill="url(#mtn-grad)"/>
+            <path d="M0,40 L33,32 L66,24 L100,5 L133,16 L166,28 L200,34" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <circle cx="100" cy="5" r="4" fill="var(--orange)"/>
+          </svg>
+          <div class="elev-current">
+            <div class="elev-current-value">12.4k</div>
+            <div class="elev-current-label">Nov</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut -->
+      <div class="glass-card donut-cell">
+        <div class="donut-wrapper">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="32" fill="none" stroke="var(--cyan)" stroke-width="14" stroke-dasharray="100.5 100.5"/>
+            <circle cx="50" cy="50" r="32" fill="none" stroke="var(--orange)" stroke-width="14" stroke-dasharray="60.3 140.7" stroke-dashoffset="-100.5"/>
+            <circle cx="50" cy="50" r="32" fill="none" stroke="var(--purple)" stroke-width="14" stroke-dasharray="40.2 160.8" stroke-dashoffset="-160.8"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-center-value">2,847</div>
+            <div class="donut-center-label">Miles</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="donut-legend-item"><span class="donut-dot" style="background: var(--cyan)"></span> Road 50%</div>
+          <div class="donut-legend-item"><span class="donut-dot" style="background: var(--orange)"></span> Gravel 30%</div>
+          <div class="donut-legend-item"><span class="donut-dot" style="background: var(--purple)"></span> MTB 20%</div>
+        </div>
+      </div>
+
+      <!-- Speed Trend -->
+      <div class="glass-card speed-cell">
+        <div class="card-label">PERFORMANCE</div>
+        <div class="speed-hero">+2.1 mph</div>
+        <div class="speed-sub">(+13%) 🔥</div>
+        <div class="speed-chart">
+          <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="spd-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--green-bright)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--green-bright)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,35 Q30,32 60,24 T120,5 L120,40 L0,40 Z" fill="url(#spd-fill)"/>
+            <path d="M0,35 Q30,32 60,24 T120,5" fill="none" stroke="var(--green-bright)" stroke-width="2"/>
+            <circle cx="120" cy="5" r="3" fill="var(--green-bright)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Placeholder for balance -->
+      <div class="glass-card stat-cell" style="justify-content: flex-start; padding-top: 12px;">
+        <div class="card-label">RECENT</div>
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+          <div style="font-size: 11px; display: flex; justify-content: space-between;">
+            <span style="color: var(--muted-foreground)">Today</span>
+            <span style="font-weight: 600;">32 mi</span>
+          </div>
+          <div style="font-size: 11px; display: flex; justify-content: space-between;">
+            <span style="color: var(--muted-foreground)">This week</span>
+            <span style="font-weight: 600;">148 mi</span>
+          </div>
+          <div style="font-size: 11px; display: flex; justify-content: space-between;">
+            <span style="color: var(--muted-foreground)">Avg/week</span>
+            <span style="font-weight: 600;">78 mi</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

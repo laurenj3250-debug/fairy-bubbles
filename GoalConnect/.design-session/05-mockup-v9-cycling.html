@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey - Cycling</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* App design system colors */
+      --background: hsl(45, 30%, 12%);
+      --card: hsl(40, 20%, 18%);
+      --card-glass: hsla(40, 20%, 18%, 0.4);
+      --foreground: hsl(40, 20%, 95%);
+      --border: hsla(40, 15%, 50%, 0.15);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: hsl(40, 15%, 65%);
+
+      /* Expanded color palette */
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --orange: #f97316;
+      --orange-glow: rgba(249, 115, 22, 0.3);
+      --yellow: #eab308;
+      --yellow-glow: rgba(234, 179, 8, 0.3);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.3);
+      --green: #22c55e;
+      --red: #ef4444;
+
+      /* Typography scale */
+      --text-hero: 64px;
+      --text-secondary-num: 32px;
+      --text-chart-title: 18px;
+      --text-section-header: 14px;
+      --text-label: 12px;
+      --text-body: 14px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 32px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-title { font-size: 28px; color: var(--foreground); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .nav-tab {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: var(--text-body);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+    }
+
+    .nav-tab:hover { color: var(--foreground); background: hsla(40, 15%, 50%, 0.1); }
+    .nav-tab.active { background: var(--cyan); color: white; box-shadow: 0 4px 16px var(--cyan-glow); }
+
+    /* Grid - increased gaps */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Glass Card - increased padding */
+    .glass-card {
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-2px);
+      border-color: hsla(40, 15%, 50%, 0.3);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Typography classes */
+    .card-label {
+      font-size: var(--text-section-header);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: var(--text-chart-title);
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 20px;
+    }
+
+    .data-label {
+      font-size: var(--text-label);
+      font-weight: 500;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+    }
+
+    /* ===================
+       HERO STATS - Fixed hierarchy
+       =================== */
+    .hero-section {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    /* Primary stat - larger, with glow */
+    .hero-primary {
+      flex: 1.5;
+      text-align: center;
+      padding: 40px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 30%, var(--cyan-glow), transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-primary .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: var(--text-hero);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cyan), #67e8f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      position: relative;
+      animation: countUp 1s ease-out;
+    }
+
+    .hero-primary .hero-label {
+      font-size: 16px;
+      color: var(--foreground);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .hero-primary .hero-sub {
+      font-size: var(--text-body);
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* Secondary stats - smaller, muted */
+    .hero-secondary {
+      flex: 1;
+      text-align: center;
+      padding: 24px 16px;
+      opacity: 0.85;
+    }
+
+    .hero-secondary .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: var(--text-secondary-num);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .hero-secondary .hero-label {
+      font-size: var(--text-label);
+      color: var(--muted-foreground);
+      font-weight: 500;
+    }
+
+    .hero-secondary .hero-sub {
+      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Color-coded secondary stats */
+    .hero-elevation .hero-value { color: var(--orange); }
+    .hero-elevation .hero-sub { color: var(--orange); opacity: 0.8; }
+
+    .hero-centuries .hero-value { color: var(--purple); }
+    .hero-centuries .hero-sub { color: var(--purple); opacity: 0.8; }
+
+    .hero-streak .hero-value { color: var(--yellow); }
+    .hero-streak .hero-sub { color: var(--yellow); opacity: 0.8; }
+
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===================
+       MONTHLY MILES - High contrast bars
+       =================== */
+    .monthly-chart {
+      height: 220px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 20px 0 40px;
+      gap: 8px;
+      position: relative;
+    }
+
+    .monthly-chart::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 20px;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .bar-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .bar-col:hover .bar-value { opacity: 1; }
+
+    .bar {
+      width: 100%;
+      max-width: 40px;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(180deg, var(--cyan) 0%, rgba(6, 182, 212, 0.3) 100%);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .bar:hover {
+      filter: brightness(1.2);
+      transform: scaleY(1.02);
+    }
+
+    .bar-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .bar-current {
+      background: linear-gradient(180deg, #67e8f9 0%, var(--cyan) 100%);
+      box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    /* ===================
+       SEGMENT PRs - Better hierarchy
+       =================== */
+    .segment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .segment-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: hsla(0, 0%, 100%, 0.03);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .segment-item:hover {
+      border-color: var(--purple);
+      background: hsla(270, 70%, 60%, 0.05);
+    }
+
+    .segment-item.top-pr {
+      background: linear-gradient(135deg, hsla(270, 70%, 60%, 0.15), hsla(270, 70%, 60%, 0.05));
+      border-color: var(--purple);
+    }
+
+    .segment-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+    }
+
+    .segment-item.top-pr .segment-rank {
+      background: var(--purple);
+      color: white;
+    }
+
+    .segment-icon {
+      font-size: 18px;
+    }
+
+    .segment-info { flex: 1; }
+
+    .segment-name {
+      font-size: var(--text-body);
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 2px;
+    }
+
+    .segment-meta {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .segment-time {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--purple);
+      font-family: 'Fraunces', serif;
+    }
+
+    .pr-badge {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--purple);
+      color: white;
+      font-weight: 700;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--purple-glow); }
+      50% { box-shadow: 0 0 0 6px transparent; }
+    }
+
+    /* ===================
+       DISTANCE & ELEVATION - Split into two clear lines
+       =================== */
+    .dual-chart {
+      height: 200px;
+      position: relative;
+      padding: 20px 0;
+    }
+
+    .dual-chart svg { width: 100%; height: 100%; }
+
+    .chart-axis {
+      position: absolute;
+      left: 0;
+      top: 20px;
+      bottom: 40px;
+      width: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .chart-axis-right {
+      left: auto;
+      right: 0;
+      text-align: right;
+    }
+
+    .time-axis {
+      position: absolute;
+      bottom: 10px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    /* ===================
+       CANDLESTICK - With context
+       =================== */
+    .candlestick-container {
+      height: 200px;
+      position: relative;
+      padding: 30px 20px 50px;
+    }
+
+    .candle-labels {
+      position: absolute;
+      right: 8px;
+      top: 30px;
+      bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .avg-line {
+      position: absolute;
+      left: 20px;
+      right: 50px;
+      height: 2px;
+      background: var(--yellow);
+      opacity: 0.5;
+    }
+
+    .avg-label {
+      position: absolute;
+      right: 55px;
+      font-size: 10px;
+      color: var(--yellow);
+      transform: translateY(-50%);
+    }
+
+    .candles {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 100%;
+      gap: 12px;
+    }
+
+    .candle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .candle-wick {
+      width: 2px;
+      background: var(--muted-foreground);
+    }
+
+    .candle-body {
+      width: 24px;
+      border-radius: 3px;
+      min-height: 15px;
+    }
+
+    .candle-body.up { background: var(--green); }
+    .candle-body.down { background: var(--red); }
+
+    .candle-week {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 8px;
+    }
+
+    .candle-summary {
+      text-align: center;
+      margin-top: 16px;
+      font-size: var(--text-body);
+      color: var(--foreground);
+    }
+
+    .candle-summary strong { color: var(--green); }
+
+    /* ===================
+       CUMULATIVE MILES - Clear goal comparison
+       =================== */
+    .cumulative-chart {
+      height: 180px;
+      position: relative;
+      padding: 20px 0;
+    }
+
+    .cumulative-chart svg { width: 100%; height: 100%; }
+
+    .milestone {
+      position: absolute;
+      font-size: 9px;
+      color: var(--muted-foreground);
+      transform: translateX(-50%);
+    }
+
+    .gap-indicator {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .gap-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green);
+      font-family: 'Fraunces', serif;
+    }
+
+    .gap-label {
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    /* ===================
+       ELEVATION CHART - With Y-axis
+       =================== */
+    .elevation-chart {
+      height: 180px;
+      position: relative;
+      padding: 20px 40px 30px 50px;
+    }
+
+    .elevation-chart svg { width: 100%; height: 100%; }
+
+    .elev-axis {
+      position: absolute;
+      left: 0;
+      top: 20px;
+      bottom: 30px;
+      width: 45px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted-foreground);
+      text-align: right;
+      padding-right: 8px;
+    }
+
+    .peak-marker {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--orange);
+      text-align: center;
+    }
+
+    .elev-comparison {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    /* ===================
+       DONUT CHART - Labels inside, total center
+       =================== */
+    .donut-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 180px;
+    }
+
+    .donut-chart {
+      width: 160px;
+      height: 160px;
+      position: relative;
+    }
+
+    .donut-chart svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .donut-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .donut-total {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--foreground);
+      font-family: 'Fraunces', serif;
+    }
+
+    .donut-total-label {
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .donut-labels {
+      position: absolute;
+      inset: 0;
+    }
+
+    .donut-label {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .donut-legend {
+      margin-left: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--foreground);
+    }
+
+    .donut-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    /* ===================
+       SPEED TREND - Prominent delta
+       =================== */
+    .speed-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .speed-delta {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green);
+      font-family: 'Fraunces', serif;
+    }
+
+    .speed-delta-pct {
+      font-size: 16px;
+      color: var(--green);
+      opacity: 0.8;
+    }
+
+    .speed-chart {
+      height: 140px;
+      position: relative;
+    }
+
+    .speed-chart svg { width: 100%; height: 100%; }
+
+    /* ===================
+       PROGRESS RING - Enhanced
+       =================== */
+    .ring-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+    }
+
+    .ring-chart {
+      width: 180px;
+      height: 180px;
+      position: relative;
+    }
+
+    .ring-chart svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ring-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .ring-value {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--foreground);
+    }
+
+    .ring-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .ring-status {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-label);
+      color: var(--muted-foreground);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .legend-dashed {
+      width: 20px;
+      height: 0;
+      border-top: 2px dashed;
+    }
+
+    /* Section divider */
+    .section-divider {
+      grid-column: span 12;
+      height: 1px;
+      background: var(--border);
+      margin: 8px 0;
+    }
+
+    /* Date range label */
+    .date-range {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .span-3, .span-4, .span-5 { grid-column: span 6; }
+      .span-6, .span-7 { grid-column: span 12; }
+      .hero-section { flex-wrap: wrap; }
+      .hero-primary { flex: 1 1 100%; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-section { flex-direction: column; }
+      .span-3, .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 12; }
+      .nav { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav">
+      <h1 class="nav-title heading">Journey</h1>
+      <div class="nav-tabs">
+        <button class="nav-tab">Lifting</button>
+        <button class="nav-tab">Climbing</button>
+        <button class="nav-tab active">Cycling</button>
+      </div>
+    </nav>
+
+    <!-- Hero Stats - Fixed hierarchy -->
+    <div class="hero-section">
+      <div class="glass-card hero-primary">
+        <div class="hero-value">2,847</div>
+        <div class="hero-label">Yearly Miles</div>
+        <div class="hero-sub">71% of goal - ahead of schedule!</div>
+      </div>
+      <div class="glass-card hero-secondary hero-elevation">
+        <div class="hero-value">142k</div>
+        <div class="hero-label">Elevation (ft)</div>
+        <div class="hero-sub">14 Everests!</div>
+      </div>
+      <div class="glass-card hero-secondary hero-centuries">
+        <div class="hero-value">3</div>
+        <div class="hero-label">Centuries</div>
+        <div class="hero-sub">100+ mi rides</div>
+      </div>
+      <div class="glass-card hero-secondary hero-streak">
+        <div class="hero-value">12</div>
+        <div class="hero-label">Day Streak</div>
+        <div class="hero-sub">Personal best!</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+
+      <!-- Yearly Progress Ring -->
+      <div class="glass-card span-4">
+        <div class="card-label">2024 Goal</div>
+        <div class="card-title">Yearly Miles Progress</div>
+        <div class="ring-container">
+          <div class="ring-chart">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--muted)" stroke-width="10"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#ring-grad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="55"/>
+              <defs>
+                <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="var(--cyan)"/>
+                  <stop offset="100%" stop-color="#67e8f9"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-value">71%</div>
+              <div class="ring-label">2,847 / 4,000 mi</div>
+              <div class="ring-status">On track!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Miles - High contrast -->
+      <div class="glass-card span-8">
+        <div class="card-label">This Year</div>
+        <div class="card-title">Monthly Miles</div>
+        <div class="date-range">Jan 2024 - Nov 2024</div>
+        <div class="monthly-chart">
+          <div class="bar-col"><span class="bar-value">186</span><div class="bar" style="height: 45%"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-col"><span class="bar-value">156</span><div class="bar" style="height: 38%"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-col"><span class="bar-value">254</span><div class="bar" style="height: 62%"></div><span class="bar-label">Mar</span></div>
+          <div class="bar-col"><span class="bar-value">308</span><div class="bar" style="height: 75%"></div><span class="bar-label">Apr</span></div>
+          <div class="bar-col"><span class="bar-value">370</span><div class="bar" style="height: 90%"></div><span class="bar-label">May</span></div>
+          <div class="bar-col"><span class="bar-value">412</span><div class="bar" style="height: 100%"></div><span class="bar-label">Jun</span></div>
+          <div class="bar-col"><span class="bar-value">390</span><div class="bar" style="height: 95%"></div><span class="bar-label">Jul</span></div>
+          <div class="bar-col"><span class="bar-value">362</span><div class="bar" style="height: 88%"></div><span class="bar-label">Aug</span></div>
+          <div class="bar-col"><span class="bar-value">287</span><div class="bar" style="height: 70%"></div><span class="bar-label">Sep</span></div>
+          <div class="bar-col"><span class="bar-value">226</span><div class="bar" style="height: 55%"></div><span class="bar-label">Oct</span></div>
+          <div class="bar-col"><span class="bar-value">124</span><div class="bar bar-current" style="height: 30%"></div><span class="bar-label">Nov</span></div>
+          <div class="bar-col"><span class="bar-value">-</span><div class="bar" style="height: 5%; opacity: 0.3"></div><span class="bar-label">Dec</span></div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Distance & Elevation - Clear separate lines -->
+      <div class="glass-card span-8">
+        <div class="card-label">Volume Trend</div>
+        <div class="card-title">Distance & Elevation Over Time</div>
+        <div class="date-range">Last 6 months (Jun - Nov 2024)</div>
+        <div class="dual-chart">
+          <svg viewBox="0 0 400 150" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="dist-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="elev-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--orange)" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="var(--orange)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid lines -->
+            <line x1="50" y1="30" x2="380" y2="30" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="50" y1="70" x2="380" y2="70" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="50" y1="110" x2="380" y2="110" stroke="var(--border)" stroke-dasharray="4"/>
+            <!-- Distance area -->
+            <path d="M50,120 L105,85 L160,75 L215,65 L270,80 L325,90 L380,100 L380,140 L50,140 Z" fill="url(#dist-area)"/>
+            <!-- Distance line -->
+            <path d="M50,120 L105,85 L160,75 L215,65 L270,80 L325,90 L380,100" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Elevation line -->
+            <path d="M50,110 L105,60 L160,45 L215,55 L270,75 L325,95 L380,105" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Data points -->
+            <circle cx="50" cy="120" r="4" fill="var(--cyan)"/>
+            <circle cx="380" cy="100" r="4" fill="var(--cyan)"/>
+            <circle cx="50" cy="110" r="4" fill="var(--orange)"/>
+            <circle cx="215" cy="55" r="5" fill="var(--orange)"/>
+            <circle cx="380" cy="105" r="4" fill="var(--orange)"/>
+            <!-- Peak label -->
+            <text x="215" y="42" text-anchor="middle" fill="var(--orange)" font-size="10" font-weight="600">Peak: 18.2k ft</text>
+            <!-- Y-axis labels left (distance) -->
+            <text x="45" y="34" text-anchor="end" fill="var(--cyan)" font-size="9">400 mi</text>
+            <text x="45" y="74" text-anchor="end" fill="var(--cyan)" font-size="9">300</text>
+            <text x="45" y="114" text-anchor="end" fill="var(--cyan)" font-size="9">200</text>
+            <!-- Y-axis labels right (elevation) -->
+            <text x="385" y="34" text-anchor="start" fill="var(--orange)" font-size="9">20k ft</text>
+            <text x="385" y="74" text-anchor="start" fill="var(--orange)" font-size="9">15k</text>
+            <text x="385" y="114" text-anchor="start" fill="var(--orange)" font-size="9">10k</text>
+          </svg>
+          <div class="time-axis">
+            <span>Jun</span>
+            <span>Jul</span>
+            <span>Aug</span>
+            <span>Sep</span>
+            <span>Oct</span>
+            <span>Nov</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-line" style="background: var(--cyan)"></span> Distance (mi)</div>
+          <div class="legend-item"><span class="legend-line" style="background: var(--orange)"></span> Elevation (ft)</div>
+        </div>
+      </div>
+
+      <!-- Segment PRs - Better hierarchy -->
+      <div class="glass-card span-4">
+        <div class="card-label">Strava</div>
+        <div class="card-title">Segment PRs</div>
+        <div class="segment-list">
+          <div class="segment-item top-pr">
+            <span class="segment-rank">1</span>
+            <span class="segment-icon">⛰️</span>
+            <div class="segment-info">
+              <div class="segment-name">Hawk Hill Climb<span class="pr-badge">PR!</span></div>
+              <div class="segment-meta">1.2 mi • 6.8% avg</div>
+            </div>
+            <span class="segment-time">8:42</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">2</span>
+            <span class="segment-icon">💨</span>
+            <div class="segment-info">
+              <div class="segment-name">Paradise Loop Sprint<span class="pr-badge">PR!</span></div>
+              <div class="segment-meta">0.8 mi • flat</div>
+            </div>
+            <span class="segment-time">2:15</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">3</span>
+            <span class="segment-icon">⛰️</span>
+            <div class="segment-info">
+              <div class="segment-name">Camino Alto</div>
+              <div class="segment-meta">2.1 mi • 5.2% avg</div>
+            </div>
+            <span class="segment-time">12:08</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">4</span>
+            <span class="segment-icon">🏔️</span>
+            <div class="segment-info">
+              <div class="segment-name">Fairfax-Bolinas Rd</div>
+              <div class="segment-meta">4.8 mi • 7.1% avg</div>
+            </div>
+            <span class="segment-time">24:33</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Candlestick - With context -->
+      <div class="glass-card span-7">
+        <div class="card-label">Performance</div>
+        <div class="card-title">Weekly Speed Range</div>
+        <div class="date-range">Last 8 weeks (Oct 1 - Nov 22, 2024)</div>
+        <div class="candlestick-container">
+          <div class="avg-line" style="top: 45%"></div>
+          <div class="avg-label" style="top: 45%">Avg 16.5</div>
+          <div class="candle-labels">
+            <span>20 mph</span>
+            <span>18</span>
+            <span>16</span>
+            <span>14</span>
+          </div>
+          <div class="candles">
+            <div class="candle">
+              <div class="candle-wick" style="height: 15px"></div>
+              <div class="candle-body up" style="height: 25px"></div>
+              <div class="candle-wick" style="height: 10px"></div>
+              <span class="candle-week">W1</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 12px"></div>
+              <div class="candle-body up" style="height: 30px"></div>
+              <div class="candle-wick" style="height: 8px"></div>
+              <span class="candle-week">W2</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 20px"></div>
+              <div class="candle-body down" style="height: 18px"></div>
+              <div class="candle-wick" style="height: 15px"></div>
+              <span class="candle-week">W3</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 10px"></div>
+              <div class="candle-body up" style="height: 35px"></div>
+              <div class="candle-wick" style="height: 5px"></div>
+              <span class="candle-week">W4</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 15px"></div>
+              <div class="candle-body up" style="height: 22px"></div>
+              <div class="candle-wick" style="height: 12px"></div>
+              <span class="candle-week">W5</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 18px"></div>
+              <div class="candle-body down" style="height: 20px"></div>
+              <div class="candle-wick" style="height: 18px"></div>
+              <span class="candle-week">W6</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 8px"></div>
+              <div class="candle-body up" style="height: 40px"></div>
+              <div class="candle-wick" style="height: 5px"></div>
+              <span class="candle-week">W7</span>
+            </div>
+            <div class="candle">
+              <div class="candle-wick" style="height: 10px"></div>
+              <div class="candle-body up" style="height: 32px"></div>
+              <div class="candle-wick" style="height: 8px"></div>
+              <span class="candle-week">W8</span>
+            </div>
+          </div>
+        </div>
+        <div class="candle-summary">
+          This week: <strong>17.8 mph avg</strong> • 8% faster than last week
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: var(--green)"></span> Faster than prev week</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--red)"></span> Slower</div>
+          <div class="legend-item"><span class="legend-dashed" style="border-color: var(--yellow)"></span> 8-week avg</div>
+        </div>
+      </div>
+
+      <!-- Cumulative Miles vs Goal -->
+      <div class="glass-card span-5">
+        <div class="card-label">Year to Date</div>
+        <div class="card-title">Cumulative Miles vs Goal</div>
+        <div class="cumulative-chart">
+          <svg viewBox="0 0 280 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="actual-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Milestone lines -->
+            <line x1="70" y1="10" x2="70" y2="130" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="140" y1="10" x2="140" y2="130" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="210" y1="10" x2="210" y2="130" stroke="var(--border)" stroke-dasharray="2"/>
+            <!-- Goal line -->
+            <line x1="0" y1="120" x2="280" y2="20" stroke="var(--muted-foreground)" stroke-width="3" stroke-dasharray="8,4"/>
+            <!-- Actual area -->
+            <path d="M0,120 Q35,115 70,100 T140,70 T210,45 T280,35 L280,130 L0,130 Z" fill="url(#actual-fill)"/>
+            <!-- Actual line -->
+            <path d="M0,120 Q35,115 70,100 T140,70 T210,45 T280,35" fill="none" stroke="var(--cyan)" stroke-width="3"/>
+            <!-- End point -->
+            <circle cx="280" cy="35" r="6" fill="var(--cyan)"/>
+          </svg>
+          <span class="milestone" style="left: 25%; bottom: 5px">25%</span>
+          <span class="milestone" style="left: 50%; bottom: 5px">50%</span>
+          <span class="milestone" style="left: 75%; bottom: 5px">75%</span>
+          <div class="gap-indicator">
+            <div class="gap-value">+14%</div>
+            <div class="gap-label">ahead of pace</div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-line" style="background: var(--cyan)"></span> Actual: 2,847 mi</div>
+          <div class="legend-item"><span class="legend-dashed" style="border-color: var(--muted-foreground)"></span> Goal pace</div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Monthly Elevation -->
+      <div class="glass-card span-4">
+        <div class="card-label">Climbing</div>
+        <div class="card-title">Monthly Elevation</div>
+        <div class="elevation-chart">
+          <div class="elev-axis">
+            <span>20k</span>
+            <span>15k</span>
+            <span>10k</span>
+            <span>5k</span>
+            <span>0</span>
+          </div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="mtn-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--orange)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="var(--orange)" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <line x1="0" y1="25" x2="200" y2="25" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="50" x2="200" y2="50" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="75" x2="200" y2="75" stroke="var(--border)" stroke-dasharray="2"/>
+            <!-- Mountain -->
+            <path d="M0,80 L33,65 L66,50 L100,10 L133,35 L166,55 L200,70 L200,100 L0,100 Z" fill="url(#mtn-grad)"/>
+            <path d="M0,80 L33,65 L66,50 L100,10 L133,35 L166,55 L200,70" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <!-- Peak -->
+            <circle cx="100" cy="10" r="4" fill="var(--orange)"/>
+          </svg>
+          <div class="peak-marker" style="left: calc(50% + 25px); top: 25px">18.2k ft<br><small style="opacity:0.7">June</small></div>
+        </div>
+        <div class="elev-comparison">+22% higher than 2023</div>
+      </div>
+
+      <!-- Ride Types Donut -->
+      <div class="glass-card span-4">
+        <div class="card-label">Breakdown</div>
+        <div class="card-title">Ride Types</div>
+        <div class="donut-wrapper">
+          <div class="donut-chart">
+            <svg viewBox="0 0 100 100">
+              <!-- Road 50% -->
+              <circle cx="50" cy="50" r="35" fill="none" stroke="var(--cyan)" stroke-width="20" stroke-dasharray="110 220"/>
+              <!-- Gravel 30% -->
+              <circle cx="50" cy="50" r="35" fill="none" stroke="var(--orange)" stroke-width="20" stroke-dasharray="66 220" stroke-dashoffset="-110"/>
+              <!-- MTB 20% -->
+              <circle cx="50" cy="50" r="35" fill="none" stroke="var(--purple)" stroke-width="20" stroke-dasharray="44 220" stroke-dashoffset="-176"/>
+            </svg>
+            <div class="donut-center">
+              <div class="donut-total">2.8k</div>
+              <div class="donut-total-label">total miles</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: var(--cyan)"></span>
+              Road 50%
+            </div>
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: var(--orange)"></span>
+              Gravel 30%
+            </div>
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: var(--purple)"></span>
+              MTB 20%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speed Trend -->
+      <div class="glass-card span-4">
+        <div class="card-label">Performance</div>
+        <div class="card-title">Avg Speed Trend</div>
+        <div class="speed-header">
+          <span class="speed-delta">+2.1 mph</span>
+          <span class="speed-delta-pct">(+13%)</span>
+        </div>
+        <div class="date-range">Since January 2024</div>
+        <div class="speed-chart">
+          <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="speed-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--green)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--green)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <line x1="0" y1="25" x2="200" y2="25" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="50" x2="200" y2="50" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="75" x2="200" y2="75" stroke="var(--border)" stroke-dasharray="2"/>
+            <!-- Area -->
+            <path d="M0,75 Q25,72 50,68 T100,55 T150,40 T200,25 L200,100 L0,100 Z" fill="url(#speed-fill)"/>
+            <!-- Line -->
+            <path d="M0,75 Q25,72 50,68 T100,55 T150,40 T200,25" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round"/>
+            <!-- End point -->
+            <circle cx="200" cy="25" r="5" fill="var(--green)"/>
+            <!-- Label -->
+            <text x="195" y="18" text-anchor="end" fill="var(--foreground)" font-size="11" font-weight="600">18.2</text>
+            <text x="5" y="82" fill="var(--muted-foreground)" font-size="9">16.1</text>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

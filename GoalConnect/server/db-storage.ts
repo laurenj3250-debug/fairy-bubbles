@@ -27,7 +27,11 @@ import type {
   DreamScrollTag,
   DreamScrollItem,
   InsertDreamScrollItem,
+  // Journey Goals
+  JourneyGoal,
+  InsertJourneyGoal,
 } from "@shared/schema";
+import { DEFAULT_JOURNEY_GOALS } from "@shared/schema";
 import type { IStorage } from "./storage";
 
 export class DbStorage implements IStorage {
@@ -130,6 +134,9 @@ export class DbStorage implements IStorage {
   }
 
   async deleteGoal(id: number): Promise<boolean> {
+    // First delete all goal updates (foreign key constraint)
+    await this.db.delete(schema.goalUpdates).where(eq(schema.goalUpdates.goalId, id));
+    // Then delete the goal itself
     const result = await this.db.delete(schema.goals).where(eq(schema.goals.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
   }
@@ -915,4 +922,89 @@ export class DbStorage implements IStorage {
       freezeCount: freeze.freezeCount - 1,
     });
   }
+
+  // ============ JOURNEY GOALS ============
+
+  async getJourneyGoals(userId: number): Promise<JourneyGoal[]> {
+    return await this.db
+      .select()
+      .from(schema.journeyGoals)
+      .where(eq(schema.journeyGoals.userId, userId));
+  }
+
+  async getJourneyGoalsByCategory(userId: number, category: "cycling" | "lifting" | "climbing"): Promise<JourneyGoal[]> {
+    return await this.db
+      .select()
+      .from(schema.journeyGoals)
+      .where(
+        and(
+          eq(schema.journeyGoals.userId, userId),
+          eq(schema.journeyGoals.category, category)
+        )
+      );
+  }
+
+  async getJourneyGoalByKey(userId: number, goalKey: string): Promise<JourneyGoal | undefined> {
+    const [goal] = await this.db
+      .select()
+      .from(schema.journeyGoals)
+      .where(
+        and(
+          eq(schema.journeyGoals.userId, userId),
+          eq(schema.journeyGoals.goalKey, goalKey)
+        )
+      );
+    return goal;
+  }
+
+  async createJourneyGoal(goal: InsertJourneyGoal): Promise<JourneyGoal> {
+    const [newGoal] = await this.db
+      .insert(schema.journeyGoals)
+      .values(goal as any)
+      .returning();
+    return newGoal;
+  }
+
+  async updateJourneyGoal(userId: number, goalKey: string, targetValue: number): Promise<JourneyGoal | undefined> {
+    const [updated] = await this.db
+      .update(schema.journeyGoals)
+      .set({ targetValue, updatedAt: new Date() })
+      .where(
+        and(
+          eq(schema.journeyGoals.userId, userId),
+          eq(schema.journeyGoals.goalKey, goalKey)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteJourneyGoals(userId: number): Promise<boolean> {
+    await this.db
+      .delete(schema.journeyGoals)
+      .where(eq(schema.journeyGoals.userId, userId));
+    return true;
+  }
+
+  async initializeJourneyGoals(userId: number): Promise<JourneyGoal[]> {
+    const goals: JourneyGoal[] = [];
+
+    // Create goals from defaults
+    for (const [category, categoryGoals] of Object.entries(DEFAULT_JOURNEY_GOALS)) {
+      for (const [goalKey, goalData] of Object.entries(categoryGoals)) {
+        const goal = await this.createJourneyGoal({
+          userId,
+          category: category as "cycling" | "lifting" | "climbing",
+          goalKey,
+          targetValue: goalData.targetValue,
+          unit: goalData.unit,
+        });
+        goals.push(goal);
+      }
+    }
+
+    return goals;
+  }
+
+  // NOTE: Linking methods removed - Journey is source of truth, Goals page displays read-only
 }

@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { users } from "@shared/schema";
 import { storage } from "./storage";
+import { log } from "./lib/logger";
 import {
   loginRateLimiter,
   registerRateLimiter,
@@ -41,14 +42,14 @@ function getSessionSecret(): string {
       );
     }
 
-    console.log('[auth] ✅ Session secret validated (length: ' + secret.length + ' chars)');
+    log.info('[auth] Session secret validated (length: ' + secret.length + ' chars)');
     return secret;
   }
 
   // In development, allow a default but warn
   if (!secret) {
-    console.warn('[auth] ⚠️  WARNING: Using default SESSION_SECRET in development mode');
-    console.warn('[auth] ⚠️  For production, set SESSION_SECRET environment variable');
+    log.warn('[auth] WARNING: Using default SESSION_SECRET in development mode');
+    log.warn('[auth] For production, set SESSION_SECRET environment variable');
     return "dev-secret-change-in-production-" + Math.random().toString(36);
   }
 
@@ -163,7 +164,7 @@ async function findUserByEmail(email: string) {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   } catch (error) {
-    console.error('[auth] Database error in findUserByEmail:', error);
+    log.error('[auth] Database error in findUserByEmail:', error);
     throw new Error('Database unavailable');
   }
 }
@@ -187,14 +188,14 @@ async function handleRegister(req: Request, res: Response) {
     // Validate password strength (SECURITY: Strong password requirements)
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.valid) {
-      console.log('[auth] Password validation failed:', passwordValidation.errors);
+      log.debug('[auth] Password validation failed:', passwordValidation.errors);
       return res.status(400).json({
         error: "Password does not meet security requirements",
         details: passwordValidation.errors
       });
     }
 
-    console.log('[auth] Password validation passed (entropy: ' + passwordValidation.entropy + ' bits)');
+    log.debug('[auth] Password validation passed (entropy: ' + passwordValidation.entropy + ' bits)');
 
     // Check if user already exists
     const existingUser = await findUserByEmail(email.toLowerCase());
@@ -260,9 +261,9 @@ async function handleRegister(req: Request, res: Response) {
     };
     req.user = req.session.user;
 
-    console.log('[auth] ✅ User registered successfully:', newUser.email);
-    console.log('[auth] Session ID:', req.sessionID);
-    console.log('[auth] Session user:', req.session.user);
+    log.info('[auth] User registered successfully:', newUser.email);
+    log.debug('[auth] Session ID:', req.sessionID);
+    log.debug('[auth] Session user:', req.session.user);
 
     return res.status(201).json({
       authenticated: true,
@@ -273,7 +274,7 @@ async function handleRegister(req: Request, res: Response) {
       },
     });
   } catch (error) {
-    console.error("[auth] Registration error:", error);
+    log.error("[auth] Registration error:", error);
     return res.status(500).json({ error: "Failed to create account" });
   }
 }
@@ -297,7 +298,7 @@ async function handleLogin(req: Request, res: Response) {
     if (lockedUntil) {
       const remainingMinutes = Math.ceil((lockedUntil.getTime() - Date.now()) / (60 * 1000));
       const attemptCount = getFailedAttempts(normalizedEmail);
-      console.warn(`[security] Login attempt blocked for locked account: ${normalizedEmail} (${attemptCount} failed attempts)`);
+      log.warn(`[security] Login attempt blocked for locked account: ${normalizedEmail} (${attemptCount} failed attempts)`);
 
       return res.status(423).json({
         error: "Account temporarily locked due to too many failed login attempts",
@@ -323,7 +324,7 @@ async function handleLogin(req: Request, res: Response) {
       recordFailedLogin(normalizedEmail);
       const attempts = getFailedAttempts(normalizedEmail);
 
-      console.warn(`[security] Failed login for ${normalizedEmail} (${attempts} attempts)`);
+      log.warn(`[security] Failed login for ${normalizedEmail} (${attempts} attempts)`);
 
       // Provide helpful feedback about impending lockout
       let errorMessage = "Invalid email or password";
@@ -345,20 +346,29 @@ async function handleLogin(req: Request, res: Response) {
     };
     req.user = req.session.user;
 
-    console.log('[auth] ✅ User logged in successfully:', user.email);
-    console.log('[auth] Session ID:', req.sessionID);
-    console.log('[auth] Session user:', req.session.user);
+    log.info('[auth] User logged in successfully:', user.email);
+    log.debug('[auth] Session ID:', req.sessionID);
+    log.debug('[auth] Session user:', req.session.user);
 
-    return res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
+    // Explicitly save session before sending response to prevent race conditions
+    req.session.save((err) => {
+      if (err) {
+        log.error('[auth] Failed to save session:', err);
+        return res.status(500).json({ error: "Failed to create session" });
+      }
+
+      log.debug('[auth] Session saved successfully');
+      return res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      });
     });
   } catch (error) {
-    console.error("[auth] Login error:", error);
+    log.error("[auth] Login error:", error);
     return res.status(500).json({ error: "Failed to log in" });
   }
 }
@@ -369,7 +379,7 @@ async function handleLogin(req: Request, res: Response) {
 function handleLogout(req: Request, res: Response) {
   req.session.destroy((err) => {
     if (err) {
-      console.error("[auth] Logout error:", err);
+      log.error("[auth] Logout error:", err);
       return res.status(500).json({ error: "Failed to log out" });
     }
 
@@ -382,16 +392,16 @@ function handleLogout(req: Request, res: Response) {
  * Get current session
  */
 function handleSession(req: Request, res: Response) {
-  console.log('[auth] Session check - Session ID:', req.sessionID);
-  console.log('[auth] Session check - Session user:', req.session.user);
-  console.log('[auth] Session check - Cookie:', req.headers.cookie);
+  log.debug('[auth] Session check - Session ID:', req.sessionID);
+  log.debug('[auth] Session check - Session user:', req.session.user);
+  log.debug('[auth] Session check - Cookie:', req.headers.cookie);
 
   if (!req.session.user) {
-    console.log('[auth] ❌ No user in session');
+    log.debug('[auth] No user in session');
     return res.json({ authenticated: false });
   }
 
-  console.log('[auth] ✅ User authenticated:', req.session.user.email);
+  log.debug('[auth] User authenticated:', req.session.user.email);
   return res.json({
     authenticated: true,
     user: req.session.user,
@@ -424,7 +434,7 @@ export function requireUser(req: Request): AuthenticatedUser {
  * Configure simple session-based authentication
  */
 export function configureSimpleAuth(app: Express) {
-  console.log("[auth] Configuring simple session-based authentication");
+  log.info("[auth] Configuring simple session-based authentication");
 
   // Set up session middleware with appropriate store
   let sessionConfig: any = {
@@ -442,16 +452,16 @@ export function configureSimpleAuth(app: Express) {
   // Use PostgreSQL session store if DATABASE_URL is available
   if (process.env.DATABASE_URL) {
     try {
-      console.log("[auth] Attempting PostgreSQL session store");
+      log.debug("[auth] Attempting PostgreSQL session store");
       const db = getDb();
       sessionConfig.store = new PgSession({
         pool: (db as any).pool,
         tableName: "session",
         createTableIfMissing: true,
       });
-      console.log("[auth] ✅ PostgreSQL session store configured");
+      log.info("[auth] PostgreSQL session store configured");
     } catch (error) {
-      console.error("[auth] ⚠️  PostgreSQL session store failed, using memory store:", error instanceof Error ? error.message : error);
+      log.warn("[auth] PostgreSQL session store failed, using memory store:", error instanceof Error ? error.message : error);
       // Fall back to memory store if PG fails
       sessionConfig.store = new MemoryStore({
         checkPeriod: 86400000,
@@ -459,7 +469,7 @@ export function configureSimpleAuth(app: Express) {
     }
   } else {
     // Fall back to in-memory session store for development
-    console.log("[auth] Using in-memory session store (development mode)");
+    log.info("[auth] Using in-memory session store (development mode)");
     // MemoryStore is already imported and created at the top of the file
     sessionConfig.store = new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
@@ -483,10 +493,10 @@ export function configureSimpleAuth(app: Express) {
   app.post("/api/auth/logout", handleLogout);
   app.get("/api/auth/session", handleSession);
 
-  console.log("[auth] ✅ Rate limiting enabled on auth endpoints");
-  console.log("[auth]    - Login: 5 attempts per 15 minutes per IP");
-  console.log("[auth]    - Register: 3 attempts per hour per IP");
-  console.log("[auth]    - Account lockout: Progressive (5/10/20 failed attempts)");
+  log.info("[auth] Rate limiting enabled on auth endpoints");
+  log.info("[auth]    - Login: 5 attempts per 15 minutes per IP");
+  log.info("[auth]    - Register: 3 attempts per hour per IP");
+  log.info("[auth]    - Account lockout: Progressive (5/10/20 failed attempts)");
 
   // Protect all /api/* routes except auth endpoints
   app.use((req, res, next) => {
@@ -509,5 +519,5 @@ export function configureSimpleAuth(app: Express) {
     return requireAuth(req, res, next);
   });
 
-  console.log("[auth] ✅ Simple authentication configured");
+  log.info("[auth] Simple authentication configured");
 }

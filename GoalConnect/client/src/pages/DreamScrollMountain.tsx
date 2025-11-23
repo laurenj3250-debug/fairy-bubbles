@@ -56,20 +56,6 @@ export default function DreamScrollMountain() {
     queryKey: ["/api/dream-scroll"],
   });
 
-  // Log when data changes (replaces onSuccess/onError)
-  useEffect(() => {
-    if (allItems && !isLoading) {
-      console.log('[DreamScrollMountain] Successfully loaded', allItems.length, 'items');
-    }
-  }, [allItems, isLoading]);
-
-  useEffect(() => {
-    if (isError && error) {
-      console.error('[DreamScrollMountain] Failed to load:', error);
-    }
-  }, [isError, error]);
-
-  console.log('[DreamScrollMountain] Query state:', { isLoading, isError, itemCount: allItems?.length });
 
   // Fetch tags for current category
   const { data: categoryTags = [] } = useQuery<DreamScrollTag[]>({

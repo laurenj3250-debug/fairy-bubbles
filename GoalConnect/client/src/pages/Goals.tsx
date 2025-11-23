@@ -3,11 +3,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { GoalDialog } from "@/components/GoalDialog";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
 import { Badge } from "@/components/ui/badge";
 import { cn, getToday } from "@/lib/utils";
+import { useJourneyGoals } from "@/hooks/useJourneyGoals";
+import { useStravaStats } from "@/hooks/useStravaStats";
+import { useLiftingStats } from "@/hooks/useLiftingStats";
+import { useClimbingStats } from "@/hooks/useClimbingStats";
 
 // REMOVED: MagicalCanvas - No longer needed for mountain aesthetic
 
@@ -23,6 +28,12 @@ export default function Goals() {
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
   });
+
+  // Journey goals - read-only display (Journey page is source of truth)
+  const { targets: journeyTargets } = useJourneyGoals();
+  const { stats: stravaStats, isLoading: stravaLoading, error: stravaError } = useStravaStats();
+  const { stats: liftingStats, isLoading: liftingLoading, error: liftingError } = useLiftingStats();
+  const { stats: climbingStats, isLoading: climbingLoading, error: climbingError } = useClimbingStats();
 
   const deleteGoalMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/goals/${id}`, "DELETE"),
@@ -252,6 +263,24 @@ export default function Goals() {
             </div>
           </div>
         </div>
+
+        {/* Fitness Progress from Journey (read-only) */}
+        <JourneyGoalsSection
+          stravaStats={stravaStats}
+          liftingStats={liftingStats}
+          climbingStats={climbingStats}
+          targets={journeyTargets}
+          loadingStates={{
+            cycling: stravaLoading,
+            lifting: liftingLoading,
+            climbing: climbingLoading,
+          }}
+          errorStates={{
+            cycling: !!stravaError,
+            lifting: !!liftingError,
+            climbing: !!climbingError,
+          }}
+        />
 
         {/* View Tabs - Soft glass toggle */}
         <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 flex gap-2 mb-8">
@@ -641,6 +670,157 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
             Delete
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Journey Goals Section Component - Read-only display of fitness progress
+// Journey page is the source of truth - edit there, display here
+interface JourneyGoalsSectionProps {
+  stravaStats: { ytdMiles: number; ytdRides: number } | null | undefined;
+  liftingStats: { ytdWorkouts: number } | null | undefined;
+  climbingStats: { ytdProblemsSent: number } | null | undefined;
+  targets: {
+    cyclingMiles: number;
+    liftingWorkouts: number;
+    liftingTotal: number;
+    climbingTicks: number;
+  };
+  loadingStates: {
+    cycling: boolean;
+    lifting: boolean;
+    climbing: boolean;
+  };
+  errorStates: {
+    cycling: boolean;
+    lifting: boolean;
+    climbing: boolean;
+  };
+}
+
+function JourneyGoalsSection({
+  stravaStats,
+  liftingStats,
+  climbingStats,
+  targets,
+  loadingStates,
+  errorStates,
+}: JourneyGoalsSectionProps) {
+  const journeyGoalConfigs = [
+    {
+      key: "yearly_miles",
+      label: "Cycling Miles",
+      icon: Bike,
+      target: targets.cyclingMiles,
+      current: stravaStats?.ytdMiles ?? null,
+      unit: "mi",
+      color: "hsl(var(--accent))",
+      isLoading: loadingStates.cycling,
+      hasError: errorStates.cycling,
+    },
+    {
+      key: "yearly_workouts",
+      label: "Lifting Workouts",
+      icon: Dumbbell,
+      target: targets.liftingWorkouts,
+      current: liftingStats?.ytdWorkouts ?? null,
+      unit: "sessions",
+      color: "hsl(var(--primary))",
+      isLoading: loadingStates.lifting,
+      hasError: errorStates.lifting,
+    },
+    {
+      key: "yearly_climbs",
+      label: "Climbing Ticks",
+      icon: Mountain,
+      target: targets.climbingTicks,
+      current: climbingStats?.ytdProblemsSent ?? null,
+      unit: "climbs",
+      color: "hsl(var(--secondary))",
+      isLoading: loadingStates.climbing,
+      hasError: errorStates.climbing,
+    }
+  ];
+
+  return (
+    <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-foreground">Fitness Progress</h2>
+        <a
+          href="/journey"
+          className="text-sm font-medium flex items-center gap-1 hover:underline"
+          style={{ color: 'hsl(var(--primary))' }}
+        >
+          Edit on Journey <ArrowRight className="w-4 h-4" />
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {journeyGoalConfigs.map(config => {
+          const currentValue = config.current ?? 0;
+          const progress = config.target > 0 && !config.isLoading && !config.hasError
+            ? Math.round((currentValue / config.target) * 100)
+            : 0;
+
+          return (
+            <div
+              key={config.key}
+              className="bg-background/30 rounded-2xl p-4 border border-foreground/5"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: `${config.color}20`,
+                    border: `1px solid ${config.color}40`
+                  }}
+                >
+                  <config.icon className="w-5 h-5" style={{ color: config.color }} />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-foreground">{config.label}</div>
+                  <div className="text-sm text-foreground/60">
+                    {config.isLoading ? (
+                      <Skeleton className="h-4 w-24 inline-block" />
+                    ) : config.hasError ? (
+                      <span className="text-destructive flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Failed to load
+                      </span>
+                    ) : (
+                      <>{currentValue.toLocaleString()} / {config.target.toLocaleString()} {config.unit}</>
+                    )}
+                  </div>
+                </div>
+                <div
+                  className="text-lg font-bold"
+                  style={{ color: progress >= 100 ? 'hsl(var(--primary))' : config.color }}
+                >
+                  {config.isLoading ? (
+                    <Skeleton className="h-6 w-10" />
+                  ) : config.hasError ? (
+                    <span className="text-destructive">--</span>
+                  ) : (
+                    <>{progress}%</>
+                  )}
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--foreground) / 0.08)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(progress, 100)}%`,
+                    background: progress >= 100
+                      ? 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
+                      : config.color
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

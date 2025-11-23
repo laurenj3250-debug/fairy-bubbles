@@ -28,6 +28,7 @@ import {
   type InsertDreamScrollItem,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
+import { log } from "./lib/logger";
 
 export interface GoalUpdateResult {
   update: GoalUpdate;
@@ -821,11 +822,11 @@ export class MemStorage implements IStorage {
 // The pg Pool handles reconnections automatically - no need to test connection upfront
 const storageImplementation: IStorage = process.env.DATABASE_URL
   ? (() => {
-      console.log('[storage] Using DbStorage (PostgreSQL)');
+      log.info('[storage] Using DbStorage (PostgreSQL)');
       return new DbStorage();
     })()
   : (() => {
-      console.log('[storage] Using MemStorage (in-memory)');
+      log.info('[storage] Using MemStorage (in-memory)');
       return new MemStorage();
     })();
 

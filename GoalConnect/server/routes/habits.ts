@@ -4,6 +4,7 @@ import { requireUser } from "../simple-auth";
 import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
 import { calculateStreak, calculateWeeklyCompletion } from "../pet-utils";
 import { getDb } from "../db";
+import { log } from "../lib/logger";
 
 const getUserId = (req: any) => requireUser(req).id;
 
@@ -502,7 +503,7 @@ export function registerHabitRoutes(app: Express) {
         }
       } else {
         // Create new log
-        console.log('[DEBUG] Creating habit log with:', {
+        log.debug('[habits] Creating habit log with:', {
           habitId,
           userId,
           date,
@@ -546,7 +547,7 @@ export function registerHabitRoutes(app: Express) {
           }
         });
       } catch (scoreError: any) {
-        console.error('Score update failed:', scoreError);
+        log.error('[habits] Score update failed:', scoreError);
         // Don't fail the whole request if scoring fails (graceful degradation)
         return res.json(logResult);
       }

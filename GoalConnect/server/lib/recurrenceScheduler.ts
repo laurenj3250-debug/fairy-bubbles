@@ -7,6 +7,7 @@ import { getDb } from "../db";
 import { todos } from "../../shared/schema";
 import { and, isNotNull, lte, sql } from "drizzle-orm";
 import { calculateNextOccurrence, type RecurrencePattern } from "../../shared/lib/recurrenceEngine";
+import { log } from "./logger";
 
 interface RecurringTask {
   id: number;
@@ -51,7 +52,7 @@ export async function processRecurringTasks(): Promise<{
         )
       ) as RecurringTask[];
 
-    console.log(`[Recurrence Scheduler] Found ${recurringTasks.length} tasks to process`);
+    log.info(`[Recurrence Scheduler] Found ${recurringTasks.length} tasks to process`);
 
     for (const task of recurringTasks) {
       try {
@@ -73,7 +74,7 @@ export async function processRecurringTasks(): Promise<{
             })
             .where(sql`${todos.id} = ${task.id}`);
 
-          console.log(`[Recurrence Scheduler] Task ${task.id} recurrence ended`);
+          log.info(`[Recurrence Scheduler] Task ${task.id} recurrence ended`);
           continue;
         }
 
@@ -107,19 +108,19 @@ export async function processRecurringTasks(): Promise<{
           })
           .where(sql`${todos.id} = ${task.id}`);
 
-        console.log(`[Recurrence Scheduler] Created instance for task ${task.id}, next: ${nextOccurrenceDate.toISOString().split('T')[0]}`);
+        log.info(`[Recurrence Scheduler] Created instance for task ${task.id}, next: ${nextOccurrenceDate.toISOString().split('T')[0]}`);
 
       } catch (error) {
         results.errors++;
-        console.error(`[Recurrence Scheduler] Error processing task ${task.id}:`, error);
+        log.error(`[Recurrence Scheduler] Error processing task ${task.id}:`, error);
       }
     }
 
-    console.log(`[Recurrence Scheduler] Complete: ${results.created} created, ${results.errors} errors`);
+    log.info(`[Recurrence Scheduler] Complete: ${results.created} created, ${results.errors} errors`);
     return results;
 
   } catch (error) {
-    console.error('[Recurrence Scheduler] Fatal error:', error);
+    log.error('[Recurrence Scheduler] Fatal error:', error);
     throw error;
   }
 }

@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey - App-Matched Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* Exact app colors */
+      --background: hsl(45, 30%, 12%);
+      --foreground: hsl(40, 20%, 95%);
+      --card: hsl(40, 20%, 18%);
+      --primary: hsl(25, 95%, 58%);
+      --secondary: hsl(200, 85%, 55%);
+      --accent: hsl(160, 80%, 50%);
+      --success: hsl(142, 85%, 55%);
+      --warning: hsl(38, 100%, 60%);
+      --destructive: hsl(0, 90%, 60%);
+      --border: hsl(40, 15%, 30%);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: hsl(40, 15%, 65%);
+
+      /* Sport-specific */
+      --lift-color: hsl(270, 60%, 55%);
+      --climb-color: hsl(160, 80%, 50%);
+      --bike-color: hsl(200, 85%, 55%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    h1, h2, h3, h4, .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .strava-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--primary), hsl(38, 100%, 60%));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .page-title {
+      font-size: 28px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle { font-size: 14px; color: var(--muted-foreground); }
+    .sync-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px; color: var(--muted-foreground);
+    }
+    .sync-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    /* Sport Tabs */
+    .sport-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--muted);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .sport-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600; font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--muted-foreground);
+    }
+    .sport-tab:hover { color: var(--foreground); background: rgba(255,255,255,0.05); }
+    .sport-tab.active { color: var(--foreground); }
+    .sport-tab.active[data-tab="lifting"] { background: rgba(147, 51, 234, 0.25); }
+    .sport-tab.active[data-tab="climbing"] { background: rgba(20, 184, 166, 0.25); }
+    .sport-tab.active[data-tab="cycling"] { background: rgba(59, 130, 246, 0.25); }
+    .tab-icon { font-size: 16px; }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-foreground);
+    }
+    .card-icon { font-size: 14px; opacity: 0.6; }
+
+    /* Grid */
+    .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 16px; }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Hero Stats */
+    .hero-stat { text-align: center; padding: 24px 16px; }
+    .hero-stat .label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+      margin-bottom: 8px;
+    }
+    .hero-stat .value {
+      font-family: 'Fraunces', serif;
+      font-size: 36px; font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .hero-stat .unit { font-size: 14px; font-weight: 500; opacity: 0.7; }
+    .hero-stat .delta { font-size: 12px; color: var(--success); font-weight: 600; }
+    .hero-stat.featured {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(168, 85, 247, 0.05));
+      border-color: rgba(147, 51, 234, 0.3);
+    }
+
+    /* Color classes */
+    .text-lift { color: var(--lift-color); }
+    .text-climb { color: var(--climb-color); }
+    .text-bike { color: var(--bike-color); }
+    .text-primary { color: var(--primary); }
+    .text-success { color: var(--success); }
+    .text-warning { color: var(--warning); }
+
+    /* ===================== CHARTS ===================== */
+
+    /* Line Chart (SVG-based, Recharts-style) */
+    .chart-container {
+      position: relative;
+      height: 180px;
+      width: 100%;
+    }
+    .chart-svg { width: 100%; height: 100%; }
+    .chart-grid line { stroke: var(--border); stroke-opacity: 0.4; }
+    .chart-axis text { fill: var(--muted-foreground); font-size: 10px; }
+    .chart-line {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .chart-area { opacity: 0.15; }
+    .chart-dot {
+      fill: var(--card);
+      stroke-width: 2;
+    }
+    .chart-dot:hover { r: 6; }
+
+    /* Bar Chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 140px;
+      gap: 8px;
+      padding-top: 10px;
+    }
+    .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar {
+      width: 100%;
+      max-width: 24px;
+      border-radius: 4px 4px 0 0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .bar::after {
+      content: attr(data-value);
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .bar:hover::after { opacity: 1; }
+    .bar:hover { filter: brightness(1.2); transform: scaleY(1.02); }
+    .bar-label { font-size: 10px; color: var(--muted-foreground); }
+
+    /* Radar Chart */
+    .radar-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+    }
+    .radar-svg { width: 100%; height: 100%; }
+    .radar-grid { stroke: var(--border); stroke-opacity: 0.3; fill: none; }
+    .radar-axis { stroke: var(--border); stroke-opacity: 0.2; }
+    .radar-label { fill: var(--muted-foreground); font-size: 10px; text-anchor: middle; }
+    .radar-area {
+      fill-opacity: 0.25;
+      stroke-width: 2;
+    }
+    .radar-dot { r: 4; }
+
+    /* Progress Ring */
+    .progress-ring-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto;
+    }
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring-bg { fill: none; stroke: var(--muted); stroke-width: 8; }
+    .progress-ring-fill {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease;
+    }
+    .progress-ring-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; }
+    .ring-label { font-size: 10px; color: var(--muted-foreground); }
+
+    /* Heatmap Calendar */
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+    .heatmap-cell:hover { transform: scale(1.2); }
+    .heat-0 { background: var(--muted); }
+    .heat-1 { background: rgba(147, 51, 234, 0.25); }
+    .heat-2 { background: rgba(147, 51, 234, 0.45); }
+    .heat-3 { background: rgba(147, 51, 234, 0.65); }
+    .heat-4 { background: rgba(147, 51, 234, 0.85); }
+
+    /* Grade Pyramid */
+    .pyramid { display: flex; flex-direction: column; gap: 6px; }
+    .pyramid-row { display: flex; align-items: center; gap: 10px; }
+    .pyramid-grade {
+      width: 28px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+      text-align: right;
+    }
+    .pyramid-bar-bg {
+      flex: 1;
+      height: 18px;
+      background: var(--muted);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .pyramid-bar {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(0,0,0,0.7);
+      transition: width 0.6s ease;
+    }
+
+    /* Epic Card */
+    .epic-card {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+    }
+    .epic-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .epic-card.lift::before { background: linear-gradient(90deg, var(--lift-color), hsl(280, 70%, 65%)); }
+    .epic-card.climb::before { background: linear-gradient(90deg, var(--climb-color), hsl(170, 70%, 60%)); }
+    .epic-card.bike::before { background: linear-gradient(90deg, var(--bike-color), hsl(210, 80%, 65%)); }
+    .epic-title { font-size: 18px; margin-bottom: 4px; }
+    .epic-subtitle { font-size: 13px; color: var(--muted-foreground); margin-bottom: 20px; }
+    .epic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .epic-item {
+      text-align: center;
+      padding: 14px 10px;
+      background: var(--muted);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .epic-item:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .epic-icon { font-size: 24px; margin-bottom: 6px; }
+    .epic-value { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+    .epic-label { font-size: 10px; color: var(--muted-foreground); }
+
+    /* Activity List */
+    .activity-list { display: flex; flex-direction: column; gap: 8px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      background: var(--muted);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .activity-item:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); }
+    .activity-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .activity-icon.lift { background: linear-gradient(135deg, var(--lift-color), hsl(280, 60%, 65%)); }
+    .activity-icon.climb { background: linear-gradient(135deg, var(--climb-color), hsl(170, 70%, 55%)); }
+    .activity-icon.bike { background: linear-gradient(135deg, var(--bike-color), hsl(210, 75%, 60%)); }
+    .activity-info { flex: 1; }
+    .activity-name { font-weight: 600; font-size: 13px; }
+    .activity-meta { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+    .activity-stat { text-align: right; }
+    .activity-value { font-weight: 700; font-size: 13px; }
+    .activity-unit { font-size: 10px; color: var(--muted-foreground); }
+
+    /* PR Badge */
+    .pr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      background: linear-gradient(135deg, var(--warning), hsl(30, 100%, 55%));
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      color: hsl(30, 30%, 10%);
+    }
+
+    /* Achievements */
+    .achievements-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+    .achievement {
+      flex-shrink: 0;
+      width: 100px;
+      text-align: center;
+      padding: 16px 12px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: all 0.2s ease;
+    }
+    .achievement:hover { transform: translateY(-2px); border-color: rgba(255,215,0,0.3); }
+    .achievement.earned {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+      border-color: rgba(255, 215, 0, 0.25);
+    }
+    .achievement-emoji { font-size: 26px; margin-bottom: 8px; }
+    .achievement-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+    .achievement-desc { font-size: 9px; color: var(--muted-foreground); }
+    .achievement.locked { opacity: 0.4; }
+    .achievement.locked .achievement-emoji { filter: grayscale(1); }
+
+    /* Mini Stats */
+    .mini-stats { display: flex; gap: 12px; margin-top: 16px; }
+    .mini-stat {
+      flex: 1;
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--muted);
+      border-radius: 10px;
+    }
+    .mini-stat .value { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 700; }
+    .mini-stat .label { font-size: 9px; color: var(--muted-foreground); margin-top: 2px; text-transform: uppercase; }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      .span-3, .span-4 { grid-column: span 6; }
+      .span-7, .span-8 { grid-column: span 12; }
+      .epic-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .span-3, .span-4, .span-5, .span-6 { grid-column: span 12; }
+      .sport-tabs { width: 100%; }
+      .sport-tab { flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; }
+    }
+
+    /* Hidden */
+    .sport-content { display: none; }
+    .sport-content.active { display: block; animation: fadeSlide 0.4s ease; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="strava-icon">S</div>
+        <div>
+          <h1 class="page-title heading">Strava Journey</h1>
+          <p class="page-subtitle">Your multi-sport chronicle</p>
+        </div>
+      </div>
+      <div class="sync-pill">
+        <div class="sync-dot"></div>
+        Synced 2m ago
+      </div>
+    </header>
+
+    <!-- Sport Tabs -->
+    <div class="sport-tabs">
+      <div class="sport-tab active" data-tab="lifting" onclick="switchSport('lifting')">
+        <span class="tab-icon">🏋️</span> Lifting
+      </div>
+      <div class="sport-tab" data-tab="climbing" onclick="switchSport('climbing')">
+        <span class="tab-icon">🧗</span> Climbing
+      </div>
+      <div class="sport-tab" data-tab="cycling" onclick="switchSport('cycling')">
+        <span class="tab-icon">🚴</span> Cycling
+      </div>
+    </div>
+
+    <!-- ==================== LIFTING ==================== -->
+    <div class="sport-content active" id="lifting-content">
+      <!-- Hero Stats -->
+      <div class="bento">
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Est. 1RM Squat</div>
+          <div class="value text-lift">285<span class="unit">lb</span></div>
+          <div class="delta">+15lb this month</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Est. 1RM Bench</div>
+          <div class="value text-lift">205<span class="unit">lb</span></div>
+          <div class="delta">+10lb this month</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Est. 1RM Deadlift</div>
+          <div class="value text-lift">365<span class="unit">lb</span></div>
+          <div class="delta">+20lb this month</div>
+        </div>
+        <div class="glass-card hero-stat span-3 featured">
+          <div class="label">Big 3 Total</div>
+          <div class="value text-lift">855<span class="unit">lb</span></div>
+          <div class="delta" style="color: var(--warning);">145lb to 1000lb Club!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="glass-card epic-card lift" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h3 class="epic-title heading">Your Lifting Journey</h3>
+            <p class="epic-subtitle">Making weights look easy since 2023</p>
+          </div>
+          <div class="pr-badge">🏆 New Deadlift PR!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🦣</div>
+            <div class="epic-value text-lift">2.3x</div>
+            <div class="epic-label">Bodyweight Deadlift</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🚗</div>
+            <div class="epic-value text-lift">48</div>
+            <div class="epic-label">Cars of Weight Moved</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">📈</div>
+            <div class="epic-value text-lift">Top 15%</div>
+            <div class="epic-label">Strength Level</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🎯</div>
+            <div class="epic-value text-lift">85%</div>
+            <div class="epic-label">To 1000lb Club</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- 1RM Progression Line Chart -->
+        <div class="glass-card span-8">
+          <div class="card-header">
+            <span class="card-label">1RM Progression (6 Months)</span>
+            <span class="card-icon">📈</span>
+          </div>
+          <div class="chart-container">
+            <svg class="chart-svg" viewBox="0 0 400 150" preserveAspectRatio="none">
+              <!-- Grid -->
+              <g class="chart-grid">
+                <line x1="40" y1="20" x2="390" y2="20" />
+                <line x1="40" y1="50" x2="390" y2="50" />
+                <line x1="40" y1="80" x2="390" y2="80" />
+                <line x1="40" y1="110" x2="390" y2="110" />
+                <line x1="40" y1="140" x2="390" y2="140" />
+              </g>
+              <!-- Y Axis Labels -->
+              <g class="chart-axis">
+                <text x="35" y="24" text-anchor="end">400</text>
+                <text x="35" y="54" text-anchor="end">350</text>
+                <text x="35" y="84" text-anchor="end">300</text>
+                <text x="35" y="114" text-anchor="end">250</text>
+                <text x="35" y="144" text-anchor="end">200</text>
+              </g>
+              <!-- Deadlift Line -->
+              <path class="chart-area" fill="url(#liftGrad1)" d="M60,95 L118,88 L176,82 L234,70 L292,58 L350,45 L350,140 L60,140 Z" />
+              <path class="chart-line" stroke="hsl(270, 60%, 55%)" d="M60,95 L118,88 L176,82 L234,70 L292,58 L350,45" />
+              <!-- Squat Line -->
+              <path class="chart-area" fill="url(#liftGrad2)" d="M60,105 L118,100 L176,95 L234,88 L292,80 L350,72 L350,140 L60,140 Z" />
+              <path class="chart-line" stroke="hsl(25, 95%, 58%)" d="M60,105 L118,100 L176,95 L234,88 L292,80 L350,72" />
+              <!-- Bench Line -->
+              <path class="chart-area" fill="url(#liftGrad3)" d="M60,120 L118,118 L176,115 L234,110 L292,105 L350,100 L350,140 L60,140 Z" />
+              <path class="chart-line" stroke="hsl(200, 85%, 55%)" d="M60,120 L118,118 L176,115 L234,110 L292,105 L350,100" />
+              <!-- Dots -->
+              <circle class="chart-dot" cx="350" cy="45" r="4" stroke="hsl(270, 60%, 55%)" />
+              <circle class="chart-dot" cx="350" cy="72" r="4" stroke="hsl(25, 95%, 58%)" />
+              <circle class="chart-dot" cx="350" cy="100" r="4" stroke="hsl(200, 85%, 55%)" />
+              <!-- X Axis Labels -->
+              <g class="chart-axis">
+                <text x="60" y="155" text-anchor="middle">Jun</text>
+                <text x="118" y="155" text-anchor="middle">Jul</text>
+                <text x="176" y="155" text-anchor="middle">Aug</text>
+                <text x="234" y="155" text-anchor="middle">Sep</text>
+                <text x="292" y="155" text-anchor="middle">Oct</text>
+                <text x="350" y="155" text-anchor="middle">Nov</text>
+              </g>
+              <defs>
+                <linearGradient id="liftGrad1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(270, 60%, 55%)" />
+                  <stop offset="100%" stop-color="hsl(270, 60%, 55%)" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="liftGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(25, 95%, 58%)" />
+                  <stop offset="100%" stop-color="hsl(25, 95%, 58%)" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="liftGrad3" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(200, 85%, 55%)" />
+                  <stop offset="100%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 11px;">
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(270, 60%, 55%); border-radius: 2px;"></span> Deadlift: 365lb</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(25, 95%, 58%); border-radius: 2px;"></span> Squat: 285lb</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(200, 85%, 55%); border-radius: 2px;"></span> Bench: 205lb</span>
+          </div>
+        </div>
+
+        <!-- Muscle Radar Chart -->
+        <div class="glass-card span-4">
+          <div class="card-header">
+            <span class="card-label">Muscle Balance</span>
+            <span class="card-icon">🎯</span>
+          </div>
+          <div class="radar-container">
+            <svg class="radar-svg" viewBox="0 0 200 200">
+              <!-- Pentagon Grid -->
+              <polygon class="radar-grid" points="100,20 176,58 156,148 44,148 24,58" />
+              <polygon class="radar-grid" points="100,40 153,68 138,138 62,138 47,68" />
+              <polygon class="radar-grid" points="100,60 130,78 120,128 80,128 70,78" />
+              <!-- Axis lines -->
+              <line class="radar-axis" x1="100" y1="100" x2="100" y2="20" />
+              <line class="radar-axis" x1="100" y1="100" x2="176" y2="58" />
+              <line class="radar-axis" x1="100" y1="100" x2="156" y2="148" />
+              <line class="radar-axis" x1="100" y1="100" x2="44" y2="148" />
+              <line class="radar-axis" x1="100" y1="100" x2="24" y2="58" />
+              <!-- Data -->
+              <polygon class="radar-area" fill="hsl(270, 60%, 55%)" stroke="hsl(270, 60%, 55%)"
+                points="100,35 160,65 145,135 55,135 40,70" />
+              <!-- Labels -->
+              <text class="radar-label" x="100" y="12">Chest</text>
+              <text class="radar-label" x="185" y="60">Back</text>
+              <text class="radar-label" x="165" y="165">Legs</text>
+              <text class="radar-label" x="35" y="165">Core</text>
+              <text class="radar-label" x="15" y="60">Arms</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Weekly Volume Bar Chart -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Weekly Volume (Tonnage)</span>
+            <span class="card-icon">📊</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-group">
+              <div class="bar" style="height: 65%; background: linear-gradient(180deg, hsl(270, 60%, 55%), hsl(270, 50%, 40%));" data-value="9.2k"></div>
+              <span class="bar-label">Mon</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 10%; background: var(--muted);" data-value="Rest"></div>
+              <span class="bar-label">Tue</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 85%; background: linear-gradient(180deg, hsl(270, 60%, 55%), hsl(270, 50%, 40%));" data-value="12.4k"></div>
+              <span class="bar-label">Wed</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 10%; background: var(--muted);" data-value="Rest"></div>
+              <span class="bar-label">Thu</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 95%; background: linear-gradient(180deg, hsl(270, 60%, 55%), hsl(270, 50%, 40%));" data-value="14.1k"></div>
+              <span class="bar-label">Fri</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 55%; background: linear-gradient(180deg, hsl(270, 60%, 55%), hsl(270, 50%, 40%));" data-value="7.2k"></div>
+              <span class="bar-label">Sat</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 10%; background: var(--muted);" data-value="Rest"></div>
+              <span class="bar-label">Sun</span>
+            </div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="value text-lift">42,850</div>
+              <div class="label">lbs this week</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value text-lift">156</div>
+              <div class="label">total sets</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value text-success">+8%</div>
+              <div class="label">vs last week</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Training Heatmap -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Training Consistency (12 Weeks)</span>
+            <span class="card-icon">🔥</span>
+          </div>
+          <div style="display: flex; gap: 16px; margin-bottom: 12px; font-size: 10px; color: var(--muted-foreground);">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="heatmap" style="gap: 4px;">
+            <!-- Week 1-12 data -->
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-0"></div>
+            <div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-0"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 11px; color: var(--muted-foreground);">
+            <span>12 week streak 🔥</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span>Less</span>
+              <div class="heatmap-cell heat-0" style="width: 10px; height: 10px;"></div>
+              <div class="heatmap-cell heat-2" style="width: 10px; height: 10px;"></div>
+              <div class="heatmap-cell heat-4" style="width: 10px; height: 10px;"></div>
+              <span>More</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Recent Sessions</span>
+            <span class="card-icon">💪</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Push Day - Chest & Shoulders</div>
+                <div class="activity-meta">Today at 7:30 AM · 1h 12m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-lift">12,450 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Pull Day - Back & Biceps</div>
+                <div class="activity-meta">Yesterday · 1h 05m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-lift">11,200 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Leg Day 🦵</div>
+                <div class="activity-meta">Nov 19 · 1h 25m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-lift">18,900 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal Progress Ring -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">1000lb Club Progress</span>
+            <span class="card-icon">🏆</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 24px;">
+            <div class="progress-ring-wrap">
+              <svg class="progress-ring" width="120" height="120" viewBox="0 0 120 120">
+                <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+                <circle class="progress-ring-fill" cx="60" cy="60" r="52"
+                  stroke="url(#ringGrad)"
+                  stroke-dasharray="327"
+                  stroke-dashoffset="48" />
+                <defs>
+                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="hsl(270, 60%, 55%)" />
+                    <stop offset="100%" stop-color="hsl(280, 70%, 65%)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="progress-ring-content">
+                <div class="ring-value text-lift">85%</div>
+                <div class="ring-label">855 / 1000</div>
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Breakdown</div>
+              <div style="font-size: 12px; color: var(--muted-foreground); display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Squat</span><span style="color: var(--foreground); font-weight: 600;">285 lb</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Bench</span><span style="color: var(--foreground); font-weight: 600;">205 lb</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Deadlift</span><span style="color: var(--foreground); font-weight: 600;">365 lb</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 6px; margin-top: 4px;">
+                  <span style="font-weight: 600;">Remaining</span><span style="color: var(--warning); font-weight: 700;">145 lb</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="glass-card span-12">
+          <div class="card-header">
+            <span class="card-label">Achievements</span>
+            <a href="#" style="color: var(--lift-color); font-size: 11px; font-weight: 600; text-decoration: none;">See all 18 →</a>
+          </div>
+          <div class="achievements-row">
+            <div class="achievement earned">
+              <div class="achievement-emoji">🔥</div>
+              <div class="achievement-name">Iron Consistency</div>
+              <div class="achievement-desc">12 week streak</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🦁</div>
+              <div class="achievement-name">2x Bodyweight DL</div>
+              <div class="achievement-desc">Deadlift milestone</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">Volume King</div>
+              <div class="achievement-desc">50k lbs in a week</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">💎</div>
+              <div class="achievement-name">PR Hunter</div>
+              <div class="achievement-desc">5 PRs this month</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">👑</div>
+              <div class="achievement-name">1000lb Club</div>
+              <div class="achievement-desc">145 lbs away</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">🏆</div>
+              <div class="achievement-name">Elite Status</div>
+              <div class="achievement-desc">Top 5% strength</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CLIMBING ==================== -->
+    <div class="sport-content" id="climbing-content">
+      <div class="bento">
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Max Boulder Grade</div>
+          <div class="value text-climb">V6</div>
+          <div class="delta">↑ from V5 this month</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Kilter Board Angle</div>
+          <div class="value text-climb">40°</div>
+          <div class="delta">Training at steep!</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Flash Rate</div>
+          <div class="value text-climb">68%</div>
+          <div class="delta">+12% improvement</div>
+        </div>
+        <div class="glass-card hero-stat span-3" style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.15), rgba(45, 212, 191, 0.05)); border-color: rgba(20, 184, 166, 0.3);">
+          <div class="label">Sessions This Month</div>
+          <div class="value text-climb">14</div>
+          <div class="delta" style="color: var(--warning);">Most active month!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="glass-card epic-card climb" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h3 class="epic-title heading">Your Climbing Journey</h3>
+            <p class="epic-subtitle">Crushing it on the wall since 2022</p>
+          </div>
+          <div class="pr-badge">🎉 First V6 Send!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🏔️</div>
+            <div class="epic-value text-climb">3.2</div>
+            <div class="epic-label">El Caps of Elevation</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🧱</div>
+            <div class="epic-value text-climb">847</div>
+            <div class="epic-label">Problems Sent</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">📊</div>
+            <div class="epic-value text-climb">Top 22%</div>
+            <div class="epic-label">Of Gym Climbers</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">⏱️</div>
+            <div class="epic-value text-climb">186h</div>
+            <div class="epic-label">Time on Wall</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Grade Pyramid -->
+        <div class="glass-card span-7">
+          <div class="card-header">
+            <span class="card-label">Grade Pyramid (Last 90 Days)</span>
+            <span class="card-icon">📐</span>
+          </div>
+          <div class="pyramid">
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V6</div>
+              <div class="pyramid-bar-bg"><div class="pyramid-bar" style="width: 5%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(170, 70%, 55%));">1</div></div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V5</div>
+              <div class="pyramid-bar-bg"><div class="pyramid-bar" style="width: 20%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(170, 70%, 55%));">8</div></div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V4</div>
+              <div class="pyramid-bar-bg"><div class="pyramid-bar" style="width: 45%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(170, 70%, 55%));">24</div></div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V3</div>
+              <div class="pyramid-bar-bg"><div class="pyramid-bar" style="width: 75%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(170, 70%, 55%));">52</div></div>
+            </div>
+            <div class="pyramid-row">
+              <div class="pyramid-grade">V2</div>
+              <div class="pyramid-bar-bg"><div class="pyramid-bar" style="width: 100%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(170, 70%, 55%));">78</div></div>
+            </div>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--muted-foreground); margin-top: 12px;">
+            💡 Build 3 more V5s before projecting V7
+          </div>
+        </div>
+
+        <!-- Grade Progression Line Chart -->
+        <div class="glass-card span-5">
+          <div class="card-header">
+            <span class="card-label">Max Grade Over Time</span>
+            <span class="card-icon">📈</span>
+          </div>
+          <div class="chart-container" style="height: 140px;">
+            <svg class="chart-svg" viewBox="0 0 250 120" preserveAspectRatio="none">
+              <g class="chart-grid">
+                <line x1="30" y1="20" x2="240" y2="20" />
+                <line x1="30" y1="45" x2="240" y2="45" />
+                <line x1="30" y1="70" x2="240" y2="70" />
+                <line x1="30" y1="95" x2="240" y2="95" />
+              </g>
+              <g class="chart-axis">
+                <text x="25" y="24" text-anchor="end">V6</text>
+                <text x="25" y="49" text-anchor="end">V5</text>
+                <text x="25" y="74" text-anchor="end">V4</text>
+                <text x="25" y="99" text-anchor="end">V3</text>
+              </g>
+              <path class="chart-area" fill="url(#climbGrad)" d="M50,95 L90,95 L130,70 L170,70 L210,45 L230,20 L230,110 L50,110 Z" />
+              <path class="chart-line" stroke="hsl(160, 80%, 50%)" d="M50,95 L90,95 L130,70 L170,70 L210,45 L230,20" />
+              <circle class="chart-dot" cx="230" cy="20" r="5" stroke="hsl(160, 80%, 50%)" fill="var(--card)" stroke-width="2" />
+              <g class="chart-axis">
+                <text x="50" y="118" text-anchor="middle">Jan</text>
+                <text x="110" y="118" text-anchor="middle">Apr</text>
+                <text x="170" y="118" text-anchor="middle">Jul</text>
+                <text x="230" y="118" text-anchor="middle">Nov</text>
+              </g>
+              <defs>
+                <linearGradient id="climbGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(160, 80%, 50%)" />
+                  <stop offset="100%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Session Frequency Area Chart -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Sessions Per Week</span>
+            <span class="card-icon">📆</span>
+          </div>
+          <div class="chart-container" style="height: 120px;">
+            <svg class="chart-svg" viewBox="0 0 300 100" preserveAspectRatio="none">
+              <path class="chart-area" fill="url(#climbGrad2)" d="M20,80 L45,70 L70,65 L95,55 L120,60 L145,45 L170,50 L195,40 L220,35 L245,30 L270,25 L270,90 L20,90 Z" />
+              <path class="chart-line" stroke="hsl(160, 80%, 50%)" stroke-width="2" d="M20,80 L45,70 L70,65 L95,55 L120,60 L145,45 L170,50 L195,40 L220,35 L245,30 L270,25" />
+              <g class="chart-axis">
+                <text x="20" y="98" text-anchor="middle">W1</text>
+                <text x="95" y="98" text-anchor="middle">W4</text>
+                <text x="170" y="98" text-anchor="middle">W8</text>
+                <text x="245" y="98" text-anchor="middle">W12</text>
+              </g>
+              <defs>
+                <linearGradient id="climbGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0.4" />
+                  <stop offset="100%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="value text-climb">3.5</div>
+              <div class="label">avg sessions/week</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value text-success">+40%</div>
+              <div class="label">vs 3 months ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send Efficiency -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Send Efficiency by Grade</span>
+            <span class="card-icon">⚡</span>
+          </div>
+          <div class="bar-chart" style="height: 120px;">
+            <div class="bar-group">
+              <div class="bar" style="height: 95%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="95%"></div>
+              <span class="bar-label">V2</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 85%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="85%"></div>
+              <span class="bar-label">V3</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 72%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="72%"></div>
+              <span class="bar-label">V4</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 45%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="45%"></div>
+              <span class="bar-label">V5</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 15%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="15%"></div>
+              <span class="bar-label">V6</span>
+            </div>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--muted-foreground); margin-top: 8px;">
+            Flash rate (first attempt sends)
+          </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Recent Sessions</span>
+            <span class="card-icon">🧗</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon climb">🧗</div>
+              <div class="activity-info">
+                <div class="activity-name">Kilter Board Session</div>
+                <div class="activity-meta">Today · 1h 45m · 40°</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-climb">12 sends</div>
+                <div class="activity-unit">V3-V5</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon climb">🧗</div>
+              <div class="activity-info">
+                <div class="activity-name">Gym Bouldering</div>
+                <div class="activity-meta">Yesterday · 2h 10m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-climb">18 sends</div>
+                <div class="activity-unit">incl. V6!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kilter Angle Progress -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Kilter Board Angle Progress</span>
+            <span class="card-icon">📱</span>
+          </div>
+          <div class="bar-chart" style="height: 100px;">
+            <div class="bar-group">
+              <div class="bar" style="height: 100%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="V5"></div>
+              <span class="bar-label">20°</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 80%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="V4"></div>
+              <span class="bar-label">30°</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 60%; background: linear-gradient(180deg, hsl(160, 80%, 50%), hsl(160, 60%, 35%));" data-value="V4"></div>
+              <span class="bar-label">40°</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 35%; background: linear-gradient(180deg, hsl(38, 100%, 60%), hsl(38, 80%, 45%));" data-value="V3"></div>
+              <span class="bar-label">50°</span>
+            </div>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--muted-foreground); margin-top: 8px;">
+            🎯 Goal: V4 @ 50° by December
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="glass-card span-12">
+          <div class="card-header">
+            <span class="card-label">Achievements</span>
+            <a href="#" style="color: var(--climb-color); font-size: 11px; font-weight: 600; text-decoration: none;">See all 24 →</a>
+          </div>
+          <div class="achievements-row">
+            <div class="achievement earned">
+              <div class="achievement-emoji">🎯</div>
+              <div class="achievement-name">First V6</div>
+              <div class="achievement-desc">Grade breakthrough</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">Flash Master</div>
+              <div class="achievement-desc">10 flashes in session</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">📐</div>
+              <div class="achievement-name">Steep Sender</div>
+              <div class="achievement-desc">V4 at 40°</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🔥</div>
+              <div class="achievement-name">8 Week Streak</div>
+              <div class="achievement-desc">Consistency!</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">🏔️</div>
+              <div class="achievement-name">V7 Club</div>
+              <div class="achievement-desc">Keep projecting!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CYCLING ==================== -->
+    <div class="sport-content" id="cycling-content">
+      <div class="bento">
+        <div class="glass-card hero-stat span-3">
+          <div class="label">FTP (Estimated)</div>
+          <div class="value text-bike">245<span class="unit">W</span></div>
+          <div class="delta">+12W this month</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Power-to-Weight</div>
+          <div class="value text-bike">3.5<span class="unit">W/kg</span></div>
+          <div class="delta">Cat 4 level</div>
+        </div>
+        <div class="glass-card hero-stat span-3">
+          <div class="label">Distance This Month</div>
+          <div class="value text-bike">847<span class="unit">km</span></div>
+          <div class="delta">+15% vs last month</div>
+        </div>
+        <div class="glass-card hero-stat span-3" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.05)); border-color: rgba(59, 130, 246, 0.3);">
+          <div class="label">CTL (Fitness)</div>
+          <div class="value text-bike">72</div>
+          <div class="delta" style="color: var(--success);">Building strong!</div>
+        </div>
+      </div>
+
+      <!-- Epic Card -->
+      <div class="glass-card epic-card bike" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h3 class="epic-title heading">Your Cycling Journey</h3>
+            <p class="epic-subtitle">Turning pedals into progress</p>
+          </div>
+          <div class="pr-badge">⚡ New 20min Power PR!</div>
+        </div>
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="epic-icon">🏔️</div>
+            <div class="epic-value text-bike">0.8</div>
+            <div class="epic-label">Everests Climbed</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🌍</div>
+            <div class="epic-value text-bike">12,450</div>
+            <div class="epic-label">Lifetime KM</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">⚡</div>
+            <div class="epic-value text-bike">3</div>
+            <div class="epic-label">KOMs Held</div>
+          </div>
+          <div class="epic-item">
+            <div class="epic-icon">🔥</div>
+            <div class="epic-value text-bike">+15%</div>
+            <div class="epic-label">FTP Gain (6mo)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Fitness/Fatigue/Form Chart -->
+        <div class="glass-card span-8">
+          <div class="card-header">
+            <span class="card-label">Performance Management Chart (PMC)</span>
+            <span class="card-icon">📈</span>
+          </div>
+          <div class="chart-container" style="height: 160px;">
+            <svg class="chart-svg" viewBox="0 0 400 140" preserveAspectRatio="none">
+              <g class="chart-grid">
+                <line x1="40" y1="20" x2="380" y2="20" />
+                <line x1="40" y1="50" x2="380" y2="50" />
+                <line x1="40" y1="80" x2="380" y2="80" />
+                <line x1="40" y1="110" x2="380" y2="110" />
+              </g>
+              <g class="chart-axis">
+                <text x="35" y="24" text-anchor="end">100</text>
+                <text x="35" y="54" text-anchor="end">75</text>
+                <text x="35" y="84" text-anchor="end">50</text>
+                <text x="35" y="114" text-anchor="end">25</text>
+              </g>
+              <!-- CTL (Fitness) - Blue area -->
+              <path fill="url(#ctlGrad)" d="M60,90 L100,85 L140,80 L180,70 L220,60 L260,55 L300,50 L340,45 L340,120 L60,120 Z" />
+              <path class="chart-line" stroke="hsl(200, 85%, 55%)" stroke-width="2.5" d="M60,90 L100,85 L140,80 L180,70 L220,60 L260,55 L300,50 L340,45" />
+              <!-- ATL (Fatigue) - Red dashed -->
+              <path stroke="hsl(0, 90%, 60%)" stroke-width="2" stroke-dasharray="6,4" fill="none" d="M60,100 L100,90 L140,95 L180,75 L220,85 L260,70 L300,80 L340,65" />
+              <!-- TSB (Form) - Green -->
+              <path stroke="hsl(142, 85%, 55%)" stroke-width="2" fill="none" d="M60,70 L100,75 L140,65 L180,80 L220,60 L260,70 L300,55 L340,65" />
+              <!-- Current point markers -->
+              <circle cx="340" cy="45" r="4" fill="var(--card)" stroke="hsl(200, 85%, 55%)" stroke-width="2" />
+              <circle cx="340" cy="65" r="4" fill="var(--card)" stroke="hsl(0, 90%, 60%)" stroke-width="2" />
+              <circle cx="340" cy="65" r="4" fill="var(--card)" stroke="hsl(142, 85%, 55%)" stroke-width="2" />
+              <g class="chart-axis">
+                <text x="60" y="135" text-anchor="middle">Oct</text>
+                <text x="140" y="135" text-anchor="middle">Oct</text>
+                <text x="220" y="135" text-anchor="middle">Nov</text>
+                <text x="300" y="135" text-anchor="middle">Nov</text>
+                <text x="340" y="135" text-anchor="middle">Now</text>
+              </g>
+              <defs>
+                <linearGradient id="ctlGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 11px;">
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(200, 85%, 55%); border-radius: 2px;"></span> CTL (Fitness): 72</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(0, 90%, 60%); border-radius: 2px;"></span> ATL (Fatigue): 58</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 3px; background: hsl(142, 85%, 55%); border-radius: 2px;"></span> TSB (Form): +14</span>
+          </div>
+          <div style="text-align: center; margin-top: 10px; padding: 8px 16px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; font-size: 12px; color: var(--success); display: inline-block; margin-left: 50%; transform: translateX(-50%);">
+            🎯 Form is good! Great time for a hard effort.
+          </div>
+        </div>
+
+        <!-- Power Curve -->
+        <div class="glass-card span-4">
+          <div class="card-header">
+            <span class="card-label">Power Curve (90 Day Best)</span>
+            <span class="card-icon">⚡</span>
+          </div>
+          <div class="bar-chart" style="height: 130px;">
+            <div class="bar-group">
+              <div class="bar" style="height: 100%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="892W"></div>
+              <span class="bar-label">5s</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 72%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="645W"></div>
+              <span class="bar-label">30s</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 46%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="412W"></div>
+              <span class="bar-label">1m</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 33%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="298W"></div>
+              <span class="bar-label">5m</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 29%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="258W"></div>
+              <span class="bar-label">20m</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 24%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="212W"></div>
+              <span class="bar-label">1h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FTP Progression -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">FTP Progression (12 Months)</span>
+            <span class="card-icon">📈</span>
+          </div>
+          <div class="chart-container" style="height: 130px;">
+            <svg class="chart-svg" viewBox="0 0 300 110" preserveAspectRatio="none">
+              <g class="chart-grid">
+                <line x1="30" y1="15" x2="280" y2="15" />
+                <line x1="30" y1="40" x2="280" y2="40" />
+                <line x1="30" y1="65" x2="280" y2="65" />
+                <line x1="30" y1="90" x2="280" y2="90" />
+              </g>
+              <g class="chart-axis">
+                <text x="25" y="19" text-anchor="end">260</text>
+                <text x="25" y="44" text-anchor="end">240</text>
+                <text x="25" y="69" text-anchor="end">220</text>
+                <text x="25" y="94" text-anchor="end">200</text>
+              </g>
+              <path class="chart-area" fill="url(#ftpGrad)" d="M50,85 L90,78 L130,70 L170,60 L210,50 L250,35 L250,95 L50,95 Z" />
+              <path class="chart-line" stroke="hsl(200, 85%, 55%)" stroke-width="2.5" d="M50,85 L90,78 L130,70 L170,60 L210,50 L250,35" />
+              <circle cx="250" cy="35" r="5" fill="var(--card)" stroke="hsl(200, 85%, 55%)" stroke-width="2" />
+              <g class="chart-axis">
+                <text x="50" y="108" text-anchor="middle">Dec</text>
+                <text x="110" y="108" text-anchor="middle">Mar</text>
+                <text x="170" y="108" text-anchor="middle">Jun</text>
+                <text x="230" y="108" text-anchor="middle">Sep</text>
+              </g>
+              <defs>
+                <linearGradient id="ftpGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="hsl(200, 85%, 55%)" />
+                  <stop offset="100%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="text-align: center; font-size: 12px; color: var(--success); font-weight: 600; margin-top: 8px;">
+            +32W (+15%) in 12 months
+          </div>
+        </div>
+
+        <!-- Weekly TSS -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Weekly Training Load (TSS)</span>
+            <span class="card-icon">📊</span>
+          </div>
+          <div class="bar-chart" style="height: 110px;">
+            <div class="bar-group">
+              <div class="bar" style="height: 70%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="87"></div>
+              <span class="bar-label">Mon</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 10%; background: var(--muted);" data-value="0"></div>
+              <span class="bar-label">Tue</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 85%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="102"></div>
+              <span class="bar-label">Wed</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 45%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="54"></div>
+              <span class="bar-label">Thu</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 10%; background: var(--muted);" data-value="0"></div>
+              <span class="bar-label">Fri</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 100%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="124"></div>
+              <span class="bar-label">Sat</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar" style="height: 55%; background: linear-gradient(180deg, hsl(200, 85%, 55%), hsl(200, 70%, 40%));" data-value="65"></div>
+              <span class="bar-label">Sun</span>
+            </div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="value text-bike">432</div>
+              <div class="label">TSS this week</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value text-bike">9.2h</div>
+              <div class="label">ride time</div>
+            </div>
+            <div class="mini-stat">
+              <div class="value text-bike">2,450m</div>
+              <div class="label">elevation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Rides -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Recent Rides</span>
+            <span class="card-icon">🚴</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon bike">🚴</div>
+              <div class="activity-info">
+                <div class="activity-name">Morning Intervals</div>
+                <div class="activity-meta">Today · 1h 32m · 245W avg</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-bike">48.2 km</div>
+                <div class="activity-unit">TSS: 87</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon bike">🚴</div>
+              <div class="activity-info">
+                <div class="activity-name">Canyon Loop</div>
+                <div class="activity-meta">Yesterday · 2h 45m · 198W</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-value text-bike">72.5 km</div>
+                <div class="activity-unit">TSS: 124</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heart Rate Zones -->
+        <div class="glass-card span-6">
+          <div class="card-header">
+            <span class="card-label">Time in HR Zones (This Week)</span>
+            <span class="card-icon">❤️</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 24px; font-size: 11px; color: var(--muted-foreground);">Z1</span>
+              <div style="flex: 1; height: 16px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+                <div style="width: 15%; height: 100%; background: hsl(200, 70%, 60%); border-radius: 4px;"></div>
+              </div>
+              <span style="width: 40px; font-size: 11px; text-align: right;">0:55</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 24px; font-size: 11px; color: var(--muted-foreground);">Z2</span>
+              <div style="flex: 1; height: 16px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+                <div style="width: 55%; height: 100%; background: hsl(142, 70%, 50%); border-radius: 4px;"></div>
+              </div>
+              <span style="width: 40px; font-size: 11px; text-align: right;">5:05</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 24px; font-size: 11px; color: var(--muted-foreground);">Z3</span>
+              <div style="flex: 1; height: 16px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+                <div style="width: 20%; height: 100%; background: hsl(45, 90%, 55%); border-radius: 4px;"></div>
+              </div>
+              <span style="width: 40px; font-size: 11px; text-align: right;">1:50</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 24px; font-size: 11px; color: var(--muted-foreground);">Z4</span>
+              <div style="flex: 1; height: 16px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+                <div style="width: 8%; height: 100%; background: hsl(25, 90%, 55%); border-radius: 4px;"></div>
+              </div>
+              <span style="width: 40px; font-size: 11px; text-align: right;">0:45</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 24px; font-size: 11px; color: var(--muted-foreground);">Z5</span>
+              <div style="flex: 1; height: 16px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+                <div style="width: 3%; height: 100%; background: hsl(0, 80%, 55%); border-radius: 4px;"></div>
+              </div>
+              <span style="width: 40px; font-size: 11px; text-align: right;">0:15</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="glass-card span-12">
+          <div class="card-header">
+            <span class="card-label">Achievements</span>
+            <a href="#" style="color: var(--bike-color); font-size: 11px; font-weight: 600; text-decoration: none;">See all 31 →</a>
+          </div>
+          <div class="achievements-row">
+            <div class="achievement earned">
+              <div class="achievement-emoji">⚡</div>
+              <div class="achievement-name">FTP Breakthrough</div>
+              <div class="achievement-desc">New 20min PR</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">👑</div>
+              <div class="achievement-name">KOM Hunter</div>
+              <div class="achievement-desc">3 segments owned</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🏔️</div>
+              <div class="achievement-name">Climbing Machine</div>
+              <div class="achievement-desc">10,000m in a month</div>
+            </div>
+            <div class="achievement earned">
+              <div class="achievement-emoji">🔥</div>
+              <div class="achievement-name">Consistency</div>
+              <div class="achievement-desc">8 week streak</div>
+            </div>
+            <div class="achievement locked">
+              <div class="achievement-emoji">💯</div>
+              <div class="achievement-name">Century Rider</div>
+              <div class="achievement-desc">100km single ride</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchSport(sport) {
+      document.querySelectorAll('.sport-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === sport);
+      });
+      document.querySelectorAll('.sport-content').forEach(content => {
+        content.classList.toggle('active', content.id === `${sport}-content`);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey V4 - Fixed Design</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* FIXED: Pure dark, not muddy brown */
+      --bg: #08080C;
+      --bg-card: #111116;
+      --bg-elevated: #18181F;
+
+      /* FIXED: Vibrant, punchy colors */
+      --lift-primary: #A855F7;
+      --lift-glow: rgba(168, 85, 247, 0.5);
+      --lift-gradient: linear-gradient(135deg, #A855F7 0%, #C084FC 50%, #E879F9 100%);
+
+      --climb-primary: #14F0C5;
+      --climb-glow: rgba(20, 240, 197, 0.5);
+      --climb-gradient: linear-gradient(135deg, #14F0C5 0%, #2DD4BF 50%, #5EEAD4 100%);
+
+      --bike-primary: #3B82F6;
+      --bike-glow: rgba(59, 130, 246, 0.5);
+      --bike-gradient: linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
+
+      --gold: #FFD700;
+      --gold-glow: rgba(255, 215, 0, 0.4);
+      --success: #22C55E;
+      --warning: #F59E0B;
+
+      --text: #FFFFFF;
+      --text-secondary: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* ============ HEADER ============ */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .logo-area { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #FC4C02, #FF7A45);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 20px;
+      box-shadow: 0 4px 20px rgba(252, 76, 2, 0.4);
+    }
+    .page-title {
+      font-size: 32px;
+      background: linear-gradient(135deg, #FC4C02, #FF7A45, #FFA940);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-sub { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+    .sync-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .sync-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    /* ============ SPORT TABS ============ */
+    .sport-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 6px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    .sport-tab {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700; font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-muted);
+      border: 2px solid transparent;
+    }
+    .sport-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+    .sport-tab.active { color: var(--text); }
+    .sport-tab.active[data-tab="lifting"] {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.4);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+    .sport-tab.active[data-tab="climbing"] {
+      background: rgba(20, 240, 197, 0.15);
+      border-color: rgba(20, 240, 197, 0.4);
+      box-shadow: 0 0 20px rgba(20, 240, 197, 0.2);
+    }
+    .sport-tab.active[data-tab="cycling"] {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+    .tab-emoji { font-size: 18px; }
+
+    /* ============ CELEBRATION BANNER ============ */
+    .celebration-banner {
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1), rgba(255, 215, 0, 0.15));
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: glow-gold 2s ease-in-out infinite;
+    }
+    @keyframes glow-gold {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.4); }
+    }
+    .celebration-content { display: flex; align-items: center; gap: 16px; }
+    .celebration-icon { font-size: 36px; animation: bounce 1s ease infinite; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .celebration-text h3 {
+      font-size: 18px;
+      color: var(--gold);
+      margin-bottom: 2px;
+    }
+    .celebration-text p { font-size: 13px; color: var(--text-secondary); }
+    .celebration-badge {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--gold), #FFA500);
+      border-radius: 100px;
+      font-weight: 800;
+      font-size: 13px;
+      color: #000;
+      box-shadow: 0 4px 20px var(--gold-glow);
+    }
+
+    /* ============ GRID ============ */
+    .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 16px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-9 { grid-column: span 9; }
+    .span-12 { grid-column: span 12; }
+
+    /* ============ CARDS ============ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .card-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    /* ============ HERO STAT (FIXED: One BIG focal point) ============ */
+    .hero-mega {
+      text-align: center;
+      padding: 40px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-mega::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.1;
+      border-radius: 20px;
+    }
+    .hero-mega.lift::before { background: var(--lift-gradient); }
+    .hero-mega.climb::before { background: var(--climb-gradient); }
+    .hero-mega.bike::before { background: var(--bike-gradient); }
+
+    .hero-mega .label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .hero-mega .value {
+      font-family: 'Fraunces', serif;
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      text-shadow: 0 4px 30px currentColor;
+    }
+    .hero-mega .value.lift { color: var(--lift-primary); text-shadow: 0 4px 40px var(--lift-glow); }
+    .hero-mega .value.climb { color: var(--climb-primary); text-shadow: 0 4px 40px var(--climb-glow); }
+    .hero-mega .value.bike { color: var(--bike-primary); text-shadow: 0 4px 40px var(--bike-glow); }
+    .hero-mega .unit { font-size: 24px; opacity: 0.7; }
+    .hero-mega .subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+    .hero-mega .delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 6px 14px;
+      background: rgba(34, 197, 94, 0.15);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    /* ============ SUPPORTING STATS ============ */
+    .stat-row {
+      display: flex;
+      gap: 12px;
+    }
+    .stat-item {
+      flex: 1;
+      text-align: center;
+      padding: 20px 16px;
+      background: var(--bg-elevated);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+    .stat-item .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .stat-item .value {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .stat-item .delta {
+      font-size: 11px;
+      color: var(--success);
+      margin-top: 4px;
+    }
+
+    /* ============ CHARTS (FIXED: Much larger, thicker lines) ============ */
+    .chart-area {
+      height: 220px;
+      position: relative;
+    }
+    .chart-svg { width: 100%; height: 100%; }
+    .chart-grid line { stroke: rgba(255,255,255,0.06); }
+    .chart-line {
+      fill: none;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 8px currentColor);
+    }
+    .chart-area-fill { opacity: 0.25; }
+    .chart-dot {
+      fill: var(--bg-card);
+      stroke-width: 3;
+      filter: drop-shadow(0 2px 6px currentColor);
+    }
+    .chart-label { fill: var(--text-muted); font-size: 11px; font-weight: 500; }
+
+    /* ============ BAR CHART (FIXED: Taller bars, more data) ============ */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 180px;
+      gap: 10px;
+      padding-top: 20px;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .bar-wrapper {
+      width: 100%;
+      height: 140px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .bar {
+      width: 100%;
+      max-width: 36px;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .bar::before {
+      content: attr(data-val);
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .bar:hover::before { opacity: 1; }
+    .bar:hover { filter: brightness(1.3); transform: scaleX(1.1); }
+    .bar.lift { background: var(--lift-gradient); box-shadow: 0 4px 20px var(--lift-glow); }
+    .bar.climb { background: var(--climb-gradient); box-shadow: 0 4px 20px var(--climb-glow); }
+    .bar.bike { background: var(--bike-gradient); box-shadow: 0 4px 20px var(--bike-glow); }
+    .bar.rest { background: var(--bg-elevated); }
+    .bar-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+    /* ============ EPIC COMPARISON (FIXED: Visual, relatable) ============ */
+    .epic-card {
+      position: relative;
+      padding: 28px;
+      overflow: hidden;
+    }
+    .epic-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+    }
+    .epic-card.lift::before { background: var(--lift-gradient); }
+    .epic-card.climb::before { background: var(--climb-gradient); }
+    .epic-card.bike::before { background: var(--bike-gradient); }
+
+    .epic-header { margin-bottom: 24px; }
+    .epic-title {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .epic-sub { font-size: 14px; color: var(--text-secondary); }
+
+    .epic-visual {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 24px;
+      background: var(--bg-elevated);
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .epic-illustration {
+      font-size: 64px;
+      filter: drop-shadow(0 4px 20px rgba(255,255,255,0.1));
+    }
+    .epic-stat {
+      flex: 1;
+    }
+    .epic-stat .number {
+      font-family: 'Fraunces', serif;
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .epic-stat .number.lift { color: var(--lift-primary); }
+    .epic-stat .number.climb { color: var(--climb-primary); }
+    .epic-stat .number.bike { color: var(--bike-primary); }
+    .epic-stat .desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .epic-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .epic-item {
+      text-align: center;
+      padding: 16px 12px;
+      background: var(--bg-elevated);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .epic-item:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .epic-item .icon { font-size: 28px; margin-bottom: 8px; }
+    .epic-item .val {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .epic-item .lbl { font-size: 11px; color: var(--text-muted); }
+
+    /* ============ PROGRESS RING (FIXED: Bigger, glowing) ============ */
+    .ring-container {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .ring-wrap {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      flex-shrink: 0;
+    }
+    .ring-svg { transform: rotate(-90deg); filter: drop-shadow(0 0 20px var(--lift-glow)); }
+    .ring-bg { fill: none; stroke: var(--bg-elevated); stroke-width: 12; }
+    .ring-fill {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.5s ease;
+    }
+    .ring-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-val {
+      font-family: 'Fraunces', serif;
+      font-size: 42px;
+      font-weight: 800;
+    }
+    .ring-label { font-size: 12px; color: var(--text-muted); }
+
+    .ring-details { flex: 1; }
+    .ring-details h4 { font-size: 16px; margin-bottom: 12px; }
+    .ring-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .ring-row:last-child { border-bottom: none; }
+    .ring-row .label { color: var(--text-secondary); }
+    .ring-row .value { font-weight: 700; }
+    .ring-row.highlight .value { color: var(--warning); }
+
+    /* ============ ACHIEVEMENTS (FIXED: Bigger, glowing) ============ */
+    .achievements-section { margin-top: 8px; }
+    .achievements-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .achievements-title { font-size: 18px; }
+    .achievements-link {
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .achievements-link.lift { color: var(--lift-primary); }
+    .achievements-link.climb { color: var(--climb-primary); }
+    .achievements-link.bike { color: var(--bike-primary); }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+    .achievement {
+      text-align: center;
+      padding: 20px 14px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .achievement.earned {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.04));
+      border-color: rgba(255, 215, 0, 0.4);
+      box-shadow: 0 4px 30px rgba(255, 215, 0, 0.15);
+    }
+    .achievement.earned:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 40px rgba(255, 215, 0, 0.25);
+    }
+    .achievement.new::after {
+      content: 'NEW!';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      padding: 4px 10px;
+      background: var(--success);
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #000;
+      animation: pulse 1.5s infinite;
+    }
+    .achievement.locked { opacity: 0.35; }
+    .achievement-emoji {
+      font-size: 36px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .achievement.earned .achievement-emoji {
+      filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.5));
+    }
+    .achievement.locked .achievement-emoji { filter: grayscale(1); }
+    .achievement-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .achievement-desc { font-size: 10px; color: var(--text-muted); }
+    .achievement-progress {
+      margin-top: 8px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .achievement-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    /* ============ ACTIVITY LIST ============ */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg-elevated);
+      border-radius: 14px;
+      transition: all 0.2s ease;
+    }
+    .activity:hover { transform: translateX(4px); background: rgba(255,255,255,0.04); }
+    .activity-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .activity-icon.lift { background: var(--lift-gradient); box-shadow: 0 4px 15px var(--lift-glow); }
+    .activity-icon.climb { background: var(--climb-gradient); box-shadow: 0 4px 15px var(--climb-glow); }
+    .activity-icon.bike { background: var(--bike-gradient); box-shadow: 0 4px 15px var(--bike-glow); }
+    .activity-info { flex: 1; }
+    .activity-name { font-weight: 700; font-size: 14px; }
+    .activity-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .activity-stat { text-align: right; }
+    .activity-val { font-weight: 800; font-size: 15px; }
+    .activity-unit { font-size: 11px; color: var(--text-muted); }
+
+    /* ============ MOTIVATIONAL COPY ============ */
+    .motivation {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .motivation .emoji { font-size: 20px; margin-right: 8px; }
+    .motivation.success { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+    .motivation.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1100px) {
+      .span-3, .span-4 { grid-column: span 6; }
+      .span-5, .span-7, .span-8, .span-9 { grid-column: span 12; }
+      .achievements-grid { grid-template-columns: repeat(3, 1fr); }
+      .epic-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 700px) {
+      .container { padding: 16px; }
+      .span-3, .span-4, .span-5, .span-6 { grid-column: span 12; }
+      .achievements-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-mega .value { font-size: 56px; }
+      .ring-container { flex-direction: column; }
+      .epic-visual { flex-direction: column; text-align: center; }
+    }
+
+    /* Hidden tabs */
+    .sport-content { display: none; }
+    .sport-content.active { display: block; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-area">
+        <div class="logo">S</div>
+        <div>
+          <h1 class="page-title heading">Strava Journey</h1>
+          <p class="page-sub">Your multi-sport chronicle</p>
+        </div>
+      </div>
+      <div class="sync-badge">
+        <div class="sync-dot"></div>
+        Synced 2m ago
+      </div>
+    </header>
+
+    <!-- Sport Tabs -->
+    <div class="sport-tabs">
+      <div class="sport-tab active" data-tab="lifting" onclick="switchSport('lifting')">
+        <span class="tab-emoji">🏋️</span> Lifting
+      </div>
+      <div class="sport-tab" data-tab="climbing" onclick="switchSport('climbing')">
+        <span class="tab-emoji">🧗</span> Climbing
+      </div>
+      <div class="sport-tab" data-tab="cycling" onclick="switchSport('cycling')">
+        <span class="tab-emoji">🚴</span> Cycling
+      </div>
+    </div>
+
+    <!-- ==================== LIFTING TAB ==================== -->
+    <div class="sport-content active" id="lifting-content">
+
+      <!-- Celebration Banner -->
+      <div class="celebration-banner">
+        <div class="celebration-content">
+          <div class="celebration-icon">🎉</div>
+          <div class="celebration-text">
+            <h3 class="heading">New Deadlift PR!</h3>
+            <p>You just hit 365lb - that's 2.3x your bodyweight!</p>
+          </div>
+        </div>
+        <div class="celebration-badge">+20lb from last month</div>
+      </div>
+
+      <div class="bento">
+        <!-- HERO: One massive focal point -->
+        <div class="card hero-mega lift span-5">
+          <div class="label">Big 3 Total</div>
+          <div class="value lift">855<span class="unit">lb</span></div>
+          <div class="subtitle">Squat + Bench + Deadlift</div>
+          <div class="delta">📈 +45lb this month</div>
+        </div>
+
+        <!-- Supporting stats -->
+        <div class="card span-7" style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="label">Squat</div>
+              <div class="value" style="color: var(--lift-primary);">285<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="delta">+15lb</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">Bench</div>
+              <div class="value" style="color: var(--lift-primary);">205<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="delta">+10lb</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">Deadlift</div>
+              <div class="value" style="color: var(--lift-primary);">365<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="delta">+20lb 🔥</div>
+            </div>
+          </div>
+          <div class="motivation success" style="margin-top: 16px;">
+            <span class="emoji">💪</span> You're only <strong>145lb</strong> away from the 1000lb Club!
+          </div>
+        </div>
+      </div>
+
+      <!-- Epic Comparison - VISUAL & RELATABLE -->
+      <div class="card epic-card lift" style="margin-bottom: 16px;">
+        <div class="epic-header">
+          <h3 class="epic-title heading">Your Lifting Journey</h3>
+          <p class="epic-sub">Making weights look easy since 2023</p>
+        </div>
+
+        <div class="epic-visual">
+          <div class="epic-illustration">🚗</div>
+          <div class="epic-stat">
+            <div class="number lift">48</div>
+            <div class="desc">Honda Civics worth of weight moved this month</div>
+          </div>
+        </div>
+
+        <div class="epic-grid">
+          <div class="epic-item">
+            <div class="icon">🦣</div>
+            <div class="val" style="color: var(--lift-primary);">2.3x</div>
+            <div class="lbl">Bodyweight Deadlift</div>
+          </div>
+          <div class="epic-item">
+            <div class="icon">📈</div>
+            <div class="val" style="color: var(--lift-primary);">Top 15%</div>
+            <div class="lbl">Strength Level</div>
+          </div>
+          <div class="epic-item">
+            <div class="icon">🔥</div>
+            <div class="val" style="color: var(--lift-primary);">12</div>
+            <div class="lbl">Week Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- 1RM Progression Chart - LARGER -->
+        <div class="card span-8">
+          <div class="card-header">
+            <span class="card-label">1RM Progression (6 Months)</span>
+          </div>
+          <div class="chart-area">
+            <svg class="chart-svg" viewBox="0 0 500 200" preserveAspectRatio="none">
+              <!-- Grid -->
+              <g class="chart-grid">
+                <line x1="50" y1="30" x2="480" y2="30" />
+                <line x1="50" y1="70" x2="480" y2="70" />
+                <line x1="50" y1="110" x2="480" y2="110" />
+                <line x1="50" y1="150" x2="480" y2="150" />
+              </g>
+              <!-- Y Labels -->
+              <text class="chart-label" x="45" y="34" text-anchor="end">400</text>
+              <text class="chart-label" x="45" y="74" text-anchor="end">350</text>
+              <text class="chart-label" x="45" y="114" text-anchor="end">300</text>
+              <text class="chart-label" x="45" y="154" text-anchor="end">250</text>
+              <!-- Deadlift -->
+              <path class="chart-area-fill" fill="url(#liftPurple)" d="M80,130 L150,120 L220,110 L290,90 L360,75 L430,55 L430,180 L80,180 Z" />
+              <path class="chart-line" stroke="#A855F7" d="M80,130 L150,120 L220,110 L290,90 L360,75 L430,55" />
+              <circle class="chart-dot" cx="430" cy="55" r="7" stroke="#A855F7" />
+              <!-- Squat -->
+              <path class="chart-area-fill" fill="url(#liftOrange)" d="M80,145 L150,140 L220,130 L290,115 L360,100 L430,85 L430,180 L80,180 Z" />
+              <path class="chart-line" stroke="#F59E0B" d="M80,145 L150,140 L220,130 L290,115 L360,100 L430,85" />
+              <circle class="chart-dot" cx="430" cy="85" r="7" stroke="#F59E0B" />
+              <!-- Bench -->
+              <path class="chart-area-fill" fill="url(#liftBlue)" d="M80,160 L150,158 L220,152 L290,145 L360,135 L430,125 L430,180 L80,180 Z" />
+              <path class="chart-line" stroke="#3B82F6" d="M80,160 L150,158 L220,152 L290,145 L360,135 L430,125" />
+              <circle class="chart-dot" cx="430" cy="125" r="7" stroke="#3B82F6" />
+              <!-- X Labels -->
+              <text class="chart-label" x="80" y="195" text-anchor="middle">Jun</text>
+              <text class="chart-label" x="150" y="195" text-anchor="middle">Jul</text>
+              <text class="chart-label" x="220" y="195" text-anchor="middle">Aug</text>
+              <text class="chart-label" x="290" y="195" text-anchor="middle">Sep</text>
+              <text class="chart-label" x="360" y="195" text-anchor="middle">Oct</text>
+              <text class="chart-label" x="430" y="195" text-anchor="middle">Nov</text>
+              <defs>
+                <linearGradient id="liftPurple" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#A855F7" />
+                  <stop offset="100%" stop-color="#A855F7" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="liftOrange" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#F59E0B" />
+                  <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="liftBlue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3B82F6" />
+                  <stop offset="100%" stop-color="#3B82F6" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 28px; margin-top: 12px; font-size: 12px; font-weight: 600;">
+            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 4px; background: #A855F7; border-radius: 2px;"></span> Deadlift: 365lb</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 4px; background: #F59E0B; border-radius: 2px;"></span> Squat: 285lb</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 16px; height: 4px; background: #3B82F6; border-radius: 2px;"></span> Bench: 205lb</span>
+          </div>
+        </div>
+
+        <!-- Progress Ring - Goal -->
+        <div class="card span-4">
+          <div class="card-header">
+            <span class="card-label">1000lb Club Progress</span>
+          </div>
+          <div class="ring-container" style="flex-direction: column; align-items: center;">
+            <div class="ring-wrap">
+              <svg class="ring-svg" width="160" height="160" viewBox="0 0 160 160">
+                <circle class="ring-bg" cx="80" cy="80" r="68" />
+                <circle class="ring-fill" cx="80" cy="80" r="68"
+                  stroke="url(#ringLift)"
+                  stroke-dasharray="427"
+                  stroke-dashoffset="62" />
+                <defs>
+                  <linearGradient id="ringLift" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#A855F7" />
+                    <stop offset="100%" stop-color="#E879F9" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="ring-content">
+                <div class="ring-val" style="color: var(--lift-primary);">85%</div>
+                <div class="ring-label">855 / 1000lb</div>
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 16px;">
+              <div style="font-size: 24px; font-weight: 800; color: var(--warning);">145lb</div>
+              <div style="font-size: 13px; color: var(--text-muted);">remaining to join the club</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Volume - TALLER BARS -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-label">Weekly Volume (Tonnage)</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar lift" style="height: 60%;" data-val="9.2k lb"></div></div>
+              <span class="bar-label">Mon</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar rest" style="height: 8%;"></div></div>
+              <span class="bar-label">Tue</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar lift" style="height: 85%;" data-val="12.4k lb"></div></div>
+              <span class="bar-label">Wed</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar rest" style="height: 8%;"></div></div>
+              <span class="bar-label">Thu</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar lift" style="height: 100%;" data-val="14.1k lb"></div></div>
+              <span class="bar-label">Fri</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar lift" style="height: 50%;" data-val="7.2k lb"></div></div>
+              <span class="bar-label">Sat</span>
+            </div>
+            <div class="bar-col">
+              <div class="bar-wrapper"><div class="bar rest" style="height: 8%;"></div></div>
+              <span class="bar-label">Sun</span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-around; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
+            <div style="text-align: center;">
+              <div style="font-size: 22px; font-weight: 800; color: var(--lift-primary);">42,850</div>
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">lbs this week</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 22px; font-weight: 800; color: var(--lift-primary);">156</div>
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">total sets</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 22px; font-weight: 800; color: var(--success);">+8%</div>
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">vs last week</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="card span-6">
+          <div class="card-header">
+            <span class="card-label">Recent Sessions</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Push Day - Chest & Shoulders</div>
+                <div class="activity-meta">Today at 7:30 AM · 1h 12m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-val" style="color: var(--lift-primary);">12,450 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Pull Day - Back & Biceps</div>
+                <div class="activity-meta">Yesterday · 1h 05m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-val" style="color: var(--lift-primary);">11,200 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+            <div class="activity">
+              <div class="activity-icon lift">🏋️</div>
+              <div class="activity-info">
+                <div class="activity-name">Leg Day 🦵 - PR Day!</div>
+                <div class="activity-meta">Nov 19 · 1h 25m</div>
+              </div>
+              <div class="activity-stat">
+                <div class="activity-val" style="color: var(--lift-primary);">18,900 lb</div>
+                <div class="activity-unit">volume</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements - BIGGER & GLOWING -->
+      <div class="card achievements-section">
+        <div class="achievements-header">
+          <h3 class="achievements-title heading">Achievements</h3>
+          <a href="#" class="achievements-link lift">See all 18 →</a>
+        </div>
+        <div class="achievements-grid">
+          <div class="achievement earned new">
+            <span class="achievement-emoji">🔥</span>
+            <div class="achievement-name">Iron Consistency</div>
+            <div class="achievement-desc">12 week streak</div>
+          </div>
+          <div class="achievement earned">
+            <span class="achievement-emoji">🦁</span>
+            <div class="achievement-name">2x Bodyweight DL</div>
+            <div class="achievement-desc">Deadlift milestone</div>
+          </div>
+          <div class="achievement earned">
+            <span class="achievement-emoji">⚡</span>
+            <div class="achievement-name">Volume King</div>
+            <div class="achievement-desc">50k lbs in a week</div>
+          </div>
+          <div class="achievement earned">
+            <span class="achievement-emoji">💎</span>
+            <div class="achievement-name">PR Hunter</div>
+            <div class="achievement-desc">5 PRs this month</div>
+          </div>
+          <div class="achievement locked">
+            <span class="achievement-emoji">👑</span>
+            <div class="achievement-name">1000lb Club</div>
+            <div class="achievement-desc">145 lbs to go</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 85%; background: var(--lift-gradient);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CLIMBING TAB (Abbreviated for length) ==================== -->
+    <div class="sport-content" id="climbing-content">
+      <div class="celebration-banner" style="border-color: rgba(20, 240, 197, 0.4); background: linear-gradient(90deg, rgba(20, 240, 197, 0.15), rgba(20, 184, 166, 0.1), rgba(20, 240, 197, 0.15));">
+        <div class="celebration-content">
+          <div class="celebration-icon">🧗</div>
+          <div class="celebration-text">
+            <h3 class="heading" style="color: var(--climb-primary);">First V6 Send!</h3>
+            <p>You just broke into a new grade - that's huge!</p>
+          </div>
+        </div>
+        <div class="celebration-badge">Grade Breakthrough</div>
+      </div>
+
+      <div class="bento">
+        <div class="card hero-mega climb span-5">
+          <div class="label">Max Boulder Grade</div>
+          <div class="value climb">V6</div>
+          <div class="subtitle">Your hardest send yet</div>
+          <div class="delta" style="background: rgba(20, 240, 197, 0.15); color: var(--climb-primary);">↑ from V5 this month</div>
+        </div>
+        <div class="card span-7" style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="label">Flash Rate</div>
+              <div class="value" style="color: var(--climb-primary);">68%</div>
+              <div class="delta">+12%</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">Sessions</div>
+              <div class="value" style="color: var(--climb-primary);">14</div>
+              <div class="delta">this month</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">Kilter Angle</div>
+              <div class="value" style="color: var(--climb-primary);">40°</div>
+              <div class="delta">steep!</div>
+            </div>
+          </div>
+          <div class="motivation success" style="margin-top: 16px; background: rgba(20, 240, 197, 0.1); color: var(--climb-primary);">
+            <span class="emoji">🏔️</span> You've climbed <strong>3.2 El Capitans</strong> worth of elevation!
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 60px; color: var(--text-muted);">
+        <p>[ Full climbing dashboard with grade pyramid, session charts, Kilter progress... ]</p>
+        <p style="margin-top: 8px; font-size: 13px;">See lifting tab for full design patterns</p>
+      </div>
+    </div>
+
+    <!-- ==================== CYCLING TAB (Abbreviated for length) ==================== -->
+    <div class="sport-content" id="cycling-content">
+      <div class="celebration-banner" style="border-color: rgba(59, 130, 246, 0.4); background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1), rgba(59, 130, 246, 0.15));">
+        <div class="celebration-content">
+          <div class="celebration-icon">⚡</div>
+          <div class="celebration-text">
+            <h3 class="heading" style="color: var(--bike-primary);">New 20min Power PR!</h3>
+            <p>258W average - your FTP is climbing!</p>
+          </div>
+        </div>
+        <div class="celebration-badge">+12W from last test</div>
+      </div>
+
+      <div class="bento">
+        <div class="card hero-mega bike span-5">
+          <div class="label">FTP (Estimated)</div>
+          <div class="value bike">245<span class="unit">W</span></div>
+          <div class="subtitle">Functional Threshold Power</div>
+          <div class="delta" style="background: rgba(59, 130, 246, 0.15); color: var(--bike-primary);">+12W this month</div>
+        </div>
+        <div class="card span-7" style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="label">W/kg</div>
+              <div class="value" style="color: var(--bike-primary);">3.5</div>
+              <div class="delta">Cat 4</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">CTL (Fitness)</div>
+              <div class="value" style="color: var(--bike-primary);">72</div>
+              <div class="delta">building</div>
+            </div>
+            <div class="stat-item">
+              <div class="label">TSB (Form)</div>
+              <div class="value" style="color: var(--success);">+14</div>
+              <div class="delta">fresh!</div>
+            </div>
+          </div>
+          <div class="motivation success" style="margin-top: 16px; background: rgba(59, 130, 246, 0.1); color: var(--bike-primary);">
+            <span class="emoji">🏔️</span> You've climbed <strong>0.8 Everests</strong> this year!
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 60px; color: var(--text-muted);">
+        <p>[ Full cycling dashboard with PMC chart, power curve, TSS tracking... ]</p>
+        <p style="margin-top: 8px; font-size: 13px;">See lifting tab for full design patterns</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchSport(sport) {
+      document.querySelectorAll('.sport-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === sport);
+      });
+      document.querySelectorAll('.sport-content').forEach(content => {
+        content.classList.toggle('active', content.id === `${sport}-content`);
+      });
+    }
+  </script>
+</body>
+</html>

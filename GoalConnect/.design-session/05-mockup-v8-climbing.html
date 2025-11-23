@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey - Climbing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* App design system colors */
+      --background: hsl(45, 30%, 12%);
+      --background-elevated: hsl(40, 20%, 18%);
+      --card: hsl(40, 20%, 18%);
+      --card-glass: hsla(40, 20%, 18%, 0.4);
+      --foreground: hsl(40, 20%, 95%);
+      --primary: hsl(25, 95%, 58%);
+      --secondary: hsl(200, 85%, 55%);
+      --accent: hsl(160, 80%, 50%);
+      --success: hsl(142, 85%, 55%);
+      --warning: hsl(38, 100%, 60%);
+      --border: hsla(40, 15%, 50%, 0.15);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: hsl(40, 15%, 65%);
+
+      /* Sport-specific accent - climbing orange */
+      --climb-accent: hsl(25, 95%, 58%);
+      --climb-glow: hsla(25, 95%, 58%, 0.3);
+      --kilter-accent: hsl(160, 80%, 50%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-title { font-size: 24px; color: var(--foreground); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .nav-tab {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+    }
+
+    .nav-tab:hover { color: var(--foreground); background: hsla(40, 15%, 50%, 0.1); }
+    .nav-tab.active { background: var(--climb-accent); color: white; box-shadow: 0 2px 8px var(--climb-glow); }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .glass-card:hover {
+      border-color: hsla(40, 15%, 50%, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-foreground);
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 16px;
+    }
+
+    /* Hero Stats Row */
+    .hero-row { display: flex; gap: 16px; margin-bottom: 24px; }
+
+    .hero-stat { flex: 1; text-align: center; padding: 24px 16px; }
+
+    .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--climb-accent), var(--kilter-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .hero-label { font-size: 12px; color: var(--muted-foreground); font-weight: 500; }
+    .hero-sub { font-size: 11px; color: var(--accent); margin-top: 4px; }
+
+    /* Chart area */
+    .chart-area {
+      height: 200px;
+      background: linear-gradient(180deg, hsla(25, 95%, 58%, 0.05) 0%, transparent 100%);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Grade Pyramid */
+    .pyramid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    .pyramid-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pyramid-label {
+      width: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--foreground);
+      text-align: right;
+    }
+
+    .pyramid-bar-container { flex: 1; height: 20px; position: relative; }
+
+    .pyramid-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--climb-accent), hsla(25, 95%, 58%, 0.5));
+      transition: width 0.5s ease;
+    }
+
+    .pyramid-count {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--foreground);
+      font-weight: 500;
+    }
+
+    /* Swarmplot */
+    .swarmplot {
+      height: 200px;
+      position: relative;
+      padding: 20px;
+    }
+
+    .swarm-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .swarm-dot:hover {
+      transform: scale(1.5);
+      z-index: 10;
+    }
+
+    /* Funnel */
+    .funnel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 20px;
+    }
+
+    .funnel-stage {
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .funnel-stage:hover {
+      filter: brightness(1.1);
+      transform: scaleX(1.02);
+    }
+
+    /* Angle x Grade Matrix */
+    .matrix {
+      display: grid;
+      grid-template-columns: 40px repeat(5, 1fr);
+      gap: 4px;
+      padding: 16px 0;
+    }
+
+    .matrix-header {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      text-align: center;
+      padding: 4px;
+    }
+
+    .matrix-row-label {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+
+    .matrix-cell {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .matrix-cell:hover { transform: scale(1.1); }
+
+    /* Bump chart */
+    .bump-chart { height: 180px; padding: 16px 0; }
+    .bump-chart svg { width: 100%; height: 100%; }
+
+    /* Flash Rate Progress */
+    .flash-rates {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .flash-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flash-label {
+      font-size: 12px;
+      color: var(--foreground);
+      width: 50px;
+    }
+
+    .flash-bar {
+      flex: 1;
+      height: 12px;
+      background: var(--muted);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .flash-fill {
+      height: 100%;
+      border-radius: 6px;
+    }
+
+    .flash-value {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      width: 40px;
+      text-align: right;
+    }
+
+    /* Calendar Heatmap */
+    .calendar-heatmap {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 4px;
+      padding: 16px 0;
+    }
+
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .heatmap-cell:hover { transform: scale(1.2); }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .span-3, .span-4 { grid-column: span 6; }
+      .span-6 { grid-column: span 12; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-row { flex-direction: column; }
+      .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
+      .nav { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav">
+      <h1 class="nav-title heading">Journey</h1>
+      <div class="nav-tabs">
+        <button class="nav-tab">Lifting</button>
+        <button class="nav-tab active">Climbing</button>
+        <button class="nav-tab">Cycling</button>
+      </div>
+    </nav>
+
+    <!-- Hero Stats -->
+    <div class="hero-row">
+      <div class="glass-card hero-stat">
+        <div class="hero-value">V6</div>
+        <div class="hero-label">Outdoor Max</div>
+        <div class="hero-sub">Red Rocks</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">V5</div>
+        <div class="hero-label">Kilter Max</div>
+        <div class="hero-sub">@ 40 degrees</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">12.4k</div>
+        <div class="hero-label">Vertical Feet</div>
+        <div class="hero-sub">This year</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">23</div>
+        <div class="hero-label">Day Streak</div>
+        <div class="hero-sub">Personal best!</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+      <!-- Grade Pyramid -->
+      <div class="glass-card span-6">
+        <div class="card-label">All Time</div>
+        <div class="card-title">Grade Pyramid</div>
+        <div class="pyramid">
+          <div class="pyramid-row">
+            <span class="pyramid-label">V6</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 8%; background: linear-gradient(90deg, hsl(0, 70%, 55%), hsla(0, 70%, 55%, 0.5))"></div>
+              <span class="pyramid-count">2</span>
+            </div>
+          </div>
+          <div class="pyramid-row">
+            <span class="pyramid-label">V5</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 20%; background: linear-gradient(90deg, hsl(25, 95%, 58%), hsla(25, 95%, 58%, 0.5))"></div>
+              <span class="pyramid-count">8</span>
+            </div>
+          </div>
+          <div class="pyramid-row">
+            <span class="pyramid-label">V4</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 45%; background: linear-gradient(90deg, hsl(38, 100%, 60%), hsla(38, 100%, 60%, 0.5))"></div>
+              <span class="pyramid-count">24</span>
+            </div>
+          </div>
+          <div class="pyramid-row">
+            <span class="pyramid-label">V3</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 70%; background: linear-gradient(90deg, hsl(142, 85%, 55%), hsla(142, 85%, 55%, 0.5))"></div>
+              <span class="pyramid-count">47</span>
+            </div>
+          </div>
+          <div class="pyramid-row">
+            <span class="pyramid-label">V2</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 90%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsla(160, 80%, 50%, 0.5))"></div>
+              <span class="pyramid-count">82</span>
+            </div>
+          </div>
+          <div class="pyramid-row">
+            <span class="pyramid-label">V1</span>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 100%; background: linear-gradient(90deg, hsl(200, 85%, 55%), hsla(200, 85%, 55%, 0.5))"></div>
+              <span class="pyramid-count">120+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Send Distribution (Swarmplot) -->
+      <div class="glass-card span-6">
+        <div class="card-label">This Month</div>
+        <div class="card-title">Send Distribution (Swarmplot)</div>
+        <div class="swarmplot" id="swarmplot">
+          <!-- Generated by JS -->
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(200, 85%, 55%)"></span> V1-V2</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(160, 80%, 50%)"></span> V3</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(38, 100%, 60%)"></span> V4</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(25, 95%, 58%)"></span> V5+</div>
+        </div>
+      </div>
+
+      <!-- Attempts to Sends (Funnel) -->
+      <div class="glass-card span-4">
+        <div class="card-label">Conversion</div>
+        <div class="card-title">Attempts to Sends</div>
+        <div class="funnel">
+          <div class="funnel-stage" style="width: 100%; background: linear-gradient(90deg, hsla(25, 95%, 58%, 0.8), hsla(25, 95%, 58%, 0.5))">142 Attempts</div>
+          <div class="funnel-stage" style="width: 75%; background: linear-gradient(90deg, hsla(38, 100%, 60%, 0.8), hsla(38, 100%, 60%, 0.5))">98 Good Burns</div>
+          <div class="funnel-stage" style="width: 55%; background: linear-gradient(90deg, hsla(142, 85%, 55%, 0.8), hsla(142, 85%, 55%, 0.5))">67 Sends</div>
+          <div class="funnel-stage" style="width: 35%; background: linear-gradient(90deg, hsla(160, 80%, 50%, 0.8), hsla(160, 80%, 50%, 0.5))">28 Flashes</div>
+        </div>
+      </div>
+
+      <!-- Angle x Grade Matrix -->
+      <div class="glass-card span-4">
+        <div class="card-label">Kilter Board</div>
+        <div class="card-title">Angle x Grade Matrix</div>
+        <div class="matrix">
+          <!-- Header row -->
+          <div class="matrix-header"></div>
+          <div class="matrix-header">V2</div>
+          <div class="matrix-header">V3</div>
+          <div class="matrix-header">V4</div>
+          <div class="matrix-header">V5</div>
+          <div class="matrix-header">V6</div>
+
+          <!-- 20 deg -->
+          <div class="matrix-row-label">20°</div>
+          <div class="matrix-cell" style="background: hsla(160, 80%, 50%, 0.9)">12</div>
+          <div class="matrix-cell" style="background: hsla(160, 80%, 50%, 0.7)">8</div>
+          <div class="matrix-cell" style="background: hsla(160, 80%, 50%, 0.5)">5</div>
+          <div class="matrix-cell" style="background: hsla(160, 80%, 50%, 0.3)">2</div>
+          <div class="matrix-cell" style="background: hsla(160, 80%, 50%, 0.1)">0</div>
+
+          <!-- 30 deg -->
+          <div class="matrix-row-label">30°</div>
+          <div class="matrix-cell" style="background: hsla(38, 100%, 60%, 0.9)">15</div>
+          <div class="matrix-cell" style="background: hsla(38, 100%, 60%, 0.8)">10</div>
+          <div class="matrix-cell" style="background: hsla(38, 100%, 60%, 0.5)">6</div>
+          <div class="matrix-cell" style="background: hsla(38, 100%, 60%, 0.3)">3</div>
+          <div class="matrix-cell" style="background: hsla(38, 100%, 60%, 0.15)">1</div>
+
+          <!-- 40 deg -->
+          <div class="matrix-row-label">40°</div>
+          <div class="matrix-cell" style="background: hsla(25, 95%, 58%, 0.9)">18</div>
+          <div class="matrix-cell" style="background: hsla(25, 95%, 58%, 0.7)">12</div>
+          <div class="matrix-cell" style="background: hsla(25, 95%, 58%, 0.45)">7</div>
+          <div class="matrix-cell" style="background: hsla(25, 95%, 58%, 0.25)">4</div>
+          <div class="matrix-cell" style="background: hsla(25, 95%, 58%, 0.1)">1</div>
+
+          <!-- 50 deg -->
+          <div class="matrix-row-label">50°</div>
+          <div class="matrix-cell" style="background: hsla(0, 70%, 55%, 0.6)">8</div>
+          <div class="matrix-cell" style="background: hsla(0, 70%, 55%, 0.4)">5</div>
+          <div class="matrix-cell" style="background: hsla(0, 70%, 55%, 0.25)">2</div>
+          <div class="matrix-cell" style="background: hsla(0, 70%, 55%, 0.1)">0</div>
+          <div class="matrix-cell" style="background: hsla(0, 70%, 55%, 0.05)">0</div>
+        </div>
+      </div>
+
+      <!-- Flash Rate by Grade -->
+      <div class="glass-card span-4">
+        <div class="card-label">Success Rate</div>
+        <div class="card-title">Flash Rate by Grade</div>
+        <div class="flash-rates">
+          <div class="flash-item">
+            <span class="flash-label">V2</span>
+            <div class="flash-bar">
+              <div class="flash-fill" style="width: 85%; background: linear-gradient(90deg, hsl(160, 80%, 50%), hsl(160, 60%, 40%))"></div>
+            </div>
+            <span class="flash-value">85%</span>
+          </div>
+          <div class="flash-item">
+            <span class="flash-label">V3</span>
+            <div class="flash-bar">
+              <div class="flash-fill" style="width: 62%; background: linear-gradient(90deg, hsl(142, 85%, 55%), hsl(142, 65%, 45%))"></div>
+            </div>
+            <span class="flash-value">62%</span>
+          </div>
+          <div class="flash-item">
+            <span class="flash-label">V4</span>
+            <div class="flash-bar">
+              <div class="flash-fill" style="width: 38%; background: linear-gradient(90deg, hsl(38, 100%, 60%), hsl(38, 80%, 50%))"></div>
+            </div>
+            <span class="flash-value">38%</span>
+          </div>
+          <div class="flash-item">
+            <span class="flash-label">V5</span>
+            <div class="flash-bar">
+              <div class="flash-fill" style="width: 15%; background: linear-gradient(90deg, hsl(25, 95%, 58%), hsl(25, 75%, 48%))"></div>
+            </div>
+            <span class="flash-value">15%</span>
+          </div>
+          <div class="flash-item">
+            <span class="flash-label">V6</span>
+            <div class="flash-bar">
+              <div class="flash-fill" style="width: 5%; background: linear-gradient(90deg, hsl(0, 70%, 55%), hsl(0, 60%, 45%))"></div>
+            </div>
+            <span class="flash-value">5%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grade Progress by Angle (Bump Chart) -->
+      <div class="glass-card span-6">
+        <div class="card-label">6-Month Trend</div>
+        <div class="card-title">Grade Progress by Angle (Bump Chart)</div>
+        <div class="bump-chart">
+          <svg viewBox="0 0 300 120" preserveAspectRatio="none">
+            <!-- 40 deg - best angle, stays high -->
+            <path d="M20,35 C80,30 120,25 180,28 S260,22 280,20" fill="none" stroke="hsl(25, 95%, 58%)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="20" cy="35" r="6" fill="hsl(25, 95%, 58%)"/>
+            <circle cx="280" cy="20" r="6" fill="hsl(25, 95%, 58%)"/>
+
+            <!-- 30 deg - improving -->
+            <path d="M20,60 C80,55 120,48 180,40 S260,38 280,40" fill="none" stroke="hsl(38, 100%, 60%)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="20" cy="60" r="6" fill="hsl(38, 100%, 60%)"/>
+            <circle cx="280" cy="40" r="6" fill="hsl(38, 100%, 60%)"/>
+
+            <!-- 20 deg - slab, staying same -->
+            <path d="M20,80 C80,78 120,82 180,78 S260,82 280,80" fill="none" stroke="hsl(160, 80%, 50%)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="20" cy="80" r="6" fill="hsl(160, 80%, 50%)"/>
+            <circle cx="280" cy="80" r="6" fill="hsl(160, 80%, 50%)"/>
+
+            <!-- 50 deg - steep, hardest -->
+            <path d="M20,100 C80,98 120,95 180,92 S260,100 280,95" fill="none" stroke="hsl(0, 70%, 55%)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="20" cy="100" r="6" fill="hsl(0, 70%, 55%)"/>
+            <circle cx="280" cy="95" r="6" fill="hsl(0, 70%, 55%)"/>
+
+            <!-- Labels -->
+            <text x="290" y="24" fill="var(--foreground)" font-size="10" font-weight="500">40°</text>
+            <text x="290" y="44" fill="var(--foreground)" font-size="10" font-weight="500">30°</text>
+            <text x="290" y="84" fill="var(--foreground)" font-size="10" font-weight="500">20°</text>
+            <text x="290" y="99" fill="var(--foreground)" font-size="10" font-weight="500">50°</text>
+          </svg>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(25, 95%, 58%)"></span> 40° V5</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(38, 100%, 60%)"></span> 30° V4</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(160, 80%, 50%)"></span> 20° V4</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(0, 70%, 55%)"></span> 50° V3</div>
+        </div>
+      </div>
+
+      <!-- Session Calendar Heatmap -->
+      <div class="glass-card span-6">
+        <div class="card-label">This Year</div>
+        <div class="card-title">Session Calendar</div>
+        <div class="calendar-heatmap" id="calendar-heatmap">
+          <!-- Generated by JS -->
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: var(--muted)"></span> Rest</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsla(25, 95%, 58%, 0.3)"></span> Light</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsla(25, 95%, 58%, 0.6)"></span> Solid</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(25, 95%, 58%)"></span> Crusher</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate swarmplot dots
+    const swarmplot = document.getElementById('swarmplot');
+    const grades = [
+      { grade: 'V1-V2', color: 'hsl(200, 85%, 55%)', count: 35, yBase: 75 },
+      { grade: 'V3', color: 'hsl(160, 80%, 50%)', count: 25, yBase: 55 },
+      { grade: 'V4', color: 'hsl(38, 100%, 60%)', count: 15, yBase: 35 },
+      { grade: 'V5+', color: 'hsl(25, 95%, 58%)', count: 8, yBase: 15 }
+    ];
+
+    grades.forEach(g => {
+      for(let i = 0; i < g.count; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'swarm-dot';
+        dot.style.background = g.color;
+        dot.style.left = `${10 + Math.random() * 80}%`;
+        dot.style.top = `${g.yBase + (Math.random() - 0.5) * 15}%`;
+        dot.style.opacity = 0.7 + Math.random() * 0.3;
+        swarmplot.appendChild(dot);
+      }
+    });
+
+    // Generate calendar heatmap
+    const heatmap = document.getElementById('calendar-heatmap');
+    for(let i = 0; i < 84; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      const intensity = Math.random();
+      if(intensity < 0.3) {
+        cell.style.background = 'var(--muted)';
+      } else if(intensity < 0.5) {
+        cell.style.background = 'hsla(25, 95%, 58%, 0.3)';
+      } else if(intensity < 0.75) {
+        cell.style.background = 'hsla(25, 95%, 58%, 0.6)';
+      } else {
+        cell.style.background = 'hsl(25, 95%, 58%)';
+      }
+      heatmap.appendChild(cell);
+    }
+  </script>
+</body>
+</html>

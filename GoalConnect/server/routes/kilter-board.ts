@@ -13,6 +13,7 @@ import {
   KilterBoardClient,
   KilterBoardError,
 } from "../importers/kilter-board-client";
+import { log } from "../lib/logger";
 import {
   groupIntoSessions,
   toClimbingSessionInsert,
@@ -137,7 +138,7 @@ export function registerKilterBoardRoutes(app: Express) {
           initialSync: syncResult,
         });
       } catch (error) {
-        console.error("Kilter Board connect error:", error);
+        log.error("[kilter-board] Connect error:", error);
         res.status(500).json({
           error: "Failed to connect Kilter Board account",
           details: error instanceof Error ? error.message : "Unknown error",
@@ -258,7 +259,7 @@ export function registerKilterBoardRoutes(app: Express) {
           throw syncError;
         }
       } catch (error) {
-        console.error("Kilter Board sync error:", error);
+        log.error("[kilter-board] Sync error:", error);
         res.status(500).json({
           error: "Failed to sync with Kilter Board",
           details: error instanceof Error ? error.message : "Unknown error",
@@ -299,7 +300,7 @@ export function registerKilterBoardRoutes(app: Express) {
           message: "Kilter Board account disconnected",
         });
       } catch (error) {
-        console.error("Kilter Board disconnect error:", error);
+        log.error("[kilter-board] Disconnect error:", error);
         res.status(500).json({
           error: "Failed to disconnect Kilter Board account",
         });
@@ -349,7 +350,7 @@ export function registerKilterBoardRoutes(app: Express) {
           ...connection,
         });
       } catch (error) {
-        console.error("Kilter Board status error:", error);
+        log.error("[kilter-board] Status error:", error);
         res.status(500).json({
           error: "Failed to get Kilter Board status",
         });
@@ -362,6 +363,9 @@ export function registerKilterBoardRoutes(app: Express) {
    * Get imported climbing sessions
    *
    * Query params:
+   *   - startDate: YYYY-MM-DD - filter sessionDate >= startDate
+   *   - endDate: YYYY-MM-DD - filter sessionDate <= endDate
+   *   - countOnly: boolean - return aggregated { totalSessions, totalProblemsSent } instead of records
    *   - limit: Number of results (default 50)
    *   - offset: Pagination offset (default 0)
    */
@@ -372,32 +376,60 @@ export function registerKilterBoardRoutes(app: Express) {
         const userId = getUserId(req);
         const db = getDb();
 
+        const countOnly = req.query.countOnly === "true";
         const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
         const offset = parseInt(req.query.offset as string) || 0;
 
+        // Build filter conditions
+        const conditions: ReturnType<typeof eq>[] = [
+          eq(climbingSessions.userId, userId),
+          eq(climbingSessions.sourceType, "kilter_board"),
+        ];
+
+        // Filter by start date (sessionDate is YYYY-MM-DD string)
+        if (req.query.startDate) {
+          conditions.push(sql`${climbingSessions.sessionDate} >= ${req.query.startDate}`);
+        }
+
+        // Filter by end date
+        if (req.query.endDate) {
+          conditions.push(sql`${climbingSessions.sessionDate} <= ${req.query.endDate}`);
+        }
+
+        const whereClause = and(...conditions);
+
+        // Count-only mode: return aggregated stats
+        if (countOnly) {
+          const [result] = await db
+            .select({
+              totalSessions: sql<number>`count(*)`,
+              totalProblemsSent: sql<number>`COALESCE(sum(${climbingSessions.problemsSent}), 0)`,
+              totalProblemsAttempted: sql<number>`COALESCE(sum(${climbingSessions.problemsAttempted}), 0)`,
+            })
+            .from(climbingSessions)
+            .where(whereClause);
+
+          return res.json({
+            totalSessions: Number(result.totalSessions),
+            totalProblemsSent: Number(result.totalProblemsSent),
+            totalProblemsAttempted: Number(result.totalProblemsAttempted),
+          });
+        }
+
+        // Full query with pagination
         const sessions = await db
           .select()
           .from(climbingSessions)
-          .where(
-            and(
-              eq(climbingSessions.userId, userId),
-              eq(climbingSessions.sourceType, "kilter_board")
-            )
-          )
+          .where(whereClause)
           .orderBy(desc(climbingSessions.sessionDate))
           .limit(limit)
           .offset(offset);
 
-        // Get total count
+        // Get total count with same filters
         const [countResult] = await db
           .select({ count: sql<number>`count(*)` })
           .from(climbingSessions)
-          .where(
-            and(
-              eq(climbingSessions.userId, userId),
-              eq(climbingSessions.sourceType, "kilter_board")
-            )
-          );
+          .where(whereClause);
 
         res.json({
           sessions,
@@ -409,7 +441,7 @@ export function registerKilterBoardRoutes(app: Express) {
           },
         });
       } catch (error) {
-        console.error("Error fetching Kilter Board sessions:", error);
+        log.error("[kilter-board] Error fetching sessions:", error);
         res.status(500).json({
           error: "Failed to fetch climbing sessions",
         });
@@ -450,7 +482,7 @@ export function registerKilterBoardRoutes(app: Express) {
 
         res.json(session);
       } catch (error) {
-        console.error("Error fetching session:", error);
+        log.error("[kilter-board] Error fetching session:", error);
         res.status(500).json({ error: "Failed to fetch session" });
       }
     }
@@ -509,7 +541,7 @@ export function registerKilterBoardRoutes(app: Express) {
           gradeDistribution,
         });
       } catch (error) {
-        console.error("Error fetching Kilter Board stats:", error);
+        log.error("[kilter-board] Error fetching stats:", error);
         res.status(500).json({
           error: "Failed to fetch statistics",
         });

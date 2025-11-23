@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey - Interactive Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --strava-orange: #FC4C02;
+      --strava-gradient: linear-gradient(135deg, #FC4C02 0%, #FF7A45 50%, #FFA940 100%);
+      --gold: #FFD700;
+      --bg-dark: #0A0A0F;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-primary: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.3;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: var(--strava-orange);
+      top: -200px;
+      right: -100px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: #FF7A45;
+      bottom: 20%;
+      left: -100px;
+      animation-delay: -7s;
+    }
+
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: #FFA940;
+      top: 50%;
+      right: 10%;
+      animation-delay: -14s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .strava-badge {
+      width: 48px;
+      height: 48px;
+      background: var(--strava-gradient);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 8px 32px rgba(252, 76, 2, 0.4);
+    }
+
+    .header-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: var(--strava-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-text p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      backdrop-filter: blur(12px);
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      background: #22C55E;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Hero Stats */
+    .hero-section {
+      margin-bottom: 40px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    .hero-stat {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 32px;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hero-stat:hover {
+      transform: translateY(-4px);
+      border-color: rgba(252, 76, 2, 0.3);
+      box-shadow: 0 20px 60px rgba(252, 76, 2, 0.15);
+    }
+
+    .hero-stat.featured {
+      background: linear-gradient(135deg, rgba(252, 76, 2, 0.15) 0%, rgba(255, 122, 69, 0.08) 100%);
+      border-color: rgba(252, 76, 2, 0.3);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-size: 56px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-value.gradient {
+      background: var(--strava-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-unit {
+      font-size: 20px;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+
+    .stat-comparison {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-comparison span {
+      color: #22C55E;
+      font-weight: 600;
+    }
+
+    /* Epic Comparison Card */
+    .epic-card {
+      background: linear-gradient(135deg, rgba(252, 76, 2, 0.1) 0%, rgba(255, 169, 64, 0.05) 100%);
+      border: 1px solid rgba(252, 76, 2, 0.2);
+      border-radius: 28px;
+      padding: 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .epic-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--strava-gradient);
+    }
+
+    .epic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+    }
+
+    .epic-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .epic-subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .achievement-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #000;
+      box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .comparison-item {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .comparison-item:hover {
+      border-color: rgba(252, 76, 2, 0.3);
+      transform: scale(1.02);
+    }
+
+    .comparison-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .comparison-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--strava-orange);
+      margin-bottom: 4px;
+    }
+
+    .comparison-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Bento Grid */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .bento-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 28px;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bento-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--glass);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Streak Card - spans 4 columns */
+    .streak-card {
+      grid-column: span 4;
+    }
+
+    .streak-display {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .streak-number {
+      font-size: 64px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22C55E 0%, #86EFAC 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .streak-label {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .streak-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .streak-progress {
+      height: 100%;
+      width: 78%;
+      background: linear-gradient(90deg, #22C55E, #86EFAC);
+      border-radius: 4px;
+      animation: shimmer 2s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .streak-goal {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Weekly Chart - spans 8 columns */
+    .chart-card {
+      grid-column: span 8;
+    }
+
+    .week-chart {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 160px;
+      padding-top: 20px;
+    }
+
+    .day-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .bar-container {
+      height: 120px;
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .bar {
+      width: 32px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(180deg, var(--strava-orange) 0%, rgba(252, 76, 2, 0.3) 100%);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .bar:hover {
+      transform: scaleY(1.05);
+      box-shadow: 0 0 20px rgba(252, 76, 2, 0.5);
+    }
+
+    .bar.today {
+      background: var(--strava-gradient);
+      box-shadow: 0 0 30px rgba(252, 76, 2, 0.4);
+    }
+
+    .day-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .day-label.today {
+      color: var(--strava-orange);
+    }
+
+    /* Recent Activities - spans 6 columns */
+    .activities-card {
+      grid-column: span 6;
+    }
+
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateX(4px);
+    }
+
+    .activity-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--strava-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .activity-info {
+      flex: 1;
+    }
+
+    .activity-name {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .activity-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .activity-stats {
+      text-align: right;
+    }
+
+    .activity-distance {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--strava-orange);
+    }
+
+    .activity-time {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Progress Ring Card - spans 3 columns */
+    .ring-card {
+      grid-column: span 3;
+      text-align: center;
+    }
+
+    .progress-ring-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 20px;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 10;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke: url(#orangeGradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 377;
+      stroke-dashoffset: 75;
+      animation: ring-fill 2s ease-out forwards;
+    }
+
+    @keyframes ring-fill {
+      from { stroke-dashoffset: 377; }
+      to { stroke-dashoffset: 75; }
+    }
+
+    .ring-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--strava-orange);
+    }
+
+    .ring-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .goal-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Pace Analysis - spans 3 columns */
+    .pace-card {
+      grid-column: span 3;
+    }
+
+    .pace-display {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .pace-value {
+      font-size: 48px;
+      font-weight: 900;
+      background: var(--strava-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .pace-unit {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    .pace-trend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: 100px;
+      font-size: 14px;
+      color: #22C55E;
+      font-weight: 600;
+    }
+
+    /* Achievements Section */
+    .achievements-section {
+      margin-top: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .see-all {
+      color: var(--strava-orange);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    .achievement-item {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .achievement-item:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 215, 0, 0.3);
+      box-shadow: 0 12px 40px rgba(255, 215, 0, 0.1);
+    }
+
+    .achievement-item.earned {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%);
+      border-color: rgba(255, 215, 0, 0.3);
+    }
+
+    .achievement-emoji {
+      font-size: 40px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .achievement-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .achievement-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .achievement-item.locked {
+      opacity: 0.5;
+    }
+
+    .achievement-item.locked .achievement-emoji {
+      filter: grayscale(1);
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 64px;
+      height: 64px;
+      background: var(--strava-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 8px 32px rgba(252, 76, 2, 0.4);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 48px rgba(252, 76, 2, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .hero-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .comparison-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .bento-card {
+        grid-column: span 6 !important;
+      }
+      .achievements-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+      .bento-card {
+        grid-column: span 12 !important;
+      }
+      .comparison-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Background -->
+  <div class="ambient-bg">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="strava-badge">S</div>
+        <div class="header-text">
+          <h1>Strava Journey</h1>
+          <p>Your running story, beautifully told</p>
+        </div>
+      </div>
+      <div class="sync-badge">
+        <div class="sync-dot"></div>
+        Synced 2 min ago
+      </div>
+    </header>
+
+    <!-- Hero Stats -->
+    <section class="hero-section">
+      <div class="hero-grid">
+        <div class="hero-stat featured">
+          <div class="stat-label">Total Distance</div>
+          <div class="stat-value gradient">847.3<span class="stat-unit">km</span></div>
+          <div class="stat-comparison"><span>+12%</span> vs last month</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-label">Activities This Month</div>
+          <div class="stat-value">28</div>
+          <div class="stat-comparison"><span>+4</span> from last month</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-label">Elevation Gained</div>
+          <div class="stat-value">4,892<span class="stat-unit">m</span></div>
+          <div class="stat-comparison">1.6x Burj Khalifa</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Epic Comparison Card -->
+    <section class="epic-card">
+      <div class="epic-header">
+        <div>
+          <h2 class="epic-title">Your Epic Running Journey</h2>
+          <p class="epic-subtitle">You've covered the equivalent of some incredible distances</p>
+        </div>
+        <div class="achievement-badge">
+          <span>&#127942;</span> Marathon x20 Achieved
+        </div>
+      </div>
+      <div class="comparison-grid">
+        <div class="comparison-item">
+          <div class="comparison-icon">&#127939;</div>
+          <div class="comparison-value">20.1</div>
+          <div class="comparison-label">Full Marathons</div>
+        </div>
+        <div class="comparison-item">
+          <div class="comparison-icon">&#128507;</div>
+          <div class="comparison-value">1.9</div>
+          <div class="comparison-label">London to Paris</div>
+        </div>
+        <div class="comparison-item">
+          <div class="comparison-icon">&#127956;</div>
+          <div class="comparison-value">5.9</div>
+          <div class="comparison-label">Everest Base Camp Treks</div>
+        </div>
+        <div class="comparison-item">
+          <div class="comparison-icon">&#128640;</div>
+          <div class="comparison-value">2.2%</div>
+          <div class="comparison-label">Way to the Moon</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bento Grid -->
+    <div class="bento-grid">
+      <!-- Streak Card -->
+      <div class="bento-card streak-card">
+        <div class="card-header">
+          <span class="card-title">Current Streak</span>
+          <div class="card-icon">&#128293;</div>
+        </div>
+        <div class="streak-display">
+          <span class="streak-number">14</span>
+          <span class="streak-label">days strong</span>
+        </div>
+        <div class="streak-bar">
+          <div class="streak-progress"></div>
+        </div>
+        <div class="streak-goal">4 more days to beat your record of 18!</div>
+      </div>
+
+      <!-- Weekly Chart -->
+      <div class="bento-card chart-card">
+        <div class="card-header">
+          <span class="card-title">This Week's Distance</span>
+          <div class="card-icon">&#128200;</div>
+        </div>
+        <div class="week-chart">
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 60%"></div>
+            </div>
+            <span class="day-label">Mon</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 85%"></div>
+            </div>
+            <span class="day-label">Tue</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 40%"></div>
+            </div>
+            <span class="day-label">Wed</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 95%"></div>
+            </div>
+            <span class="day-label">Thu</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 70%"></div>
+            </div>
+            <span class="day-label">Fri</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar" style="height: 50%"></div>
+            </div>
+            <span class="day-label">Sat</span>
+          </div>
+          <div class="day-bar">
+            <div class="bar-container">
+              <div class="bar today" style="height: 75%"></div>
+            </div>
+            <span class="day-label today">Today</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="bento-card activities-card">
+        <div class="card-header">
+          <span class="card-title">Recent Activities</span>
+          <div class="card-icon">&#128099;</div>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-icon">&#127939;</div>
+            <div class="activity-info">
+              <div class="activity-name">Morning Run</div>
+              <div class="activity-meta">Today at 6:45 AM</div>
+            </div>
+            <div class="activity-stats">
+              <div class="activity-distance">8.2 km</div>
+              <div class="activity-time">42:15</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon">&#127939;</div>
+            <div class="activity-info">
+              <div class="activity-name">Evening Jog</div>
+              <div class="activity-meta">Yesterday at 7:30 PM</div>
+            </div>
+            <div class="activity-stats">
+              <div class="activity-distance">5.1 km</div>
+              <div class="activity-time">28:44</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon">&#127939;</div>
+            <div class="activity-info">
+              <div class="activity-name">Long Run Sunday</div>
+              <div class="activity-meta">Nov 19 at 8:00 AM</div>
+            </div>
+            <div class="activity-stats">
+              <div class="activity-distance">15.3 km</div>
+              <div class="activity-time">1:22:08</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Progress Ring -->
+      <div class="bento-card ring-card">
+        <div class="card-header">
+          <span class="card-title">Monthly Goal</span>
+          <div class="card-icon">&#127919;</div>
+        </div>
+        <div class="progress-ring-container">
+          <svg class="progress-ring" width="140" height="140">
+            <defs>
+              <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#FC4C02"/>
+                <stop offset="100%" style="stop-color:#FFA940"/>
+              </linearGradient>
+            </defs>
+            <circle class="progress-ring-bg" cx="70" cy="70" r="60"/>
+            <circle class="progress-ring-fill" cx="70" cy="70" r="60"/>
+          </svg>
+          <div class="ring-content">
+            <span class="ring-value">80%</span>
+            <span class="ring-label">of 100km</span>
+          </div>
+        </div>
+        <p class="goal-text">20km to go - you've got this!</p>
+      </div>
+
+      <!-- Pace Analysis -->
+      <div class="bento-card pace-card">
+        <div class="card-header">
+          <span class="card-title">Average Pace</span>
+          <div class="card-icon">&#9201;</div>
+        </div>
+        <div class="pace-display">
+          <span class="pace-value">5:12</span>
+          <span class="pace-unit">/km</span>
+        </div>
+        <div class="pace-trend">
+          &#8593; 8% faster than last month
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements Section -->
+    <section class="achievements-section">
+      <div class="section-header">
+        <h2 class="section-title">Achievements Unlocked</h2>
+        <a href="#" class="see-all">See all 24 &#8594;</a>
+      </div>
+      <div class="achievements-grid">
+        <div class="achievement-item earned">
+          <span class="achievement-emoji">&#128293;</span>
+          <div class="achievement-name">Fire Starter</div>
+          <div class="achievement-desc">7-day streak</div>
+        </div>
+        <div class="achievement-item earned">
+          <span class="achievement-emoji">&#127942;</span>
+          <div class="achievement-name">Century Club</div>
+          <div class="achievement-desc">100km in a month</div>
+        </div>
+        <div class="achievement-item earned">
+          <span class="achievement-emoji">&#127747;</span>
+          <div class="achievement-name">Early Bird</div>
+          <div class="achievement-desc">10 sunrise runs</div>
+        </div>
+        <div class="achievement-item earned">
+          <span class="achievement-emoji">&#9968;</span>
+          <div class="achievement-name">Speed Demon</div>
+          <div class="achievement-desc">Sub-5min pace</div>
+        </div>
+        <div class="achievement-item locked">
+          <span class="achievement-emoji">&#128142;</span>
+          <div class="achievement-name">Diamond</div>
+          <div class="achievement-desc">30-day streak</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab">+</div>
+</body>
+</html>

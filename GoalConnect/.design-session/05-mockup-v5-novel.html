@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey V5 - Novel Visualizations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #08080C;
+      --bg-card: #111116;
+      --bg-elevated: #18181F;
+      --lift: #A855F7;
+      --lift-glow: rgba(168, 85, 247, 0.4);
+      --climb: #14F0C5;
+      --climb-glow: rgba(20, 240, 197, 0.4);
+      --bike: #3B82F6;
+      --bike-glow: rgba(59, 130, 246, 0.4);
+      --gold: #FFD700;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --text: #FFFFFF;
+      --text-sec: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+      --border: rgba(255,255,255,0.08);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    h1, h2, h3, .heading { font-family: 'Fraunces', serif; font-weight: 700; }
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--lift);
+      margin: 40px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--lift), transparent);
+    }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* ============================================================
+       NOVEL CHART 1: MUSCLE RECOVERY HEATMAP (Matrix)
+       Shows when each muscle was last trained + recovery status
+       ============================================================ */
+    .recovery-matrix {
+      display: grid;
+      grid-template-columns: 100px repeat(7, 1fr);
+      gap: 4px;
+    }
+    .recovery-header {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 8px 4px;
+    }
+    .recovery-muscle {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+      padding: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .recovery-cell {
+      height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .recovery-cell:hover { transform: scale(1.1); z-index: 10; }
+    .recovery-cell.trained { background: var(--lift); color: #000; box-shadow: 0 2px 12px var(--lift-glow); }
+    .recovery-cell.recovering { background: rgba(245, 158, 11, 0.4); color: var(--warning); }
+    .recovery-cell.ready { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+    .recovery-cell.overdue { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px dashed var(--danger); }
+    .recovery-cell.rest { background: var(--bg-elevated); }
+
+    .recovery-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      justify-content: center;
+      font-size: 11px;
+    }
+    .recovery-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+    }
+
+    /* ============================================================
+       NOVEL CHART 2: VOLUME TREEMAP
+       Hierarchical view: Muscle Group > Exercise > Sets
+       ============================================================ */
+    .treemap {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: repeat(3, 80px);
+      gap: 4px;
+      height: 260px;
+    }
+    .treemap-cell {
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .treemap-cell:hover { transform: scale(1.02); z-index: 10; }
+    .treemap-cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    }
+    .treemap-cell .name { font-size: 12px; font-weight: 700; position: relative; }
+    .treemap-cell .volume { font-size: 10px; opacity: 0.8; position: relative; }
+    .treemap-cell .percent {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      opacity: 0.3;
+    }
+
+    /* Chest - Largest */
+    .treemap-chest {
+      grid-row: span 2;
+      background: linear-gradient(135deg, hsl(270, 60%, 45%), hsl(270, 50%, 35%));
+    }
+    /* Back */
+    .treemap-back {
+      grid-row: span 2;
+      background: linear-gradient(135deg, hsl(280, 55%, 40%), hsl(280, 45%, 30%));
+    }
+    /* Shoulders */
+    .treemap-shoulders {
+      background: linear-gradient(135deg, hsl(260, 50%, 42%), hsl(260, 40%, 32%));
+    }
+    /* Arms */
+    .treemap-arms {
+      background: linear-gradient(135deg, hsl(290, 50%, 38%), hsl(290, 40%, 28%));
+    }
+    /* Legs - Second row */
+    .treemap-legs {
+      grid-column: span 2;
+      background: linear-gradient(135deg, hsl(265, 55%, 48%), hsl(265, 45%, 38%));
+    }
+    /* Core */
+    .treemap-core {
+      background: linear-gradient(135deg, hsl(275, 45%, 35%), hsl(275, 35%, 25%));
+    }
+
+    /* ============================================================
+       NOVEL CHART 3: REP-WEIGHT SCATTER PLOT
+       Shows training zones: where you spend most time
+       ============================================================ */
+    .scatter-container {
+      position: relative;
+      height: 280px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .scatter-grid {
+      position: absolute;
+      inset: 40px 20px 40px 50px;
+    }
+    .scatter-zones {
+      position: absolute;
+      inset: 40px 20px 40px 50px;
+    }
+    .scatter-zone {
+      position: absolute;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .zone-strength {
+      top: 0; left: 60%;
+      width: 38%; height: 45%;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px dashed rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+    .zone-hypertrophy {
+      top: 20%; left: 25%;
+      width: 40%; height: 50%;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px dashed rgba(168, 85, 247, 0.4);
+      color: var(--lift);
+    }
+    .zone-endurance {
+      bottom: 0; left: 0;
+      width: 35%; height: 40%;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px dashed rgba(34, 197, 94, 0.3);
+      color: var(--success);
+    }
+    .scatter-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lift);
+      box-shadow: 0 0 8px var(--lift-glow);
+      transform: translate(-50%, -50%);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .scatter-dot:hover {
+      width: 16px;
+      height: 16px;
+      box-shadow: 0 0 20px var(--lift-glow);
+    }
+    .scatter-dot.large { width: 16px; height: 16px; }
+    .scatter-dot.small { width: 6px; height: 6px; opacity: 0.6; }
+    .scatter-axis-x {
+      position: absolute;
+      bottom: 10px;
+      left: 50px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .scatter-axis-y {
+      position: absolute;
+      left: 10px;
+      top: 40px;
+      bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+    .scatter-label-x {
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+    }
+    .scatter-label-y {
+      position: absolute;
+      left: -5px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+    }
+
+    /* ============================================================
+       NOVEL CHART 4: ATTEMPT FUNNEL (Climbing)
+       Shows progression: Attempts → Projects → Sends
+       ============================================================ */
+    .funnel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 20px 0;
+    }
+    .funnel-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #000;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .funnel-stage:hover { transform: scaleX(1.02); }
+    .funnel-stage span {
+      position: absolute;
+      right: -80px;
+      color: var(--text-sec);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .funnel-1 { width: 100%; background: linear-gradient(90deg, hsl(160, 70%, 35%), hsl(160, 80%, 45%)); }
+    .funnel-2 { width: 75%; background: linear-gradient(90deg, hsl(165, 75%, 40%), hsl(165, 85%, 50%)); }
+    .funnel-3 { width: 50%; background: linear-gradient(90deg, hsl(170, 80%, 45%), hsl(170, 90%, 55%)); }
+    .funnel-4 { width: 30%; background: linear-gradient(90deg, hsl(155, 85%, 50%), hsl(155, 95%, 60%)); box-shadow: 0 4px 20px var(--climb-glow); }
+
+    /* ============================================================
+       NOVEL CHART 5: STYLE RADAR (Climbing)
+       Multi-axis showing climbing style strengths
+       ============================================================ */
+    .radar-container {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      margin: 0 auto;
+    }
+    .radar-svg { width: 100%; height: 100%; }
+    .radar-ring { fill: none; stroke: var(--border); stroke-width: 1; }
+    .radar-axis { stroke: var(--border); stroke-width: 1; }
+    .radar-area {
+      fill: var(--climb);
+      fill-opacity: 0.2;
+      stroke: var(--climb);
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 8px var(--climb-glow));
+    }
+    .radar-dot {
+      fill: var(--climb);
+      filter: drop-shadow(0 0 6px var(--climb-glow));
+    }
+    .radar-label {
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--text-sec);
+    }
+
+    /* ============================================================
+       NOVEL CHART 6: SESSION ENERGY CURVE (Climbing)
+       Shows performance arc during a session
+       ============================================================ */
+    .energy-curve {
+      position: relative;
+      height: 180px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .energy-svg { width: 100%; height: 100%; }
+    .energy-area {
+      fill: url(#energyGrad);
+    }
+    .energy-line {
+      fill: none;
+      stroke: var(--climb);
+      stroke-width: 3;
+      filter: drop-shadow(0 2px 8px var(--climb-glow));
+    }
+    .energy-zone {
+      position: absolute;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .energy-zone.warmup { top: 70%; left: 8%; background: rgba(59, 130, 246, 0.2); color: var(--bike); }
+    .energy-zone.peak { top: 15%; left: 35%; background: rgba(20, 240, 197, 0.2); color: var(--climb); }
+    .energy-zone.fatigue { top: 50%; right: 10%; background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+    /* ============================================================
+       NOVEL CHART 7: POWER DURATION CURVE (Cycling)
+       The canonical cycling performance chart
+       ============================================================ */
+    .pdc-container {
+      position: relative;
+      height: 240px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px 20px 40px 50px;
+    }
+    .pdc-svg { width: 100%; height: 100%; }
+    .pdc-grid line { stroke: var(--border); stroke-width: 1; }
+    .pdc-area {
+      fill: url(#pdcGrad);
+    }
+    .pdc-line {
+      fill: none;
+      stroke: var(--bike);
+      stroke-width: 3;
+      filter: drop-shadow(0 2px 10px var(--bike-glow));
+    }
+    .pdc-dot {
+      fill: var(--bg-card);
+      stroke: var(--bike);
+      stroke-width: 2;
+      filter: drop-shadow(0 2px 6px var(--bike-glow));
+    }
+    .pdc-annotation {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .pdc-axis {
+      position: absolute;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       NOVEL CHART 8: TRAINING POLARIZATION (Cycling)
+       Shows if you're following 80/20 rule
+       ============================================================ */
+    .polarization {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+    }
+    .polar-donut {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      flex-shrink: 0;
+    }
+    .polar-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .polar-ring { fill: none; stroke-width: 20; }
+    .polar-z1 { stroke: hsl(200, 70%, 50%); }
+    .polar-z2 { stroke: hsl(142, 70%, 45%); }
+    .polar-z3 { stroke: hsl(45, 90%, 50%); }
+    .polar-z4 { stroke: hsl(25, 90%, 50%); }
+    .polar-z5 { stroke: hsl(0, 80%, 50%); }
+    .polar-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .polar-percent { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 800; }
+    .polar-label { font-size: 11px; color: var(--text-muted); }
+    .polar-breakdown { flex: 1; }
+    .polar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .polar-row:last-child { border-bottom: none; }
+    .polar-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+    .polar-zone { font-size: 12px; font-weight: 600; flex: 1; }
+    .polar-time { font-size: 12px; color: var(--text-sec); }
+    .polar-pct { font-size: 12px; font-weight: 700; width: 40px; text-align: right; }
+
+    /* ============================================================
+       NOVEL CHART 9: FATIGUE RESISTANCE (Cycling)
+       How power degrades with accumulated work
+       ============================================================ */
+    .fatigue-chart {
+      position: relative;
+      height: 200px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .fatigue-svg { width: 100%; height: 100%; }
+    .fatigue-line {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+    .fatigue-fresh { stroke: var(--success); filter: drop-shadow(0 2px 6px rgba(34, 197, 94, 0.4)); }
+    .fatigue-1000kj { stroke: var(--bike); filter: drop-shadow(0 2px 6px var(--bike-glow)); }
+    .fatigue-2000kj { stroke: var(--warning); filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.4)); }
+    .fatigue-3000kj { stroke: var(--danger); filter: drop-shadow(0 2px 6px rgba(239, 68, 68, 0.4)); }
+    .fatigue-legend {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10px;
+    }
+    .fatigue-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .fatigue-dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .span-4 { grid-column: span 6; }
+      .span-8 { grid-column: span 12; }
+    }
+    @media (max-width: 700px) {
+      .span-4, .span-6 { grid-column: span 12; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="heading" style="font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, #FC4C02, #FF7A45); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+      Novel Visualization Showcase
+    </h1>
+    <p style="color: var(--text-muted); margin-bottom: 32px;">Charts you've never seen in a fitness app</p>
+
+    <!-- ==================== LIFTING SECTION ==================== -->
+    <div class="section-title">🏋️ Lifting - Novel Charts</div>
+
+    <div class="grid">
+      <!-- 1. MUSCLE RECOVERY HEATMAP -->
+      <div class="card span-8">
+        <div class="card-title">Muscle Recovery Matrix</div>
+        <div class="card-subtitle">See which muscles are ready to train vs need rest</div>
+        <div class="recovery-matrix">
+          <div class="recovery-header"></div>
+          <div class="recovery-header">Mon</div>
+          <div class="recovery-header">Tue</div>
+          <div class="recovery-header">Wed</div>
+          <div class="recovery-header">Thu</div>
+          <div class="recovery-header">Fri</div>
+          <div class="recovery-header">Sat</div>
+          <div class="recovery-header">Sun</div>
+
+          <div class="recovery-muscle">Chest</div>
+          <div class="recovery-cell trained">12</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell ready">✓</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">14</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell ready">✓</div>
+
+          <div class="recovery-muscle">Back</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">16</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell ready">✓</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">18</div>
+          <div class="recovery-cell recovering"></div>
+
+          <div class="recovery-muscle">Legs</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">20</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell ready">✓</div>
+          <div class="recovery-cell rest"></div>
+
+          <div class="recovery-muscle">Shoulders</div>
+          <div class="recovery-cell trained">8</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">10</div>
+          <div class="recovery-cell recovering"></div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell ready">✓</div>
+
+          <div class="recovery-muscle">Arms</div>
+          <div class="recovery-cell trained">6</div>
+          <div class="recovery-cell trained">8</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell trained">6</div>
+          <div class="recovery-cell trained">8</div>
+          <div class="recovery-cell rest"></div>
+          <div class="recovery-cell ready">✓</div>
+
+          <div class="recovery-muscle">Core</div>
+          <div class="recovery-cell overdue">5d</div>
+          <div class="recovery-cell overdue">6d</div>
+          <div class="recovery-cell overdue">7d</div>
+          <div class="recovery-cell overdue">8d</div>
+          <div class="recovery-cell overdue">9d</div>
+          <div class="recovery-cell trained">10</div>
+          <div class="recovery-cell recovering"></div>
+        </div>
+        <div class="recovery-legend">
+          <span><div class="legend-dot" style="background: var(--lift);"></div> Trained (sets)</span>
+          <span><div class="legend-dot" style="background: rgba(245, 158, 11, 0.4);"></div> Recovering</span>
+          <span><div class="legend-dot" style="background: rgba(34, 197, 94, 0.2);"></div> Ready</span>
+          <span><div class="legend-dot" style="background: rgba(239, 68, 68, 0.15); border: 1px dashed var(--danger);"></div> Overdue</span>
+        </div>
+      </div>
+
+      <!-- 2. VOLUME TREEMAP -->
+      <div class="card span-4">
+        <div class="card-title">Volume Distribution</div>
+        <div class="card-subtitle">Where your training volume goes</div>
+        <div class="treemap">
+          <div class="treemap-cell treemap-chest">
+            <div class="name">Chest</div>
+            <div class="volume">4,850 lb</div>
+            <div class="percent">28%</div>
+          </div>
+          <div class="treemap-cell treemap-shoulders">
+            <div class="name">Shoulders</div>
+            <div class="volume">1,920 lb</div>
+            <div class="percent">11%</div>
+          </div>
+          <div class="treemap-cell treemap-back">
+            <div class="name">Back</div>
+            <div class="volume">3,640 lb</div>
+            <div class="percent">21%</div>
+          </div>
+          <div class="treemap-cell treemap-arms">
+            <div class="name">Arms</div>
+            <div class="volume">1,380 lb</div>
+            <div class="percent">8%</div>
+          </div>
+          <div class="treemap-cell treemap-legs">
+            <div class="name">Legs</div>
+            <div class="volume">4,200 lb</div>
+            <div class="percent">24%</div>
+          </div>
+          <div class="treemap-cell treemap-core">
+            <div class="name">Core</div>
+            <div class="volume">1,360 lb</div>
+            <div class="percent">8%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. REP-WEIGHT SCATTER -->
+      <div class="card span-6">
+        <div class="card-title">Training Zone Distribution</div>
+        <div class="card-subtitle">Where you spend your sets (weight × reps)</div>
+        <div class="scatter-container">
+          <div class="scatter-zones">
+            <div class="scatter-zone zone-strength">STRENGTH<br>1-5 reps</div>
+            <div class="scatter-zone zone-hypertrophy">HYPERTROPHY<br>6-12 reps</div>
+            <div class="scatter-zone zone-endurance">ENDURANCE<br>15+ reps</div>
+          </div>
+          <!-- Scatter dots - positioned by % -->
+          <div class="scatter-dot" style="left: 35%; top: 35%;"></div>
+          <div class="scatter-dot" style="left: 40%; top: 40%;"></div>
+          <div class="scatter-dot large" style="left: 45%; top: 38%;"></div>
+          <div class="scatter-dot" style="left: 38%; top: 45%;"></div>
+          <div class="scatter-dot large" style="left: 42%; top: 42%;"></div>
+          <div class="scatter-dot" style="left: 50%; top: 35%;"></div>
+          <div class="scatter-dot" style="left: 48%; top: 48%;"></div>
+          <div class="scatter-dot small" style="left: 75%; top: 25%;"></div>
+          <div class="scatter-dot small" style="left: 80%; top: 20%;"></div>
+          <div class="scatter-dot small" style="left: 78%; top: 28%;"></div>
+          <div class="scatter-dot small" style="left: 20%; top: 70%;"></div>
+          <div class="scatter-dot small" style="left: 25%; top: 75%;"></div>
+          <div class="scatter-axis-x">
+            <span>1</span><span>5</span><span>8</span><span>12</span><span>15</span><span>20+</span>
+          </div>
+          <div class="scatter-label-x">Reps →</div>
+          <div class="scatter-axis-y" style="transform: rotate(180deg); writing-mode: vertical-rl;">
+            <span>Heavy</span><span>Medium</span><span>Light</span>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-sec);">
+          💡 You train mostly in the <strong style="color: var(--lift);">hypertrophy zone</strong> - great for muscle growth!
+        </div>
+      </div>
+
+      <!-- Placeholder for more lifting charts -->
+      <div class="card span-6" style="display: flex; align-items: center; justify-content: center; min-height: 280px; color: var(--text-muted);">
+        <div style="text-align: center;">
+          <div style="font-size: 40px; margin-bottom: 12px;">📊</div>
+          <div>More ideas:</div>
+          <div style="font-size: 12px; margin-top: 8px;">
+            • Volume Periodization Wave<br>
+            • 1RM Decay Prediction<br>
+            • Exercise Correlation Network
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CLIMBING SECTION ==================== -->
+    <div class="section-title" style="color: var(--climb);">🧗 Climbing - Novel Charts</div>
+    <div class="section-title::after" style="background: linear-gradient(90deg, var(--climb), transparent);"></div>
+
+    <div class="grid">
+      <!-- 4. ATTEMPT FUNNEL -->
+      <div class="card span-4">
+        <div class="card-title">Send Funnel (This Month)</div>
+        <div class="card-subtitle">From attempts to sends</div>
+        <div class="funnel">
+          <div class="funnel-stage funnel-1">247 Attempts<span>100%</span></div>
+          <div class="funnel-stage funnel-2">186 Sticks<span>75%</span></div>
+          <div class="funnel-stage funnel-3">124 Projects<span>50%</span></div>
+          <div class="funnel-stage funnel-4">78 Sends<span>32%</span></div>
+        </div>
+        <div style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-sec);">
+          Your send rate: <strong style="color: var(--climb);">32%</strong> - that's solid!
+        </div>
+      </div>
+
+      <!-- 5. STYLE RADAR -->
+      <div class="card span-4">
+        <div class="card-title">Climbing Style Profile</div>
+        <div class="card-subtitle">Your strengths across different styles</div>
+        <div class="radar-container">
+          <svg class="radar-svg" viewBox="0 0 260 260">
+            <!-- Rings -->
+            <circle class="radar-ring" cx="130" cy="130" r="100" />
+            <circle class="radar-ring" cx="130" cy="130" r="75" />
+            <circle class="radar-ring" cx="130" cy="130" r="50" />
+            <circle class="radar-ring" cx="130" cy="130" r="25" />
+            <!-- Axes -->
+            <line class="radar-axis" x1="130" y1="130" x2="130" y2="30" />
+            <line class="radar-axis" x1="130" y1="130" x2="225" y2="80" />
+            <line class="radar-axis" x1="130" y1="130" x2="225" y2="180" />
+            <line class="radar-axis" x1="130" y1="130" x2="130" y2="230" />
+            <line class="radar-axis" x1="130" y1="130" x2="35" y2="180" />
+            <line class="radar-axis" x1="130" y1="130" x2="35" y2="80" />
+            <!-- Data polygon -->
+            <polygon class="radar-area" points="130,45 200,85 195,175 130,210 70,160 60,90" />
+            <!-- Dots -->
+            <circle class="radar-dot" cx="130" cy="45" r="5" />
+            <circle class="radar-dot" cx="200" cy="85" r="5" />
+            <circle class="radar-dot" cx="195" cy="175" r="5" />
+            <circle class="radar-dot" cx="130" cy="210" r="5" />
+            <circle class="radar-dot" cx="70" cy="160" r="5" />
+            <circle class="radar-dot" cx="60" cy="90" r="5" />
+            <!-- Labels -->
+            <text class="radar-label" x="130" y="18" text-anchor="middle">Crimps</text>
+            <text class="radar-label" x="240" y="80" text-anchor="start">Slopers</text>
+            <text class="radar-label" x="240" y="185" text-anchor="start">Dynamic</text>
+            <text class="radar-label" x="130" y="250" text-anchor="middle">Overhang</text>
+            <text class="radar-label" x="15" y="185" text-anchor="start">Pinches</text>
+            <text class="radar-label" x="15" y="80" text-anchor="start">Slab</text>
+          </svg>
+        </div>
+        <div style="text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-sec);">
+          Strongest: <strong style="color: var(--climb);">Crimps</strong> • Weakest: <strong style="color: var(--warning);">Slab</strong>
+        </div>
+      </div>
+
+      <!-- 6. SESSION ENERGY CURVE -->
+      <div class="card span-4">
+        <div class="card-title">Session Energy Curve</div>
+        <div class="card-subtitle">Your performance arc during a session</div>
+        <div class="energy-curve">
+          <svg class="energy-svg" viewBox="0 0 300 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--climb)" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="var(--climb)" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <path class="energy-area" d="M0,120 Q30,100 60,80 T120,30 T180,35 T240,70 T300,100 L300,140 L0,140 Z" />
+            <path class="energy-line" d="M0,120 Q30,100 60,80 T120,30 T180,35 T240,70 T300,100" />
+          </svg>
+          <div class="energy-zone warmup">Warmup</div>
+          <div class="energy-zone peak">Peak</div>
+          <div class="energy-zone fatigue">Fatigue</div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-sec);">
+          Peak performance at <strong style="color: var(--climb);">45-60 min</strong> into session
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CYCLING SECTION ==================== -->
+    <div class="section-title" style="color: var(--bike);">🚴 Cycling - Novel Charts</div>
+
+    <div class="grid">
+      <!-- 7. POWER DURATION CURVE -->
+      <div class="card span-8">
+        <div class="card-title">Power Duration Curve</div>
+        <div class="card-subtitle">Your best power output across all durations (90 day)</div>
+        <div class="pdc-container">
+          <svg class="pdc-svg" viewBox="0 0 500 180" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="pdcGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--bike)" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="var(--bike)" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <g class="pdc-grid">
+              <line x1="0" y1="30" x2="500" y2="30" />
+              <line x1="0" y1="70" x2="500" y2="70" />
+              <line x1="0" y1="110" x2="500" y2="110" />
+              <line x1="0" y1="150" x2="500" y2="150" />
+            </g>
+            <!-- Curve -->
+            <path class="pdc-area" d="M10,20 Q50,25 80,40 T150,65 T220,90 T300,115 T400,140 T490,155 L490,170 L10,170 Z" />
+            <path class="pdc-line" d="M10,20 Q50,25 80,40 T150,65 T220,90 T300,115 T400,140 T490,155" />
+            <!-- Key points -->
+            <circle class="pdc-dot" cx="10" cy="20" r="6" />
+            <circle class="pdc-dot" cx="80" cy="40" r="6" />
+            <circle class="pdc-dot" cx="150" cy="65" r="6" />
+            <circle class="pdc-dot" cx="300" cy="115" r="6" />
+            <circle class="pdc-dot" cx="490" cy="155" r="6" />
+          </svg>
+          <!-- Annotations -->
+          <div class="pdc-annotation" style="top: 5px; left: 10px;">
+            <strong style="color: var(--bike);">892W</strong> 5s
+          </div>
+          <div class="pdc-annotation" style="top: 35px; left: 90px;">
+            <strong style="color: var(--bike);">645W</strong> 30s
+          </div>
+          <div class="pdc-annotation" style="top: 60px; left: 165px;">
+            <strong style="color: var(--bike);">412W</strong> 1m
+          </div>
+          <div class="pdc-annotation" style="top: 110px; left: 310px;">
+            <strong style="color: var(--bike);">258W</strong> 20m (FTP)
+          </div>
+          <div class="pdc-annotation" style="bottom: 20px; right: 20px;">
+            <strong style="color: var(--bike);">212W</strong> 1h
+          </div>
+          <!-- X axis labels -->
+          <div class="pdc-axis" style="bottom: 5px; left: 10px;">5s</div>
+          <div class="pdc-axis" style="bottom: 5px; left: 80px;">30s</div>
+          <div class="pdc-axis" style="bottom: 5px; left: 150px;">1m</div>
+          <div class="pdc-axis" style="bottom: 5px; left: 220px;">5m</div>
+          <div class="pdc-axis" style="bottom: 5px; left: 300px;">20m</div>
+          <div class="pdc-axis" style="bottom: 5px; left: 400px;">1h</div>
+        </div>
+      </div>
+
+      <!-- 8. TRAINING POLARIZATION -->
+      <div class="card span-4">
+        <div class="card-title">Training Polarization</div>
+        <div class="card-subtitle">Are you following 80/20?</div>
+        <div class="polarization">
+          <div class="polar-donut">
+            <svg viewBox="0 0 160 160">
+              <!-- Z1-Z2 (Easy) - Should be ~80% -->
+              <circle class="polar-ring polar-z2" cx="80" cy="80" r="60"
+                stroke-dasharray="282.6" stroke-dashoffset="56.5" />
+              <!-- Z3 (Tempo) -->
+              <circle class="polar-ring polar-z3" cx="80" cy="80" r="60"
+                stroke-dasharray="282.6" stroke-dashoffset="254"
+                style="transform: rotate(108deg); transform-origin: center;" />
+              <!-- Z4-Z5 (Hard) - Should be ~20% -->
+              <circle class="polar-ring polar-z4" cx="80" cy="80" r="60"
+                stroke-dasharray="282.6" stroke-dashoffset="268"
+                style="transform: rotate(144deg); transform-origin: center;" />
+              <circle class="polar-ring polar-z5" cx="80" cy="80" r="60"
+                stroke-dasharray="282.6" stroke-dashoffset="276"
+                style="transform: rotate(162deg); transform-origin: center;" />
+            </svg>
+            <div class="polar-center">
+              <div class="polar-percent" style="color: var(--bike);">78%</div>
+              <div class="polar-label">easy</div>
+            </div>
+          </div>
+          <div class="polar-breakdown">
+            <div class="polar-row">
+              <div class="polar-color" style="background: hsl(142, 70%, 45%);"></div>
+              <div class="polar-zone">Z2 Endurance</div>
+              <div class="polar-time">5:05</div>
+              <div class="polar-pct" style="color: var(--success);">55%</div>
+            </div>
+            <div class="polar-row">
+              <div class="polar-color" style="background: hsl(200, 70%, 50%);"></div>
+              <div class="polar-zone">Z1 Recovery</div>
+              <div class="polar-time">2:08</div>
+              <div class="polar-pct">23%</div>
+            </div>
+            <div class="polar-row">
+              <div class="polar-color" style="background: hsl(45, 90%, 50%);"></div>
+              <div class="polar-zone">Z3 Tempo</div>
+              <div class="polar-time">1:02</div>
+              <div class="polar-pct">11%</div>
+            </div>
+            <div class="polar-row">
+              <div class="polar-color" style="background: hsl(25, 90%, 50%);"></div>
+              <div class="polar-zone">Z4 Threshold</div>
+              <div class="polar-time">0:38</div>
+              <div class="polar-pct">7%</div>
+            </div>
+            <div class="polar-row">
+              <div class="polar-color" style="background: hsl(0, 80%, 50%);"></div>
+              <div class="polar-zone">Z5 VO2max</div>
+              <div class="polar-time">0:22</div>
+              <div class="polar-pct">4%</div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center; font-size: 12px; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; color: var(--success);">
+          ✓ Good polarization! Close to ideal 80/20 split.
+        </div>
+      </div>
+
+      <!-- 9. FATIGUE RESISTANCE -->
+      <div class="card span-6">
+        <div class="card-title">Fatigue Resistance</div>
+        <div class="card-subtitle">How your power degrades with accumulated work</div>
+        <div class="fatigue-chart">
+          <svg class="fatigue-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
+            <!-- Fresh -->
+            <path class="fatigue-line fatigue-fresh" d="M20,20 Q100,22 180,35 T340,60 T380,75" />
+            <!-- After 1000kJ -->
+            <path class="fatigue-line fatigue-1000kj" d="M20,35 Q100,40 180,55 T340,85 T380,100" />
+            <!-- After 2000kJ -->
+            <path class="fatigue-line fatigue-2000kj" d="M20,55 Q100,62 180,80 T340,110 T380,125" />
+            <!-- After 3000kJ -->
+            <path class="fatigue-line fatigue-3000kj" d="M20,80 Q100,90 180,105 T340,130 T380,145" />
+          </svg>
+          <div class="fatigue-legend">
+            <span><div class="fatigue-dot" style="background: var(--success);"></div> Fresh</span>
+            <span><div class="fatigue-dot" style="background: var(--bike);"></div> After 1000kJ</span>
+            <span><div class="fatigue-dot" style="background: var(--warning);"></div> After 2000kJ</span>
+            <span><div class="fatigue-dot" style="background: var(--danger);"></div> After 3000kJ</span>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-sec);">
+          At 2000kJ, your 5min power drops by <strong style="color: var(--warning);">18%</strong>
+        </div>
+      </div>
+
+      <!-- Placeholder -->
+      <div class="card span-6" style="display: flex; align-items: center; justify-content: center; min-height: 240px; color: var(--text-muted);">
+        <div style="text-align: center;">
+          <div style="font-size: 40px; margin-bottom: 12px;">📈</div>
+          <div>More ideas:</div>
+          <div style="font-size: 12px; margin-top: 8px;">
+            • W' Balance Depletion<br>
+            • Elevation vs Speed Scatter<br>
+            • Segment Comparison Bump Chart
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

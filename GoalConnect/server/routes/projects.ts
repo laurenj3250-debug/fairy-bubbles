@@ -3,6 +3,7 @@ import { getDb } from "../db.js";
 import { projects } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
+import { log } from "../lib/logger";
 
 export function registerProjectRoutes(app: Express) {
   // GET /api/projects - Get all projects for user
@@ -24,7 +25,7 @@ export function registerProjectRoutes(app: Express) {
 
       res.json(userProjects);
     } catch (error) {
-      console.error("[API] Error fetching projects:", error);
+      log.error("[projects] Error fetching projects:", error);
       res.status(500).send("Failed to fetch projects");
     }
   });
@@ -54,7 +55,7 @@ export function registerProjectRoutes(app: Express) {
 
       res.json(newProject);
     } catch (error) {
-      console.error("[API] Error creating project:", error);
+      log.error("[projects] Error creating project:", error);
       res.status(500).send("Failed to create project");
     }
   });
@@ -88,7 +89,7 @@ export function registerProjectRoutes(app: Express) {
 
       res.json(updatedProject);
     } catch (error) {
-      console.error("[API] Error updating project:", error);
+      log.error("[projects] Error updating project:", error);
       res.status(500).send("Failed to update project");
     }
   });
@@ -117,7 +118,7 @@ export function registerProjectRoutes(app: Express) {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("[API] Error deleting project:", error);
+      log.error("[projects] Error deleting project:", error);
       res.status(500).send("Failed to delete project");
     }
   });
@@ -148,7 +149,7 @@ export function registerProjectRoutes(app: Express) {
 
       res.json(updatedProject);
     } catch (error) {
-      console.error("[API] Error archiving project:", error);
+      log.error("[projects] Error archiving project:", error);
       res.status(500).send("Failed to archive project");
     }
   });

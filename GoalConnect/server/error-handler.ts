@@ -5,6 +5,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { log } from "./lib/logger";
 import {
   ApiError,
   DatabaseError,
@@ -101,7 +102,7 @@ export function errorHandler(
 ) {
   // Log all errors
   const errorLog = formatErrorForLogging(error);
-  console.error('[ErrorHandler]', errorLog);
+  log.error('[ErrorHandler]', errorLog);
 
   // Don't expose internal errors in production
   const isDevelopment = process.env.NODE_ENV === 'development';

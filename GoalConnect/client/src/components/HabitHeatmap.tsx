@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface HabitLog {
   id: number;
@@ -41,8 +42,25 @@ function getDayLabel(date: string): string {
 }
 
 export function HabitHeatmap() {
+  const queryClient = useQueryClient();
+
   const { data: habits = [] } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
+  });
+
+  // Toggle habit completion for a specific date
+  const toggleMutation = useMutation({
+    mutationFn: async ({ habitId, date }: { habitId: number; date: string }) => {
+      return await apiRequest("/api/habit-logs/toggle", "POST", {
+        habitId,
+        date,
+      });
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/range/"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+    },
   });
 
   // Generate last 7 days
@@ -161,17 +179,21 @@ export function HabitHeatmap() {
               className="relative flex items-center gap-3 p-2.5 rounded-xl overflow-hidden bg-primary/10 border border-primary/20"
             >
 
-              {/* Habit name */}
-              <div
-                className="w-24 text-sm font-semibold truncate"
+              {/* Habit name - clickable to toggle today */}
+              <button
+                onClick={() => {
+                  const today = days[days.length - 1];
+                  toggleMutation.mutate({ habitId: habit.id, date: today });
+                }}
+                className="w-24 text-sm font-semibold truncate text-left cursor-pointer hover:opacity-80 transition-opacity"
                 style={{
                   color: colors.bright,
                   textShadow: `0 0 8px ${colors.solid}80`,
                 }}
-                title={habit.title}
+                title={`Click to toggle ${habit.title} for today`}
               >
                 {habit.title}
-              </div>
+              </button>
 
               {/* Week cells - glowing orbs style */}
               <div className="flex gap-2 flex-1 justify-end">
@@ -238,6 +260,7 @@ export function HabitHeatmap() {
                         whileHover={{ scale: 1.2, rotate: [0, -8, 8, 0] }}
                         whileTap={{ scale: 0.85 }}
                         transition={{ type: "spring", stiffness: 500 }}
+                        onClick={() => toggleMutation.mutate({ habitId: habit.id, date })}
                         className={
                           "relative w-8 h-8 rounded-full cursor-pointer " +
                           (isToday && !isCompleted ? "ring-2 ring-white/40 ring-offset-1 ring-offset-transparent" : "")

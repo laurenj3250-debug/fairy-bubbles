@@ -23,25 +23,25 @@ import ExpeditionMissions from "@/pages/ExpeditionMissions";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
 import ImportSettings from "@/pages/ImportSettings";
+import SummitJournal from "@/pages/SummitJournal";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import V2Dashboard from "@/pages/V2Dashboard";
+import Journey from "@/pages/Journey";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
 import { useMountainTheme } from "@/hooks/useMountainTheme";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
 
 // Component that requires authentication
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  console.log("[RequireAuth] Checking auth:", { loading, hasUser: !!user });
-
   if (loading) {
-    console.log("[RequireAuth] Still loading, showing spinner");
     return (
       <div style={{
         position: "fixed",
@@ -67,17 +67,16 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    console.log("[RequireAuth] No user, redirecting to /login");
     return <Redirect to="/login" />;
   }
 
-  console.log("[RequireAuth] User authenticated, rendering children");
   return <>{children}</>;
 }
 
 function AppRoutes() {
   const timeOfDay = useTimeOfDay();
   const { user } = useAuth();
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Fetch habits to check for streak
   const { data: habits = [] } = useQuery<any[]>({
@@ -96,7 +95,28 @@ function AppRoutes() {
     document.documentElement.setAttribute('data-has-streak', hasStreak ? 'true' : 'false');
   }, [habits]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // "?" opens keyboard shortcuts help
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
+    <>
     <Switch>
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
@@ -229,8 +249,24 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
+      <Route path="/summit-journal">
+        <RequireAuth>
+          <MainLayout>
+            <SummitJournal />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/journey">
+        <RequireAuth>
+          <Journey />
+        </RequireAuth>
+      </Route>
       <Route component={NotFound} />
     </Switch>
+
+    {/* Global Keyboard Shortcuts Modal */}
+    <KeyboardShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+    </>
   );
 }
 

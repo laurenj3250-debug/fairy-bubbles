@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey - Cycling</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --background: hsl(45, 30%, 12%);
+      --card: hsl(40, 20%, 18%);
+      --card-glass: hsla(40, 20%, 18%, 0.4);
+      --card-glass-dim: hsla(40, 20%, 18%, 0.25);
+      --foreground: hsl(40, 20%, 95%);
+      --border: hsla(40, 15%, 50%, 0.15);
+      --border-hover: hsla(40, 15%, 50%, 0.35);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: #9ca3af;
+
+      --cyan: #06b6d4;
+      --cyan-bright: #22d3ee;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --orange: #f97316;
+      --orange-glow: rgba(249, 115, 22, 0.3);
+      --yellow: #eab308;
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.4);
+      --green: #059669;
+      --green-bright: #10b981;
+      --green-zone: rgba(220, 252, 231, 0.15);
+      --red: #ef4444;
+      --red-zone: rgba(254, 226, 226, 0.15);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 32px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, .heading { font-family: 'Fraunces', serif; font-weight: 600; }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* Nav */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-title { font-size: 28px; }
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .nav-tab {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+    }
+    .nav-tab:hover { color: var(--foreground); background: hsla(40, 15%, 50%, 0.1); }
+    .nav-tab.active { background: var(--cyan); color: white; box-shadow: 0 4px 16px var(--cyan-glow); }
+
+    /* Grid - 24px gaps */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Glass Card - 28px padding, hover states */
+    .glass-card {
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+    .glass-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Standardized card headers - ALL CAPS, 11px, 40% opacity */
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+      opacity: 0.6;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 20px;
+    }
+
+    /* =================== HERO STATS =================== */
+    .hero-section { display: flex; gap: 24px; margin-bottom: 32px; }
+
+    /* Primary - large with glow */
+    .hero-primary {
+      flex: 1.5;
+      text-align: center;
+      padding: 48px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 30%, var(--cyan-glow), transparent 70%);
+      pointer-events: none;
+    }
+    .hero-primary .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: 72px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .hero-primary .hero-label {
+      font-size: 18px;
+      color: var(--foreground);
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .hero-primary .hero-sub {
+      font-size: 15px;
+      color: var(--green-bright);
+      font-weight: 600;
+    }
+
+    /* Secondary - smaller, dimmer, pushed back visually */
+    .hero-secondary {
+      flex: 1;
+      text-align: center;
+      padding: 24px 16px;
+      background: hsla(40, 20%, 18%, 0.15);
+      backdrop-filter: blur(4px);
+      border-color: hsla(40, 15%, 50%, 0.08);
+      opacity: 0.75;
+    }
+    .hero-secondary:hover {
+      opacity: 1;
+    }
+    .hero-secondary .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hero-secondary .hero-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      font-weight: 500;
+    }
+    .hero-secondary .hero-sub {
+      font-size: 10px;
+      margin-top: 4px;
+      font-weight: 500;
+      opacity: 0.7;
+    }
+    .hero-elevation .hero-value { color: var(--orange); opacity: 0.85; }
+    .hero-elevation .hero-sub { color: var(--orange); }
+    .hero-centuries .hero-value { color: var(--purple); opacity: 0.85; }
+    .hero-centuries .hero-sub { color: var(--purple); }
+    .hero-streak .hero-value { color: var(--yellow); opacity: 0.85; }
+    .hero-streak .hero-sub { color: var(--yellow); }
+
+    /* =================== MONTHLY MILES - VISIBLE BARS =================== */
+    .monthly-chart {
+      height: 240px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 40px 0 0;
+      gap: 8px;
+      position: relative;
+    }
+    /* Y-axis */
+    .monthly-yaxis {
+      position: absolute;
+      left: -8px;
+      top: 40px;
+      bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted-foreground);
+      text-align: right;
+      width: 35px;
+    }
+    /* Grid lines */
+    .monthly-chart::before,
+    .monthly-chart::after {
+      content: '';
+      position: absolute;
+      left: 40px;
+      right: 0;
+      height: 1px;
+      background: var(--border);
+    }
+    .monthly-chart::before { top: 40px; }
+    .monthly-chart::after { top: calc(40px + 50%); }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 40px;
+    }
+    .bar-col:first-child { margin-left: 45px; }
+
+    .bar-value {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--foreground);
+      margin-bottom: 6px;
+    }
+    .bar {
+      width: 100%;
+      max-width: 36px;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--cyan-bright) 0%, var(--cyan) 50%, rgba(6, 182, 212, 0.4) 100%);
+      transition: all 0.2s;
+      min-height: 4px;
+    }
+    .bar:hover { filter: brightness(1.2); transform: scaleX(1.1); }
+    .bar-above-avg { background: linear-gradient(180deg, var(--green-bright) 0%, var(--green) 100%); }
+    .bar-current { box-shadow: 0 0 20px var(--cyan-glow); }
+    .bar-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* =================== YEARLY PROGRESS - With context =================== */
+    .progress-card-content {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .ring-chart {
+      width: 160px;
+      height: 160px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .ring-chart svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-chart circle:last-of-type { stroke-width: 20; }
+    .ring-chart circle:first-of-type { stroke-width: 20; }
+    .ring-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .ring-value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; }
+    .ring-label { font-size: 11px; color: var(--muted-foreground); }
+    .progress-details { flex: 1; }
+    .progress-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .progress-stat:last-child { border-bottom: none; }
+    .progress-stat-label { color: var(--muted-foreground); }
+    .progress-stat-value { font-weight: 600; color: var(--foreground); }
+    .progress-stat-value.green { color: var(--green-bright); }
+    .progress-stat-value.ahead { color: var(--green-bright); font-weight: 700; }
+
+    /* =================== SEGMENT PRs =================== */
+    .segment-list { display: flex; flex-direction: column; gap: 14px; }
+    .segment-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      background: hsla(0, 0%, 100%, 0.02);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .segment-item:hover {
+      border-color: var(--purple);
+      background: hsla(270, 70%, 60%, 0.05);
+      transform: translateX(4px);
+    }
+    /* #1 PR special styling - GOLD treatment */
+    .segment-item.gold {
+      background: linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(43, 96%, 56%, 0.05));
+      border: 2px solid rgba(251, 191, 36, 0.5);
+      box-shadow: 0 0 24px rgba(251, 191, 36, 0.35), inset 0 0 20px rgba(251, 191, 36, 0.05);
+    }
+    .segment-item.gold:hover {
+      box-shadow: 0 0 32px rgba(251, 191, 36, 0.5), inset 0 0 24px rgba(251, 191, 36, 0.08);
+      border-color: rgba(251, 191, 36, 0.7);
+    }
+    .segment-rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+    }
+    .segment-item.gold .segment-rank {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1f2937;
+      font-size: 16px;
+    }
+    .segment-icon { font-size: 20px; }
+    .segment-info { flex: 1; }
+    .segment-name { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 2px; }
+    .segment-meta { font-size: 11px; color: var(--muted-foreground); }
+    .segment-time {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--purple);
+      font-family: 'Fraunces', serif;
+    }
+    .segment-item.gold .segment-time { font-size: 22px; }
+    .pr-badge {
+      display: inline-block;
+      font-size: 9px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: var(--purple);
+      color: white;
+      font-weight: 700;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--purple-glow); }
+      50% { box-shadow: 0 0 0 8px transparent; }
+    }
+
+    /* =================== DISTANCE & ELEVATION =================== */
+    .dual-chart { height: 220px; position: relative; padding: 20px 50px 40px 50px; }
+    .dual-chart svg { width: 100%; height: 100%; }
+    .axis-left, .axis-right {
+      position: absolute;
+      top: 20px;
+      bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      width: 45px;
+    }
+    .axis-left { left: 0; text-align: right; padding-right: 8px; color: var(--cyan); }
+    .axis-right { right: 0; text-align: left; padding-left: 8px; color: var(--orange); }
+    .time-axis {
+      position: absolute;
+      bottom: 12px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.8; }
+    }
+    .peak-dot { animation: pulse-dot 2s infinite; }
+
+    /* =================== CANDLESTICK - With zones =================== */
+    .candle-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: hsla(160, 84%, 39%, 0.12);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+      border: 1px solid hsla(160, 84%, 39%, 0.25);
+    }
+    .candle-header-icon { font-size: 20px; }
+    .candle-header-text { font-size: 16px; font-weight: 600; }
+    .candle-header-text .green { color: var(--green-bright); font-weight: 700; }
+
+    .candlestick-container {
+      height: 180px;
+      position: relative;
+      padding: 0 20px;
+    }
+    /* Zone backgrounds */
+    .zone-fast {
+      position: absolute;
+      top: 0;
+      left: 20px;
+      right: 50px;
+      height: 33%;
+      background: var(--green-zone);
+      border-radius: 4px 4px 0 0;
+    }
+    .zone-slow {
+      position: absolute;
+      bottom: 30px;
+      left: 20px;
+      right: 50px;
+      height: 25%;
+      background: var(--red-zone);
+      border-radius: 0 0 4px 4px;
+    }
+    .avg-line {
+      position: absolute;
+      left: 20px;
+      right: 50px;
+      height: 2px;
+      background: var(--yellow);
+      top: 50%;
+    }
+    .avg-label {
+      position: absolute;
+      right: 55px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--yellow);
+      font-weight: 600;
+    }
+    .zone-label {
+      position: absolute;
+      right: 55px;
+      font-size: 9px;
+      color: var(--muted-foreground);
+    }
+    .zone-label.top { top: 8px; }
+    .zone-label.bottom { bottom: 38px; }
+
+    .candles {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: calc(100% - 30px);
+      position: relative;
+      z-index: 1;
+    }
+    .candle { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: center; }
+    .candle-wick { width: 2px; background: var(--muted-foreground); }
+    .candle-body { width: 20px; border-radius: 3px; min-height: 12px; transition: all 0.15s ease; cursor: pointer; }
+    .candle-body.up { background: var(--green-bright); }
+    .candle-body.down { background: var(--red); }
+    .candle:hover .candle-body { transform: scaleX(1.3); filter: brightness(1.2); }
+    .candle:hover .candle-wick { background: var(--foreground); }
+    .candle-week { font-size: 10px; color: var(--muted-foreground); margin-top: 8px; position: absolute; bottom: 0; }
+
+    /* =================== CUMULATIVE MILES =================== */
+    .cumulative-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .ahead-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, hsla(160, 84%, 39%, 0.2), hsla(160, 84%, 39%, 0.1));
+      border-radius: 8px;
+      border: 1px solid var(--green);
+    }
+    .ahead-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green-bright);
+      font-family: 'Fraunces', serif;
+    }
+    .ahead-label { font-size: 11px; color: var(--green-bright); }
+
+    .cumulative-chart { height: 160px; position: relative; }
+    .cumulative-chart svg { width: 100%; height: 100%; }
+    .milestone {
+      position: absolute;
+      bottom: -18px;
+      font-size: 9px;
+      color: var(--muted-foreground);
+      transform: translateX(-50%);
+    }
+    .projection-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--green-bright);
+      font-weight: 500;
+    }
+
+    /* =================== ELEVATION CHART =================== */
+    .elevation-chart { height: 160px; position: relative; padding: 0 0 20px 45px; }
+    .elevation-chart svg { width: 100%; height: 100%; }
+    .elev-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 20px;
+      width: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted-foreground);
+      text-align: right;
+      padding-right: 8px;
+    }
+    .elev-current {
+      position: absolute;
+      right: 10px;
+      bottom: 35px;
+      text-align: right;
+    }
+    .elev-current-value { font-size: 16px; font-weight: 700; color: var(--orange); }
+    .elev-current-label { font-size: 10px; color: var(--muted-foreground); }
+    .elev-comparison { text-align: center; margin-top: 12px; font-size: 12px; color: var(--green-bright); font-weight: 500; }
+
+    /* =================== DONUT =================== */
+    .donut-wrapper { display: flex; align-items: center; justify-content: center; height: 180px; gap: 24px; }
+    .donut-chart { width: 160px; height: 160px; position: relative; }
+    .donut-chart svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .donut-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-center-value { font-size: 20px; font-weight: 700; color: var(--orange); font-family: 'Fraunces', serif; }
+    .donut-center-label { font-size: 9px; color: var(--muted-foreground); }
+    .donut-legend { display: flex; flex-direction: column; gap: 12px; }
+    .donut-legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .donut-dot { width: 14px; height: 14px; border-radius: 4px; }
+    .donut-pct-label {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    /* =================== LOADING STATES =================== */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        var(--muted) 25%,
+        hsla(40, 20%, 25%, 0.6) 50%,
+        var(--muted) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    .skeleton-text { height: 16px; width: 60%; margin-bottom: 8px; }
+    .skeleton-value { height: 48px; width: 120px; margin-bottom: 12px; }
+    .skeleton-chart { height: 160px; width: 100%; }
+    .skeleton-bar { height: 100px; width: 28px; }
+
+    .loading-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 32px;
+    }
+
+    /* =================== ACCESSIBILITY =================== */
+    /* Focus states */
+    .glass-card:focus-visible,
+    .nav-tab:focus-visible,
+    .segment-item:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+    }
+
+    /* Keyboard navigation for interactive elements */
+    [tabindex="0"]:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .glass-card {
+        border-width: 2px;
+        border-color: var(--foreground);
+      }
+      .bar { border: 1px solid var(--foreground); }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Screen reader only class */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* =================== SPEED TREND =================== */
+    .speed-celebration {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, hsla(160, 84%, 39%, 0.15), hsla(160, 84%, 39%, 0.05));
+      border-radius: 10px;
+      border: 1px solid var(--green);
+    }
+    .speed-delta {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green-bright);
+      font-family: 'Fraunces', serif;
+    }
+    .speed-pct { font-size: 16px; color: var(--green-bright); opacity: 0.9; }
+    .speed-emoji { font-size: 24px; }
+
+    .speed-chart { height: 120px; position: relative; }
+    .speed-chart svg { width: 100%; height: 100%; }
+
+    /* Legend */
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted-foreground); }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255,255,255,0.15); }
+    .legend-line { width: 20px; height: 3px; border-radius: 2px; }
+    .legend-dashed { width: 20px; height: 0; border-top: 2px dashed; }
+
+    /* Section divider */
+    .section-divider { grid-column: span 12; height: 1px; background: var(--border); margin: 8px 0; }
+
+    /* Card entrance animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .glass-card {
+      animation: fadeInUp 0.4s ease-out backwards;
+    }
+    .hero-section .glass-card:nth-child(1) { animation-delay: 0ms; }
+    .hero-section .glass-card:nth-child(2) { animation-delay: 80ms; }
+    .hero-section .glass-card:nth-child(3) { animation-delay: 160ms; }
+    .hero-section .glass-card:nth-child(4) { animation-delay: 240ms; }
+    .grid .glass-card:nth-child(1) { animation-delay: 320ms; }
+    .grid .glass-card:nth-child(2) { animation-delay: 400ms; }
+    .grid .glass-card:nth-child(3) { animation-delay: 480ms; }
+    .grid .glass-card:nth-child(4) { animation-delay: 560ms; }
+    .grid .glass-card:nth-child(5) { animation-delay: 640ms; }
+    .grid .glass-card:nth-child(6) { animation-delay: 720ms; }
+    .grid .glass-card:nth-child(7) { animation-delay: 800ms; }
+    .grid .glass-card:nth-child(8) { animation-delay: 880ms; }
+    .grid .glass-card:nth-child(9) { animation-delay: 960ms; }
+    .grid .glass-card:nth-child(10) { animation-delay: 1040ms; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .span-4, .span-5 { grid-column: span 6; }
+      .span-6, .span-7 { grid-column: span 12; }
+      .hero-section { flex-wrap: wrap; }
+      .hero-primary { flex: 1 1 100%; }
+    }
+    @media (max-width: 768px) {
+      .hero-section { flex-direction: column; }
+      .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 12; }
+      .nav { flex-direction: column; gap: 16px; }
+      body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Nav -->
+    <nav class="nav">
+      <h1 class="nav-title heading">Journey</h1>
+      <div class="nav-tabs">
+        <button class="nav-tab">Lifting</button>
+        <button class="nav-tab">Climbing</button>
+        <button class="nav-tab active">Cycling</button>
+      </div>
+    </nav>
+
+    <!-- Hero Stats - Fixed hierarchy -->
+    <div class="hero-section" role="region" aria-label="Key cycling statistics">
+      <div class="glass-card hero-primary" tabindex="0" role="figure" aria-label="2,847 yearly miles, 429 miles ahead of pace">
+        <div class="hero-value">2,847</div>
+        <div class="hero-label">Yearly Miles</div>
+        <div class="hero-sub">Crushing it! 429 mi ahead of pace</div>
+      </div>
+      <div class="glass-card hero-secondary hero-elevation" tabindex="0" role="figure" aria-label="142,000 feet elevation gained, equivalent to 14 Everests">
+        <div class="hero-value">142k</div>
+        <div class="hero-label">Elevation (ft)</div>
+        <div class="hero-sub">14 Everests!</div>
+      </div>
+      <div class="glass-card hero-secondary hero-centuries" tabindex="0" role="figure" aria-label="3 century rides, 100+ miles each">
+        <div class="hero-value">3</div>
+        <div class="hero-label">Centuries</div>
+        <div class="hero-sub">100+ mi rides</div>
+      </div>
+      <div class="glass-card hero-secondary hero-streak" tabindex="0" role="figure" aria-label="12 day riding streak, personal best">
+        <div class="hero-value">12</div>
+        <div class="hero-label">Day Streak</div>
+        <div class="hero-sub">Personal best!</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+
+      <!-- Yearly Progress - With context -->
+      <div class="glass-card span-5" tabindex="0" role="figure" aria-label="2024 yearly miles progress: 71% complete, 2,847 of 4,000 miles, 429 miles ahead of pace, projected to finish December 8">
+        <div class="card-label">2024 GOAL</div>
+        <div class="card-title">Yearly Miles Progress</div>
+        <div class="progress-card-content">
+          <div class="ring-chart">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="var(--muted)" stroke-width="12"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="url(#ring-grad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="180" stroke-dashoffset="52"/>
+              <defs>
+                <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="var(--cyan)"/>
+                  <stop offset="100%" stop-color="var(--cyan-bright)"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-value">71%</div>
+              <div class="ring-label">of 4,000 mi</div>
+            </div>
+          </div>
+          <div class="progress-details" style="display: flex; flex-direction: column; justify-content: center;">
+            <div class="progress-stat" style="padding: 12px 0;">
+              <span class="progress-stat-label">Current</span>
+              <span class="progress-stat-value">2,847 mi</span>
+            </div>
+            <div class="progress-stat" style="padding: 12px 0;">
+              <span class="progress-stat-label">Goal Pace</span>
+              <span class="progress-stat-value">2,418 mi</span>
+            </div>
+            <div class="progress-stat" style="padding: 12px 0;">
+              <span class="progress-stat-label">Ahead By</span>
+              <span class="progress-stat-value ahead">+429 mi</span>
+            </div>
+            <div class="progress-stat" style="padding: 12px 0; border-bottom: none;">
+              <span class="progress-stat-label">🎯 Projected</span>
+              <span class="progress-stat-value" style="color: var(--green-bright); font-weight: 700;">Dec 8 finish</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Miles - VISIBLE bars with values -->
+      <div class="glass-card span-7" tabindex="0" role="figure" aria-label="Monthly miles chart for 2024. Peak month was June with 412 miles. Average is 237 miles per month. Green bars indicate above-average months.">
+        <div class="card-label">THIS YEAR</div>
+        <div class="card-title">Monthly Miles</div>
+        <div class="monthly-chart">
+          <div class="monthly-yaxis">
+            <span>400</span>
+            <span>300</span>
+            <span>200</span>
+            <span>100</span>
+            <span>0</span>
+          </div>
+          <div class="bar-col"><span class="bar-value">186</span><div class="bar" style="height: 93px"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-col"><span class="bar-value">156</span><div class="bar" style="height: 78px"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-col"><span class="bar-value">254</span><div class="bar bar-above-avg" style="height: 127px"></div><span class="bar-label">Mar</span></div>
+          <div class="bar-col"><span class="bar-value">308</span><div class="bar bar-above-avg" style="height: 154px"></div><span class="bar-label">Apr</span></div>
+          <div class="bar-col"><span class="bar-value">370</span><div class="bar bar-above-avg" style="height: 185px"></div><span class="bar-label">May</span></div>
+          <div class="bar-col"><span class="bar-value">412</span><div class="bar bar-above-avg" style="height: 200px"></div><span class="bar-label">Jun</span></div>
+          <div class="bar-col"><span class="bar-value">390</span><div class="bar bar-above-avg" style="height: 195px"></div><span class="bar-label">Jul</span></div>
+          <div class="bar-col"><span class="bar-value">362</span><div class="bar bar-above-avg" style="height: 181px"></div><span class="bar-label">Aug</span></div>
+          <div class="bar-col"><span class="bar-value">287</span><div class="bar bar-above-avg" style="height: 143px"></div><span class="bar-label">Sep</span></div>
+          <div class="bar-col"><span class="bar-value">226</span><div class="bar" style="height: 113px"></div><span class="bar-label">Oct</span></div>
+          <div class="bar-col"><span class="bar-value">124</span><div class="bar bar-current" style="height: 62px"></div><span class="bar-label">Nov</span></div>
+          <div class="bar-col"><span class="bar-value">-</span><div class="bar" style="height: 8px; opacity: 0.3"></div><span class="bar-label">Dec</span></div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: var(--cyan)"></span> Below avg (237/mo)</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--green-bright)"></span> Above average</div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Distance & Elevation - Clear dual axis -->
+      <div class="glass-card span-8" tabindex="0" role="figure" aria-label="Distance and elevation trends over 6 months. Distance shown in cyan, elevation in orange. Peak elevation was 18,200 feet in August.">
+        <div class="card-label">VOLUME TREND</div>
+        <div class="card-title">Distance & Elevation Over Time</div>
+        <div class="dual-chart">
+          <div class="axis-left">
+            <span>400 mi</span>
+            <span>300</span>
+            <span>200</span>
+            <span>100</span>
+          </div>
+          <div class="axis-right">
+            <span>20k ft</span>
+            <span>15k</span>
+            <span>10k</span>
+            <span>5k</span>
+          </div>
+          <svg viewBox="0 0 400 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="dist-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <line x1="0" y1="35" x2="400" y2="35" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="0" y1="70" x2="400" y2="70" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="0" y1="105" x2="400" y2="105" stroke="var(--border)" stroke-dasharray="4"/>
+            <!-- Distance area -->
+            <path d="M0,120 L66,75 L133,60 L200,50 L266,70 L333,85 L400,95 L400,140 L0,140 Z" fill="url(#dist-fill)"/>
+            <!-- Distance line -->
+            <path d="M0,120 L66,75 L133,60 L200,50 L266,70 L333,85 L400,95" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Elevation line -->
+            <path d="M0,110 L66,50 L133,25 L200,40 L266,65 L333,90 L400,100" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Points -->
+            <circle cx="0" cy="120" r="4" fill="var(--cyan)"/>
+            <circle cx="400" cy="95" r="4" fill="var(--cyan)"/>
+            <circle cx="0" cy="110" r="4" fill="var(--orange)"/>
+            <circle cx="133" cy="25" r="8" fill="var(--orange)" class="peak-dot"/>
+            <circle cx="400" cy="100" r="4" fill="var(--orange)"/>
+            <!-- Peak label with pointer -->
+            <line x1="133" y1="25" x2="133" y2="8" stroke="var(--orange)" stroke-width="1"/>
+            <text x="133" y="5" text-anchor="middle" fill="var(--orange)" font-size="10" font-weight="600">Peak: 18.2k ft</text>
+          </svg>
+          <div class="time-axis">
+            <span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-line" style="background: var(--cyan)"></span> Distance (mi)</div>
+          <div class="legend-item"><span class="legend-line" style="background: var(--orange)"></span> Elevation (ft)</div>
+        </div>
+      </div>
+
+      <!-- Segment PRs -->
+      <div class="glass-card span-4" tabindex="0" role="list" aria-label="Strava segment personal records. 4 segments listed with times and rankings.">
+        <div class="card-label">SEGMENT PRS</div>
+        <div class="card-title">Segment PRs</div>
+        <div class="segment-list">
+          <div class="segment-item gold" tabindex="0" role="listitem" aria-label="Rank 1: Hawk Hill Climb, 8 minutes 42 seconds, 1.2 miles at 6.8 percent average grade, personal record">
+            <span class="segment-rank">🥇</span>
+            <span class="segment-icon">⛰️</span>
+            <div class="segment-info">
+              <div class="segment-name">Hawk Hill Climb<span class="pr-badge">PR!</span></div>
+              <div class="segment-meta">1.2 mi • 6.8% avg</div>
+            </div>
+            <span class="segment-time">8:42</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">2</span>
+            <span class="segment-icon">💨</span>
+            <div class="segment-info">
+              <div class="segment-name">Paradise Sprint<span class="pr-badge">PR!</span></div>
+              <div class="segment-meta">0.8 mi • flat</div>
+            </div>
+            <span class="segment-time">2:15</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">3</span>
+            <span class="segment-icon">⛰️</span>
+            <div class="segment-info">
+              <div class="segment-name">Camino Alto</div>
+              <div class="segment-meta">2.1 mi • 5.2% avg</div>
+            </div>
+            <span class="segment-time">12:08</span>
+          </div>
+          <div class="segment-item">
+            <span class="segment-rank">4</span>
+            <span class="segment-icon">🏔️</span>
+            <div class="segment-info">
+              <div class="segment-name">Fairfax-Bolinas</div>
+              <div class="segment-meta">4.8 mi • 7.1% avg</div>
+            </div>
+            <span class="segment-time">24:33</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Candlestick with zones -->
+      <div class="glass-card span-7" tabindex="0" role="figure" aria-label="Weekly speed range candlestick chart. Current week averages 17.8 mph, 8% faster than last week. Green candles show faster weeks, red shows slower.">
+        <div class="card-label">PERFORMANCE</div>
+        <div class="card-title">Weekly Speed Range</div>
+        <div class="candle-header">
+          <span class="candle-header-icon">↗️</span>
+          <span class="candle-header-text">This week: <span class="green">17.8 mph avg</span> • 8% faster than last week</span>
+        </div>
+        <div class="candlestick-container">
+          <div class="zone-fast"></div>
+          <div class="zone-slow"></div>
+          <div class="avg-line"></div>
+          <div class="avg-label">Avg: 16.5</div>
+          <div class="zone-label top">Faster</div>
+          <div class="zone-label bottom">Slower</div>
+          <div class="candles">
+            <div class="candle"><div class="candle-wick" style="height:12px"></div><div class="candle-body up" style="height:28px"></div><div class="candle-wick" style="height:8px"></div><span class="candle-week" style="left:calc(6.25% - 8px)">W1</span></div>
+            <div class="candle"><div class="candle-wick" style="height:10px"></div><div class="candle-body up" style="height:32px"></div><div class="candle-wick" style="height:6px"></div><span class="candle-week" style="left:calc(18.75% - 8px)">W2</span></div>
+            <div class="candle"><div class="candle-wick" style="height:18px"></div><div class="candle-body down" style="height:20px"></div><div class="candle-wick" style="height:14px"></div><span class="candle-week" style="left:calc(31.25% - 8px)">W3</span></div>
+            <div class="candle"><div class="candle-wick" style="height:8px"></div><div class="candle-body up" style="height:38px"></div><div class="candle-wick" style="height:4px"></div><span class="candle-week" style="left:calc(43.75% - 8px)">W4</span></div>
+            <div class="candle"><div class="candle-wick" style="height:14px"></div><div class="candle-body up" style="height:24px"></div><div class="candle-wick" style="height:10px"></div><span class="candle-week" style="left:calc(56.25% - 8px)">W5</span></div>
+            <div class="candle"><div class="candle-wick" style="height:16px"></div><div class="candle-body down" style="height:22px"></div><div class="candle-wick" style="height:16px"></div><span class="candle-week" style="left:calc(68.75% - 8px)">W6</span></div>
+            <div class="candle"><div class="candle-wick" style="height:6px"></div><div class="candle-body up" style="height:42px"></div><div class="candle-wick" style="height:4px"></div><span class="candle-week" style="left:calc(81.25% - 8px)">W7</span></div>
+            <div class="candle"><div class="candle-wick" style="height:8px"></div><div class="candle-body up" style="height:35px"></div><div class="candle-wick" style="height:6px"></div><span class="candle-week" style="left:calc(93.75% - 8px)">W8</span></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: var(--green-bright)"></span> Faster than prev</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--red)"></span> Slower</div>
+          <div class="legend-item"><span class="legend-dashed" style="border-color: var(--yellow)"></span> 8-week avg</div>
+        </div>
+      </div>
+
+      <!-- Cumulative Miles -->
+      <div class="glass-card span-5" tabindex="0" role="figure" aria-label="Cumulative miles versus goal pace. Currently 14% ahead of pace at 2,847 miles. Projected to reach goal by December 8, 3 weeks early.">
+        <div class="card-label">YEAR TO DATE</div>
+        <div class="cumulative-header">
+          <div class="card-title" style="margin-bottom: 0">Cumulative Miles vs Goal</div>
+          <div class="ahead-badge">
+            <span class="ahead-value">+14%</span>
+            <span class="ahead-label">ahead</span>
+          </div>
+        </div>
+        <div class="cumulative-chart">
+          <svg viewBox="0 0 280 120" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cum-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Milestones -->
+            <line x1="70" y1="0" x2="70" y2="120" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="140" y1="0" x2="140" y2="120" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="210" y1="0" x2="210" y2="120" stroke="var(--border)" stroke-dasharray="2"/>
+            <!-- Goal line -->
+            <line x1="0" y1="110" x2="280" y2="10" stroke="var(--muted-foreground)" stroke-width="3" stroke-dasharray="8,4"/>
+            <!-- Actual fill -->
+            <path d="M0,110 Q35,105 70,90 T140,60 T210,35 T280,25 L280,120 L0,120 Z" fill="url(#cum-fill)"/>
+            <!-- Actual line -->
+            <path d="M0,110 Q35,105 70,90 T140,60 T210,35 T280,25" fill="none" stroke="var(--cyan)" stroke-width="3"/>
+            <circle cx="280" cy="25" r="6" fill="var(--cyan)"/>
+          </svg>
+          <span class="milestone" style="left: 25%">25%</span>
+          <span class="milestone" style="left: 50%">50%</span>
+          <span class="milestone" style="left: 75%">75%</span>
+        </div>
+        <div class="projection-text" style="color: #fbbf24; font-size: 13px; text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);">✨ Goal reached by Dec 8 (3 weeks early!)</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-line" style="background: var(--cyan)"></span> Actual: 2,847 mi</div>
+          <div class="legend-item"><span class="legend-dashed" style="border-color: var(--muted-foreground)"></span> Goal pace</div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Elevation Chart -->
+      <div class="glass-card span-4" tabindex="0" role="figure" aria-label="Monthly elevation gained. Currently at 12,400 feet in November. Peak was August. 22% more elevation than 2023 average.">
+        <div class="card-label">CLIMBING</div>
+        <div class="card-title">Monthly Elevation</div>
+        <div class="elevation-chart">
+          <div class="elev-axis">
+            <span>20k</span>
+            <span>15k</span>
+            <span>10k</span>
+            <span>5k</span>
+            <span>0</span>
+          </div>
+          <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="mtn-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--orange)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="var(--orange)" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="25" x2="200" y2="25" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="50" x2="200" y2="50" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="75" x2="200" y2="75" stroke="var(--border)" stroke-dasharray="2"/>
+            <path d="M0,75 L33,60 L66,45 L100,9 L133,30 L166,50 L200,62 L200,100 L0,100 Z" fill="url(#mtn-grad)"/>
+            <path d="M0,75 L33,60 L66,45 L100,9 L133,30 L166,50 L200,62" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <circle cx="100" cy="9" r="5" fill="var(--orange)" class="peak-dot"/>
+            <circle cx="200" cy="62" r="5" fill="var(--orange)" style="animation: pulse-dot 1.5s infinite"/>
+          </svg>
+          <div class="elev-current">
+            <div class="elev-current-value">12.4k</div>
+            <div class="elev-current-label">Nov (so far)</div>
+          </div>
+        </div>
+        <div class="elev-comparison">+22% vs 2023 average</div>
+      </div>
+
+      <!-- Donut - Elevation in center -->
+      <div class="glass-card span-4" tabindex="0" role="figure" aria-label="Ride types breakdown: Road 50%, Gravel 30%, MTB 20%. Total 2,847 miles">
+        <div class="card-label">BREAKDOWN</div>
+        <div class="card-title">Ride Types</div>
+        <div class="donut-wrapper">
+          <div class="donut-chart" aria-hidden="true">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="32" fill="none" stroke="var(--cyan)" stroke-width="18" stroke-dasharray="100.5 100.5"/>
+              <circle cx="50" cy="50" r="32" fill="none" stroke="var(--orange)" stroke-width="18" stroke-dasharray="60.3 140.7" stroke-dashoffset="-100.5"/>
+              <circle cx="50" cy="50" r="32" fill="none" stroke="var(--purple)" stroke-width="18" stroke-dasharray="40.2 160.8" stroke-dashoffset="-160.8"/>
+            </svg>
+            <!-- Percentage labels positioned on segments -->
+            <span class="donut-pct-label" style="top: 18%; left: 70%;">50%</span>
+            <span class="donut-pct-label" style="top: 70%; left: 68%;">30%</span>
+            <span class="donut-pct-label" style="top: 70%; left: 18%;">20%</span>
+            <div class="donut-center">
+              <div class="donut-center-value">2,847</div>
+              <div class="donut-center-label">Total Miles</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="donut-legend-item"><span class="donut-dot" style="background: var(--cyan)"></span> Road</div>
+            <div class="donut-legend-item"><span class="donut-dot" style="background: var(--orange)"></span> Gravel</div>
+            <div class="donut-legend-item"><span class="donut-dot" style="background: var(--purple)"></span> MTB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speed Trend - Celebration -->
+      <div class="glass-card span-4" tabindex="0" role="figure" aria-label="Average speed trend showing plus 2.1 mph improvement, 13% faster. Current average speed is 18.2 mph.">
+        <div class="card-label">PERFORMANCE</div>
+        <div class="card-title">Avg Speed Trend</div>
+        <div class="speed-celebration">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span class="speed-delta" style="font-size: 36px; background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">+2.1 mph</span>
+            <span class="speed-pct" style="font-size: 14px;">(+13%) 🔥</span>
+          </div>
+        </div>
+        <div class="speed-chart">
+          <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="spd-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--green-bright)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--green-bright)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="20" x2="200" y2="20" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="40" x2="200" y2="40" stroke="var(--border)" stroke-dasharray="2"/>
+            <line x1="0" y1="60" x2="200" y2="60" stroke="var(--border)" stroke-dasharray="2"/>
+            <path d="M0,60 Q25,58 50,52 T100,40 T150,25 T200,12 L200,80 L0,80 Z" fill="url(#spd-fill)"/>
+            <path d="M0,60 Q25,58 50,52 T100,40 T150,25 T200,12" fill="none" stroke="var(--green-bright)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="200" cy="12" r="5" fill="var(--green-bright)"/>
+            <text x="195" y="8" text-anchor="end" fill="var(--foreground)" font-size="10" font-weight="600">18.2</text>
+            <text x="5" y="65" fill="var(--muted-foreground)" font-size="9">16.1</text>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Loading State Demo (hidden by default, for reference) -->
+    <div class="grid" style="margin-top: 32px; display: none;" id="loading-demo">
+      <div class="glass-card span-4">
+        <div class="skeleton skeleton-text" style="width: 40%;"></div>
+        <div class="skeleton skeleton-value"></div>
+        <div class="skeleton skeleton-chart"></div>
+      </div>
+      <div class="glass-card span-4">
+        <div class="skeleton skeleton-text" style="width: 50%;"></div>
+        <div style="display: flex; gap: 12px; align-items: flex-end; height: 120px; margin-top: 20px;">
+          <div class="skeleton skeleton-bar" style="height: 60%;"></div>
+          <div class="skeleton skeleton-bar" style="height: 80%;"></div>
+          <div class="skeleton skeleton-bar" style="height: 45%;"></div>
+          <div class="skeleton skeleton-bar" style="height: 90%;"></div>
+          <div class="skeleton skeleton-bar" style="height: 70%;"></div>
+          <div class="skeleton skeleton-bar" style="height: 50%;"></div>
+        </div>
+      </div>
+      <div class="glass-card span-4">
+        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+        <div class="skeleton skeleton-text" style="width: 40%;"></div>
+        <div class="skeleton" style="width: 120px; height: 120px; border-radius: 50%; margin: 20px auto;"></div>
+      </div>
+    </div>
+
+    <!-- Screen reader summary -->
+    <div class="sr-only" role="status" aria-live="polite" id="sr-summary">
+      Cycling dashboard loaded. Showing yearly miles: 2,847 miles, 71% of 4,000 mile goal, 429 miles ahead of pace.
+    </div>
+  </div>
+
+  <script>
+    // Toggle loading demo (for development)
+    function toggleLoadingDemo() {
+      const demo = document.getElementById('loading-demo');
+      demo.style.display = demo.style.display === 'none' ? 'grid' : 'none';
+    }
+
+    // Keyboard navigation enhancement
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.setAttribute('role', 'tab');
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tab.click();
+        }
+      });
+    });
+
+    // Announce updates to screen readers
+    function announce(message) {
+      const sr = document.getElementById('sr-summary');
+      sr.textContent = message;
+    }
+  </script>
+</body>
+</html>

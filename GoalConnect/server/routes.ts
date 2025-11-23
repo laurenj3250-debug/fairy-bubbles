@@ -2,6 +2,7 @@ import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ensureDatabaseInitialized } from "./init-db";
+import { log } from "./lib/logger";
 import { getDb, getPool } from "./db";
 import { eq, sql, and } from "drizzle-orm";
 import * as schema from "@shared/schema";
@@ -36,7 +37,11 @@ import { registerHabitRoutes } from "./routes/habits";
 import { registerGoalRoutes } from "./routes/goals";
 import { registerImportRoutes } from "./routes/import";
 import { registerKilterBoardRoutes } from "./routes/kilter-board";
+import { registerStravaRoutes } from "./routes/strava";
 import { registerHabitMappingRoutes } from "./routes/habit-mappings";
+import { registerPetRoutes } from "./routes/pet";
+import { registerPointRoutes } from "./routes/points";
+import { registerJourneyGoalRoutes } from "./routes/journey-goals";
 import {
   DatabaseError,
   ValidationError,
@@ -108,7 +113,7 @@ async function updatePetFromHabits(userId: number) {
         });
       } catch (createError) {
         const errorLog = formatErrorForLogging(createError);
-        console.error("[updatePetFromHabits] Failed to create default pet:", errorLog);
+        log.error("[updatePetFromHabits] Failed to create default pet:", errorLog);
         throw new DatabaseError(getErrorMessage(createError), "createVirtualPet");
       }
     }
@@ -125,14 +130,14 @@ async function updatePetFromHabits(userId: number) {
       });
     } catch (updateError) {
       const errorLog = formatErrorForLogging(updateError);
-      console.error("[updatePetFromHabits] Failed to update pet stats:", errorLog);
+      log.error("[updatePetFromHabits] Failed to update pet stats:", errorLog);
       throw new DatabaseError(getErrorMessage(updateError), "updateVirtualPet");
     }
 
     return { stats, leveledUp: stats.leveledUp, evolved: stats.evolved };
   } catch (error) {
     const errorLog = formatErrorForLogging(error);
-    console.error("[updatePetFromHabits] Pet update failed:", errorLog);
+    log.error("[updatePetFromHabits] Pet update failed:", errorLog);
     // Re-throw instead of swallowing - let caller decide how to handle
     throw error instanceof DatabaseError ? error : new DatabaseError(getErrorMessage(error), "updatePetFromHabits");
   }
@@ -143,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await ensureDatabaseInitialized();
   } catch (error) {
     const errorLog = formatErrorForLogging(error);
-    console.error("[routes] Database initialization check failed:", errorLog);
+    log.error("[routes] Database initialization check failed:", errorLog);
     throw new DatabaseError(getErrorMessage(error), "ensureDatabaseInitialized");
   }
 
@@ -294,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (err) {
         // Silently continue if custom costumes file doesn't exist or is invalid
-        console.log("No custom costumes found or error loading them:", err);
+        log.debug("No custom costumes found or error loading them:", err);
       }
       
       // Combine database costumes with custom costumes
@@ -643,41 +648,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("[API] Error reordering todos:", error);
+      log.error("[API] Error reordering todos:", error);
       res.status(500).json({ error: "Failed to reorder todos" });
     }
   });
 
   // Sprite Upload (stores in database)
   app.post("/api/sprites/upload", upload.array('sprites', 500), async (req, res) => {
-    console.log('[sprites] ========== UPLOAD REQUEST STARTED ==========');
+    log.debug('[sprites] ========== UPLOAD REQUEST STARTED ==========');
     try {
       const files = req.files as Express.Multer.File[];
-      console.log('[sprites] Files received:', files?.length || 0);
+      log.debug('[sprites] Files received:', files?.length || 0);
 
       if (!files || files.length === 0) {
-        console.log('[sprites] ERROR: No files in request');
+        log.debug('[sprites] ERROR: No files in request');
         return res.status(400).json({ error: "No files uploaded" });
       }
 
       const uploadedFiles: string[] = [];
 
       for (const file of files) {
-        console.log(`[sprites] Processing file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
+        log.debug(`[sprites] Processing file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
         const ext = path.extname(file.originalname).toLowerCase();
 
         if (ext === '.zip') {
           // Extract ZIP files
-          console.log(`[sprites] Extracting ZIP: ${file.originalname}`);
+          log.debug(`[sprites] Extracting ZIP: ${file.originalname}`);
           try {
             const zip = new AdmZip(file.path);
             const zipEntries = zip.getEntries();
-            console.log(`[sprites] ZIP contains ${zipEntries.length} entries`);
+            log.debug(`[sprites] ZIP contains ${zipEntries.length} entries`);
 
             for (const entry of zipEntries) {
               // Skip directories and hidden files
               if (entry.isDirectory || entry.entryName.startsWith('__MACOSX') || path.basename(entry.entryName).startsWith('.')) {
-                console.log(`[sprites] Skipping: ${entry.entryName}`);
+                log.debug(`[sprites] Skipping: ${entry.entryName}`);
                 continue;
               }
 
@@ -685,17 +690,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const entryExt = path.extname(entry.entryName).toLowerCase();
               if (['.png', '.jpg', '.jpeg', '.psd'].includes(entryExt)) {
                 const fileName = path.basename(entry.entryName);
-                console.log(`[sprites] Extracting image: ${fileName}`);
+                log.debug(`[sprites] Extracting image: ${fileName}`);
                 const imageData = entry.getData();
                 const base64Data = imageData.toString('base64');
-                console.log(`[sprites] Base64 data length: ${base64Data.length}`);
+                log.debug(`[sprites] Base64 data length: ${base64Data.length}`);
 
                 // Determine MIME type
                 let mimeType = 'image/png';
                 if (entryExt === '.jpg' || entryExt === '.jpeg') mimeType = 'image/jpeg';
                 else if (entryExt === '.psd') mimeType = 'image/vnd.adobe.photoshop';
 
-                console.log(`[sprites] Attempting to store ${fileName} in database...`);
+                log.debug(`[sprites] Attempting to store ${fileName} in database...`);
                 // Store in database (upsert to handle duplicates)
                 try {
                   await storage.upsertSprite({
@@ -705,9 +710,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     mimeType,
                   });
                   uploadedFiles.push(fileName);
-                  console.log(`[sprites] ✓ Successfully stored in DB: ${fileName}`);
+                  log.debug(`[sprites] Successfully stored in DB: ${fileName}`);
                 } catch (dbError: any) {
-                  console.error(`[sprites] ✗ Database error for ${fileName}:`, dbError.message);
+                  log.error(`[sprites] Database error for ${fileName}:`, dbError);
                   throw dbError;
                 }
               }
@@ -715,17 +720,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Delete the ZIP file after extraction
             fs.unlinkSync(file.path);
-            console.log(`[sprites] Deleted ZIP file: ${file.originalname}`);
+            log.debug(`[sprites] Deleted ZIP file: ${file.originalname}`);
           } catch (error) {
-            console.error(`[sprites] Error extracting ZIP ${file.originalname}:`, getErrorMessage(error));
+            log.error(`[sprites] Error extracting ZIP ${file.originalname}:`, error);
             throw error;
           }
         } else {
           // Non-ZIP image files
-          console.log(`[sprites] Processing single image: ${file.originalname}`);
+          log.debug(`[sprites] Processing single image: ${file.originalname}`);
           const fileData = fs.readFileSync(file.path);
           const base64Data = fileData.toString('base64');
-          console.log(`[sprites] Base64 data length: ${base64Data.length}`);
+          log.debug(`[sprites] Base64 data length: ${base64Data.length}`);
 
           // Determine MIME type
           let mimeType = file.mimetype;
@@ -734,9 +739,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
             else if (ext === '.psd') mimeType = 'image/vnd.adobe.photoshop';
           }
-          console.log(`[sprites] MIME type: ${mimeType}`);
+          log.debug(`[sprites] MIME type: ${mimeType}`);
 
-          console.log(`[sprites] Attempting to store ${file.originalname} in database...`);
+          log.debug(`[sprites] Attempting to store ${file.originalname} in database...`);
           // Store in database (upsert to handle duplicates)
           try {
             await storage.upsertSprite({
@@ -746,29 +751,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               mimeType,
             });
             uploadedFiles.push(file.originalname);
-            console.log(`[sprites] ✓ Successfully stored in DB: ${file.originalname}`);
+            log.debug(`[sprites] Successfully stored in DB: ${file.originalname}`);
           } catch (dbError: any) {
-            console.error(`[sprites] ✗ Database error for ${file.originalname}:`, dbError.message);
+            log.error(`[sprites] Database error for ${file.originalname}:`, dbError);
             throw dbError;
           }
 
           // Delete temporary file
           fs.unlinkSync(file.path);
-          console.log(`[sprites] Deleted temp file: ${file.originalname}`);
+          log.debug(`[sprites] Deleted temp file: ${file.originalname}`);
         }
       }
 
-      console.log(`[sprites] ========== UPLOAD SUCCESS: ${uploadedFiles.length} files ==========`);
+      log.debug(`[sprites] ========== UPLOAD SUCCESS: ${uploadedFiles.length} files ==========`);
       res.json({
         success: true,
         files: uploadedFiles,
         count: uploadedFiles.length,
       });
     } catch (error) {
-      console.error('[sprites] ========== UPLOAD FAILED ==========');
-      console.error('[sprites] Error type:', error instanceof Error ? error.constructor.name : 'Unknown');
-      console.error('[sprites] Error message:', getErrorMessage(error));
-      console.error('[sprites] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      log.error('[sprites] Upload failed', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to upload sprites" });
     }
   });
@@ -786,7 +788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(spriteList);
     } catch (error) {
-      console.error('[sprites] List error:', error);
+      log.error('[sprites] List error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to list sprites" });
     }
   });
@@ -807,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
       res.send(imageBuffer);
     } catch (error) {
-      console.error('[sprites] File serve error:', error);
+      log.error('[sprites] File serve error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to serve sprite" });
     }
   });
@@ -830,10 +832,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('[sprites] Organization saved:', sprites.length, 'sprites');
+      log.debug('[sprites] Organization saved:', sprites.length, 'sprites');
       res.json({ success: true, count: sprites.length });
     } catch (error) {
-      console.error('[sprites] Organize error:', error);
+      log.error('[sprites] Organize error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to save organization" });
     }
   });
@@ -854,9 +856,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.deleteSprite(filename);
           deleted.push(filename);
-          console.log(`[sprites] Deleted from DB: ${filename}`);
+          log.debug(`[sprites] Deleted from DB: ${filename}`);
         } catch (error) {
-          console.error(`[sprites] Failed to delete ${filename}:`, error);
+          log.error(`[sprites] Failed to delete ${filename}:`, error);
           failed.push(filename);
         }
       }
@@ -869,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         failedFiles: failed,
       });
     } catch (error) {
-      console.error('[sprites] Delete error:', error);
+      log.error('[sprites] Delete error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to delete sprites" });
     }
   });
@@ -880,7 +882,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metadata = await storage.getSpritesMetadata();
       res.json(metadata);
     } catch (error) {
-      console.error('[sprites] Get metadata error:', error);
+      log.error('[sprites] Get metadata error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprite metadata" });
     }
   });
@@ -907,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mimeType: sprite.mimeType,
       });
     } catch (error) {
-      console.error('[sprites] Get by ID error:', error);
+      log.error('[sprites] Get by ID error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprite" });
     }
   });
@@ -935,7 +937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(spriteData);
       }
     } catch (error) {
-      console.error('[sprites] Get all error:', error);
+      log.error('[sprites] Get all error:', error);
       res.status(500).json({ error: getErrorMessage(error) || "Failed to get sprites" });
     }
   });
@@ -952,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const items = await storage.getDreamScrollItems(req.user!.id);
       res.json(items);
     } catch (error) {
-      console.error('[dream-scroll] Get items error:', error);
+      log.error('[dream-scroll] Get items error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -968,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const items = await storage.getDreamScrollItemsByCategory(req.user!.id, category);
       res.json(items);
     } catch (error) {
-      console.error('[dream-scroll] Get by category error:', error);
+      log.error('[dream-scroll] Get by category error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -990,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(item);
     } catch (error) {
-      console.error('[dream-scroll] Create error:', error);
+      log.error('[dream-scroll] Create error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1011,7 +1013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(item);
     } catch (error) {
-      console.error('[dream-scroll] Update error:', error);
+      log.error('[dream-scroll] Update error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1032,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(item);
     } catch (error) {
-      console.error('[dream-scroll] Toggle error:', error);
+      log.error('[dream-scroll] Toggle error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1048,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteDreamScrollItem(id);
       res.json({ success: true });
     } catch (error) {
-      console.error('[dream-scroll] Delete error:', error);
+      log.error('[dream-scroll] Delete error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1066,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tags = await storage.getDreamScrollTags(req.user!.id, category);
       res.json(tags);
     } catch (error) {
-      console.error('[dream-scroll-tags] Get tags error:', error);
+      log.error('[dream-scroll-tags] Get tags error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1086,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(tag);
     } catch (error) {
-      console.error('[dream-scroll-tags] Create tag error:', error);
+      log.error('[dream-scroll-tags] Create tag error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1102,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteDreamScrollTag(id);
       res.json({ success: true });
     } catch (error) {
-      console.error('[dream-scroll-tags] Delete tag error:', error);
+      log.error('[dream-scroll-tags] Delete tag error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1154,7 +1156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresIn,
       });
     } catch (error) {
-      console.error('[combo] Get stats error:', error);
+      log.error('[combo] Get stats error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1212,7 +1214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresIn: 300, // 5 minutes in seconds
       });
     } catch (error) {
-      console.error('[combo] Register error:', error);
+      log.error('[combo] Register error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1234,7 +1236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Daily quests feature not implemented yet
       res.json([]);
     } catch (error) {
-      console.error('[daily-quests] Get error:', error);
+      log.error('[daily-quests] Get error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1252,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Daily quests feature not implemented yet
       res.status(404).json({ error: "Quest not found" });
     } catch (error) {
-      console.error('[daily-quests] Claim error:', error);
+      log.error('[daily-quests] Claim error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1275,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         canEarn: false,
       });
     } catch (error) {
-      console.error('[streak-freezes] Get error:', error);
+      log.error('[streak-freezes] Get error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1292,7 +1294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Streak freeze feature not implemented yet
       res.status(400).json({ error: "Feature not available" });
     } catch (error) {
-      console.error('[streak-freezes] Purchase error:', error);
+      log.error('[streak-freezes] Purchase error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1305,7 +1307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const gear = await storage.getAllAlpineGear();
       res.json(gear);
     } catch (error) {
-      console.error('[alpine-gear] Get all gear error:', error);
+      log.error('[alpine-gear] Get all gear error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1320,7 +1322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inventory = await storage.getPlayerGearInventory(req.user!.id);
       res.json(inventory);
     } catch (error) {
-      console.error('[alpine-gear] Get inventory error:', error);
+      log.error('[alpine-gear] Get inventory error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1336,7 +1338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.purchaseGear(req.user!.id, gearId);
       res.json(result);
     } catch (error) {
-      console.error('[alpine-gear] Purchase error:', error);
+      log.error('[alpine-gear] Purchase error:', error);
       res.status(400).json({ error: getErrorMessage(error) });
     }
   });
@@ -1371,7 +1373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(stats);
     } catch (error) {
-      console.error('[gear] Get stats error:', error);
+      log.error('[gear] Get stats error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1406,7 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(gearCollection);
     } catch (error) {
-      console.error('[gear] Get collection error:', error);
+      log.error('[gear] Get collection error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1419,7 +1421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const regions = await storage.getAllRegions();
       res.json(regions);
     } catch (error) {
-      console.error('[mountains] Get regions error:', error);
+      log.error('[mountains] Get regions error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1430,7 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mountains = await storage.getAllMountains();
       res.json(mountains);
     } catch (error) {
-      console.error('[mountains] Get all error:', error);
+      log.error('[mountains] Get all error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1442,7 +1444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mountains = await storage.getMountainsByRegion(regionId);
       res.json(mountains);
     } catch (error) {
-      console.error('[mountains] Get by region error:', error);
+      log.error('[mountains] Get by region error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1472,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(formatted);
     } catch (error) {
-      console.error('[mountains] Get unlocked error:', error);
+      log.error('[mountains] Get unlocked error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1484,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Implement getRoutesByMountainId
       res.json([]);
     } catch (error) {
-      console.error('[routes] Get by mountain error:', error);
+      log.error('[routes] Get by mountain error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1531,7 +1533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      console.error('[backgrounds] Get user backgrounds error:', error);
+      log.error('[backgrounds] Get user backgrounds error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1581,7 +1583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ ...mountain[0], unlocked: true, isActive: true });
     } catch (error) {
-      console.error('[backgrounds] Activate background error:', error);
+      log.error('[backgrounds] Activate background error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1596,7 +1598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = await storage.getPlayerClimbingStats(req.user!.id);
       res.json(stats);
     } catch (error) {
-      console.error('[climbing] Get stats error:', error);
+      log.error('[climbing] Get stats error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1643,7 +1645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         progressPercent: Math.round((xpInCurrentLevel / xpNeededForNextLevel) * 100),
       });
     } catch (error) {
-      console.error('[user] Get level progress error:', error);
+      log.error('[user] Get level progress error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1813,7 +1815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       );
 
-      console.log('[expeditions] Started expedition:', {
+      log.debug('[expeditions] Started expedition:', {
         expeditionId,
         userId,
         mountain: mountainData.name,
@@ -1840,7 +1842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error('[expeditions] Create expedition error:', error);
+      log.error('[expeditions] Create expedition error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -1928,7 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       );
 
-      console.log('[expeditions] Advanced expedition:', {
+      log.debug('[expeditions] Advanced expedition:', {
         expeditionId,
         newDay,
         newProgress: Math.round(newProgress),
@@ -1951,7 +1953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Day ${newDay}: Advanced to ${campNames[camp]}`
       });
     } catch (error) {
-      console.error('[expeditions] Advance expedition error:', error);
+      log.error('[expeditions] Advance expedition error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -2144,7 +2146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       );
 
-      console.log('[expeditions] Completed expedition:', {
+      log.debug('[expeditions] Completed expedition:', {
         expeditionId,
         userId,
         mountain: exp.mountain_name,
@@ -2179,7 +2181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mountainBackground: mountainBackground  // New background/theme unlocked
       });
     } catch (error) {
-      console.error('[expeditions] Complete expedition error:', error);
+      log.error('[expeditions] Complete expedition error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -2258,7 +2260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       );
 
-      console.log('[expeditions] Retreated from expedition:', {
+      log.debug('[expeditions] Retreated from expedition:', {
         expeditionId,
         userId,
         mountain: exp.mountain_name,
@@ -2283,7 +2285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Weather conditions forced a retreat. The mountain will be here when you're ready to return."
       });
     } catch (error) {
-      console.error('[expeditions] Retreat expedition error:', error);
+      log.error('[expeditions] Retreat expedition error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -2317,7 +2319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(expeditions.rows);
     } catch (error) {
-      console.error('[expeditions] Get expeditions error:', error);
+      log.error('[expeditions] Get expeditions error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -2363,7 +2365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mountain,
       });
     } catch (error) {
-      console.error("Error fetching current mission:", error);
+      log.error("Error fetching current mission:", error);
       res.status(500).json({ error: "Failed to fetch current mission" });
     }
   });
@@ -2422,7 +2424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requiredLevel: nextMountain.requiredClimbingLevel,
       });
     } catch (error) {
-      console.error("Error fetching next mountain:", error);
+      log.error("Error fetching next mountain:", error);
       res.status(500).json({ error: "Failed to fetch next mountain" });
     }
   });
@@ -2512,7 +2514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mountain,
       });
     } catch (error) {
-      console.error("Error starting mission:", error);
+      log.error("Error starting mission:", error);
       res.status(500).json({ error: "Failed to start mission" });
     }
   });
@@ -2620,7 +2622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     } catch (error) {
-      console.error("Error checking progress:", error);
+      log.error("Error checking progress:", error);
       res.status(500).json({ error: "Failed to check progress" });
     }
   });
@@ -2842,7 +2844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      console.error("Error completing mission:", error);
+      log.error("Error completing mission:", error);
       res.status(500).json({ error: "Failed to complete mission" });
     }
   });
@@ -2852,7 +2854,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGoalRoutes(app);
   registerImportRoutes(app);
   registerKilterBoardRoutes(app);
+  registerStravaRoutes(app);
   registerHabitMappingRoutes(app);
+  registerPetRoutes(app);
+  registerPointRoutes(app);
+  registerJourneyGoalRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

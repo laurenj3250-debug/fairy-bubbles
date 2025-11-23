@@ -1,0 +1,2 @@
+ALTER TABLE "journey_goals" ADD COLUMN "linked_goal_id" integer;--> statement-breakpoint
+ALTER TABLE "journey_goals" ADD CONSTRAINT "journey_goals_linked_goal_id_goals_id_fk" FOREIGN KEY ("linked_goal_id") REFERENCES "public"."goals"("id") ON DELETE set null ON UPDATE no action;

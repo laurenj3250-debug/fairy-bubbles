@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava Journey V6 - Real Motivating Metrics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      /* App design system - warm charcoal */
+      --bg: hsl(45, 30%, 8%);
+      --bg-card: hsl(45, 25%, 12%);
+      --bg-elevated: hsl(45, 20%, 16%);
+      --primary: hsl(25, 95%, 58%);
+      --primary-glow: hsla(25, 95%, 58%, 0.3);
+      --teal: hsl(175, 80%, 45%);
+      --teal-glow: hsla(175, 80%, 45%, 0.3);
+
+      /* Sport colors */
+      --lift: #A855F7;
+      --lift-glow: rgba(168, 85, 247, 0.3);
+      --climb: #14F0C5;
+      --climb-glow: rgba(20, 240, 197, 0.3);
+      --bike: #3B82F6;
+      --bike-glow: rgba(59, 130, 246, 0.3);
+
+      --gold: #FFD700;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --text: #FFFFFF;
+      --text-sec: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+      --border: rgba(255,255,255,0.08);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px;
+    }
+    h1, h2, h3, .heading { font-family: 'Fraunces', serif; font-weight: 700; }
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .header-left h1 {
+      font-size: 36px;
+      background: linear-gradient(135deg, var(--primary), hsl(35, 95%, 65%));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-left p {
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Sport Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .tab {
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab:hover { background: var(--bg-elevated); }
+    .tab.active-lift { background: var(--lift); color: #fff; box-shadow: 0 4px 20px var(--lift-glow); }
+    .tab.active-climb { background: var(--climb); color: #000; box-shadow: 0 4px 20px var(--climb-glow); }
+    .tab.active-bike { background: var(--bike); color: #fff; box-shadow: 0 4px 20px var(--bike-glow); }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; margin-top: 24px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .card-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hero Stats */
+    .hero-stat {
+      text-align: center;
+      padding: 32px 24px;
+    }
+    .hero-stat .value {
+      font-family: 'Fraunces', serif;
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .hero-stat .unit {
+      font-size: 24px;
+      font-weight: 600;
+      opacity: 0.6;
+      margin-left: 4px;
+    }
+    .hero-stat .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .hero-stat .sub {
+      font-size: 12px;
+      color: var(--text-sec);
+      margin-top: 4px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      margin-top: 16px;
+    }
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Streak */
+    .streak-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .streak-flame {
+      font-size: 48px;
+      filter: drop-shadow(0 4px 12px rgba(255, 150, 50, 0.4));
+    }
+    .streak-info .value {
+      font-family: 'Fraunces', serif;
+      font-size: 40px;
+      font-weight: 800;
+    }
+    .streak-info .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* PR List */
+    .pr-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pr-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .pr-item:hover {
+      transform: translateX(4px);
+      background: rgba(255,255,255,0.05);
+    }
+    .pr-item .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .pr-item .details {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .pr-item .weight {
+      font-family: 'Fraunces', serif;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .pr-item .ratio {
+      font-size: 11px;
+      color: var(--text-sec);
+      margin-top: 2px;
+      text-align: right;
+    }
+
+    /* Grade Pyramid */
+    .pyramid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pyramid-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pyramid-grade {
+      width: 40px;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: right;
+    }
+    .pyramid-bar-container {
+      flex: 1;
+      height: 28px;
+      background: var(--bg-elevated);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .pyramid-bar {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #000;
+      transition: width 0.5s ease;
+    }
+    .pyramid-count {
+      width: 40px;
+      font-size: 13px;
+      color: var(--text-sec);
+      text-align: left;
+    }
+
+    /* Angle Matrix */
+    .angle-matrix {
+      display: grid;
+      grid-template-columns: 60px repeat(5, 1fr);
+      gap: 4px;
+    }
+    .matrix-header {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 8px 4px;
+    }
+    .matrix-row-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+      display: flex;
+      align-items: center;
+      padding-right: 8px;
+    }
+    .matrix-cell {
+      height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    .matrix-cell:hover { transform: scale(1.05); }
+    .matrix-cell.sent { background: var(--climb); color: #000; box-shadow: 0 2px 8px var(--climb-glow); }
+    .matrix-cell.project { background: rgba(20, 240, 197, 0.2); color: var(--climb); border: 1px dashed var(--climb); }
+    .matrix-cell.empty { background: var(--bg-elevated); color: var(--text-muted); }
+
+    /* Chart Placeholder */
+    .chart-area {
+      height: 200px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-end;
+      padding: 20px;
+      gap: 8px;
+    }
+    .chart-bar {
+      flex: 1;
+      border-radius: 6px 6px 0 0;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .chart-bar:hover {
+      filter: brightness(1.2);
+    }
+    .chart-bar .tooltip {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .chart-bar:hover .tooltip { opacity: 1; }
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Yearly Progress Ring */
+    .ring-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto;
+    }
+    .ring-svg {
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: var(--bg-elevated);
+      stroke-width: 12;
+    }
+    .ring-progress {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-value {
+      font-family: 'Fraunces', serif;
+      font-size: 32px;
+      font-weight: 800;
+    }
+    .ring-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Section Divider */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 40px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, currentColor, transparent);
+      opacity: 0.3;
+    }
+
+    /* PR Badge */
+    .pr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--gold), #FFA500);
+      color: #000;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: flex;
+      gap: 24px;
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    .stat-item {
+      flex: 1;
+      text-align: center;
+    }
+    .stat-item .value {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .stat-item .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .span-3 { grid-column: span 6; }
+      .span-4 { grid-column: span 6; }
+      .span-5 { grid-column: span 12; }
+      .span-7 { grid-column: span 12; }
+      .span-8 { grid-column: span 12; }
+    }
+    @media (max-width: 700px) {
+      .span-3, .span-4, .span-6 { grid-column: span 12; }
+      .tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <h1>Strava Journey</h1>
+        <p>Your multi-sport performance dashboard</p>
+      </div>
+      <div class="tabs">
+        <div class="tab active-lift">🏋️ Lifting</div>
+        <div class="tab">🧗 Climbing</div>
+        <div class="tab">🚴 Cycling</div>
+      </div>
+    </div>
+
+    <!-- ==================== LIFTING TAB ==================== -->
+    <div class="grid">
+      <!-- Big 3 Total -->
+      <div class="card span-4">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--lift);">885<span class="unit">lb</span></div>
+          <div class="label">Big 3 Total</div>
+          <div class="sub">Squat + Bench + Deadlift 1RM</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-labels">
+            <span>Progress to 1000lb Club</span>
+            <span>88.5%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 88.5%; background: linear-gradient(90deg, var(--lift), hsl(280, 70%, 60%));"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wilks Score -->
+      <div class="card span-4">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--gold);">342</div>
+          <div class="label">Wilks Score</div>
+          <div class="sub">Top 15% for your bodyweight</div>
+        </div>
+        <div class="stats-row" style="margin-top: 8px; border-top: none; padding-top: 0;">
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">155</div>
+            <div class="label">Bodyweight</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">5.7x</div>
+            <div class="label">BW Ratio</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workout Streak -->
+      <div class="card span-4">
+        <div class="streak-card">
+          <div class="streak-flame">🔥</div>
+          <div class="streak-info">
+            <div class="value" style="color: var(--primary);">47</div>
+            <div class="label">Week Streak</div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">4</div>
+            <div class="label">This Week</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">186</div>
+            <div class="label">Total Workouts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PR List -->
+      <div class="card span-5">
+        <div class="card-header">
+          <div class="card-title">Personal Records</div>
+          <span class="pr-badge">🏆 3 PRs This Month</span>
+        </div>
+        <div class="pr-list">
+          <div class="pr-item">
+            <div>
+              <div class="name">Squat</div>
+              <div class="details">Nov 18, 2024 • RPE 9</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--lift);">315<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="ratio">2.03× BW</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Bench Press</div>
+              <div class="details">Nov 12, 2024 • RPE 8.5</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--lift);">225<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="ratio">1.45× BW</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Deadlift</div>
+              <div class="details">Nov 5, 2024 • RPE 9.5</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--lift);">345<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="ratio">2.23× BW</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Overhead Press</div>
+              <div class="details">Oct 28, 2024 • RPE 9</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--lift);">135<span style="font-size: 14px; opacity: 0.6;">lb</span></div>
+              <div class="ratio">0.87× BW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1RM Progress Chart -->
+      <div class="card span-7">
+        <div class="card-header">
+          <div class="card-title">1RM Progress (6 Months)</div>
+          <div style="display: flex; gap: 16px; font-size: 11px;">
+            <span style="display: flex; align-items: center; gap: 6px;"><div style="width: 12px; height: 3px; background: var(--lift); border-radius: 2px;"></div> Squat</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><div style="width: 12px; height: 3px; background: hsl(280, 70%, 60%); border-radius: 2px;"></div> Bench</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><div style="width: 12px; height: 3px; background: hsl(260, 60%, 55%); border-radius: 2px;"></div> Dead</span>
+          </div>
+        </div>
+        <div class="chart-area" style="height: 220px; align-items: center; justify-content: center;">
+          <svg width="100%" height="180" viewBox="0 0 600 180" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+              <line x1="0" y1="30" x2="600" y2="30" />
+              <line x1="0" y1="70" x2="600" y2="70" />
+              <line x1="0" y1="110" x2="600" y2="110" />
+              <line x1="0" y1="150" x2="600" y2="150" />
+            </g>
+            <!-- Squat line -->
+            <path d="M20,120 Q100,115 180,105 T340,85 T500,60 T580,45"
+                  fill="none" stroke="var(--lift)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Bench line -->
+            <path d="M20,140 Q100,138 180,132 T340,120 T500,105 T580,95"
+                  fill="none" stroke="hsl(280, 70%, 60%)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Deadlift line -->
+            <path d="M20,110 Q100,105 180,95 T340,75 T500,55 T580,35"
+                  fill="none" stroke="hsl(260, 60%, 55%)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Dots -->
+            <circle cx="580" cy="45" r="6" fill="var(--lift)" />
+            <circle cx="580" cy="95" r="6" fill="hsl(280, 70%, 60%)" />
+            <circle cx="580" cy="35" r="6" fill="hsl(260, 60%, 55%)" />
+          </svg>
+        </div>
+        <div class="chart-labels">
+          <span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CLIMBING TAB ==================== -->
+    <div class="section-title" style="color: var(--climb);">🧗 Climbing</div>
+
+    <div class="grid">
+      <!-- Max Grade -->
+      <div class="card span-3">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--climb);">V6</div>
+          <div class="label">Max Grade Sent</div>
+          <div class="sub">Outdoor boulder • Oct 2024</div>
+        </div>
+      </div>
+
+      <!-- Kilter Max -->
+      <div class="card span-3">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--climb);">V5</div>
+          <div class="label">Kilter Board Max</div>
+          <div class="sub">At 40° • Nov 2024</div>
+        </div>
+      </div>
+
+      <!-- Vertical Climbed -->
+      <div class="card span-3">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--teal);">12.4k</div>
+          <div class="label">Vertical Feet (2024)</div>
+          <div class="sub">≈ 4 Everests</div>
+        </div>
+      </div>
+
+      <!-- Climbing Streak -->
+      <div class="card span-3">
+        <div class="streak-card">
+          <div class="streak-flame">🧗</div>
+          <div class="streak-info">
+            <div class="value" style="color: var(--climb);">23</div>
+            <div class="label">Day Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grade Pyramid -->
+      <div class="card span-5">
+        <div class="card-header">
+          <div class="card-title">Grade Pyramid</div>
+          <div class="card-badge" style="background: var(--climb); color: #000;">142 Sends</div>
+        </div>
+        <div class="pyramid">
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb);">V6</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 8%; background: var(--climb);">1</div>
+            </div>
+            <div class="pyramid-count">1</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb);">V5</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 20%; background: var(--climb);">4</div>
+            </div>
+            <div class="pyramid-count">4</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade" style="color: var(--climb);">V4</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 45%; background: var(--climb);">12</div>
+            </div>
+            <div class="pyramid-count">12</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V3</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 70%; background: rgba(20, 240, 197, 0.7);">28</div>
+            </div>
+            <div class="pyramid-count">28</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V2</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 90%; background: rgba(20, 240, 197, 0.5);">45</div>
+            </div>
+            <div class="pyramid-count">45</div>
+          </div>
+          <div class="pyramid-row">
+            <div class="pyramid-grade">V1</div>
+            <div class="pyramid-bar-container">
+              <div class="pyramid-bar" style="width: 100%; background: rgba(20, 240, 197, 0.3);">52</div>
+            </div>
+            <div class="pyramid-count">52</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kilter Angle × Grade Matrix -->
+      <div class="card span-7">
+        <div class="card-header">
+          <div class="card-title">Kilter Board: Angle × Grade</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Your max grade at each angle</div>
+        </div>
+        <div class="angle-matrix">
+          <div class="matrix-header"></div>
+          <div class="matrix-header">0°</div>
+          <div class="matrix-header">20°</div>
+          <div class="matrix-header">40°</div>
+          <div class="matrix-header">50°</div>
+          <div class="matrix-header">70°</div>
+
+          <div class="matrix-row-label">V6</div>
+          <div class="matrix-cell project">🎯</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+          <div class="matrix-cell empty">-</div>
+
+          <div class="matrix-row-label">V5</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell project">🎯</div>
+          <div class="matrix-cell empty">-</div>
+
+          <div class="matrix-row-label">V4</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell project">🎯</div>
+
+          <div class="matrix-row-label">V3</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+
+          <div class="matrix-row-label">V2</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+          <div class="matrix-cell sent">✓</div>
+        </div>
+        <div style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-sec);">
+          <span style="color: var(--climb);">✓ Sent</span> &nbsp;•&nbsp;
+          <span style="color: var(--climb);">🎯 Projecting</span> &nbsp;•&nbsp;
+          <span style="color: var(--text-muted);">- Not attempted</span>
+        </div>
+      </div>
+
+      <!-- Flash Rate + Benchmarks -->
+      <div class="card span-6">
+        <div class="card-header">
+          <div class="card-title">Flash Rate by Grade</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V3</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 85%; height: 100%; background: var(--climb); display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; color: #000;">85%</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V4</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 62%; height: 100%; background: var(--climb); display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; color: #000;">62%</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 30px; font-weight: 600;">V5</span>
+            <div style="flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden;">
+              <div style="width: 25%; height: 100%; background: var(--climb); display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; color: #000;">25%</div>
+            </div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="value" style="font-size: 24px; color: var(--success);">4/5</div>
+            <div class="label">Benchmarks Today</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" style="font-size: 24px;">18</div>
+            <div class="label">Days Since V6</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Sends -->
+      <div class="card span-6">
+        <div class="card-header">
+          <div class="card-title">Recent Hard Sends</div>
+        </div>
+        <div class="pr-list">
+          <div class="pr-item">
+            <div>
+              <div class="name">Crimpy Overhang #247</div>
+              <div class="details">Kilter • 40° • 3 attempts</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--climb); font-size: 20px;">V5</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Bishop - Buttermilks</div>
+              <div class="details">Outdoor • Flash!</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--climb); font-size: 20px;">V6</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Compression Test #89</div>
+              <div class="details">Kilter • 50° • 8 attempts</div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--climb); font-size: 20px;">V4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CYCLING TAB ==================== -->
+    <div class="section-title" style="color: var(--bike);">🚴 Cycling</div>
+
+    <div class="grid">
+      <!-- Yearly Miles -->
+      <div class="card span-4">
+        <div class="card-header">
+          <div class="card-title">2024 Miles</div>
+        </div>
+        <div class="ring-container">
+          <svg class="ring-svg" width="180" height="180" viewBox="0 0 180 180">
+            <circle class="ring-bg" cx="90" cy="90" r="75" />
+            <circle class="ring-progress" cx="90" cy="90" r="75"
+                    stroke="var(--bike)"
+                    stroke-dasharray="471"
+                    stroke-dashoffset="94"
+                    style="filter: drop-shadow(0 0 10px var(--bike-glow));" />
+          </svg>
+          <div class="ring-center">
+            <div class="ring-value" style="color: var(--bike);">2,847</div>
+            <div class="ring-label">of 3,500 goal</div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 13px; color: var(--text-sec);">
+          <strong style="color: var(--success);">653 miles</strong> to go • 39 days left
+        </div>
+      </div>
+
+      <!-- Elevation -->
+      <div class="card span-4">
+        <div class="hero-stat">
+          <div class="value" style="color: var(--bike);">142k</div>
+          <div class="label">Elevation Feet (2024)</div>
+          <div class="sub">≈ 4.9 Everests</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">3,240</div>
+            <div class="label">This Month</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" style="font-size: 20px;">8,400</div>
+            <div class="label">Biggest Climb</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riding Streak + Century Count -->
+      <div class="card span-4">
+        <div class="streak-card">
+          <div class="streak-flame">🚴</div>
+          <div class="streak-info">
+            <div class="value" style="color: var(--bike);">12</div>
+            <div class="label">Day Streak</div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="value" style="font-size: 24px; color: var(--gold);">3</div>
+            <div class="label">Centuries</div>
+          </div>
+          <div class="stat-item">
+            <div class="value" style="font-size: 24px;">127</div>
+            <div class="label">Longest Ride</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Miles Chart -->
+      <div class="card span-7">
+        <div class="card-header">
+          <div class="card-title">Monthly Miles</div>
+          <div style="font-size: 12px; color: var(--text-sec);">
+            <span style="color: var(--success);">↑ 12%</span> vs last month
+          </div>
+        </div>
+        <div class="chart-area">
+          <div class="chart-bar" style="height: 45%; background: var(--bike);">
+            <div class="tooltip">Jan: 180mi</div>
+          </div>
+          <div class="chart-bar" style="height: 35%; background: var(--bike);">
+            <div class="tooltip">Feb: 140mi</div>
+          </div>
+          <div class="chart-bar" style="height: 55%; background: var(--bike);">
+            <div class="tooltip">Mar: 220mi</div>
+          </div>
+          <div class="chart-bar" style="height: 70%; background: var(--bike);">
+            <div class="tooltip">Apr: 280mi</div>
+          </div>
+          <div class="chart-bar" style="height: 85%; background: var(--bike);">
+            <div class="tooltip">May: 340mi</div>
+          </div>
+          <div class="chart-bar" style="height: 90%; background: var(--bike);">
+            <div class="tooltip">Jun: 360mi</div>
+          </div>
+          <div class="chart-bar" style="height: 95%; background: var(--bike);">
+            <div class="tooltip">Jul: 380mi</div>
+          </div>
+          <div class="chart-bar" style="height: 80%; background: var(--bike);">
+            <div class="tooltip">Aug: 320mi</div>
+          </div>
+          <div class="chart-bar" style="height: 65%; background: var(--bike);">
+            <div class="tooltip">Sep: 260mi</div>
+          </div>
+          <div class="chart-bar" style="height: 50%; background: var(--bike);">
+            <div class="tooltip">Oct: 200mi</div>
+          </div>
+          <div class="chart-bar" style="height: 42%; background: linear-gradient(to top, var(--bike), hsl(210, 90%, 65%));">
+            <div class="tooltip">Nov: 167mi (in progress)</div>
+          </div>
+        </div>
+        <div class="chart-labels">
+          <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+        </div>
+      </div>
+
+      <!-- Segment PRs -->
+      <div class="card span-5">
+        <div class="card-header">
+          <div class="card-title">Recent Segment PRs</div>
+          <span class="pr-badge">🏆 2 This Week</span>
+        </div>
+        <div class="pr-list">
+          <div class="pr-item">
+            <div>
+              <div class="name">Hawk Hill Climb</div>
+              <div class="details">Nov 19 • <span style="color: var(--success);">-18 sec</span></div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--bike); font-size: 18px;">6:42</div>
+              <div class="ratio">#12 / 1,847</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Paradise Loop Sprint</div>
+              <div class="details">Nov 17 • <span style="color: var(--success);">-5 sec</span></div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--bike); font-size: 18px;">2:14</div>
+              <div class="ratio">#28 / 3,204</div>
+            </div>
+          </div>
+          <div class="pr-item">
+            <div>
+              <div class="name">Camino Alto Descent</div>
+              <div class="details">Nov 10 • <span style="color: var(--success);">-3 sec</span></div>
+            </div>
+            <div>
+              <div class="weight" style="color: var(--bike); font-size: 18px;">1:58</div>
+              <div class="ratio">#45 / 2,156</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

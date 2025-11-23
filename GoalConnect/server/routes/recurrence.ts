@@ -10,6 +10,7 @@ import {
   getRecurringTaskInstances
 } from '../lib/recurrenceScheduler';
 import { validateRecurrencePattern, type RecurrencePattern } from '../../shared/lib/recurrenceEngine';
+import { log } from '../lib/logger';
 
 export function registerRecurrenceRoutes(app: Express) {
   /**
@@ -41,7 +42,7 @@ export function registerRecurrenceRoutes(app: Express) {
 
     res.json({ success: true, message: 'Recurrence set successfully' });
   } catch (error) {
-    console.error('Error setting recurrence:', error);
+    log.error('[recurrence] Error setting recurrence:', error);
     res.status(500).json({ error: 'Failed to set recurrence' });
   }
 });
@@ -57,7 +58,7 @@ export function registerRecurrenceRoutes(app: Express) {
 
     res.json({ success: true, message: 'Recurrence removed successfully' });
   } catch (error) {
-    console.error('Error removing recurrence:', error);
+    log.error('[recurrence] Error removing recurrence:', error);
     res.status(500).json({ error: 'Failed to remove recurrence' });
   }
 });
@@ -73,7 +74,7 @@ export function registerRecurrenceRoutes(app: Express) {
 
     res.json({ success: true, message: 'Next occurrence skipped' });
   } catch (error) {
-    console.error('Error skipping occurrence:', error);
+    log.error('[recurrence] Error skipping occurrence:', error);
     res.status(500).json({ error: 'Failed to skip occurrence' });
   }
 });
@@ -89,7 +90,7 @@ export function registerRecurrenceRoutes(app: Express) {
 
     res.json(instances);
   } catch (error) {
-    console.error('Error fetching instances:', error);
+    log.error('[recurrence] Error fetching instances:', error);
     res.status(500).json({ error: 'Failed to fetch instances' });
   }
 });

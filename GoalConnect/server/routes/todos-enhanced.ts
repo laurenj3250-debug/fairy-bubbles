@@ -3,6 +3,7 @@ import { getDb } from "../db.js";
 import { todos, projects, labels, taskLabels } from "@shared/schema";
 import { eq, inArray } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
+import { log } from "../lib/logger";
 
 export function registerTodosEnhancedRoutes(app: Express) {
   // GET /api/todos-with-metadata - Get todos with projects and labels
@@ -60,7 +61,7 @@ export function registerTodosEnhancedRoutes(app: Express) {
 
       res.json(enhancedTodos);
     } catch (error) {
-      console.error("[API] Error fetching todos with metadata:", error);
+      log.error("[API] Error fetching todos with metadata:", error);
       res.status(500).send("Failed to fetch todos");
     }
   });

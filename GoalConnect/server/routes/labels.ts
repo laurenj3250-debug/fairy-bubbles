@@ -3,6 +3,7 @@ import { getDb } from "../db.js";
 import { labels, taskLabels, todos } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
+import { log } from "../lib/logger";
 
 export function registerLabelRoutes(app: Express) {
   // GET /api/labels - Get all labels for user
@@ -19,7 +20,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json(userLabels);
     } catch (error) {
-      console.error("[API] Error fetching labels:", error);
+      log.error("[labels] Error fetching labels:", error);
       res.status(500).send("Failed to fetch labels");
     }
   });
@@ -63,7 +64,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json(newLabel);
     } catch (error) {
-      console.error("[API] Error creating label:", error);
+      log.error("[labels] Error creating label:", error);
       res.status(500).send("Failed to create label");
     }
   });
@@ -97,7 +98,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json(updatedLabel);
     } catch (error) {
-      console.error("[API] Error updating label:", error);
+      log.error("[labels] Error updating label:", error);
       res.status(500).send("Failed to update label");
     }
   });
@@ -126,7 +127,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("[API] Error deleting label:", error);
+      log.error("[labels] Error deleting label:", error);
       res.status(500).send("Failed to delete label");
     }
   });
@@ -173,7 +174,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json(taskLabelsData);
     } catch (error) {
-      console.error("[API] Error fetching task labels:", error);
+      log.error("[labels] Error fetching task labels:", error);
       res.status(500).send("Failed to fetch task labels");
     }
   });
@@ -244,7 +245,7 @@ export function registerLabelRoutes(app: Express) {
         }
       }
     } catch (error) {
-      console.error("[API] Error adding label to task:", error);
+      log.error("[labels] Error adding label to task:", error);
       res.status(500).send("Failed to add label to task");
     }
   });
@@ -285,7 +286,7 @@ export function registerLabelRoutes(app: Express) {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("[API] Error removing label from task:", error);
+      log.error("[labels] Error removing label from task:", error);
       res.status(500).send("Failed to remove label from task");
     }
   });

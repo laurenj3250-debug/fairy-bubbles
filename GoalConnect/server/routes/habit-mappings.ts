@@ -10,6 +10,7 @@ import { habitDataMappings, habits } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import { z } from "zod";
+import { log } from "../lib/logger";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -66,7 +67,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.json({ mappings });
     } catch (error) {
-      console.error("Error fetching habit mappings:", error);
+      log.error("[habit-mappings] Error fetching habit mappings:", error);
       res.status(500).json({ error: "Failed to fetch habit mappings" });
     }
   });
@@ -102,7 +103,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.json(mapping);
     } catch (error) {
-      console.error("Error fetching habit mapping:", error);
+      log.error("[habit-mappings] Error fetching habit mapping:", error);
       res.status(500).json({ error: "Failed to fetch habit mapping" });
     }
   });
@@ -174,7 +175,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.status(201).json(mapping);
     } catch (error) {
-      console.error("Error creating habit mapping:", error);
+      log.error("[habit-mappings] Error creating habit mapping:", error);
       res.status(500).json({ error: "Failed to create habit mapping" });
     }
   });
@@ -232,7 +233,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error updating habit mapping:", error);
+      log.error("[habit-mappings] Error updating habit mapping:", error);
       res.status(500).json({ error: "Failed to update habit mapping" });
     }
   });
@@ -269,7 +270,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.json({ success: true, deleted: mappingId });
     } catch (error) {
-      console.error("Error deleting habit mapping:", error);
+      log.error("[habit-mappings] Error deleting habit mapping:", error);
       res.status(500).json({ error: "Failed to delete habit mapping" });
     }
   });
@@ -303,7 +304,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
         res.json({ mappings });
       } catch (error) {
-        console.error("Error fetching habit mappings:", error);
+        log.error("[habit-mappings] Error fetching habit mappings:", error);
         res.status(500).json({ error: "Failed to fetch habit mappings" });
       }
     }

@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from "pg";
 const { Pool } = pkg;
 import * as schema from "@shared/schema";
+import { log } from "./lib/logger";
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -56,7 +57,7 @@ export function getDb(): Database {
 
     // Handle pool errors gracefully
     pool.on('error', (err) => {
-      console.error('Database pool error:', err);
+      log.error('Database pool error:', err);
       // Don't immediately reset - let the pool try to recover
       // Only reset if we get repeated errors
     });
@@ -64,7 +65,7 @@ export function getDb(): Database {
     // Handle client errors
     pool.on('connect', (client) => {
       client.on('error', (err) => {
-        console.error('Database client error:', err);
+        log.error('Database client error:', err);
       });
     });
 

@@ -16,6 +16,7 @@ import {
   SUPPORTED_WORKOUT_TYPES,
   type AppleHealthParserOptions,
 } from "../importers/apple-health-parser";
+import { log } from "../lib/logger";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -166,7 +167,7 @@ export function registerImportRoutes(app: Express) {
             importedWorkouts.push(inserted);
           } catch (insertError) {
             // Log but continue with other workouts
-            console.error("Failed to insert workout:", insertError);
+            log.error("[import] Failed to insert workout:", insertError);
             skipped++;
           }
         }
@@ -188,7 +189,7 @@ export function registerImportRoutes(app: Express) {
           })),
         });
       } catch (error) {
-        console.error("Apple Health import error:", error);
+        log.error("[import] Apple Health import error:", error);
         res.status(500).json({
           error: "Failed to import Apple Health data",
           details: error instanceof Error ? error.message : "Unknown error",
@@ -203,6 +204,10 @@ export function registerImportRoutes(app: Express) {
    *
    * Query params:
    *   - sourceType: Filter by source (apple_watch, strava, other)
+   *   - workoutType: Filter by workout type (comma-separated for multiple)
+   *   - startDate: ISO date string - filter startTime >= startDate
+   *   - endDate: ISO date string - filter startTime <= endDate
+   *   - countOnly: boolean - return just { count, totalMinutes } instead of records
    *   - limit: Number of results (default 50)
    *   - offset: Pagination offset (default 0)
    */
@@ -211,40 +216,76 @@ export function registerImportRoutes(app: Express) {
       const userId = getUserId(req);
       const db = getDb();
 
+      const countOnly = req.query.countOnly === "true";
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
       const offset = parseInt(req.query.offset as string) || 0;
 
-      let query = db
+      // Build filter conditions
+      const conditions: ReturnType<typeof eq>[] = [eq(externalWorkouts.userId, userId)];
+
+      // Filter by source type
+      if (req.query.sourceType) {
+        conditions.push(eq(externalWorkouts.sourceType, req.query.sourceType as any));
+      }
+
+      // Filter by workout type(s) - comma-separated
+      if (req.query.workoutType) {
+        const types = (req.query.workoutType as string).split(",").map(t => t.trim());
+        if (types.length === 1) {
+          conditions.push(eq(externalWorkouts.workoutType, types[0]));
+        } else {
+          conditions.push(sql`${externalWorkouts.workoutType} IN (${sql.join(types.map(t => sql`${t}`), sql`, `)})`);
+        }
+      }
+
+      // Filter by start date
+      if (req.query.startDate) {
+        const startDate = new Date(req.query.startDate as string);
+        if (!isNaN(startDate.getTime())) {
+          conditions.push(sql`${externalWorkouts.startTime} >= ${startDate}`);
+        }
+      }
+
+      // Filter by end date
+      if (req.query.endDate) {
+        const endDate = new Date(req.query.endDate as string);
+        if (!isNaN(endDate.getTime())) {
+          conditions.push(sql`${externalWorkouts.startTime} <= ${endDate}`);
+        }
+      }
+
+      const whereClause = and(...conditions);
+
+      // Count-only mode: return aggregated stats without fetching all records
+      if (countOnly) {
+        const [result] = await db
+          .select({
+            count: sql<number>`count(*)`,
+            totalMinutes: sql<number>`COALESCE(sum(${externalWorkouts.durationMinutes}), 0)`,
+          })
+          .from(externalWorkouts)
+          .where(whereClause);
+
+        return res.json({
+          count: Number(result.count),
+          totalMinutes: Number(result.totalMinutes),
+        });
+      }
+
+      // Full query with pagination
+      const workouts = await db
         .select()
         .from(externalWorkouts)
-        .where(eq(externalWorkouts.userId, userId))
+        .where(whereClause)
         .orderBy(desc(externalWorkouts.startTime))
         .limit(limit)
         .offset(offset);
 
-      // Filter by source type if specified
-      if (req.query.sourceType) {
-        query = db
-          .select()
-          .from(externalWorkouts)
-          .where(
-            and(
-              eq(externalWorkouts.userId, userId),
-              eq(externalWorkouts.sourceType, req.query.sourceType as any)
-            )
-          )
-          .orderBy(desc(externalWorkouts.startTime))
-          .limit(limit)
-          .offset(offset);
-      }
-
-      const workouts = await query;
-
-      // Get total count
+      // Get total count with same filters
       const [countResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(externalWorkouts)
-        .where(eq(externalWorkouts.userId, userId));
+        .where(whereClause);
 
       res.json({
         workouts,
@@ -256,7 +297,7 @@ export function registerImportRoutes(app: Express) {
         },
       });
     } catch (error) {
-      console.error("Error fetching workouts:", error);
+      log.error("[import] Error fetching workouts:", error);
       res.status(500).json({ error: "Failed to fetch workouts" });
     }
   });
@@ -292,7 +333,7 @@ export function registerImportRoutes(app: Express) {
 
       res.json(workout);
     } catch (error) {
-      console.error("Error fetching workout:", error);
+      log.error("[import] Error fetching workout:", error);
       res.status(500).json({ error: "Failed to fetch workout" });
     }
   });
@@ -334,7 +375,7 @@ export function registerImportRoutes(app: Express) {
 
       res.json({ success: true, deleted: workoutId });
     } catch (error) {
-      console.error("Error deleting workout:", error);
+      log.error("[import] Error deleting workout:", error);
       res.status(500).json({ error: "Failed to delete workout" });
     }
   });
@@ -370,7 +411,7 @@ export function registerImportRoutes(app: Express) {
         deleted: result.length,
       });
     } catch (error) {
-      console.error("Error deleting workouts:", error);
+      log.error("[import] Error deleting workouts:", error);
       res.status(500).json({ error: "Failed to delete workouts" });
     }
   });
@@ -411,7 +452,7 @@ export function registerImportRoutes(app: Express) {
         byWorkoutType: workoutTypes,
       });
     } catch (error) {
-      console.error("Error fetching import stats:", error);
+      log.error("[import] Error fetching import stats:", error);
       res.status(500).json({ error: "Failed to fetch import statistics" });
     }
   });

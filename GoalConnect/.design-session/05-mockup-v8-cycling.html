@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey - Cycling</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* App design system colors */
+      --background: hsl(45, 30%, 12%);
+      --background-elevated: hsl(40, 20%, 18%);
+      --card: hsl(40, 20%, 18%);
+      --card-glass: hsla(40, 20%, 18%, 0.4);
+      --foreground: hsl(40, 20%, 95%);
+      --primary: hsl(25, 95%, 58%);
+      --secondary: hsl(200, 85%, 55%);
+      --accent: hsl(160, 80%, 50%);
+      --success: hsl(142, 85%, 55%);
+      --warning: hsl(38, 100%, 60%);
+      --border: hsla(40, 15%, 50%, 0.15);
+      --muted: hsl(40, 12%, 22%);
+      --muted-foreground: hsl(40, 15%, 65%);
+
+      /* Sport-specific accent - cycling blue */
+      --cycle-accent: hsl(200, 85%, 55%);
+      --cycle-glow: hsla(200, 85%, 55%, 0.3);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, .heading {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-title { font-size: 24px; color: var(--foreground); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .nav-tab {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+    }
+
+    .nav-tab:hover { color: var(--foreground); background: hsla(40, 15%, 50%, 0.1); }
+    .nav-tab.active { background: var(--cycle-accent); color: white; box-shadow: 0 2px 8px var(--cycle-glow); }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .glass-card:hover {
+      border-color: hsla(40, 15%, 50%, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-foreground);
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 16px;
+    }
+
+    /* Hero Stats Row */
+    .hero-row { display: flex; gap: 16px; margin-bottom: 24px; }
+
+    .hero-stat { flex: 1; text-align: center; padding: 24px 16px; }
+
+    .hero-value {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cycle-accent), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .hero-label { font-size: 12px; color: var(--muted-foreground); font-weight: 500; }
+    .hero-sub { font-size: 11px; color: var(--accent); margin-top: 4px; }
+
+    /* Chart area */
+    .chart-area {
+      height: 200px;
+      background: linear-gradient(180deg, hsla(200, 85%, 55%, 0.05) 0%, transparent 100%);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Yearly Miles Ring */
+    .ring-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      position: relative;
+    }
+
+    .ring-chart {
+      width: 160px;
+      height: 160px;
+      position: relative;
+    }
+
+    .ring-chart svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ring-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .ring-value {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--foreground);
+    }
+
+    .ring-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    /* Monthly Bar Chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 100%;
+      padding: 20px 10px 30px;
+      gap: 6px;
+    }
+
+    .bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .bar {
+      width: 100%;
+      background: linear-gradient(180deg, var(--cycle-accent) 0%, hsla(200, 85%, 55%, 0.4) 100%);
+      border-radius: 4px 4px 0 0;
+      transition: all 0.3s ease;
+    }
+
+    .bar:hover { filter: brightness(1.1); }
+
+    .bar-label {
+      font-size: 9px;
+      color: var(--muted-foreground);
+      margin-top: 6px;
+    }
+
+    /* ThemeRiver (Stream Chart) */
+    .themeriver {
+      height: 180px;
+      position: relative;
+    }
+
+    .themeriver svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Segment PRs List */
+    .segment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .segment-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: hsla(200, 85%, 55%, 0.05);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .segment-item:hover {
+      border-color: var(--cycle-accent);
+      background: hsla(200, 85%, 55%, 0.1);
+    }
+
+    .segment-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .segment-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cycle-accent);
+    }
+
+    .segment-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: hsla(142, 85%, 55%, 0.2);
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* Candlestick Chart */
+    .candlestick {
+      height: 180px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .candle {
+      width: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .candle-wick {
+      width: 2px;
+      background: var(--muted-foreground);
+    }
+
+    .candle-body {
+      width: 100%;
+      border-radius: 2px;
+      min-height: 20px;
+    }
+
+    .candle-label {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      margin-top: 8px;
+    }
+
+    /* Cumulative YTD Area Chart */
+    .area-chart {
+      height: 180px;
+      position: relative;
+    }
+
+    .area-chart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Elevation Mountain Chart */
+    .mountain-chart {
+      height: 160px;
+      position: relative;
+    }
+
+    .mountain-chart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Ride Type Donut */
+    .donut-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 160px;
+      gap: 20px;
+    }
+
+    .donut-chart {
+      width: 120px;
+      height: 120px;
+    }
+
+    .donut-chart svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--foreground);
+    }
+
+    .donut-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Speed Trend Line */
+    .line-chart {
+      height: 160px;
+      position: relative;
+    }
+
+    .line-chart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .span-3, .span-4 { grid-column: span 6; }
+      .span-6 { grid-column: span 12; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-row { flex-direction: column; }
+      .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
+      .nav { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav">
+      <h1 class="nav-title heading">Journey</h1>
+      <div class="nav-tabs">
+        <button class="nav-tab">Lifting</button>
+        <button class="nav-tab">Climbing</button>
+        <button class="nav-tab active">Cycling</button>
+      </div>
+    </nav>
+
+    <!-- Hero Stats -->
+    <div class="hero-row">
+      <div class="glass-card hero-stat">
+        <div class="hero-value">2,847</div>
+        <div class="hero-label">Yearly Miles</div>
+        <div class="hero-sub">71% of 4,000 goal</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">142k</div>
+        <div class="hero-label">Elevation (ft)</div>
+        <div class="hero-sub">14 Everests!</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">3</div>
+        <div class="hero-label">Centuries</div>
+        <div class="hero-sub">100+ mi rides</div>
+      </div>
+      <div class="glass-card hero-stat">
+        <div class="hero-value">12</div>
+        <div class="hero-label">Day Streak</div>
+        <div class="hero-sub">Keep it up!</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+      <!-- Yearly Miles Progress Ring -->
+      <div class="glass-card span-4">
+        <div class="card-label">2024 Goal</div>
+        <div class="card-title">Yearly Miles Progress</div>
+        <div class="ring-container">
+          <div class="ring-chart">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--muted)" stroke-width="8"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#ring-gradient)" stroke-width="8" stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="55"/>
+              <defs>
+                <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="hsl(200, 85%, 55%)"/>
+                  <stop offset="100%" stop-color="hsl(160, 80%, 50%)"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-value">71%</div>
+              <div class="ring-label">2,847 / 4,000</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Miles Bar Chart -->
+      <div class="glass-card span-8">
+        <div class="card-label">This Year</div>
+        <div class="card-title">Monthly Miles</div>
+        <div class="chart-area bar-chart">
+          <div class="bar-wrapper"><div class="bar" style="height: 45%"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 38%"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 62%"></div><span class="bar-label">Mar</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 75%"></div><span class="bar-label">Apr</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 90%"></div><span class="bar-label">May</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 100%"></div><span class="bar-label">Jun</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 95%"></div><span class="bar-label">Jul</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 88%"></div><span class="bar-label">Aug</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 70%"></div><span class="bar-label">Sep</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 55%"></div><span class="bar-label">Oct</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 30%"></div><span class="bar-label">Nov</span></div>
+          <div class="bar-wrapper"><div class="bar" style="height: 15%; opacity: 0.5"></div><span class="bar-label">Dec</span></div>
+        </div>
+      </div>
+
+      <!-- ThemeRiver (Distance + Elevation) -->
+      <div class="glass-card span-8">
+        <div class="card-label">Volume Flow</div>
+        <div class="card-title">Distance & Elevation Over Time (ThemeRiver)</div>
+        <div class="themeriver">
+          <svg viewBox="0 0 400 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="dist-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0.2"/>
+              </linearGradient>
+              <linearGradient id="elev-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0.2"/>
+              </linearGradient>
+              <linearGradient id="time-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(25, 95%, 58%)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="hsl(25, 95%, 58%)" stop-opacity="0.2"/>
+              </linearGradient>
+            </defs>
+            <!-- Distance stream (top) -->
+            <path d="M0,70 Q50,55 100,45 T200,35 T300,40 T400,55 L400,70 Q350,68 300,70 T200,70 T100,70 T0,70 Z" fill="url(#dist-grad)"/>
+            <!-- Elevation stream (middle) -->
+            <path d="M0,70 Q50,78 100,88 T200,95 T300,88 T400,78 L400,70 Q350,72 300,70 T200,70 T100,70 T0,70 Z" fill="url(#elev-grad)"/>
+            <!-- Time stream (bottom) -->
+            <path d="M0,100 Q50,105 100,115 T200,120 T300,112 T400,105 L400,95 Q350,92 300,95 T200,98 T100,95 T0,100 Z" fill="url(#time-grad)"/>
+          </svg>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(200, 85%, 55%)"></span> Distance</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(160, 80%, 50%)"></span> Elevation</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(25, 95%, 58%)"></span> Time</div>
+        </div>
+      </div>
+
+      <!-- Segment PRs -->
+      <div class="glass-card span-4">
+        <div class="card-label">Strava</div>
+        <div class="card-title">Segment PRs</div>
+        <div class="segment-list">
+          <div class="segment-item">
+            <div>
+              <div class="segment-name">Hawk Hill Climb</div>
+              <span class="segment-badge">PR</span>
+            </div>
+            <span class="segment-time">8:42</span>
+          </div>
+          <div class="segment-item">
+            <div>
+              <div class="segment-name">Paradise Loop Sprint</div>
+              <span class="segment-badge">PR</span>
+            </div>
+            <span class="segment-time">2:15</span>
+          </div>
+          <div class="segment-item">
+            <div>
+              <div class="segment-name">Camino Alto</div>
+            </div>
+            <span class="segment-time">12:08</span>
+          </div>
+          <div class="segment-item">
+            <div>
+              <div class="segment-name">Fairfax-Bolinas Rd</div>
+            </div>
+            <span class="segment-time">24:33</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Speed Candlestick -->
+      <div class="glass-card span-6">
+        <div class="card-label">Last 8 Weeks</div>
+        <div class="card-title">Weekly Speed Range (Candlestick)</div>
+        <div class="candlestick">
+          <div class="candle">
+            <div class="candle-wick" style="height: 30px"></div>
+            <div class="candle-body" style="height: 35px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 15px"></div>
+            <span class="candle-label">W1</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 25px"></div>
+            <div class="candle-body" style="height: 40px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 20px"></div>
+            <span class="candle-label">W2</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 35px"></div>
+            <div class="candle-body" style="height: 25px; background: hsl(0, 70%, 55%)"></div>
+            <div class="candle-wick" style="height: 25px"></div>
+            <span class="candle-label">W3</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 20px"></div>
+            <div class="candle-body" style="height: 45px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 15px"></div>
+            <span class="candle-label">W4</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 30px"></div>
+            <div class="candle-body" style="height: 30px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 20px"></div>
+            <span class="candle-label">W5</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 25px"></div>
+            <div class="candle-body" style="height: 35px; background: hsl(0, 70%, 55%)"></div>
+            <div class="candle-wick" style="height: 30px"></div>
+            <span class="candle-label">W6</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 15px"></div>
+            <div class="candle-body" style="height: 50px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 10px"></div>
+            <span class="candle-label">W7</span>
+          </div>
+          <div class="candle">
+            <div class="candle-wick" style="height: 20px"></div>
+            <div class="candle-body" style="height: 40px; background: hsl(142, 85%, 55%)"></div>
+            <div class="candle-wick" style="height: 15px"></div>
+            <span class="candle-label">W8</span>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(142, 85%, 55%)"></span> Speed up from prev week</div>
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(0, 70%, 55%)"></span> Speed down</div>
+        </div>
+      </div>
+
+      <!-- Cumulative YTD Miles -->
+      <div class="glass-card span-6">
+        <div class="card-label">Year to Date</div>
+        <div class="card-title">Cumulative Miles vs Goal</div>
+        <div class="area-chart">
+          <svg viewBox="0 0 300 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="actual-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="hsl(200, 85%, 55%)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Goal line (dashed) -->
+            <line x1="0" y1="120" x2="300" y2="20" stroke="var(--muted-foreground)" stroke-width="2" stroke-dasharray="6"/>
+            <!-- Actual area -->
+            <path d="M0,120 Q30,115 60,105 T120,85 T180,65 T240,50 T300,40 L300,140 L0,140 Z" fill="url(#actual-grad)"/>
+            <!-- Actual line -->
+            <path d="M0,120 Q30,115 60,105 T120,85 T180,65 T240,50 T300,40" fill="none" stroke="hsl(200, 85%, 55%)" stroke-width="3"/>
+            <!-- End dot -->
+            <circle cx="300" cy="40" r="5" fill="hsl(200, 85%, 55%)"/>
+          </svg>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background: hsl(200, 85%, 55%)"></span> Actual: 2,847 mi</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--muted-foreground)"></span> Goal pace: 3,333 mi</div>
+        </div>
+      </div>
+
+      <!-- Elevation Mountain -->
+      <div class="glass-card span-4">
+        <div class="card-label">Climbing</div>
+        <div class="card-title">Monthly Elevation</div>
+        <div class="mountain-chart">
+          <svg viewBox="0 0 200 120" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="mountain-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="hsl(160, 80%, 50%)" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,100 L20,85 L40,75 L60,60 L80,40 L100,25 L120,35 L140,50 L160,65 L180,80 L200,90 L200,120 L0,120 Z" fill="url(#mountain-grad)"/>
+            <path d="M0,100 L20,85 L40,75 L60,60 L80,40 L100,25 L120,35 L140,50 L160,65 L180,80 L200,90" fill="none" stroke="hsl(160, 80%, 50%)" stroke-width="2"/>
+            <circle cx="100" cy="25" r="4" fill="hsl(160, 80%, 50%)"/>
+            <text x="100" y="18" text-anchor="middle" fill="var(--foreground)" font-size="9" font-weight="600">18.2k</text>
+          </svg>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: var(--muted-foreground); margin-top: 8px;">Peak: June 18,200 ft</p>
+      </div>
+
+      <!-- Ride Type Donut -->
+      <div class="glass-card span-4">
+        <div class="card-label">Breakdown</div>
+        <div class="card-title">Ride Types</div>
+        <div class="donut-container">
+          <div class="donut-chart">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(200, 85%, 55%)" stroke-width="15" stroke-dasharray="125.6 125.6" stroke-dashoffset="0"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(160, 80%, 50%)" stroke-width="15" stroke-dasharray="75.4 175.9" stroke-dashoffset="-125.6"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(25, 95%, 58%)" stroke-width="15" stroke-dasharray="50.3 200.9" stroke-dashoffset="-201"/>
+            </svg>
+          </div>
+          <div class="donut-legend">
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: hsl(200, 85%, 55%)"></span>
+              Road 50%
+            </div>
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: hsl(160, 80%, 50%)"></span>
+              Gravel 30%
+            </div>
+            <div class="donut-legend-item">
+              <span class="donut-dot" style="background: hsl(25, 95%, 58%)"></span>
+              MTB 20%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Average Speed Trend -->
+      <div class="glass-card span-4">
+        <div class="card-label">Performance</div>
+        <div class="card-title">Avg Speed Trend</div>
+        <div class="line-chart">
+          <svg viewBox="0 0 200 120" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <line x1="0" y1="30" x2="200" y2="30" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="0" y1="60" x2="200" y2="60" stroke="var(--border)" stroke-dasharray="4"/>
+            <line x1="0" y1="90" x2="200" y2="90" stroke="var(--border)" stroke-dasharray="4"/>
+            <!-- Speed line -->
+            <polyline points="0,85 25,80 50,75 75,72 100,65 125,60 150,55 175,52 200,48" fill="none" stroke="hsl(200, 85%, 55%)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- End dot -->
+            <circle cx="200" cy="48" r="5" fill="hsl(200, 85%, 55%)"/>
+            <!-- Labels -->
+            <text x="200" y="42" text-anchor="end" fill="var(--foreground)" font-size="10" font-weight="600">18.2</text>
+            <text x="0" y="92" fill="var(--muted-foreground)" font-size="9">Jan</text>
+            <text x="200" y="110" text-anchor="end" fill="var(--muted-foreground)" font-size="9">Now</text>
+          </svg>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: var(--accent); margin-top: 8px;">+2.1 mph since January</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

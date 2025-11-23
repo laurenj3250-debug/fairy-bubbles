@@ -16,6 +16,7 @@ import { Altimeter } from "@/components/Altimeter";
 import { ClimbingInspirationTile } from "@/components/ClimbingInspirationTile";
 import ActiveExpedition from "@/components/ActiveExpedition";
 import CurrentExpeditionWidget from "@/components/CurrentExpeditionWidget";
+import { QuickLogWidget } from "@/components/QuickLogWidget";
 import { Plus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -207,6 +208,9 @@ export default function DashboardNew() {
       <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-6 relative z-10">
         {/* Active Expedition (if exists) */}
         <ActiveExpedition />
+
+        {/* Quick Log Widget - One-tap habit logging */}
+        <QuickLogWidget />
 
         {/* Row 1: Hero Band - Today's Pitch (left 62%) + Routes (right 34%) with 4% gap */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[420px]">

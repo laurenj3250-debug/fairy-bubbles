@@ -1,4 +1,4 @@
-import { Home, Target, ListTodo, Settings, Mountain, Calendar } from "lucide-react";
+import { Home, Target, ListTodo, Settings, Mountain, Calendar, BookOpen, TrendingUp } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlowingOrbHabits } from "@/components/GlowingOrbHabits";
@@ -8,6 +8,7 @@ import { PeakLoreWidget } from "@/components/PeakLoreWidget";
 import { WeeklyRhythm } from "@/components/WeeklyRhythm";
 import { TokenCounter } from "@/components/TokenCounter";
 import { TodoPanel } from "@/components/TodoPanel";
+import { SummitLog } from "@/components/SummitLog";
 
 // Get time-based greeting
 function getGreeting(): string {
@@ -45,6 +46,8 @@ const navItems = [
   { path: "/habits", icon: Mountain, label: "Habits" },
   { path: "/goals", icon: Target, label: "Goals" },
   { path: "/todos", icon: ListTodo, label: "Tasks" },
+  { path: "/journey", icon: TrendingUp, label: "Journey" },
+  { path: "/summit-journal", icon: BookOpen, label: "Summit Journal" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -115,6 +118,9 @@ export default function V2Dashboard() {
             <WeeklyRhythm />
           </div>
         </div>
+
+        {/* Summit Log - Monthly Accomplishments */}
+        <SummitLog />
       </main>
 
       {/* === TO-DO PANEL === */}

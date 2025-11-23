@@ -24,7 +24,6 @@ export default function LoginPage() {
   // Redirect to home if already authenticated
   useEffect(() => {
     if (user) {
-      console.log("[Login] User already authenticated, redirecting to /");
       setLocation("/");
     }
   }, [user, setLocation]);
@@ -35,23 +34,18 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      console.log("[Login] Calling signIn...");
       const result = await signIn(email, password);
-      console.log("[Login] signIn returned:", result);
 
       if (result.error) {
-        console.log("[Login] Error from signIn:", result.error);
         setError(result.error);
         setIsSubmitting(false);
         return;
       }
 
       // Success - the useEffect will handle navigation when user state updates
-      console.log("[Login] Login successful, waiting for user state to update");
       // Note: Don't set isSubmitting to false here - keep the loading state
       // until the redirect happens via useEffect
     } catch (err) {
-      console.error("[Login] Exception during handleSubmit:", err);
       const message = err instanceof Error ? err.message : "Unable to sign in";
       setError(message);
       setIsSubmitting(false);

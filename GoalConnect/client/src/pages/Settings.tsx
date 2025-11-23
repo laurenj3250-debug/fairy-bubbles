@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mountain, Lock, Check, ArrowLeft } from "lucide-react";
+import { Mountain, Lock, Check, ArrowLeft, Download, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -66,6 +66,30 @@ export default function Settings() {
           </h1>
           <p className="text-muted-foreground">Customize your climbing experience</p>
         </div>
+
+        {/* Import Data Link */}
+        <Link href="/settings/import">
+          <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 mb-8 shadow-lg cursor-pointer transition-all hover:shadow-xl hover:scale-[1.01]">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
+                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))'
+                  }}>
+                    <Download className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Import Data</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Connect Apple Health, Kilter Board & more
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Unlocked Backgrounds */}
         <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 mb-8 shadow-lg">

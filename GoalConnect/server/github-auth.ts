@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { users } from "@shared/schema";
 import { storage } from "./storage";
 import type { AuthenticatedUser } from "./simple-auth";
+import { log } from "./lib/logger";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
@@ -97,7 +98,7 @@ async function findOrCreateGitHubUser(githubUser: GitHubUser): Promise<Authentic
     .where(eq(users.email, email.toLowerCase()));
 
   if (existingUser) {
-    console.log('[github-auth] ✅ Existing user found:', email);
+    log.info('[github-auth] Existing user found:', email);
     return {
       id: existingUser.id,
       email: existingUser.email,
@@ -116,7 +117,7 @@ async function findOrCreateGitHubUser(githubUser: GitHubUser): Promise<Authentic
     })
     .returning();
 
-  console.log('[github-auth] ✅ New GitHub user created:', email);
+  log.info('[github-auth] New GitHub user created:', email);
 
   // Initialize RPG data for new user
   // TODO: Re-enable when creature system is fully implemented
@@ -183,7 +184,7 @@ async function handleGitHubCallback(req: Request, res: Response) {
     const { code, error } = req.query;
 
     if (error) {
-      console.error('[github-auth] OAuth error:', error);
+      log.error('[github-auth] OAuth error:', error);
       return res.redirect('/?error=github_auth_denied');
     }
 
@@ -204,13 +205,13 @@ async function handleGitHubCallback(req: Request, res: Response) {
     req.session.user = user;
     req.user = user;
 
-    console.log('[github-auth] ✅ User authenticated via GitHub:', user.email);
-    console.log('[github-auth] Session ID:', req.sessionID);
+    log.info('[github-auth] User authenticated via GitHub:', user.email);
+    log.debug('[github-auth] Session ID:', req.sessionID);
 
     // Redirect to app
     res.redirect('/');
   } catch (error) {
-    console.error('[github-auth] Callback error:', error);
+    log.error('[github-auth] Callback error:', error);
     res.redirect('/?error=github_auth_failed');
   }
 }
@@ -219,11 +220,11 @@ async function handleGitHubCallback(req: Request, res: Response) {
  * Configure GitHub OAuth authentication
  */
 export function configureGitHubAuth(app: Express) {
-  console.log("[github-auth] Configuring GitHub OAuth");
+  log.info("[github-auth] Configuring GitHub OAuth");
 
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-    console.warn("[github-auth] ⚠️  GitHub OAuth not fully configured. Missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET");
-    console.warn("[github-auth] GitHub login will not be available");
+    log.warn("[github-auth] GitHub OAuth not fully configured. Missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET");
+    log.warn("[github-auth] GitHub login will not be available");
     return;
   }
 
@@ -231,6 +232,6 @@ export function configureGitHubAuth(app: Express) {
   app.get("/api/auth/github", handleGitHubLogin);
   app.get("/api/auth/github/callback", handleGitHubCallback);
 
-  console.log("[github-auth] ✅ GitHub OAuth configured");
-  console.log("[github-auth] Callback URL:", GITHUB_CALLBACK_URL);
+  log.info("[github-auth] GitHub OAuth configured");
+  log.info("[github-auth] Callback URL:", GITHUB_CALLBACK_URL);
 }

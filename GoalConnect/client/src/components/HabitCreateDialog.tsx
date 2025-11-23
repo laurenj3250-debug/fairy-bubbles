@@ -264,14 +264,10 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
         linkedGoalId: linkedGoalId,
       };
 
-      console.log("[HabitCreateDialog] Submitting habit:", data);
-
       if (activeHabit) {
         await apiRequest(`/api/habits/${activeHabit.id}`, "PATCH", data);
-        console.log("[HabitCreateDialog] Habit updated successfully");
       } else {
         await apiRequest("/api/habits", "POST", data);
-        console.log("[HabitCreateDialog] Habit created successfully");
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
@@ -281,7 +277,6 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
       setSubmitting(false);
       handleClose();
     } catch (error: any) {
-      console.error("[HabitCreateDialog] Failed to save habit:", error);
       setError(error.message || "Failed to save route. Please try again.");
       setSubmitting(false);
     }

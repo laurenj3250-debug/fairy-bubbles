@@ -23,6 +23,8 @@ import {
   FileUp,
   Clock,
   Activity,
+  Bike,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -35,9 +37,11 @@ import { Badge } from "@/components/ui/badge";
 // Types
 interface KilterBoardStatus {
   connected: boolean;
-  lastSync: string | null;
-  kilterUserId: number | null;
-  username: string | null;
+  lastSyncAt: string | null;
+  syncStatus: string | null;
+  syncError: string | null;
+  syncFrequency: string | null;
+  autoCompleteHabits: boolean | null;
 }
 
 interface ClimbingSession {
@@ -62,6 +66,43 @@ interface AppleHealthUploadResult {
   workoutsImported: number;
   duplicatesSkipped: number;
   habitsMatched: number;
+}
+
+interface StravaStatus {
+  connected: boolean;
+  configured: boolean;
+  lastSyncAt: string | null;
+  syncStatus: string | null;
+  syncError: string | null;
+}
+
+interface StravaActivity {
+  id: number;
+  workoutType: string;
+  startTime: string;
+  durationMinutes: number;
+  distanceKm: string;
+  caloriesBurned: number | null;
+  metadata: {
+    name: string;
+    sport_type: string;
+    total_elevation_gain?: number;
+  };
+}
+
+interface StravaStats {
+  strava: {
+    allTime: {
+      runs: { count: number; distanceKm: number; durationHours: number };
+      rides: { count: number; distanceKm: number; durationHours: number };
+      swims: { count: number; distanceKm: number; durationHours: number };
+    };
+  };
+  local: {
+    totalActivities: number;
+    totalDuration: number;
+    totalCalories: number;
+  };
 }
 
 export default function ImportSettings() {
@@ -96,7 +137,7 @@ export default function ImportSettings() {
   // Connect to Kilter Board
   const connectMutation = useMutation({
     mutationFn: async (data: { username: string; password: string }) => {
-      return await apiRequest("POST", "/api/import/kilter-board/connect", data);
+      return await apiRequest("/api/import/kilter-board/connect", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/import/kilter-board/status"] });
@@ -110,7 +151,7 @@ export default function ImportSettings() {
   // Disconnect from Kilter Board
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", "/api/import/kilter-board/disconnect", {});
+      return await apiRequest("/api/import/kilter-board/disconnect", "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/import/kilter-board/status"] });
@@ -120,7 +161,7 @@ export default function ImportSettings() {
   // Sync Kilter Board data
   const syncMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/import/kilter-board/sync", {});
+      return await apiRequest("/api/import/kilter-board/sync", "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/import/kilter-board/stats"] });
@@ -151,6 +192,58 @@ export default function ImportSettings() {
       setSelectedFile(null);
       setUploadProgress(0);
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+    },
+  });
+
+  // ============= STRAVA =============
+  // Fetch Strava connection status
+  const { data: stravaStatus, isLoading: isLoadingStravaStatus } = useQuery<StravaStatus>({
+    queryKey: ["/api/import/strava/status"],
+    refetchInterval: false,
+  });
+
+  // Fetch Strava activities
+  const { data: stravaActivities } = useQuery<{ activities: StravaActivity[] }>({
+    queryKey: ["/api/import/strava/activities"],
+    enabled: stravaStatus?.connected === true,
+  });
+
+  // Fetch Strava stats
+  const { data: stravaStats } = useQuery<StravaStats>({
+    queryKey: ["/api/import/strava/stats"],
+    enabled: stravaStatus?.connected === true,
+  });
+
+  // Get Strava auth URL and redirect
+  const stravaAuthMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("/api/import/strava/auth", "GET") as { authUrl: string };
+      return response;
+    },
+    onSuccess: (data) => {
+      // Redirect to Strava OAuth
+      window.location.href = data.authUrl;
+    },
+  });
+
+  // Disconnect from Strava
+  const stravaDisconnectMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/import/strava/disconnect", "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/import/strava/status"] });
+    },
+  });
+
+  // Sync Strava data
+  const stravaSyncMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/import/strava/sync", "POST");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/import/strava/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/import/strava/stats"] });
     },
   });
 
@@ -219,7 +312,7 @@ export default function ImportSettings() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-background/40 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-3 bg-background/40 backdrop-blur-sm">
             <TabsTrigger value="apple-health" className="flex items-center gap-2">
               <Watch className="w-4 h-4" />
               Apple Health
@@ -227,6 +320,10 @@ export default function ImportSettings() {
             <TabsTrigger value="kilter-board" className="flex items-center gap-2">
               <Mountain className="w-4 h-4" />
               Kilter Board
+            </TabsTrigger>
+            <TabsTrigger value="strava" className="flex items-center gap-2">
+              <Bike className="w-4 h-4" />
+              Strava
             </TabsTrigger>
           </TabsList>
 
@@ -382,7 +479,7 @@ export default function ImportSettings() {
                         <div>
                           <p className="font-semibold text-mountain-alpine-meadow">Connected</p>
                           <p className="text-sm text-muted-foreground">
-                            {kilterStatus.username || `User ID: ${kilterStatus.kilterUserId}`}
+                            Kilter Board account linked
                           </p>
                         </div>
                       </div>
@@ -401,10 +498,10 @@ export default function ImportSettings() {
                       </Button>
                     </div>
 
-                    {kilterStatus.lastSync && (
+                    {kilterStatus.lastSyncAt && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        Last synced: {formatDateTime(kilterStatus.lastSync)}
+                        Last synced: {formatDateTime(kilterStatus.lastSyncAt)}
                       </div>
                     )}
 
@@ -512,7 +609,7 @@ export default function ImportSettings() {
                     </div>
                     <div className="text-center p-4 bg-muted/50 rounded-lg">
                       <p className="text-2xl font-bold">
-                        {kilterStats.averageProblemsPerSession.toFixed(1)}
+                        {(kilterStats.averageProblemsPerSession ?? 0).toFixed(1)}
                       </p>
                       <p className="text-sm text-muted-foreground">Avg per Session</p>
                     </div>
@@ -547,6 +644,198 @@ export default function ImportSettings() {
                         </div>
                         <Badge variant="secondary">
                           {session.problemsSent}/{session.problemsAttempted}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Strava Tab */}
+          <TabsContent value="strava" className="space-y-6">
+            {/* Connection Status Card */}
+            <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5" />
+                  Connection Status
+                </CardTitle>
+                <CardDescription>
+                  Connect your Strava account to sync running, cycling, and other activities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingStravaStatus ? (
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Checking connection...
+                  </div>
+                ) : !stravaStatus?.configured ? (
+                  <div className="p-4 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+                    <p className="text-sm text-amber-200">
+                      Strava integration is not configured. Please add STRAVA_CLIENT_ID and
+                      STRAVA_CLIENT_SECRET environment variables.
+                    </p>
+                  </div>
+                ) : stravaStatus?.connected ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-orange-500/20 border border-orange-500/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
+                        <div>
+                          <p className="font-semibold text-orange-400">Connected</p>
+                          <p className="text-sm text-muted-foreground">
+                            Strava account linked
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => stravaDisconnectMutation.mutate()}
+                        disabled={stravaDisconnectMutation.isPending}
+                      >
+                        {stravaDisconnectMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Unlink className="w-4 h-4" />
+                        )}
+                        Disconnect
+                      </Button>
+                    </div>
+
+                    {stravaStatus.lastSyncAt && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        Last synced: {formatDateTime(stravaStatus.lastSyncAt)}
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => stravaSyncMutation.mutate()}
+                      disabled={stravaSyncMutation.isPending}
+                      className="w-full"
+                    >
+                      {stravaSyncMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4" />
+                          Sync Now
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Connect your Strava account to import running, cycling, swimming, and other
+                      activities automatically.
+                    </p>
+                    <Button
+                      onClick={() => stravaAuthMutation.mutate()}
+                      disabled={stravaAuthMutation.isPending}
+                      className="w-full bg-[#FC4C02] hover:bg-[#E34402]"
+                    >
+                      {stravaAuthMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-4 h-4" />
+                          Connect with Strava
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      You will be redirected to Strava to authorize access.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Stats Card */}
+            {stravaStatus?.connected && stravaStats && (
+              <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Activity Stats
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center p-4 bg-orange-500/20 rounded-lg">
+                      <p className="text-2xl font-bold">{stravaStats.strava.allTime.runs.count}</p>
+                      <p className="text-sm text-muted-foreground">Runs</p>
+                      <p className="text-xs text-orange-400">
+                        {stravaStats.strava.allTime.runs.distanceKm.toFixed(0)} km
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-blue-500/20 rounded-lg">
+                      <p className="text-2xl font-bold">{stravaStats.strava.allTime.rides.count}</p>
+                      <p className="text-sm text-muted-foreground">Rides</p>
+                      <p className="text-xs text-blue-400">
+                        {stravaStats.strava.allTime.rides.distanceKm.toFixed(0)} km
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-cyan-500/20 rounded-lg">
+                      <p className="text-2xl font-bold">{stravaStats.strava.allTime.swims.count}</p>
+                      <p className="text-sm text-muted-foreground">Swims</p>
+                      <p className="text-xs text-cyan-400">
+                        {stravaStats.strava.allTime.swims.distanceKm.toFixed(0)} km
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-muted/50 rounded-lg">
+                    <p className="text-lg font-bold">
+                      {stravaStats.local?.totalActivities || 0} activities imported
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {stravaStats.local?.totalDuration
+                        ? `${Math.round(stravaStats.local.totalDuration / 60)} hours total`
+                        : ""}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Recent Activities */}
+            {stravaStatus?.connected && stravaActivities?.activities && stravaActivities.activities.length > 0 && (
+              <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Recent Activities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {stravaActivities.activities.slice(0, 5).map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium">{activity.metadata.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDateTime(activity.startTime)}
+                            {" • "}
+                            {activity.durationMinutes} min
+                            {activity.distanceKm && ` • ${activity.distanceKm} km`}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="capitalize">
+                          {activity.workoutType}
                         </Badge>
                       </div>
                     ))}

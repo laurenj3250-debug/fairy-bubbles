@@ -1,13 +1,14 @@
 import { getDb } from './db';
 import { sql } from 'drizzle-orm';
 import { seedMountaineeringData } from './seed-mountaineering-data';
+import { log } from './lib/logger';
 
 /**
  * Run database migrations on startup for Railway PostgreSQL
  * Creates tables if they don't exist (preserves existing data)
  */
 export async function runMigrations() {
-  console.log('[migrate] Starting Railway database migration...');
+  log.info('[migrate] Starting Railway database migration...');
 
   try {
     const db = getDb();
@@ -25,16 +26,16 @@ export async function runMigrations() {
             WHERE table_name = 'users'
           ) as users_exists
         `);
-        console.log('[migrate] ✅ Database connection successful');
+        log.info('[migrate] ✅ Database connection successful');
         break; // Success, exit retry loop
       } catch (error: any) {
         retries--;
-        console.error(`[migrate] ⚠️  Database connection failed:`, error?.message || error);
+        log.error(`[migrate] Database connection failed:`, error?.message || error);
         if (retries === 0) {
-          console.error('[migrate] ❌ Failed to connect to database after all retries');
+          log.error('[migrate] ❌ Failed to connect to database after all retries');
           throw error;
         }
-        console.log(`[migrate] Database not ready, retrying in 3 seconds... (${retries} attempts left)`);
+        log.info(`[migrate] Database not ready, retrying in 3 seconds... (${retries} attempts left)`);
         await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
       }
     }
@@ -42,7 +43,7 @@ export async function runMigrations() {
     const tablesExist = checkResult?.rows[0]?.users_exists;
 
     if (tablesExist) {
-      console.log('[migrate] ✅ Tables already exist, checking critical tables...');
+      log.info('[migrate] ✅ Tables already exist, checking critical tables...');
 
       // Always ensure session table exists (critical for authentication)
       try {
@@ -54,9 +55,9 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)`);
-        console.log('[migrate] ✅ Session table verified/created');
+        log.info('[migrate] ✅ Session table verified/created');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to ensure session table:', error);
+        log.error('[migrate] ⚠️  Failed to ensure session table:', error);
       }
 
       // Run incremental migrations
@@ -66,9 +67,9 @@ export async function runMigrations() {
           ALTER TABLE habits
           ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
         `);
-        console.log('[migrate] ✅ Difficulty column added/verified in habits table');
+        log.info('[migrate] ✅ Difficulty column added/verified in habits table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add difficulty column to habits:', error);
+        log.error('[migrate] ⚠️  Failed to add difficulty column to habits:', error);
       }
 
       try {
@@ -89,9 +90,9 @@ export async function runMigrations() {
           ALTER TABLE habits
           ADD COLUMN IF NOT EXISTS scheduled_day VARCHAR(10)
         `);
-        console.log('[migrate] ✅ Weekly Hub columns (category, effort, grade, scheduled_day) added/verified in habits table');
+        log.info('[migrate] ✅ Weekly Hub columns (category, effort, grade, scheduled_day) added/verified in habits table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add Weekly Hub columns to habits:', error);
+        log.error('[migrate] ⚠️  Failed to add Weekly Hub columns to habits:', error);
       }
 
       try {
@@ -100,9 +101,9 @@ export async function runMigrations() {
           ALTER TABLE goals
           ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
         `);
-        console.log('[migrate] ✅ Difficulty column added/verified in goals table');
+        log.info('[migrate] ✅ Difficulty column added/verified in goals table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add difficulty column to goals:', error);
+        log.error('[migrate] ⚠️  Failed to add difficulty column to goals:', error);
       }
 
       try {
@@ -111,24 +112,24 @@ export async function runMigrations() {
           ALTER TABLE todos
           ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10) NOT NULL DEFAULT 'medium'
         `);
-        console.log('[migrate] ✅ Difficulty column added/verified in todos table');
+        log.info('[migrate] ✅ Difficulty column added/verified in todos table');
 
         // Remove old points column from todos if it exists
         await db.execute(sql`ALTER TABLE todos DROP COLUMN IF EXISTS points`);
-        console.log('[migrate] ✅ Old points column removed from todos table');
+        log.info('[migrate] ✅ Old points column removed from todos table');
 
         // Add subtasks column if it doesn't exist
         await db.execute(sql`
           ALTER TABLE todos
           ADD COLUMN IF NOT EXISTS subtasks TEXT NOT NULL DEFAULT '[]'
         `);
-        console.log('[migrate] ✅ Subtasks column added/verified in todos table');
+        log.info('[migrate] ✅ Subtasks column added/verified in todos table');
 
         // Remove old description column from todos if it exists
         await db.execute(sql`ALTER TABLE todos DROP COLUMN IF EXISTS description`);
-        console.log('[migrate] ✅ Old description column removed from todos table');
+        log.info('[migrate] ✅ Old description column removed from todos table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to migrate todos table:', error);
+        log.error('[migrate] ⚠️  Failed to migrate todos table:', error);
       }
 
       try {
@@ -137,9 +138,9 @@ export async function runMigrations() {
           ALTER TABLE goals
           ADD COLUMN IF NOT EXISTS priority VARCHAR(10) NOT NULL DEFAULT 'medium'
         `);
-        console.log('[migrate] ✅ Priority column added/verified in goals table');
+        log.info('[migrate] ✅ Priority column added/verified in goals table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add priority column to goals:', error);
+        log.error('[migrate] ⚠️  Failed to add priority column to goals:', error);
       }
 
       try {
@@ -148,9 +149,9 @@ export async function runMigrations() {
           ALTER TABLE costumes
           ADD COLUMN IF NOT EXISTS evolution_required VARCHAR(20) NOT NULL DEFAULT 'seed'
         `);
-        console.log('[migrate] ✅ Evolution required column added/verified in costumes table');
+        log.info('[migrate] ✅ Evolution required column added/verified in costumes table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add evolution_required column to costumes:', error);
+        log.error('[migrate] ⚠️  Failed to add evolution_required column to costumes:', error);
       }
 
       try {
@@ -167,7 +168,7 @@ export async function runMigrations() {
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
-        console.log('[migrate] ✅ Sprites table created/verified');
+        log.info('[migrate] ✅ Sprites table created/verified');
 
         // Add rarity column if it doesn't exist (for existing tables)
         await db.execute(sql`
@@ -193,9 +194,9 @@ export async function runMigrations() {
             WHEN OTHERS THEN NULL;
           END $$;
         `);
-        console.log('[migrate] ✅ Sprites table updated with rarity and new categories');
+        log.info('[migrate] ✅ Sprites table updated with rarity and new categories');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create/update sprites table:', error);
+        log.error('[migrate] ⚠️  Failed to create/update sprites table:', error);
       }
 
       try {
@@ -211,9 +212,9 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_tags_user_category ON dream_scroll_tags(user_id, category)`);
-        console.log('[migrate] ✅ Dream scroll tags table created/verified');
+        log.info('[migrate] ✅ Dream scroll tags table created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create dream_scroll_tags table:', error);
+        log.error('[migrate] ⚠️  Failed to create dream_scroll_tags table:', error);
       }
 
       try {
@@ -236,9 +237,9 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_user_id ON dream_scroll_items(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
-        console.log('[migrate] ✅ Dream scroll table and indexes created/verified');
+        log.info('[migrate] ✅ Dream scroll table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
+        log.error('[migrate] ⚠️  Failed to create dream_scroll_items table:', error);
       }
 
       try {
@@ -247,9 +248,9 @@ export async function runMigrations() {
           ALTER TABLE dream_scroll_items
           ADD COLUMN IF NOT EXISTS tags TEXT
         `);
-        console.log('[migrate] ✅ Tags column added/verified in dream_scroll_items table');
+        log.info('[migrate] ✅ Tags column added/verified in dream_scroll_items table');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add tags column to dream_scroll_items:', error);
+        log.error('[migrate] ⚠️  Failed to add tags column to dream_scroll_items:', error);
       }
 
 
@@ -268,9 +269,9 @@ export async function runMigrations() {
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
-        console.log('[migrate] ✅ World map regions table created/verified');
+        log.info('[migrate] ✅ World map regions table created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create world_map_regions table:', error);
+        log.error('[migrate] ⚠️  Failed to create world_map_regions table:', error);
       }
 
       try {
@@ -303,7 +304,7 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_difficulty_tier ON mountains(difficulty_tier)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_continent ON mountains(continent)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountains_region_id ON mountains(region_id)`);
-        console.log('[migrate] ✅ Mountains table and indexes created/verified');
+        log.info('[migrate] ✅ Mountains table and indexes created/verified');
 
         // Add background_image and theme_colors columns if they don't exist
         await db.execute(sql`
@@ -324,9 +325,9 @@ export async function runMigrations() {
             END IF;
           END $$;
         `);
-        console.log('[migrate] ✅ Mountains table updated with background_image and theme_colors columns');
+        log.info('[migrate] ✅ Mountains table updated with background_image and theme_colors columns');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create mountains table:', error);
+        log.error('[migrate] ⚠️  Failed to create mountains table:', error);
       }
 
       try {
@@ -353,9 +354,9 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_routes_mountain_id ON routes(mountain_id)`);
-        console.log('[migrate] ✅ Routes table and indexes created/verified');
+        log.info('[migrate] ✅ Routes table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create routes table:', error);
+        log.error('[migrate] ⚠️  Failed to create routes table:', error);
       }
 
       try {
@@ -378,9 +379,9 @@ export async function runMigrations() {
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_alpine_gear_category ON alpine_gear(category)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_alpine_gear_tier ON alpine_gear(tier)`);
-        console.log('[migrate] ✅ Alpine gear table and indexes created/verified');
+        log.info('[migrate] ✅ Alpine gear table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create alpine_gear table:', error);
+        log.error('[migrate] ⚠️  Failed to create alpine_gear table:', error);
       }
 
       try {
@@ -397,9 +398,9 @@ export async function runMigrations() {
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_route_gear_route_id ON route_gear_requirements(route_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_route_gear_gear_id ON route_gear_requirements(gear_id)`);
-        console.log('[migrate] ✅ Route gear requirements table and indexes created/verified');
+        log.info('[migrate] ✅ Route gear requirements table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create route_gear_requirements table:', error);
+        log.error('[migrate] ⚠️  Failed to create route_gear_requirements table:', error);
       }
 
       try {
@@ -416,9 +417,9 @@ export async function runMigrations() {
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_gear_user_id ON player_gear_inventory(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_gear_gear_id ON player_gear_inventory(gear_id)`);
-        console.log('[migrate] ✅ Player gear inventory table and indexes created/verified');
+        log.info('[migrate] ✅ Player gear inventory table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create player_gear_inventory table:', error);
+        log.error('[migrate] ⚠️  Failed to create player_gear_inventory table:', error);
       }
 
       try {
@@ -441,9 +442,9 @@ export async function runMigrations() {
             updated_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
-        console.log('[migrate] ✅ Player climbing stats table created/verified');
+        log.info('[migrate] ✅ Player climbing stats table created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create player_climbing_stats table:', error);
+        log.error('[migrate] ⚠️  Failed to create player_climbing_stats table:', error);
       }
 
       try {
@@ -474,9 +475,9 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_user_id ON player_expeditions(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_route_id ON player_expeditions(route_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_player_expeditions_status ON player_expeditions(user_id, status)`);
-        console.log('[migrate] ✅ Player expeditions table and indexes created/verified');
+        log.info('[migrate] ✅ Player expeditions table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create player_expeditions table:', error);
+        log.error('[migrate] ⚠️  Failed to create player_expeditions table:', error);
       }
 
       try {
@@ -496,9 +497,9 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_events_expedition_id ON expedition_events(expedition_id)`);
-        console.log('[migrate] ✅ Expedition events table and indexes created/verified');
+        log.info('[migrate] ✅ Expedition events table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create expedition_events table:', error);
+        log.error('[migrate] ⚠️  Failed to create expedition_events table:', error);
       }
 
       try {
@@ -514,9 +515,9 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_gear_expedition_id ON expedition_gear_loadout(expedition_id)`);
-        console.log('[migrate] ✅ Expedition gear loadout table and indexes created/verified');
+        log.info('[migrate] ✅ Expedition gear loadout table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create expedition_gear_loadout table:', error);
+        log.error('[migrate] ⚠️  Failed to create expedition_gear_loadout table:', error);
       }
 
       try {
@@ -533,9 +534,9 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_unlocks_user_id ON mountain_unlocks(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_unlocks_mountain_id ON mountain_unlocks(mountain_id)`);
         await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_mountain_unlocks_user_mountain ON mountain_unlocks(user_id, mountain_id)`);
-        console.log('[migrate] ✅ Mountain unlocks table and indexes created/verified');
+        log.info('[migrate] ✅ Mountain unlocks table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
+        log.error('[migrate] ⚠️  Failed to create mountain_unlocks table:', error);
       }
 
       try {
@@ -552,9 +553,9 @@ export async function runMigrations() {
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_backgrounds_user_id ON mountain_backgrounds(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_mountain_backgrounds_mountain_id ON mountain_backgrounds(mountain_id)`);
-        console.log('[migrate] ✅ Mountain backgrounds table and indexes created/verified');
+        log.info('[migrate] ✅ Mountain backgrounds table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create mountain_backgrounds table:', error);
+        log.error('[migrate] ⚠️  Failed to create mountain_backgrounds table:', error);
       }
 
       try {
@@ -588,9 +589,9 @@ export async function runMigrations() {
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_missions_user_id ON expedition_missions(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_expedition_missions_status ON expedition_missions(user_id, status)`);
         await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_expedition_missions_active ON expedition_missions(user_id) WHERE status = 'active'`);
-        console.log('[migrate] ✅ Expedition missions table and indexes created/verified');
+        log.info('[migrate] ✅ Expedition missions table and indexes created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create expedition_missions table:', error);
+        log.error('[migrate] ⚠️  Failed to create expedition_missions table:', error);
       }
 
       try {
@@ -599,9 +600,9 @@ export async function runMigrations() {
           ALTER TABLE player_climbing_stats
           ADD COLUMN IF NOT EXISTS current_mountain_index INTEGER NOT NULL DEFAULT 1
         `);
-        console.log('[migrate] ✅ current_mountain_index column added to player_climbing_stats');
+        log.info('[migrate] ✅ current_mountain_index column added to player_climbing_stats');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to add current_mountain_index:', error);
+        log.error('[migrate] ⚠️  Failed to add current_mountain_index:', error);
       }
 
       // ========== GAMIFICATION TABLES ==========
@@ -617,24 +618,104 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
-        console.log('[migrate] ✅ Streak freezes table created/verified');
+        log.info('[migrate] ✅ Streak freezes table created/verified');
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to create streak_freezes table:', error);
+        log.error('[migrate] ⚠️  Failed to create streak_freezes table:', error);
+      }
+
+      // ========== TODOIST-LEVEL TODO FEATURES ==========
+
+      try {
+        // Create projects table for organizing todos
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS projects (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL DEFAULT '#3b82f6',
+            is_favorite BOOLEAN NOT NULL DEFAULT false,
+            is_archived BOOLEAN NOT NULL DEFAULT false,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`);
+        log.info('[migrate] ✅ Projects table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create projects table:', error);
+      }
+
+      try {
+        // Create labels table for tagging todos
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS labels (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL DEFAULT '#6b7280',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_labels_user_id ON labels(user_id)`);
+        log.info('[migrate] ✅ Labels table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create labels table:', error);
+      }
+
+      try {
+        // Create task_labels junction table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS task_labels (
+            id SERIAL PRIMARY KEY,
+            task_id INTEGER NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
+            label_id INTEGER NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+            UNIQUE(task_id, label_id)
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_task_labels_task_id ON task_labels(task_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_task_labels_label_id ON task_labels(label_id)`);
+        log.info('[migrate] ✅ Task labels table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create task_labels table:', error);
+      }
+
+      try {
+        // Add project_id column to todos table
+        await db.execute(sql`
+          ALTER TABLE todos
+          ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL
+        `);
+        log.info('[migrate] ✅ project_id column added/verified in todos table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add project_id column to todos:', error);
+      }
+
+      try {
+        // Add other Todoist-level columns to todos
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS priority INTEGER NOT NULL DEFAULT 4`);
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS recurring_pattern TEXT`);
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS next_recurrence VARCHAR(10)`);
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS position INTEGER NOT NULL DEFAULT 0`);
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS notes TEXT`);
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS parent_task_id INTEGER REFERENCES todos(id) ON DELETE CASCADE`);
+        log.info('[migrate] ✅ Todoist-level columns added/verified in todos table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add Todoist columns to todos:', error);
       }
 
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
       } catch (error) {
-        console.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
+        log.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
         // Continue anyway - seeding is optional
       }
 
-      console.log('[migrate] ℹ️  User data preserved');
+      log.info('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
 
-    console.log('[migrate] Creating fresh tables...');
+    log.info('[migrate] Creating fresh tables...');
 
     // Users table
     await db.execute(sql`
@@ -869,20 +950,20 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
 
-    console.log('[migrate] ✅ Fresh database schema created successfully');
-    console.log('[migrate] ✅ Ready for new user signups');
+    log.info('[migrate] ✅ Fresh database schema created successfully');
+    log.info('[migrate] ✅ Ready for new user signups');
 
     // Seed mountaineering data (regions, mountains, routes, gear)
     try {
       await seedMountaineeringData();
     } catch (error) {
-      console.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
+      log.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
       // Continue anyway - seeding is optional
     }
 
     return { success: true, skipped: false };
   } catch (error) {
-    console.error('[migrate] ❌ Migration failed:', error);
+    log.error('[migrate] ❌ Migration failed:', error);
     throw error;
   }
 }

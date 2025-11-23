@@ -2,21 +2,17 @@ import { getDb } from "./db";
 import * as schema from "../shared/schema";
 
 export async function seedMountaineeringData() {
-  console.log('[mountaineering-seed] 🏔️  Starting mountaineering data seeding...');
-
   const db = getDb();
 
   // Check if data already exists (check mountains specifically since that's the main content)
   const existingMountains = await db.select().from(schema.mountains).limit(1);
   if (existingMountains.length > 0) {
-    console.log('[mountaineering-seed] ℹ️  Mountaineering data already seeded');
     return;
   }
 
   // If regions exist but mountains don't, we need to clear regions first to avoid conflicts
   const existingRegions = await db.select().from(schema.worldMapRegions).limit(1);
   if (existingRegions.length > 0) {
-    console.log('[mountaineering-seed] ⚠️  Regions exist but mountains missing - clearing old data...');
     await db.delete(schema.worldMapRegions);
   }
 
@@ -88,9 +84,7 @@ export async function seedMountaineeringData() {
     }
   ];
 
-  console.log('[mountaineering-seed] 📍 Seeding world regions...');
   const insertedRegions = await db.insert(schema.worldMapRegions).values(regions).returning();
-  console.log(`[mountaineering-seed] ✅ Created ${insertedRegions.length} regions`);
 
   // ============================================================================
   // 2. ALPINE GEAR (50+ items)
@@ -167,9 +161,7 @@ export async function seedMountaineeringData() {
     { name: "Prusik Cord Set", category: "miscellaneous", description: "Accessory cord for self-rescue", weightGrams: 120, tier: "intermediate", unlockLevel: 10, unlockHabitCount: 30, cost: 15 }
   ];
 
-  console.log('[mountaineering-seed] 🎒 Seeding alpine gear...');
   const insertedGear = await db.insert(schema.alpineGear).values(gear as any).returning();
-  console.log(`[mountaineering-seed] ✅ Created ${insertedGear.length} gear items`);
 
   // Create gear lookup map
   const gearMap = Object.fromEntries(
@@ -1216,9 +1208,7 @@ export async function seedMountaineeringData() {
     }
   });
 
-  console.log('[mountaineering-seed] 🏔️  Seeding mountains...');
   const insertedMountains = await db.insert(schema.mountains).values(mountains as any).returning();
-  console.log(`[mountaineering-seed] ✅ Created ${insertedMountains.length} mountains`);
 
   // Create mountain lookup map
   const mountainMap = Object.fromEntries(
@@ -1511,9 +1501,7 @@ export async function seedMountaineeringData() {
     }
   ];
 
-  console.log('[mountaineering-seed] 🗺️  Seeding routes...');
   const insertedRoutes = await db.insert(schema.routes).values(routes).returning();
-  console.log(`[mountaineering-seed] ✅ Created ${insertedRoutes.length} routes`);
 
   // ============================================================================
   // 5. ROUTE GEAR REQUIREMENTS (Sample for key routes)
@@ -1586,10 +1574,5 @@ export async function seedMountaineeringData() {
     { routeId: insertedRoutes[16].id, gearId: gearMap["Satellite Phone"], isRequired: false, quantity: 1 }
   ];
 
-  console.log('[mountaineering-seed] 🎒 Seeding route gear requirements...');
   await db.insert(schema.routeGearRequirements).values(routeGearRequirements);
-  console.log(`[mountaineering-seed] ✅ Created ${routeGearRequirements.length} gear requirements`);
-
-  console.log('[mountaineering-seed] ✅ Mountaineering data seeded successfully!');
-  console.log(`[mountaineering-seed] 📊 Summary: ${insertedRegions.length} regions, ${insertedMountains.length} mountains, ${insertedRoutes.length} routes, ${insertedGear.length} gear items`);
 }

@@ -68,22 +68,13 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // DEBUG: Log path resolution
-  console.log('[static] import.meta.dirname:', import.meta.dirname);
-  console.log('[static] Resolving distPath from:', import.meta.dirname);
-
   const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
-  console.log('[static] Resolved distPath:', distPath);
-  console.log('[static] distPath exists:', fs.existsSync(distPath));
 
   if (!fs.existsSync(distPath)) {
     // Try alternative path (in case we're running from dist/)
     const altPath = path.resolve(import.meta.dirname, "public");
-    console.log('[static] Trying alternative path:', altPath);
-    console.log('[static] altPath exists:', fs.existsSync(altPath));
 
     if (fs.existsSync(altPath)) {
-      console.log('[static] Using alternative path:', altPath);
       // Serve static assets with caching (they have hashes in filenames)
       app.use(express.static(altPath, {
         maxAge: '1y',

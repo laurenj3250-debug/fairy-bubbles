@@ -300,13 +300,22 @@ export const LOGGING = {
 } as const;
 
 // === FEATURE FLAGS ===
+// Safe environment detection for both Node.js and browser
+const isDevelopment = typeof process !== 'undefined'
+  ? process.env.NODE_ENV === 'development'
+  : import.meta.env?.MODE === 'development';
+
+const isProduction = typeof process !== 'undefined'
+  ? process.env.NODE_ENV === 'production'
+  : import.meta.env?.MODE === 'production';
+
 export const FEATURES = {
   /**
    * Enable/disable features
    */
-  ENABLE_ANALYTICS: process.env.ENABLE_ANALYTICS === 'true',
-  ENABLE_DEBUG_MODE: process.env.NODE_ENV === 'development',
-  ENABLE_PERFORMANCE_MONITORING: process.env.NODE_ENV === 'production',
+  ENABLE_ANALYTICS: false, // Enable via server config
+  ENABLE_DEBUG_MODE: isDevelopment,
+  ENABLE_PERFORMANCE_MONITORING: isProduction,
 } as const;
 
 // Type exports for better TypeScript support
