@@ -258,7 +258,9 @@ function AppRoutes() {
       </Route>
       <Route path="/journey">
         <RequireAuth>
-          <Journey />
+          <MainLayout>
+            <Journey />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route component={NotFound} />
