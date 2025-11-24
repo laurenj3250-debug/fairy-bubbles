@@ -125,18 +125,18 @@ export function registerStravaRoutes(app: Express) {
       if (oauthError) {
         log.warn("[strava] OAuth error:", oauthError);
         return res.redirect(
-          `/settings/imports?error=${encodeURIComponent(oauthError as string)}`
+          `/settings/import?error=${encodeURIComponent(oauthError as string)}`
         );
       }
 
       if (!code || !state) {
-        return res.redirect("/settings/imports?error=missing_params");
+        return res.redirect("/settings/import?error=missing_params");
       }
 
       // Verify state
       const stateData = oauthStateStore.get(state as string);
       if (!stateData) {
-        return res.redirect("/settings/imports?error=invalid_state");
+        return res.redirect("/settings/import?error=invalid_state");
       }
 
       // Clean up state
@@ -144,7 +144,7 @@ export function registerStravaRoutes(app: Express) {
 
       // Check state expiration (5 minutes)
       if (Date.now() - stateData.createdAt > 5 * 60 * 1000) {
-        return res.redirect("/settings/imports?error=state_expired");
+        return res.redirect("/settings/import?error=state_expired");
       }
 
       const userId = stateData.userId;
@@ -156,7 +156,7 @@ export function registerStravaRoutes(app: Express) {
         tokenResponse = await client.exchangeCodeForTokens(code as string);
       } catch (error) {
         log.error("[strava] Token exchange error:", error);
-        return res.redirect("/settings/imports?error=token_exchange_failed");
+        return res.redirect("/settings/import?error=token_exchange_failed");
       }
 
       const db = getDb();
@@ -210,10 +210,10 @@ export function registerStravaRoutes(app: Express) {
       await performSync(db, client, userId, tokenResponse);
 
       // Redirect to success page
-      res.redirect("/settings/imports?strava=connected");
+      res.redirect("/settings/import?strava=connected");
     } catch (error) {
       log.error("[strava] Callback error:", error);
-      res.redirect("/settings/imports?error=callback_failed");
+      res.redirect("/settings/import?error=callback_failed");
     }
   });
 
