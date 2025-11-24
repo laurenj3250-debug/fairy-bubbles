@@ -88,7 +88,14 @@ export function serveStatic(app: Express) {
           }
         }
       }));
-      app.use("*", (_req, res) => {
+      app.use("*", (req, res) => {
+        const url = req.originalUrl;
+
+        // Return 404 for missing static assets to prevent MIME type mismatch
+        if (url.match(/\.(js|css|map|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico|webp|json)(\?|$)/i)) {
+          return res.status(404).send('Asset not found');
+        }
+
         // Force no-cache on index.html to bypass service worker
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
@@ -117,9 +124,19 @@ export function serveStatic(app: Express) {
     }
   }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    // Force no-cache on index.html to bypass service worker
+  // fall through to index.html if the file doesn't exist (SPA routing)
+  // BUT return 404 for static asset requests (JS, CSS, etc.) to prevent
+  // serving HTML with wrong MIME type after deployments
+  app.use("*", (req, res) => {
+    const url = req.originalUrl;
+
+    // If requesting a static asset that doesn't exist, return 404
+    // This prevents the MIME type mismatch error after deploys
+    if (url.match(/\.(js|css|map|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico|webp|json)(\?|$)/i)) {
+      return res.status(404).send('Asset not found');
+    }
+
+    // For all other routes (SPA navigation), serve index.html
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
