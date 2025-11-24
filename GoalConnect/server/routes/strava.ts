@@ -407,6 +407,11 @@ export function registerStravaRoutes(app: Express) {
    * Get Strava connection status
    */
   app.get("/api/import/strava/status", async (req: Request, res: Response) => {
+    // Prevent browser caching - this status can change when env vars are added
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     try {
       const userId = getUserId(req);
       const db = getDb();
@@ -431,13 +436,17 @@ export function registerStravaRoutes(app: Express) {
         )
         .limit(1);
 
+      const configured = Boolean(STRAVA_CLIENT_ID && STRAVA_CLIENT_SECRET);
+
       if (!connection) {
+        log.debug(`[strava] Status for user ${userId}: connected=false, configured=${configured}`);
         return res.json({
           connected: false,
-          configured: Boolean(STRAVA_CLIENT_ID && STRAVA_CLIENT_SECRET),
+          configured,
         });
       }
 
+      log.debug(`[strava] Status for user ${userId}: connected=${connection.isActive}, configured=true`);
       res.json({
         connected: connection.isActive,
         configured: true,
