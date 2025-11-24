@@ -57,8 +57,14 @@ export function HabitHeatmap() {
       });
     },
     onSuccess: () => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/range/"] });
+      // Invalidate all habit-related queries for consistency across components
+      const today = new Date().toISOString().split('T')[0];
+      queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+      queryClient.invalidateQueries({ predicate: (query) =>
+        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
     },
   });

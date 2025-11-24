@@ -59,7 +59,14 @@ export function GlowingOrbHabits() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all habit-related queries for consistency across components
       queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+      queryClient.invalidateQueries({ predicate: (query) =>
+        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
     },
   });
 
