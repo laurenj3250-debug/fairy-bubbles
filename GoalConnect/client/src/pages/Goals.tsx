@@ -141,9 +141,9 @@ export default function Goals() {
 
   return (
     <div className="min-h-screen pb-24">
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-4 md:p-6">
         {/* Header - Glass morphism with soft shadows */}
-        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-8 mb-8 relative overflow-hidden">
+        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-4 md:p-8 mb-6 md:mb-8 relative overflow-hidden">
           {/* Soft gradient overlay */}
           <div
             className="absolute inset-0 opacity-20 pointer-events-none"
@@ -283,7 +283,7 @@ export default function Goals() {
         />
 
         {/* View Tabs - Soft glass toggle */}
-        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 flex gap-2 mb-8">
+        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 mb-6 md:mb-8">
           <Button
             variant="ghost"
             className={cn(

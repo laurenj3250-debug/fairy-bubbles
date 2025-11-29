@@ -909,3 +909,39 @@ export const DEFAULT_JOURNEY_GOALS = {
     yearly_climbs: { targetValue: 300, unit: 'climbs' },
   },
 } as const;
+
+// ========== OUTDOOR CLIMBING LOG ==========
+// Manual climbing tick log (replaces Mountain Project integration)
+
+export const routeTypeEnum = pgEnum('route_type', ['sport', 'trad', 'boulder', 'alpine', 'ice']);
+export const ascentStyleEnum = pgEnum('ascent_style', ['onsight', 'flash', 'redpoint', 'pinkpoint', 'send', 'attempt', 'toprope']);
+
+export const outdoorClimbingTicks = pgTable("outdoor_climbing_ticks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  routeName: text("route_name").notNull(),
+  grade: varchar("grade", { length: 20 }).notNull(), // "5.12a", "V8", "WI4", etc.
+  routeType: routeTypeEnum("route_type").notNull(),
+  ascentStyle: ascentStyleEnum("ascent_style").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  location: text("location"), // "Smith Rock, OR"
+  area: text("area"), // "Dihedrals"
+  pitches: integer("pitches").default(1).notNull(),
+  stars: integer("stars"), // 1-5 quality rating
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// TypeScript types
+export type OutdoorClimbingTick = typeof outdoorClimbingTicks.$inferSelect;
+export type InsertOutdoorClimbingTick = typeof outdoorClimbingTicks.$inferInsert;
+
+// Insert schema
+export const insertOutdoorClimbingTickSchema = createInsertSchema(outdoorClimbingTicks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOutdoorClimbingTickInput = z.infer<typeof insertOutdoorClimbingTickSchema>;

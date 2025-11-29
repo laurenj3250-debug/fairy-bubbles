@@ -2,6 +2,7 @@ import { Home, Target, ListTodo, Settings, Mountain, BookOpen, TrendingUp } from
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
+import { BottomNav } from "@/components/BottomNav";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -23,19 +24,21 @@ interface MainLayoutProps {
  * MainLayout - Shared layout with nav rail for all pages
  *
  * Layout options:
- * - With todo panel (3-column): nav | content | todo panel
- * - Without todo panel (2-column): nav | content (full width)
+ * - Desktop: nav rail | content | optional todo panel
+ * - Mobile: content only with bottom nav
  */
 export function MainLayout({ children, showTodoPanel = false, todoPanel }: MainLayoutProps) {
   const [location] = useLocation();
 
   return (
     <div className={cn(
-      "h-screen grid overflow-hidden",
-      showTodoPanel ? "grid-cols-[64px_1fr_320px]" : "grid-cols-[64px_1fr]"
+      "h-screen grid overflow-hidden pb-16 lg:pb-0",
+      showTodoPanel
+        ? "grid-cols-1 lg:grid-cols-[64px_1fr_320px]"
+        : "grid-cols-1 lg:grid-cols-[64px_1fr]"
     )}>
-      {/* === NAV RAIL === */}
-      <nav className="glass-card rounded-none border-r border-border/50 flex flex-col items-center py-6 gap-2">
+      {/* === NAV RAIL (hidden on mobile) === */}
+      <nav className="hidden lg:flex glass-card rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
         {navItems.map(({ path, icon: Icon, label }) => {
           // Handle both "/" and "/v2" as home
           const isActive = location === path || (path === "/" && location === "/v2");
@@ -62,12 +65,17 @@ export function MainLayout({ children, showTodoPanel = false, todoPanel }: MainL
         {children}
       </main>
 
-      {/* === OPTIONAL TODO PANEL === */}
+      {/* === OPTIONAL TODO PANEL (hidden on mobile) === */}
       {showTodoPanel && todoPanel && (
-        <aside className="glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
+        <aside className="hidden lg:block glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
           {todoPanel}
         </aside>
       )}
+
+      {/* === BOTTOM NAV (mobile only) === */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 }

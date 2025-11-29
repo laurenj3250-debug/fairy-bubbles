@@ -42,6 +42,7 @@ import { registerHabitMappingRoutes } from "./routes/habit-mappings";
 import { registerPetRoutes } from "./routes/pet";
 import { registerPointRoutes } from "./routes/points";
 import { registerJourneyGoalRoutes } from "./routes/journey-goals";
+import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import {
   DatabaseError,
   ValidationError,
@@ -2859,6 +2860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerPetRoutes(app);
   registerPointRoutes(app);
   registerJourneyGoalRoutes(app);
+  registerClimbingLogRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

@@ -2,7 +2,11 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useJourneyGoals } from "@/hooks/useJourneyGoals";
 import { useStravaStats } from "@/hooks/useStravaStats";
-import { Pencil, Check, X, Loader2 } from "lucide-react";
+import { useClimbingStats, type ClimbingStats } from "@/hooks/useClimbingStats";
+import { useStravaClimbingActivities, type StravaClimbingStats } from "@/hooks/useStravaClimbingActivities";
+import { useClimbingLog, type ClimbingTick, type ClimbingTickInput, type ClimbingLogStats } from "@/hooks/useClimbingLog";
+import { ClimbingLogDialog } from "@/components/ClimbingLogDialog";
+import { Pencil, Check, X, Loader2, Plus, Trash2 } from "lucide-react";
 
 type ActivityTab = "cycling" | "lifting" | "climbing";
 
@@ -263,6 +267,9 @@ export default function Journey() {
   const [activeTab, setActiveTab] = useState<ActivityTab>("cycling");
   const { targets, updateGoal, isUpdating, isLoading: isLoadingGoals } = useJourneyGoals();
   const { stats: stravaStats, isLoading: isLoadingStrava } = useStravaStats();
+  const { stats: kilterStats, isLoading: isLoadingKilter } = useClimbingStats();
+  const { stats: stravaClimbingStats, isLoading: isLoadingStravaClimbing } = useStravaClimbingActivities();
+  const { ticks: climbingLogTicks, stats: climbingLogStats, isLoading: isLoadingClimbingLog, createTick, updateTick, deleteTick, isCreating } = useClimbingLog();
 
   const tabs: { id: ActivityTab; label: string }[] = [
     { id: "lifting", label: "Lifting" },
@@ -308,7 +315,7 @@ export default function Journey() {
       {activeTab === "cycling" && (
         <CyclingTab
           yearlyGoal={targets.cyclingMiles}
-          stravaYtdMiles={stravaStats?.ytdMiles}
+          stravaStats={stravaStats}
           onUpdateGoal={handleUpdateGoal}
           isUpdating={isUpdating}
         />
@@ -317,6 +324,7 @@ export default function Journey() {
         <LiftingTab
           yearlyWorkoutsGoal={targets.liftingWorkouts}
           totalLiftGoal={targets.liftingTotal}
+          stravaStats={stravaStats}
           onUpdateGoal={handleUpdateGoal}
           isUpdating={isUpdating}
         />
@@ -326,6 +334,17 @@ export default function Journey() {
           yearlyClimbsGoal={targets.climbingTicks}
           onUpdateGoal={handleUpdateGoal}
           isUpdating={isUpdating}
+          kilterStats={kilterStats}
+          isLoadingKilter={isLoadingKilter}
+          stravaClimbingStats={stravaClimbingStats}
+          isLoadingStravaClimbing={isLoadingStravaClimbing}
+          climbingLogTicks={climbingLogTicks}
+          climbingLogStats={climbingLogStats}
+          isLoadingClimbingLog={isLoadingClimbingLog}
+          onCreateTick={createTick}
+          onUpdateTick={updateTick}
+          onDeleteTick={deleteTick}
+          isCreatingTick={isCreating}
         />
       )}
 
@@ -342,14 +361,15 @@ export default function Journey() {
 // ============== CYCLING TAB ==============
 interface CyclingTabProps {
   yearlyGoal: number;
-  stravaYtdMiles?: number;
+  stravaStats: any; // StravaStats type from hook
   onUpdateGoal: (goalKey: string, value: number) => Promise<void>;
   isUpdating: boolean;
 }
 
-function CyclingTab({ yearlyGoal, stravaYtdMiles, onUpdateGoal, isUpdating }: CyclingTabProps) {
+function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }: CyclingTabProps) {
   // Use Strava data if available, otherwise fall back to mock data
-  const actualMiles = stravaYtdMiles ?? cyclingData.yearlyMiles;
+  const actualMiles = stravaStats?.ytdMiles ?? cyclingData.yearlyMiles;
+  const elevation = stravaStats?.ytdElevationFt ?? cyclingData.elevation;
   const progressPercent = Math.round((actualMiles / yearlyGoal) * 100);
   const milesRemaining = yearlyGoal - actualMiles;
   const weeksLeft = Math.ceil((new Date(new Date().getFullYear(), 11, 31).getTime() - new Date().getTime()) / (7 * 24 * 60 * 60 * 1000));
@@ -376,7 +396,7 @@ function CyclingTab({ yearlyGoal, stravaYtdMiles, onUpdateGoal, isUpdating }: Cy
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-orange-400">142k</div>
+            <div className="text-lg font-bold text-orange-400">{(elevation / 1000).toFixed(0)}k</div>
             <div className="text-xs text-muted-foreground">Elev (ft)</div>
           </div>
         </div>
@@ -698,13 +718,16 @@ function CyclingTab({ yearlyGoal, stravaYtdMiles, onUpdateGoal, isUpdating }: Cy
 interface LiftingTabProps {
   yearlyWorkoutsGoal: number;
   totalLiftGoal: number;
+  stravaStats: any;
   onUpdateGoal: (goalKey: string, value: number) => Promise<void>;
   isUpdating: boolean;
 }
 
-function LiftingTab({ yearlyWorkoutsGoal, totalLiftGoal, onUpdateGoal, isUpdating }: LiftingTabProps) {
-  const progressPercent = Math.round((liftosaurData.yearlyWorkouts / yearlyWorkoutsGoal) * 100);
-  const workoutsRemaining = yearlyWorkoutsGoal - liftosaurData.yearlyWorkouts;
+function LiftingTab({ yearlyWorkoutsGoal, totalLiftGoal, stravaStats, onUpdateGoal, isUpdating }: LiftingTabProps) {
+  // Use Strava data if available (all activities for now - filtering by type would require additional API calls)
+  const actualWorkouts = stravaStats?.localActivities ?? liftosaurData.yearlyWorkouts;
+  const progressPercent = Math.round((actualWorkouts / yearlyWorkoutsGoal) * 100);
+  const workoutsRemaining = yearlyWorkoutsGoal - actualWorkouts;
   const weeksLeft = Math.ceil((new Date(new Date().getFullYear(), 11, 31).getTime() - new Date().getTime()) / (7 * 24 * 60 * 60 * 1000));
   const workoutsPerWeek = (Math.max(0, workoutsRemaining) / weeksLeft).toFixed(1);
 
@@ -1073,20 +1096,151 @@ interface ClimbingTabProps {
   yearlyClimbsGoal: number;
   onUpdateGoal: (goalKey: string, value: number) => Promise<void>;
   isUpdating: boolean;
+  kilterStats: ClimbingStats | null;
+  isLoadingKilter: boolean;
+  stravaClimbingStats: StravaClimbingStats | null;
+  isLoadingStravaClimbing: boolean;
+  climbingLogTicks: ClimbingTick[];
+  climbingLogStats: ClimbingLogStats | undefined;
+  isLoadingClimbingLog: boolean;
+  onCreateTick: (tick: ClimbingTickInput) => Promise<unknown>;
+  onUpdateTick: (tick: Partial<ClimbingTickInput> & { id: number }) => Promise<unknown>;
+  onDeleteTick: (id: number) => Promise<unknown>;
+  isCreatingTick: boolean;
 }
 
-function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTabProps) {
-  const progressPercent = Math.round((outdoorClimbingData.totalTicks / yearlyClimbsGoal) * 100);
-  const ticksRemaining = yearlyClimbsGoal - outdoorClimbingData.totalTicks;
+function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, isLoadingKilter, stravaClimbingStats, isLoadingStravaClimbing, climbingLogTicks, climbingLogStats, isLoadingClimbingLog, onCreateTick, onUpdateTick, onDeleteTick, isCreatingTick }: ClimbingTabProps) {
+  const [showLogDialog, setShowLogDialog] = useState(false);
+  const [editingTick, setEditingTick] = useState<ClimbingTick | undefined>();
+
+  // Check if we have real data (stats loaded successfully, even if 0 ticks)
+  const isConnected = climbingLogStats !== undefined;
+  const hasData = climbingLogStats && climbingLogStats.totalTicks > 0;
+
+  // Use real data, fallback to mock only if not connected
+  const totalTicks = climbingLogStats?.totalTicks ?? outdoorClimbingData.totalTicks;
+  const outdoorDays = climbingLogStats?.outdoorDays ?? outdoorClimbingData.outdoorDays;
+
+  // Use server-computed highest grades (no more client-side grade parsing!)
+  const highestRedpoint = climbingLogStats?.highestRouteGrade ?? outdoorClimbingData.highestRedpoint;
+  const highestBoulder = climbingLogStats?.highestBoulderGrade ?? outdoorClimbingData.highestBoulder;
+
+  // Recent ticks - use real data if available (keep raw ticks for edit/delete)
+  const recentTicksRaw = hasData ? climbingLogStats.recentTicks : [];
+  const recentTicks = hasData
+    ? climbingLogStats.recentTicks.map(tick => ({
+        id: tick.id,
+        name: tick.routeName,
+        grade: tick.grade,
+        routeType: tick.routeType.charAt(0).toUpperCase() + tick.routeType.slice(1),
+        date: new Date(tick.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        style: tick.ascentStyle.charAt(0).toUpperCase() + tick.ascentStyle.slice(1),
+        pitches: tick.pitches,
+        stars: tick.stars || 3,
+        location: tick.location || "Unknown",
+      }))
+    : outdoorClimbingData.recentTicks.map((t, i) => ({ ...t, id: i }));
+
+  // Grade parsing utility for sorting
+  const parseYdsGrade = (g: string): number => {
+    const match = g.match(/5\.(\d+)([a-d])?/);
+    if (!match) return 0;
+    return parseInt(match[1]) * 10 + (match[2] ? "abcd".indexOf(match[2]) : 0);
+  };
+
+  // Grade pyramid from real data
+  const gradePyramid = hasData
+    ? Object.entries(climbingLogStats.gradeDistribution)
+        .filter(([g]) => g.startsWith("5."))
+        .map(([grade, count]) => ({ grade, count }))
+        .sort((a, b) => parseYdsGrade(a.grade) - parseYdsGrade(b.grade))
+        .slice(-6)
+    : outdoorClimbingData.gradePyramid;
+
+  // Style breakdown - calculate PERCENTAGES from counts (fix the math!)
+  const routeTypeCounts = hasData ? climbingLogStats.routeTypeDistribution : { sport: 45, boulder: 38, trad: 17 };
+  const totalRouteTypes = Object.values(routeTypeCounts).reduce((a, b) => a + b, 0) || 1;
+  const styleBreakdown = {
+    sport: Math.round(((routeTypeCounts.sport || 0) / totalRouteTypes) * 100),
+    boulder: Math.round(((routeTypeCounts.boulder || 0) / totalRouteTypes) * 100),
+    trad: Math.round(((routeTypeCounts.trad || 0) / totalRouteTypes) * 100),
+  };
+
+  const progressPercent = Math.round((totalTicks / yearlyClimbsGoal) * 100);
+  const ticksRemaining = yearlyClimbsGoal - totalTicks;
   const monthsLeft = 12 - new Date().getMonth();
   const ticksPerMonth = Math.ceil(Math.max(0, ticksRemaining) / monthsLeft);
 
   // Grade pyramid colors
   const pyramidColors = ["#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#c2410c"];
-  const maxPyramidCount = Math.max(...outdoorClimbingData.gradePyramid.map(g => g.count));
+  const maxPyramidCount = Math.max(...gradePyramid.map(g => g.count), 1);
 
-  // Kilter grade breakdown
-  const maxKilterCount = Math.max(...kilterData.gradeBreakdown.map(g => g.count));
+  // Kilter data - use real data if available, otherwise use mock data
+  const kilterConnected = kilterStats?.isConnected ?? false;
+  const kilterHighestGrade = kilterStats?.maxGrade ?? kilterData.highestGrade;
+  const kilterTotalClimbs = kilterStats?.totalProblemsSent ?? kilterData.totalClimbs;
+  const kilterTotalSessions = kilterStats?.totalSessions ?? kilterData.totalSessions;
+  const kilterAvgAngle = kilterStats?.preferredAngle ? Math.round(kilterStats.preferredAngle) : kilterData.avgAngle;
+  const kilterFlashRate = kilterStats?.flashRate ? Math.round(kilterStats.flashRate) : kilterData.flashRate;
+  const kilterSendRate = kilterStats?.sendRate ? Math.round(kilterStats.sendRate) : kilterData.sendRate;
+  const kilterAvgTries = kilterStats?.avgAttemptsPerSend ? Math.round(kilterStats.avgAttemptsPerSend * 10) / 10 : kilterData.avgTries;
+
+  // Convert grade distribution to array format for display
+  const kilterGradeBreakdown = kilterStats?.gradeDistribution
+    ? Object.entries(kilterStats.gradeDistribution)
+        .map(([grade, count]) => ({ grade, count, ascents: count }))
+        .sort((a, b) => {
+          // Sort by V-grade numerically
+          const aNum = parseInt(a.grade.replace('V', '')) || 0;
+          const bNum = parseInt(b.grade.replace('V', '')) || 0;
+          return aNum - bNum;
+        })
+        .slice(-5) // Take top 5 grades
+    : kilterData.gradeBreakdown;
+
+  const maxKilterCount = Math.max(...kilterGradeBreakdown.map(g => g.count), 1);
+
+  // Recent Kilter sessions
+  const recentKilterClimbs = kilterStats?.sessions?.slice(0, 4).flatMap(session =>
+    (session.climbs || []).slice(0, 2).map(climb => ({
+      climb_name: climb.name,
+      angle: session.boardAngle || 40,
+      logged_grade: climb.grade,
+      displayed_grade: climb.grade,
+      is_benchmark: false,
+      tries: climb.attempts,
+      sessions_count: 1,
+      is_ascent: climb.sent,
+      date: new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }))
+  ).slice(0, 4) ?? kilterData.recentClimbs;
+
+  // Strava climbing data - use real data if available, otherwise use mock
+  const stravaConnected = stravaClimbingStats?.isConnected ?? false;
+  // Normalize to common format
+  const stravaThisWeek = stravaClimbingStats?.thisWeek ?? {
+    activities: redpointData.thisWeek.activities,
+    timeHours: redpointData.thisWeek.time,
+    calories: redpointData.thisWeek.calories,
+    elevationFt: redpointData.thisWeek.elevation,
+  };
+  const stravaThisMonth = stravaClimbingStats?.thisMonth ?? {
+    activities: redpointData.thisMonth.activities,
+    timeHours: redpointData.thisMonth.time,
+    calories: redpointData.thisMonth.calories,
+    elevationFt: redpointData.thisMonth.elevation,
+  };
+  const stravaRecentActivities = stravaClimbingStats?.recentActivities?.map(a => ({
+    name: a.name,
+    type: a.type,
+    moving_time: a.durationMinutes,
+    elapsed_time: a.durationMinutes,
+    total_elevation_gain: a.elevationGain,
+    start_date: a.date,
+    location: a.location,
+    calories: a.calories,
+    average_heartrate: a.heartRate || 0,
+  })) ?? redpointData.recentActivities;
 
   const getRouteTypeIcon = (type: string) => {
     if (type === "Boulder") return "🪨";
@@ -1103,17 +1257,17 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
         <div className="flex items-start justify-between relative z-10">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-orange-500" />
-              Mountain Project
+              <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
+              Outdoor Log {!isConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
             </div>
-            <div className="text-5xl font-bold mt-1 text-orange-500">{outdoorClimbingData.highestRedpoint}</div>
+            <div className="text-5xl font-bold mt-1 text-orange-500">{isLoadingClimbingLog ? "..." : highestRedpoint}</div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-emerald-400 font-semibold">↑ from 5.11d</span>
-              <span className="text-xs text-muted-foreground">this year</span>
+              <span className="text-sm text-emerald-400 font-semibold">{totalTicks} ticks</span>
+              <span className="text-xs text-muted-foreground">logged</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-purple-400">{outdoorClimbingData.highestBoulder}</div>
+            <div className="text-lg font-bold text-purple-400">{highestBoulder}</div>
             <div className="text-xs text-muted-foreground">Boulder</div>
           </div>
         </div>
@@ -1133,17 +1287,17 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
         <div className="flex items-start justify-between relative z-10">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              Kilter Board
+              <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
+              Kilter Board {!kilterConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
             </div>
-            <div className="text-5xl font-bold mt-1 text-purple-500">{kilterData.highestGrade}</div>
+            <div className="text-5xl font-bold mt-1 text-purple-500">{isLoadingKilter ? "..." : kilterHighestGrade}</div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-emerald-400 font-semibold">{kilterData.totalClimbs} climbs</span>
-              <span className="text-xs text-muted-foreground">{kilterData.totalSessions} sessions</span>
+              <span className="text-sm text-emerald-400 font-semibold">{kilterTotalClimbs} climbs</span>
+              <span className="text-xs text-muted-foreground">{kilterTotalSessions} sessions</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-cyan-400">{kilterData.avgAngle}°</div>
+            <div className="text-lg font-bold text-cyan-400">{kilterAvgAngle}°</div>
             <div className="text-xs text-muted-foreground">Avg Angle</div>
           </div>
         </div>
@@ -1152,7 +1306,7 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
           <div className="flex items-end gap-1 h-6">
             {kilterData.angleStats.map((a, i) => (
               <div key={i} className="flex-1 flex flex-col items-center">
-                <div className="w-full rounded-t" style={{ height: `${(a.count / 320) * 24}px`, background: a.angle === 40 ? "#a855f7" : "rgba(168, 85, 247, 0.3)" }} />
+                <div className="w-full rounded-t" style={{ height: `${(a.count / 320) * 24}px`, background: a.angle === kilterAvgAngle ? "#a855f7" : "rgba(168, 85, 247, 0.3)" }} />
               </div>
             ))}
           </div>
@@ -1163,24 +1317,24 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
       {/* REDPOINT/STRAVA - Activity Summary */}
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
-          <span className="w-2 h-2 rounded-full bg-cyan-500" />
-          Redpoint via Strava
+          <span className={cn("w-2 h-2 rounded-full", stravaConnected ? "bg-cyan-500" : "bg-gray-500")} />
+          Redpoint via Strava {!stravaConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
         </div>
         <div className="flex-1 grid grid-cols-2 gap-3">
           <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-400">{redpointData.thisWeek.time}h</div>
+            <div className="text-2xl font-bold text-cyan-400">{stravaThisWeek.timeHours}h</div>
             <div className="text-xs text-muted-foreground">This Week</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-400">{(redpointData.thisWeek.elevation / 1000).toFixed(1)}k</div>
+            <div className="text-2xl font-bold text-emerald-400">{(stravaThisWeek.elevationFt / 1000).toFixed(1)}k</div>
             <div className="text-xs text-muted-foreground">Elev (ft)</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-semibold text-orange-400">{redpointData.thisWeek.activities}</div>
+            <div className="text-lg font-semibold text-orange-400">{stravaThisWeek.activities}</div>
             <div className="text-xs text-muted-foreground">Activities</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-semibold text-purple-400">{redpointData.thisWeek.calories}</div>
+            <div className="text-lg font-semibold text-purple-400">{stravaThisWeek.calories}</div>
             <div className="text-xs text-muted-foreground">Calories</div>
           </div>
         </div>
@@ -1188,35 +1342,98 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
 
       {/* ═══════════ ROW 2: Recent Activity Columns ═══════════ */}
 
-      {/* OUTDOOR TICKS (Mountain Project) */}
+      {/* OUTDOOR TICKS (Climbing Log) */}
       <div className="row-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-orange-500" />
-          Recent Ticks
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
+            Recent Ticks
+          </div>
+          <button
+            onClick={() => setShowLogDialog(true)}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 transition-colors"
+          >
+            <Plus className="w-3 h-3" />
+            Log
+          </button>
         </div>
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {outdoorClimbingData.recentTicks.map((tick, i) => (
-            <div key={i} className={cn("flex items-start gap-2 p-2 rounded-lg border", tick.style === "Onsight" || tick.style === "Flash" ? "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/30" : "bg-white/[0.02] border-border/20")}>
+          {isLoadingClimbingLog ? (
+            <div className="flex-1 flex flex-col gap-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse flex items-start gap-2 p-2 rounded-lg bg-muted/20">
+                  <div className="w-6 h-6 rounded bg-muted/40" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-4 bg-muted/40 rounded w-3/4" />
+                    <div className="h-3 bg-muted/30 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recentTicks.length > 0 ? recentTicks.map((tick) => (
+            <div key={tick.id} className={cn("group flex items-start gap-2 p-2 rounded-lg border relative", tick.style === "Onsight" || tick.style === "Flash" ? "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/30" : "bg-white/[0.02] border-border/20")}>
               <span className="text-base">{getRouteTypeIcon(tick.routeType)}</span>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{tick.name}</div>
                 <div className="text-xs text-muted-foreground">{tick.grade} • {tick.style}</div>
                 <div className="text-xs text-muted-foreground/70">{tick.location} • {"★".repeat(tick.stars)}</div>
               </div>
-              <span className="text-xs text-muted-foreground">{tick.date}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">{tick.date}</span>
+                {/* Edit/Delete buttons - only show for real data */}
+                {hasData && (
+                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 ml-1 transition-opacity">
+                    <button
+                      onClick={() => {
+                        const rawTick = recentTicksRaw.find(t => t.id === tick.id);
+                        if (rawTick) {
+                          setEditingTick(rawTick);
+                          setShowLogDialog(true);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                      title="Edit"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete "${tick.name}"?`)) {
+                          onDeleteTick(tick.id);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
+          )) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+              <div className="text-4xl mb-2">🧗</div>
+              <div className="text-sm text-muted-foreground">No ticks yet</div>
+              <button
+                onClick={() => setShowLogDialog(true)}
+                className="mt-3 text-xs px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+              >
+                Log Your First Climb
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* KILTER RECENT (BoardLib) */}
       <div className="row-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
+          <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
           Kilter Sends
         </div>
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {kilterData.recentClimbs.map((climb, i) => (
+          {recentKilterClimbs.length > 0 ? recentKilterClimbs.map((climb, i) => (
             <div key={i} className={cn("flex items-start gap-2 p-2 rounded-lg border", climb.tries === 1 ? "bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/30" : "bg-white/[0.02] border-border/20")}>
               <div className="text-center flex-shrink-0">
                 <div className="text-lg font-bold text-purple-400">{climb.logged_grade}</div>
@@ -1231,7 +1448,11 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
               </div>
               <span className="text-xs text-muted-foreground">{climb.date}</span>
             </div>
-          ))}
+          )) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              {kilterConnected ? "No recent climbs" : "Connect Kilter Board to see climbs"}
+            </div>
+          )}
         </div>
         {/* Kilter Projects */}
         <div className="border-t border-border/20 pt-2 mt-2">
@@ -1259,9 +1480,9 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
         </div>
         <div className="flex-1 flex flex-col justify-center gap-0.5">
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Outdoor Goal</div>
-          <div className="text-sm flex items-center gap-1"><span className="font-semibold">{outdoorClimbingData.totalTicks}</span> / <EditableGoal value={yearlyClimbsGoal} unit="" goalKey="yearly_climbs" onUpdate={onUpdateGoal} isUpdating={isUpdating} /> ticks</div>
+          <div className="text-sm flex items-center gap-1"><span className="font-semibold">{totalTicks}</span> / <EditableGoal value={yearlyClimbsGoal} unit="" goalKey="yearly_climbs" onUpdate={onUpdateGoal} isUpdating={isUpdating} /> ticks</div>
           <div className="text-xs text-emerald-400">Need {ticksPerMonth}/month</div>
-          <div className="text-xs text-muted-foreground">{outdoorClimbingData.outdoorDays} outdoor days</div>
+          <div className="text-xs text-muted-foreground">{outdoorDays} outdoor days</div>
         </div>
       </div>
 
@@ -1269,34 +1490,38 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Recent Activities</div>
         <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
-          {redpointData.recentActivities.slice(0, 3).map((act, i) => (
+          {stravaRecentActivities.length > 0 ? stravaRecentActivities.slice(0, 3).map((act, i) => (
             <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-border/20">
               <div className="text-center flex-shrink-0 w-12">
-                <div className="text-sm font-semibold text-cyan-400">{Math.round(act.moving_time / 60)}m</div>
+                <div className="text-sm font-semibold text-cyan-400">{Math.round(act.moving_time)}m</div>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{act.name}</div>
                 <div className="text-xs text-muted-foreground">{act.location}</div>
               </div>
               <div className="text-right">
-                {act.total_elevation_gain > 0 && <div className="text-xs text-emerald-400">↑{act.total_elevation_gain}ft</div>}
+                {act.total_elevation_gain > 0 && <div className="text-xs text-emerald-400">↑{Math.round(act.total_elevation_gain * 3.28084)}ft</div>}
                 <div className="text-xs text-muted-foreground">{act.calories} cal</div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              {stravaConnected ? "No recent climbing activities" : "Connect Strava to see activities"}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ═══════════ ROW 3: Pyramids & Breakdowns ═══════════ */}
 
-      {/* OUTDOOR PYRAMID (Mountain Project) */}
+      {/* OUTDOOR PYRAMID (Climbing Log) */}
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-orange-500" />
+          <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
           Route Pyramid
         </div>
         <div className="flex-1 flex flex-col justify-center gap-1">
-          {outdoorClimbingData.gradePyramid.map(({ grade, count }, i) => (
+          {gradePyramid.map(({ grade, count }, i) => (
             <div key={grade} className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground w-10 text-right font-medium">{grade}</span>
               <div className="flex-1 h-3.5 bg-muted/30 rounded overflow-hidden">
@@ -1311,11 +1536,11 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
       {/* KILTER PYRAMID (BoardLib) */}
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
+          <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
           Kilter Pyramid
         </div>
         <div className="flex-1 flex flex-col justify-center gap-1">
-          {kilterData.gradeBreakdown.map(({ grade, count, ascents }) => (
+          {kilterGradeBreakdown.map(({ grade, count, ascents }) => (
             <div key={grade} className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground w-8 text-right font-medium">{grade}</span>
               <div className="flex-1 h-3.5 bg-muted/30 rounded overflow-hidden relative">
@@ -1328,14 +1553,14 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
         </div>
       </div>
 
-      {/* STYLE BREAKDOWN (Mountain Project) */}
+      {/* STYLE BREAKDOWN (Climbing Log) */}
       <div className="col-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Style Mix</div>
         <div className="flex-1 flex flex-col justify-center gap-2">
           {[
-            { label: "Sport", value: outdoorClimbingData.styleBreakdown.sport, color: "#f97316" },
-            { label: "Boulder", value: outdoorClimbingData.styleBreakdown.boulder, color: "#a855f7" },
-            { label: "Trad", value: outdoorClimbingData.styleBreakdown.trad, color: "#06b6d4" },
+            { label: "Sport", value: styleBreakdown.sport, color: "#f97316" },
+            { label: "Boulder", value: styleBreakdown.boulder, color: "#a855f7" },
+            { label: "Trad", value: styleBreakdown.trad, color: "#06b6d4" },
           ].map((style) => (
             <div key={style.label} className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: style.color }} />
@@ -1352,15 +1577,15 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
         <div className="flex-1 flex flex-col justify-center gap-1.5">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Flash</span>
-            <span className="font-semibold text-emerald-400">{kilterData.flashRate}%</span>
+            <span className="font-semibold text-emerald-400">{kilterFlashRate}%</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Send</span>
-            <span className="font-semibold text-purple-400">{kilterData.sendRate}%</span>
+            <span className="font-semibold text-purple-400">{kilterSendRate}%</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Avg Tries</span>
-            <span className="font-semibold text-cyan-400">{kilterData.avgTries}</span>
+            <span className="font-semibold text-cyan-400">{kilterAvgTries}</span>
           </div>
         </div>
       </div>
@@ -1399,6 +1624,25 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating }: ClimbingTab
           </div>
         ))}
       </div>
+
+      {/* Climbing Log Dialog */}
+      <ClimbingLogDialog
+        open={showLogDialog}
+        onOpenChange={(open) => {
+          setShowLogDialog(open);
+          if (!open) setEditingTick(undefined); // Clear editing state when closing
+        }}
+        onSubmit={async (tick) => {
+          if (editingTick) {
+            await onUpdateTick({ id: editingTick.id, ...tick });
+          } else {
+            await onCreateTick(tick);
+          }
+          setEditingTick(undefined);
+        }}
+        editingTick={editingTick}
+        isSubmitting={isCreatingTick}
+      />
     </div>
   );
 }

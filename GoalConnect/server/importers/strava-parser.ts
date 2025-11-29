@@ -141,9 +141,9 @@ export function parseStravaActivity(
     startTime,
     endTime,
     durationMinutes,
-    heartRateAvg: activity.average_heartrate,
-    heartRateMax: activity.max_heartrate,
-    caloriesBurned: activity.calories,
+    heartRateAvg: activity.average_heartrate ? Math.round(activity.average_heartrate) : undefined,
+    heartRateMax: activity.max_heartrate ? Math.round(activity.max_heartrate) : undefined,
+    caloriesBurned: activity.calories ? Math.round(activity.calories) : undefined,
     distanceKm,
     metadata: {
       name: activity.name,

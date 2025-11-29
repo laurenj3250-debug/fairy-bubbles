@@ -9,6 +9,7 @@ import { WeeklyRhythm } from "@/components/WeeklyRhythm";
 import { TokenCounter } from "@/components/TokenCounter";
 import { TodoPanel } from "@/components/TodoPanel";
 import { SummitLog } from "@/components/SummitLog";
+import { BottomNav } from "@/components/BottomNav";
 
 // Get time-based greeting
 function getGreeting(): string {
@@ -55,9 +56,9 @@ export default function V2Dashboard() {
   const [location] = useLocation();
 
   return (
-    <div className="h-screen grid grid-cols-[64px_1fr_320px] overflow-hidden">
-      {/* === NAV RAIL === */}
-      <nav className="glass-card rounded-none border-r border-border/50 flex flex-col items-center py-6 gap-2">
+    <div className="h-screen grid grid-cols-1 lg:grid-cols-[64px_1fr_320px] overflow-hidden pb-16 lg:pb-0">
+      {/* === NAV RAIL (hidden on mobile) === */}
+      <nav className="hidden lg:flex glass-card rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
         {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location === path;
           return (
@@ -79,12 +80,12 @@ export default function V2Dashboard() {
       </nav>
 
       {/* === CENTER CONTENT === */}
-      <main className="overflow-y-auto p-6 space-y-6">
+      <main className="overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="glass-card p-6">
+        <div className="glass-card p-4 md:p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold">{getGreeting()}, Climber</h1>
+              <h1 className="text-xl md:text-2xl font-bold">{getGreeting()}, Climber</h1>
               <div className="flex items-center gap-2 mt-1">
                 <Calendar className="w-4 h-4 text-primary" />
                 <p className="text-muted-foreground text-sm">
@@ -97,24 +98,24 @@ export default function V2Dashboard() {
         </div>
 
         {/* Top Row: Habits + Goals */}
-        <div className="grid grid-cols-2 gap-6">
-          <div className="glass-card p-6 min-h-[200px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="glass-card p-4 md:p-6 min-h-[180px] md:min-h-[200px]">
             <GlowingOrbHabits />
           </div>
-          <div className="glass-card p-6 min-h-[200px]">
+          <div className="glass-card p-4 md:p-6 min-h-[180px] md:min-h-[200px]">
             <MountainRangeGoals />
           </div>
         </div>
 
-        {/* Bottom Row: 3 Widgets */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="glass-card p-4 min-h-[160px]">
+        {/* Bottom Row: Widgets */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="glass-card p-4 min-h-[140px] md:min-h-[160px]">
             <HabitHeatmap />
           </div>
-          <div className="glass-card p-4 min-h-[160px]">
+          <div className="glass-card p-4 min-h-[140px] md:min-h-[160px]">
             <PeakLoreWidget />
           </div>
-          <div className="glass-card p-4 min-h-[160px]">
+          <div className="glass-card p-4 min-h-[140px] md:min-h-[160px] sm:col-span-2 lg:col-span-1">
             <WeeklyRhythm />
           </div>
         </div>
@@ -123,10 +124,15 @@ export default function V2Dashboard() {
         <SummitLog />
       </main>
 
-      {/* === TO-DO PANEL === */}
-      <aside className="glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
+      {/* === TO-DO PANEL (hidden on mobile) === */}
+      <aside className="hidden lg:block glass-card rounded-none border-l border-border/50 p-6 overflow-y-auto">
         <TodoPanel />
       </aside>
+
+      {/* === BOTTOM NAV (mobile only) === */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 }
