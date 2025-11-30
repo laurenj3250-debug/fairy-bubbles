@@ -15,6 +15,29 @@ const CLIMBING_TYPES = [
   "Climbing",
 ];
 
+// Keywords in activity names that indicate climbing (for "Workout" type activities)
+const CLIMBING_NAME_KEYWORDS = [
+  "climb",
+  "boulder",
+  "kilter",
+  "moonboard",
+  "tension board",
+  "grasshopper",
+  "movement",  // Movement climbing gym
+  "sender one",
+  "touchstone",
+  "earth treks",
+  "planet granite",
+  "brooklyn boulders",
+  "el cap",
+  "crag",
+  "send",
+  "proj",  // project
+  "redpoint",
+  "onsight",
+  "flash",
+];
+
 interface StravaActivity {
   id: number;
   externalId: string;
@@ -149,13 +172,22 @@ export function useStravaClimbingActivities() {
       };
     }
 
-    // Filter for climbing activities
+    // Filter for climbing activities by type OR by name keywords
     const allActivities = activitiesResponse?.activities ?? [];
-    const climbingActivities = allActivities.filter(activity =>
-      CLIMBING_TYPES.some(type =>
+    const climbingActivities = allActivities.filter(activity => {
+      // Check if activity type is climbing-related
+      const isClimbingType = CLIMBING_TYPES.some(type =>
         activity.workoutType?.toLowerCase().includes(type.toLowerCase())
-      )
-    );
+      );
+      if (isClimbingType) return true;
+
+      // Check if activity name contains climbing keywords (for "Workout" type)
+      const activityName = (activity.metadata?.name || "").toLowerCase();
+      const hasClimbingKeyword = CLIMBING_NAME_KEYWORDS.some(keyword =>
+        activityName.includes(keyword.toLowerCase())
+      );
+      return hasClimbingKeyword;
+    });
 
     // Transform to ClimbingActivity format
     const recentActivities: ClimbingActivity[] = climbingActivities

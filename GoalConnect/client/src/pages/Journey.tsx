@@ -6,7 +6,7 @@ import { useClimbingStats, type ClimbingStats } from "@/hooks/useClimbingStats";
 import { useStravaClimbingActivities, type StravaClimbingStats } from "@/hooks/useStravaClimbingActivities";
 import { useClimbingLog, type ClimbingTick, type ClimbingTickInput, type ClimbingLogStats } from "@/hooks/useClimbingLog";
 import { ClimbingLogDialog } from "@/components/ClimbingLogDialog";
-import { Pencil, Check, X, Loader2, Plus, Trash2 } from "lucide-react";
+import { Pencil, Check, X, Loader2, Plus, Trash2, Activity } from "lucide-react";
 
 type ActivityTab = "cycling" | "lifting" | "climbing";
 
@@ -1117,15 +1117,15 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
   const isConnected = climbingLogStats !== undefined;
   const hasData = climbingLogStats && climbingLogStats.totalTicks > 0;
 
-  // Use real data, fallback to mock only if not connected
-  const totalTicks = climbingLogStats?.totalTicks ?? outdoorClimbingData.totalTicks;
-  const outdoorDays = climbingLogStats?.outdoorDays ?? outdoorClimbingData.outdoorDays;
+  // Use real data only - NO demo fallback (show empty state instead)
+  const totalTicks = climbingLogStats?.totalTicks ?? 0;
+  const outdoorDays = climbingLogStats?.outdoorDays ?? 0;
 
-  // Use server-computed highest grades (no more client-side grade parsing!)
-  const highestRedpoint = climbingLogStats?.highestRouteGrade ?? outdoorClimbingData.highestRedpoint;
-  const highestBoulder = climbingLogStats?.highestBoulderGrade ?? outdoorClimbingData.highestBoulder;
+  // Use server-computed highest grades (no demo fallback)
+  const highestRedpoint = climbingLogStats?.highestRouteGrade ?? "—";
+  const highestBoulder = climbingLogStats?.highestBoulderGrade ?? "—";
 
-  // Recent ticks - use real data if available (keep raw ticks for edit/delete)
+  // Recent ticks - use real data only (no demo fallback)
   const recentTicksRaw = hasData ? climbingLogStats.recentTicks : [];
   const recentTicks = hasData
     ? climbingLogStats.recentTicks.map(tick => ({
@@ -1139,7 +1139,7 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
         stars: tick.stars || 3,
         location: tick.location || "Unknown",
       }))
-    : outdoorClimbingData.recentTicks.map((t, i) => ({ ...t, id: i }));
+    : [];
 
   // Grade parsing utility for sorting
   const parseYdsGrade = (g: string): number => {
@@ -1148,17 +1148,17 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
     return parseInt(match[1]) * 10 + (match[2] ? "abcd".indexOf(match[2]) : 0);
   };
 
-  // Grade pyramid from real data
+  // Grade pyramid from real data (no demo fallback)
   const gradePyramid = hasData
     ? Object.entries(climbingLogStats.gradeDistribution)
         .filter(([g]) => g.startsWith("5."))
         .map(([grade, count]) => ({ grade, count }))
         .sort((a, b) => parseYdsGrade(a.grade) - parseYdsGrade(b.grade))
         .slice(-6)
-    : outdoorClimbingData.gradePyramid;
+    : [];
 
-  // Style breakdown - calculate PERCENTAGES from counts (fix the math!)
-  const routeTypeCounts = hasData ? climbingLogStats.routeTypeDistribution : { sport: 45, boulder: 38, trad: 17 };
+  // Style breakdown - calculate PERCENTAGES from counts (no demo fallback)
+  const routeTypeCounts = hasData ? climbingLogStats.routeTypeDistribution : {};
   const totalRouteTypes = Object.values(routeTypeCounts).reduce((a, b) => a + b, 0) || 1;
   const styleBreakdown = {
     sport: Math.round(((routeTypeCounts.sport || 0) / totalRouteTypes) * 100),
@@ -1215,20 +1215,21 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
     }))
   ).slice(0, 4) ?? kilterData.recentClimbs;
 
-  // Strava climbing data - use real data if available, otherwise use mock
+  // Strava climbing data - use real data only (no demo fallback)
   const stravaConnected = stravaClimbingStats?.isConnected ?? false;
-  // Normalize to common format
+  const stravaHasClimbingActivities = stravaClimbingStats && stravaClimbingStats.totalActivities > 0;
+  // Normalize to common format - empty state instead of demo
   const stravaThisWeek = stravaClimbingStats?.thisWeek ?? {
-    activities: redpointData.thisWeek.activities,
-    timeHours: redpointData.thisWeek.time,
-    calories: redpointData.thisWeek.calories,
-    elevationFt: redpointData.thisWeek.elevation,
+    activities: 0,
+    timeHours: 0,
+    calories: 0,
+    elevationFt: 0,
   };
   const stravaThisMonth = stravaClimbingStats?.thisMonth ?? {
-    activities: redpointData.thisMonth.activities,
-    timeHours: redpointData.thisMonth.time,
-    calories: redpointData.thisMonth.calories,
-    elevationFt: redpointData.thisMonth.elevation,
+    activities: 0,
+    timeHours: 0,
+    calories: 0,
+    elevationFt: 0,
   };
   const stravaRecentActivities = stravaClimbingStats?.recentActivities?.map(a => ({
     name: a.name,
@@ -1240,7 +1241,7 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
     location: a.location,
     calories: a.calories,
     average_heartrate: a.heartRate || 0,
-  })) ?? redpointData.recentActivities;
+  })) ?? [];
 
   const getRouteTypeIcon = (type: string) => {
     if (type === "Boulder") return "🪨";
@@ -1252,34 +1253,51 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
     <div className="flex-1 grid grid-cols-6 grid-rows-[auto_1fr_1fr_auto] gap-3 min-h-0">
       {/* ═══════════ ROW 1: Hero Stats ═══════════ */}
 
-      {/* OUTDOOR HERO - Highest Redpoint (Mountain Project) */}
+      {/* OUTDOOR HERO - Highest Redpoint (Climbing Log) */}
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
         <div className="flex items-start justify-between relative z-10">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
               <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
-              Outdoor Log {!isConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
+              Outdoor Log
             </div>
-            <div className="text-5xl font-bold mt-1 text-orange-500">{isLoadingClimbingLog ? "..." : highestRedpoint}</div>
+            {isLoadingClimbingLog ? (
+              <div className="text-5xl font-bold mt-1 text-orange-500/50">...</div>
+            ) : hasData ? (
+              <div className="text-5xl font-bold mt-1 text-orange-500">{highestRedpoint}</div>
+            ) : (
+              <div className="text-3xl font-bold mt-1 text-orange-500/50">No ticks yet</div>
+            )}
             <div className="flex items-center gap-2 mt-2">
               <span className="text-sm text-emerald-400 font-semibold">{totalTicks} ticks</span>
               <span className="text-xs text-muted-foreground">logged</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-purple-400">{highestBoulder}</div>
+            <div className="text-lg font-bold text-purple-400">{hasData ? highestBoulder : "—"}</div>
             <div className="text-xs text-muted-foreground">Boulder</div>
           </div>
         </div>
-        {/* Mini sparkline */}
-        <div className="mt-auto pt-3 relative z-10">
-          <div className="flex items-end gap-1 h-6">
-            {[4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12].map((h, i) => (
-              <div key={i} className="flex-1 rounded-t" style={{ height: `${h * 2}px`, background: i === 11 ? "#f97316" : "rgba(249, 115, 22, 0.3)" }} />
-            ))}
+        {/* Mini sparkline - only show when has data */}
+        {hasData ? (
+          <div className="mt-auto pt-3 relative z-10">
+            <div className="flex items-end gap-1 h-6">
+              {[4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12].map((h, i) => (
+                <div key={i} className="flex-1 rounded-t" style={{ height: `${h * 2}px`, background: i === 11 ? "#f97316" : "rgba(249, 115, 22, 0.3)" }} />
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Jan</span><span>Nov</span></div>
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Jan</span><span>Nov</span></div>
-        </div>
+        ) : (
+          <div className="mt-auto pt-3 relative z-10 text-center">
+            <button
+              onClick={() => setShowLogDialog(true)}
+              className="text-sm px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 transition-colors"
+            >
+              Log your first climb
+            </button>
+          </div>
+        )}
       </div>
 
       {/* KILTER HERO - Highest Grade (BoardLib) */}
@@ -1318,26 +1336,34 @@ function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, 
       <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
           <span className={cn("w-2 h-2 rounded-full", stravaConnected ? "bg-cyan-500" : "bg-gray-500")} />
-          Redpoint via Strava {!stravaConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
+          Climbing via Strava {!stravaConnected && <span className="text-yellow-500 text-[10px]">(Not connected)</span>}
         </div>
-        <div className="flex-1 grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-400">{stravaThisWeek.timeHours}h</div>
-            <div className="text-xs text-muted-foreground">This Week</div>
+        {stravaConnected && !stravaHasClimbingActivities ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
+            <Activity className="w-8 h-8 text-cyan-500/40 mb-2" />
+            <div className="text-sm text-muted-foreground">No climbing activities found</div>
+            <div className="text-xs text-muted-foreground/70 mt-1">Log activities in Strava as "RockClimbing"</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-400">{(stravaThisWeek.elevationFt / 1000).toFixed(1)}k</div>
-            <div className="text-xs text-muted-foreground">Elev (ft)</div>
+        ) : (
+          <div className="flex-1 grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-400">{stravaThisWeek.timeHours}h</div>
+              <div className="text-xs text-muted-foreground">This Week</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-emerald-400">{(stravaThisWeek.elevationFt / 1000).toFixed(1)}k</div>
+              <div className="text-xs text-muted-foreground">Elev (ft)</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-orange-400">{stravaThisWeek.activities}</div>
+              <div className="text-xs text-muted-foreground">Activities</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-purple-400">{stravaThisWeek.calories}</div>
+              <div className="text-xs text-muted-foreground">Calories</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-orange-400">{stravaThisWeek.activities}</div>
-            <div className="text-xs text-muted-foreground">Activities</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-purple-400">{stravaThisWeek.calories}</div>
-            <div className="text-xs text-muted-foreground">Calories</div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ═══════════ ROW 2: Recent Activity Columns ═══════════ */}
