@@ -703,6 +703,50 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to add Todoist columns to todos:', error);
       }
 
+      // Create outdoor climbing enums and table for manual tick logging
+      try {
+        // Create route_type enum if not exists
+        await db.execute(sql`
+          DO $$ BEGIN
+            CREATE TYPE route_type AS ENUM('sport', 'trad', 'boulder', 'alpine', 'ice');
+          EXCEPTION
+            WHEN duplicate_object THEN null;
+          END $$;
+        `);
+        // Create ascent_style enum if not exists
+        await db.execute(sql`
+          DO $$ BEGIN
+            CREATE TYPE ascent_style AS ENUM('onsight', 'flash', 'redpoint', 'pinkpoint', 'send', 'attempt', 'toprope');
+          EXCEPTION
+            WHEN duplicate_object THEN null;
+          END $$;
+        `);
+        // Create outdoor_climbing_ticks table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS outdoor_climbing_ticks (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            route_name TEXT NOT NULL,
+            grade VARCHAR(20) NOT NULL,
+            route_type route_type NOT NULL,
+            ascent_style ascent_style NOT NULL,
+            date VARCHAR(10) NOT NULL,
+            location TEXT,
+            area TEXT,
+            pitches INTEGER NOT NULL DEFAULT 1,
+            stars INTEGER,
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_climbing_ticks_user_id ON outdoor_climbing_ticks(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_climbing_ticks_date ON outdoor_climbing_ticks(user_id, date)`);
+        log.info('[migrate] ✅ Outdoor climbing ticks table and enums created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create outdoor_climbing_ticks:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
