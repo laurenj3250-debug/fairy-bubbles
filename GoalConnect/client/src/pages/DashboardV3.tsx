@@ -264,15 +264,19 @@ export default function DashboardV3() {
   }, [weekLogs]);
 
   const weeklyGoals = useMemo(() => {
-    return goals.filter(g => g.deadline <= week.weekEnd && g.deadline >= week.weekStart);
+    return goals.filter(g => g.deadline && g.deadline <= week.weekEnd && g.deadline >= week.weekStart);
   }, [goals, week.weekStart, week.weekEnd]);
 
   const monthlyGoals = useMemo(() => {
     const now = new Date();
     const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
     const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
-    return goals.filter(g => g.deadline >= monthStart && g.deadline <= monthEnd).slice(0, 3);
-  }, [goals]);
+    // Exclude goals already shown in weekly section
+    const weeklyIds = new Set(weeklyGoals.map(g => g.id));
+    return goals
+      .filter(g => g.deadline && g.deadline >= monthStart && g.deadline <= monthEnd && !weeklyIds.has(g.id))
+      .slice(0, 3);
+  }, [goals, weeklyGoals]);
 
   const todosByDay = useMemo(() => {
     const byDay: Record<number, TodoWithMetadata[]> = {};

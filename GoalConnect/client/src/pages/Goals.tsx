@@ -16,7 +16,7 @@ import { useClimbingStats } from "@/hooks/useClimbingStats";
 
 // REMOVED: MagicalCanvas - No longer needed for mountain aesthetic
 
-type ViewType = "all" | "weekly" | "monthly";
+type ViewType = "all" | "weekly" | "monthly" | "archived";
 
 export default function Goals() {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
@@ -73,17 +73,30 @@ export default function Goals() {
     };
   }, []);
 
+  // Get today's date for archived filter
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+
   // Filter goals by view
   const filteredGoals = useMemo(() => {
     let filtered = [...goals];
 
-    if (activeView === "weekly") {
+    if (activeView === "archived") {
+      // Past deadline goals (incomplete only - completed goals stay in their original view)
+      filtered = goals.filter(goal =>
+        goal.deadline < today && goal.currentValue < goal.targetValue
+      );
+    } else if (activeView === "weekly") {
       filtered = goals.filter(goal =>
         goal.deadline >= weekDates.start && goal.deadline <= weekDates.end
       );
     } else if (activeView === "monthly") {
       filtered = goals.filter(goal =>
         goal.deadline >= monthDates.start && goal.deadline <= monthDates.end
+      );
+    } else {
+      // "all" view - exclude archived (past deadline incomplete)
+      filtered = goals.filter(goal =>
+        goal.deadline >= today || goal.currentValue >= goal.targetValue
       );
     }
 
@@ -94,7 +107,14 @@ export default function Goals() {
       if (priorityDiff !== 0) return priorityDiff;
       return a.deadline.localeCompare(b.deadline);
     });
-  }, [goals, activeView, weekDates, monthDates]);
+  }, [goals, activeView, weekDates, monthDates, today]);
+
+  // Count of archived goals for badge
+  const archivedCount = useMemo(() => {
+    return goals.filter(goal =>
+      goal.deadline < today && goal.currentValue < goal.targetValue
+    ).length;
+  }, [goals, today]);
 
   const handleCreateNew = () => {
     setEditingGoal(undefined);
@@ -332,6 +352,27 @@ export default function Goals() {
             <Calendar className="w-4 h-4 mr-2" />
             This Month
           </Button>
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
+              activeView === "archived"
+                ? "text-white shadow-lg"
+                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+            )}
+            style={activeView === "archived" ? {
+              background: `linear-gradient(135deg, hsl(var(--muted-foreground)), hsl(var(--muted-foreground) / 0.8))`
+            } : {}}
+            onClick={() => setActiveView("archived")}
+          >
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Archived
+            {archivedCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-foreground/20">
+                {archivedCount}
+              </span>
+            )}
+          </Button>
         </div>
 
         {/* Goals List */}
@@ -356,7 +397,9 @@ export default function Goals() {
                   ? "Begin your journey by choosing your first summit to conquer"
                   : activeView === "weekly"
                   ? "No summits planned for this week"
-                  : "No summits planned for this month"}
+                  : activeView === "monthly"
+                  ? "No summits planned for this month"
+                  : "No past-due goals - great job staying on track!"}
               </p>
               <Button
                 onClick={handleCreateNew}
