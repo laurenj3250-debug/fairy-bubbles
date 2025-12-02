@@ -230,6 +230,26 @@ export default function DashboardV3() {
     },
   });
 
+  const createTodoMutation = useMutation({
+    mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
+      return await apiRequest('/api/todos', 'POST', { title, dueDate, priority: 'medium' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+      toast({
+        title: 'Task added!',
+        description: 'Keep climbing 🧗',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Failed to add task',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // ============================================================================
   // COMPUTED DATA (properly memoized)
   // ============================================================================
@@ -312,6 +332,10 @@ export default function DashboardV3() {
     toggleTodoMutation.mutate(todoId);
   }, [toggleTodoMutation]);
 
+  const handleAddTodo = useCallback((title: string, dueDate: string) => {
+    createTodoMutation.mutate({ title, dueDate });
+  }, [createTodoMutation]);
+
   const isScheduledForDay = useCallback((habit: HabitWithData, dayIndex: number) => {
     return isHabitScheduledForDay(habit, dayIndex, week.dates);
   }, [week.dates]);
@@ -372,9 +396,16 @@ export default function DashboardV3() {
       <div className={cn("grid gap-4 mb-5", isMobile ? "grid-cols-1" : "grid-cols-2")}>
         {/* Weekly Goals */}
         <div className="glass-card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">🎯</span>
-            <h3 className="font-semibold text-foreground">Weekly Goals</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎯</span>
+              <h3 className="font-semibold text-foreground">Weekly Goals</h3>
+            </div>
+            <Link href="/goals">
+              <button className="w-6 h-6 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center text-sm">
+                +
+              </button>
+            </Link>
           </div>
 
           {goalsLoading ? (
@@ -391,31 +422,32 @@ export default function DashboardV3() {
             weeklyGoals.map(goal => {
               const isComplete = goal.currentValue >= goal.targetValue;
               return (
-                <div
-                  key={goal.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg mb-2 transition-all",
-                    isComplete ? "bg-success/10" : "bg-muted/50"
-                  )}
-                >
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs",
-                    isComplete
-                      ? "bg-success border-success text-success-foreground"
-                      : "border-muted-foreground"
-                  )}>
-                    {isComplete && '✓'}
+                <Link key={goal.id} href="/goals">
+                  <div
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg mb-2 transition-all cursor-pointer hover:opacity-80",
+                      isComplete ? "bg-success/10" : "bg-muted/50"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs",
+                      isComplete
+                        ? "bg-success border-success text-success-foreground"
+                        : "border-muted-foreground"
+                    )}>
+                      {isComplete && '✓'}
+                    </div>
+                    <span className={cn(
+                      "text-sm flex-1",
+                      isComplete && "line-through text-muted-foreground"
+                    )}>
+                      {goal.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {goal.currentValue}/{goal.targetValue} {goal.unit}
+                    </span>
                   </div>
-                  <span className={cn(
-                    "text-sm flex-1",
-                    isComplete && "line-through text-muted-foreground"
-                  )}>
-                    {goal.title}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {goal.currentValue}/{goal.targetValue} {goal.unit}
-                  </span>
-                </div>
+                </Link>
               );
             })
           )}
@@ -423,12 +455,19 @@ export default function DashboardV3() {
 
         {/* Monthly Goals */}
         <div className="glass-card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">🏔️</span>
-            <h3 className="font-semibold text-foreground">Monthly Summits</h3>
-            <span className="text-xs text-muted-foreground ml-auto">
-              {format(new Date(), 'MMMM')}
-            </span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🏔️</span>
+              <h3 className="font-semibold text-foreground">Monthly Summits</h3>
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(), 'MMMM')}
+              </span>
+            </div>
+            <Link href="/goals">
+              <button className="w-6 h-6 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center text-sm">
+                +
+              </button>
+            </Link>
           </div>
 
           <div className="flex justify-around gap-4">
@@ -450,7 +489,7 @@ export default function DashboardV3() {
                   : 0;
                 const colors = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))'];
                 return (
-                  <div key={goal.id} className="flex flex-col items-center flex-1">
+                  <Link key={goal.id} href="/goals" className="flex flex-col items-center flex-1 hover:opacity-80 transition-opacity cursor-pointer">
                     <div className="relative mb-2">
                       <ProgressArc
                         progress={progress}
@@ -464,7 +503,7 @@ export default function DashboardV3() {
                     <p className="text-xs text-muted-foreground text-center line-clamp-2">
                       {goal.title}
                     </p>
-                  </div>
+                  </Link>
                 );
               })
             )}
@@ -474,9 +513,16 @@ export default function DashboardV3() {
 
       {/* Habit Grid */}
       <div className="glass-card p-4 mb-5 overflow-x-auto">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">⚡</span>
-          <h3 className="font-semibold text-foreground">Daily Pitches</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚡</span>
+            <h3 className="font-semibold text-foreground">Daily Pitches</h3>
+          </div>
+          <Link href="/habits">
+            <button className="w-6 h-6 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center text-sm">
+              +
+            </button>
+          </Link>
         </div>
 
         {habitsLoading ? (
@@ -509,9 +555,16 @@ export default function DashboardV3() {
 
       {/* Todo Grid */}
       <div className="glass-card p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">📋</span>
-          <h3 className="font-semibold text-foreground">Route Beta</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📋</span>
+            <h3 className="font-semibold text-foreground">Route Beta</h3>
+          </div>
+          <Link href="/todos">
+            <button className="w-6 h-6 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center text-sm">
+              +
+            </button>
+          </Link>
         </div>
 
         {todosLoading ? (
@@ -543,6 +596,7 @@ export default function DashboardV3() {
                 isToday={i === week.todayIndex}
                 isMobile={isMobile}
                 onToggleTodo={handleToggleTodo}
+                onAddTodo={handleAddTodo}
               />
             ))}
           </div>

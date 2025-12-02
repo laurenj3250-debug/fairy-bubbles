@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Link } from 'wouter';
 import type { Habit } from '@shared/schema';
 
 interface HabitWithData extends Habit {
@@ -62,8 +63,8 @@ export function HabitGrid({
       {/* Habit Rows */}
       {habits.map(habit => (
         <div key={habit.id} className="flex items-center mb-1.5">
-          <div className={cn(
-            "flex-shrink-0 flex items-center gap-2",
+          <Link href="/habits" className={cn(
+            "flex-shrink-0 flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer",
             isMobile ? "w-24" : "w-36"
           )}>
             <span className="text-base">{habit.icon}</span>
@@ -76,7 +77,7 @@ export function HabitGrid({
                 {habit.grade}
               </span>
             )}
-          </div>
+          </Link>
 
           {dates.map((date, i) => {
             const showOnDay = isScheduledForDay(habit, i);
