@@ -140,7 +140,7 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <V2Dashboard />
+          <DashboardV3 />
         </RequireAuth>
       </Route>
       {/* Legacy routes - kept during migration */}
