@@ -252,6 +252,16 @@ export const todos = pgTable("todos", {
   parentTaskId: integer("parent_task_id").references((): any => todos.id, { onDelete: "cascade" }),
 });
 
+// Mood tracking
+export const moodLogs = pgTable("mood_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  emoji: varchar("emoji", { length: 10 }).notNull(),
+  tag: varchar("tag", { length: 50 }),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // TypeScript types inferred from tables
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -267,6 +277,7 @@ export type UserCostume = typeof userCostumes.$inferSelect;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
 export type UserPoints = typeof userPoints.$inferSelect;
 export type Todo = typeof todos.$inferSelect;
+export type MoodLog = typeof moodLogs.$inferSelect;
 
 // Insert schemas using drizzle-zod
 export const insertHabitSchema = createInsertSchema(habits).omit({ id: true });
@@ -298,6 +309,9 @@ export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema
 
 export const insertTodoSchema = createInsertSchema(todos).omit({ id: true, createdAt: true, completedAt: true });
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
+
+export const insertMoodLogSchema = createInsertSchema(moodLogs).omit({ id: true, createdAt: true });
+export type InsertMoodLog = z.infer<typeof insertMoodLogSchema>;
 
 // Task Management types
 export type Project = typeof projects.$inferSelect;

@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte, lte, isNotNull } from "drizzle-orm";
 import { getDb } from "./db";
 import * as schema from "@shared/schema";
 import type {
@@ -21,6 +21,10 @@ import type {
   UserPoints,
   Todo,
   InsertTodo,
+  // Mood types
+  MoodLog,
+  InsertMoodLog,
+  // Sprite types
   Sprite,
   InsertSprite,
   // Dream Scroll types
@@ -512,6 +516,59 @@ export class DbStorage implements IStorage {
     return results[0];
   }
 
+  // Mood Tracking
+  async getMoodLogsByDate(userId: number, date: string): Promise<MoodLog[]> {
+    const startOfDay = new Date(`${date}T00:00:00`);
+    const endOfDay = new Date(`${date}T23:59:59`);
+
+    return this.db
+      .select()
+      .from(schema.moodLogs)
+      .where(
+        and(
+          eq(schema.moodLogs.userId, userId),
+          gte(schema.moodLogs.createdAt, startOfDay),
+          lte(schema.moodLogs.createdAt, endOfDay)
+        )
+      )
+      .orderBy(schema.moodLogs.createdAt);
+  }
+
+  async getMoodLogsByDateRange(userId: number, startDate: string, endDate: string): Promise<MoodLog[]> {
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T23:59:59`);
+
+    return this.db
+      .select()
+      .from(schema.moodLogs)
+      .where(
+        and(
+          eq(schema.moodLogs.userId, userId),
+          gte(schema.moodLogs.createdAt, start),
+          lte(schema.moodLogs.createdAt, end)
+        )
+      )
+      .orderBy(schema.moodLogs.createdAt);
+  }
+
+  async createMoodLog(log: InsertMoodLog): Promise<MoodLog> {
+    const [created] = await this.db.insert(schema.moodLogs).values(log).returning();
+    return created;
+  }
+
+  async getUserMoodTags(userId: number): Promise<string[]> {
+    const results = await this.db
+      .selectDistinct({ tag: schema.moodLogs.tag })
+      .from(schema.moodLogs)
+      .where(
+        and(
+          eq(schema.moodLogs.userId, userId),
+          isNotNull(schema.moodLogs.tag)
+        )
+      );
+
+    return results.map(r => r.tag).filter((tag): tag is string => tag !== null);
+  }
 
   // Sprite Management
   async createSprite(sprite: InsertSprite): Promise<Sprite> {

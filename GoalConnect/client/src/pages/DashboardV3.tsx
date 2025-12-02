@@ -12,6 +12,7 @@ import { Link } from 'wouter';
 import { HabitGrid, HabitGridSkeleton } from '@/components/dashboard/HabitGrid';
 import { TodoDayColumn } from '@/components/dashboard/TodoDayColumn';
 import { ProgressArc } from '@/components/dashboard/ProgressArc';
+import { MoodButton } from '@/components/dashboard/MoodTracker';
 
 // Types
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
@@ -704,6 +705,9 @@ export default function DashboardV3() {
       </div>
 
       {currentPage === 'week' ? <WeeklyView /> : <StudyPlanner />}
+
+      {/* Floating Mood Button */}
+      <MoodButton isMobile={isMobile} />
     </div>
   );
 }
