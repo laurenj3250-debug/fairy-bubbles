@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["cd /app/GoalConnect && npm ci"]
+cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["cd /app/GoalConnect && npm run build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "cd /app/GoalConnect && npm run db:migrate && npm run start"
+cmd = "npm run db:migrate && npm run start"
