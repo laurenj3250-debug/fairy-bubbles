@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { path: "/v2", label: "Home", icon: Home },
+  { path: "/", label: "Home", icon: Home },
   { path: "/habits", label: "Habits", icon: Mountain },
   { path: "/goals", label: "Goals", icon: Target },
   { path: "/todos", label: "Tasks", icon: CheckSquare },

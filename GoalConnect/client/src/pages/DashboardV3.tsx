@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, isToday, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
+import { Settings } from 'lucide-react';
 
 // Components
 import { HabitGrid, HabitGridSkeleton } from '@/components/dashboard/HabitGrid';
@@ -264,15 +265,19 @@ export default function DashboardV3() {
   }, [weekLogs]);
 
   const weeklyGoals = useMemo(() => {
-    return goals.filter(g => g.deadline <= week.weekEnd && g.deadline >= week.weekStart);
+    return goals.filter(g => g.deadline && g.deadline <= week.weekEnd && g.deadline >= week.weekStart);
   }, [goals, week.weekStart, week.weekEnd]);
 
   const monthlyGoals = useMemo(() => {
     const now = new Date();
     const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
     const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
-    return goals.filter(g => g.deadline >= monthStart && g.deadline <= monthEnd).slice(0, 3);
-  }, [goals]);
+    // Exclude goals already shown in weekly section
+    const weeklyIds = new Set(weeklyGoals.map(g => g.id));
+    return goals
+      .filter(g => g.deadline && g.deadline >= monthStart && g.deadline <= monthEnd && !weeklyIds.has(g.id))
+      .slice(0, 3);
+  }, [goals, weeklyGoals]);
 
   const todosByDay = useMemo(() => {
     const byDay: Record<number, TodoWithMetadata[]> = {};
@@ -389,6 +394,13 @@ export default function DashboardV3() {
             <span className="text-lg">🔥</span>
             <span className="font-bold text-foreground">{streak}</span>
           </div>
+
+          {/* Settings Button */}
+          <Link href="/settings">
+            <button className="p-2 rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </Link>
         </div>
       </div>
 
