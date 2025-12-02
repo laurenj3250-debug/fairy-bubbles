@@ -28,6 +28,7 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import V2Dashboard from "@/pages/V2Dashboard";
+import DashboardV3 from "@/pages/DashboardV3";
 import Journey from "@/pages/Journey";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
@@ -129,10 +130,17 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
 
+      {/* V3 Dashboard - Weekly view + Expeditions */}
+      <Route path="/v3">
+        <RequireAuth>
+          <DashboardV3 />
+        </RequireAuth>
+      </Route>
+
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <V2Dashboard />
+          <DashboardV3 />
         </RequireAuth>
       </Route>
       {/* Legacy routes - kept during migration */}

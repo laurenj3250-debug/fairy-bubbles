@@ -19,6 +19,9 @@ import {
   type UserPoints,
   type Todo,
   type InsertTodo,
+  // Mood types
+  type MoodLog,
+  type InsertMoodLog,
   // Sprite types
   type Sprite,
   type InsertSprite,
@@ -91,6 +94,12 @@ export interface IStorage {
   updateTodo(id: number, todo: Partial<Todo>): Promise<Todo | undefined>;
   deleteTodo(id: number): Promise<boolean>;
   completeTodo(id: number): Promise<Todo | undefined>;
+
+  // Mood Tracking
+  getMoodLogsByDate(userId: number, date: string): Promise<MoodLog[]>;
+  getMoodLogsByDateRange(userId: number, startDate: string, endDate: string): Promise<MoodLog[]>;
+  createMoodLog(log: InsertMoodLog): Promise<MoodLog>;
+  getUserMoodTags(userId: number): Promise<string[]>;
 
   // Sprite Management
   createSprite(sprite: InsertSprite): Promise<Sprite>;
