@@ -133,14 +133,18 @@ function AppRoutes() {
       {/* V3 Dashboard - Weekly view + Expeditions */}
       <Route path="/v3">
         <RequireAuth>
-          <DashboardV3 />
+          <MainLayout>
+            <DashboardV3 />
+          </MainLayout>
         </RequireAuth>
       </Route>
 
       {/* Protected routes */}
       <Route path="/">
         <RequireAuth>
-          <DashboardV3 />
+          <MainLayout>
+            <DashboardV3 />
+          </MainLayout>
         </RequireAuth>
       </Route>
       {/* Legacy routes - kept during migration */}
