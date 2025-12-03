@@ -43,6 +43,7 @@ import { registerPetRoutes } from "./routes/pet";
 import { registerPointRoutes } from "./routes/points";
 import { registerJourneyGoalRoutes } from "./routes/journey-goals";
 import { registerClimbingLogRoutes } from "./routes/climbing-log";
+import { registerLiftingRoutes } from "./routes/lifting";
 import { registerMoodRoutes } from "./routes/mood";
 import {
   DatabaseError,
@@ -2902,6 +2903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerPointRoutes(app);
   registerJourneyGoalRoutes(app);
   registerClimbingLogRoutes(app);
+  registerLiftingRoutes(app);
   registerMoodRoutes(app);
 
   // Register task management routes

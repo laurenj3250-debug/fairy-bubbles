@@ -966,3 +966,98 @@ export const insertOutdoorClimbingTickSchema = createInsertSchema(outdoorClimbin
 });
 
 export type InsertOutdoorClimbingTickInput = z.infer<typeof insertOutdoorClimbingTickSchema>;
+
+// ========== LIFTING LOG ==========
+// Manual workout tracking for strength training
+
+export const liftingCategoryEnum = pgEnum('lifting_category', ['push', 'pull', 'legs', 'core', 'compound', 'accessory']);
+export const equipmentTypeEnum = pgEnum('equipment_type', ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other']);
+
+// User's exercise library
+export const liftingExercises = pgTable("lifting_exercises", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  category: liftingCategoryEnum("category").notNull().default("compound"),
+  equipment: equipmentTypeEnum("equipment").notNull().default("barbell"),
+  primaryMuscle: text("primary_muscle"), // "chest", "back", "quads", etc.
+  isCustom: boolean("is_custom").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // Prevent duplicate exercise names per user
+    userExerciseIdx: uniqueIndex("lifting_exercises_user_name_key").on(table.userId, table.name),
+  };
+});
+
+// Individual sets logged during workouts
+export const liftingSets = pgTable("lifting_sets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  exerciseId: integer("exercise_id").notNull().references(() => liftingExercises.id, { onDelete: "cascade" }),
+  workoutDate: varchar("workout_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  setNumber: integer("set_number").notNull().default(1),
+  reps: integer("reps").notNull(),
+  weightLbs: decimal("weight_lbs", { precision: 6, scale: 2 }).notNull(),
+  rpe: integer("rpe"), // Rate of perceived exertion 1-10
+  isPR: boolean("is_pr").notNull().default(false), // Personal record for this exercise
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Workout sessions - group sets into workouts
+export const liftingWorkouts = pgTable("lifting_workouts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  workoutDate: varchar("workout_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  name: text("name"), // "Push Day", "Full Body", etc.
+  durationMinutes: integer("duration_minutes"),
+  totalVolume: integer("total_volume").notNull().default(0), // Total weight × reps
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One workout per day per user (can have multiple exercises within)
+    userDateIdx: uniqueIndex("lifting_workouts_user_date_key").on(table.userId, table.workoutDate),
+  };
+});
+
+// TypeScript types
+export type LiftingExercise = typeof liftingExercises.$inferSelect;
+export type LiftingSet = typeof liftingSets.$inferSelect;
+export type LiftingWorkout = typeof liftingWorkouts.$inferSelect;
+export type InsertLiftingExercise = typeof liftingExercises.$inferInsert;
+export type InsertLiftingSet = typeof liftingSets.$inferInsert;
+export type InsertLiftingWorkout = typeof liftingWorkouts.$inferInsert;
+
+// Insert schemas
+export const insertLiftingExerciseSchema = createInsertSchema(liftingExercises).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLiftingSetSchema = createInsertSchema(liftingSets).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLiftingWorkoutSchema = createInsertSchema(liftingWorkouts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Default exercises to seed for new users
+export const DEFAULT_LIFTING_EXERCISES = [
+  { name: "Bench Press", category: "push" as const, equipment: "barbell" as const, primaryMuscle: "chest" },
+  { name: "Squat", category: "legs" as const, equipment: "barbell" as const, primaryMuscle: "quads" },
+  { name: "Deadlift", category: "compound" as const, equipment: "barbell" as const, primaryMuscle: "back" },
+  { name: "Overhead Press", category: "push" as const, equipment: "barbell" as const, primaryMuscle: "shoulders" },
+  { name: "Barbell Row", category: "pull" as const, equipment: "barbell" as const, primaryMuscle: "back" },
+  { name: "Pull-up", category: "pull" as const, equipment: "bodyweight" as const, primaryMuscle: "back" },
+  { name: "Dumbbell Curl", category: "pull" as const, equipment: "dumbbell" as const, primaryMuscle: "biceps" },
+  { name: "Tricep Pushdown", category: "push" as const, equipment: "cable" as const, primaryMuscle: "triceps" },
+  { name: "Leg Press", category: "legs" as const, equipment: "machine" as const, primaryMuscle: "quads" },
+  { name: "Romanian Deadlift", category: "legs" as const, equipment: "barbell" as const, primaryMuscle: "hamstrings" },
+] as const;
