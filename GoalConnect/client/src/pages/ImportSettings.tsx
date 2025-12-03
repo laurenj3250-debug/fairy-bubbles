@@ -33,6 +33,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { useHabitMappings, type HabitMapping, type CreateMappingInput } from "@/hooks/useHabitMappings";
+import { Plus, Trash2 } from "lucide-react";
 
 // Types
 interface KilterBoardStatus {
@@ -115,6 +117,28 @@ export default function ImportSettings() {
   // Apple Health state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Auto-complete mapping state
+  const [showAddMapping, setShowAddMapping] = useState(false);
+  const [newMappingHabitId, setNewMappingHabitId] = useState<number | null>(null);
+  const [newMappingTypes, setNewMappingTypes] = useState<string[]>([]);
+  const [newMappingMinDuration, setNewMappingMinDuration] = useState<number>(0);
+
+  // Fetch habits for mapping
+  const { data: habits = [] } = useQuery<Array<{ id: number; title: string; icon: string }>>({
+    queryKey: ["/api/habits"],
+  });
+
+  // Fetch habit mappings
+  const {
+    mappings,
+    activityTypes,
+    isLoading: isLoadingMappings,
+    createMapping,
+    deleteMapping,
+    isCreating,
+    isDeleting,
+  } = useHabitMappings();
 
   // Fetch Kilter Board connection status
   const { data: kilterStatus, isLoading: isLoadingStatus } = useQuery<KilterBoardStatus>({
@@ -324,6 +348,10 @@ export default function ImportSettings() {
             <TabsTrigger value="strava" className="flex items-center gap-2">
               <Bike className="w-4 h-4" />
               Strava
+            </TabsTrigger>
+            <TabsTrigger value="auto-complete" className="flex items-center gap-2">
+              <LinkIcon className="w-4 h-4" />
+              Auto-Complete
             </TabsTrigger>
           </TabsList>
 
@@ -843,6 +871,181 @@ export default function ImportSettings() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Auto-Complete Tab */}
+          <TabsContent value="auto-complete" className="space-y-6">
+            <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5" />
+                  Habit Auto-Complete Rules
+                </CardTitle>
+                <CardDescription>
+                  Configure which activities from Strava automatically complete your habits
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Existing Mappings */}
+                {mappings.length > 0 && (
+                  <div className="space-y-3">
+                    {mappings.map((mapping) => (
+                      <div
+                        key={mapping.id}
+                        className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{mapping.habitIcon}</span>
+                          <div>
+                            <p className="font-medium">{mapping.habitTitle}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {(mapping.matchCriteria.activityTypes || []).join(", ") || "Any activity"}
+                              {mapping.matchCriteria.minDurationMinutes && ` • ${mapping.matchCriteria.minDurationMinutes}+ min`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="capitalize">
+                            {mapping.sourceType}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteMapping(mapping.id)}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add New Mapping */}
+                {!showAddMapping ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddMapping(true)}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Auto-Complete Rule
+                  </Button>
+                ) : (
+                  <div className="p-4 bg-card/50 rounded-lg border border-border/50 space-y-4">
+                    <div className="space-y-2">
+                      <Label>Habit</Label>
+                      <select
+                        className="w-full p-2 bg-background/50 border border-border rounded-md"
+                        value={newMappingHabitId || ""}
+                        onChange={(e) => setNewMappingHabitId(e.target.value ? parseInt(e.target.value) : null)}
+                      >
+                        <option value="">Select a habit...</option>
+                        {habits
+                          .filter(h => !mappings.some(m => m.habitId === h.id && m.sourceType === "strava"))
+                          .map((habit) => (
+                            <option key={habit.id} value={habit.id}>
+                              {habit.icon} {habit.title}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Activity Types (select multiple)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {activityTypes.map((type) => (
+                          <Badge
+                            key={type}
+                            variant={newMappingTypes.includes(type) ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => {
+                              if (newMappingTypes.includes(type)) {
+                                setNewMappingTypes(newMappingTypes.filter(t => t !== type));
+                              } else {
+                                setNewMappingTypes([...newMappingTypes, type]);
+                              }
+                            }}
+                          >
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Minimum Duration (minutes)</Label>
+                      <Input
+                        type="number"
+                        value={newMappingMinDuration || ""}
+                        onChange={(e) => setNewMappingMinDuration(parseInt(e.target.value) || 0)}
+                        placeholder="0 (any duration)"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          if (!newMappingHabitId) return;
+                          await createMapping({
+                            habitId: newMappingHabitId,
+                            sourceType: "strava",
+                            matchCriteria: {
+                              activityTypes: newMappingTypes.length > 0 ? newMappingTypes : undefined,
+                              minDurationMinutes: newMappingMinDuration > 0 ? newMappingMinDuration : undefined,
+                            },
+                          });
+                          setShowAddMapping(false);
+                          setNewMappingHabitId(null);
+                          setNewMappingTypes([]);
+                          setNewMappingMinDuration(0);
+                        }}
+                        disabled={!newMappingHabitId || isCreating}
+                      >
+                        {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                        Create Rule
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setShowAddMapping(false);
+                          setNewMappingHabitId(null);
+                          setNewMappingTypes([]);
+                          setNewMappingMinDuration(0);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {mappings.length === 0 && !showAddMapping && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <LinkIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm">No auto-complete rules configured yet.</p>
+                    <p className="text-xs mt-1">
+                      Create rules to automatically mark habits complete when you log activities on Strava.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* How It Works */}
+            <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-sm">How Auto-Complete Works</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-2">
+                <p>1. Connect your Strava account in the Strava tab</p>
+                <p>2. Create auto-complete rules above linking habits to activity types</p>
+                <p>3. When you sync Strava, matching activities will automatically complete your habits</p>
+                <p>4. Manual habit entries won't be overwritten by auto-complete</p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

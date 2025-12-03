@@ -1,7 +1,7 @@
 /**
- * Habit Data Mapping Routes
+ * Habit Data Mappings Routes
  *
- * CRUD operations for user-configured habit matching rules.
+ * Configure rules for auto-completing habits from external data sources
  */
 
 import type { Express, Request, Response } from "express";
@@ -9,36 +9,48 @@ import { getDb } from "../db";
 import { habitDataMappings, habits } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
-import { z } from "zod";
 import { log } from "../lib/logger";
+import { z } from "zod";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
-// Validation schema for match criteria
-const matchCriteriaSchema = z.object({
-  workoutType: z.union([z.string(), z.array(z.string())]).optional(),
-  minDuration: z.number().positive().optional(),
-  maxDuration: z.number().positive().optional(),
-  minCalories: z.number().positive().optional(),
-  minProblems: z.number().nonnegative().optional(),
-  minGrade: z.string().optional(),
-  boardAngle: z.number().optional(),
-  keywords: z.array(z.string()).optional(),
-});
+// Available Strava activity types for matching
+export const STRAVA_ACTIVITY_TYPES = [
+  "Ride",
+  "Run",
+  "Walk",
+  "Hike",
+  "RockClimbing",
+  "Bouldering",
+  "Yoga",
+  "WeightTraining",
+  "Crossfit",
+  "Swim",
+  "VirtualRide",
+  "VirtualRun",
+  "Workout",
+  "EBikeRide",
+  "MountainBikeRide",
+  "GravelRide",
+  "TrailRun",
+  "Rowing",
+  "Kayaking",
+  "AlpineSki",
+  "NordicSki",
+  "Snowboard",
+];
 
-// Validation schema for creating/updating mappings
-const mappingSchema = z.object({
-  habitId: z.number().positive(),
-  sourceType: z.enum(["apple_watch", "kilter_board", "strava"]),
-  matchCriteria: matchCriteriaSchema,
-  autoComplete: z.boolean().default(true),
-  autoIncrement: z.boolean().default(false),
+// Match criteria schema
+const matchCriteriaSchema = z.object({
+  activityTypes: z.array(z.string()).optional(),
+  minDurationMinutes: z.number().min(1).optional(),
+  keywords: z.array(z.string()).optional(),
 });
 
 export function registerHabitMappingRoutes(app: Express) {
   /**
    * GET /api/habit-mappings
-   * Get all habit mappings for the current user
+   * List all habit mappings for the user
    */
   app.get("/api/habit-mappings", async (req: Request, res: Response) => {
     try {
@@ -48,63 +60,23 @@ export function registerHabitMappingRoutes(app: Express) {
       const mappings = await db
         .select({
           id: habitDataMappings.id,
-          userId: habitDataMappings.userId,
           habitId: habitDataMappings.habitId,
           sourceType: habitDataMappings.sourceType,
           matchCriteria: habitDataMappings.matchCriteria,
           autoComplete: habitDataMappings.autoComplete,
           autoIncrement: habitDataMappings.autoIncrement,
           createdAt: habitDataMappings.createdAt,
-          updatedAt: habitDataMappings.updatedAt,
-          // Join habit info
           habitTitle: habits.title,
           habitIcon: habits.icon,
-          habitColor: habits.color,
         })
         .from(habitDataMappings)
-        .leftJoin(habits, eq(habitDataMappings.habitId, habits.id))
+        .innerJoin(habits, eq(habits.id, habitDataMappings.habitId))
         .where(eq(habitDataMappings.userId, userId));
 
       res.json({ mappings });
     } catch (error) {
-      log.error("[habit-mappings] Error fetching habit mappings:", error);
+      log.error("[habit-mappings] Error fetching mappings:", error);
       res.status(500).json({ error: "Failed to fetch habit mappings" });
-    }
-  });
-
-  /**
-   * GET /api/habit-mappings/:id
-   * Get a single habit mapping by ID
-   */
-  app.get("/api/habit-mappings/:id", async (req: Request, res: Response) => {
-    try {
-      const userId = getUserId(req);
-      const mappingId = parseInt(req.params.id, 10);
-
-      if (isNaN(mappingId)) {
-        return res.status(400).json({ error: "Invalid mapping ID" });
-      }
-
-      const db = getDb();
-      const [mapping] = await db
-        .select()
-        .from(habitDataMappings)
-        .where(
-          and(
-            eq(habitDataMappings.id, mappingId),
-            eq(habitDataMappings.userId, userId)
-          )
-        )
-        .limit(1);
-
-      if (!mapping) {
-        return res.status(404).json({ error: "Mapping not found" });
-      }
-
-      res.json(mapping);
-    } catch (error) {
-      log.error("[habit-mappings] Error fetching habit mapping:", error);
-      res.status(500).json({ error: "Failed to fetch habit mapping" });
     }
   });
 
@@ -115,48 +87,53 @@ export function registerHabitMappingRoutes(app: Express) {
   app.post("/api/habit-mappings", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
+      const db = getDb();
 
       // Validate request body
-      const parseResult = mappingSchema.safeParse(req.body);
-      if (!parseResult.success) {
+      const createSchema = z.object({
+        habitId: z.number(),
+        sourceType: z.enum(["strava", "apple_watch", "kilter_board"]),
+        matchCriteria: matchCriteriaSchema,
+        autoComplete: z.boolean().default(true),
+        autoIncrement: z.boolean().default(false),
+      });
+
+      const validationResult = createSchema.safeParse(req.body);
+      if (!validationResult.success) {
         return res.status(400).json({
-          error: "Invalid mapping data",
-          details: parseResult.error.errors,
+          error: "Invalid input",
+          details: validationResult.error.flatten(),
         });
       }
 
-      const { habitId, sourceType, matchCriteria, autoComplete, autoIncrement } =
-        parseResult.data;
-
-      const db = getDb();
+      const data = validationResult.data;
 
       // Verify habit belongs to user
       const [habit] = await db
-        .select({ id: habits.id })
+        .select()
         .from(habits)
-        .where(and(eq(habits.id, habitId), eq(habits.userId, userId)))
+        .where(and(eq(habits.id, data.habitId), eq(habits.userId, userId)))
         .limit(1);
 
       if (!habit) {
         return res.status(404).json({ error: "Habit not found" });
       }
 
-      // Check if mapping already exists for this habit/source combination
+      // Check if mapping already exists for this habit and source
       const [existing] = await db
-        .select({ id: habitDataMappings.id })
+        .select()
         .from(habitDataMappings)
         .where(
           and(
-            eq(habitDataMappings.habitId, habitId),
-            eq(habitDataMappings.sourceType, sourceType)
+            eq(habitDataMappings.habitId, data.habitId),
+            eq(habitDataMappings.sourceType, data.sourceType)
           )
         )
         .limit(1);
 
       if (existing) {
         return res.status(409).json({
-          error: "A mapping already exists for this habit and source",
-          existingId: existing.id,
+          error: "Mapping already exists for this habit and source",
         });
       }
 
@@ -165,17 +142,17 @@ export function registerHabitMappingRoutes(app: Express) {
         .insert(habitDataMappings)
         .values({
           userId,
-          habitId,
-          sourceType,
-          matchCriteria,
-          autoComplete,
-          autoIncrement,
+          habitId: data.habitId,
+          sourceType: data.sourceType,
+          matchCriteria: data.matchCriteria,
+          autoComplete: data.autoComplete,
+          autoIncrement: data.autoIncrement,
         })
         .returning();
 
       res.status(201).json(mapping);
     } catch (error) {
-      log.error("[habit-mappings] Error creating habit mapping:", error);
+      log.error("[habit-mappings] Error creating mapping:", error);
       res.status(500).json({ error: "Failed to create habit mapping" });
     }
   });
@@ -187,27 +164,16 @@ export function registerHabitMappingRoutes(app: Express) {
   app.put("/api/habit-mappings/:id", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
-      const mappingId = parseInt(req.params.id, 10);
+      const mappingId = parseInt(req.params.id);
+      const db = getDb();
 
       if (isNaN(mappingId)) {
         return res.status(400).json({ error: "Invalid mapping ID" });
       }
 
-      // Validate request body (partial update allowed)
-      const updateSchema = mappingSchema.partial();
-      const parseResult = updateSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        return res.status(400).json({
-          error: "Invalid mapping data",
-          details: parseResult.error.errors,
-        });
-      }
-
-      const db = getDb();
-
-      // Verify mapping exists and belongs to user
+      // Verify ownership
       const [existing] = await db
-        .select({ id: habitDataMappings.id })
+        .select()
         .from(habitDataMappings)
         .where(
           and(
@@ -221,11 +187,25 @@ export function registerHabitMappingRoutes(app: Express) {
         return res.status(404).json({ error: "Mapping not found" });
       }
 
-      // Update mapping
+      // Validate update data
+      const updateSchema = z.object({
+        matchCriteria: matchCriteriaSchema.optional(),
+        autoComplete: z.boolean().optional(),
+        autoIncrement: z.boolean().optional(),
+      });
+
+      const validationResult = updateSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid input",
+          details: validationResult.error.flatten(),
+        });
+      }
+
       const [updated] = await db
         .update(habitDataMappings)
         .set({
-          ...parseResult.data,
+          ...validationResult.data,
           updatedAt: new Date(),
         })
         .where(eq(habitDataMappings.id, mappingId))
@@ -233,7 +213,7 @@ export function registerHabitMappingRoutes(app: Express) {
 
       res.json(updated);
     } catch (error) {
-      log.error("[habit-mappings] Error updating habit mapping:", error);
+      log.error("[habit-mappings] Error updating mapping:", error);
       res.status(500).json({ error: "Failed to update habit mapping" });
     }
   });
@@ -245,15 +225,13 @@ export function registerHabitMappingRoutes(app: Express) {
   app.delete("/api/habit-mappings/:id", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
-      const mappingId = parseInt(req.params.id, 10);
+      const mappingId = parseInt(req.params.id);
+      const db = getDb();
 
       if (isNaN(mappingId)) {
         return res.status(400).json({ error: "Invalid mapping ID" });
       }
 
-      const db = getDb();
-
-      // Verify ownership and delete
       const result = await db
         .delete(habitDataMappings)
         .where(
@@ -268,45 +246,18 @@ export function registerHabitMappingRoutes(app: Express) {
         return res.status(404).json({ error: "Mapping not found" });
       }
 
-      res.json({ success: true, deleted: mappingId });
+      res.json({ success: true, deletedId: mappingId });
     } catch (error) {
-      log.error("[habit-mappings] Error deleting habit mapping:", error);
+      log.error("[habit-mappings] Error deleting mapping:", error);
       res.status(500).json({ error: "Failed to delete habit mapping" });
     }
   });
 
   /**
-   * GET /api/habit-mappings/for-habit/:habitId
-   * Get all mappings for a specific habit
+   * GET /api/habit-mappings/activity-types
+   * Get list of available activity types for Strava
    */
-  app.get(
-    "/api/habit-mappings/for-habit/:habitId",
-    async (req: Request, res: Response) => {
-      try {
-        const userId = getUserId(req);
-        const habitId = parseInt(req.params.habitId, 10);
-
-        if (isNaN(habitId)) {
-          return res.status(400).json({ error: "Invalid habit ID" });
-        }
-
-        const db = getDb();
-
-        const mappings = await db
-          .select()
-          .from(habitDataMappings)
-          .where(
-            and(
-              eq(habitDataMappings.habitId, habitId),
-              eq(habitDataMappings.userId, userId)
-            )
-          );
-
-        res.json({ mappings });
-      } catch (error) {
-        log.error("[habit-mappings] Error fetching habit mappings:", error);
-        res.status(500).json({ error: "Failed to fetch habit mappings" });
-      }
-    }
-  );
+  app.get("/api/habit-mappings/activity-types", async (_req: Request, res: Response) => {
+    res.json({ activityTypes: STRAVA_ACTIVITY_TYPES });
+  });
 }

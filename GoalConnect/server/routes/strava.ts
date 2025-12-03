@@ -19,6 +19,7 @@ import {
   parseStravaActivity,
   parseAthleteStats,
 } from "../importers/strava-parser";
+import { applyWorkoutMatches } from "../services/habit-auto-complete";
 import { log } from "../lib/logger";
 
 const getUserId = (req: Request) => requireUser(req).id;
@@ -668,7 +669,7 @@ async function performSync(
       skipped++;
     } else {
       // Insert new activity
-      await db.insert(externalWorkouts).values({
+      const [insertedWorkout] = await db.insert(externalWorkouts).values({
         userId: parsed.userId,
         sourceType: parsed.sourceType,
         externalId: parsed.externalId,
@@ -681,7 +682,21 @@ async function performSync(
         caloriesBurned: parsed.caloriesBurned,
         distanceKm: parsed.distanceKm,
         metadata: parsed.metadata,
-      });
+      }).returning();
+
+      // Auto-complete habits based on the imported activity
+      if (insertedWorkout) {
+        try {
+          const autoCompleteResult = await applyWorkoutMatches(insertedWorkout, userId);
+          if (autoCompleteResult.habitsCompleted > 0 || autoCompleteResult.habitsIncremented > 0) {
+            log.info(`[strava] Auto-completed ${autoCompleteResult.habitsCompleted} habits, incremented ${autoCompleteResult.habitsIncremented} for activity ${insertedWorkout.id}`);
+          }
+        } catch (autoCompleteError) {
+          log.error("[strava] Failed to apply habit auto-complete:", autoCompleteError);
+          // Don't fail the sync if auto-complete fails
+        }
+      }
+
       imported++;
     }
   }
