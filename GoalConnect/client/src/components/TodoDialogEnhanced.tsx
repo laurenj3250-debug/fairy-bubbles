@@ -312,7 +312,12 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null, defaul
       onOpenChange(false);
     } catch (error) {
       console.error("Error creating todo:", error);
-      toast({ title: "Error", description: "Failed to create task", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to create task";
+      toast({
+        title: "Error",
+        description: errorMessage.includes("401") ? "Please log in again" : errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }

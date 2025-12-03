@@ -4,7 +4,7 @@ import connectPgSimple from "connect-pg-simple";
 import createMemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
+import { getDb, getPool } from "./db";
 import { users } from "@shared/schema";
 import { storage } from "./storage";
 import { log } from "./lib/logger";
@@ -453,9 +453,10 @@ export function configureSimpleAuth(app: Express) {
   if (process.env.DATABASE_URL) {
     try {
       log.debug("[auth] Attempting PostgreSQL session store");
-      const db = getDb();
+      // Use getPool() to get the actual pg Pool instance
+      const pool = getPool();
       sessionConfig.store = new PgSession({
-        pool: (db as any).pool,
+        pool,
         tableName: "session",
         createTableIfMissing: true,
       });

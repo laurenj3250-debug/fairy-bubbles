@@ -539,8 +539,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const todo = await storage.createTodo(validated);
       res.status(201).json(todo);
     } catch (error) {
-      if (error instanceof Error && error.name === "ZodError") {
-        return res.status(400).json({ error: "Invalid todo data", details: (error as any).errors });
+      console.error("[POST /api/todos] Error:", error);
+      if (error instanceof Error) {
+        if (error.message === "User not authenticated") {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        if (error.name === "ZodError") {
+          return res.status(400).json({ error: "Invalid todo data", details: (error as any).errors });
+        }
       }
       res.status(500).json({ error: "Failed to create todo" });
     }
