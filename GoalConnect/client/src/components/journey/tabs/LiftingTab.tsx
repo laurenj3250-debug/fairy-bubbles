@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Activity, Dumbbell, Flame, Plus, Timer, TrendingUp, Trophy, Weight, Zap } from "lucide-react";
+import { Activity, Dumbbell, Flame, Plus, Timer, TrendingUp, Trophy, Upload, Weight, Zap } from "lucide-react";
 import { EditableGoal } from "../shared";
 import { useLiftingLog, LiftingWorkout, LiftingSet } from "@/hooks/useLiftingLog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface LiftingTabProps {
   yearlyWorkoutsGoal: number;
@@ -50,6 +51,7 @@ function groupSetsByExercise(sets: LiftingSet[]): Record<string, LiftingSet[]> {
 }
 
 export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUpdating }: LiftingTabProps) {
+  const { toast } = useToast();
   const {
     exercises,
     workouts,
@@ -60,13 +62,47 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
     logSet,
     saveWorkout,
     isLoggingSet,
+    importLiftosaur,
+    isImportingLiftosaur,
   } = useLiftingLog();
 
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [weight, setWeight] = useState<string>("");
   const [reps, setReps] = useState<string>("");
   const [sets, setSets] = useState<string>("1");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // Liftosaur exports have a "history" array
+      if (!data.history) {
+        toast({ title: "Invalid file", description: "This doesn't look like a Liftosaur export. Expected { history: [...] }", variant: "destructive" });
+        return;
+      }
+
+      const result = await importLiftosaur({ history: data.history });
+      toast({
+        title: "Import successful!",
+        description: `Imported ${result.imported.workouts} workouts, ${result.imported.sets} sets, ${result.imported.exercises} new exercises`,
+      });
+      setIsImportDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Import failed", description: "Could not parse the file. Make sure it's a valid Liftosaur JSON export.", variant: "destructive" });
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const ytdWorkouts = stats?.ytdWorkouts || 0;
   const thisMonthWorkouts = stats?.thisMonthWorkouts || 0;
@@ -110,28 +146,58 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
   if (!isLoading && exercises.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".json"
+          className="hidden"
+        />
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
           <Dumbbell className="w-12 h-12 text-purple-500" />
         </div>
         <div>
           <h3 className="text-xl font-semibold mb-2">Set Up Lifting Log</h3>
           <p className="text-muted-foreground max-w-sm">
-            Get started with a library of common exercises. You can add custom exercises anytime.
+            Import your workout history from Liftosaur, or start fresh with a library of common exercises.
           </p>
         </div>
-        <Button
-          onClick={() => seedExercises()}
-          disabled={isSeedingExercises}
-          className="px-6 py-3 bg-purple-500 hover:bg-purple-600"
-        >
-          {isSeedingExercises ? "Setting up..." : "Add Default Exercises"}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImportingLiftosaur}
+            variant="default"
+            className="px-6 py-3 bg-purple-500 hover:bg-purple-600"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {isImportingLiftosaur ? "Importing..." : "Import from Liftosaur"}
+          </Button>
+          <Button
+            onClick={() => seedExercises()}
+            disabled={isSeedingExercises}
+            variant="outline"
+            className="px-6 py-3"
+          >
+            {isSeedingExercises ? "Setting up..." : "Start Fresh"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground max-w-sm">
+          In Liftosaur, go to Settings → Export Data → Export as JSON, then upload the file here.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="flex-1 grid grid-cols-6 grid-rows-[auto_1fr_auto] gap-3 min-h-0">
+      {/* Hidden file input for import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".json"
+        className="hidden"
+      />
       {/* ═══════════ ROW 1: Hero Stats ═══════════ */}
 
       {/* HERO - YTD Workouts */}
@@ -208,13 +274,24 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
             <span className="w-2 h-2 rounded-full bg-purple-500" />
             Recent Workouts
           </div>
-          <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                <Plus className="w-3 h-3" />
-                Log Set
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs gap-1"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImportingLiftosaur}
+            >
+              <Upload className="w-3 h-3" />
+              {isImportingLiftosaur ? "..." : "Import"}
+            </Button>
+            <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                  <Plus className="w-3 h-3" />
+                  Log Set
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Log Exercise Set</DialogTitle>
@@ -274,6 +351,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
           {isLoading ? (

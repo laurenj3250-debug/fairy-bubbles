@@ -392,6 +392,176 @@ export function registerLiftingRoutes(app: Express) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
+
+  // ==================== LIFTOSAUR IMPORT ====================
+
+  /**
+   * POST /api/lifting/import/liftosaur
+   * Import workout history from Liftosaur JSON export
+   *
+   * Expected format (from Liftosaur export):
+   * {
+   *   history: IHistoryRecord[]
+   * }
+   *
+   * Where IHistoryRecord contains:
+   * - date: string (ISO8601)
+   * - entries: IHistoryEntry[] (each has exercise and sets)
+   * - Each set has: completedReps, completedWeight (with value and unit)
+   */
+  app.post("/api/lifting/import/liftosaur", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+      const { history } = req.body;
+
+      if (!history || !Array.isArray(history)) {
+        return res.status(400).json({ error: "Invalid Liftosaur export format. Expected { history: [...] }" });
+      }
+
+      let workoutsImported = 0;
+      let setsImported = 0;
+      let exercisesCreated = 0;
+
+      // Get existing exercises for this user
+      const existingExercises = await db
+        .select()
+        .from(liftingExercises)
+        .where(eq(liftingExercises.userId, userId));
+
+      const exerciseMap = new Map<string, number>();
+      for (const ex of existingExercises) {
+        exerciseMap.set(ex.name.toLowerCase(), ex.id);
+      }
+
+      // Process each history record (workout day)
+      for (const record of history) {
+        if (!record.date || !record.entries) continue;
+
+        // Parse date - Liftosaur uses ISO8601 format
+        const workoutDate = record.date.split("T")[0]; // Get YYYY-MM-DD
+
+        // Create/update workout for this day
+        try {
+          await db
+            .insert(liftingWorkouts)
+            .values({
+              userId,
+              workoutDate,
+              name: record.dayName || record.programName || null,
+              totalVolume: 0, // Will be calculated after
+            })
+            .onConflictDoNothing();
+
+          workoutsImported++;
+        } catch (e) {
+          // Workout might already exist, continue
+        }
+
+        // Process each exercise entry
+        for (const entry of record.entries || []) {
+          if (!entry.exercise || !entry.sets) continue;
+
+          // Get or create exercise
+          const exerciseName = entry.exercise.name || entry.exercise.id || "Unknown";
+          let exerciseId = exerciseMap.get(exerciseName.toLowerCase());
+
+          if (!exerciseId) {
+            // Create new exercise
+            try {
+              const [newExercise] = await db
+                .insert(liftingExercises)
+                .values({
+                  userId,
+                  name: exerciseName,
+                  category: "compound", // Default
+                  equipment: mapEquipment(entry.exercise.equipment),
+                  isCustom: true,
+                })
+                .returning();
+
+              exerciseId = newExercise.id;
+              exerciseMap.set(exerciseName.toLowerCase(), exerciseId);
+              exercisesCreated++;
+            } catch (e) {
+              // Exercise might already exist due to race condition
+              const existing = await db
+                .select()
+                .from(liftingExercises)
+                .where(and(eq(liftingExercises.userId, userId), eq(liftingExercises.name, exerciseName)));
+              if (existing.length > 0) {
+                exerciseId = existing[0].id;
+                exerciseMap.set(exerciseName.toLowerCase(), exerciseId);
+              } else {
+                continue;
+              }
+            }
+          }
+
+          // Import sets
+          const allSets = [...(entry.warmupSets || []), ...(entry.sets || [])];
+          let setNumber = 0;
+
+          for (const set of allSets) {
+            setNumber++;
+
+            // Extract weight - Liftosaur uses { value, unit } format
+            let weightLbs = 0;
+            if (set.completedWeight) {
+              weightLbs = set.completedWeight.value || 0;
+              if (set.completedWeight.unit === "kg") {
+                weightLbs = weightLbs * 2.20462; // Convert kg to lbs
+              }
+            } else if (set.weight) {
+              weightLbs = set.weight.value || 0;
+              if (set.weight.unit === "kg") {
+                weightLbs = weightLbs * 2.20462;
+              }
+            }
+
+            const reps = set.completedReps ?? set.reps ?? 0;
+
+            if (reps > 0 && weightLbs > 0) {
+              try {
+                await db.insert(liftingSets).values({
+                  userId,
+                  exerciseId,
+                  workoutDate,
+                  setNumber,
+                  reps,
+                  weightLbs: weightLbs.toFixed(2),
+                  isPR: false, // Will recalculate PRs separately
+                });
+                setsImported++;
+              } catch (e) {
+                // Duplicate set, skip
+              }
+            }
+          }
+        }
+
+        // Update workout volume for this day
+        await updateWorkoutVolume(db, userId, workoutDate);
+      }
+
+      // Recalculate PRs across all exercises
+      await recalculatePRs(db, userId);
+
+      log.info(`[lifting] Liftosaur import: ${workoutsImported} workouts, ${setsImported} sets, ${exercisesCreated} new exercises`);
+
+      res.json({
+        success: true,
+        imported: {
+          workouts: workoutsImported,
+          sets: setsImported,
+          exercises: exercisesCreated,
+        },
+      });
+    } catch (error) {
+      log.error("[lifting] Error importing Liftosaur data:", error);
+      res.status(500).json({ error: "Failed to import Liftosaur data" });
+    }
+  });
 }
 
 // Helper to update workout volume after set changes
@@ -414,4 +584,49 @@ async function updateWorkoutVolume(db: any, userId: number, workoutDate: string)
         eq(liftingWorkouts.workoutDate, workoutDate)
       )
     );
+}
+
+// Map Liftosaur equipment types to our enum values
+function mapEquipment(equipment?: string): "barbell" | "dumbbell" | "machine" | "cable" | "bodyweight" | "kettlebell" | "other" {
+  if (!equipment) return "barbell";
+  const lowerEquip = equipment.toLowerCase();
+  if (lowerEquip.includes("barbell")) return "barbell";
+  if (lowerEquip.includes("dumbbell")) return "dumbbell";
+  if (lowerEquip.includes("machine") || lowerEquip.includes("cable")) return "machine";
+  if (lowerEquip.includes("bodyweight") || lowerEquip === "leverageMachine") return "bodyweight";
+  if (lowerEquip.includes("kettlebell")) return "kettlebell";
+  return "barbell"; // Default
+}
+
+// Recalculate PRs for all exercises after import
+async function recalculatePRs(db: any, userId: number) {
+  // Get all unique exercises for this user
+  const exercises = await db
+    .select({ id: liftingExercises.id })
+    .from(liftingExercises)
+    .where(eq(liftingExercises.userId, userId));
+
+  for (const exercise of exercises) {
+    // Find the max weight for this exercise
+    const [maxResult] = await db
+      .select({ maxWeight: max(liftingSets.weightLbs) })
+      .from(liftingSets)
+      .where(
+        and(eq(liftingSets.userId, userId), eq(liftingSets.exerciseId, exercise.id))
+      );
+
+    if (maxResult.maxWeight) {
+      // Mark the set(s) with max weight as PRs
+      await db
+        .update(liftingSets)
+        .set({ isPR: true })
+        .where(
+          and(
+            eq(liftingSets.userId, userId),
+            eq(liftingSets.exerciseId, exercise.id),
+            eq(liftingSets.weightLbs, maxResult.maxWeight)
+          )
+        );
+    }
+  }
 }

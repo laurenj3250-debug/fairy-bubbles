@@ -172,6 +172,25 @@ export function useLiftingLog() {
     },
   });
 
+  // Import Liftosaur data
+  const importLiftosaurMutation = useMutation({
+    mutationFn: async (data: { history: unknown[] }) => {
+      const response = await fetch("/api/lifting/import/liftosaur", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to import Liftosaur data");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/exercises"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/stats"] });
+    },
+  });
+
   const exercises = exercisesData?.exercises || [];
   const workouts = workoutsData?.workouts || [];
   const stats = statsData || null;
@@ -194,6 +213,7 @@ export function useLiftingLog() {
     saveWorkout: saveWorkoutMutation.mutate,
     logSet: logSetMutation.mutate,
     deleteSet: deleteSetMutation.mutate,
+    importLiftosaur: importLiftosaurMutation.mutateAsync,
 
     // Mutation states
     isSeedingExercises: seedExercisesMutation.isPending,
@@ -201,5 +221,6 @@ export function useLiftingLog() {
     isSavingWorkout: saveWorkoutMutation.isPending,
     isLoggingSet: logSetMutation.isPending,
     isDeletingSet: deleteSetMutation.isPending,
+    isImportingLiftosaur: importLiftosaurMutation.isPending,
   };
 }
