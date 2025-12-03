@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { X, Target, TrendingUp, AlertCircle, Calendar, Zap } from "lucide-react";
+import { X, Target, TrendingUp, AlertCircle, Calendar, Zap, CalendarDays, CalendarRange } from "lucide-react";
+import { format, endOfMonth, endOfWeek, getISOWeek, getYear } from "date-fns";
 import type { Goal } from "@shared/schema";
+
+type GoalType = "regular" | "monthly" | "weekly";
 
 interface GoalDialogProps {
   open: boolean;
   onClose: () => void;
   goal?: Goal;
+  defaultGoalType?: GoalType;
+  monthlyGoals?: Goal[]; // For linking weekly goals to monthly goals
 }
 
 const formatDateInput = (date: Date) => {
@@ -24,10 +29,11 @@ const GOAL_TEMPLATES = [
   { title: "Learn 100 Words", target: 100, unit: "words", category: "Learning", difficulty: "easy" as const, priority: "medium" as const },
 ];
 
-export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
+export function GoalDialog({ open, onClose, goal, defaultGoalType = "regular", monthlyGoals = [] }: GoalDialogProps) {
   const { user } = useAuth();
   const isEdit = !!goal;
 
+  const [goalType, setGoalType] = useState<GoalType>(defaultGoalType);
   const [title, setTitle] = useState(goal?.title || "");
   const [description, setDescription] = useState(goal?.description || "");
   const [targetValue, setTargetValue] = useState(goal?.targetValue || 100);
@@ -42,6 +48,9 @@ export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
   );
   const [priority, setPriority] = useState<"high" | "medium" | "low">(
     (goal?.priority as "high" | "medium" | "low") || "medium"
+  );
+  const [parentGoalId, setParentGoalId] = useState<number | null>(
+    (goal as any)?.parentGoalId || null
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -71,6 +80,25 @@ export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     setDeadline(formatDateInput(lastDay));
   };
+
+  // Handle goal type change - auto-set deadline
+  const handleGoalTypeChange = (newType: GoalType) => {
+    setGoalType(newType);
+    const now = new Date();
+    if (newType === "monthly") {
+      // Set deadline to end of current month
+      setDeadline(formatDateInput(endOfMonth(now)));
+    } else if (newType === "weekly") {
+      // Set deadline to end of current week (Sunday)
+      setDeadline(formatDateInput(endOfWeek(now, { weekStartsOn: 1 })));
+    }
+  };
+
+  // Get current month/week strings for display
+  const currentMonth = format(new Date(), "yyyy-MM");
+  const currentWeekNum = getISOWeek(new Date());
+  const currentYear = getYear(new Date());
+  const currentWeek = `${currentYear}-W${String(currentWeekNum).padStart(2, '0')}`;
 
   // Calculate potential points with current settings
   const calculatePotentialPoints = () => {
@@ -114,6 +142,11 @@ export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
         category,
         difficulty,
         priority,
+        // Add month/week based on goalType
+        month: goalType === "monthly" ? currentMonth : null,
+        week: goalType === "weekly" ? currentWeek : null,
+        // Link weekly goals to monthly goals
+        parentGoalId: goalType === "weekly" ? parentGoalId : null,
       };
 
       if (isEdit) {
@@ -181,6 +214,99 @@ export function GoalDialog({ open, onClose, goal }: GoalDialogProps) {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Goal Type Selector */}
+          {!isEdit && (
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", fontWeight: "600", color: "#666", letterSpacing: "0.5px" }}>
+                GOAL TYPE
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                {([
+                  { type: "regular" as GoalType, label: "Regular", icon: Target, desc: "Anytime goal" },
+                  { type: "monthly" as GoalType, label: "Monthly", icon: CalendarDays, desc: format(new Date(), "MMMM") },
+                  { type: "weekly" as GoalType, label: "Weekly", icon: CalendarRange, desc: `Week ${currentWeekNum}` },
+                ]).map(({ type, label, icon: Icon, desc }) => {
+                  const selected = goalType === type;
+                  const bgColor = type === "monthly" ? "#dbeafe" : type === "weekly" ? "#fef3c7" : "#f3f4f6";
+                  const borderColor = type === "monthly" ? "#3b82f6" : type === "weekly" ? "#f59e0b" : "#8B5CF6";
+                  const textColor = type === "monthly" ? "#1d4ed8" : type === "weekly" ? "#b45309" : "#6b21a8";
+
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => handleGoalTypeChange(type)}
+                      style={{
+                        padding: "12px 8px",
+                        border: `2px solid ${selected ? borderColor : "#e5e7eb"}`,
+                        borderRadius: "12px",
+                        background: selected ? bgColor : "white",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        textAlign: "center",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!selected) {
+                          e.currentTarget.style.borderColor = borderColor;
+                          e.currentTarget.style.background = bgColor;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!selected) {
+                          e.currentTarget.style.borderColor = "#e5e7eb";
+                          e.currentTarget.style.background = "white";
+                        }
+                      }}
+                    >
+                      <Icon style={{ width: "20px", height: "20px", margin: "0 auto 4px", color: selected ? textColor : "#666" }} />
+                      <div style={{ fontSize: "13px", fontWeight: selected ? "700" : "500", color: selected ? textColor : "#000" }}>
+                        {label}
+                      </div>
+                      <div style={{ fontSize: "11px", color: selected ? textColor : "#999" }}>
+                        {desc}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Parent Goal Selector (for weekly goals) */}
+          {!isEdit && goalType === "weekly" && monthlyGoals.length > 0 && (
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", fontWeight: "600", color: "#666", letterSpacing: "0.5px" }}>
+                LINKS TO MONTHLY GOAL
+              </label>
+              <select
+                value={parentGoalId || ""}
+                onChange={(e) => setParentGoalId(e.target.value ? parseInt(e.target.value) : null)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  outline: "none",
+                  background: "white",
+                  cursor: "pointer",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#f59e0b")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+              >
+                <option value="">No parent goal (standalone)</option>
+                {monthlyGoals.map((mg) => (
+                  <option key={mg.id} value={mg.id}>
+                    {mg.title} ({mg.currentValue}/{mg.targetValue} {mg.unit})
+                  </option>
+                ))}
+              </select>
+              <p style={{ marginTop: "4px", fontSize: "11px", color: "#666" }}>
+                Link this weekly checkpoint to a monthly goal for better tracking
+              </p>
+            </div>
+          )}
+
           {/* Quick Templates */}
           {!isEdit && (
             <div style={{ marginBottom: "24px" }}>

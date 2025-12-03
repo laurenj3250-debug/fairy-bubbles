@@ -99,6 +99,12 @@ export const goals = pgTable("goals", {
   category: text("category").notNull(),
   difficulty: varchar("difficulty", { length: 10 }).notNull().default("medium").$type<"easy" | "medium" | "hard">(),
   priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"high" | "medium" | "low">(),
+  // Monthly/Weekly goal fields for weekly planner homepage
+  month: varchar("month", { length: 7 }), // Format: "2024-12" for December 2024
+  week: varchar("week", { length: 10 }), // Format: "2024-W49" for week 49 of 2024 (ISO week)
+  archived: boolean("archived").notNull().default(false),
+  // Goal hierarchy - weekly goals link to monthly goals
+  parentGoalId: integer("parent_goal_id").references((): any => goals.id, { onDelete: "set null" }),
 });
 
 export const goalUpdates = pgTable("goal_updates", {
@@ -244,6 +250,7 @@ export const todos = pgTable("todos", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   // New columns for Todoist-level features
   projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+  goalId: integer("goal_id").references(() => goals.id, { onDelete: "set null" }), // Link task to a goal
   priority: integer("priority").default(4).notNull(), // 1=P1 (urgent), 4=P4 (low)
   recurringPattern: text("recurring_pattern"), // cron-like pattern
   nextRecurrence: varchar("next_recurrence", { length: 10 }), // YYYY-MM-DD

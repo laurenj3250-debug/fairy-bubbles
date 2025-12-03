@@ -23,6 +23,7 @@ interface TodoDialogEnhancedProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editTodo?: TodoWithMetadata | null;
+  defaultDueDate?: string; // YYYY-MM-DD format for pre-filling the date
 }
 
 interface Subtask {
@@ -31,11 +32,11 @@ interface Subtask {
   completed: boolean;
 }
 
-export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: TodoDialogEnhancedProps) {
+export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null, defaultDueDate }: TodoDialogEnhancedProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
-  const [dateOption, setDateOption] = useState<string>("none");
-  const [customDate, setCustomDate] = useState("");
+  const [dateOption, setDateOption] = useState<string>(defaultDueDate ? "custom" : "none");
+  const [customDate, setCustomDate] = useState(defaultDueDate || "");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
@@ -106,7 +107,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
     setNotes(parsed.notes || "");
   };
 
-  // Populate form when editing
+  // Populate form when editing or opening with default date
   useEffect(() => {
     if (editTodo && open) {
       setTitle(editTodo.title);
@@ -127,12 +128,16 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
         setDateOption("none");
         setCustomDate("");
       }
+    } else if (open && !editTodo && defaultDueDate) {
+      // Opening with a default date (e.g., from WeeklyPlanner)
+      setDateOption("custom");
+      setCustomDate(defaultDueDate);
     } else if (!open) {
       // Reset when closing without editing
       if (!editTodo) {
         setTitle("");
-        setDateOption("none");
-        setCustomDate("");
+        setDateOption(defaultDueDate ? "custom" : "none");
+        setCustomDate(defaultDueDate || "");
         setDifficulty("medium");
         setSubtasks([]);
         setProjectId(null);
@@ -144,7 +149,7 @@ export function TodoDialogEnhanced({ open, onOpenChange, editTodo = null }: Todo
         setUseSmartInput(true);
       }
     }
-  }, [editTodo, open]);
+  }, [editTodo, open, defaultDueDate]);
 
   if (!open) return null;
 

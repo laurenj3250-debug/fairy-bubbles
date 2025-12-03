@@ -191,6 +191,10 @@ export class DbStorage implements IStorage {
       category: row.category,
       difficulty: row.difficulty || "medium",
       priority: row.priority || "medium",
+      month: row.month || null,
+      week: row.week || null,
+      archived: row.archived || false,
+      parentGoalId: (row as any).parent_goal_id || null,
     };
     
     const percentBefore = (row.previous_value / goal.targetValue) * 100;

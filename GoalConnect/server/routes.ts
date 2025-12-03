@@ -559,6 +559,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Access denied" });
       }
       const updated = await storage.updateTodo(id, req.body);
+
+      // Auto-increment linked goal progress when task is toggled to completed
+      const wasJustCompleted = req.body.completed === true && !existing.completed;
+      if (wasJustCompleted && updated?.goalId) {
+        try {
+          const goal = await storage.getGoal(updated.goalId);
+          if (goal && goal.currentValue < goal.targetValue) {
+            await storage.updateGoal(updated.goalId, {
+              currentValue: goal.currentValue + 1,
+            });
+            log.debug(`[todos] Auto-incremented goal ${updated.goalId} progress for task ${id}: ${goal.currentValue} -> ${goal.currentValue + 1}`);
+          }
+        } catch (goalError) {
+          log.error('[todos] Failed to auto-increment goal progress:', goalError);
+        }
+      }
+
       res.json(updated);
     } catch (error) {
       if (error instanceof Error && error.name === "ZodError") {
@@ -581,6 +598,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Access denied" });
       }
       const completed = await storage.completeTodo(id);
+
+      // Auto-increment linked goal progress when task is completed
+      if (completed?.goalId && !existing.completed) {
+        try {
+          const goal = await storage.getGoal(completed.goalId);
+          if (goal && goal.currentValue < goal.targetValue) {
+            await storage.updateGoal(completed.goalId, {
+              currentValue: goal.currentValue + 1,
+            });
+            log.debug(`[todos] Auto-incremented goal ${completed.goalId} progress for task ${id}: ${goal.currentValue} -> ${goal.currentValue + 1}`);
+          }
+        } catch (goalError) {
+          log.error('[todos] Failed to auto-increment goal progress:', goalError);
+          // Don't fail the request, task was still completed
+        }
+      }
+
       res.json(completed);
     } catch (error) {
       res.status(500).json({ error: "Failed to complete todo" });

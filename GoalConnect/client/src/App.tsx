@@ -29,6 +29,7 @@ import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import V2Dashboard from "@/pages/V2Dashboard";
 import DashboardV3 from "@/pages/DashboardV3";
+import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
@@ -272,6 +273,13 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <Journey />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/planner">
+        <RequireAuth>
+          <MainLayout>
+            <WeeklyPlannerPage />
           </MainLayout>
         </RequireAuth>
       </Route>

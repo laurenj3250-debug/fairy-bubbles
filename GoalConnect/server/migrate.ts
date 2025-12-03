@@ -703,6 +703,34 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to add Todoist columns to todos:', error);
       }
 
+      // ========== WEEKLY PLANNER HOMEPAGE ==========
+
+      try {
+        // Add month, week, and archived columns to goals for monthly/weekly goal lifecycle
+        await db.execute(sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS month VARCHAR(7)`); // "2024-12"
+        await db.execute(sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS week VARCHAR(10)`); // "2024-W49" (ISO week)
+        await db.execute(sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false`);
+        log.info('[migrate] ✅ Monthly/weekly goal columns (month, week, archived) added/verified in goals table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add monthly/weekly goal columns to goals:', error);
+      }
+
+      try {
+        // Add goal_id to todos for task-goal linking
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL`);
+        log.info('[migrate] ✅ goal_id column added/verified in todos table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add goal_id column to todos:', error);
+      }
+
+      try {
+        // Add parent_goal_id to goals for weekly→monthly goal hierarchy
+        await db.execute(sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS parent_goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL`);
+        log.info('[migrate] ✅ parent_goal_id column added/verified in goals table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add parent_goal_id column to goals:', error);
+      }
+
       // Create outdoor climbing enums and table for manual tick logging
       try {
         // Create route_type enum if not exists
