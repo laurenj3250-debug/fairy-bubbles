@@ -8,12 +8,10 @@ import { ProgressBackground } from "@/components/ProgressBackground";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import BaseCamp from "@/pages/BaseCamp";
-import DashboardNew from "@/pages/DashboardNew";
 import Habits from "@/pages/Habits";
 import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
-import WeeklyHub from "@/pages/WeeklyHub";
 import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 // ARCHIVED: Alpine Expeditions (System A)
@@ -28,9 +26,10 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import V2Dashboard from "@/pages/V2Dashboard";
-import DashboardV3 from "@/pages/DashboardV3";
+import IcyDash from "@/pages/IcyDash";
 import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
+import StudyPlanner from "@/pages/StudyPlanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -131,35 +130,11 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
 
-      {/* V3 Dashboard - Weekly view + Expeditions */}
-      <Route path="/v3">
-        <RequireAuth>
-          <MainLayout>
-            <DashboardV3 />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-
-      {/* Protected routes */}
+      {/* Main Dashboard - IcyDash */}
       <Route path="/">
         <RequireAuth>
           <MainLayout>
-            <DashboardV3 />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      {/* Legacy routes - kept during migration */}
-      <Route path="/weekly-hub-old">
-        <RequireAuth>
-          <MainLayout>
-            <WeeklyHub />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      <Route path="/dashboard">
-        <RequireAuth>
-          <MainLayout>
-            <DashboardNew />
+            <IcyDash />
           </MainLayout>
         </RequireAuth>
       </Route>
@@ -280,6 +255,13 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <WeeklyPlannerPage />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/study">
+        <RequireAuth>
+          <MainLayout>
+            <StudyPlanner />
           </MainLayout>
         </RequireAuth>
       </Route>
