@@ -26,6 +26,19 @@ import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
 import { LuxuryStudyTracker } from '@/components/LuxuryStudyTracker';
 import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 
+// Drag and Drop
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
+
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 
 // ============================================================================
@@ -198,6 +211,14 @@ export default function DashboardV4() {
   const [inlineAddDay, setInlineAddDay] = useState<number | null>(null);
   const [inlineAddTitle, setInlineAddTitle] = useState('');
 
+  // Drag and drop state
+  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
@@ -329,6 +350,26 @@ export default function DashboardV4() {
       toast({ title: "Failed to delete task", description: error.message, variant: "destructive" });
     },
   });
+
+  // Drag and drop handler
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTaskId(null);
+
+    if (!over) return;
+
+    const taskId = active.id as number;
+    const overData = over.data.current as { date: string; dayIndex: number } | undefined;
+
+    if (overData?.date) {
+      const task = todos.find(t => t.id === taskId);
+      if (task && task.dueDate !== overData.date) {
+        updateTodoMutation.mutate({ id: taskId, dueDate: overData.date });
+      }
+    }
+  };
+
+  const activeTask = activeTaskId ? todos.find(t => t.id === activeTaskId) : null;
 
   // ============================================================================
   // COMPUTED DATA
@@ -617,110 +658,56 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Weekly Schedule (full-width, 7-day tasks) */}
+          {/* ROW 3: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
           <div className="glass-card frost-accent">
             <div className="flex items-center justify-between mb-4">
               <span className="card-title">Schedule</span>
               <span className="font-heading italic text-xs text-[var(--text-muted)]">{week.formatRange}</span>
             </div>
-            <div className="grid grid-cols-7 gap-2">
-              {week.dayNames.map((day, i) => {
-                const dayTodos = todosByDay[i] || [];
-                const isToday = i === week.todayIndex;
 
-                return (
-                  <div
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={(e) => setActiveTaskId(e.active.id as number)}
+              onDragEnd={handleDragEnd}
+              onDragCancel={() => setActiveTaskId(null)}
+            >
+              <div className="grid grid-cols-7 gap-2">
+                {week.dayNames.map((day, i) => (
+                  <DroppableDayColumn
                     key={`${day}-${i}`}
-                    className={cn(
-                      "rounded-xl p-3 min-h-[100px] text-center transition-all",
-                      isToday
-                        ? "bg-peach-400/10 border border-peach-400/25 shadow-[0_0_15px_rgba(228,168,128,0.1)]"
-                        : "bg-white/5"
-                    )}
-                  >
-                    <div className={cn(
-                      "font-heading-sc text-[0.6rem] tracking-wide mb-2",
-                      isToday ? "text-peach-400" : "text-[var(--text-muted)]"
-                    )}>
-                      {day}
-                    </div>
-                    <div className="space-y-1">
-                      {dayTodos.slice(0, 4).map(todo => (
-                        <button
-                          type="button"
-                          key={todo.id}
-                          onClick={() => handleToggleTodo(todo.id)}
-                          className={cn(
-                            "w-full text-left font-body text-[0.65rem] p-1 rounded bg-ice-card/50 cursor-pointer truncate hover:bg-peach-400/10 transition-colors",
-                            todo.completed && "opacity-50 line-through"
-                          )}
-                        >
-                          {todo.title}
-                        </button>
-                      ))}
-                      {dayTodos.length < 4 && (
-                        inlineAddDay === i ? (
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              if (inlineAddTitle.trim() && !createTodoMutation.isPending) {
-                                createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate: week.dates[i] });
-                              }
-                            }}
-                            className="flex gap-1"
-                            aria-label={`Add task for ${week.dayNames[i]}`}
-                          >
-                            <label htmlFor={`task-input-${i}`} className="sr-only">
-                              Task title for {week.dayNames[i]}
-                            </label>
-                            <input
-                              id={`task-input-${i}`}
-                              type="text"
-                              value={inlineAddTitle}
-                              onChange={(e) => setInlineAddTitle(e.target.value)}
-                              placeholder="Task..."
-                              autoFocus
-                              maxLength={500}
-                              disabled={createTodoMutation.isPending}
-                              onBlur={() => {
-                                if (!inlineAddTitle.trim() && !createTodoMutation.isPending) {
-                                  setInlineAddDay(null);
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Escape' && !createTodoMutation.isPending) {
-                                  setInlineAddTitle('');
-                                  setInlineAddDay(null);
-                                }
-                              }}
-                              className={cn(
-                                "flex-1 text-[0.6rem] p-1 rounded bg-white/10 border border-white/20 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50",
-                                createTodoMutation.isPending && "opacity-50 cursor-not-allowed"
-                              )}
-                            />
-                            {createTodoMutation.isPending && (
-                              <span className="text-[0.5rem] text-peach-400 animate-pulse">...</span>
-                            )}
-                          </form>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setInlineAddDay(i)}
-                            disabled={createTodoMutation.isPending}
-                            className={cn(
-                              "w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100",
-                              createTodoMutation.isPending && "cursor-not-allowed"
-                            )}
-                          >
-                            + add
-                          </button>
-                        )
-                      )}
-                    </div>
+                    dayIndex={i}
+                    dayName={day}
+                    date={week.dates[i]}
+                    isToday={i === week.todayIndex}
+                    todos={todosByDay[i] || []}
+                    onToggle={handleToggleTodo}
+                    onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
+                    onDelete={(id) => deleteTodoMutation.mutate(id)}
+                    onAdd={() => setInlineAddDay(i)}
+                    isAddingDay={inlineAddDay}
+                    inlineAddTitle={inlineAddTitle}
+                    setInlineAddTitle={setInlineAddTitle}
+                    setInlineAddDay={setInlineAddDay}
+                    onSubmitAdd={(dueDate) => {
+                      createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate });
+                    }}
+                    isCreating={createTodoMutation.isPending}
+                    isUpdating={updateTodoMutation.isPending}
+                    isDeleting={deleteTodoMutation.isPending}
+                  />
+                ))}
+              </div>
+
+              {/* Drag overlay for visual feedback */}
+              <DragOverlay>
+                {activeTask && (
+                  <div className="bg-ice-card/90 p-1 rounded shadow-lg text-[0.65rem] border border-peach-400/50 max-w-[100px] truncate">
+                    {activeTask.title}
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </DragOverlay>
+            </DndContext>
           </div>
 
         </div>
