@@ -241,6 +241,9 @@ export default function DashboardV4() {
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
+    },
   });
 
   const toggleTodoMutation = useMutation({
@@ -251,6 +254,9 @@ export default function DashboardV4() {
       triggerConfetti();
       queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to complete task", description: error.message, variant: "destructive" });
     },
   });
 
@@ -267,18 +273,28 @@ export default function DashboardV4() {
       queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Failed to update goal", description: error.message, variant: "destructive" });
+    },
   });
 
   const createTodoMutation = useMutation({
     mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
+      const trimmedTitle = title.trim();
+      if (!trimmedTitle || trimmedTitle.length > 500) {
+        throw new Error('Task title must be 1-500 characters');
+      }
       return await apiRequest('/api/todos', 'POST', {
-        title,
+        title: trimmedTitle,
         dueDate,
         priority: 4,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to create task", description: error.message, variant: "destructive" });
     },
   });
 
@@ -449,6 +465,7 @@ export default function DashboardV4() {
                         current={goal.currentValue}
                         target={goal.targetValue}
                         onIncrement={() => incrementGoalMutation.mutate(goal.id)}
+                        isPending={incrementGoalMutation.isPending}
                       />
                     ))}
                   </div>

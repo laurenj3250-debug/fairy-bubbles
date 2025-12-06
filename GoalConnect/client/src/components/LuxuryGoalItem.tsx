@@ -7,6 +7,7 @@ interface LuxuryGoalItemProps {
   isComplete?: boolean;
   className?: string;
   onIncrement?: () => void;
+  isPending?: boolean;
 }
 
 export function LuxuryGoalItem({
@@ -16,6 +17,7 @@ export function LuxuryGoalItem({
   isComplete,
   className,
   onIncrement,
+  isPending,
 }: LuxuryGoalItemProps) {
   const progress = Math.min((current / target) * 100, 100);
   const complete = isComplete ?? current >= target;
@@ -24,13 +26,14 @@ export function LuxuryGoalItem({
     <button
       type="button"
       onClick={onIncrement}
-      disabled={complete || !onIncrement}
+      disabled={complete || !onIncrement || isPending}
       role="listitem"
-      aria-label={`${title}: ${current} of ${target}${complete ? ', completed' : ''}. ${!complete && onIncrement ? 'Click to increment.' : ''}`}
+      aria-label={`${title}: ${current} of ${target}${complete ? ', completed' : ''}${isPending ? ', updating...' : ''}. ${!complete && onIncrement && !isPending ? 'Click to increment.' : ''}`}
       className={cn(
         "w-full flex items-center gap-3 p-3 rounded-xl transition-all goal-item text-left",
         complete ? "bg-peach-400/10" : "bg-white/5 hover:bg-white/10",
-        !complete && onIncrement && "cursor-pointer",
+        !complete && onIncrement && !isPending && "cursor-pointer",
+        isPending && "opacity-50",
         className
       )}
     >
