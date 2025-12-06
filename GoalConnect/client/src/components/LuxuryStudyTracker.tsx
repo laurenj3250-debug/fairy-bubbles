@@ -64,6 +64,7 @@ export function LuxuryStudyTracker({
 
       {/* Start button */}
       <button
+        type="button"
         onClick={onStartSession}
         className={cn(
           "w-full py-3 rounded-2xl font-heading text-sm tracking-wide transition-all mt-4",

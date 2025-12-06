@@ -638,41 +638,54 @@ export default function DashboardV4() {
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
-                              if (inlineAddTitle.trim()) {
+                              if (inlineAddTitle.trim() && !createTodoMutation.isPending) {
                                 createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate: week.dates[i] });
-                                // State reset moved to onSuccess to avoid race condition
                               }
                             }}
                             className="flex gap-1"
-                            aria-label="Add task form"
+                            aria-label={`Add task for ${week.dayNames[i]}`}
                           >
+                            <label htmlFor={`task-input-${i}`} className="sr-only">
+                              Task title for {week.dayNames[i]}
+                            </label>
                             <input
+                              id={`task-input-${i}`}
                               type="text"
                               value={inlineAddTitle}
                               onChange={(e) => setInlineAddTitle(e.target.value)}
                               placeholder="Task..."
                               autoFocus
                               maxLength={500}
-                              aria-label="Task title"
+                              disabled={createTodoMutation.isPending}
                               onBlur={() => {
-                                if (!inlineAddTitle.trim()) {
+                                if (!inlineAddTitle.trim() && !createTodoMutation.isPending) {
                                   setInlineAddDay(null);
                                 }
                               }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Escape') {
+                                if (e.key === 'Escape' && !createTodoMutation.isPending) {
                                   setInlineAddTitle('');
                                   setInlineAddDay(null);
                                 }
                               }}
-                              className="flex-1 text-[0.6rem] p-1 rounded bg-white/10 border border-white/20 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                              className={cn(
+                                "flex-1 text-[0.6rem] p-1 rounded bg-white/10 border border-white/20 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50",
+                                createTodoMutation.isPending && "opacity-50 cursor-not-allowed"
+                              )}
                             />
+                            {createTodoMutation.isPending && (
+                              <span className="text-[0.5rem] text-peach-400 animate-pulse">...</span>
+                            )}
                           </form>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setInlineAddDay(i)}
-                            className="w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100"
+                            disabled={createTodoMutation.isPending}
+                            className={cn(
+                              "w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100",
+                              createTodoMutation.isPending && "cursor-not-allowed"
+                            )}
                           >
                             + add
                           </button>
