@@ -194,6 +194,10 @@ export default function DashboardV4() {
   const { toast } = useToast();
   const week = useWeekData();
 
+  // Inline task add state
+  const [inlineAddDay, setInlineAddDay] = useState<number | null>(null);
+  const [inlineAddTitle, setInlineAddTitle] = useState('');
+
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
@@ -292,6 +296,9 @@ export default function DashboardV4() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+      // Reset inline add form state after successful creation
+      setInlineAddTitle('');
+      setInlineAddDay(null);
     },
     onError: (error: Error) => {
       toast({ title: "Failed to create task", description: error.message, variant: "destructive" });
@@ -314,7 +321,7 @@ export default function DashboardV4() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const todayHabits = useMemo(() => {
-    return habits.slice(0, 5); // Max 5 habits displayed
+    return habits; // Show all habits
   }, [habits]);
 
   const completedTodayCount = useMemo(() => {
@@ -322,7 +329,15 @@ export default function DashboardV4() {
   }, [todayHabits, completionMap, todayStr]);
 
   const weeklyGoals = useMemo(() => {
-    return goals.filter(g => g.deadline && g.deadline <= week.weekEnd && g.deadline >= week.weekStart).slice(0, 3);
+    return goals
+      .filter(g => {
+        // Must have deadline in current week
+        const hasWeeklyDeadline = g.deadline && g.deadline <= week.weekEnd && g.deadline >= week.weekStart;
+        // Must NOT be completed (currentValue < targetValue)
+        const isIncomplete = g.currentValue < g.targetValue;
+        return hasWeeklyDeadline && isIncomplete;
+      })
+      .slice(0, 3);
   }, [goals, week.weekStart, week.weekEnd]);
 
   const monthlyGoals = useMemo(() => {
@@ -355,6 +370,20 @@ export default function DashboardV4() {
 
   const quickTasks = useMemo(() => {
     return todos.filter(t => !t.completed).slice(0, 5);
+  }, [todos]);
+
+  // Study tasks - tasks with study-related keywords
+  const studyTasks = useMemo(() => {
+    return todos.filter(t => {
+      const title = t.title.toLowerCase();
+      const isStudyTask = title.includes('study') ||
+        title.includes('learn') ||
+        title.includes('review') ||
+        title.includes('flashcard') ||
+        title.includes('anki') ||
+        title.includes('remnote');
+      return isStudyTask && !t.completed;
+    }).slice(0, 3);
   }, [todos]);
 
   // Weekly rhythm data (habits completed per day)
@@ -478,10 +507,10 @@ export default function DashboardV4() {
               <span className="card-title">Study Tracker</span>
               <div className="flex-1 flex items-center justify-center">
                 <LuxuryStudyTracker
-                  todayMinutes={0}
-                  weekMinutes={0}
+                  tasks={studyTasks.map(t => ({ id: t.id, title: t.title, completed: t.completed }))}
+                  onToggle={(id) => handleToggleTodo(id)}
                   onStartSession={() => {
-                    toast({ title: "Study session started" });
+                    window.location.href = '/study';
                   }}
                 />
               </div>
@@ -513,11 +542,11 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 2: Place to Explore + Weekly Rhythm + This Week */}
+          {/* ROW 2: Climbing Tip + Weekly Rhythm + This Week */}
           <div className="card-grid grid grid-cols-3 gap-5">
-            {/* Place to Explore */}
+            {/* Climbing Tip */}
             <div className="glass-card frost-accent min-h-[220px] flex flex-col">
-              <span className="card-title">Place to Explore</span>
+              <span className="card-title">Climbing Tip</span>
               <div className="flex-1">
                 {(() => {
                   const fact = getDailyFunFact();
@@ -545,7 +574,7 @@ export default function DashboardV4() {
               <span className="card-title">This Week</span>
               <div className="flex-1 flex items-center">
                 <LuxuryHabitGrid
-                  habits={todayHabits.slice(0, 4).map(habit => ({
+                  habits={todayHabits.map(habit => ({
                     id: habit.id,
                     name: habit.title,
                     days: week.dates.map(date => ({
@@ -578,7 +607,7 @@ export default function DashboardV4() {
                   <div
                     key={`${day}-${i}`}
                     className={cn(
-                      "rounded-xl p-3 min-h-[70px] text-center transition-all",
+                      "rounded-xl p-3 min-h-[100px] text-center transition-all",
                       isToday
                         ? "bg-peach-400/10 border border-peach-400/25 shadow-[0_0_15px_rgba(228,168,128,0.1)]"
                         : "bg-white/5"
@@ -591,7 +620,7 @@ export default function DashboardV4() {
                       {day}
                     </div>
                     <div className="space-y-1">
-                      {dayTodos.slice(0, 2).map(todo => (
+                      {dayTodos.slice(0, 4).map(todo => (
                         <button
                           type="button"
                           key={todo.id}
@@ -604,19 +633,50 @@ export default function DashboardV4() {
                           {todo.title}
                         </button>
                       ))}
-                      {dayTodos.length < 2 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const title = prompt('Quick add task:');
-                            if (title?.trim()) {
-                              createTodoMutation.mutate({ title: title.trim(), dueDate: week.dates[i] });
-                            }
-                          }}
-                          className="w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100"
-                        >
-                          + add
-                        </button>
+                      {dayTodos.length < 4 && (
+                        inlineAddDay === i ? (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              if (inlineAddTitle.trim()) {
+                                createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate: week.dates[i] });
+                                // State reset moved to onSuccess to avoid race condition
+                              }
+                            }}
+                            className="flex gap-1"
+                            aria-label="Add task form"
+                          >
+                            <input
+                              type="text"
+                              value={inlineAddTitle}
+                              onChange={(e) => setInlineAddTitle(e.target.value)}
+                              placeholder="Task..."
+                              autoFocus
+                              maxLength={500}
+                              aria-label="Task title"
+                              onBlur={() => {
+                                if (!inlineAddTitle.trim()) {
+                                  setInlineAddDay(null);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                  setInlineAddTitle('');
+                                  setInlineAddDay(null);
+                                }
+                              }}
+                              className="flex-1 text-[0.6rem] p-1 rounded bg-white/10 border border-white/20 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                            />
+                          </form>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setInlineAddDay(i)}
+                            className="w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100"
+                          >
+                            + add
+                          </button>
+                        )
                       )}
                     </div>
                   </div>

@@ -33,13 +33,13 @@ export function MainLayout({ children, showTodoPanel = false, todoPanel }: MainL
 
   return (
     <div className={cn(
-      "h-screen grid overflow-hidden pb-16 lg:pb-0",
+      "h-screen grid overflow-hidden pb-16 md:pb-0",
       showTodoPanel
-        ? "grid-cols-1 lg:grid-cols-[64px_1fr_320px]"
-        : "grid-cols-1 lg:grid-cols-[64px_1fr]"
+        ? "grid-cols-1 md:grid-cols-[64px_1fr] lg:grid-cols-[64px_1fr_320px]"
+        : "grid-cols-1 md:grid-cols-[64px_1fr]"
     )}>
       {/* === NAV RAIL (hidden on mobile) === */}
-      <nav className="hidden lg:flex glass-card rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
+      <nav className="hidden md:flex glass-card rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
         {navItems.map(({ path, icon: Icon, label }) => {
           // Handle both "/" and "/v2" as home
           const isActive = location === path || (path === "/" && location === "/v2");
@@ -74,7 +74,7 @@ export function MainLayout({ children, showTodoPanel = false, todoPanel }: MainL
       )}
 
       {/* === BOTTOM NAV (mobile only) === */}
-      <div className="lg:hidden">
+      <div className="md:hidden">
         <BottomNav />
       </div>
     </div>
