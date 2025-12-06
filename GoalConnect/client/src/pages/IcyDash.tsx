@@ -44,6 +44,8 @@ import {
 import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
+import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/useStudyPlanner';
+import type { StudyTaskType } from '@shared/types/study';
 
 // ============================================================================
 // TYPES
@@ -542,19 +544,56 @@ export default function DashboardV4() {
     return todos.filter(t => !t.completed).slice(0, 5);
   }, [todos]);
 
-  // Study tasks - tasks with study-related keywords
+  // Study planner data with local state for immediate toggle feedback
+  const {
+    toggleSchedule: toggleStudyTask,
+    isTaskCompleted: isStudyTaskCompleted,
+  } = useStudyPlanner();
+
+  // Local state to track completed study tasks for immediate UI feedback
+  const [localCompletedStudyTasks, setLocalCompletedStudyTasks] = useState<Set<string>>(new Set());
+
+  // Get today's scheduled study tasks from the default schedule
   const studyTasks = useMemo(() => {
-    return todos.filter(t => {
-      const title = t.title.toLowerCase();
-      const isStudyTask = title.includes('study') ||
-        title.includes('learn') ||
-        title.includes('review') ||
-        title.includes('flashcard') ||
-        title.includes('anki') ||
-        title.includes('remnote');
-      return isStudyTask && !t.completed;
-    }).slice(0, 3);
-  }, [todos]);
+    const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
+
+    // Use default schedule - API is unreliable
+    const scheduleForDay = DEFAULT_WEEKLY_SCHEDULE.find(d => d.day === dayOfWeek);
+    if (!scheduleForDay) return [];
+
+    const taskTypes = scheduleForDay.tasks as StudyTaskType[];
+
+    return taskTypes.map(taskType => {
+      const config = TASK_CONFIG[taskType];
+      // Check local state first, then API state
+      const localCompleted = localCompletedStudyTasks.has(taskType);
+      const apiCompleted = isStudyTaskCompleted(todayStr, taskType);
+      return {
+        id: taskType,
+        title: config.label,
+        completed: localCompleted || apiCompleted,
+        taskType,
+      };
+    });
+  }, [todayStr, isStudyTaskCompleted, localCompletedStudyTasks]);
+
+  // Handle study task toggle with local state for immediate feedback
+  const handleStudyTaskToggle = useCallback((taskType: string) => {
+    // Immediately update local state for responsive UI
+    setLocalCompletedStudyTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(taskType)) {
+        next.delete(taskType);
+      } else {
+        next.add(taskType);
+        triggerConfetti();
+      }
+      return next;
+    });
+
+    // Also sync with API (fire and forget)
+    toggleStudyTask({ date: todayStr, taskType: taskType as StudyTaskType });
+  }, [todayStr, toggleStudyTask]);
 
   // Weekly rhythm data (habits completed per day)
   const weeklyRhythm = useMemo(() => {
@@ -608,65 +647,76 @@ export default function DashboardV4() {
       {/* Mountain hero section */}
       <MountainHero />
 
+      {/* Sidebar Navigation */}
+      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+        <div className="space-y-4">
+          <Link href="/">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              dashboard
+            </span>
+          </Link>
+          <Link href="/habits">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              habits
+            </span>
+          </Link>
+          <Link href="/goals">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              goals
+            </span>
+          </Link>
+          <Link href="/todos">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              todos
+            </span>
+          </Link>
+          <Link href="/study">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              study
+            </span>
+          </Link>
+          <Link href="/journey">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              journey
+            </span>
+          </Link>
+          <Link href="/settings">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              settings
+            </span>
+          </Link>
+        </div>
+      </nav>
+
       {/* Main dashboard content */}
       <div className="relative z-10 px-5 md:px-8 pb-24">
         <div className="max-w-[900px] ml-[188px] space-y-5">
 
-          {/* HEADER: Logo + Habit Orbs + Stats */}
-          <header className="flex justify-center items-center mb-8">
-            <div className="flex items-center gap-8">
-              <h1 className="logo-text">
-                GOAL CONNECT
-              </h1>
-              <div className="flex-shrink-0">
-                <GlowingOrbHabits />
+          {/* HEADER: Simplified - Logo + Stats */}
+          <header className="flex items-center justify-between mb-6">
+            {/* Left: Logo */}
+            <h1 className="logo-text tracking-wider">
+              GOAL CONNECT
+            </h1>
+
+            {/* Center: Habit Orbs (clickable to habits) */}
+            <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
+              <GlowingOrbHabits />
+            </Link>
+
+            {/* Right: Stats - subtle, not competing with content */}
+            <div className="flex items-center gap-4 text-xs">
+              <div className="text-[var(--text-muted)]">
+                <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
+                <span className="ml-1 opacity-70">pts</span>
               </div>
-              <Link href="/habits">
-                <button className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading">
-                  + habit
-                </button>
-              </Link>
-            </div>
-            <div className="flex gap-6 text-xs ml-8">
-              <div className="font-body text-[var(--text-muted)]">
-                <span className="font-heading text-base text-peach-400">{xp.toLocaleString()}</span>
-                {' '}points
-              </div>
-              <div className="font-body text-[var(--text-muted)]">
-                <span className="font-heading text-base text-peach-400">{dayStreak}</span>
-                {' '}day streak
+              <div className="w-px h-3 bg-white/20" />
+              <div className="text-[var(--text-muted)]">
+                <span className="font-heading text-sm text-peach-400">{dayStreak}</span>
+                <span className="ml-1 opacity-70">streak</span>
               </div>
             </div>
           </header>
-
-          {/* Quick Nav - matching existing style */}
-          <nav className="flex justify-center gap-6 mb-4">
-            <Link href="/expedition-missions">
-              <span className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading cursor-pointer">
-                expeditions
-              </span>
-            </Link>
-            <Link href="/alpine-shop">
-              <span className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading cursor-pointer">
-                shop
-              </span>
-            </Link>
-            <Link href="/world-map">
-              <span className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading cursor-pointer">
-                world map
-              </span>
-            </Link>
-            <Link href="/journey">
-              <span className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading cursor-pointer">
-                journey
-              </span>
-            </Link>
-            <Link href="/settings">
-              <span className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading cursor-pointer">
-                settings
-              </span>
-            </Link>
-          </nav>
 
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
@@ -683,7 +733,7 @@ export default function DashboardV4() {
                   </div>
                 ) : weeklyGoals.length === 0 ? (
                   <Link href="/goals">
-                    <div className="font-heading italic text-sm text-[var(--text-muted)] hover:text-peach-400 py-8 text-center cursor-pointer transition-colors">
+                    <div className="font-body text-sm text-[var(--text-muted)] hover:text-peach-400 py-8 text-center cursor-pointer transition-colors">
                       + Add weekly goals
                     </div>
                   </Link>
@@ -710,10 +760,8 @@ export default function DashboardV4() {
               <div className="flex-1 flex items-center justify-center">
                 <LuxuryStudyTracker
                   tasks={studyTasks.map(t => ({ id: t.id, title: t.title, completed: t.completed }))}
-                  onToggle={(id) => handleToggleTodo(id)}
-                  onStartSession={() => {
-                    window.location.href = '/study';
-                  }}
+                  onToggle={(id) => handleStudyTaskToggle(id as string)}
+                  onStartSession={() => setLocation('/study')}
                 />
               </div>
             </div>
@@ -724,7 +772,7 @@ export default function DashboardV4() {
               <div className="flex-1 flex items-center justify-around">
                 {monthlyGoals.length === 0 ? (
                   <Link href="/goals">
-                    <div className="font-heading italic text-sm text-[var(--text-muted)] hover:text-peach-400 py-4 text-center cursor-pointer transition-colors">
+                    <div className="font-body text-sm text-[var(--text-muted)] hover:text-peach-400 py-4 text-center cursor-pointer transition-colors">
                       + Add monthly goals
                     </div>
                   </Link>
@@ -772,9 +820,9 @@ export default function DashboardV4() {
             </div>
 
             {/* This Week */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+            <div className="glass-card frost-accent flex flex-col">
               <span className="card-title">This Week</span>
-              <div className="flex-1 flex items-center">
+              <div className="flex-1">
                 <LuxuryHabitGrid
                   habits={todayHabits.map(habit => ({
                     id: habit.id,
@@ -812,7 +860,7 @@ export default function DashboardV4() {
                   {hideCompleted ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <span className="font-heading italic text-xs text-[var(--text-muted)]">{week.formatRange}</span>
+              <span className="font-body text-xs text-[var(--text-muted)]">{week.formatRange}</span>
             </div>
 
             <DndContext

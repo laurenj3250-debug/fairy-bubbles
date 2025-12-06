@@ -54,16 +54,17 @@ export function DroppableDayColumn({
       className={cn(
         "rounded-xl p-2 min-h-[100px] text-center transition-all",
         isToday
-          ? "bg-peach-400/10 border border-peach-400/25 shadow-[0_0_15px_rgba(228,168,128,0.1)]"
-          : "bg-white/5",
+          ? "bg-peach-400/10 border border-peach-400/30"
+          : "bg-white/5 border border-transparent",
         isOver && "ring-2 ring-peach-400/50 bg-peach-400/5"
       )}
     >
+      {/* Day label */}
       <div className={cn(
-        "font-heading-sc text-[0.6rem] tracking-wide mb-2",
+        "font-heading-sc tracking-wide mb-2 text-[0.65rem]",
         isToday ? "text-peach-400" : "text-[var(--text-muted)]"
       )}>
-        {dayName}
+        {isToday ? `${dayName} ·` : dayName}
       </div>
 
       <SortableContext items={todos.map(t => t.id)} strategy={verticalListSortingStrategy}>

@@ -25,31 +25,25 @@ export function LuxuryHabitGrid({
 }: LuxuryHabitGridProps) {
   const fullDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  // Empty state
   if (habits.length === 0) {
     return (
-      <div className={cn("flex flex-col items-center justify-center py-6", className)}>
-        <span className="font-heading italic text-sm text-[var(--text-muted)]">
-          No habits yet
-        </span>
-        <span className="font-body text-xs text-[var(--text-muted)] mt-1 opacity-60">
-          Add habits to track your week
-        </span>
+      <div className={cn("flex items-center justify-center py-3", className)}>
+        <span className="font-body text-sm text-[var(--text-muted)]">No habits yet</span>
       </div>
     );
   }
 
   return (
-    <div role="grid" aria-label="Weekly habit tracker" className={cn("space-y-3", className)}>
+    <div role="grid" aria-label="Weekly habit tracker" className={cn("space-y-1.5", className)}>
       {/* Day headers */}
-      <div className="flex items-center gap-2" role="row">
-        <div className="w-20" /> {/* Spacer for habit names */}
-        <div className="flex-1 grid grid-cols-7 gap-1">
+      <div className="flex items-center" role="row">
+        <div className="w-20 shrink-0" />
+        <div className="flex-1 flex justify-between px-1">
           {dayLabels.map((day, i) => (
             <span
               key={i}
               className={cn(
-                "font-heading-sc text-[10px] text-center",
+                "w-5 text-center font-heading-sc text-[9px]",
                 i === todayIndex ? "text-peach-400" : "text-[var(--text-muted)]"
               )}
             >
@@ -57,23 +51,20 @@ export function LuxuryHabitGrid({
             </span>
           ))}
         </div>
-        <div className="w-10" /> {/* Spacer for count */}
       </div>
 
       {/* Habit rows */}
-      {habits.map((habit, i) => (
-        <div key={i} role="row" className="flex items-center gap-2">
-          {/* Habit name */}
+      {habits.map((habit) => (
+        <div key={habit.id} role="row" className="flex items-center">
           <span
             role="rowheader"
-            className="w-20 font-body text-xs text-[var(--text-secondary)] truncate"
+            className="w-20 shrink-0 font-body text-[11px] text-[var(--text-secondary)] truncate pr-2"
             title={habit.name}
           >
             {habit.name}
           </span>
 
-          {/* Day circles */}
-          <div className="flex-1 grid grid-cols-7 gap-1">
+          <div className="flex-1 flex justify-between px-1">
             {habit.days.map((day, j) => (
               <button
                 key={j}
@@ -83,20 +74,16 @@ export function LuxuryHabitGrid({
                 role="gridcell"
                 aria-label={`${habit.name} on ${fullDayNames[j]}: ${day.completed ? 'completed' : 'not completed'}`}
                 className={cn(
-                  "w-3.5 h-3.5 rounded-full mx-auto transition-all habit-circle",
+                  "w-5 h-5 rounded-full transition-all flex items-center justify-center",
                   day.completed
-                    ? "bg-peach-400 shadow-[0_0_6px_rgba(228,168,128,0.4)]"
-                    : "bg-white/10 border border-white/5",
-                  onToggle && "cursor-pointer hover:scale-125"
+                    ? "bg-peach-400 shadow-[0_0_8px_rgba(228,168,128,0.5)]"
+                    : "bg-white/15",
+                  j === todayIndex && !day.completed && "ring-1 ring-peach-400/50",
+                  onToggle && "cursor-pointer hover:scale-110"
                 )}
               />
             ))}
           </div>
-
-          {/* Completion count */}
-          <span className="w-8 font-heading text-xs text-right text-[var(--text-muted)]">
-            {habit.completed}/{habit.total}
-          </span>
         </div>
       ))}
     </div>
