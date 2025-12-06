@@ -4,14 +4,42 @@ import { motion } from "framer-motion";
 import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
 import { Plus } from "lucide-react";
 
-// Unified theme colors - using CSS variables for consistency
-const getHabitColor = () => {
-  // Use primary color (sunset orange) for all habits
-  return {
-    bg: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--warning)))",
-    border: "hsl(var(--primary))",
-    glow: "hsl(var(--primary))"
-  };
+// Vibrant climbing hold colors - each habit gets a unique color
+const HOLD_COLORS = [
+  { // Coral/Orange
+    bg: "linear-gradient(135deg, #FF6B35, #FF8C42)",
+    border: "#FF6B35",
+    glow: "#FF6B35"
+  },
+  { // Teal/Cyan
+    bg: "linear-gradient(135deg, #0EA5E9, #22D3EE)",
+    border: "#0EA5E9",
+    glow: "#0EA5E9"
+  },
+  { // Purple/Violet
+    bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)",
+    border: "#8B5CF6",
+    glow: "#8B5CF6"
+  },
+  { // Green/Emerald
+    bg: "linear-gradient(135deg, #10B981, #34D399)",
+    border: "#10B981",
+    glow: "#10B981"
+  },
+  { // Pink/Rose
+    bg: "linear-gradient(135deg, #EC4899, #F472B6)",
+    border: "#EC4899",
+    glow: "#EC4899"
+  },
+  { // Gold/Amber
+    bg: "linear-gradient(135deg, #F59E0B, #FBBF24)",
+    border: "#F59E0B",
+    glow: "#F59E0B"
+  },
+];
+
+const getHabitColor = (index: number) => {
+  return HOLD_COLORS[index % HOLD_COLORS.length];
 };
 
 interface Habit {
@@ -80,9 +108,9 @@ export function GlowingOrbHabits() {
     completed: isCompleted(habit.id)
   }));
 
-  const handleOrbClick = (habitId: number, event: React.MouseEvent<HTMLDivElement>) => {
+  const handleOrbClick = (habitId: number, index: number, event: React.MouseEvent<HTMLDivElement>) => {
     const completed = isCompleted(habitId);
-    const color = getHabitColor();
+    const color = getHabitColor(index);
 
     // Only burst when completing (not uncompleting)
     if (!completed) {
@@ -100,19 +128,17 @@ export function GlowingOrbHabits() {
   const completedCount = habits.filter(h => h.completed).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Progress Summary */}
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          {completedCount}/{habits.length} holds sent today
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        {completedCount}/{habits.length} today
+      </p>
 
-      {/* Climbing Wall - Grid of holds */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      {/* Habits - horizontal row */}
+      <div className="flex gap-5">
         {habits.map((habit, index) => {
           const completed = habit.completed;
-          const color = getHabitColor();
+          const color = getHabitColor(index);
 
           return (
             <motion.button
@@ -120,13 +146,13 @@ export function GlowingOrbHabits() {
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              onClick={(e) => handleOrbClick(habit.id, e as any)}
+              onClick={(e) => handleOrbClick(habit.id, index, e as any)}
               className="relative flex flex-col items-center gap-2 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Climbing Hold */}
-              <div className="relative w-20 h-20">
+              {/* Hold */}
+              <div className="relative w-14 h-14">
                 {/* EXPLOSION BURST on click */}
                 {bursts.filter(b => b.habitId === habit.id).map(burst => (
                   <div key={burst.id} className="absolute inset-0 pointer-events-none overflow-visible">
@@ -250,7 +276,7 @@ export function GlowingOrbHabits() {
                 >
                   <ClimbingHoldSVG
                     variant={index % 3}
-                    size={80}
+                    size={56}
                     gradient={color.bg}
                     borderColor={color.border}
                   />
@@ -320,7 +346,7 @@ export function GlowingOrbHabits() {
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     className="absolute inset-0 flex items-center justify-center"
                   >
-                    <svg className="w-8 h-8 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </motion.div>
@@ -329,9 +355,9 @@ export function GlowingOrbHabits() {
 
               {/* Habit name */}
               <span
-                className="text-sm font-semibold text-center max-w-[120px] line-clamp-2"
+                className="text-xs font-semibold text-center max-w-[80px] leading-tight truncate"
                 style={{
-                  color: completed ? color.border : 'var(--muted-foreground)',
+                  color: completed ? color.border : 'hsl(var(--foreground))',
                   textShadow: completed ? `0 0 8px ${color.glow}60` : 'none',
                 }}
               >
@@ -345,7 +371,7 @@ export function GlowingOrbHabits() {
       {/* Add new habit */}
       {habits.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">No holds on your wall yet</p>
+          <p className="text-muted-foreground mb-4">No habits yet</p>
           <a
             href="/habits"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition text-white shadow-lg hover:scale-105 hover:shadow-xl"
@@ -354,7 +380,7 @@ export function GlowingOrbHabits() {
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Your First Hold
+            Add Your First Habit
           </a>
         </div>
       )}

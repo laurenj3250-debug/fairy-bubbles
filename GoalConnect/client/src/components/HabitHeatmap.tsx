@@ -151,14 +151,14 @@ export function HabitHeatmap() {
       </div>
 
       {/* Day labels header */}
-      <div className="flex gap-2 mb-2 ml-auto mr-10 relative z-10">
+      <div className="flex gap-1 mb-2 ml-auto mr-8 relative z-10">
         {days.map((date, i) => {
           const isToday = i === days.length - 1;
           return (
             <div
               key={date}
               className={
-                "w-8 text-center text-xs font-semibold " +
+                "w-6 text-center text-xs font-semibold " +
                 (isToday ? "text-primary" : "text-muted-foreground")
               }
             >
@@ -182,7 +182,7 @@ export function HabitHeatmap() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: habitIndex * 0.08, type: "spring" }}
-              className="relative flex items-center gap-3 p-2.5 rounded-xl overflow-hidden bg-primary/10 border border-primary/20"
+              className="relative flex items-center gap-2 p-2 rounded-xl overflow-hidden bg-primary/10 border border-primary/20"
             >
 
               {/* Habit name - clickable to toggle today */}
@@ -191,18 +191,18 @@ export function HabitHeatmap() {
                   const today = days[days.length - 1];
                   toggleMutation.mutate({ habitId: habit.id, date: today });
                 }}
-                className="w-24 text-sm font-semibold truncate text-left cursor-pointer hover:opacity-80 transition-opacity"
+                className="w-16 shrink-0 text-xs font-semibold text-left cursor-pointer hover:opacity-80 transition-opacity truncate"
                 style={{
                   color: colors.bright,
                   textShadow: `0 0 8px ${colors.solid}80`,
                 }}
-                title={`Click to toggle ${habit.title} for today`}
+                title={habit.title}
               >
                 {habit.title}
               </button>
 
               {/* Week cells - glowing orbs style */}
-              <div className="flex gap-2 flex-1 justify-end">
+              <div className="flex gap-1 flex-1 justify-end">
                 {days.map((date, dayIndex) => {
                   const isCompleted = completedDates.has(date);
                   const isToday = dayIndex === days.length - 1;
@@ -263,12 +263,12 @@ export function HabitHeatmap() {
 
                       {/* Cell with hover wobble - ULTRA SHINY */}
                       <motion.div
-                        whileHover={{ scale: 1.2, rotate: [0, -8, 8, 0] }}
-                        whileTap={{ scale: 0.85 }}
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.9 }}
                         transition={{ type: "spring", stiffness: 500 }}
                         onClick={() => toggleMutation.mutate({ habitId: habit.id, date })}
                         className={
-                          "relative w-8 h-8 rounded-full cursor-pointer " +
+                          "relative w-6 h-6 rounded-full cursor-pointer " +
                           (isToday && !isCompleted ? "ring-2 ring-white/40 ring-offset-1 ring-offset-transparent" : "")
                         }
                         style={{
@@ -327,7 +327,7 @@ export function HabitHeatmap() {
                             initial={{ scale: 0, rotate: -45 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                            className="absolute inset-0 w-full h-full p-2 text-white drop-shadow-sm"
+                            className="absolute inset-0 w-full h-full p-1.5 text-white drop-shadow-sm"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -348,7 +348,7 @@ export function HabitHeatmap() {
 
               {/* Streak count with MEGA glow */}
               <div
-                className="w-10 text-center text-sm font-bold relative z-10"
+                className="w-8 text-center text-xs font-bold relative z-10 shrink-0"
                 style={{
                   color: completedCount > 0 ? colors.bright : "var(--muted-foreground)",
                   textShadow: completedCount > 0

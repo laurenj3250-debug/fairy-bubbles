@@ -23,10 +23,10 @@ export function PeakLoreWidget() {
   };
 
   const typeLabels = {
-    location: "Peak of the Day",
-    fact: "Climbing Lore",
-    technique: "Technique Tip",
-    quote: "Climbing Wisdom",
+    location: "Place to Explore",
+    fact: "Fun Fact",
+    technique: "Pro Tip",
+    quote: "Daily Inspiration",
   };
 
   const Icon = typeIcons[inspiration.type];
@@ -40,13 +40,13 @@ export function PeakLoreWidget() {
           <Icon className="w-4 h-4" style={{ color: colors.icon }} />
           <h3 className="text-sm font-semibold">{typeLabels[inspiration.type]}</h3>
         </div>
-        <span className="text-xl">{inspiration.emoji}</span>
+        <span className="text-base">{inspiration.emoji}</span>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col gap-2">
         <h4
-          className="font-bold text-sm"
+          className="text-sm font-bold"
           style={{ color: colors.icon }}
         >
           {inspiration.title}
@@ -59,7 +59,7 @@ export function PeakLoreWidget() {
       {/* Type Badge */}
       <div className="mt-2">
         <span
-          className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
+          className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
           style={{
             background: colors.bg,
             border: `1px solid ${colors.border}`,

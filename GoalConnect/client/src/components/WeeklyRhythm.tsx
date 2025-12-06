@@ -213,6 +213,7 @@ export function WeeklyRhythm() {
                   dominantBaseline="middle"
                   fontSize="11"
                   fontWeight="600"
+                  fontFamily="Inter, sans-serif"
                   fill={DAY_COLORS[i]}
                 >
                   {day.charAt(0)}
@@ -235,10 +236,10 @@ export function WeeklyRhythm() {
           >
             <div className="text-xs text-muted-foreground mb-1">Best Day</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold" style={{ color: DAY_COLORS[bestDay] }}>
+              <span className="text-base font-bold" style={{ color: DAY_COLORS[bestDay] }}>
                 {DAYS[bestDay]}
               </span>
-              <span className="text-lg font-semibold" style={{ color: DAY_COLORS[bestDay] }}>
+              <span className="text-sm font-semibold" style={{ color: DAY_COLORS[bestDay] }}>
                 {Math.round(displayStats[bestDay].rate * 100)}%
               </span>
             </div>
@@ -254,10 +255,10 @@ export function WeeklyRhythm() {
           >
             <div className="text-xs text-muted-foreground mb-1">Weakest</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-medium text-muted-foreground">
+              <span className="text-base font-semibold text-muted-foreground">
                 {DAYS[worstDay]}
               </span>
-              <span className="text-lg text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 {Math.round(displayStats[worstDay].rate * 100)}%
               </span>
             </div>
