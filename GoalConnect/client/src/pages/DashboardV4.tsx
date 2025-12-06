@@ -305,6 +305,31 @@ export default function DashboardV4() {
     },
   });
 
+  const updateTodoMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; title?: string; dueDate?: string }) => {
+      return await apiRequest(`/api/todos/${id}`, 'PATCH', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to update task", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteTodoMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/todos/${id}`, 'DELETE');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+      toast({ title: "Task deleted" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to delete task", description: error.message, variant: "destructive" });
+    },
+  });
+
   // ============================================================================
   // COMPUTED DATA
   // ============================================================================
