@@ -645,6 +645,51 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create projects table:', error);
       }
 
+      // Add icon column to projects (added for Todoist-style project icons)
+      try {
+        await db.execute(sql`
+          ALTER TABLE projects
+          ADD COLUMN IF NOT EXISTS icon TEXT DEFAULT '📁'
+        `);
+        log.info('[migrate] ✅ icon column added/verified in projects table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add icon column to projects:', error);
+      }
+
+      // Add parent_id column for nested projects
+      try {
+        await db.execute(sql`
+          ALTER TABLE projects
+          ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES projects(id) ON DELETE SET NULL
+        `);
+        log.info('[migrate] ✅ parent_id column added/verified in projects table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add parent_id column to projects:', error);
+      }
+
+      // Rename is_archived to archived (schema uses 'archived')
+      try {
+        await db.execute(sql`
+          ALTER TABLE projects
+          RENAME COLUMN is_archived TO archived
+        `);
+        log.info('[migrate] ✅ is_archived renamed to archived in projects table');
+      } catch (error) {
+        // Column may already be named 'archived' or not exist
+        log.debug('[migrate] is_archived rename skipped (may already be correct)');
+      }
+
+      // Drop is_favorite column (not in current schema)
+      try {
+        await db.execute(sql`
+          ALTER TABLE projects
+          DROP COLUMN IF EXISTS is_favorite
+        `);
+        log.info('[migrate] ✅ is_favorite column dropped from projects table');
+      } catch (error) {
+        log.debug('[migrate] is_favorite drop skipped');
+      }
+
       try {
         // Create labels table for tagging todos
         await db.execute(sql`
@@ -773,6 +818,120 @@ export async function runMigrations() {
         log.info('[migrate] ✅ Outdoor climbing ticks table and enums created/verified');
       } catch (error) {
         log.error('[migrate] ⚠️  Failed to create outdoor_climbing_ticks:', error);
+      }
+
+      // ========== STUDY PLANNER TABLES ==========
+
+      try {
+        // Create study_task_type enum if not exists
+        await db.execute(sql`
+          DO $$ BEGIN
+            CREATE TYPE study_task_type AS ENUM('remnote_review', 'email_cases', 'chapter', 'mri_lecture', 'papers');
+          EXCEPTION
+            WHEN duplicate_object THEN null;
+          END $$;
+        `);
+
+        // Create study_books table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_books (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            abbreviation TEXT,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_books_user_id ON study_books(user_id)`);
+        log.info('[migrate] ✅ Study books table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_books table:', error);
+      }
+
+      try {
+        // Create study_chapters table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_chapters (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            book_id INTEGER NOT NULL REFERENCES study_books(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            images_completed BOOLEAN NOT NULL DEFAULT false,
+            images_completed_at TIMESTAMP,
+            cards_completed BOOLEAN NOT NULL DEFAULT false,
+            cards_completed_at TIMESTAMP,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_chapters_user_id ON study_chapters(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_chapters_book_id ON study_chapters(book_id)`);
+        log.info('[migrate] ✅ Study chapters table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_chapters table:', error);
+      }
+
+      try {
+        // Create study_papers table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_papers (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            url TEXT,
+            completed BOOLEAN NOT NULL DEFAULT false,
+            completed_at TIMESTAMP,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_papers_user_id ON study_papers(user_id)`);
+        log.info('[migrate] ✅ Study papers table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_papers table:', error);
+      }
+
+      try {
+        // Create study_mri_lectures table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_mri_lectures (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            url TEXT,
+            completed BOOLEAN NOT NULL DEFAULT false,
+            completed_at TIMESTAMP,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_mri_lectures_user_id ON study_mri_lectures(user_id)`);
+        log.info('[migrate] ✅ Study MRI lectures table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_mri_lectures table:', error);
+      }
+
+      try {
+        // Create study_schedule_logs table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_schedule_logs (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            date VARCHAR(10) NOT NULL,
+            task_type study_task_type NOT NULL,
+            completed BOOLEAN NOT NULL DEFAULT false,
+            linked_item_id INTEGER,
+            linked_item_type VARCHAR(20),
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_schedule_logs_user_id ON study_schedule_logs(user_id)`);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS study_schedule_logs_user_date_task_key ON study_schedule_logs(user_id, date, task_type)`);
+        log.info('[migrate] ✅ Study schedule logs table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_schedule_logs table:', error);
       }
 
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist

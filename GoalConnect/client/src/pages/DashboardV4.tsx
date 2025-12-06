@@ -15,6 +15,16 @@ import { WeeklyRhythm } from '@/components/WeeklyRhythm';
 import { PeakLoreWidget } from '@/components/PeakLoreWidget';
 import { AlpenglowOrb } from '@/components/AlpenglowOrb';
 import { SummitPill } from '@/components/SummitPill';
+import { MountainHero } from '@/components/MountainHero';
+import { ForestBackground } from '@/components/ForestBackground';
+
+// V5 Luxury Components
+import { LuxuryProgressRing } from '@/components/LuxuryProgressRing';
+import { LuxuryWeeklyRhythm } from '@/components/LuxuryWeeklyRhythm';
+import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
+import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
+import { LuxuryStudyTracker } from '@/components/LuxuryStudyTracker';
+import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 
@@ -42,6 +52,61 @@ interface StreakData {
 interface TodoWithMetadata extends Todo {
   project?: Project | null;
   labels?: Array<{ id: number; name: string; color: string }>;
+}
+
+// ============================================================================
+// FUN FACTS - Curated climbing & adventure knowledge
+// ============================================================================
+
+const FUN_FACTS = [
+  {
+    title: "The Term 'Beta'",
+    content: "Climbers call route information 'beta' after Bates Method videos in the 1980s. Jack Bates filmed climbers solving problems, and the footage became the original way to share route knowledge.",
+    category: "Climbing Lore",
+  },
+  {
+    title: "Crimping Science",
+    content: "The crimp grip generates 3-4x more force than an open hand grip, but puts significantly more stress on finger pulleys. Training both grip types builds more resilient tendons.",
+    category: "Training Tips",
+  },
+  {
+    title: "The V-Scale Origin",
+    content: "The V-scale for bouldering was created by John 'Vermin' Sherman at Hueco Tanks in the 1990s. The 'V' stands for Vermin, his nickname from his disheveled climbing lifestyle.",
+    category: "Climbing History",
+  },
+  {
+    title: "Rest Step Technique",
+    content: "The mountaineer's 'rest step' locks your rear leg straight with each step, letting your skeleton bear weight instead of muscles. This technique can reduce energy expenditure by 30%.",
+    category: "Mountain Skills",
+  },
+  {
+    title: "Flash vs Onsight",
+    content: "An 'onsight' means climbing a route first try with zero prior knowledge. A 'flash' means first try but with beta from others. Both are impressive, but onsights are considered more pure.",
+    category: "Climbing Terms",
+  },
+  {
+    title: "Heel Hook Power",
+    content: "A proper heel hook can support up to 80% of your body weight, making it one of the most powerful techniques for overhanging terrain. The key is engaging your hamstring, not just placing the heel.",
+    category: "Technique",
+  },
+  {
+    title: "Chalk Chemistry",
+    content: "Climbing chalk is magnesium carbonate, the same compound used in antacids. It absorbs moisture and increases friction, but too much can actually decrease grip on certain rock types.",
+    category: "Gear Science",
+  },
+  {
+    title: "The Crux",
+    content: "The 'crux' of a climb is its hardest section. Routes can have multiple cruxes, and identifying them before climbing helps you conserve energy for when you need it most.",
+    category: "Strategy",
+  },
+];
+
+function getDailyFunFact() {
+  // Use day of year as seed for consistent daily rotation
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return FUN_FACTS[dayOfYear % FUN_FACTS.length];
 }
 
 // ============================================================================
@@ -189,6 +254,34 @@ export default function DashboardV4() {
     },
   });
 
+  const incrementGoalMutation = useMutation({
+    mutationFn: async (goalId: number) => {
+      const goal = goals.find(g => g.id === goalId);
+      if (!goal) throw new Error('Goal not found');
+      return await apiRequest(`/api/goals/${goalId}`, 'PATCH', {
+        currentValue: Math.min(goal.currentValue + 1, goal.targetValue),
+      });
+    },
+    onSuccess: () => {
+      triggerConfetti();
+      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
+    },
+  });
+
+  const createTodoMutation = useMutation({
+    mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
+      return await apiRequest('/api/todos', 'POST', {
+        title,
+        dueDate,
+        priority: 4,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
+    },
+  });
+
   // ============================================================================
   // COMPUTED DATA
   // ============================================================================
@@ -220,10 +313,16 @@ export default function DashboardV4() {
     const now = new Date();
     const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
     const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
+    const currentMonth = format(now, 'yyyy-MM'); // e.g., "2024-12"
     const weeklyIds = new Set(weeklyGoals.map(g => g.id));
     return goals
-      .filter(g => g.deadline && g.deadline >= monthStart && g.deadline <= monthEnd && !weeklyIds.has(g.id))
-      .slice(0, 2);
+      .filter(g => {
+        // Include if it's a monthly goal (has month field) OR deadline is within current month
+        const isMonthlyGoal = g.month === currentMonth;
+        const isInMonthDeadline = g.deadline && g.deadline >= monthStart && g.deadline <= monthEnd;
+        return (isMonthlyGoal || isInMonthDeadline) && !weeklyIds.has(g.id) && !g.archived;
+      })
+      .slice(0, 3); // Show up to 3 monthly goals in gauges
   }, [goals, weeklyGoals]);
 
   const todosByDay = useMemo(() => {
@@ -268,6 +367,12 @@ export default function DashboardV4() {
 
   const xp = points?.available ?? 0;
 
+  // Calculate overall day streak (max streak across all habits)
+  const dayStreak = useMemo(() => {
+    if (habits.length === 0) return 0;
+    return Math.max(...habits.map(h => h.streak?.streak ?? h.streak ?? 0));
+  }, [habits]);
+
   const handleToggleHabit = useCallback((habitId: number) => {
     toggleHabitMutation.mutate({ habitId, date: todayStr });
   }, [toggleHabitMutation, todayStr]);
@@ -281,266 +386,229 @@ export default function DashboardV4() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen p-5 md:p-6 pb-24">
-      <div className="max-w-[1200px] mx-auto space-y-5">
+    <div className="min-h-screen relative">
+      {/* Forest background layers */}
+      <ForestBackground />
 
-        {/* ROW 1: Habits on left + Stats on right */}
-        <div className="flex justify-between items-start gap-6">
-          <div className="flex-shrink-0">
-            <GlowingOrbHabits />
-          </div>
-          <div className="flex gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/15 border border-primary/30">
-              <span>⚡</span>
-              <span className="text-sm font-bold text-primary">{xp.toLocaleString()} XP</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-warning/15 border border-warning/30">
-              <span>🪙</span>
-              <span className="text-sm font-bold text-warning">156</span>
-            </div>
-          </div>
-        </div>
+      {/* Mountain hero section */}
+      <MountainHero />
 
-        {/* ROW 2: Weekly Goals + Monthly Summits (2 equal columns) */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Weekly Goals */}
-          <div className="glass-card p-4 min-h-[180px]">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">🎯</span>
-              <span className="text-sm font-semibold">Weekly Goals</span>
-            </div>
-            {goalsLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />)}
+      {/* Main dashboard content */}
+      <div className="relative z-10 px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] ml-[188px] space-y-5">
+
+          {/* HEADER: Logo + Habit Orbs + Stats */}
+          <header className="flex justify-center items-center mb-8">
+            <div className="flex items-center gap-8">
+              <h1 className="logo-text">
+                GOAL CONNECT
+              </h1>
+              <div className="flex-shrink-0">
+                <GlowingOrbHabits />
               </div>
-            ) : weeklyGoals.length === 0 ? (
-              <Link href="/goals">
-                <div className="text-sm text-muted-foreground hover:text-primary py-4 text-center cursor-pointer">
-                  + Add weekly goals
-                </div>
+              <Link href="/habits">
+                <button className="text-[var(--text-muted)] hover:text-peach-400 transition-colors text-xs font-heading">
+                  + habit
+                </button>
               </Link>
-            ) : (
-              <div className="space-y-2">
-                {weeklyGoals.map(goal => {
-                  const isComplete = goal.currentValue >= goal.targetValue;
-                  return (
-                    <div
-                      key={goal.id}
-                      className={cn(
-                        "flex items-center gap-3 p-2 rounded-lg",
-                        isComplete ? "bg-success/10" : "bg-muted/50"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-xs",
-                        isComplete ? "bg-success text-white" : "border-2 border-border"
-                      )}>
-                        {isComplete && '✓'}
-                      </div>
-                      <span className={cn("text-sm font-medium flex-1", isComplete && "line-through opacity-60")}>
-                        {goal.title}
-                      </span>
-                      <span className={cn("text-xs font-semibold", isComplete ? "text-success" : "text-muted-foreground")}>
-                        {goal.currentValue}/{goal.targetValue}
-                      </span>
-                    </div>
-                  );
-                })}
+            </div>
+            <div className="flex gap-6 text-xs ml-8">
+              <div className="font-body text-[var(--text-muted)]">
+                <span className="font-heading text-base text-peach-400">{xp.toLocaleString()}</span>
+                {' '}points
               </div>
-            )}
+              <div className="font-body text-[var(--text-muted)]">
+                <span className="font-heading text-base text-peach-400">{dayStreak}</span>
+                {' '}day streak
+              </div>
+            </div>
+          </header>
+
+          {/* ROW 1: Weekly Goals + Study Tracker + Monthly Progress */}
+          <div className="card-grid grid grid-cols-3 gap-5">
+            {/* Weekly Goals */}
+            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+              <span className="card-title">Weekly Goals</span>
+              <div className="flex-1 flex flex-col justify-center">
+                {goalsLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map(i => <div key={i} className="h-12 bg-white/5 animate-pulse rounded-xl" />)}
+                  </div>
+                ) : weeklyGoals.length === 0 ? (
+                  <Link href="/goals">
+                    <div className="font-heading italic text-sm text-[var(--text-muted)] hover:text-peach-400 py-8 text-center cursor-pointer transition-colors">
+                      + Add weekly goals
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="space-y-2">
+                    {weeklyGoals.map(goal => (
+                      <LuxuryGoalItem
+                        key={goal.id}
+                        title={goal.title}
+                        current={goal.currentValue}
+                        target={goal.targetValue}
+                        onIncrement={() => incrementGoalMutation.mutate(goal.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Study Tracker */}
+            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+              <span className="card-title">Study Tracker</span>
+              <div className="flex-1 flex items-center justify-center">
+                <LuxuryStudyTracker
+                  todayMinutes={0}
+                  weekMinutes={0}
+                  onStartSession={() => {
+                    toast({ title: "Study session started" });
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Monthly Progress */}
+            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+              <span className="card-title">Monthly Progress</span>
+              <div className="flex-1 flex items-center justify-around">
+                {monthlyGoals.length === 0 ? (
+                  <Link href="/goals">
+                    <div className="font-heading italic text-sm text-[var(--text-muted)] hover:text-peach-400 py-4 text-center cursor-pointer transition-colors">
+                      + Add monthly goals
+                    </div>
+                  </Link>
+                ) : (
+                  monthlyGoals.slice(0, 3).map(goal => {
+                    const progress = Math.min(Math.round((goal.currentValue / goal.targetValue) * 100), 100);
+                    return (
+                      <LuxuryProgressRing
+                        key={goal.id}
+                        progress={progress}
+                        label={goal.title}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Monthly Goals */}
-          <div className="glass-card p-4 min-h-[180px]">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-base">📊</span>
-              <span className="text-sm font-semibold">Monthly Goals</span>
+          {/* ROW 2: Place to Explore + Weekly Rhythm + This Week */}
+          <div className="card-grid grid grid-cols-3 gap-5">
+            {/* Place to Explore */}
+            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+              <span className="card-title">Place to Explore</span>
+              <div className="flex-1">
+                {(() => {
+                  const fact = getDailyFunFact();
+                  return (
+                    <LuxuryFunFact
+                      title={fact.title}
+                      content={fact.content}
+                      category={fact.category}
+                    />
+                  );
+                })()}
+              </div>
             </div>
-            <div className="flex-1 flex items-center justify-around">
-              {/* Gauge Meters */}
-              {[
-                { name: 'Fitness', progress: 75 },
-                { name: 'Learning', progress: 40 },
-                { name: 'Reading', progress: 100 },
-              ].map((goal, i) => {
-                const color = goal.progress >= 90 ? '#FFD700' : goal.progress >= 70 ? '#FF6B35' : goal.progress >= 50 ? '#4ECDC4' : '#6495ED';
-                const size = 90;
-                const strokeWidth = 8;
-                const radius = (size - strokeWidth) / 2;
-                const circumference = Math.PI * radius; // Half circle
-                const offset = circumference - (goal.progress / 100) * circumference;
+
+            {/* Weekly Rhythm */}
+            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+              <span className="card-title">Weekly Rhythm</span>
+              <div className="flex-1 flex items-end">
+                <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
+              </div>
+            </div>
+
+            {/* This Week */}
+            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+              <span className="card-title">This Week</span>
+              <div className="flex-1 flex items-center">
+                <LuxuryHabitGrid
+                  habits={todayHabits.slice(0, 4).map(habit => ({
+                    id: habit.id,
+                    name: habit.title,
+                    days: week.dates.map(date => ({
+                      date,
+                      completed: completionMap[habit.id]?.[date] ?? false,
+                    })),
+                    completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
+                    total: 7,
+                  }))}
+                  todayIndex={week.todayIndex}
+                  onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 3: Weekly Schedule (full-width, 7-day tasks) */}
+          <div className="glass-card frost-accent">
+            <div className="flex items-center justify-between mb-4">
+              <span className="card-title">Schedule</span>
+              <span className="font-heading italic text-xs text-[var(--text-muted)]">{week.formatRange}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {week.dayNames.map((day, i) => {
+                const dayTodos = todosByDay[i] || [];
+                const isToday = i === week.todayIndex;
 
                 return (
-                  <motion.div
-                    key={goal.name}
-                    className="flex flex-col items-center"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.1, type: "spring" }}
+                  <div
+                    key={`${day}-${i}`}
+                    className={cn(
+                      "rounded-xl p-3 min-h-[70px] text-center transition-all",
+                      isToday
+                        ? "bg-peach-400/10 border border-peach-400/25 shadow-[0_0_15px_rgba(228,168,128,0.1)]"
+                        : "bg-white/5"
+                    )}
                   >
-                    <div className="relative" style={{ width: size, height: size / 2 + 10 }}>
-                      {/* Glow effect */}
-                      <motion.div
-                        className="absolute inset-0"
-                        style={{
-                          background: `radial-gradient(ellipse at 50% 100%, ${color}40 0%, transparent 60%)`,
-                          filter: 'blur(8px)',
-                        }}
-                        animate={{ opacity: [0.5, 0.8, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                      />
-
-                      <svg width={size} height={size / 2 + 10} className="overflow-visible">
-                        {/* Background arc */}
-                        <path
-                          d={`M ${strokeWidth / 2} ${size / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${size / 2}`}
-                          fill="none"
-                          stroke="rgba(255,255,255,0.1)"
-                          strokeWidth={strokeWidth}
-                          strokeLinecap="round"
-                        />
-
-                        {/* Progress arc */}
-                        <motion.path
-                          d={`M ${strokeWidth / 2} ${size / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${size / 2}`}
-                          fill="none"
-                          stroke={color}
-                          strokeWidth={strokeWidth}
-                          strokeLinecap="round"
-                          strokeDasharray={circumference}
-                          initial={{ strokeDashoffset: circumference }}
-                          animate={{ strokeDashoffset: offset }}
-                          transition={{ duration: 1.2, ease: "easeOut", delay: i * 0.15 }}
-                          style={{
-                            filter: `drop-shadow(0 0 6px ${color})`,
+                    <div className={cn(
+                      "font-heading-sc text-[0.6rem] tracking-wide mb-2",
+                      isToday ? "text-peach-400" : "text-[var(--text-muted)]"
+                    )}>
+                      {day}
+                    </div>
+                    <div className="space-y-1">
+                      {dayTodos.slice(0, 2).map(todo => (
+                        <button
+                          type="button"
+                          key={todo.id}
+                          onClick={() => handleToggleTodo(todo.id)}
+                          className={cn(
+                            "w-full text-left font-body text-[0.65rem] p-1 rounded bg-ice-card/50 cursor-pointer truncate hover:bg-peach-400/10 transition-colors",
+                            todo.completed && "opacity-50 line-through"
+                          )}
+                        >
+                          {todo.title}
+                        </button>
+                      ))}
+                      {dayTodos.length < 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const title = prompt('Quick add task:');
+                            if (title?.trim()) {
+                              createTodoMutation.mutate({ title: title.trim(), dueDate: week.dates[i] });
+                            }
                           }}
-                        />
-
-                        {/* Tick marks */}
-                        {[0, 25, 50, 75, 100].map((tick) => {
-                          const angle = Math.PI - (tick / 100) * Math.PI;
-                          const x1 = size / 2 + (radius - 12) * Math.cos(angle);
-                          const y1 = size / 2 - (radius - 12) * Math.sin(angle);
-                          const x2 = size / 2 + (radius - 6) * Math.cos(angle);
-                          const y2 = size / 2 - (radius - 6) * Math.sin(angle);
-                          return (
-                            <line
-                              key={tick}
-                              x1={x1} y1={y1} x2={x2} y2={y2}
-                              stroke="rgba(255,255,255,0.3)"
-                              strokeWidth="1"
-                            />
-                          );
-                        })}
-
-                        {/* Percentage text */}
-                        <text
-                          x={size / 2}
-                          y={size / 2 - 5}
-                          textAnchor="middle"
-                          fontSize="14"
-                          fontWeight="600"
-                          fontFamily="Inter, sans-serif"
-                          fill="white"
+                          className="w-full text-center font-body text-[0.55rem] p-1 rounded text-[var(--text-muted)] hover:bg-white/5 transition-colors opacity-50 hover:opacity-100"
                         >
-                          {goal.progress}%
-                        </text>
-                      </svg>
-
-                      {/* Summit sparkle */}
-                      {goal.progress >= 100 && (
-                        <motion.div
-                          className="absolute -top-1 left-1/2 -translate-x-1/2"
-                          animate={{ scale: [1, 1.3, 1] }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                          ✨
-                        </motion.div>
+                          + add
+                        </button>
                       )}
                     </div>
-
-                    <span className="text-xs font-semibold mt-1" style={{ color }}>
-                      {goal.name}
-                    </span>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           </div>
 
         </div>
-
-        {/* ROW 3: Tip of Day + Rhythm + Heatmap (3 equal columns) */}
-        <div className="grid grid-cols-3 gap-4">
-          {/* Tip of the Day */}
-          <div className="glass-card p-4 min-h-[200px]">
-            <PeakLoreWidget />
-          </div>
-
-          {/* Weekly Rhythm */}
-          <div className="glass-card p-4 min-h-[200px]">
-            <WeeklyRhythm />
-          </div>
-
-          {/* Habit Heatmap */}
-          <div className="glass-card p-4 min-h-[200px]">
-            <HabitHeatmap />
-          </div>
-        </div>
-
-        {/* ROW 4: Weekly Schedule (7-day tasks) */}
-        <div className="glass-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-base">📅</span>
-            <span className="text-sm font-semibold">Weekly Schedule</span>
-            <span className="text-xs text-muted-foreground ml-2">{week.formatRange}</span>
-          </div>
-          <div className="grid grid-cols-7 gap-3">
-            {week.dayNames.map((day, i) => {
-              const dayTodos = todosByDay[i] || [];
-              const isToday = i === week.todayIndex;
-              const dateNum = parseInt(week.dates[i].split('-')[2]);
-
-              return (
-                <div
-                  key={day}
-                  className={cn(
-                    "rounded-xl p-3 min-h-[120px]",
-                    isToday ? "bg-primary/10 border border-primary/30" : "bg-muted/50"
-                  )}
-                >
-                  <div className={cn(
-                    "text-xs font-semibold mb-2 text-center",
-                    isToday ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {day} {dateNum}
-                  </div>
-                  <div className="space-y-1">
-                    {dayTodos.slice(0, 4).map(todo => (
-                      <div
-                        key={todo.id}
-                        onClick={() => handleToggleTodo(todo.id)}
-                        className={cn(
-                          "flex items-center gap-1.5 p-1.5 rounded bg-card cursor-pointer text-xs",
-                          todo.completed && "opacity-50"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-3 h-3 rounded-sm border flex-shrink-0",
-                          todo.completed ? "bg-success border-success" : "border-border"
-                        )} />
-                        <span className={cn("truncate", todo.completed && "line-through")}>
-                          {todo.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
       </div>
     </div>
   );
