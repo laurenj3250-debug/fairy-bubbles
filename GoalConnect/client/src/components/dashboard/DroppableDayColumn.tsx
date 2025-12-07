@@ -2,7 +2,15 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
 import { DraggableScheduleTask } from './DraggableScheduleTask';
+import { CheckCircle2, Circle } from 'lucide-react';
 import type { Todo } from '@shared/schema';
+
+export interface StudyTaskItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  taskType: string;
+}
 
 interface DroppableDayColumnProps {
   dayIndex: number;
@@ -10,10 +18,12 @@ interface DroppableDayColumnProps {
   date: string;
   isToday: boolean;
   todos: Todo[];
+  studyTasks?: StudyTaskItem[];
   onToggle: (id: number) => void;
   onUpdate: (id: number, title: string) => void;
   onDelete: (id: number) => void;
   onAdd: () => void;
+  onStudyToggle?: (taskType: string) => void;
   isAddingDay: number | null;
   inlineAddTitle: string;
   setInlineAddTitle: (value: string) => void;
@@ -30,10 +40,12 @@ export function DroppableDayColumn({
   date,
   isToday,
   todos,
+  studyTasks = [],
   onToggle,
   onUpdate,
   onDelete,
   onAdd,
+  onStudyToggle,
   isAddingDay,
   inlineAddTitle,
   setInlineAddTitle,
@@ -130,6 +142,35 @@ export function DroppableDayColumn({
                 + add
               </button>
             )
+          )}
+
+          {/* Study Tasks Section */}
+          {studyTasks.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-purple-400/20">
+              {studyTasks.map(task => (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => onStudyToggle?.(task.taskType)}
+                  className={cn(
+                    "w-full flex items-center gap-1 p-1 rounded text-[0.55rem] text-left transition-all",
+                    task.completed ? "opacity-50" : "hover:bg-purple-400/10"
+                  )}
+                >
+                  {task.completed ? (
+                    <CheckCircle2 className="w-3 h-3 text-purple-400 shrink-0" />
+                  ) : (
+                    <Circle className="w-3 h-3 text-purple-400/50 shrink-0" />
+                  )}
+                  <span className={cn(
+                    "font-body truncate text-purple-300",
+                    task.completed && "line-through text-purple-400/50"
+                  )}>
+                    {task.title}
+                  </span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </SortableContext>

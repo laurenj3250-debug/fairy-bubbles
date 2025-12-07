@@ -42,7 +42,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
+import { DroppableDayColumn, type StudyTaskItem } from '@/components/dashboard/DroppableDayColumn';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/useStudyPlanner';
@@ -454,16 +454,16 @@ export default function DashboardV4() {
 
   const monthlyGoals = useMemo(() => {
     const now = new Date();
-    const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
-    const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
-    const currentMonth = format(now, 'yyyy-MM'); // e.g., "2024-12"
+    const currentMonth = format(now, 'yyyy-MM'); // e.g., "2025-12"
     const weeklyIds = new Set(weeklyGoals.map(g => g.id));
+
     return goals
       .filter(g => {
-        // Include if it's a monthly goal (has month field) OR deadline is within current month
-        const isMonthlyGoal = g.month === currentMonth;
-        const isInMonthDeadline = g.deadline && g.deadline >= monthStart && g.deadline <= monthEnd;
-        return (isMonthlyGoal || isInMonthDeadline) && !weeklyIds.has(g.id) && !g.archived;
+        // Include if deadline is within current month (starts with "2025-12")
+        // OR if the month field matches current month
+        const deadlineMonth = g.deadline?.substring(0, 7); // "2025-12-31" -> "2025-12"
+        const isInCurrentMonth = deadlineMonth === currentMonth || g.month === currentMonth;
+        return isInCurrentMonth && !weeklyIds.has(g.id) && !g.archived;
       })
       .slice(0, 3); // Show up to 3 monthly goals in gauges
   }, [goals, weeklyGoals]);
@@ -547,6 +547,7 @@ export default function DashboardV4() {
 
   // Study planner data with local state for immediate toggle feedback
   const {
+    weekData,
     toggleSchedule: toggleStudyTask,
     isTaskCompleted: isStudyTaskCompleted,
   } = useStudyPlanner();
@@ -576,24 +577,45 @@ export default function DashboardV4() {
         taskType,
       };
     });
-  }, [todayStr, isStudyTaskCompleted, localCompletedStudyTasks]);
+  }, [todayStr, isStudyTaskCompleted, localCompletedStudyTasks, weekData]);
 
-  // Handle study task toggle with local state for immediate feedback
-  const handleStudyTaskToggle = useCallback((taskType: string) => {
-    // Immediately update local state for responsive UI
-    setLocalCompletedStudyTasks(prev => {
-      const next = new Set(prev);
-      if (next.has(taskType)) {
-        next.delete(taskType);
-      } else {
-        next.add(taskType);
-        triggerConfetti();
-      }
-      return next;
-    });
+  // Study tasks for each day of the week (for weekly schedule display)
+  const studyTasksByDay = useMemo((): StudyTaskItem[][] =>
+    week.dates.map((date, dayIndex) => {
+      const scheduleForDay = DEFAULT_WEEKLY_SCHEDULE.find(d => d.day === dayIndex);
+      if (!scheduleForDay) return [];
 
-    // Also sync with API (fire and forget)
-    toggleStudyTask({ date: todayStr, taskType: taskType as StudyTaskType });
+      return (scheduleForDay.tasks as StudyTaskType[]).map(taskType => {
+        const config = TASK_CONFIG[taskType];
+        const isToday = date === todayStr;
+        const localCompleted = isToday && localCompletedStudyTasks.has(taskType);
+        return {
+          id: `${date}-${taskType}`,
+          title: config.label,
+          completed: localCompleted || isStudyTaskCompleted(date, taskType),
+          taskType,
+        };
+      });
+    })
+  , [week.dates, todayStr, isStudyTaskCompleted, localCompletedStudyTasks, weekData]);
+
+  // Unified study task toggle handler - works for any date
+  const handleStudyTaskToggle = useCallback((taskType: string, date = todayStr) => {
+    // For today, update local state for immediate UI feedback
+    if (date === todayStr) {
+      setLocalCompletedStudyTasks(prev => {
+        const next = new Set(prev);
+        if (next.has(taskType)) {
+          next.delete(taskType);
+        } else {
+          next.add(taskType);
+          triggerConfetti();
+        }
+        return next;
+      });
+    }
+    // Sync with API
+    toggleStudyTask({ date, taskType: taskType as StudyTaskType });
   }, [todayStr, toggleStudyTask]);
 
   // Weekly rhythm data (habits completed per day)
@@ -889,10 +911,12 @@ export default function DashboardV4() {
                     date={week.dates[i]}
                     isToday={i === week.todayIndex}
                     todos={todosByDay[i] || []}
+                    studyTasks={studyTasksByDay[i] || []}
                     onToggle={handleToggleTodo}
                     onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
                     onDelete={(id) => deleteTodoMutation.mutate(id)}
                     onAdd={() => setInlineAddDay(i)}
+                    onStudyToggle={(taskType) => handleStudyTaskToggle(taskType, week.dates[i])}
                     isAddingDay={inlineAddDay}
                     inlineAddTitle={inlineAddTitle}
                     setInlineAddTitle={setInlineAddTitle}

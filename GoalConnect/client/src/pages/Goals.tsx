@@ -81,22 +81,22 @@ export default function Goals() {
     let filtered = [...goals];
 
     if (activeView === "archived") {
-      // Past deadline goals (incomplete only - completed goals stay in their original view)
+      // Show goals marked as archived OR past deadline incomplete
       filtered = goals.filter(goal =>
-        goal.deadline < today && goal.currentValue < goal.targetValue
+        goal.archived || (goal.deadline < today && goal.currentValue < goal.targetValue)
       );
     } else if (activeView === "weekly") {
       filtered = goals.filter(goal =>
-        goal.deadline >= weekDates.start && goal.deadline <= weekDates.end
+        !goal.archived && goal.deadline >= weekDates.start && goal.deadline <= weekDates.end
       );
     } else if (activeView === "monthly") {
       filtered = goals.filter(goal =>
-        goal.deadline >= monthDates.start && goal.deadline <= monthDates.end
+        !goal.archived && goal.deadline >= monthDates.start && goal.deadline <= monthDates.end
       );
     } else {
-      // "all" view - exclude archived (past deadline incomplete)
+      // "all" view - exclude archived goals
       filtered = goals.filter(goal =>
-        goal.deadline >= today || goal.currentValue >= goal.targetValue
+        !goal.archived && (goal.deadline >= today || goal.currentValue >= goal.targetValue)
       );
     }
 
@@ -112,7 +112,7 @@ export default function Goals() {
   // Count of archived goals for badge
   const archivedCount = useMemo(() => {
     return goals.filter(goal =>
-      goal.deadline < today && goal.currentValue < goal.targetValue
+      goal.archived || (goal.deadline < today && goal.currentValue < goal.targetValue)
     ).length;
   }, [goals, today]);
 
