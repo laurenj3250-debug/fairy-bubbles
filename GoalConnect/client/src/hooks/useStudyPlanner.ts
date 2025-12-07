@@ -168,9 +168,15 @@ export function useStudyPlanner(options: UseStudyPlannerOptions = {}) {
     mutationFn: async (chapterId: number) => {
       return apiRequest(`/api/study/chapters/${chapterId}/images`, "PATCH");
     },
-    onSuccess: () => {
+    onSuccess: (data: { imagesCompleted: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/study/books"] });
       queryClient.invalidateQueries({ queryKey: ["/api/study/stats"] });
+      // Also mark "chapter" task complete on today's schedule if images were completed
+      if (data.imagesCompleted) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        apiRequest("/api/study/schedule/log", "POST", { date: today, taskType: "chapter" })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["/api/study/schedule/week"] }));
+      }
     },
   });
 
@@ -178,9 +184,15 @@ export function useStudyPlanner(options: UseStudyPlannerOptions = {}) {
     mutationFn: async (chapterId: number) => {
       return apiRequest(`/api/study/chapters/${chapterId}/cards`, "PATCH");
     },
-    onSuccess: () => {
+    onSuccess: (data: { cardsCompleted: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/study/books"] });
       queryClient.invalidateQueries({ queryKey: ["/api/study/stats"] });
+      // Also mark "chapter" task complete on today's schedule if cards were completed
+      if (data.cardsCompleted) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        apiRequest("/api/study/schedule/log", "POST", { date: today, taskType: "chapter" })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["/api/study/schedule/week"] }));
+      }
     },
   });
 
@@ -200,9 +212,15 @@ export function useStudyPlanner(options: UseStudyPlannerOptions = {}) {
     mutationFn: async (paperId: number) => {
       return apiRequest(`/api/study/papers/${paperId}/toggle`, "PATCH");
     },
-    onSuccess: () => {
+    onSuccess: (data: { completed: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/study/papers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/study/stats"] });
+      // Also mark "papers" task complete on today's schedule if paper was completed
+      if (data.completed) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        apiRequest("/api/study/schedule/log", "POST", { date: today, taskType: "papers" })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["/api/study/schedule/week"] }));
+      }
     },
   });
 
@@ -236,9 +254,15 @@ export function useStudyPlanner(options: UseStudyPlannerOptions = {}) {
         "PATCH"
       );
     },
-    onSuccess: () => {
+    onSuccess: (data: { completed: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/study/mri-lectures"] });
       queryClient.invalidateQueries({ queryKey: ["/api/study/stats"] });
+      // Also mark "mri_lecture" task complete on today's schedule if lecture was completed
+      if (data.completed) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        apiRequest("/api/study/schedule/log", "POST", { date: today, taskType: "mri_lecture" })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["/api/study/schedule/week"] }));
+      }
     },
   });
 
