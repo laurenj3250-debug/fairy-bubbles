@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goals Page Mockup - LJ Design</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+    .glass-card-hover:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    .progress-ring circle {
+      transition: stroke-dashoffset 0.8s ease-out;
+    }
+
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .count-up { animation: countUp 0.6s ease-out forwards; }
+
+    /* Status colors */
+    .status-on-track { color: #00D4AA; }
+    .status-behind { color: #F59E0B; }
+    .status-ahead { color: #3B82F6; }
+  </style>
+</head>
+<body class="text-white p-8">
+  <div class="max-w-[1400px] mx-auto">
+
+    <!-- TOP BAR -->
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-6">
+        <h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+          GoalConnect
+        </h1>
+        <nav class="flex gap-1">
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Home</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Habits</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white">Goals</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Journey</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="glass-card px-3 py-1.5 flex items-center gap-2">
+          <span class="text-teal-400 font-bold">✦</span>
+          <span class="text-sm font-semibold">2,450 XP</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center font-bold text-sm">LJ</div>
+      </div>
+    </header>
+
+    <!-- PAGE HEADER -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold mb-1">Goals</h2>
+        <p class="text-white/50 text-sm">3 weekly • 2 monthly • 1 yearly</p>
+      </div>
+      <button class="glass-card px-4 py-2 text-sm font-medium hover:bg-white/10 transition flex items-center gap-2">
+        <span class="text-purple-400">+</span> New Goal
+      </button>
+    </div>
+
+    <!-- HERO STATS -->
+    <div class="glass-card p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-white/50 text-sm mb-1">This Month's Progress</p>
+          <div class="flex items-baseline gap-3">
+            <span class="text-4xl font-bold count-up">68%</span>
+            <span class="text-teal-400 text-sm font-medium">↑ 12% from last month</span>
+          </div>
+          <p class="text-white/40 text-sm mt-1">4 of 6 goals on track</p>
+        </div>
+
+        <div class="flex gap-8">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-teal-400 count-up">12</div>
+            <div class="text-xs text-white/40">Completed</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-purple-400 count-up">6</div>
+            <div class="text-xs text-white/40">In Progress</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-white/60 count-up">2</div>
+            <div class="text-xs text-white/40">Behind</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEKLY GOALS SECTION -->
+    <section class="mb-8">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span class="text-purple-400">◆</span> Weekly Goals
+        <span class="text-xs text-white/40 font-normal">Dec 2 - 8</span>
+      </h3>
+
+      <div class="grid grid-cols-3 gap-4">
+        <!-- Goal Card 1: On Track -->
+        <div class="glass-card glass-card-hover p-5 cursor-pointer transition-all group">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold mb-1">Cycle 50 miles</h4>
+              <p class="text-xs text-white/40">3 days left</p>
+            </div>
+            <!-- Progress Ring -->
+            <div class="relative">
+              <svg class="w-14 h-14 progress-ring">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="#7C3AED" stroke-width="4"
+                        stroke-dasharray="151" stroke-dashoffset="38" stroke-linecap="round"/>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-sm font-bold">75%</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-white/60">Progress</span>
+              <span class="font-medium">37.5 / 50 mi</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style="width: 75%"></div>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="status-on-track">✓ On track</span>
+              <span class="text-white/40">~4.2 mi/day needed</span>
+            </div>
+          </div>
+
+          <!-- Linked habits -->
+          <div class="mt-4 pt-3 border-t border-white/10">
+            <p class="text-xs text-white/40 mb-2">Linked habits contributing:</p>
+            <div class="flex gap-2">
+              <span class="px-2 py-1 rounded text-[10px] bg-orange-500/20 text-orange-300">🚴 Cycling</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal Card 2: Behind -->
+        <div class="glass-card glass-card-hover p-5 cursor-pointer transition-all group border-yellow-500/20">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold mb-1">4 lifting sessions</h4>
+              <p class="text-xs text-white/40">3 days left</p>
+            </div>
+            <div class="relative">
+              <svg class="w-14 h-14 progress-ring">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="#F59E0B" stroke-width="4"
+                        stroke-dasharray="151" stroke-dashoffset="76" stroke-linecap="round"/>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-sm font-bold">50%</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-white/60">Progress</span>
+              <span class="font-medium">2 / 4 sessions</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-full" style="width: 50%"></div>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="status-behind">⚠️ Behind pace</span>
+              <span class="text-white/40">2 more in 3 days</span>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-white/10">
+            <p class="text-xs text-white/40 mb-2">Linked habits contributing:</p>
+            <div class="flex gap-2">
+              <span class="px-2 py-1 rounded text-[10px] bg-orange-500/20 text-orange-300">🏋️ Strength</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal Card 3: Completed -->
+        <div class="glass-card p-5 cursor-pointer transition-all group bg-teal-500/5 border-teal-500/20">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold mb-1 flex items-center gap-2">
+                Read 3 hours
+                <span class="text-teal-400">✓</span>
+              </h4>
+              <p class="text-xs text-teal-400">Completed!</p>
+            </div>
+            <div class="relative">
+              <svg class="w-14 h-14 progress-ring">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="#00D4AA" stroke-width="4"
+                        stroke-dasharray="151" stroke-dashoffset="0" stroke-linecap="round"/>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-teal-400">100%</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-white/60">Progress</span>
+              <span class="font-medium text-teal-400">3.5 / 3 hrs</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full" style="width: 100%"></div>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="status-on-track">+50 XP bonus!</span>
+              <span class="text-white/40">Exceeded by 30 min</span>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-white/10">
+            <p class="text-xs text-white/40 mb-2">Linked habits:</p>
+            <div class="flex gap-2">
+              <span class="px-2 py-1 rounded text-[10px] bg-teal-500/20 text-teal-300">📚 Read 30 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MONTHLY GOALS SECTION -->
+    <section class="mb-8">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span class="text-purple-300">◆</span> Monthly Goals
+        <span class="text-xs text-white/40 font-normal">December 2024</span>
+      </h3>
+
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Monthly Goal 1 -->
+        <div class="glass-card glass-card-hover p-5 cursor-pointer transition-all">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold mb-1">Cycle 200 miles</h4>
+              <p class="text-xs text-white/40">27 days left</p>
+            </div>
+            <div class="relative">
+              <svg class="w-16 h-16 progress-ring">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#7C3AED" stroke-width="5"
+                        stroke-dasharray="176" stroke-dashoffset="62" stroke-linecap="round"/>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-lg font-bold">65%</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-white/60">Progress</span>
+              <span class="font-medium">130 / 200 mi</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style="width: 65%"></div>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="status-ahead">🚀 Ahead of pace</span>
+              <span class="text-white/40">~2.6 mi/day needed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Goal 2 -->
+        <div class="glass-card glass-card-hover p-5 cursor-pointer transition-all">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold mb-1">Complete 90% of habits</h4>
+              <p class="text-xs text-white/40">27 days left</p>
+            </div>
+            <div class="relative">
+              <svg class="w-16 h-16 progress-ring">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#00D4AA" stroke-width="5"
+                        stroke-dasharray="176" stroke-dashoffset="19" stroke-linecap="round"/>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center text-lg font-bold">89%</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-white/60">Completion Rate</span>
+              <span class="font-medium">89% / 90%</span>
+            </div>
+            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full" style="width: 89%"></div>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="status-on-track">✓ On track</span>
+              <span class="text-white/40">1% more to hit target</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- YEARLY GOALS SECTION -->
+    <section>
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span class="text-purple-200">◆</span> Yearly Goals
+        <span class="text-xs text-white/40 font-normal">2024</span>
+      </h3>
+
+      <div class="glass-card glass-card-hover p-6 cursor-pointer transition-all">
+        <div class="flex items-center gap-6">
+          <div class="relative">
+            <svg class="w-24 h-24 progress-ring">
+              <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+              <circle cx="48" cy="48" r="42" fill="none" stroke="url(#yearGradient)" stroke-width="6"
+                      stroke-dasharray="264" stroke-dashoffset="53" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="yearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#7C3AED"/>
+                  <stop offset="100%" stop-color="#00D4AA"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold">80%</span>
+          </div>
+
+          <div class="flex-1">
+            <h4 class="text-xl font-semibold mb-2">Cycle 2,000 miles</h4>
+            <div class="flex items-center gap-4 mb-3">
+              <span class="text-white/60">1,600 / 2,000 mi</span>
+              <span class="status-ahead text-sm">🚀 31 days ahead of pace!</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden mb-2">
+              <div class="h-full bg-gradient-to-r from-purple-600 via-purple-400 to-teal-400 rounded-full" style="width: 80%"></div>
+            </div>
+            <p class="text-xs text-white/40">At current pace, you'll finish by Dec 15 (16 days early)</p>
+          </div>
+
+          <div class="text-right">
+            <div class="text-3xl font-bold text-teal-400">400</div>
+            <div class="text-xs text-white/40">miles to go</div>
+            <div class="text-xs text-white/40 mt-2">~14.3 mi/day</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Add Goal FAB -->
+    <button class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center text-2xl shadow-lg hover:shadow-purple-500/30 transition-shadow">
+      +
+    </button>
+
+  </div>
+</body>
+</html>

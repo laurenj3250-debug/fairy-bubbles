@@ -1,12 +1,12 @@
-# Design Session: Strava/Kilter Integration
+# Design Session: Weekly Planner Dashboard
 
 **Mode:** Full (9 phases)
-**Feature:** Strava & Kilter Board Integration Pages
-**Started:** 2025-11-22
-**Current Phase:** F1 - Clarify
+**Feature:** Weekly Planner Dashboard - "The Minimal-Lauren Layout"
+**Started:** 2025-12-05
+**Current Phase:** F1 Clarify → F2 Research
 
 ## Progress
-- [ ] F1: Clarify
+- [x] F1: Clarify
 - [ ] F2: Research
 - [ ] F3: Inspiration Capture
 - [ ] F4: Principles

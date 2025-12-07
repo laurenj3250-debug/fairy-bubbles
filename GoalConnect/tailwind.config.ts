@@ -19,27 +19,50 @@ export default {
         "gradient-radial-highlight": "var(--gradient-radial-highlight)",
       },
       colors: {
-        // Mountain-inspired colors
+        // V5 Unified Peach Palette
+        peach: {
+          '50': '#fdf8f6',
+          '100': '#fdf6f0',
+          '200': '#f8e4d6',
+          '300': '#f0c9ae',
+          '400': '#e4a880',
+          '500': '#d4936a',
+          '600': '#c07850',
+        },
+        // V5 Ice Theme
+        ice: {
+          'deep': '#070f1a',
+          'primary': '#0c1a28',
+          'card': '#0f2433',
+          'frost': '#1a3a4a',
+          'glow': '#7dd3fc',
+        },
+        // Dark Forest Moody Palette
+        forest: {
+          'deep': '#080c08',        // Deepest background
+          'dark': '#0d1815',        // Card backgrounds
+          'mid': '#1a2f28',         // Forest green
+          'sage': '#3d5a50',        // Muted sage
+          'coral': '#d4a59a',       // Warm coral accent
+          'coral-light': '#e8c4bc', // Light coral
+          'cream': '#f5ebe0',       // Text color
+          'vine': '#2a4a3a',        // Vine/leaf elements
+        },
+        // Legacy mountain colors (kept for compatibility)
         mountain: {
-          // Sky & Air
           'sky-light': '#0ea5e9',
           'sky-horizon': '#e0f2fe',
-          // Ice & Snow
           'glacier-ice': '#7dd3fc',
           'fresh-snow': '#f8fafc',
           'snow-shadow': '#e2e8f0',
-          // Rock & Stone
           'granite': '#64748b',
           'dark-rock': '#334155',
           'cliff-face': '#1e293b',
-          // Warmth (Sunrise/Sunset)
           'alpenglow': '#f97316',
           'golden-hour': '#facc15',
           'sunset-pink': '#f9a8d4',
-          // Growth & Life
           'alpine-meadow': '#22c55e',
           'tree-line': '#14b8a6',
-          // Night
           'night-sky': '#0f172a',
           'starlit': '#1e293b',
           'moonlit-snow': '#3b82f6',
@@ -117,11 +140,13 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Fraunces", "Georgia", "serif"],
+        sans: ["Source Sans 3", "system-ui", "sans-serif"],
+        serif: ["Cormorant Garamond", "Georgia", "serif"],
         mono: ["var(--font-mono)"],
-        heading: ["Fraunces", "Georgia", "serif"], // For headings and titles
-        body: ["Inter", "system-ui", "sans-serif"], // For body text
+        heading: ["Cormorant Garamond", "Georgia", "serif"],
+        "heading-sc": ["Cormorant SC", "Georgia", "serif"],
+        body: ["Source Sans 3", "system-ui", "sans-serif"],
+        display: ["Cormorant Garamond", "Georgia", "serif"],
         altitude: ["var(--font-altitude)", "sans-serif"],
         technical: ["var(--font-technical)", "monospace"],
       },

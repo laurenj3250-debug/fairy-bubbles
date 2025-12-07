@@ -1,279 +1,180 @@
-# F4: Design Principles - Strava/Kilter Pages
+# F4: Design Principles - The Minimal-Lauren Layout™
 
-## Design Philosophy
+## Visual System
 
-**Core Emotion:** "I'm a champion" - Every element should make the user feel proud of their accomplishments.
+### Color Palette (ONE accent - Teal)
+```
+Primary Accent:  #00D4AA (teal) - completions, progress, active states
+Background:      #0d1117 (deep charcoal)
+Card:            #161b22 (elevated surface)
+Border:          #30363d (subtle separation)
+Text Primary:    #e6edf3 (bright)
+Text Secondary:  #7d8590 (muted)
+Success:         #238636 (completed items)
+Warning:         #f59e0b (streak at risk)
+Urgent:          #f85149 (overdue)
+```
 
-**Inspired By:** Summit Journal energy + Strava's athletic edge + Apple's polish
+### Typography
+```
+Headings:   Inter 600, 14-16px
+Body:       Inter 400, 13-14px  
+Small:      Inter 400, 11-12px
+Mono:       JetBrains Mono (clock, stats)
+```
+
+### Spacing Scale (8px base)
+```
+xs:  4px   (inline spacing)
+sm:  8px   (element gaps)
+md:  16px  (card padding, section gaps)
+lg:  24px  (major sections)
+xl:  32px  (row separation)
+```
+
+### Border Radius
+```
+Cards:     12px
+Buttons:   8px
+Tags:      6px
+Circles:   9999px
+```
 
 ---
 
-## Visual Style
+## Layout Structure
 
-### Style Classification
-**Primary:** Dark Glassmorphism with Gradient Accents
-**Secondary:** Data Storytelling with Animated Reveals
-
-### Color Palette
-
+### Grid
 ```
-Primary Background:    hsl(var(--background))     Dark base
-Card Background:       rgba(255,255,255,0.05)     Glass effect
-Card Border:           rgba(255,255,255,0.1)      Subtle edge
-
-Strava Orange:         #FC4C02                    Energy, athletic
-Strava Orange Light:   #FF6B35                    Hover states
-Running Accent:        #FF8C42                    Warm energy
-
-Kilter Teal:           #00D4AA                    Growth, progress
-Kilter Teal Light:     #00F5C4                    Highlights
-Climbing Accent:       #7C3AED                    Achievement purple
-
-Success/PR:            hsl(var(--success))        Green celebrations
-Warning:               #F59E0B                    Amber alerts
-Text Primary:          hsl(var(--foreground))     High contrast
-Text Muted:            hsl(var(--muted-foreground))
+| 3 cards (equal) |  → Top row: flex, gap-16px
+| CALENDAR        |  → Middle: flex-1, min-height 50vh
+| widgets (opt)   |  → Bottom: flex, gap-16px, conditional
 ```
 
-### Gradient Patterns
+### Measurements
+- **Header**: 56px fixed height
+- **Top Row Cards**: ~200px height each, equal width (1/3)
+- **Calendar**: Fills remaining space (flex-1)
+- **Widget Row**: ~120px height when visible
+- **Total max boxes**: 6 (3 top + calendar + 2 optional)
+
+---
+
+## Component Styles
+
+### Cards
 ```css
-/* Hero backgrounds */
-.strava-hero: linear-gradient(135deg, #FC4C02/20, transparent, #FF6B35/10)
-.kilter-hero: linear-gradient(135deg, hsl(var(--primary))/20, transparent, hsl(var(--accent))/10)
-
-/* Card accents */
-.glass-card: bg-white/5 backdrop-blur-xl border-white/10
-
-/* Text gradients (for big numbers) */
-.gradient-text: bg-gradient-to-r from-[#FC4C02] to-[#FF8C42] bg-clip-text
-```
-
----
-
-## Typography
-
-### Hierarchy
-```
-Hero Numbers:     text-5xl md:text-6xl font-bold    "2,551"
-Hero Unit:        text-2xl md:text-3xl font-semibold "miles"
-Section Titles:   text-xs uppercase tracking-widest  "YOUR RUNNING JOURNEY"
-Card Titles:      text-lg font-semibold              "Personal Records"
-Stats:            text-2xl font-bold                 "42"
-Labels:           text-sm text-muted-foreground      "Total Runs"
-Body:             text-sm                            Descriptions
-Micro:            text-[10px] text-muted-foreground  Chart labels
-```
-
-### Font Stack
-- Primary: System font stack (already configured)
-- Numbers: `tabular-nums` for aligned digits
-
----
-
-## Layout Principles
-
-### Page Structure
-```
-[Back Button]
-[Page Title + Subtitle]
-[Hero Section - Full width, celebration-focused]
-[Bento Grid - 2 column on desktop, 1 column mobile]
-  [Large Card]  [Medium Card]
-  [Medium Card] [Medium Card]
-  [Small Cards Row]
-```
-
-### Spacing Scale (4px base)
-```
-Page padding:     px-4 (16px)
-Section gaps:     space-y-6 (24px)
-Card padding:     p-4 md:p-6 (16-24px)
-Card gaps:        gap-4 (16px)
-Element spacing:  gap-2, gap-3 (8-12px)
-```
-
-### Card Sizes (Bento Grid)
-- **Hero:** Full width, 200-300px height
-- **Large:** 2 columns, flexible height
-- **Medium:** 1 column, ~200px height
-- **Small:** 1/2 or 1/3 width, ~120px height
-
----
-
-## Component Patterns
-
-### Glass Card
-```tsx
-className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg"
-// or
-className="glass-card" // if defined in globals
-```
-
-### Stat Card Pattern
-```
-[Icon]
-[Big Number]  ← Animated CountUp
-[Label]       ← Muted text
-[Trend Arrow] ← Optional, colored
-```
-
-### Achievement Badge Pattern
-```
-[Colored Background Circle/Ring]
-  [Icon or Emoji]
-[Title]       ← Bold
-[Description] ← Muted, small
-```
-
-### Progress Ring Pattern
-```
-[SVG Circle Track]  ← Muted stroke
-[SVG Circle Fill]   ← Gradient stroke, animated
-[Center Content]    ← Number + Label
-```
-
----
-
-## Animation Principles
-
-### Entry Animations
-```tsx
-initial={{ opacity: 0, y: 20 }}
-animate={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.5 }}
-```
-
-### Staggered Children
-```tsx
-transition={{ delay: index * 0.1 }}
-```
-
-### Number CountUp
-```tsx
-// Use framer-motion animate()
-const count = useMotionValue(0);
-animate(count, value, { duration: 1.5, ease: "easeOut" });
-```
-
-### Micro-interactions
-- **Hover on cards:** `hover:border-foreground/20 transition-colors`
-- **Button press:** `active:scale-95 transition-transform`
-- **Success:** Confetti burst (canvas-confetti)
-- **Loading:** Skeleton pulse or spinner
-
-### Timing Guidelines
-- Entry: 300-500ms
-- Hover: 150-200ms
-- Number count: 1000-1500ms
-- Stagger delay: 100-150ms per item
-
----
-
-## Data Visualization
-
-### Chart Styles
-```tsx
-// Line/Area Charts
-fill="url(#gradientFill)"
-stroke="hsl(var(--primary))"
-strokeWidth={2}
-
-// Gradient definitions
-<linearGradient id="gradientFill" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-</linearGradient>
-```
-
-### Progress Rings
-- Track: `stroke="hsl(var(--muted))" strokeWidth="8"`
-- Fill: `stroke="url(#ringGradient)" strokeWidth="8" strokeLinecap="round"`
-- Animation: `stroke-dashoffset` from full to target
-
-### Calendar Heatmap
-- Empty: `bg-muted/20`
-- Low: `bg-primary/30`
-- Medium: `bg-primary/60`
-- High: `bg-primary`
-
----
-
-## Content Strategy
-
-### Hero Section Content
-```
-[Micro label]        "YOUR RUNNING JOURNEY"
-[Big comparison]     "You've run 47 marathons worth of distance"
-[Supporting stat]    "That's 1,232 miles since you started"
-[Quick stats row]    [Runs] [Hours] [Calories]
-```
-
-### Comparisons That Inspire
-**For Running:**
-- "X marathons worth of distance"
-- "Enough to run from NYC to Miami"
-- "X trips around Central Park"
-
-**For Climbing:**
-- "Climbed X times the height of Everest"
-- "Sent X problems (that's X per session!)"
-
-### Achievement Labels
-- Use active, celebratory language
-- "Longest Run Ever" not "Maximum distance"
-- "Crushing It" not "Above average"
-
----
-
-## Accessibility
-
-### Color Contrast
-- Text on dark bg: minimum 4.5:1 ratio
-- Interactive elements: minimum 3:1 ratio
-- Never rely on color alone (use icons, patterns)
-
-### Motion
-- Respect `prefers-reduced-motion`
-- Provide static fallbacks for animations
-
-### Focus States
-- Visible focus rings on all interactive elements
-- `focus-visible:ring-2 focus-visible:ring-primary`
-
----
-
-## Page-Specific Decisions
-
-### Strava Page
-- **Hero:** Running route visualization or big distance number
-- **Accent Color:** Strava Orange (#FC4C02)
-- **Key Metrics:** Distance, Time, Runs, Pace
-- **Unique Element:** Activity type breakdown (run/ride/swim)
-
-### Kilter Page (Summit Journal Evolution)
-- **Hero:** Mountain comparison (keep existing)
-- **Accent Color:** Primary gradient
-- **Key Metrics:** Sends, Sessions, Max Grade, Hours
-- **Unique Element:** Grade pyramid, personality analysis
-
----
-
-## Design Tokens Summary
-
-```css
-:root {
-  /* Strava-specific */
-  --strava-orange: 24 100% 50%;        /* #FC4C02 */
-  --strava-orange-light: 20 100% 60%;  /* #FF6B35 */
-  
-  /* Animation */
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  
-  /* Shadows */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-glow: 0 0 20px rgb(var(--primary) / 0.3);
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 16px;
 }
 ```
+
+### Today Column Highlight
+```css
+.today {
+  background: linear-gradient(180deg, rgba(0,212,170,0.08), transparent);
+  border: 1px solid rgba(0,212,170,0.3);
+  box-shadow: 0 0 0 1px rgba(0,212,170,0.1);
+}
+```
+
+### Task Items
+```css
+.task {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.task-done {
+  background: rgba(35, 134, 54, 0.1);
+  border-color: rgba(35, 134, 54, 0.3);
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.task-urgent {
+  border-left: 3px solid #f85149;
+  background: rgba(248, 81, 73, 0.08);
+}
+```
+
+### Progress Bars
+```css
+.progress-bar {
+  height: 6px;
+  background: #30363d;
+  border-radius: 3px;
+}
+
+.progress-fill {
+  background: #00D4AA;
+  border-radius: 3px;
+  transition: width 300ms ease;
+}
+```
+
+---
+
+## Interaction Patterns
+
+### Hover States
+- Cards: `background: #1c2128` (slightly lighter)
+- Tasks: `border-color: #484f58`
+- Buttons: `background: hsl(accent/80%)`
+
+### Transitions
+- All: `200ms ease`
+- No bouncy animations
+- Smooth opacity fades
+
+### Focus States
+- `outline: 2px solid #00D4AA`
+- `outline-offset: 2px`
+
+---
+
+## Widget Visibility Rules
+
+### Auto-Hide Conditions
+```typescript
+// Widget only renders if:
+if (widget.data.length > 0) render()
+
+// Smooth exit
+<AnimatePresence>
+  {hasData && <motion.div exit={{ opacity: 0, height: 0 }} />}
+</AnimatePresence>
+```
+
+### Empty States
+- Don't show empty cards
+- Don't show placeholder text
+- Just hide the widget entirely
+
+---
+
+## ADHD-Friendly Rules
+
+1. **Max 5 habits visible** (no infinite scrolling)
+2. **Max 3-5 tasks per day column**
+3. **Today auto-expanded** by default
+4. **Streak warnings pulse** (subtle animation)
+5. **Completed items fade** (not removed, just dimmed)
+6. **ONE primary action** per card
+7. **No notifications/alerts** inside dashboard
+
+---
+
+## Mood Check
+
+✅ Clean - no visual clutter
+✅ Functional - everything has purpose
+✅ ADHD-friendly - limited choices, clear focus
+✅ NOT a neon panic attack
+✅ NOT a cluttered break room

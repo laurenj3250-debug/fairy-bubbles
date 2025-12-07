@@ -2,14 +2,14 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, Circle } from 'lucide-react';
 
 interface StudyTask {
-  id: number;
+  id: string | number;
   title: string;
   completed: boolean;
 }
 
 interface LuxuryStudyTrackerProps {
   tasks: StudyTask[];
-  onToggle?: (id: number) => void;
+  onToggle?: (id: string | number) => void;
   onStartSession?: () => void;
   className?: string;
 }
@@ -27,9 +27,9 @@ export function LuxuryStudyTracker({
     <div className={cn("flex flex-col h-full w-full", className)}>
       {isEmpty ? (
         <div className="flex-1 flex flex-col items-center justify-center">
-          <span className="empty-display">No study tasks</span>
-          <span className="font-body text-xs text-[var(--text-muted)] mt-2">
-            Add tasks with "study" or "learn" in the title
+          <span className="empty-display">Rest day</span>
+          <span className="font-body text-xs text-[var(--text-muted)] mt-2 text-center">
+            No study tasks scheduled for today
           </span>
         </div>
       ) : (

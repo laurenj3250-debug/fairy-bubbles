@@ -1,9 +1,10 @@
 import type { Express, Request } from "express";
 import { getDb } from "../db.js";
-import { todos, projects, labels, taskLabels } from "@shared/schema";
+import { projects, labels, taskLabels } from "@shared/schema";
 import { eq, inArray } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import { log } from "../lib/logger";
+import { storage } from "../storage";
 
 export function registerTodosEnhancedRoutes(app: Express) {
   // GET /api/todos-with-metadata - Get todos with projects and labels
@@ -12,12 +13,8 @@ export function registerTodosEnhancedRoutes(app: Express) {
     const db = getDb();
 
     try {
-      // Get all todos for user
-      const userTodos = await db
-        .select()
-        .from(todos)
-        .where(eq(todos.userId, user.id))
-        .orderBy(todos.createdAt);
+      // Get all todos for user using storage (handles schema compatibility)
+      const userTodos = await storage.getTodos(user.id);
 
       // Get all projects for user
       const userProjects = await db

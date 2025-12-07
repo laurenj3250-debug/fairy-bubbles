@@ -7,7 +7,7 @@
 import type { Express, Request, Response } from "express";
 import crypto from "crypto";
 import { getDb } from "../db";
-import { dataSourceConnections, externalWorkouts } from "@shared/schema";
+import { dataSourceConnections, externalWorkouts, playerClimbingStats } from "@shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import {
@@ -609,6 +609,83 @@ export function registerStravaRoutes(app: Express) {
   });
 }
 
+// ============= GAMIFICATION: XP SYSTEM =============
+
+// Climbing activity types that award XP
+const CLIMBING_ACTIVITY_TYPES = ["RockClimbing", "Bouldering"];
+
+/**
+ * Calculate XP for a climbing activity
+ * Formula: duration (minutes) * 2 + heart rate bonus (20 if avg > 140)
+ */
+function calculateClimbingXp(
+  durationMinutes: number,
+  heartRateAvg: number | null
+): number {
+  const baseXp = durationMinutes * 2;
+  const heartRateBonus = heartRateAvg && heartRateAvg > 140 ? 20 : 0;
+  return Math.round(baseXp + heartRateBonus);
+}
+
+/**
+ * Calculate climbing level from total XP
+ * Each level requires progressively more XP (level^2 * 100)
+ */
+function calculateLevelFromXp(totalXp: number): number {
+  // Level formula: XP needed = level^2 * 100
+  // So level = sqrt(XP / 100)
+  return Math.max(1, Math.floor(Math.sqrt(totalXp / 100)) + 1);
+}
+
+/**
+ * Award XP for a climbing activity
+ */
+async function awardClimbingXp(
+  db: ReturnType<typeof getDb>,
+  userId: number,
+  xpAmount: number
+): Promise<{ newXp: number; newLevel: number; leveledUp: boolean }> {
+  // Get or create player stats
+  let [stats] = await db
+    .select()
+    .from(playerClimbingStats)
+    .where(eq(playerClimbingStats.userId, userId));
+
+  if (!stats) {
+    // Create default stats
+    [stats] = await db
+      .insert(playerClimbingStats)
+      .values({
+        userId,
+        climbingLevel: 1,
+        totalExperience: 0,
+        summitsReached: 0,
+        totalElevationClimbed: 0,
+      })
+      .returning();
+  }
+
+  const oldLevel = stats.climbingLevel;
+  const newXp = stats.totalExperience + xpAmount;
+  const newLevel = calculateLevelFromXp(newXp);
+  const leveledUp = newLevel > oldLevel;
+
+  // Update stats
+  await db
+    .update(playerClimbingStats)
+    .set({
+      totalExperience: newXp,
+      climbingLevel: newLevel,
+    })
+    .where(eq(playerClimbingStats.userId, userId));
+
+  if (leveledUp) {
+    log.info(`[strava] User ${userId} leveled up! ${oldLevel} -> ${newLevel} (${newXp} XP)`);
+  }
+
+  return { newXp, newLevel, leveledUp };
+}
+
 /**
  * Perform a sync and import activities
  */
@@ -694,6 +771,21 @@ async function performSync(
         } catch (autoCompleteError) {
           log.error("[strava] Failed to apply habit auto-complete:", autoCompleteError);
           // Don't fail the sync if auto-complete fails
+        }
+
+        // Award XP for climbing activities
+        if (CLIMBING_ACTIVITY_TYPES.includes(parsed.workoutType)) {
+          try {
+            const xpAmount = calculateClimbingXp(
+              parsed.durationMinutes || 0,
+              parsed.heartRateAvg ?? null
+            );
+            const xpResult = await awardClimbingXp(db, userId, xpAmount);
+            log.info(`[strava] Awarded ${xpAmount} XP for climbing activity ${insertedWorkout.id} (total: ${xpResult.newXp}, level: ${xpResult.newLevel})`);
+          } catch (xpError) {
+            log.error("[strava] Failed to award climbing XP:", xpError);
+            // Don't fail the sync if XP awarding fails
+          }
         }
       }
 

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lauren's Dashboard - GoalConnect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: hsl(45 30% 12%);
+      --foreground: hsl(40 20% 95%);
+      --card: hsl(40 20% 18%);
+      --primary: hsl(25 95% 58%);
+      --secondary: hsl(200 85% 55%);
+      --accent: hsl(160 80% 50%);
+      --success: hsl(142 85% 55%);
+      --warning: hsl(38 100% 60%);
+      --destructive: hsl(0 90% 60%);
+      --border: hsl(40 15% 30%);
+      --muted: hsl(40 12% 22%);
+      --muted-foreground: hsl(40 15% 65%);
+      --easy: #4ade80;
+      --moderate: #fbbf24;
+      --hard: #fb923c;
+      --expert: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      background-image:
+        radial-gradient(ellipse at top, rgba(249, 115, 22, 0.06), transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.04), transparent 50%);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .heading { font-family: 'Fraunces', serif; font-weight: 600; }
+
+    .glass-card {
+      border-radius: 16px;
+      background: hsl(45 30% 12% / 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid hsl(40 20% 95% / 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      padding: 16px;
+    }
+
+    .badge {
+      padding: 8px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Climbing holds */
+    .hold {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 200ms;
+      position: relative;
+    }
+    .hold:hover { transform: scale(1.05); }
+    .hold svg { width: 28px; height: 28px; }
+    .hold-label {
+      font-size: 9px;
+      color: var(--muted-foreground);
+      margin-top: 4px;
+      text-align: center;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hold.completed::after {
+      content: '✓';
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 16px; height: 16px;
+      background: var(--success);
+      border-radius: 50%;
+      font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--background);
+    }
+
+    /* Heatmap */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--muted);
+    }
+    .heatmap-cell.l1 { background: hsl(142 85% 55% / 0.25); }
+    .heatmap-cell.l2 { background: hsl(142 85% 55% / 0.5); }
+    .heatmap-cell.l3 { background: hsl(142 85% 55% / 0.75); }
+    .heatmap-cell.l4 { background: var(--success); }
+
+    /* Week grid */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .day-col {
+      background: var(--muted);
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 120px;
+    }
+    .day-col.today {
+      background: hsl(25 95% 58% / 0.1);
+      border: 1px solid hsl(25 95% 58% / 0.3);
+    }
+    .day-header {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+    .today .day-header { color: var(--primary); }
+
+    .todo-item {
+      padding: 6px 8px;
+      background: var(--card);
+      border-radius: 6px;
+      font-size: 11px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .todo-checkbox {
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .todo-item.done .todo-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .todo-item.done { opacity: 0.5; text-decoration: line-through; }
+
+    /* Progress ring */
+    .progress-ring {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .progress-ring svg { transform: rotate(-90deg); }
+    .progress-ring .value {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Draggable widgets */
+    .widget {
+      position: absolute;
+      cursor: move;
+      touch-action: none;
+      user-select: none;
+    }
+    .widget:hover .delete-btn { opacity: 1; }
+    .widget .glass-card { height: 100%; }
+
+    .delete-btn {
+      position: absolute;
+      top: -8px; right: -8px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--destructive);
+      color: white;
+      border: 2px solid var(--background);
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 150ms;
+      z-index: 10;
+    }
+    .delete-btn:hover { transform: scale(1.1); }
+
+    .resize-handle {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      width: 14px; height: 14px;
+      cursor: se-resize;
+      opacity: 0.3;
+    }
+    .resize-handle::before {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 8px; height: 8px;
+      border-right: 2px solid var(--foreground);
+      border-bottom: 2px solid var(--foreground);
+    }
+    .widget:hover .resize-handle { opacity: 0.7; }
+
+    .canvas {
+      position: relative;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas" id="canvas">
+
+    <!-- Today's Pitch (Climbing Holds) -->
+    <div class="widget" data-x="20" data-y="20" style="width: 220px; height: 150px; transform: translate(20px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+          <span style="font-size: 14px;">🧗</span>
+          <span class="heading" style="font-size: 13px;">Today's Pitch</span>
+        </div>
+        <div style="text-align: center; font-size: 11px; color: var(--muted-foreground); margin-bottom: 8px;">0/3 holds sent today</div>
+        <div style="display: flex; justify-content: center; gap: 14px;">
+          <div style="text-align: center;"><div class="hold" style="background: hsl(40 12% 28%);"><svg viewBox="0 0 40 40"><path d="M20 8c-6 0-12 5-12 12s6 12 12 12 12-6 12-12-6-12-12-12z" fill="currentColor" opacity="0.7"/></svg></div><div class="hold-label">RemNote</div></div>
+          <div style="text-align: center;"><div class="hold" style="background: hsl(40 12% 28%);"><svg viewBox="0 0 40 40"><path d="M12 32 L20 8 L28 32 Z" fill="currentColor" opacity="0.7"/></svg></div><div class="hold-label">Pimsleur</div></div>
+          <div style="text-align: center;"><div class="hold" style="background: hsl(40 12% 28%);"><svg viewBox="0 0 40 40"><path d="M8 20c0-7 12-12 12-12s12 5 12 12-5 12-12 12-12-5-12-12z" fill="currentColor" opacity="0.7"/></svg></div><div class="hold-label">Gym</div></div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- XP Badge -->
+    <div class="widget" data-x="920" data-y="20" style="width: 130px; height: 46px; transform: translate(920px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 0;"><div class="badge" style="background: hsl(25 95% 58% / 0.15); color: var(--primary); border: 1px solid hsl(25 95% 58% / 0.3); height: 100%; justify-content: center;"><span>⚡</span><span>2,847 XP</span></div></div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Coins Badge -->
+    <div class="widget" data-x="1060" data-y="20" style="width: 90px; height: 46px; transform: translate(1060px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 0;"><div class="badge" style="background: hsl(38 100% 60% / 0.15); color: var(--warning); border: 1px solid hsl(38 100% 60% / 0.3); height: 100%; justify-content: center;"><span>🪙</span><span>156</span></div></div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Weekly Rhythm -->
+    <div class="widget" data-x="20" data-y="190" style="width: 340px; height: 130px; transform: translate(20px, 190px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📈</span><span class="heading" style="font-size: 14px;">Weekly Rhythm</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 50px; padding: 0 8px;">
+          <div style="text-align: center;"><div style="width: 24px; height: 35px; background: var(--success); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">M</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 45px; background: var(--success); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">T</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 28px; background: var(--success); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">W</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 18px; background: var(--primary); border-radius: 4px; box-shadow: 0 0 10px hsl(25 95% 58% / 0.5);"></div><span style="font-size: 9px; color: var(--primary); font-weight: 600;">T</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 8px; background: var(--muted); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">F</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 8px; background: var(--muted); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">S</span></div>
+          <div style="text-align: center;"><div style="width: 24px; height: 8px; background: var(--muted); border-radius: 4px;"></div><span style="font-size: 9px; color: var(--muted-foreground);">S</span></div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Peak of the Day -->
+    <div class="widget" data-x="380" data-y="190" style="width: 300px; height: 130px; transform: translate(380px, 190px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>🏕️</span><span class="heading" style="font-size: 14px;">Peak of the Day</span></div>
+        <div style="text-align: center;"><div style="font-size: 11px; color: var(--muted-foreground); margin-bottom: 6px;">Focus on:</div><div style="font-size: 16px; font-weight: 600; color: var(--foreground);">Deep Work Session</div><div style="font-size: 12px; color: var(--accent); margin-top: 4px;">2 hours of focused coding</div></div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Habit Heatmap -->
+    <div class="widget" data-x="700" data-y="190" style="width: 260px; height: 130px; transform: translate(700px, 190px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>📊</span><span class="heading" style="font-size: 14px;">Habit Heatmap</span></div>
+        <div class="heatmap-grid"><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div></div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Weekly Goals -->
+    <div class="widget" data-x="20" data-y="340" style="width: 280px; height: 180px; transform: translate(20px, 340px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🎯</span><span class="heading" style="font-size: 14px;">Weekly Goals</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: hsl(142 85% 55% / 0.1); border-radius: 8px; margin-bottom: 6px;"><div style="width: 14px; height: 14px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; font-size: 8px;">✓</div><span style="font-size: 12px; flex: 1; text-decoration: line-through; opacity: 0.6;">Run 3x</span><span style="font-size: 10px; color: var(--success);">3/3</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--muted); border-radius: 8px; margin-bottom: 6px;"><div style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);"></div><span style="font-size: 12px; flex: 1;">Read 100 pages</span><span style="font-size: 10px; color: var(--muted-foreground);">67/100</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--muted); border-radius: 8px;"><div style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);"></div><span style="font-size: 12px; flex: 1;">Ship feature</span><span style="font-size: 10px; color: var(--muted-foreground);">0/1</span></div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Monthly Summits -->
+    <div class="widget" data-x="320" data-y="340" style="width: 220px; height: 180px; transform: translate(320px, 340px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🏔️</span><span class="heading" style="font-size: 14px;">Monthly Summits</span></div>
+        <div style="display: flex; justify-content: space-around;">
+          <div style="text-align: center;"><div class="progress-ring"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="var(--muted)" stroke-width="3"/><circle cx="24" cy="24" r="20" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="37.7"/></svg><span class="value">70%</span></div><p style="font-size: 10px; color: var(--muted-foreground); margin-top: 4px;">Fitness</p></div>
+          <div style="text-align: center;"><div class="progress-ring"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="var(--muted)" stroke-width="3"/><circle cx="24" cy="24" r="20" fill="none" stroke="var(--secondary)" stroke-width="3" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="62.8"/></svg><span class="value">50%</span></div><p style="font-size: 10px; color: var(--muted-foreground); margin-top: 4px;">Learning</p></div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Quick Tasks -->
+    <div class="widget" data-x="560" data-y="340" style="width: 220px; height: 180px; transform: translate(560px, 340px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📋</span><span class="heading" style="font-size: 14px;">Quick Tasks</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Check email</div>
+        <div class="todo-item done"><div class="todo-checkbox"></div>Morning standup</div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Review PR</div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Call with client</div>
+        <div class="todo-item done"><div class="todo-checkbox"></div>Submit report</div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Climbing Goal -->
+    <div class="widget" data-x="800" data-y="340" style="width: 200px; height: 180px; transform: translate(800px, 340px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>🧗</span><span class="heading" style="font-size: 14px;">Climbing Goal</span></div>
+        <div style="text-align: center;"><div style="font-size: 28px; font-weight: 700; color: var(--primary);">847</div><div style="font-size: 11px; color: var(--muted-foreground);">vertical feet this week</div><div style="margin: 10px 0;"><div style="height: 8px; background: var(--muted); border-radius: 4px; overflow: hidden;"><div style="width: 65%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--warning)); border-radius: 4px;"></div></div></div><div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted-foreground);"><span>847 ft</span><span>Goal: 1,300 ft</span></div></div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Route Beta (7-day) -->
+    <div class="widget" data-x="20" data-y="540" style="width: 980px; height: 200px; transform: translate(20px, 540px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;"><span>📅</span><span class="heading" style="font-size: 14px;">Route Beta</span><span style="font-size: 11px; color: var(--muted-foreground); margin-left: 8px;">December 2–8</span></div>
+        <div class="week-grid">
+          <div class="day-col"><div class="day-header">Mon 2</div><div class="todo-item done"><div class="todo-checkbox"></div>Review PR</div><div class="todo-item done"><div class="todo-checkbox"></div>Team sync</div></div>
+          <div class="day-col"><div class="day-header">Tue 3</div><div class="todo-item done"><div class="todo-checkbox"></div>Deploy v2</div><div class="todo-item done"><div class="todo-checkbox"></div>Write tests</div></div>
+          <div class="day-col"><div class="day-header">Wed 4</div><div class="todo-item done"><div class="todo-checkbox"></div>Client call</div></div>
+          <div class="day-col today"><div class="day-header">Thu 5</div><div class="todo-item"><div class="todo-checkbox"></div>Design review</div><div class="todo-item"><div class="todo-checkbox"></div>Write docs</div><div class="todo-item"><div class="todo-checkbox"></div>Ship feature</div></div>
+          <div class="day-col"><div class="day-header">Fri 6</div><div class="todo-item"><div class="todo-checkbox"></div>Retro</div><div class="todo-item"><div class="todo-checkbox"></div>Plan sprint</div></div>
+          <div class="day-col"><div class="day-header">Sat 7</div><div class="todo-item"><div class="todo-checkbox"></div>Gym</div></div>
+          <div class="day-col"><div class="day-header">Sun 8</div><div class="todo-item"><div class="todo-checkbox"></div>Meal prep</div></div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+  </div>
+
+  <div class="hint">Drag to move widgets. Resize from bottom-right corner. X to delete.</div>
+
+  <script>
+    interact('.widget')
+      .draggable({
+        inertia: true,
+        modifiers: [interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })],
+        autoScroll: true,
+        listeners: { move: dragMoveListener }
+      })
+      .resizable({
+        edges: { right: true, bottom: true },
+        listeners: {
+          move(event) {
+            let { x, y } = event.target.dataset;
+            x = parseFloat(x) || 0;
+            y = parseFloat(y) || 0;
+            Object.assign(event.target.style, {
+              width: `${event.rect.width}px`,
+              height: `${event.rect.height}px`,
+              transform: `translate(${x}px, ${y}px)`
+            });
+          }
+        },
+        modifiers: [interact.modifiers.restrictSize({ min: { width: 80, height: 50 } })]
+      });
+
+    function dragMoveListener(event) {
+      const target = event.target;
+      const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      target.style.transform = `translate(${x}px, ${y}px)`;
+      target.setAttribute('data-x', x);
+      target.setAttribute('data-y', y);
+    }
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.closest('.widget').remove();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -748,6 +748,14 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to add Todoist columns to todos:', error);
       }
 
+      try {
+        // Add created_at column to todos (required by todos-enhanced.ts)
+        await db.execute(sql`ALTER TABLE todos ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`);
+        log.info('[migrate] ✅ created_at column added/verified in todos table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add created_at column to todos:', error);
+      }
+
       // ========== WEEKLY PLANNER HOMEPAGE ==========
 
       try {
@@ -932,6 +940,25 @@ export async function runMigrations() {
         log.info('[migrate] ✅ Study schedule logs table created/verified');
       } catch (error) {
         log.error('[migrate] ⚠️  Failed to create study_schedule_logs table:', error);
+      }
+
+      try {
+        // Create study_schedule_config table for customizable weekly schedule
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS study_schedule_config (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            task_type study_task_type NOT NULL,
+            day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+            is_active BOOLEAN NOT NULL DEFAULT true,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_study_schedule_config_user_id ON study_schedule_config(user_id)`);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS study_schedule_config_user_task_day_key ON study_schedule_config(user_id, task_type, day_of_week)`);
+        log.info('[migrate] ✅ Study schedule config table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create study_schedule_config table:', error);
       }
 
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist

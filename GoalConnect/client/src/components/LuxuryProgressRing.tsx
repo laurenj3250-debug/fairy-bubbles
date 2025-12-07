@@ -32,19 +32,19 @@ export function LuxuryProgressRing({
       </span>
 
       {/* Arc below percentage */}
-      <div className="relative" style={{ width: size, height: size / 2 }}>
+      <div className="relative" style={{ width: size, height: size / 2 + strokeWidth }}>
         <svg
           role="progressbar"
           aria-valuenow={safeProgress}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label={label ? `${label}: ${safeProgress}% complete` : `${safeProgress}% complete`}
-          viewBox={`0 0 ${size} ${size / 2}`}
+          viewBox={`0 0 ${size} ${size / 2 + strokeWidth}`}
           className="w-full h-full"
         >
-          {/* Track - half circle */}
+          {/* Track - half circle curving UP (rainbow style) */}
           <path
-            d={`M ${strokeWidth / 2} ${strokeWidth / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${strokeWidth / 2}`}
+            d={`M ${strokeWidth / 2} ${radius + strokeWidth / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${radius + strokeWidth / 2}`}
             fill="none"
             stroke="rgba(228, 168, 128, 0.2)"
             strokeWidth={strokeWidth}
@@ -52,7 +52,7 @@ export function LuxuryProgressRing({
           />
           {/* Progress fill */}
           <path
-            d={`M ${strokeWidth / 2} ${strokeWidth / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${strokeWidth / 2}`}
+            d={`M ${strokeWidth / 2} ${radius + strokeWidth / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${radius + strokeWidth / 2}`}
             fill="none"
             stroke="var(--peach-400)"
             strokeWidth={strokeWidth}
@@ -69,7 +69,7 @@ export function LuxuryProgressRing({
       {/* Label */}
       {label && (
         <span
-          className="font-body text-xs text-center max-w-[70px] truncate text-[var(--text-muted)]"
+          className="font-body text-xs text-center max-w-[90px] truncate text-[var(--text-muted)]"
           title={label}
         >
           {label}

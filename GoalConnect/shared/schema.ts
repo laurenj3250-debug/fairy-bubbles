@@ -1061,3 +1061,140 @@ export const DEFAULT_LIFTING_EXERCISES = [
   { name: "Leg Press", category: "legs" as const, equipment: "machine" as const, primaryMuscle: "quads" },
   { name: "Romanian Deadlift", category: "legs" as const, equipment: "barbell" as const, primaryMuscle: "hamstrings" },
 ] as const;
+
+// ========== STUDY PLANNER ==========
+// Veterinary neurology board exam study tracking system
+
+// Study Books (groups chapters)
+export const studyBooks = pgTable("study_books", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  abbreviation: text("abbreviation"), // Short form like "P&O" for compact display
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Study Chapters (2-step workflow: images + cards)
+export const studyChapters = pgTable("study_chapters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: integer("book_id").notNull().references(() => studyBooks.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  imagesCompleted: boolean("images_completed").notNull().default(false),
+  imagesCompletedAt: timestamp("images_completed_at"),
+  cardsCompleted: boolean("cards_completed").notNull().default(false),
+  cardsCompletedAt: timestamp("cards_completed_at"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Study Papers (simple checklist)
+export const studyPapers = pgTable("study_papers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  url: text("url"), // Optional link to paper
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// MRI Lectures (simple checklist)
+export const studyMriLectures = pgTable("study_mri_lectures", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  url: text("url"), // Optional link to video
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Weekly Schedule Task Types
+export const studyTaskTypeEnum = pgEnum('study_task_type', [
+  'remnote_review',
+  'email_cases',
+  'chapter',
+  'mri_lecture',
+  'papers'
+]);
+
+// Weekly Schedule Logs (tracks daily completions)
+export const studyScheduleLogs = pgTable("study_schedule_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  taskType: studyTaskTypeEnum("task_type").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  linkedItemId: integer("linked_item_id"), // Optional: which chapter/paper/lecture was worked on
+  linkedItemType: varchar("linked_item_type", { length: 20 }), // 'chapter' | 'paper' | 'mri_lecture'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One log per user per date per task type
+    userDateTaskIdx: uniqueIndex("study_schedule_logs_user_date_task_key").on(table.userId, table.date, table.taskType),
+  };
+});
+
+// Study schedule config - configurable weekly schedule
+export const studyScheduleConfig = pgTable("study_schedule_config", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  taskType: studyTaskTypeEnum("task_type").notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 6=Saturday
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One config per user per task per day
+    userTaskDayIdx: uniqueIndex("study_schedule_config_user_task_day_key").on(table.userId, table.taskType, table.dayOfWeek),
+  };
+});
+
+// TypeScript types for study planner
+export type StudyBook = typeof studyBooks.$inferSelect;
+export type StudyChapter = typeof studyChapters.$inferSelect;
+export type StudyPaper = typeof studyPapers.$inferSelect;
+export type StudyMriLecture = typeof studyMriLectures.$inferSelect;
+export type StudyScheduleLog = typeof studyScheduleLogs.$inferSelect;
+export type StudyScheduleConfig = typeof studyScheduleConfig.$inferSelect;
+
+export type InsertStudyBook = typeof studyBooks.$inferInsert;
+export type InsertStudyChapter = typeof studyChapters.$inferInsert;
+export type InsertStudyPaper = typeof studyPapers.$inferInsert;
+export type InsertStudyMriLecture = typeof studyMriLectures.$inferInsert;
+export type InsertStudyScheduleLog = typeof studyScheduleLogs.$inferInsert;
+
+// Insert schemas
+export const insertStudyBookSchema = createInsertSchema(studyBooks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStudyChapterSchema = createInsertSchema(studyChapters).omit({
+  id: true,
+  createdAt: true,
+  imagesCompletedAt: true,
+  cardsCompletedAt: true,
+});
+
+export const insertStudyPaperSchema = createInsertSchema(studyPapers).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertStudyMriLectureSchema = createInsertSchema(studyMriLectures).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertStudyScheduleLogSchema = createInsertSchema(studyScheduleLogs).omit({
+  id: true,
+  createdAt: true,
+});

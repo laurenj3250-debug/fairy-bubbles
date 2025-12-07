@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habits Page Mockup - LJ Design</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+    .glass-card-hover:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .accent-teal { border-left: 3px solid #00D4AA; }
+
+    /* Heatmap cell colors */
+    .heat-0 { background: rgba(255,255,255,0.05); }
+    .heat-1 { background: rgba(0, 212, 170, 0.2); }
+    .heat-2 { background: rgba(0, 212, 170, 0.4); }
+    .heat-3 { background: rgba(0, 212, 170, 0.6); }
+    .heat-4 { background: rgba(0, 212, 170, 0.9); }
+
+    /* Mini calendar dots */
+    .dot-complete { background: #00D4AA; }
+    .dot-missed { background: rgba(255,255,255,0.1); }
+    .dot-today { border: 2px solid #00D4AA; background: transparent; }
+
+    @keyframes flicker {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .flame { animation: flicker 1s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .at-risk { animation: pulse 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="text-white p-8">
+  <div class="max-w-[1400px] mx-auto">
+
+    <!-- TOP BAR -->
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-6">
+        <h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+          GoalConnect
+        </h1>
+        <nav class="flex gap-1">
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Home</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white">Habits</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Goals</a>
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5">Journey</a>
+        </nav>
+      </div>
+
+      <!-- XP Display -->
+      <div class="flex items-center gap-4">
+        <div class="glass-card px-3 py-1.5 flex items-center gap-2">
+          <span class="text-teal-400 font-bold">✦</span>
+          <span class="text-sm font-semibold">2,450 XP</span>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center font-bold text-sm">LJ</div>
+      </div>
+    </header>
+
+    <!-- PAGE HEADER -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold mb-1">Habits</h2>
+        <p class="text-white/50 text-sm">4 active habits • 87% completion rate this week</p>
+      </div>
+      <button class="glass-card px-4 py-2 text-sm font-medium hover:bg-white/10 transition flex items-center gap-2">
+        <span class="text-teal-400">+</span> New Habit
+      </button>
+    </div>
+
+    <!-- MAIN LAYOUT: Sidebar + Content -->
+    <div class="flex gap-6">
+
+      <!-- LEFT SIDEBAR - Filters -->
+      <aside class="w-56 flex-shrink-0 space-y-4">
+
+        <!-- Categories Filter -->
+        <div class="glass-card p-4">
+          <h3 class="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Categories</h3>
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" checked class="w-4 h-4 rounded accent-teal-500">
+              <span class="text-sm text-white/80 group-hover:text-white">All Habits</span>
+              <span class="ml-auto text-xs text-white/40">4</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <div class="w-3 h-3 rounded-full bg-teal-500"></div>
+              <span class="text-sm text-white/80 group-hover:text-white">Mind</span>
+              <span class="ml-auto text-xs text-white/40">2</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+              <span class="text-sm text-white/80 group-hover:text-white">Training</span>
+              <span class="ml-auto text-xs text-white/40">1</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span class="text-sm text-white/80 group-hover:text-white">Foundation</span>
+              <span class="ml-auto text-xs text-white/40">1</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="glass-card p-4">
+          <h3 class="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Status</h3>
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="status" checked class="w-4 h-4 accent-teal-500">
+              <span class="text-sm text-white/80">Active</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="status" class="w-4 h-4 accent-teal-500">
+              <span class="text-sm text-white/80">Archived</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="status" class="w-4 h-4 accent-teal-500">
+              <span class="text-sm text-white/80">All</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="glass-card p-4">
+          <h3 class="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">This Week</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-sm text-white/60">Completed</span>
+              <span class="text-sm font-semibold text-teal-400">26/30</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-white/60">Best Streak</span>
+              <span class="text-sm font-semibold">🔥 12</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-white/60">XP Earned</span>
+              <span class="text-sm font-semibold text-teal-400">+340</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 space-y-6">
+
+        <!-- HEATMAP SECTION -->
+        <div class="glass-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold">Activity Heatmap</h3>
+            <div class="flex items-center gap-2 text-xs text-white/40">
+              <span>Less</span>
+              <div class="flex gap-1">
+                <div class="w-3 h-3 rounded heat-0"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+              </div>
+              <span>More</span>
+            </div>
+          </div>
+
+          <!-- Heatmap Grid (12 weeks) -->
+          <div class="flex gap-1">
+            <div class="flex flex-col gap-1 text-[10px] text-white/30 pr-2">
+              <span class="h-3">Mon</span>
+              <span class="h-3"></span>
+              <span class="h-3">Wed</span>
+              <span class="h-3"></span>
+              <span class="h-3">Fri</span>
+              <span class="h-3"></span>
+              <span class="h-3">Sun</span>
+            </div>
+            <!-- Weeks -->
+            <div class="flex gap-1">
+              <!-- Generate 12 weeks of data -->
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-0"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-0"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-2"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-1"></div>
+              </div>
+              <!-- Current week (partial) -->
+              <div class="flex flex-col gap-1">
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded heat-3"></div>
+                <div class="w-3 h-3 rounded heat-4"></div>
+                <div class="w-3 h-3 rounded border border-teal-400"></div>
+                <div class="w-3 h-3 rounded heat-0"></div>
+                <div class="w-3 h-3 rounded heat-0"></div>
+                <div class="w-3 h-3 rounded heat-0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HABITS LIST -->
+        <div class="space-y-3">
+
+          <!-- Habit Card 1: Completed today -->
+          <div class="glass-card glass-card-hover p-4 cursor-pointer transition-all group">
+            <div class="flex items-center gap-4">
+              <!-- Complete checkbox -->
+              <button class="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                ✓
+              </button>
+
+              <!-- Main content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h4 class="font-semibold">Morning Meditation</h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-teal-500/20 text-teal-400">Mind</span>
+                  <span class="text-xs text-white/40">Morning</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-white/50">
+                  <span>Daily</span>
+                  <span class="text-teal-400 font-medium">🔥 12 day streak</span>
+                </div>
+              </div>
+
+              <!-- Mini calendar (last 7 days) -->
+              <div class="flex gap-1 items-center">
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+              </div>
+
+              <!-- Actions -->
+              <div class="opacity-0 group-hover:opacity-100 transition flex gap-2">
+                <button class="text-white/40 hover:text-white text-sm">Edit</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habit Card 2: At risk (not done today, yesterday done) -->
+          <div class="glass-card glass-card-hover p-4 cursor-pointer transition-all group border-yellow-500/30 at-risk">
+            <div class="flex items-center gap-4">
+              <button class="w-8 h-8 rounded-full border-2 border-yellow-400/50 flex items-center justify-center shrink-0 hover:bg-yellow-400/20 transition">
+              </button>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h4 class="font-semibold">Strength Training</h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-orange-500/20 text-orange-400">Training</span>
+                  <span class="text-xs text-white/40">Anytime</span>
+                  <span class="text-yellow-400 text-xs flex items-center gap-1 flame">⚠️ at risk</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-white/50">
+                  <span>Mon, Wed, Fri</span>
+                  <span class="text-orange-400 font-medium">🔥 7 day streak</span>
+                </div>
+              </div>
+
+              <div class="flex gap-1 items-center">
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-missed"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-missed"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-today"></div>
+              </div>
+
+              <div class="opacity-0 group-hover:opacity-100 transition flex gap-2">
+                <button class="text-white/40 hover:text-white text-sm">Edit</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habit Card 3: Not done today -->
+          <div class="glass-card glass-card-hover p-4 cursor-pointer transition-all group">
+            <div class="flex items-center gap-4">
+              <button class="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 hover:bg-white/10 transition">
+              </button>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h4 class="font-semibold">Read 30 Minutes</h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-teal-500/20 text-teal-400">Mind</span>
+                  <span class="text-xs text-white/40">Evening</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-white/50">
+                  <span>Daily</span>
+                  <span class="font-medium">🔥 3 day streak</span>
+                </div>
+              </div>
+
+              <div class="flex gap-1 items-center">
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-missed"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-missed"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-today"></div>
+              </div>
+
+              <div class="opacity-0 group-hover:opacity-100 transition flex gap-2">
+                <button class="text-white/40 hover:text-white text-sm">Edit</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habit Card 4: Not done today -->
+          <div class="glass-card glass-card-hover p-4 cursor-pointer transition-all group">
+            <div class="flex items-center gap-4">
+              <button class="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 hover:bg-white/10 transition">
+              </button>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h4 class="font-semibold">Journal</h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-400">Foundation</span>
+                  <span class="text-xs text-white/40">Evening</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-white/50">
+                  <span>Daily</span>
+                  <span class="font-medium">🔥 21 day streak</span>
+                </div>
+              </div>
+
+              <div class="flex gap-1 items-center">
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-complete"></div>
+                <div class="w-2.5 h-2.5 rounded-full dot-today"></div>
+              </div>
+
+              <div class="opacity-0 group-hover:opacity-100 transition flex gap-2">
+                <button class="text-white/40 hover:text-white text-sm">Edit</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Undo Toast -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 glass-card px-4 py-3 flex items-center gap-4">
+          <span class="text-sm">Morning Meditation completed</span>
+          <button class="text-teal-400 text-sm font-medium hover:text-teal-300">Undo</button>
+          <span class="text-teal-400 text-sm">+25 XP</span>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -801,9 +801,9 @@ export default function DashboardV4() {
           {/* ROW 3: Monthly Progress + Weekly Rhythm + Destination (3 columns, small) */}
           <div className="card-grid grid grid-cols-3 gap-5">
             {/* Monthly Progress */}
-            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
               <span className="card-title">Monthly Progress</span>
-              <div className="flex-1 flex items-center justify-around">
+              <div className="flex-1 flex items-center justify-around pt-2">
                 {monthlyGoals.length === 0 ? (
                   <Link href="/goals">
                     <div className="font-body text-sm text-[var(--text-muted)] hover:text-peach-400 py-4 text-center cursor-pointer transition-colors">
@@ -818,6 +818,7 @@ export default function DashboardV4() {
                         key={goal.id}
                         progress={progress}
                         label={goal.title}
+                        size={80}
                       />
                     );
                   })
@@ -826,7 +827,7 @@ export default function DashboardV4() {
             </div>
 
             {/* Weekly Rhythm */}
-            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
               <span className="card-title">Weekly Rhythm</span>
               <div className="flex-1 flex items-end">
                 <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
@@ -834,7 +835,7 @@ export default function DashboardV4() {
             </div>
 
             {/* Destination Spotlight */}
-            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
               <span className="card-title">Destination</span>
               <div className="flex-1">
                 {(() => {
@@ -852,7 +853,7 @@ export default function DashboardV4() {
           </div>
 
           {/* ROW 4: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
-          <div className="glass-card frost-accent">
+          <div className="glass-card frost-accent min-h-[280px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <span className="card-title">Schedule</span>

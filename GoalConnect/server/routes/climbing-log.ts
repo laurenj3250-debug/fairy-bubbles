@@ -9,6 +9,7 @@ import { getDb } from "../db";
 import {
   outdoorClimbingTicks,
   insertOutdoorClimbingTickSchema,
+  playerClimbingStats,
 } from "@shared/schema";
 import { eq, and, desc, sql, gte, count } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
@@ -291,6 +292,139 @@ export function registerClimbingLogRoutes(app: Express) {
     } catch (error) {
       log.error("[climbing-log] Error deleting tick:", error);
       res.status(500).json({ error: "Failed to delete climbing tick" });
+    }
+  });
+
+  // ============= GAMIFICATION: XP ENDPOINTS =============
+
+  /**
+   * GET /api/climbing/xp
+   * Get current user's climbing XP and level
+   */
+  app.get("/api/climbing/xp", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+
+      let [stats] = await db
+        .select()
+        .from(playerClimbingStats)
+        .where(eq(playerClimbingStats.userId, userId));
+
+      if (!stats) {
+        // Create default stats
+        [stats] = await db
+          .insert(playerClimbingStats)
+          .values({
+            userId,
+            climbingLevel: 1,
+            totalExperience: 0,
+            summitsReached: 0,
+            totalElevationClimbed: 0,
+          })
+          .returning();
+      }
+
+      // Calculate XP needed for next level
+      const currentLevel = stats.climbingLevel;
+      const xpForCurrentLevel = (currentLevel - 1) * (currentLevel - 1) * 100;
+      const xpForNextLevel = currentLevel * currentLevel * 100;
+      const xpProgress = stats.totalExperience - xpForCurrentLevel;
+      const xpNeeded = xpForNextLevel - xpForCurrentLevel;
+
+      res.json({
+        level: stats.climbingLevel,
+        totalXp: stats.totalExperience,
+        xpProgress,
+        xpNeeded,
+        progressPercent: Math.round((xpProgress / xpNeeded) * 100),
+      });
+    } catch (error) {
+      log.error("[climbing-log] Error fetching XP:", error);
+      res.status(500).json({ error: "Failed to fetch climbing XP" });
+    }
+  });
+
+  /**
+   * POST /api/climbing/xp
+   * Manually award climbing XP
+   */
+  app.post("/api/climbing/xp", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+
+      // Validate input
+      const xpSchema = z.object({
+        amount: z.number().int().min(1).max(1000),
+        reason: z.string().optional(),
+      });
+
+      const validationResult = xpSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid input",
+          details: validationResult.error.flatten(),
+        });
+      }
+
+      const { amount, reason } = validationResult.data;
+
+      // Get or create player stats
+      let [stats] = await db
+        .select()
+        .from(playerClimbingStats)
+        .where(eq(playerClimbingStats.userId, userId));
+
+      if (!stats) {
+        [stats] = await db
+          .insert(playerClimbingStats)
+          .values({
+            userId,
+            climbingLevel: 1,
+            totalExperience: 0,
+            summitsReached: 0,
+            totalElevationClimbed: 0,
+          })
+          .returning();
+      }
+
+      const oldLevel = stats.climbingLevel;
+      const newXp = stats.totalExperience + amount;
+      // Level formula: level = sqrt(XP / 100) + 1
+      const newLevel = Math.max(1, Math.floor(Math.sqrt(newXp / 100)) + 1);
+      const leveledUp = newLevel > oldLevel;
+
+      // Update stats
+      await db
+        .update(playerClimbingStats)
+        .set({
+          totalExperience: newXp,
+          climbingLevel: newLevel,
+        })
+        .where(eq(playerClimbingStats.userId, userId));
+
+      log.info(`[climbing-log] Awarded ${amount} XP to user ${userId}${reason ? ` (${reason})` : ""} - now level ${newLevel}`);
+
+      // Calculate XP progress for response
+      const xpForCurrentLevel = (newLevel - 1) * (newLevel - 1) * 100;
+      const xpForNextLevel = newLevel * newLevel * 100;
+      const xpProgress = newXp - xpForCurrentLevel;
+      const xpNeeded = xpForNextLevel - xpForCurrentLevel;
+
+      res.json({
+        success: true,
+        awarded: amount,
+        level: newLevel,
+        totalXp: newXp,
+        leveledUp,
+        xpProgress,
+        xpNeeded,
+        progressPercent: Math.round((xpProgress / xpNeeded) * 100),
+      });
+    } catch (error) {
+      log.error("[climbing-log] Error awarding XP:", error);
+      res.status(500).json({ error: "Failed to award climbing XP" });
     }
   });
 }

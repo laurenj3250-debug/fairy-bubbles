@@ -1,71 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ClimbingHoldSVG } from "./ClimbingHoldSVG";
-import { Plus } from "lucide-react";
-
-// Vibrant climbing hold colors - each habit gets a unique color
-const HOLD_COLORS = [
-  { // Coral/Orange
-    bg: "linear-gradient(135deg, #FF6B35, #FF8C42)",
-    border: "#FF6B35",
-    glow: "#FF6B35"
-  },
-  { // Teal/Cyan
-    bg: "linear-gradient(135deg, #0EA5E9, #22D3EE)",
-    border: "#0EA5E9",
-    glow: "#0EA5E9"
-  },
-  { // Purple/Violet
-    bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)",
-    border: "#8B5CF6",
-    glow: "#8B5CF6"
-  },
-  { // Green/Emerald
-    bg: "linear-gradient(135deg, #10B981, #34D399)",
-    border: "#10B981",
-    glow: "#10B981"
-  },
-  { // Pink/Rose
-    bg: "linear-gradient(135deg, #EC4899, #F472B6)",
-    border: "#EC4899",
-    glow: "#EC4899"
-  },
-  { // Gold/Amber
-    bg: "linear-gradient(135deg, #F59E0B, #FBBF24)",
-    border: "#F59E0B",
-    glow: "#F59E0B"
-  },
-];
-
-const getHabitColor = (index: number) => {
-  return HOLD_COLORS[index % HOLD_COLORS.length];
-};
 
 interface Habit {
   id: number;
   title: string;
-  description?: string;
-  categoryId?: number;
-  cadence?: "daily" | "weekly";
-  targetPerWeek?: number;
-  streak?: {
-    streak: number;
-  };
 }
 
 interface HabitLog {
   id: number;
   habitId: number;
   completed: boolean;
-  habit?: Habit;
 }
 
 export function GlowingOrbHabits() {
   const queryClient = useQueryClient();
-  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [bursts, setBursts] = useState<{ id: number; habitId: number; color: string }[]>([]);
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
   const { data: allHabits = [] } = useQuery<Habit[]>({
     queryKey: ["/api/habits"],
@@ -76,7 +25,7 @@ export function GlowingOrbHabits() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
+    mutationFn: async ({ habitId }: { habitId: number }) => {
       const response = await fetch(`/api/habit-logs/toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,303 +36,52 @@ export function GlowingOrbHabits() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all habit-related queries for consistency across components
       queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
       queryClient.invalidateQueries({ predicate: (query) =>
-        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
+        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs')
       });
       queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
     },
   });
 
   const isCompleted = (habitId: number) => {
-    const log = habitLogs.find((l) => l.habitId === habitId);
-    return log?.completed || false;
+    return habitLogs.some(l => l.habitId === habitId && l.completed);
   };
 
-  const habits = allHabits.map(habit => ({
-    ...habit,
-    completed: isCompleted(habit.id)
-  }));
-
-  const handleOrbClick = (habitId: number, index: number, event: React.MouseEvent<HTMLDivElement>) => {
-    const completed = isCompleted(habitId);
-    const color = getHabitColor(index);
-
-    // Only burst when completing (not uncompleting)
-    if (!completed) {
-      const burstId = Date.now();
-      setBursts((prev) => [...prev, { id: burstId, habitId, color: color.glow }]);
-      setTimeout(() => {
-        setBursts((prev) => prev.filter((b) => b.id !== burstId));
-      }, 1000);
-    }
-
-    // Toggle habit
-    toggleMutation.mutate({ habitId, completed: !completed });
+  // Get first 2-3 letters of habit title to fit in circles
+  const getShortName = (title: string) => {
+    // Use first 3 chars, uppercase for readability
+    return title.substring(0, 3).toUpperCase();
   };
-
-  const completedCount = habits.filter(h => h.completed).length;
 
   return (
-    <div className="space-y-2">
-      {/* Progress Summary */}
-      <p className="text-xs text-muted-foreground">
-        {completedCount}/{habits.length} today
-      </p>
+    <div className="flex gap-2">
+      {allHabits.slice(0, 5).map((habit, index) => {
+        const completed = isCompleted(habit.id);
 
-      {/* Habits - horizontal row */}
-      <div className="flex gap-5">
-        {habits.map((habit, index) => {
-          const completed = habit.completed;
-          const color = getHabitColor(index);
-
-          return (
-            <motion.button
-              key={habit.id}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.05 }}
-              onClick={(e) => handleOrbClick(habit.id, index, e as any)}
-              className="relative flex flex-col items-center gap-2 group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {/* Hold */}
-              <div className="relative w-14 h-14">
-                {/* EXPLOSION BURST on click */}
-                {bursts.filter(b => b.habitId === habit.id).map(burst => (
-                  <div key={burst.id} className="absolute inset-0 pointer-events-none overflow-visible">
-                    {/* Ring explosion */}
-                    <motion.div
-                      className="absolute inset-[-50%] rounded-full"
-                      style={{
-                        border: `4px solid ${burst.color}`,
-                        boxShadow: `0 0 30px ${burst.color}, 0 0 60px ${burst.color}, inset 0 0 30px ${burst.color}`,
-                      }}
-                      initial={{ scale: 0.3, opacity: 1 }}
-                      animate={{ scale: 4, opacity: 0 }}
-                      transition={{ duration: 0.7, ease: "easeOut" }}
-                    />
-                    {/* Second ring */}
-                    <motion.div
-                      className="absolute inset-[-50%] rounded-full"
-                      style={{
-                        border: `2px solid ${burst.color}`,
-                        boxShadow: `0 0 20px ${burst.color}`,
-                      }}
-                      initial={{ scale: 0.5, opacity: 0.8 }}
-                      animate={{ scale: 3, opacity: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-                    />
-                    {/* Particle explosion - 16 particles */}
-                    {[...Array(16)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-4 h-4 rounded-full"
-                        style={{
-                          background: burst.color,
-                          boxShadow: `0 0 15px ${burst.color}, 0 0 30px ${burst.color}`,
-                          left: '50%',
-                          top: '50%',
-                          marginLeft: '-8px',
-                          marginTop: '-8px',
-                        }}
-                        initial={{ scale: 1, x: 0, y: 0, opacity: 1 }}
-                        animate={{
-                          scale: [1, 2, 0],
-                          x: Math.cos(i * 22.5 * Math.PI / 180) * 150,
-                          y: Math.sin(i * 22.5 * Math.PI / 180) * 150,
-                          opacity: [1, 1, 0],
-                        }}
-                        transition={{
-                          duration: 0.8,
-                          ease: "easeOut",
-                        }}
-                      />
-                    ))}
-                    {/* Inner sparkle particles */}
-                    {[...Array(8)].map((_, i) => (
-                      <motion.div
-                        key={`inner-${i}`}
-                        className="absolute w-2 h-2 rounded-full"
-                        style={{
-                          background: '#fff',
-                          boxShadow: `0 0 10px #fff, 0 0 20px ${burst.color}`,
-                          left: '50%',
-                          top: '50%',
-                          marginLeft: '-4px',
-                          marginTop: '-4px',
-                        }}
-                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                        animate={{
-                          scale: [0, 1.5, 0],
-                          x: Math.cos((i * 45 + 22.5) * Math.PI / 180) * 60,
-                          y: Math.sin((i * 45 + 22.5) * Math.PI / 180) * 60,
-                          opacity: [1, 1, 0],
-                        }}
-                        transition={{
-                          duration: 0.5,
-                          ease: "easeOut",
-                          delay: 0.05,
-                        }}
-                      />
-                    ))}
-                    {/* Flash */}
-                    <motion.div
-                      className="absolute inset-[-100%] rounded-full"
-                      style={{
-                        background: `radial-gradient(circle, ${burst.color} 0%, transparent 50%)`,
-                      }}
-                      initial={{ opacity: 1, scale: 0.3 }}
-                      animate={{ opacity: 0, scale: 3 }}
-                      transition={{ duration: 0.4 }}
-                    />
-                  </div>
-                ))}
-
-                {/* Intense glow layer when completed */}
-                {completed && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{
-                      opacity: [0.6, 1, 0.6],
-                      scale: [1, 1.05, 1]
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="absolute inset-[-50%] rounded-full"
-                    style={{
-                      background: `radial-gradient(circle, ${color.border} 0%, transparent 70%)`,
-                      filter: 'blur(20px)',
-                    }}
-                  />
-                )}
-
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  animate={completed ? {
-                    filter: `brightness(1.4) saturate(1.8) drop-shadow(0 0 20px ${color.border}) drop-shadow(0 0 40px ${color.border})`
-                  } : {
-                    filter: "brightness(0.5) saturate(0.4) grayscale(0.5)"
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ClimbingHoldSVG
-                    variant={index % 3}
-                    size={56}
-                    gradient={color.bg}
-                    borderColor={color.border}
-                  />
-                </motion.div>
-
-                {/* Sparkles burst effect */}
-                {completed && (
-                  <>
-                    {[...Array(6)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-2 h-2 rounded-full"
-                        style={{
-                          background: color.glow,
-                          boxShadow: `0 0 6px ${color.glow}`,
-                          left: '50%',
-                          top: '50%',
-                        }}
-                        initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                        animate={{
-                          scale: [0, 1, 0],
-                          x: [0, Math.cos(i * 60 * Math.PI / 180) * 50],
-                          y: [0, Math.sin(i * 60 * Math.PI / 180) * 50],
-                          opacity: [1, 1, 0],
-                        }}
-                        transition={{
-                          duration: 0.6,
-                          delay: i * 0.05,
-                          repeat: Infinity,
-                          repeatDelay: 8,
-                        }}
-                      />
-                    ))}
-                  </>
-                )}
-
-                {/* Shimmer effect on completed */}
-                {completed && (
-                  <motion.div
-                    className="absolute inset-0 rounded-full overflow-hidden pointer-events-none"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                        background: `linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)`,
-                      }}
-                      animate={{
-                        x: ['-100%', '200%'],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 10,
-                        ease: 'easeInOut',
-                      }}
-                    />
-                  </motion.div>
-                )}
-
-                {/* Check mark */}
-                {completed && (
-                  <motion.div
-                    initial={{ scale: 0, rotate: -45 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Habit name */}
-              <span
-                className="text-xs font-semibold text-center max-w-[80px] leading-tight truncate"
-                style={{
-                  color: completed ? color.border : 'hsl(var(--foreground))',
-                  textShadow: completed ? `0 0 8px ${color.glow}60` : 'none',
-                }}
-              >
-                {habit.title}
-              </span>
-            </motion.button>
-          );
-        })}
-      </div>
-
-      {/* Add new habit */}
-      {habits.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">No habits yet</p>
-          <a
-            href="/habits"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition text-white shadow-lg hover:scale-105 hover:shadow-xl"
+        return (
+          <motion.button
+            key={habit.id}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => toggleMutation.mutate({ habitId: habit.id })}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[0.5rem] font-medium uppercase tracking-wide transition-all cursor-pointer"
             style={{
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
+              background: completed
+                ? "linear-gradient(135deg, #d4a59a 0%, #e8c4bc 100%)"
+                : "rgba(61, 90, 80, 0.3)",
+              border: completed ? "none" : "1px solid #3d5a50",
+              color: completed ? "#080c08" : "#3d5a50",
+              boxShadow: completed ? "0 0 20px rgba(212, 165, 154, 0.4)" : "none",
             }}
           >
-            <Plus className="w-4 h-4" />
-            Add Your First Habit
-          </a>
-        </div>
-      )}
+            {getShortName(habit.title)}
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

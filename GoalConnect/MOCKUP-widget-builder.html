@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Builder - GoalConnect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: hsl(45 30% 12%);
+      --foreground: hsl(40 20% 95%);
+      --card: hsl(40 20% 18%);
+      --primary: hsl(25 95% 58%);
+      --secondary: hsl(200 85% 55%);
+      --accent: hsl(160 80% 50%);
+      --success: hsl(142 85% 55%);
+      --warning: hsl(38 100% 60%);
+      --destructive: hsl(0 90% 60%);
+      --border: hsl(40 15% 30%);
+      --muted: hsl(40 12% 22%);
+      --muted-foreground: hsl(40 15% 65%);
+      /* Difficulty colors */
+      --easy: #4ade80;
+      --moderate: #fbbf24;
+      --hard: #fb923c;
+      --expert: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      background-image:
+        radial-gradient(ellipse at top, rgba(249, 115, 22, 0.06), transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.04), transparent 50%);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .heading { font-family: 'Fraunces', serif; font-weight: 600; }
+
+    /* Glass card */
+    .glass-card {
+      border-radius: 16px;
+      background: hsl(45 30% 12% / 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid hsl(40 20% 95% / 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      height: 100%;
+      padding: 16px;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    /* Nav sidebar */
+    .nav-sidebar {
+      width: 64px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 8px;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 200;
+    }
+    .nav-item {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted-foreground);
+      transition: all 150ms;
+      cursor: pointer;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--foreground); }
+    .nav-item.active { background: hsl(25 95% 58% / 0.15); color: var(--primary); }
+
+    /* Widget palette sidebar */
+    .widget-palette {
+      width: 220px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      left: 64px; top: 0; bottom: 0;
+      z-index: 150;
+      overflow-y: auto;
+      padding: 16px 12px;
+    }
+    .palette-item {
+      padding: 10px 12px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: all 150ms;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .palette-item:hover {
+      background: hsl(25 95% 58% / 0.1);
+      border-color: var(--primary);
+    }
+    .palette-item.dragging { opacity: 0.5; }
+
+    /* Widgets */
+    .widget {
+      position: absolute;
+      touch-action: none;
+      user-select: none;
+      border-radius: 16px;
+      overflow: visible;
+      transition: box-shadow 200ms;
+    }
+    .widget:hover {
+      box-shadow: 0 0 0 2px var(--primary), 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .widget.dragging {
+      box-shadow: 0 0 0 2px var(--primary), 0 16px 48px rgba(0,0,0,0.5);
+      z-index: 1000 !important;
+      cursor: grabbing;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -8px; right: -8px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--destructive);
+      color: white;
+      border: 2px solid var(--background);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 150ms, transform 150ms;
+      z-index: 100;
+    }
+    .widget:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { transform: scale(1.1); }
+
+    .resize-handle {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      width: 16px; height: 16px;
+      cursor: se-resize;
+      opacity: 0.3;
+      transition: opacity 200ms;
+      z-index: 10;
+    }
+    .widget:hover .resize-handle { opacity: 0.8; }
+
+    /* Climbing hold SVG */
+    .climbing-hold {
+      position: relative;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .climbing-hold::before {
+      content: '';
+      position: absolute;
+      inset: -30%;
+      border-radius: 50%;
+      background: radial-gradient(circle, currentColor 0%, transparent 70%);
+      opacity: 0.2;
+      filter: blur(10px);
+    }
+
+    /* Pitch card (habit as climbing hold) */
+    .pitch-card {
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--card);
+      border-left: 6px solid;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    .pitch-card:hover { transform: translateX(4px); }
+    .pitch-card.completed { opacity: 0.6; }
+
+    /* Progress bars */
+    .progress-bar {
+      height: 8px;
+      background: var(--muted);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 500ms ease;
+    }
+
+    /* Progress arc */
+    .progress-arc { position: relative; display: flex; flex-direction: column; align-items: center; }
+    .progress-arc-value {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: 700; font-size: 14px;
+    }
+
+    /* Habit grid */
+    .habit-day {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+      cursor: pointer;
+      transition: all 150ms;
+      border: 2px solid var(--border);
+      background: var(--card);
+    }
+    .habit-day.done {
+      background: linear-gradient(135deg, var(--success), hsl(142 85% 45%));
+      border-color: transparent;
+      color: white;
+    }
+    .habit-day.today { border-color: var(--primary); box-shadow: 0 0 8px hsl(25 95% 58% / 0.4); }
+    .habit-day.missed { background: hsl(0 90% 60% / 0.15); border-color: hsl(0 90% 60% / 0.4); color: var(--destructive); }
+
+    /* Altitude zones */
+    .altitude-zone {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Day column */
+    .day-col {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .day-col.today {
+      background: linear-gradient(180deg, hsl(25 95% 58% / 0.12), hsl(25 95% 58% / 0.04));
+      border: 1px solid hsl(25 95% 58% / 0.3);
+    }
+    .day-col.past { opacity: 0.5; }
+
+    .task-chip {
+      font-size: 10px;
+      padding: 4px 8px;
+      background: var(--muted);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .task-chip.done { opacity: 0.5; text-decoration: line-through; }
+    .task-chip.urgent { background: hsl(0 90% 60% / 0.15); border-color: hsl(0 90% 60% / 0.3); }
+
+    /* Pattern insight card */
+    .insight-card {
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Streak badge */
+    .streak-badge {
+      background: linear-gradient(135deg, var(--primary), var(--warning));
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: hsl(30 15% 10%);
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 8px hsl(25 95% 58% / 0.4); }
+      50% { box-shadow: 0 0 16px hsl(25 95% 58% / 0.6); }
+    }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+    .builder-header {
+      position: fixed;
+      top: 0; left: 284px; right: 0;
+      height: 56px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV SIDEBAR -->
+  <nav class="nav-sidebar">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--warning)] flex items-center justify-center text-lg mb-4">🧗</div>
+    <div class="nav-item active" title="Builder"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg></div>
+    <div class="flex-1"></div>
+    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--warning)] flex items-center justify-center text-xs font-bold">LJ</div>
+  </nav>
+
+  <!-- WIDGET PALETTE -->
+  <aside class="widget-palette">
+    <h2 class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Widget Palette</h2>
+    <p class="text-[10px] text-muted-foreground mb-4">Drag widgets to canvas. Click X to delete.</p>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Habits</div>
+    <div class="palette-item" data-widget="climbing-holds">🧗 Climbing Holds</div>
+    <div class="palette-item" data-widget="weekly-habits">📊 Weekly Habit Grid</div>
+    <div class="palette-item" data-widget="todays-pitch">⛰️ Today's Pitch</div>
+    <div class="palette-item" data-widget="quick-log">⚡ Quick Log</div>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Goals</div>
+    <div class="palette-item" data-widget="weekly-goals">🎯 Weekly Goals</div>
+    <div class="palette-item" data-widget="monthly-summits">🏔️ Monthly Summits</div>
+    <div class="palette-item" data-widget="expedition">🗻 Expedition Progress</div>
+    <div class="palette-item" data-widget="daily-quests">📜 Daily Quests</div>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Stats</div>
+    <div class="palette-item" data-widget="altimeter">📍 Altimeter</div>
+    <div class="palette-item" data-widget="xp-badge">⚡ XP Badge</div>
+    <div class="palette-item" data-widget="streak">🔥 Streak Counter</div>
+    <div class="palette-item" data-widget="combo-tracker">💥 Combo Tracker</div>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Insights</div>
+    <div class="palette-item" data-widget="pattern-insights">📈 Pattern Insights</div>
+    <div class="palette-item" data-widget="weekly-performance">📊 Weekly Performance</div>
+    <div class="palette-item" data-widget="completion-ring">🎯 Completion Ring</div>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Calendar</div>
+    <div class="palette-item" data-widget="week-calendar">📅 Week Calendar</div>
+    <div class="palette-item" data-widget="ridge-traverse">🏔️ Ridge Traverse</div>
+
+    <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Other</div>
+    <div class="palette-item" data-widget="pet-widget">🌿 Pet / Plant</div>
+    <div class="palette-item" data-widget="streak-freeze">❄️ Streak Freeze</div>
+    <div class="palette-item" data-widget="inspiration">💡 Climbing Inspiration</div>
+    <div class="palette-item" data-widget="basecamp">🏕️ Basecamp Status</div>
+  </aside>
+
+  <!-- BUILDER HEADER -->
+  <div class="builder-header">
+    <div>
+      <h1 class="heading text-lg">Widget Builder</h1>
+      <p class="text-xs text-muted-foreground">Drag, resize, delete - build your perfect dashboard</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="resetCanvas()" class="px-4 py-2 bg-muted border border-border rounded-lg text-sm hover:bg-destructive/20 transition-colors">Reset</button>
+      <button onclick="saveLayout()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold" style="color: hsl(30 15% 10%);">Save Layout</button>
+    </div>
+  </div>
+
+  <!-- WIDGET CANVAS -->
+  <div id="widget-canvas" style="margin-left: 284px; margin-top: 56px; position: relative; flex: 1; min-height: calc(100vh - 56px); padding: 20px;">
+
+    <!-- PRE-PLACED WIDGETS - Users can delete any of these -->
+
+    <!-- CLIMBING HOLDS (Habits as climbing holds) -->
+    <div class="widget" id="climbing-holds-1" style="left: 20px; top: 20px; width: 400px; height: 380px; z-index: 15;">
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🧗</span>
+            <h2 class="heading" style="font-size: 16px; margin: 0;">Today's Pitch</h2>
+          </div>
+          <span style="font-size: 11px; color: var(--muted-foreground);">4/5 sent</span>
+        </div>
+        <!-- Habit as climbing hold -->
+        <div class="pitch-card" style="border-color: var(--easy); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--easy), #86efac); display: flex; align-items: center; justify-content: center;">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; text-decoration: line-through; opacity: 0.6;">🧘 Morning Meditation</div>
+              <div style="display: flex; gap: 6px; margin-top: 4px;">
+                <span style="font-size: 10px; padding: 2px 8px; background: hsl(142 85% 55% / 0.15); border: 1px solid var(--easy); border-radius: 8px; color: #166534;">5.6 Easy</span>
+                <span class="streak-badge">🔥 7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pitch-card" style="border-color: var(--moderate); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--moderate), #fcd34d); display: flex; align-items: center; justify-content: center;">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; text-decoration: line-through; opacity: 0.6;">💪 Workout</div>
+              <div style="display: flex; gap: 6px; margin-top: 4px;">
+                <span style="font-size: 10px; padding: 2px 8px; background: hsl(38 100% 55% / 0.15); border: 1px solid var(--moderate); border-radius: 8px; color: #92400e;">5.9 Moderate</span>
+                <span class="streak-badge">🔥 14</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pitch-card pulse-glow" style="border-color: var(--hard); margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; border: 3px solid var(--hard); background: transparent; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;"></div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700;">📖 Read 30 minutes</div>
+              <div style="display: flex; gap: 6px; margin-top: 4px;">
+                <span style="font-size: 10px; padding: 2px 8px; background: hsl(25 95% 58% / 0.15); border: 1px solid var(--hard); border-radius: 8px; color: #9a3412;">5.11c Hard</span>
+                <span style="font-size: 10px; color: var(--warning);">⚠️ at risk</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- ALTIMETER -->
+    <div class="widget" id="altimeter-1" style="left: 440px; top: 20px; width: 220px; height: 280px; z-index: 14;">
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="font-size: 18px;">📍</span>
+          <h3 class="heading" style="font-size: 14px; margin: 0;">Altimeter</h3>
+          <span style="margin-left: auto; font-size: 11px; color: var(--primary); font-weight: 700;">5.11c</span>
+        </div>
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 36px; font-weight: 800;">2,450</div>
+          <div style="font-size: 12px; color: var(--muted-foreground);">meters</div>
+          <div style="margin-top: 8px; padding: 4px 12px; display: inline-block; background: hsl(160 80% 50% / 0.15); border: 1px solid var(--accent); border-radius: 12px;">
+            <span style="font-size: 12px; font-weight: 600; color: var(--accent);">Alpine Zone</span>
+          </div>
+        </div>
+        <div style="font-size: 11px; display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted-foreground);">Atmosphere:</span><span>Thin Air</span></div>
+          <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted-foreground);">Elevation:</span><span>2,500-4,500m</span></div>
+          <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted-foreground);">Total XP:</span><span style="color: var(--accent); font-weight: 700;">2,450</span></div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- WEEKLY HABIT GRID -->
+    <div class="widget" id="weekly-habits-1" style="left: 680px; top: 20px; width: 440px; height: 260px; z-index: 13;">
+      <div class="glass-card" style="background: linear-gradient(135deg, hsl(40 20% 20%), hsl(40 20% 15%)); border-color: hsl(25 95% 58% / 0.2);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">📊</span>
+            <h2 class="heading" style="font-size: 14px; margin: 0;">Weekly Habits</h2>
+          </div>
+          <span style="font-size: 11px; color: var(--muted-foreground);">Dec 2-8</span>
+        </div>
+        <div style="display: flex; gap: 6px; margin-bottom: 8px; padding-left: 90px;">
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">M</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">T</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">W</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--primary); font-weight: 700;">T</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">F</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">S</div>
+          <div style="width: 28px; text-align: center; font-size: 10px; color: var(--muted-foreground);">S</div>
+        </div>
+        <!-- Habit rows -->
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+          <div style="width: 82px; font-size: 12px;">🧘 Meditate</div>
+          <div style="display: flex; gap: 6px;">
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done today">✓</div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+          </div>
+          <span class="streak-badge">🔥 7</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+          <div style="width: 82px; font-size: 12px;">💪 Workout</div>
+          <div style="display: flex; gap: 6px;">
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done">✓</div>
+            <div class="habit-day done today">✓</div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+          </div>
+          <span class="streak-badge">🔥 14</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+          <div style="width: 82px; font-size: 12px;">📖 Read</div>
+          <div style="display: flex; gap: 6px;">
+            <div class="habit-day done">✓</div>
+            <div class="habit-day missed">✗</div>
+            <div class="habit-day done">✓</div>
+            <div class="habit-day today pulse-glow"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+            <div class="habit-day" style="opacity: 0.4;"></div>
+          </div>
+          <span style="font-size: 10px; color: var(--warning);">⚠️</span>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- EXPEDITION PROGRESS -->
+    <div class="widget" id="expedition-1" style="left: 20px; top: 420px; width: 280px; height: 160px; z-index: 12;">
+      <div class="glass-card" style="background: linear-gradient(135deg, hsl(25 95% 58% / 0.15), transparent), hsl(45 30% 12% / 0.6);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <span style="font-size: 28px;">🏔️</span>
+          <div>
+            <div style="font-size: 10px; color: var(--muted-foreground); text-transform: uppercase;">December Expedition</div>
+            <div class="heading" style="font-size: 14px;">200 mi cycling</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+          <span style="font-size: 12px; color: var(--muted-foreground);">130 / 200 mi</span>
+          <span class="heading" style="font-size: 24px; color: var(--primary);">65%</span>
+        </div>
+        <div class="progress-bar" style="height: 10px;">
+          <div class="progress-fill" style="width: 65%; background: linear-gradient(90deg, var(--primary), var(--warning));"></div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- MONTHLY SUMMITS (Progress Arcs) -->
+    <div class="widget" id="monthly-summits-1" style="left: 320px; top: 420px; width: 360px; height: 180px; z-index: 11;">
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🏔️</span>
+            <h2 class="heading" style="font-size: 14px; margin: 0;">Monthly Summits</h2>
+          </div>
+          <span style="font-size: 11px; color: var(--muted-foreground);">December</span>
+        </div>
+        <div style="display: flex; justify-content: space-around;">
+          <div class="progress-arc">
+            <svg width="56" height="56" style="transform: rotate(-90deg);">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--muted)" stroke-width="5"/>
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--primary)" stroke-width="5" stroke-dasharray="138" stroke-dashoffset="48" stroke-linecap="round"/>
+            </svg>
+            <span class="progress-arc-value" style="color: var(--primary); font-size: 12px;">65%</span>
+            <div style="font-size: 10px; color: var(--muted-foreground); text-align: center; margin-top: 4px;">200mi cycling</div>
+          </div>
+          <div class="progress-arc">
+            <svg width="56" height="56" style="transform: rotate(-90deg);">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--muted)" stroke-width="5"/>
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--secondary)" stroke-width="5" stroke-dasharray="138" stroke-dashoffset="69" stroke-linecap="round"/>
+            </svg>
+            <span class="progress-arc-value" style="color: var(--secondary); font-size: 12px;">50%</span>
+            <div style="font-size: 10px; color: var(--muted-foreground); text-align: center; margin-top: 4px;">2 books</div>
+          </div>
+          <div class="progress-arc">
+            <svg width="56" height="56" style="transform: rotate(-90deg);">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--muted)" stroke-width="5"/>
+              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--accent)" stroke-width="5" stroke-dasharray="138" stroke-dashoffset="72" stroke-linecap="round"/>
+            </svg>
+            <span class="progress-arc-value" style="color: var(--accent); font-size: 12px;">48%</span>
+            <div style="font-size: 10px; color: var(--muted-foreground); text-align: center; margin-top: 4px;">25 meditations</div>
+          </div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- PATTERN INSIGHTS -->
+    <div class="widget" id="pattern-insights-1" style="left: 700px; top: 300px; width: 420px; height: 280px; z-index: 10;">
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="font-size: 16px;">📈</span>
+          <h2 class="heading" style="font-size: 14px; margin: 0;">Pattern Insights</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div class="insight-card">
+            <div style="font-size: 10px; color: var(--muted-foreground); margin-bottom: 4px;">YOUR BEST DAY</div>
+            <div style="font-size: 16px; font-weight: 700;">Wednesday</div>
+            <div style="font-size: 10px; color: var(--accent);">92% completion rate</div>
+          </div>
+          <div class="insight-card" style="border-color: var(--warning);">
+            <div style="font-size: 10px; color: var(--muted-foreground); margin-bottom: 4px;">WATCH OUT</div>
+            <div style="font-size: 16px; font-weight: 700;">Sunday</div>
+            <div style="font-size: 10px; color: var(--warning);">Only 45% completion</div>
+          </div>
+          <div class="insight-card">
+            <div style="font-size: 10px; color: var(--muted-foreground); margin-bottom: 4px;">TRENDING UP</div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--success);">+12%</div>
+            <div style="font-size: 10px; color: var(--muted-foreground);">vs last 4 weeks</div>
+          </div>
+          <div class="insight-card">
+            <div style="font-size: 10px; color: var(--muted-foreground); margin-bottom: 4px;">LAST 30 DAYS</div>
+            <div style="font-size: 16px; font-weight: 700;">78%</div>
+            <div style="font-size: 10px; color: var(--muted-foreground);">156/200 completed</div>
+          </div>
+        </div>
+        <div style="font-size: 10px; color: var(--muted-foreground); margin-bottom: 6px;">WEEKLY PERFORMANCE</div>
+        <div style="display: flex; gap: 6px;">
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Sun</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.45); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">45%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Mon</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.75); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">75%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Tue</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.80); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">80%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--primary); font-weight: 700;">Wed</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.92); border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--accent);">
+              <span style="font-size: 10px; font-weight: 700;">92%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Thu</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.85); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">85%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Fri</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.70); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">70%</span>
+            </div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Sat</div>
+            <div style="height: 40px; background: hsl(160 80% 50% / 0.60); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 10px; font-weight: 700;">60%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- WEEK CALENDAR -->
+    <div class="widget" id="week-calendar-1" style="left: 20px; top: 600px; width: 700px; height: 180px; z-index: 9;">
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 16px;">📅</span>
+            <h2 class="heading" style="font-size: 14px; margin: 0;">Route Beta</h2>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <button style="background: none; border: none; color: var(--muted-foreground); cursor: pointer;">←</button>
+              <span style="font-size: 11px; font-weight: 600;">Dec 2-8</span>
+              <button style="background: none; border: none; color: var(--muted-foreground); cursor: pointer;">→</button>
+            </div>
+          </div>
+          <button style="font-size: 11px; background: var(--primary); color: hsl(30 15% 10%); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">+ Task</button>
+        </div>
+        <div style="display: flex; gap: 6px; height: calc(100% - 40px);">
+          <div class="day-col past">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Mon</div>
+            <div style="font-weight: 700;">2</div>
+            <div class="task-chip done">✓ Standup</div>
+            <div class="task-chip done">✓ 8mi ride</div>
+          </div>
+          <div class="day-col past">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Tue</div>
+            <div style="font-weight: 700;">3</div>
+            <div class="task-chip done">✓ Dentist</div>
+          </div>
+          <div class="day-col past">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Wed</div>
+            <div style="font-weight: 700;">4</div>
+            <div class="task-chip done">✓ Deploy</div>
+          </div>
+          <div class="day-col today">
+            <div style="font-size: 9px; color: var(--primary); font-weight: 700;">TODAY</div>
+            <div style="font-weight: 700; color: var(--primary);">5</div>
+            <div class="task-chip">PRs</div>
+            <div class="task-chip urgent">! Mom</div>
+          </div>
+          <div class="day-col">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Fri</div>
+            <div style="font-weight: 700;">6</div>
+            <div class="task-chip">Deploy v2</div>
+          </div>
+          <div class="day-col">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Sat</div>
+            <div style="font-weight: 700;">7</div>
+            <div class="task-chip" style="background: hsl(270 60% 50% / 0.15); border-color: hsl(270 60% 50% / 0.3);">🧗 Climb</div>
+          </div>
+          <div class="day-col">
+            <div style="font-size: 9px; color: var(--muted-foreground);">Sun</div>
+            <div style="font-weight: 700;">8</div>
+            <div style="font-size: 16px; margin-top: 4px;">😴</div>
+          </div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- COMPLETION RING -->
+    <div class="widget" id="completion-ring-1" style="left: 740px; top: 600px; width: 160px; height: 160px; z-index: 8;">
+      <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="position: relative;">
+          <svg width="80" height="80" style="transform: rotate(-90deg);">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="var(--muted)" stroke-width="8"/>
+            <circle cx="40" cy="40" r="34" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="213" stroke-dashoffset="43" stroke-linecap="round"/>
+          </svg>
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 20px; font-weight: 800;">80%</span>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--muted-foreground); margin-top: 8px;">Today's Routes</div>
+        <div style="font-size: 12px; font-weight: 600;">4/5 sent</div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- PET WIDGET -->
+    <div class="widget" id="pet-widget-1" style="left: 920px; top: 600px; width: 140px; height: 120px; z-index: 7;">
+      <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: hsl(160 80% 50% / 0.08); border-color: hsl(160 80% 50% / 0.2);">
+        <span style="font-size: 40px;">🌿</span>
+        <div style="font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 6px;">Level 12</div>
+        <div style="font-size: 10px; color: var(--muted-foreground);">Growth: 78%</div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- STREAK COUNTER -->
+    <div class="widget" id="streak-1" style="left: 1080px; top: 600px; width: 120px; height: 100px; z-index: 6;">
+      <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <span style="font-size: 28px;">🔥</span>
+        <div style="font-size: 24px; font-weight: 800; color: var(--primary);">14</div>
+        <div style="font-size: 10px; color: var(--muted-foreground);">day streak</div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+    <!-- XP BADGE -->
+    <div class="widget" id="xp-badge-1" style="left: 920px; top: 740px; width: 140px; height: 80px; z-index: 5;">
+      <div class="glass-card" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, hsl(25 95% 58% / 0.15), transparent);">
+        <span style="font-size: 24px;">⚡</span>
+        <div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--primary);">2,450</div>
+          <div style="font-size: 10px; color: var(--muted-foreground);">Total XP</div>
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>
+      <div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>
+    </div>
+
+  </div>
+
+  <script>
+    let widgetCounter = 100;
+
+    // Delete widget
+    function deleteWidget(el) {
+      el.style.transition = 'transform 200ms, opacity 200ms';
+      el.style.transform = 'scale(0.8)';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 200);
+    }
+
+    // Reset canvas
+    function resetCanvas() {
+      if (confirm('Remove all widgets from canvas?')) {
+        document.querySelectorAll('#widget-canvas .widget').forEach(w => w.remove());
+      }
+    }
+
+    // Save layout (just logs for now)
+    function saveLayout() {
+      const widgets = [];
+      document.querySelectorAll('#widget-canvas .widget').forEach(w => {
+        widgets.push({
+          id: w.id,
+          left: w.style.left,
+          top: w.style.top,
+          width: w.style.width,
+          height: w.style.height
+        });
+      });
+      console.log('Layout saved:', widgets);
+      alert('Layout saved! (Check console for data)');
+    }
+
+    // Widget templates
+    const widgetTemplates = {
+      'climbing-holds': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span style="font-size: 18px;">🧗</span><h2 class="heading" style="font-size: 14px; margin: 0;">Climbing Holds</h2></div><div class="pitch-card" style="border-color: var(--moderate);"><div style="display: flex; align-items: center; gap: 10px;"><div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--moderate), #fcd34d); display: flex; align-items: center; justify-content: center;"><div style="width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%;"></div></div><div><div style="font-weight: 600;">New Habit</div><span style="font-size: 10px; color: var(--muted-foreground);">5.9 Moderate</span></div></div></div></div>`,
+      'weekly-habits': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>📊</span><span class="heading" style="font-size: 13px;">Weekly Habits</span></div><div style="display: flex; gap: 4px;"><div class="habit-day done">✓</div><div class="habit-day done">✓</div><div class="habit-day missed">✗</div><div class="habit-day today"></div><div class="habit-day" style="opacity:0.4"></div><div class="habit-day" style="opacity:0.4"></div><div class="habit-day" style="opacity:0.4"></div></div></div>`,
+      'todays-pitch': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>⛰️</span><span class="heading">Today's Pitch</span></div><div style="margin-top: 10px; font-size: 12px;">4/5 routes sent</div></div>`,
+      'quick-log': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 28px;">⚡</span><div style="font-size: 12px; margin-top: 6px;">Quick Log</div></div>`,
+      'weekly-goals': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>🎯</span><span class="heading" style="font-size: 13px;">Weekly Goals</span></div><div class="progress-bar"><div class="progress-fill" style="width: 70%; background: var(--secondary);"></div></div></div>`,
+      'monthly-summits': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span>🏔️</span><span class="heading" style="font-size: 13px;">Monthly Summits</span></div><div class="progress-arc"><svg width="50" height="50" style="transform: rotate(-90deg);"><circle cx="25" cy="25" r="20" fill="none" stroke="var(--muted)" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="125" stroke-dashoffset="44"/></svg><span class="progress-arc-value" style="color: var(--primary); font-size: 11px;">65%</span></div></div>`,
+      'expedition': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>🗻</span><span class="heading">Expedition</span></div><div style="margin-top: 8px;"><div class="progress-bar"><div class="progress-fill" style="width: 65%; background: linear-gradient(90deg, var(--primary), var(--warning));"></div></div><div style="font-size: 11px; margin-top: 4px;">130/200 mi</div></div></div>`,
+      'daily-quests': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>📜</span><span class="heading">Daily Quests</span></div><div style="margin-top: 8px; font-size: 11px;">3 quests available</div></div>`,
+      'altimeter': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>📍</span><span class="heading">Altimeter</span></div><div style="text-align: center; margin-top: 10px;"><div style="font-size: 24px; font-weight: 700;">2,450m</div><div style="font-size: 11px; color: var(--accent);">Alpine Zone</div></div></div>`,
+      'xp-badge': `<div class="glass-card" style="display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 20px;">⚡</span><div><div style="font-size: 18px; font-weight: 700; color: var(--primary);">2,450</div><div style="font-size: 10px; color: var(--muted-foreground);">XP</div></div></div>`,
+      'streak': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 24px;">🔥</span><div style="font-size: 20px; font-weight: 700;">14</div><div style="font-size: 10px; color: var(--muted-foreground);">days</div></div>`,
+      'combo-tracker': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 24px;">💥</span><div style="font-size: 16px; font-weight: 700; color: var(--warning);">3x COMBO</div></div>`,
+      'pattern-insights': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>📈</span><span class="heading">Insights</span></div><div style="margin-top: 8px; font-size: 11px;">Best day: Wednesday (92%)</div></div>`,
+      'weekly-performance': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>📊</span><span class="heading">Performance</span></div><div style="display: flex; gap: 3px; margin-top: 10px; height: 30px;"><div style="flex: 1; background: hsl(160 80% 50% / 0.5); border-radius: 3px;"></div><div style="flex: 1; background: hsl(160 80% 50% / 0.7); border-radius: 3px;"></div><div style="flex: 1; background: hsl(160 80% 50% / 0.9); border-radius: 3px;"></div><div style="flex: 1; background: hsl(160 80% 50% / 0.8); border-radius: 3px;"></div><div style="flex: 1; background: hsl(160 80% 50% / 0.6); border-radius: 3px;"></div></div></div>`,
+      'completion-ring': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><svg width="60" height="60" style="transform: rotate(-90deg);"><circle cx="30" cy="30" r="24" fill="none" stroke="var(--muted)" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" stroke="var(--accent)" stroke-width="6" stroke-dasharray="150" stroke-dashoffset="30"/></svg><div style="margin-top: 6px; font-size: 14px; font-weight: 700;">80%</div></div>`,
+      'week-calendar': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>📅</span><span class="heading">Week</span></div><div style="display: flex; gap: 4px; margin-top: 8px;"><div class="day-col past" style="padding: 4px;"><div style="font-size: 9px;">M</div><div style="font-size: 11px; font-weight: 700;">2</div></div><div class="day-col today" style="padding: 4px;"><div style="font-size: 9px; color: var(--primary);">T</div><div style="font-size: 11px; font-weight: 700; color: var(--primary);">5</div></div><div class="day-col" style="padding: 4px;"><div style="font-size: 9px;">F</div><div style="font-size: 11px; font-weight: 700;">6</div></div></div></div>`,
+      'ridge-traverse': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>🏔️</span><span class="heading">Ridge</span></div><div style="height: 20px; background: linear-gradient(90deg, var(--success) 60%, var(--muted) 60%); border-radius: 4px; margin-top: 10px;"></div></div>`,
+      'pet-widget': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 32px;">🌿</span><div style="font-size: 12px; font-weight: 600; color: var(--accent); margin-top: 4px;">Lv.12</div></div>`,
+      'streak-freeze': `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 24px;">❄️</span><div style="font-size: 11px; margin-top: 4px;">2 freezes left</div></div>`,
+      'inspiration': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>💡</span><span class="heading">Inspiration</span></div><div style="margin-top: 8px; font-size: 11px; font-style: italic; color: var(--muted-foreground);">"The summit is just a halfway point."</div></div>`,
+      'basecamp': `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>🏕️</span><span class="heading">Basecamp</span></div><div style="margin-top: 8px; font-size: 11px;">Status: Ready to climb</div></div>`
+    };
+
+    // Make palette items draggable to create new widgets
+    document.querySelectorAll('.palette-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('widget-type', item.dataset.widget);
+        item.classList.add('dragging');
+      });
+      item.addEventListener('dragend', () => item.classList.remove('dragging'));
+      item.setAttribute('draggable', 'true');
+    });
+
+    // Drop zone
+    const canvas = document.getElementById('widget-canvas');
+    canvas.addEventListener('dragover', (e) => e.preventDefault());
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const widgetType = e.dataTransfer.getData('widget-type');
+      if (widgetType && widgetTemplates[widgetType]) {
+        createWidget(widgetType, e.clientX - 284 - 100, e.clientY - 56 - 50);
+      }
+    });
+
+    function createWidget(type, x, y) {
+      const widget = document.createElement('div');
+      widget.className = 'widget';
+      widget.id = `${type}-${widgetCounter++}`;
+      widget.style.cssText = `left: ${x}px; top: ${y}px; width: 200px; height: 150px; z-index: ${widgetCounter};`;
+      widget.innerHTML = widgetTemplates[type] +
+        '<button class="delete-btn" onclick="deleteWidget(this.parentElement)">×</button>' +
+        '<div class="resize-handle"><svg viewBox="0 0 16 16" fill="var(--muted-foreground)"><path d="M14 14H10V12H12V10H14V14ZM14 6H12V8H14V6ZM6 12H8V14H6V12Z"/></svg></div>';
+      canvas.appendChild(widget);
+      initWidgetInteraction(widget);
+    }
+
+    function initWidgetInteraction(widget) {
+      interact(widget)
+        .draggable({
+          inertia: true,
+          modifiers: [interact.modifiers.restrictRect({ restriction: '#widget-canvas', endOnly: true })],
+          listeners: {
+            start(e) { e.target.classList.add('dragging'); },
+            move(e) {
+              const t = e.target;
+              const x = (parseFloat(t.getAttribute('data-x')) || parseFloat(t.style.left)) + e.dx;
+              const y = (parseFloat(t.getAttribute('data-y')) || parseFloat(t.style.top)) + e.dy;
+              t.style.left = x + 'px';
+              t.style.top = y + 'px';
+              t.setAttribute('data-x', x);
+              t.setAttribute('data-y', y);
+            },
+            end(e) { e.target.classList.remove('dragging'); }
+          }
+        })
+        .resizable({
+          edges: { right: true, bottom: true },
+          modifiers: [interact.modifiers.restrictSize({ min: { width: 100, height: 80 } })],
+          listeners: {
+            move(e) {
+              e.target.style.width = e.rect.width + 'px';
+              e.target.style.height = e.rect.height + 'px';
+            }
+          }
+        });
+    }
+
+    // Init existing widgets
+    document.querySelectorAll('#widget-canvas .widget').forEach(initWidgetInteraction);
+  </script>
+
+</body>
+</html>

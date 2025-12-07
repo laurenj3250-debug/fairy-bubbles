@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Builder V2+V3 - GoalConnect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: hsl(45 30% 12%);
+      --foreground: hsl(40 20% 95%);
+      --card: hsl(40 20% 18%);
+      --primary: hsl(25 95% 58%);
+      --secondary: hsl(200 85% 55%);
+      --accent: hsl(160 80% 50%);
+      --success: hsl(142 85% 55%);
+      --warning: hsl(38 100% 60%);
+      --destructive: hsl(0 90% 60%);
+      --border: hsl(40 15% 30%);
+      --muted: hsl(40 12% 22%);
+      --muted-foreground: hsl(40 15% 65%);
+      --easy: #4ade80;
+      --moderate: #fbbf24;
+      --hard: #fb923c;
+      --expert: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      background-image:
+        radial-gradient(ellipse at top, rgba(249, 115, 22, 0.06), transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.04), transparent 50%);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .heading { font-family: 'Fraunces', serif; font-weight: 600; }
+
+    .glass-card {
+      border-radius: 16px;
+      background: hsl(45 30% 12% / 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid hsl(40 20% 95% / 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      height: 100%;
+      padding: 16px;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    .widget-palette {
+      width: 260px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 150;
+      overflow-y: auto;
+      padding: 16px 12px;
+    }
+
+    .palette-section {
+      margin-bottom: 16px;
+    }
+    .palette-section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-foreground);
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+    .palette-item {
+      padding: 10px 12px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      cursor: grab;
+      font-size: 13px;
+      transition: all 150ms;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .palette-item:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--primary);
+      transform: translateX(2px);
+    }
+    .palette-item .icon { font-size: 16px; }
+    .palette-item .source {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+    .source-v2 { background: hsl(200 85% 55% / 0.2); color: var(--secondary); }
+    .source-v3 { background: hsl(25 95% 58% / 0.2); color: var(--primary); }
+
+    .canvas-area {
+      flex: 1;
+      margin-left: 260px;
+      padding: 24px;
+      position: relative;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .widget {
+      position: absolute;
+      cursor: move;
+      touch-action: none;
+      user-select: none;
+    }
+    .widget:hover .delete-btn { opacity: 1; }
+    .widget.resizing .glass-card { border-color: var(--primary); }
+
+    .delete-btn {
+      position: absolute;
+      top: -8px; right: -8px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--destructive);
+      color: white;
+      border: 2px solid var(--background);
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 150ms;
+      z-index: 10;
+    }
+    .delete-btn:hover { transform: scale(1.1); }
+
+    .resize-handle {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      width: 16px; height: 16px;
+      cursor: se-resize;
+      opacity: 0.3;
+    }
+    .resize-handle::before {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 8px; height: 8px;
+      border-right: 2px solid var(--foreground);
+      border-bottom: 2px solid var(--foreground);
+    }
+    .widget:hover .resize-handle { opacity: 0.7; }
+
+    /* Glowing orbs */
+    .orb-container { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 8px; }
+    .orb {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      position: relative;
+      cursor: pointer;
+      transition: all 300ms;
+    }
+    .orb::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: inherit;
+      filter: blur(12px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+    .orb:hover { transform: scale(1.1); }
+    .orb.completed { background: var(--success); }
+    .orb.pending { background: var(--muted); }
+
+    /* Climbing holds */
+    .hold {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 200ms;
+      position: relative;
+    }
+    .hold:hover { transform: scale(1.05); }
+    .hold svg { width: 36px; height: 36px; }
+    .hold.completed::after {
+      content: '✓';
+      position: absolute;
+      bottom: -4px; right: -4px;
+      width: 18px; height: 18px;
+      background: var(--success);
+      border-radius: 50%;
+      font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Mountain range */
+    .mountain-range {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      height: 80px;
+      padding-top: 16px;
+    }
+    .mountain {
+      width: 0; height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      position: relative;
+    }
+    .mountain::after {
+      content: '';
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 8px solid white;
+      opacity: 0.8;
+    }
+
+    /* Heatmap */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .heatmap-cell {
+      width: 100%; aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--muted);
+    }
+    .heatmap-cell.l1 { background: hsl(142 85% 55% / 0.25); }
+    .heatmap-cell.l2 { background: hsl(142 85% 55% / 0.5); }
+    .heatmap-cell.l3 { background: hsl(142 85% 55% / 0.75); }
+    .heatmap-cell.l4 { background: var(--success); }
+
+    /* Progress arc */
+    .progress-arc {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .progress-arc svg { transform: rotate(-90deg); }
+    .progress-arc .label {
+      position: absolute;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Weekly grid */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .day-col {
+      background: var(--muted);
+      border-radius: 8px;
+      padding: 8px;
+      min-height: 100px;
+    }
+    .day-col.today {
+      background: hsl(25 95% 58% / 0.1);
+      border: 1px solid hsl(25 95% 58% / 0.3);
+    }
+    .day-header {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .today .day-header { color: var(--primary); }
+
+    /* Todo item */
+    .todo-item {
+      padding: 6px 8px;
+      background: var(--card);
+      border-radius: 6px;
+      font-size: 11px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .todo-checkbox {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .todo-item.done .todo-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .todo-item.done { opacity: 0.5; text-decoration: line-through; }
+
+    /* Badge styles */
+    .badge {
+      padding: 8px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .badge-primary { background: hsl(25 95% 58% / 0.15); color: var(--primary); border: 1px solid hsl(25 95% 58% / 0.3); }
+    .badge-muted { background: var(--muted); border: 1px solid var(--border); }
+    .badge-accent { background: hsl(160 80% 50% / 0.1); color: var(--accent); border: 1px solid hsl(160 80% 50% / 0.3); }
+
+    /* Expedition card */
+    .expedition-progress {
+      height: 8px;
+      background: var(--muted);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+    .expedition-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), hsl(142 85% 65%));
+      border-radius: 4px;
+      transition: width 500ms;
+    }
+
+    /* Pet evolution */
+    .pet-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .pet-emoji { font-size: 48px; }
+    .pet-stats { font-size: 12px; color: var(--muted-foreground); }
+  </style>
+</head>
+<body>
+  <!-- Widget Palette -->
+  <div class="widget-palette">
+    <h2 class="heading text-lg mb-4" style="color: var(--foreground)">Widget Builder</h2>
+    <p style="font-size: 11px; color: var(--muted-foreground); margin-bottom: 16px;">
+      Drag widgets onto canvas. Resize handles in corners. X to delete.
+    </p>
+
+    <!-- V2 Widgets -->
+    <div class="palette-section">
+      <div class="palette-section-title">V2 Dashboard</div>
+      <div class="palette-item" draggable="true" data-widget="glowing-orbs">
+        <span class="icon">🔮</span> Glowing Orb Habits
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="mountain-range">
+        <span class="icon">🏔️</span> Mountain Range Goals
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="heatmap">
+        <span class="icon">📊</span> Habit Heatmap
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="weekly-rhythm">
+        <span class="icon">📈</span> Weekly Rhythm
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="todo-panel">
+        <span class="icon">📋</span> Todo Panel
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="summit-log">
+        <span class="icon">📔</span> Summit Log
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="peak-lore">
+        <span class="icon">🏕️</span> Peak Lore
+        <span class="source source-v2">V2</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="token-counter">
+        <span class="icon">🪙</span> Token Counter
+        <span class="source source-v2">V2</span>
+      </div>
+    </div>
+
+    <!-- V3 Widgets -->
+    <div class="palette-section">
+      <div class="palette-section-title">V3 Dashboard</div>
+      <div class="palette-item" draggable="true" data-widget="habit-grid">
+        <span class="icon">⚡</span> Daily Pitches Grid
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="todo-week">
+        <span class="icon">📅</span> Route Beta (7-day)
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="weekly-goals">
+        <span class="icon">🎯</span> Weekly Goals
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="monthly-summits">
+        <span class="icon">🏔️</span> Monthly Summits (Arcs)
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="expedition-cards">
+        <span class="icon">🗺️</span> Expedition Cards
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="mood-button">
+        <span class="icon">😊</span> Mood Tracker
+        <span class="source source-v3">V3</span>
+      </div>
+    </div>
+
+    <!-- Shared Widgets -->
+    <div class="palette-section">
+      <div class="palette-section-title">Stats & Badges</div>
+      <div class="palette-item" draggable="true" data-widget="xp-badge">
+        <span class="icon">⚡</span> XP Badge
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="streak-badge">
+        <span class="icon">🔥</span> Streak Badge
+        <span class="source source-v3">V3</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="pet-widget">
+        <span class="icon">🌱</span> Pet Widget
+        <span class="source source-v3">V3</span>
+      </div>
+    </div>
+
+    <!-- Legacy Widgets -->
+    <div class="palette-section">
+      <div class="palette-section-title">DashboardNew (Legacy)</div>
+      <div class="palette-item" draggable="true" data-widget="climbing-holds">
+        <span class="icon">🧗</span> Climbing Hold Habits
+        <span class="source" style="background: hsl(160 80% 50% / 0.2); color: var(--accent);">Legacy</span>
+      </div>
+      <div class="palette-item" draggable="true" data-widget="altimeter">
+        <span class="icon">🌡️</span> Altimeter Zones
+        <span class="source" style="background: hsl(160 80% 50% / 0.2); color: var(--accent);">Legacy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-area" id="canvas">
+    <!-- Pre-placed widgets for demo -->
+
+    <!-- XP Badge -->
+    <div class="widget" data-x="20" data-y="20" style="width: 140px; height: 50px; transform: translate(20px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 0;">
+        <div class="badge badge-primary" style="height: 100%; justify-content: center;">
+          <span>⚡</span>
+          <span>2,847 XP</span>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Streak Badge -->
+    <div class="widget" data-x="170" data-y="20" style="width: 100px; height: 50px; transform: translate(170px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 0;">
+        <div class="badge badge-muted" style="height: 100%; justify-content: center;">
+          <span>🔥</span>
+          <span>14</span>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Pet Widget -->
+    <div class="widget" data-x="280" data-y="20" style="width: 80px; height: 50px; transform: translate(280px, 20px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="padding: 0;">
+        <div class="badge badge-accent" style="height: 100%; justify-content: center;">
+          <span>🌳</span>
+          <span style="font-size: 11px;">Lv.5</span>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Glowing Orb Habits (V2) -->
+    <div class="widget" data-x="20" data-y="90" style="width: 280px; height: 180px; transform: translate(20px, 90px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>🔮</span>
+          <span class="heading" style="font-size: 14px;">Today's Habits</span>
+          <span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span>
+        </div>
+        <div class="orb-container">
+          <div class="orb completed" title="Exercise">💪</div>
+          <div class="orb completed" title="Meditate">🧘</div>
+          <div class="orb pending" title="Read">📚</div>
+          <div class="orb pending" title="Journal">✍️</div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Climbing Hold Habits (Legacy) -->
+    <div class="widget" data-x="320" data-y="90" style="width: 320px; height: 180px; transform: translate(320px, 90px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>🧗</span>
+          <span class="heading" style="font-size: 14px;">Today's Pitch</span>
+          <span style="font-size: 10px; color: var(--accent); margin-left: auto;">Legacy</span>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div class="hold completed" style="background: var(--easy);" title="5.6 - Exercise">
+            <svg viewBox="0 0 40 40"><path d="M20 5c-8 0-15 7-15 15s7 15 15 15 15-7 15-15-7-15-15-15z" fill="currentColor" opacity="0.8"/></svg>
+          </div>
+          <div class="hold completed" style="background: var(--moderate);" title="5.9 - Meditate">
+            <svg viewBox="0 0 40 40"><path d="M10 35 L20 5 L30 35 Z" fill="currentColor" opacity="0.8"/></svg>
+          </div>
+          <div class="hold" style="background: var(--hard);" title="5.11c - Deep Work">
+            <svg viewBox="0 0 40 40"><path d="M5 20c0-8 15-15 15-15s15 7 15 15-7 15-15 15-15-7-15-15z" fill="currentColor" opacity="0.8"/></svg>
+          </div>
+          <div class="hold" style="background: var(--expert);" title="5.13a - Cold Shower">
+            <svg viewBox="0 0 40 40"><path d="M20 5 L35 15 L30 35 L10 35 L5 15 Z" fill="currentColor" opacity="0.8"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Mountain Range Goals (V2) -->
+    <div class="widget" data-x="660" data-y="90" style="width: 240px; height: 180px; transform: translate(660px, 90px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span>🏔️</span>
+          <span class="heading" style="font-size: 14px;">Goal Peaks</span>
+          <span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span>
+        </div>
+        <div class="mountain-range">
+          <div class="mountain" style="border-bottom: 50px solid var(--success);"></div>
+          <div class="mountain" style="border-bottom: 70px solid var(--primary);"></div>
+          <div class="mountain" style="border-bottom: 40px solid var(--secondary);"></div>
+          <div class="mountain" style="border-bottom: 60px solid var(--accent);"></div>
+        </div>
+        <div style="display: flex; justify-content: space-around; margin-top: 8px; font-size: 10px; color: var(--muted-foreground);">
+          <span>Read</span><span>Run</span><span>Save</span><span>Code</span>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Weekly Goals (V3) -->
+    <div class="widget" data-x="20" data-y="290" style="width: 320px; height: 160px; transform: translate(20px, 290px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>🎯</span>
+          <span class="heading" style="font-size: 14px;">Weekly Goals</span>
+          <span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span>
+        </div>
+        <div style="space-y: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--muted); border-radius: 8px; margin-bottom: 6px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; font-size: 10px;">✓</div>
+            <span style="font-size: 13px; flex: 1; text-decoration: line-through; opacity: 0.6;">Run 3x this week</span>
+            <span style="font-size: 11px; color: var(--muted-foreground);">3/3</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--muted); border-radius: 8px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border);"></div>
+            <span style="font-size: 13px; flex: 1;">Read 100 pages</span>
+            <span style="font-size: 11px; color: var(--muted-foreground);">67/100</span>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Monthly Summits with Progress Arcs (V3) -->
+    <div class="widget" data-x="360" data-y="290" style="width: 320px; height: 160px; transform: translate(360px, 290px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>🏔️</span>
+          <span class="heading" style="font-size: 14px;">Monthly Summits</span>
+          <span style="font-size: 10px; color: var(--muted-foreground); margin-left: 4px;">December</span>
+          <span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span>
+        </div>
+        <div style="display: flex; justify-content: space-around;">
+          <div style="text-align: center;">
+            <div class="progress-arc">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--muted)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="45"/>
+              </svg>
+              <span class="label">70%</span>
+            </div>
+            <p style="font-size: 11px; color: var(--muted-foreground); margin-top: 6px;">Fitness</p>
+          </div>
+          <div style="text-align: center;">
+            <div class="progress-arc">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--muted)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--secondary)" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="75"/>
+              </svg>
+              <span class="label">50%</span>
+            </div>
+            <p style="font-size: 11px; color: var(--muted-foreground); margin-top: 6px;">Learning</p>
+          </div>
+          <div style="text-align: center;">
+            <div class="progress-arc">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--muted)" stroke-width="4"/>
+                <circle cx="28" cy="28" r="24" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="120"/>
+              </svg>
+              <span class="label">20%</span>
+            </div>
+            <p style="font-size: 11px; color: var(--muted-foreground); margin-top: 6px;">Savings</p>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Habit Heatmap (V2) -->
+    <div class="widget" data-x="700" data-y="290" style="width: 200px; height: 160px; transform: translate(700px, 290px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>📊</span>
+          <span class="heading" style="font-size: 14px;">Habit Heatmap</span>
+          <span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span>
+        </div>
+        <div class="heatmap-grid">
+          <div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Daily Pitches Grid (V3) -->
+    <div class="widget" data-x="20" data-y="470" style="width: 880px; height: 140px; transform: translate(20px, 470px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>⚡</span>
+          <span class="heading" style="font-size: 14px;">Daily Pitches</span>
+          <span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 100px repeat(7, 1fr); gap: 8px; font-size: 12px;">
+          <div></div>
+          <div style="text-align: center; font-weight: 500;">Mon</div>
+          <div style="text-align: center; font-weight: 500;">Tue</div>
+          <div style="text-align: center; font-weight: 500;">Wed</div>
+          <div style="text-align: center; font-weight: 500; color: var(--primary);">Thu</div>
+          <div style="text-align: center; font-weight: 500;">Fri</div>
+          <div style="text-align: center; font-weight: 500;">Sat</div>
+          <div style="text-align: center; font-weight: 500;">Sun</div>
+
+          <div style="color: var(--muted-foreground);">Exercise</div>
+          <div style="text-align: center;">✅</div>
+          <div style="text-align: center;">✅</div>
+          <div style="text-align: center;">✅</div>
+          <div style="text-align: center; background: hsl(25 95% 58% / 0.1); border-radius: 6px; padding: 4px;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+
+          <div style="color: var(--muted-foreground);">Read</div>
+          <div style="text-align: center;">✅</div>
+          <div style="text-align: center;">❌</div>
+          <div style="text-align: center;">✅</div>
+          <div style="text-align: center; background: hsl(25 95% 58% / 0.1); border-radius: 6px; padding: 4px;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+          <div style="text-align: center; opacity: 0.3;">⬜</div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Route Beta 7-day Todos (V3) -->
+    <div class="widget" data-x="20" data-y="630" style="width: 880px; height: 180px; transform: translate(20px, 630px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>📋</span>
+          <span class="heading" style="font-size: 14px;">Route Beta</span>
+          <span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span>
+        </div>
+        <div class="week-grid">
+          <div class="day-col">
+            <div class="day-header">Mon</div>
+            <div class="todo-item done"><div class="todo-checkbox"></div>Review PR</div>
+          </div>
+          <div class="day-col">
+            <div class="day-header">Tue</div>
+            <div class="todo-item done"><div class="todo-checkbox"></div>Team sync</div>
+          </div>
+          <div class="day-col">
+            <div class="day-header">Wed</div>
+            <div class="todo-item"><div class="todo-checkbox"></div>Deploy v2</div>
+          </div>
+          <div class="day-col today">
+            <div class="day-header">Thu</div>
+            <div class="todo-item"><div class="todo-checkbox"></div>Design review</div>
+            <div class="todo-item"><div class="todo-checkbox"></div>Write docs</div>
+          </div>
+          <div class="day-col">
+            <div class="day-header">Fri</div>
+            <div class="todo-item"><div class="todo-checkbox"></div>Ship feature</div>
+          </div>
+          <div class="day-col">
+            <div class="day-header">Sat</div>
+          </div>
+          <div class="day-col">
+            <div class="day-header">Sun</div>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Expedition Cards (V3) -->
+    <div class="widget" data-x="20" data-y="830" style="width: 280px; height: 160px; transform: translate(20px, 830px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span>🗺️</span>
+          <span class="heading" style="font-size: 14px;">Expedition</span>
+          <span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span>
+        </div>
+        <h4 style="font-size: 13px; margin-top: 8px;">Learn TypeScript</h4>
+        <div class="expedition-progress">
+          <div class="expedition-fill" style="width: 65%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted-foreground);">
+          <span>65% complete</span>
+          <span>13/20 tasks</span>
+        </div>
+        <div style="margin-top: 8px;">
+          <span style="font-size: 10px; padding: 3px 8px; background: hsl(142 85% 55% / 0.15); color: var(--success); border-radius: 4px;">On track</span>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Todo Panel (V2) -->
+    <div class="widget" data-x="320" data-y="830" style="width: 240px; height: 200px; transform: translate(320px, 830px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>📋</span>
+          <span class="heading" style="font-size: 14px;">Quick Tasks</span>
+          <span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span>
+        </div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Check email</div>
+        <div class="todo-item done"><div class="todo-checkbox"></div>Morning standup</div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Review design</div>
+        <div class="todo-item"><div class="todo-checkbox"></div>Submit report</div>
+        <div class="todo-item done"><div class="todo-checkbox"></div>Call with Alex</div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Altimeter (Legacy) -->
+    <div class="widget" data-x="580" data-y="830" style="width: 180px; height: 200px; transform: translate(580px, 830px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span>🌡️</span>
+          <span class="heading" style="font-size: 14px;">Altimeter</span>
+          <span style="font-size: 10px; color: var(--accent); margin-left: auto;">Legacy</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: hsl(0 90% 60% / 0.15); border-radius: 6px; border-left: 3px solid var(--destructive);">
+            <span style="font-size: 11px; font-weight: 500;">Death Zone</span>
+            <span style="font-size: 10px; color: var(--muted-foreground); margin-left: auto;">8000m+</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: hsl(38 100% 60% / 0.15); border-radius: 6px; border-left: 3px solid var(--warning);">
+            <span style="font-size: 11px; font-weight: 500;">Summit Push</span>
+            <span style="font-size: 10px; color: var(--muted-foreground); margin-left: auto;">6000m</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: hsl(160 80% 50% / 0.15); border-radius: 6px; border-left: 3px solid var(--accent);">
+            <span style="font-size: 11px; font-weight: 500;">High Camp</span>
+            <span style="font-size: 10px; color: var(--muted-foreground); margin-left: auto;">4000m</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: hsl(142 85% 55% / 0.15); border-radius: 6px; border-left: 3px solid var(--success);">
+            <span style="font-size: 11px; font-weight: 500;">Base Camp</span>
+            <span style="font-size: 10px; color: var(--muted-foreground); margin-left: auto;">2000m</span>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+    <!-- Mood Tracker (V3) -->
+    <div class="widget" data-x="780" data-y="830" style="width: 120px; height: 120px; transform: translate(780px, 830px);">
+      <button class="delete-btn">&times;</button>
+      <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <span style="font-size: 10px; color: var(--primary); position: absolute; top: 8px; right: 8px;">V3</span>
+        <span style="font-size: 40px; margin-bottom: 8px;">😊</span>
+        <span style="font-size: 11px; color: var(--muted-foreground);">Feeling good</span>
+      </div>
+      <div class="resize-handle"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Drag and resize with interact.js
+    interact('.widget')
+      .draggable({
+        inertia: true,
+        modifiers: [
+          interact.modifiers.restrictRect({
+            restriction: 'parent',
+            endOnly: true
+          })
+        ],
+        autoScroll: true,
+        listeners: {
+          move: dragMoveListener
+        }
+      })
+      .resizable({
+        edges: { right: true, bottom: true, left: false, top: false },
+        listeners: {
+          move(event) {
+            let { x, y } = event.target.dataset;
+            x = (parseFloat(x) || 0);
+            y = (parseFloat(y) || 0);
+
+            Object.assign(event.target.style, {
+              width: `${event.rect.width}px`,
+              height: `${event.rect.height}px`,
+              transform: `translate(${x}px, ${y}px)`
+            });
+          }
+        },
+        modifiers: [
+          interact.modifiers.restrictSize({
+            min: { width: 80, height: 50 }
+          })
+        ]
+      });
+
+    function dragMoveListener(event) {
+      const target = event.target;
+      const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+      target.style.transform = `translate(${x}px, ${y}px)`;
+      target.setAttribute('data-x', x);
+      target.setAttribute('data-y', y);
+    }
+
+    // Delete buttons
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.closest('.widget').remove();
+      });
+    });
+
+    // Drag from palette to canvas
+    let draggedWidget = null;
+
+    document.querySelectorAll('.palette-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        draggedWidget = item.dataset.widget;
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+    });
+
+    document.getElementById('canvas').addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    document.getElementById('canvas').addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (!draggedWidget) return;
+
+      const canvas = document.getElementById('canvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - 260; // Offset for palette width
+      const y = e.clientY - rect.top;
+
+      const widget = createWidget(draggedWidget, x, y);
+      canvas.appendChild(widget);
+
+      // Initialize interact on new widget
+      initWidgetInteract(widget);
+
+      draggedWidget = null;
+    });
+
+    function initWidgetInteract(widget) {
+      interact(widget)
+        .draggable({
+          inertia: true,
+          modifiers: [
+            interact.modifiers.restrictRect({
+              restriction: 'parent',
+              endOnly: true
+            })
+          ],
+          autoScroll: true,
+          listeners: {
+            move: dragMoveListener
+          }
+        })
+        .resizable({
+          edges: { right: true, bottom: true, left: false, top: false },
+          listeners: {
+            move(event) {
+              let { x, y } = event.target.dataset;
+              x = (parseFloat(x) || 0);
+              y = (parseFloat(y) || 0);
+              Object.assign(event.target.style, {
+                width: `${event.rect.width}px`,
+                height: `${event.rect.height}px`,
+                transform: `translate(${x}px, ${y}px)`
+              });
+            }
+          },
+          modifiers: [
+            interact.modifiers.restrictSize({
+              min: { width: 80, height: 50 }
+            })
+          ]
+        });
+
+      widget.querySelector('.delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        widget.remove();
+      });
+    }
+
+    function createWidget(type, x, y) {
+      const widget = document.createElement('div');
+      widget.className = 'widget';
+      widget.setAttribute('data-x', x);
+      widget.setAttribute('data-y', y);
+      widget.style.transform = `translate(${x}px, ${y}px)`;
+
+      const configs = {
+        'glowing-orbs': { w: 280, h: 180, content: getOrbsContent() },
+        'climbing-holds': { w: 320, h: 180, content: getHoldsContent() },
+        'mountain-range': { w: 240, h: 180, content: getMountainContent() },
+        'heatmap': { w: 200, h: 160, content: getHeatmapContent() },
+        'weekly-rhythm': { w: 300, h: 120, content: getWeeklyRhythmContent() },
+        'todo-panel': { w: 240, h: 200, content: getTodoPanelContent() },
+        'summit-log': { w: 260, h: 180, content: getSummitLogContent() },
+        'peak-lore': { w: 240, h: 140, content: getPeakLoreContent() },
+        'token-counter': { w: 160, h: 80, content: getTokenContent() },
+        'habit-grid': { w: 600, h: 140, content: getHabitGridContent() },
+        'todo-week': { w: 700, h: 180, content: getTodoWeekContent() },
+        'weekly-goals': { w: 320, h: 160, content: getWeeklyGoalsContent() },
+        'monthly-summits': { w: 320, h: 160, content: getMonthlySummitsContent() },
+        'expedition-cards': { w: 280, h: 160, content: getExpeditionContent() },
+        'mood-button': { w: 120, h: 120, content: getMoodContent() },
+        'xp-badge': { w: 140, h: 50, content: getXPContent() },
+        'streak-badge': { w: 100, h: 50, content: getStreakContent() },
+        'pet-widget': { w: 80, h: 50, content: getPetContent() },
+        'altimeter': { w: 180, h: 200, content: getAltimeterContent() }
+      };
+
+      const config = configs[type] || { w: 200, h: 150, content: '<div class="glass-card">Widget</div>' };
+      widget.style.width = config.w + 'px';
+      widget.style.height = config.h + 'px';
+      widget.innerHTML = `<button class="delete-btn">&times;</button>${config.content}<div class="resize-handle"></div>`;
+
+      return widget;
+    }
+
+    // Widget content generators
+    function getOrbsContent() {
+      return `<div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🔮</span><span class="heading" style="font-size: 14px;">Today's Habits</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div>
+        <div class="orb-container"><div class="orb pending">💪</div><div class="orb pending">🧘</div><div class="orb pending">📚</div></div>
+      </div>`;
+    }
+    function getHoldsContent() {
+      return `<div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🧗</span><span class="heading" style="font-size: 14px;">Today's Pitch</span><span style="font-size: 10px; color: var(--accent); margin-left: auto;">Legacy</span></div>
+        <div style="display: flex; gap: 12px;"><div class="hold" style="background: var(--easy);"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="currentColor" opacity="0.8"/></svg></div><div class="hold" style="background: var(--moderate);"><svg viewBox="0 0 40 40"><path d="M10 35 L20 5 L30 35 Z" fill="currentColor" opacity="0.8"/></svg></div></div>
+      </div>`;
+    }
+    function getMountainContent() {
+      return `<div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;"><span>🏔️</span><span class="heading" style="font-size: 14px;">Goal Peaks</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div>
+        <div class="mountain-range"><div class="mountain" style="border-bottom: 50px solid var(--success);"></div><div class="mountain" style="border-bottom: 70px solid var(--primary);"></div><div class="mountain" style="border-bottom: 40px solid var(--secondary);"></div></div>
+      </div>`;
+    }
+    function getHeatmapContent() {
+      return `<div class="glass-card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📊</span><span class="heading" style="font-size: 14px;">Heatmap</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div>
+        <div class="heatmap-grid"><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div></div>
+      </div>`;
+    }
+    function getWeeklyRhythmContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📈</span><span class="heading" style="font-size: 14px;">Weekly Rhythm</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div><div style="display: flex; justify-content: space-around; align-items: flex-end; height: 50px;"><div style="width: 20px; height: 30px; background: var(--success); border-radius: 4px;"></div><div style="width: 20px; height: 45px; background: var(--success); border-radius: 4px;"></div><div style="width: 20px; height: 25px; background: var(--success); border-radius: 4px;"></div><div style="width: 20px; height: 50px; background: var(--primary); border-radius: 4px;"></div><div style="width: 20px; height: 15px; background: var(--muted); border-radius: 4px;"></div><div style="width: 20px; height: 10px; background: var(--muted); border-radius: 4px;"></div><div style="width: 20px; height: 10px; background: var(--muted); border-radius: 4px;"></div></div></div>`;
+    }
+    function getTodoPanelContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📋</span><span class="heading" style="font-size: 14px;">Quick Tasks</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div><div class="todo-item"><div class="todo-checkbox"></div>Task 1</div><div class="todo-item done"><div class="todo-checkbox"></div>Task 2</div><div class="todo-item"><div class="todo-checkbox"></div>Task 3</div></div>`;
+    }
+    function getSummitLogContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📔</span><span class="heading" style="font-size: 14px;">Summit Log</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div><div style="font-size: 12px; color: var(--muted-foreground);">Recent achievements and reflections...</div></div>`;
+    }
+    function getPeakLoreContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🏕️</span><span class="heading" style="font-size: 14px;">Peak Lore</span><span style="font-size: 10px; color: var(--secondary); margin-left: auto;">V2</span></div><div style="font-size: 12px; font-style: italic; color: var(--muted-foreground);">"The summit is what drives us..."</div></div>`;
+    }
+    function getTokenContent() {
+      return `<div class="glass-card" style="display: flex; align-items: center; justify-content: center;"><span style="font-size: 24px; margin-right: 8px;">🪙</span><span style="font-size: 18px; font-weight: 600;">247</span></div>`;
+    }
+    function getHabitGridContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>⚡</span><span class="heading" style="font-size: 14px;">Daily Pitches</span><span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span></div><div style="font-size: 12px; color: var(--muted-foreground);">7-day habit tracking grid...</div></div>`;
+    }
+    function getTodoWeekContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>📋</span><span class="heading" style="font-size: 14px;">Route Beta</span><span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span></div><div class="week-grid"><div class="day-col"><div class="day-header">Mon</div></div><div class="day-col"><div class="day-header">Tue</div></div><div class="day-col"><div class="day-header">Wed</div></div><div class="day-col today"><div class="day-header">Thu</div></div><div class="day-col"><div class="day-header">Fri</div></div><div class="day-col"><div class="day-header">Sat</div></div><div class="day-col"><div class="day-header">Sun</div></div></div></div>`;
+    }
+    function getWeeklyGoalsContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🎯</span><span class="heading" style="font-size: 14px;">Weekly Goals</span><span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span></div><div style="padding: 8px; background: var(--muted); border-radius: 8px;"><span style="font-size: 13px;">Goal placeholder</span></div></div>`;
+    }
+    function getMonthlySummitsContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🏔️</span><span class="heading" style="font-size: 14px;">Monthly Summits</span><span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span></div><div style="display: flex; justify-content: space-around;"><div class="progress-arc"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="var(--muted)" stroke-width="3"/><circle cx="24" cy="24" r="20" fill="none" stroke="var(--primary)" stroke-width="3" stroke-dasharray="125.6" stroke-dashoffset="50" style="transform: rotate(-90deg); transform-origin: center;"/></svg></div></div></div>`;
+    }
+    function getExpeditionContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px;"><span>🗺️</span><span class="heading" style="font-size: 14px;">Expedition</span><span style="font-size: 10px; color: var(--primary); margin-left: auto;">V3</span></div><h4 style="font-size: 13px; margin-top: 8px;">Project Name</h4><div class="expedition-progress"><div class="expedition-fill" style="width: 45%;"></div></div><span style="font-size: 11px; color: var(--muted-foreground);">45% complete</span></div>`;
+    }
+    function getMoodContent() {
+      return `<div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: 10px; color: var(--primary); position: absolute; top: 8px; right: 8px;">V3</span><span style="font-size: 40px;">😊</span><span style="font-size: 11px; color: var(--muted-foreground);">Mood</span></div>`;
+    }
+    function getXPContent() {
+      return `<div class="glass-card" style="padding: 0;"><div class="badge badge-primary" style="height: 100%; justify-content: center;"><span>⚡</span><span>0 XP</span></div></div>`;
+    }
+    function getStreakContent() {
+      return `<div class="glass-card" style="padding: 0;"><div class="badge badge-muted" style="height: 100%; justify-content: center;"><span>🔥</span><span>0</span></div></div>`;
+    }
+    function getPetContent() {
+      return `<div class="glass-card" style="padding: 0;"><div class="badge badge-accent" style="height: 100%; justify-content: center;"><span>🌱</span><span style="font-size: 11px;">Lv.1</span></div></div>`;
+    }
+    function getAltimeterContent() {
+      return `<div class="glass-card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><span>🌡️</span><span class="heading" style="font-size: 14px;">Altimeter</span><span style="font-size: 10px; color: var(--accent); margin-left: auto;">Legacy</span></div><div style="display: flex; flex-direction: column; gap: 4px;"><div style="padding: 6px 8px; background: hsl(0 90% 60% / 0.15); border-radius: 6px; border-left: 3px solid var(--destructive); font-size: 11px;">Death Zone</div><div style="padding: 6px 8px; background: hsl(38 100% 60% / 0.15); border-radius: 6px; border-left: 3px solid var(--warning); font-size: 11px;">Summit Push</div><div style="padding: 6px 8px; background: hsl(142 85% 55% / 0.15); border-radius: 6px; border-left: 3px solid var(--success); font-size: 11px;">Base Camp</div></div></div>`;
+    }
+  </script>
+</body>
+</html>

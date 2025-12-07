@@ -1,24 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, endOfWeek, addDays, isToday, isBefore, getISOWeek, getYear } from "date-fns";
 import type { Goal, Habit, HabitLog, Todo } from "@shared/schema";
-import { ExpeditionHeader } from "@/components/ExpeditionHeader";
 import { TodoDialogEnhanced } from "@/components/TodoDialogEnhanced";
 import { GoalDialog } from "@/components/GoalDialog";
 import { cn } from "@/lib/utils";
-import { getClimbingRank } from "@/lib/climbingRanks";
-import { Check, Plus, Target, Calendar, TrendingUp, Mountain, Flag } from "lucide-react";
+import { Check, Plus, Target, Calendar, TrendingUp, Flag, Clock } from "lucide-react";
 
 /**
- * WeeklyPlannerPage - V3 Homepage Design
+ * WeeklyPlannerPage - Homepage Dashboard
  *
- * Hierarchy:
- * 1. Expedition Header - Mountain context with progress
- * 2. Monthly Goals - Current month's focus areas
- * 3. Habits - Compact week view
- * 4. Weekly Goals (Checkpoints) - This week's key objectives
- * 5. Weekly Planner - 7-day task grid
- * 6. Quick Stats - Week summary
+ * Layout:
+ * - Hero stats section with clock
+ * - Horizontal week view (habits + tasks)
+ * - Sidebar: Today's habits, Goals progress
  */
 export default function WeeklyPlannerPage() {
   const queryClient = useQueryClient();
@@ -26,6 +21,13 @@ export default function WeeklyPlannerPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [defaultGoalType, setDefaultGoalType] = useState<"monthly" | "weekly">("monthly");
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update clock every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Current dates
   const now = new Date();
@@ -51,57 +53,19 @@ export default function WeeklyPlannerPage() {
     queryKey: ["/api/todos"],
   });
 
-  const { data: climbingStats } = useQuery<{ climbingLevel: number }>({
-    queryKey: ["/api/climbing/stats"],
-    queryFn: async () => {
-      const res = await fetch("/api/climbing/stats");
-      if (!res.ok) return { climbingLevel: 1 };
-      return res.json();
-    },
-  });
+  // Calculate week completion rate
+  const weekCompletionRate = useMemo(() => {
+    const totalPossible = habits.length * 7; // habits × days
+    if (totalPossible === 0) return 0;
 
-  // Calculate expedition progress (days with completed habits)
-  const seasonProgress = useMemo(() => {
-    const completedLogs = habitLogs.filter((log) => log.completed);
-    const uniqueDays = new Set(completedLogs.map((log) => log.date));
-    return { current: uniqueDays.size, total: 90 };
-  }, [habitLogs]);
+    const completedThisWeek = habitLogs.filter(log => {
+      if (!log.completed) return false;
+      const logDate = new Date(log.date);
+      return logDate >= weekStart && logDate <= weekEnd;
+    }).length;
 
-  // Calculate week progress for ExpeditionHeader
-  const weekProgress = useMemo(() => {
-    const categories = { mind: 0, foundation: 0, adventure: 0 };
-    const targets = { mind: 0, foundation: 0, adventure: 0 };
-
-    habits.forEach((habit) => {
-      if (habit.category && habit.category !== "training") {
-        const category = habit.category as keyof typeof categories;
-        if (category in categories) {
-          const target = habit.targetPerWeek || (habit.cadence === "daily" ? 7 : 3);
-          targets[category] += target;
-
-          const weekLogs = habitLogs.filter((log) => {
-            if (log.habitId !== habit.id || !log.completed) return false;
-            const logDate = new Date(log.date);
-            return logDate >= weekStart && logDate <= weekEnd;
-          });
-
-          categories[category] += Math.min(weekLogs.length, target);
-        }
-      }
-    });
-
-    return {
-      mind: { completed: categories.mind, target: targets.mind || 1 },
-      foundation: { completed: categories.foundation, target: targets.foundation || 1 },
-      adventure: { completed: categories.adventure, target: targets.adventure || 1 },
-    };
+    return Math.round((completedThisWeek / totalPossible) * 100);
   }, [habits, habitLogs, weekStart, weekEnd]);
-
-  // Get climbing rank
-  const rank = useMemo(() => {
-    const level = climbingStats?.climbingLevel || 1;
-    return getClimbingRank(level);
-  }, [climbingStats]);
 
   // Filter goals by type - separate active vs completed
   const monthlyGoals = useMemo(() => {
@@ -202,13 +166,30 @@ export default function WeeklyPlannerPage() {
   return (
     <div className="min-h-screen pb-24">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
-        {/* Expedition Header */}
-        <ExpeditionHeader
-          seasonProgress={seasonProgress}
-          climbingGrade={rank?.grade || "5.9"}
-          climbingRank={rank?.name || "Crux Panicker"}
-          weekSummary={weekProgress}
-        />
+        {/* Hero Section with Clock */}
+        <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">This Week</p>
+            <div className="flex items-baseline gap-3">
+              <span className="text-4xl font-bold">{weekCompletionRate}%</span>
+              <span className="text-sm text-primary">habits completed</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {habits.length} active habits • {weekStats.completed} tasks done
+            </p>
+          </div>
+
+          {/* Clock for ADHD time awareness */}
+          <div className="flex items-center gap-2 glass-card px-4 py-2 rounded-lg">
+            <Clock className="w-4 h-4 text-primary" />
+            <span className="text-lg font-semibold tabular-nums">
+              {format(currentTime, "HH:mm")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {format(currentTime, "EEE, MMM d")}
+            </span>
+          </div>
+        </div>
 
         {/* Top Row: Monthly Goals + Habits */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -299,7 +280,7 @@ export default function WeeklyPlannerPage() {
                 <div className="flex items-center gap-1 text-orange-500">
                   <span className="text-xs">🔥</span>
                   <span className="text-sm font-bold">
-                    {weekProgress.mind.completed + weekProgress.foundation.completed + weekProgress.adventure.completed}
+                    {Object.values(habitWeekData).reduce((sum, day) => sum + day.completed, 0)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">this week</span>
                 </div>
@@ -362,12 +343,12 @@ export default function WeeklyPlannerPage() {
           </div>
         </div>
 
-        {/* Weekly Goals (Checkpoints) */}
+        {/* Weekly Goals */}
         <div className="glass-card p-4 rounded-2xl">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              This Week's Checkpoints
+              Weekly Goals
               {completedWeeklyGoals.length > 0 && (
                 <span className="text-green-500 text-[10px] font-bold">
                   ✓ {completedWeeklyGoals.length} done
@@ -391,7 +372,7 @@ export default function WeeklyPlannerPage() {
                       All weekly goals completed!
                     </p>
                     <p className="text-xs text-muted-foreground mb-3">
-                      {completedWeeklyGoals.length} checkpoint{completedWeeklyGoals.length > 1 ? 's' : ''} done
+                      {completedWeeklyGoals.length} goal{completedWeeklyGoals.length > 1 ? 's' : ''} done
                     </p>
                   </>
                 ) : (
@@ -404,7 +385,7 @@ export default function WeeklyPlannerPage() {
                       onClick={handleAddWeeklyGoal}
                       className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
                     >
-                      Add Weekly Checkpoint
+                      Add Weekly Goal
                     </button>
                   </>
                 )}
@@ -581,13 +562,13 @@ export default function WeeklyPlannerPage() {
 
           <div className="glass-card p-4 rounded-xl flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
-              <Mountain className="w-5 h-5 text-amber-500" />
+              <Target className="w-5 h-5 text-amber-500" />
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {completedWeeklyGoals.length}/{weeklyGoals.length + completedWeeklyGoals.length}
               </p>
-              <p className="text-xs text-muted-foreground">checkpoints done</p>
+              <p className="text-xs text-muted-foreground">weekly goals done</p>
             </div>
           </div>
         </div>

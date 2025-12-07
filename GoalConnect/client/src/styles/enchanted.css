@@ -4,8 +4,8 @@
    NO EMOJIS - Pure visual magic
    ======================================== */
 
-/* Import beautiful fonts */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap');
+/* Import luxury journal fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Cormorant+SC:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap');
 
 :root {
   /* ===== ALICE IN WONDERLAND PALETTE ===== */
@@ -48,29 +48,186 @@
   --glow-pink: rgba(249, 168, 212, 0.5);
   --glow-blue: rgba(147, 197, 253, 0.5);
   --shimmer: rgba(253, 244, 255, 0.2);
+
+  /* ===== V5 UNIFIED PEACH PALETTE ===== */
+  --peach-50:  #fdf8f6;
+  --peach-100: #fdf6f0;
+  --peach-200: #f8e4d6;
+  --peach-300: #f0c9ae;
+  --peach-400: #e4a880;
+  --peach-500: #d4936a;
+  --peach-600: #c07850;
+
+  /* Semantic peach usage */
+  --accent-primary: var(--peach-400);
+  --accent-hover: var(--peach-300);
+  --accent-active: var(--peach-500);
+  --accent-glow: rgba(228, 168, 128, 0.4);
+  --accent-subtle: rgba(228, 168, 128, 0.15);
+
+  /* ===== V5 BACKGROUND PALETTE ===== */
+  --bg-deep: #070f1a;
+  --bg-primary: #0c1a28;
+  --bg-card: #0f2433;
+  --bg-card-alpha: rgba(15, 36, 51, 0.78);
+  --bg-elevated: rgba(15, 36, 51, 0.85);
+
+  /* ===== V5 TEXT PALETTE ===== */
+  --text-primary: #f5f2ed;       /* 13.2:1 ratio - excellent */
+  --text-secondary: #c8d4e0;     /* 7.8:1 ratio (was #b8c4d0 at 5.8:1) */
+  --text-muted: #9aaab8;         /* 5.5:1 ratio (was #8090a0 at 4.82:1) */
+  --text-accent: var(--peach-400);
+
+  /* ===== V5 BORDERS ===== */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(228, 168, 128, 0.08);
+  --border-accent: rgba(228, 168, 128, 0.3);
+
+  /* ===== V5 Z-INDEX SCALE ===== */
+  /* Documented stacking order to prevent z-index wars */
+  --z-ground: 1;           /* Background ground plane */
+  --z-card-glow: -1;       /* Card glow effects (behind content) */
+  --z-card-content: 1;     /* Card content layer */
+  --z-frost-accent: 2;     /* Frost corner accents */
+  --z-dropdown: 50;        /* Dropdown menus */
+  --z-modal: 100;          /* Modal dialogs */
+  --z-tooltip: 200;        /* Tooltips */
+
+  /* ===== V5 TYPOGRAPHY TOKENS ===== */
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-heading-sc: 'Cormorant SC', Georgia, serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  /* Font sizes - editorial scale */
+  --text-hero: 3.5rem;
+  --text-h1: 1.75rem;
+  --text-h2: 1.25rem;
+  --text-h3: 1rem;
+  --text-body: 0.875rem;
+  --text-small: 0.75rem;
+  --text-tiny: 0.625rem;
+
+  /* Line heights */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Letter spacing */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.2em;
+
+  /* Spacing scale - 8px rhythm */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.5rem;    /* 24px */
+  --space-6: 2rem;      /* 32px */
+  --space-8: 3rem;      /* 48px */
 }
 
 /* ===== TYPOGRAPHY ===== */
 
-/* Headers - Storybook elegance */
-h1, h2, h3, .enchanted-title {
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-shadow: 0 0 20px var(--glow-gold);
-}
-
-/* Body - Whimsical but readable */
-body, p, span, div {
-  font-family: 'Quicksand', sans-serif;
+/* Hero titles - Elegant italic script */
+.hero-title {
+  font-family: var(--font-display);
   font-weight: 400;
+  font-style: italic;
+  font-size: var(--text-hero);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Special numbers/stats - Elegant serif */
+/* Logo text - refined small caps */
+.logo-text {
+  font-family: var(--font-heading-sc);
+  font-weight: 400;
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-primary);
+}
+
+/* Card headers - Elegant serif */
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-h2);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+/* Body text - Clean readable sans */
+.body-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Data numbers - Elegant serif numerals */
 .stat-number, .milestone-value {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-heading);
+  font-weight: 300;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-primary);
+}
+
+/* Labels - Small caps or italic */
+.label-text {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.label-caps {
+  font-family: var(--font-heading-sc);
+  font-size: var(--text-tiny);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Opt-in serif heading class (replaces global h1/h2/h3 selector) */
+.heading-serif,
+.enchanted-title {
+  font-family: var(--font-heading);
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+}
+
+/* Card section headers - consistent across all cards */
+.section-heading {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-h2);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+/* Data display - elegant numerals */
+.data-display {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: 1.75rem;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+/* Empty state display - inviting italic */
+.empty-display {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.5rem;
+  color: var(--text-muted);
 }
 
 /* ===== GRADIENT UTILITIES ===== */
@@ -410,4 +567,239 @@ body, p, span, div {
     0 4px 20px rgba(0, 0, 0, 0.15),
     0 0 40px var(--glow-purple),
     0 0 20px var(--glow-pink);
+}
+
+/* ========================================
+   V5 LUXURY CARD SYSTEM
+   Glassmorphism with frost accents
+   ======================================== */
+
+.glass-card {
+  background: var(--bg-card-alpha);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+
+  /* Grounding shadow */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Override index.css ::after glow effect - V5 doesn't use it */
+.glass-card::after {
+  content: none;
+  display: none;
+}
+
+/* Frost texture overlay (using ::before) */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Card header styling */
+.glass-card .card-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-h2);
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+/* Frost corner accents */
+.frost-accent {
+  position: relative;
+}
+
+.frost-accent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(
+    135deg,
+    rgba(228, 168, 128, 0.15) 0%,
+    transparent 50%
+  );
+  border-radius: 0 20px 0 24px;
+  pointer-events: none;
+  z-index: var(--z-frost-accent);
+}
+
+/* ===== GROUNDING ELEMENTS ===== */
+
+/* Ground plane beneath cards */
+.ground-plane {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35vh;
+  background: linear-gradient(
+    to top,
+    rgba(7, 15, 26, 0.95) 0%,
+    rgba(7, 15, 26, 0.6) 40%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: var(--z-ground);
+}
+
+/* Card grid grounding shadow */
+.card-grid-shadow {
+  filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.4));
+}
+
+/* Card grid with staggered animation */
+.card-grid {
+  display: grid;
+}
+
+/* ===== EMPTY STATE SHIMMER ===== */
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+/* Visible focus states */
+.glass-card:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--peach-400);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== MICRO-INTERACTIONS ===== */
+
+/* Staggered card entry */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.glass-card {
+  animation: card-enter 0.4s ease-out backwards;
+}
+
+.card-grid > .glass-card:nth-child(1) { animation-delay: 0ms; }
+.card-grid > .glass-card:nth-child(2) { animation-delay: 50ms; }
+.card-grid > .glass-card:nth-child(3) { animation-delay: 100ms; }
+.card-grid > .glass-card:nth-child(4) { animation-delay: 150ms; }
+.card-grid > .glass-card:nth-child(5) { animation-delay: 200ms; }
+.card-grid > .glass-card:nth-child(6) { animation-delay: 250ms; }
+
+/* Checkbox completion pop */
+@keyframes check-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.goal-complete-check {
+  animation: check-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Bar chart grow */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.rhythm-bar {
+  animation: bar-grow 0.6s ease-out backwards;
+}
+
+/* ===== INTERACTIVE STATES ===== */
+
+/* Goal items */
+.goal-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goal-item:hover {
+  background: rgba(228, 168, 128, 0.08);
+}
+
+/* Habit grid circles */
+.habit-circle {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.habit-circle:hover {
+  transform: scale(1.2);
+}
+
+/* Link hover with underline */
+.link-subtle {
+  position: relative;
+  color: var(--peach-400);
+  text-decoration: none;
+}
+
+.link-subtle::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--peach-400);
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.link-subtle:hover::after {
+  transform: scaleX(1);
 }
