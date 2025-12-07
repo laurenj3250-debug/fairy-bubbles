@@ -75,49 +75,49 @@ interface TodoWithMetadata extends Todo {
 }
 
 // ============================================================================
-// FUN FACTS - Curated climbing & adventure knowledge
+// DESTINATION SPOTLIGHT - Epic crags & mountain destinations
 // ============================================================================
 
 const FUN_FACTS = [
   {
-    title: "The Term 'Beta'",
-    content: "Climbers call route information 'beta' after Bates Method videos in the 1980s. Jack Bates filmed climbers solving problems, and the footage became the original way to share route knowledge.",
-    category: "Climbing Lore",
+    title: "Red River Gorge, Kentucky",
+    content: "The Red has 1,500+ sport routes on bullet sandstone with steep overhangs and pockets. Best seasons: spring & fall. Miguel's Pizza is the legendary climber hangout.",
+    category: "Sport Climbing",
   },
   {
-    title: "Crimping Science",
-    content: "The crimp grip generates 3-4x more force than an open hand grip, but puts significantly more stress on finger pulleys. Training both grip types builds more resilient tendons.",
-    category: "Training Tips",
+    title: "Bishop, California",
+    content: "World-class high desert bouldering on volcanic tablelands and the Buttermilks. Famous for the Mandala (V12) and perfect fall/winter weather at 4,000ft elevation.",
+    category: "Bouldering",
   },
   {
-    title: "The V-Scale Origin",
-    content: "The V-scale for bouldering was created by John 'Vermin' Sherman at Hueco Tanks in the 1990s. The 'V' stands for Vermin, his nickname from his disheveled climbing lifestyle.",
-    category: "Climbing History",
+    title: "Yosemite Valley, California",
+    content: "The birthplace of American big wall climbing. El Capitan's 3,000ft granite face hosts The Nose and Dawn Wall. Best months: April-May and September-October.",
+    category: "Big Wall",
   },
   {
-    title: "Rest Step Technique",
-    content: "The mountaineer's 'rest step' locks your rear leg straight with each step, letting your skeleton bear weight instead of muscles. This technique can reduce energy expenditure by 30%.",
-    category: "Mountain Skills",
+    title: "Kalymnos, Greece",
+    content: "Mediterranean limestone paradise with 3,500+ routes, crystal blue water, and perfect tufa climbing. Spring and fall offer ideal temps with cheap ferries from Athens.",
+    category: "Sport Climbing",
   },
   {
-    title: "Flash vs Onsight",
-    content: "An 'onsight' means climbing a route first try with zero prior knowledge. A 'flash' means first try but with beta from others. Both are impressive, but onsights are considered more pure.",
-    category: "Climbing Terms",
+    title: "Fontainebleau, France",
+    content: "The world's most famous bouldering forest with 30,000+ problems on sandstone. Circuit system color-codes difficulty. An hour from Paris by train.",
+    category: "Bouldering",
   },
   {
-    title: "Heel Hook Power",
-    content: "A proper heel hook can support up to 80% of your body weight, making it one of the most powerful techniques for overhanging terrain. The key is engaging your hamstring, not just placing the heel.",
-    category: "Technique",
+    title: "Indian Creek, Utah",
+    content: "Desert crack climbing mecca with perfect parallel-sided sandstone splitters. Bring tape and expect to hand-jam. Best in spring/fall, camping at Creek Pasture.",
+    category: "Trad Climbing",
   },
   {
-    title: "Chalk Chemistry",
-    content: "Climbing chalk is magnesium carbonate, the same compound used in antacids. It absorbs moisture and increases friction, but too much can actually decrease grip on certain rock types.",
-    category: "Gear Science",
+    title: "Chamonix, France",
+    content: "Alpine climbing capital at the base of Mont Blanc. The Aiguilles offer world-class granite from single-pitch to multi-day routes. Summer season June-September.",
+    category: "Alpine",
   },
   {
-    title: "The Crux",
-    content: "The 'crux' of a climb is its hardest section. Routes can have multiple cruxes, and identifying them before climbing helps you conserve energy for when you need it most.",
-    category: "Strategy",
+    title: "Hueco Tanks, Texas",
+    content: "Legendary bouldering on syenite porphyry with unique huecos (pockets). Limited daily permits required. Winter destination with problems from V0 to V15.",
+    category: "Bouldering",
   },
 ];
 
@@ -798,7 +798,7 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Monthly Progress + Weekly Rhythm + Climbing Tip (3 columns, small) */}
+          {/* ROW 3: Monthly Progress + Weekly Rhythm + Destination (3 columns, small) */}
           <div className="card-grid grid grid-cols-3 gap-5">
             {/* Monthly Progress */}
             <div className="glass-card frost-accent min-h-[160px] flex flex-col">
@@ -833,9 +833,9 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Climbing Tip */}
+            {/* Destination Spotlight */}
             <div className="glass-card frost-accent min-h-[160px] flex flex-col">
-              <span className="card-title">Climbing Tip</span>
+              <span className="card-title">Destination</span>
               <div className="flex-1">
                 {(() => {
                   const fact = getDailyFunFact();
