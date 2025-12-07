@@ -136,8 +136,8 @@ function getDailyFunFact() {
 function useWeekData() {
   return useMemo(() => {
     const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Sunday start to match grid labels
+    const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
     const dates = days.map(d => format(d, 'yyyy-MM-dd'));
     const dayNames = days.map(d => format(d, 'EEE'));
