@@ -31,28 +31,41 @@ describe("Kilter Board Parser", () => {
   });
 
   describe("difficultyToGrade", () => {
-    it("should convert low difficulty to V0", () => {
+    it("should convert low difficulty (1-12) to V0", () => {
       expect(difficultyToGrade(1)).toBe("V0");
-      expect(difficultyToGrade(2)).toBe("V0");
+      expect(difficultyToGrade(10)).toBe("V0");
+      expect(difficultyToGrade(12)).toBe("V0");
     });
 
     it("should convert mid-range difficulties correctly", () => {
-      expect(difficultyToGrade(5)).toBe("V3");
-      expect(difficultyToGrade(7)).toBe("V4");
-      expect(difficultyToGrade(9)).toBe("V5");
-      expect(difficultyToGrade(11)).toBe("V6");
+      // V1 = 13-14, V2 = 15, V3 = 16-17, V4 = 18-19
+      expect(difficultyToGrade(13)).toBe("V1");
+      expect(difficultyToGrade(15)).toBe("V2");
+      expect(difficultyToGrade(16)).toBe("V3");
+      expect(difficultyToGrade(18)).toBe("V4");
+      expect(difficultyToGrade(20)).toBe("V5");
+      expect(difficultyToGrade(22)).toBe("V6");
     });
 
     it("should convert high difficulties to hard grades", () => {
-      expect(difficultyToGrade(14)).toBe("V8");
-      expect(difficultyToGrade(16)).toBe("V10");
-      expect(difficultyToGrade(18)).toBe("V12+");
+      // V7 = 23, V8 = 24-25, V9 = 26, V10 = 27, V11 = 28, V12 = 29
+      expect(difficultyToGrade(23)).toBe("V7");
+      expect(difficultyToGrade(24)).toBe("V8");
+      expect(difficultyToGrade(26)).toBe("V9");
+      expect(difficultyToGrade(27)).toBe("V10");
+      expect(difficultyToGrade(29)).toBe("V12");
     });
 
     it("should handle edge cases", () => {
       expect(difficultyToGrade(0)).toBe("V0");
-      expect(difficultyToGrade(20)).toBe("V12+");
       expect(difficultyToGrade(-1)).toBe("V0");
+      expect(difficultyToGrade(35)).toBe("V16+");
+    });
+
+    it("should round decimal difficulty values", () => {
+      expect(difficultyToGrade(16.4)).toBe("V3");
+      expect(difficultyToGrade(16.6)).toBe("V3"); // rounds to 17
+      expect(difficultyToGrade(18.5)).toBe("V4"); // rounds to 19
     });
   });
 
@@ -463,8 +476,8 @@ describe("Kilter Board Parser", () => {
           frames: "",
           angle: 40,
           quality_average: 4,
-          difficulty_average: 15,
-          benchmark_difficulty: "V9",
+          difficulty_average: 18, // V4 in new scale
+          benchmark_difficulty: "V4",
           is_draft: false,
           created_at: "2025-11-01T00:00:00Z",
         },

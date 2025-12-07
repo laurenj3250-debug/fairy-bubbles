@@ -76,52 +76,71 @@ export interface ParsedClimbingSession {
   climbs: ClimbDetail[];
 }
 
-// Grade conversion map: Kilter difficulty (1-18) to V-scale
+// Kilter Board difficulty to V-scale grade mapping
+// Source: difficulty_grades table from official Kilter Board database
+// The boulder_name column contains grades like "6a/V3" - we extract the V-grade
 const DIFFICULTY_TO_GRADE: Record<number, string> = {
-  1: "V0",
-  2: "V0",
-  3: "V1",
-  4: "V2",
-  5: "V3",
-  6: "V3",
-  7: "V4",
-  8: "V4",
-  9: "V5",
-  10: "V5",
-  11: "V6",
-  12: "V6",
-  13: "V7",
-  14: "V8",
-  15: "V9",
-  16: "V10",
-  17: "V11",
-  18: "V12+",
+  // Font 1a-4c = V0 (difficulty 1-12)
+  1: "V0", 2: "V0", 3: "V0", 4: "V0", 5: "V0", 6: "V0",
+  7: "V0", 8: "V0", 9: "V0", 10: "V0", 11: "V0", 12: "V0",
+  // Font 5a-5b = V1 (difficulty 13-14)
+  13: "V1", 14: "V1",
+  // Font 5c = V2 (difficulty 15)
+  15: "V2",
+  // Font 6a-6a+ = V3 (difficulty 16-17)
+  16: "V3", 17: "V3",
+  // Font 6b-6b+ = V4 (difficulty 18-19)
+  18: "V4", 19: "V4",
+  // Font 6c-6c+ = V5 (difficulty 20-21)
+  20: "V5", 21: "V5",
+  // Font 7a = V6 (difficulty 22)
+  22: "V6",
+  // Font 7a+ = V7 (difficulty 23)
+  23: "V7",
+  // Font 7b-7b+ = V8 (difficulty 24-25)
+  24: "V8", 25: "V8",
+  // Font 7c = V9 (difficulty 26)
+  26: "V9",
+  // Font 7c+ = V10 (difficulty 27)
+  27: "V10",
+  // Font 8a = V11 (difficulty 28)
+  28: "V11",
+  // Font 8a+ = V12 (difficulty 29)
+  29: "V12",
+  // Font 8b+ = V14, etc.
+  30: "V13", 31: "V14", 32: "V15", 33: "V16",
 };
 
-// Reverse map for grade comparison
+// Reverse map for grade comparison (use middle difficulty value for each grade)
 const GRADE_TO_NUMERIC: Record<string, number> = {
-  "V0": 1,
-  "V1": 3,
-  "V2": 4,
-  "V3": 5,
-  "V4": 7,
-  "V5": 9,
-  "V6": 11,
-  "V7": 13,
-  "V8": 14,
-  "V9": 15,
-  "V10": 16,
-  "V11": 17,
-  "V12+": 18,
+  "V0": 10,   // difficulty 1-12
+  "V1": 13,   // difficulty 13-14
+  "V2": 15,   // difficulty 15
+  "V3": 16,   // difficulty 16-17
+  "V4": 18,   // difficulty 18-19
+  "V5": 20,   // difficulty 20-21
+  "V6": 22,   // difficulty 22
+  "V7": 23,   // difficulty 23
+  "V8": 24,   // difficulty 24-25
+  "V9": 26,   // difficulty 26
+  "V10": 27,  // difficulty 27
+  "V11": 28,  // difficulty 28
+  "V12": 29,  // difficulty 29
+  "V13": 30,  // difficulty 30
+  "V14": 31,  // difficulty 31
+  "V15": 32,  // difficulty 32
+  "V16": 33,  // difficulty 33
 };
 
 /**
- * Convert Kilter difficulty (1-18) to V-scale grade
+ * Convert Kilter difficulty (1-33+) to V-scale grade
  */
 export function difficultyToGrade(difficulty: number): string {
   if (difficulty <= 0) return "V0";
-  if (difficulty > 18) return "V12+";
-  return DIFFICULTY_TO_GRADE[difficulty] || "V0";
+  if (difficulty > 33) return "V16+";
+  // Round to nearest integer for decimal difficulty values
+  const rounded = Math.round(difficulty);
+  return DIFFICULTY_TO_GRADE[rounded] || "V0";
 }
 
 /**
