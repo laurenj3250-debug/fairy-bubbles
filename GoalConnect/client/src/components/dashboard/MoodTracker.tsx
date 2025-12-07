@@ -60,7 +60,7 @@ function MoodPicker({ onClose, isMobile = false }: MoodPickerProps) {
   });
 
   // Combine default and saved tags, deduplicated
-  const allTags = [...new Set([...DEFAULT_TAGS, ...savedTags])];
+  const allTags = Array.from(new Set([...DEFAULT_TAGS, ...savedTags]));
 
   const createMoodMutation = useMutation({
     mutationFn: async (data: { emoji: string; tag?: string; note?: string }) => {

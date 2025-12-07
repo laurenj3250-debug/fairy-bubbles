@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Sparkles, Plus, Check, ChevronDown, Mountain } from "lucide-react";
+import { Sparkles, Plus, Check, ChevronDown, Mountain, CalendarPlus } from "lucide-react";
 import type { DreamScrollItem } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = [
   { value: "do", label: "Peaks to Climb", emoji: "⛰️" },
@@ -20,7 +24,10 @@ export function DreamScrollWidget() {
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [calendarItemId, setCalendarItemId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
+  const { toast } = useToast();
   const selectedCat = CATEGORIES.find(c => c.value === selectedCategory) || CATEGORIES[0];
 
   // Fetch items for selected category
@@ -55,6 +62,32 @@ export function DreamScrollWidget() {
     },
   });
 
+  const createTodoMutation = useMutation({
+    mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
+      return apiRequest("/api/todos", "POST", {
+        title,
+        dueDate,
+        priority: 4,
+      });
+    },
+    onSuccess: (_, { dueDate }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/todos-with-metadata"] });
+      setCalendarItemId(null);
+      setSelectedDate(undefined);
+      toast({
+        title: "Added to schedule",
+        description: `Task scheduled for ${format(new Date(dueDate), 'MMM d')}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to add to schedule",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (newItemTitle.trim()) {
@@ -66,7 +99,7 @@ export function DreamScrollWidget() {
   const completedItems = items.filter(item => item.completed);
 
   return (
-    <div className="glass-card interactive-glow p-6">
+    <div className="glass-card interactive-glow p-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
@@ -162,7 +195,7 @@ export function DreamScrollWidget() {
       </div>
 
       {/* Items list */}
-      <div className="space-y-2 max-h-[280px] overflow-y-auto relative z-10">
+      <div className="space-y-2 flex-1 overflow-y-auto relative z-10">
         {isLoading ? (
           <div className="text-center py-8">
             <div className="animate-pulse space-y-2">
@@ -202,6 +235,41 @@ export function DreamScrollWidget() {
                     <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{item.description}</div>
                   )}
                 </div>
+
+                {/* Pull to Calendar Button */}
+                <Popover open={calendarItemId === item.id} onOpenChange={(open) => {
+                  if (open) {
+                    setCalendarItemId(item.id);
+                    setSelectedDate(new Date());
+                  } else {
+                    setCalendarItemId(null);
+                  }
+                }}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="mt-0.5 flex-shrink-0 text-muted-foreground hover:text-[hsl(var(--accent))] transition-colors"
+                      title="Add to schedule"
+                    >
+                      <CalendarPlus className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                          createTodoMutation.mutate({
+                            title: item.title,
+                            dueDate: format(date, 'yyyy-MM-dd'),
+                          });
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             ))}
 

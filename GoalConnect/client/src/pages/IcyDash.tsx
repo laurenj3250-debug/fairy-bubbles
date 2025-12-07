@@ -29,6 +29,7 @@ import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
 import { LuxuryStudyTracker } from '@/components/LuxuryStudyTracker';
 import { LuxuryFunFact } from '@/components/LuxuryFunFact';
+import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 
 // Drag and Drop
 import {
@@ -721,10 +722,10 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* ROW 1: Weekly Goals + Study Tracker + Monthly Progress */}
-          <div className="card-grid grid grid-cols-3 gap-5">
+          {/* ROW 1: Weekly Goals + Study Tracker (2 columns) */}
+          <div className="card-grid grid grid-cols-2 gap-5">
             {/* Weekly Goals */}
-            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
               <span className="card-title">Weekly Goals</span>
               <div className="flex-1 flex flex-col justify-center">
                 {goalsLoading ? (
@@ -755,7 +756,7 @@ export default function DashboardV4() {
             </div>
 
             {/* Study Tracker */}
-            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
               <span className="card-title">Study Tracker</span>
               <div className="flex-1 flex items-center justify-center">
                 <LuxuryStudyTracker
@@ -765,9 +766,42 @@ export default function DashboardV4() {
                 />
               </div>
             </div>
+          </div>
 
+          {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
+          <div className="card-grid grid grid-cols-2 gap-5">
+            {/* This Week Habits */}
+            <div className="glass-card frost-accent min-h-[320px] flex flex-col">
+              <span className="card-title">This Week</span>
+              <div className="flex-1">
+                <LuxuryHabitGrid
+                  habits={todayHabits.map(habit => ({
+                    id: habit.id,
+                    name: habit.title,
+                    days: week.dates.map(date => ({
+                      date,
+                      completed: completionMap[habit.id]?.[date] ?? false,
+                    })),
+                    completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
+                    total: 7,
+                  }))}
+                  todayIndex={week.todayIndex}
+                  onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* Dream Scroll Widget */}
+            <div className="min-h-[320px]">
+              <DreamScrollWidget />
+            </div>
+          </div>
+
+          {/* ROW 3: Monthly Progress + Weekly Rhythm + Climbing Tip (3 columns, small) */}
+          <div className="card-grid grid grid-cols-3 gap-5">
             {/* Monthly Progress */}
-            <div className="glass-card frost-accent min-h-[280px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
               <span className="card-title">Monthly Progress</span>
               <div className="flex-1 flex items-center justify-around">
                 {monthlyGoals.length === 0 ? (
@@ -790,12 +824,17 @@ export default function DashboardV4() {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* ROW 2: Climbing Tip + Weekly Rhythm + This Week */}
-          <div className="card-grid grid grid-cols-3 gap-5">
+            {/* Weekly Rhythm */}
+            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
+              <span className="card-title">Weekly Rhythm</span>
+              <div className="flex-1 flex items-end">
+                <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
+              </div>
+            </div>
+
             {/* Climbing Tip */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[160px] flex flex-col">
               <span className="card-title">Climbing Tip</span>
               <div className="flex-1">
                 {(() => {
@@ -810,39 +849,9 @@ export default function DashboardV4() {
                 })()}
               </div>
             </div>
-
-            {/* Weekly Rhythm */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
-              <span className="card-title">Weekly Rhythm</span>
-              <div className="flex-1 flex items-end">
-                <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
-              </div>
-            </div>
-
-            {/* This Week */}
-            <div className="glass-card frost-accent flex flex-col">
-              <span className="card-title">This Week</span>
-              <div className="flex-1">
-                <LuxuryHabitGrid
-                  habits={todayHabits.map(habit => ({
-                    id: habit.id,
-                    name: habit.title,
-                    days: week.dates.map(date => ({
-                      date,
-                      completed: completionMap[habit.id]?.[date] ?? false,
-                    })),
-                    completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
-                    total: 7,
-                  }))}
-                  todayIndex={week.todayIndex}
-                  onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
-                  className="w-full"
-                />
-              </div>
-            </div>
           </div>
 
-          {/* ROW 3: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
+          {/* ROW 4: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
           <div className="glass-card frost-accent">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">

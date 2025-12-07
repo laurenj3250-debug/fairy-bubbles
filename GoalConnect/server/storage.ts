@@ -829,6 +829,23 @@ export class MemStorage implements IStorage {
   async deleteDreamScrollTag(id: number): Promise<void> {
     // noop
   }
+
+  // Mood log stub methods (MemStorage is not used in production)
+  async getMoodLogsByDate(userId: number, date: string): Promise<MoodLog[]> {
+    return [];
+  }
+
+  async getMoodLogsByDateRange(userId: number, startDate: string, endDate: string): Promise<MoodLog[]> {
+    return [];
+  }
+
+  async createMoodLog(log: InsertMoodLog): Promise<MoodLog> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getUserMoodTags(userId: number): Promise<string[]> {
+    return [];
+  }
 }
 
 // Simple storage selection: Use database if available, otherwise in-memory
