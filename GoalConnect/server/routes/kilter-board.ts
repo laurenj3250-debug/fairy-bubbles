@@ -566,10 +566,19 @@ async function performSync(
   totalAscents: number;
   totalAttempts: number;
 }> {
+  log.info("[kilter-board] === SYNC DEBUG START ===");
+  log.info(`[kilter-board] userId=${userId}, kilterUserId=${kilterUserId}, since=${since}`);
+
   // Fetch data from Kilter Board
   const data = await client.getUserClimbingData(token, kilterUserId, {
     since,
   });
+
+  // DEBUG: Log what we got from API
+  log.info(`[kilter-board] API Response: ascents=${data.ascents.length}, attempts=${data.attempts.length}, climbs=${data.climbs.length}`);
+  if (data.ascents.length > 0) {
+    log.info(`[kilter-board] First ascent sample: ${JSON.stringify(data.ascents[0])}`);
+  }
 
   // Group into sessions
   const sessions = groupIntoSessions(
@@ -578,6 +587,12 @@ async function performSync(
     data.climbs,
     kilterUserId
   );
+
+  // DEBUG: Log parsed sessions
+  log.info(`[kilter-board] Parsed sessions count: ${sessions.length}`);
+  if (sessions.length > 0) {
+    log.info(`[kilter-board] First session sample: ${JSON.stringify(sessions[0])}`);
+  }
 
   let imported = 0;
   let skipped = 0;
@@ -632,6 +647,8 @@ async function performSync(
       imported++;
     }
   }
+
+  log.info(`[kilter-board] === SYNC DEBUG END === imported=${imported}, skipped=${skipped}`);
 
   return {
     sessionsImported: imported,

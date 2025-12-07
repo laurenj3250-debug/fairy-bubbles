@@ -95,7 +95,12 @@ export class KilterBoardClient {
     }
 
     const data = await response.json();
-    const session = data.session;
+    // Handle both "session" (BoardLib style) and "login" (v1 API) response formats
+    const session = data.session || data.login;
+
+    if (!session || !session.token) {
+      throw new KilterBoardError("Invalid login response - no token received", 500);
+    }
 
     return {
       token: session.token,
@@ -138,7 +143,9 @@ export class KilterBoardClient {
 
     let complete = false;
     let pageCount = 0;
-    const maxPages = 100;
+    // Kilter API returns all shared climbs first (can be 200+ pages), then user data last
+    // Must paginate through all pages to get user's ascents/bids
+    const maxPages = 250;
     const currentTables = { ...tables };
 
     while (!complete && pageCount < maxPages) {
@@ -171,10 +178,15 @@ export class KilterBoardClient {
       const data = await response.json();
       complete = data._complete === true;
 
+      // Handle both wrapped (PUT) and unwrapped response formats
+      const responseData = data.PUT || data;
+
       // Collect data from this page
-      if (data.climbs) allClimbs.push(...data.climbs);
-      if (data.ascents) allAscents.push(...data.ascents);
-      if (data.bids) allAttempts.push(...data.bids);
+      if (responseData.climbs) allClimbs.push(...responseData.climbs);
+      if (responseData.ascents) allAscents.push(...responseData.ascents);
+      // API calls attempts "bids" or "attempts"
+      if (responseData.bids) allAttempts.push(...responseData.bids);
+      if (responseData.attempts) allAttempts.push(...responseData.attempts);
 
       // Update sync dates for pagination
       for (const sync of [...(data.user_syncs || []), ...(data.shared_syncs || [])]) {

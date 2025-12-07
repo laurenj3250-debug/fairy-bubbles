@@ -63,7 +63,7 @@ describe("KilterBoardClient", () => {
       await client.login("test@example.com", "password123");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://api.kilterboardapp.com/v1/logins",
+        "https://kilterboardapp.com/sessions",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -72,8 +72,9 @@ describe("KilterBoardClient", () => {
           body: JSON.stringify({
             username: "test@example.com",
             password: "password123",
-            tou: true,
-            pp: true,
+            tou: "accepted",
+            pp: "accepted",
+            ua: "app",
           }),
         })
       );
@@ -118,7 +119,7 @@ describe("KilterBoardClient", () => {
     it("should fetch sync data with token", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const token = "test-token";
@@ -129,20 +130,20 @@ describe("KilterBoardClient", () => {
       expect(result.climbs).toBeDefined();
     });
 
-    it("should include authorization header", async () => {
+    it("should include cookie header with token", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const token = "test-bearer-token";
       await client.sync(token);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://api.kilterboardapp.com/v1/sync",
+        "https://kilterboardapp.com/sync",
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
           }),
         })
       );
@@ -151,7 +152,7 @@ describe("KilterBoardClient", () => {
     it("should pass table timestamps for incremental sync", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const token = "test-token";
@@ -180,7 +181,7 @@ describe("KilterBoardClient", () => {
     it("should extract data from PUT response format", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const result = await client.sync("valid-token");
@@ -195,7 +196,7 @@ describe("KilterBoardClient", () => {
     it("should filter ascents and attempts by user ID", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const result = await client.getUserClimbingData("valid-token", 67890);
@@ -207,7 +208,7 @@ describe("KilterBoardClient", () => {
     it("should include climb metadata for user's climbs", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const result = await client.getUserClimbingData("valid-token", 67890);
@@ -218,7 +219,7 @@ describe("KilterBoardClient", () => {
     it("should return empty arrays for user with no data", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => syncResponse,
+        json: async () => ({ ...syncResponse, _complete: true }),
       });
 
       const result = await client.getUserClimbingData("valid-token", 99999);
@@ -291,7 +292,7 @@ describe("KilterBoardClient", () => {
     it("should handle missing PUT key gracefully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}), // Empty response
+        json: async () => ({ _complete: true }), // Empty response with complete flag
       });
 
       const result = await client.sync("valid-token");
@@ -309,6 +310,7 @@ describe("KilterBoardClient", () => {
             climbs: syncResponse.PUT.climbs,
             // Missing ascents and attempts
           },
+          _complete: true,
         }),
       });
 

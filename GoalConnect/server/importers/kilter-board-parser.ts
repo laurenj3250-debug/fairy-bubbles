@@ -144,10 +144,12 @@ export function generateSessionExternalId(session: {
 }
 
 /**
- * Extract date string (YYYY-MM-DD) from ISO timestamp
+ * Extract date string (YYYY-MM-DD) from timestamp
+ * Handles both ISO format (2025-11-08T13:43:11) and Kilter format (2025-11-08 13:43:11)
  */
-function getDateString(isoString: string): string {
-  return isoString.split("T")[0];
+function getDateString(timestamp: string): string {
+  // Split on either T (ISO) or space (Kilter format)
+  return timestamp.split(/[T ]/)[0];
 }
 
 /**
