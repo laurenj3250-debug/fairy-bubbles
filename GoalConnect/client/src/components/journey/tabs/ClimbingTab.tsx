@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Pencil, Plus, Trash2, Activity } from "lucide-react";
+import { Plus, Zap, Target, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
 import { ClimbingLogDialog } from "@/components/ClimbingLogDialog";
-import { EditableGoal } from "../shared";
 import type { ClimbingStats } from "@/hooks/useClimbingStats";
 import type { StravaClimbingStats } from "@/hooks/useStravaClimbingActivities";
 import type { ClimbingTick, ClimbingTickInput, ClimbingLogStats } from "@/hooks/useClimbingLog";
+import { PERSONALITY_DISPLAY } from "@/lib/climbingPersonality";
+import { SessionCalendar } from "../SessionCalendar";
+import { AbsurdFactsTicker } from "../AbsurdFactsTicker";
 
 interface ClimbingTabProps {
   yearlyClimbsGoal: number;
@@ -24,568 +27,414 @@ interface ClimbingTabProps {
   isCreatingTick: boolean;
 }
 
-export function ClimbingTab({ yearlyClimbsGoal, onUpdateGoal, isUpdating, kilterStats, isLoadingKilter, stravaClimbingStats, isLoadingStravaClimbing, climbingLogTicks, climbingLogStats, isLoadingClimbingLog, onCreateTick, onUpdateTick, onDeleteTick, isCreatingTick }: ClimbingTabProps) {
+export function ClimbingTab({
+  kilterStats,
+  isLoadingKilter,
+  onCreateTick,
+  isCreatingTick,
+}: ClimbingTabProps) {
   const [showLogDialog, setShowLogDialog] = useState(false);
-  const [editingTick, setEditingTick] = useState<ClimbingTick | undefined>();
 
-  // Check if we have real data (stats loaded successfully, even if 0 ticks)
-  const isConnected = climbingLogStats !== undefined;
-  const hasData = climbingLogStats && climbingLogStats.totalTicks > 0;
+  const isConnected = kilterStats?.isConnected ?? false;
+  const personality = kilterStats?.personality;
+  const displayInfo = personality ? PERSONALITY_DISPLAY[personality.primary] : null;
 
-  // Use real data only - NO demo fallback (show empty state instead)
-  const totalTicks = climbingLogStats?.totalTicks ?? 0;
-  const outdoorDays = climbingLogStats?.outdoorDays ?? 0;
-
-  // Use server-computed highest grades (no demo fallback)
-  const highestRedpoint = climbingLogStats?.highestRouteGrade ?? "—";
-  const highestBoulder = climbingLogStats?.highestBoulderGrade ?? "—";
-
-  // Recent ticks - use real data only (no demo fallback)
-  const recentTicksRaw = hasData ? climbingLogStats.recentTicks : [];
-  const recentTicks = hasData
-    ? climbingLogStats.recentTicks.map(tick => ({
-        id: tick.id,
-        name: tick.routeName,
-        grade: tick.grade,
-        routeType: tick.routeType.charAt(0).toUpperCase() + tick.routeType.slice(1),
-        date: new Date(tick.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        style: tick.ascentStyle.charAt(0).toUpperCase() + tick.ascentStyle.slice(1),
-        pitches: tick.pitches,
-        stars: tick.stars || 3,
-        location: tick.location || "Unknown",
-      }))
-    : [];
-
-  // Grade parsing utility for sorting
-  const parseYdsGrade = (g: string): number => {
-    const match = g.match(/5\.(\d+)([a-d])?/);
-    if (!match) return 0;
-    return parseInt(match[1]) * 10 + (match[2] ? "abcd".indexOf(match[2]) : 0);
-  };
-
-  // Grade pyramid from real data (no demo fallback)
-  const gradePyramid = hasData
-    ? Object.entries(climbingLogStats.gradeDistribution)
-        .filter(([g]) => g.startsWith("5."))
-        .map(([grade, count]) => ({ grade, count }))
-        .sort((a, b) => parseYdsGrade(a.grade) - parseYdsGrade(b.grade))
-        .slice(-6)
-    : [];
-
-  // Style breakdown - calculate PERCENTAGES from counts (no demo fallback)
-  const routeTypeCounts = hasData ? climbingLogStats.routeTypeDistribution : {};
-  const totalRouteTypes = Object.values(routeTypeCounts).reduce((a, b) => a + b, 0) || 1;
-  const styleBreakdown = {
-    sport: Math.round(((routeTypeCounts.sport || 0) / totalRouteTypes) * 100),
-    boulder: Math.round(((routeTypeCounts.boulder || 0) / totalRouteTypes) * 100),
-    trad: Math.round(((routeTypeCounts.trad || 0) / totalRouteTypes) * 100),
-  };
-
-  const progressPercent = Math.round((totalTicks / yearlyClimbsGoal) * 100);
-  const ticksRemaining = yearlyClimbsGoal - totalTicks;
-  const monthsLeft = 12 - new Date().getMonth();
-  const ticksPerMonth = Math.ceil(Math.max(0, ticksRemaining) / monthsLeft);
-
-  // Grade pyramid colors
-  const pyramidColors = ["#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#c2410c"];
+  // Grade distribution for pyramid
+  const gradeDistribution = kilterStats?.gradeDistribution ?? {};
+  const gradePyramid = Object.entries(gradeDistribution)
+    .map(([grade, count]) => ({ grade, count }))
+    .sort((a, b) => {
+      const aNum = parseInt(a.grade.replace('V', '')) || 0;
+      const bNum = parseInt(b.grade.replace('V', '')) || 0;
+      return aNum - bNum;
+    })
+    .slice(-5);
   const maxPyramidCount = Math.max(...gradePyramid.map(g => g.count), 1);
 
-  // Kilter data - use real data only, zeros if not connected
-  const kilterConnected = kilterStats?.isConnected ?? false;
-  const kilterHighestGrade = kilterStats?.maxGrade ?? "—";
-  const kilterTotalClimbs = kilterStats?.totalProblemsSent ?? 0;
-  const kilterTotalSessions = kilterStats?.totalSessions ?? 0;
-  const kilterAvgAngle = kilterStats?.preferredAngle ? Math.round(kilterStats.preferredAngle) : 0;
-  const kilterFlashRate = kilterStats?.flashRate ? Math.round(kilterStats.flashRate) : 0;
-  const kilterSendRate = kilterStats?.sendRate ? Math.round(kilterStats.sendRate) : 0;
-  const kilterAvgTries = kilterStats?.avgAttemptsPerSend ? Math.round(kilterStats.avgAttemptsPerSend * 10) / 10 : 0;
+  // Recent sends from sessions
+  const recentSends = kilterStats?.sessions?.slice(0, 4).flatMap(session =>
+    (session.climbs || [])
+      .filter(c => c.sent)
+      .slice(0, 2)
+      .map(climb => ({
+        name: climb.name,
+        grade: climb.grade,
+        angle: session.boardAngle || 40,
+        attempts: climb.attempts,
+        date: new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      }))
+  ).slice(0, 5) ?? [];
 
-  // Convert grade distribution to array format for display - empty if not connected
-  const kilterGradeBreakdown = kilterStats?.gradeDistribution
-    ? Object.entries(kilterStats.gradeDistribution)
-        .map(([grade, count]) => ({ grade, count, ascents: count }))
-        .sort((a, b) => {
-          // Sort by V-grade numerically
-          const aNum = parseInt(a.grade.replace('V', '')) || 0;
-          const bNum = parseInt(b.grade.replace('V', '')) || 0;
-          return aNum - bNum;
-        })
-        .slice(-5) // Take top 5 grades
-    : [];
+  // Angle performance - group sends by angle brackets
+  const anglePerformance = kilterStats?.sessions?.reduce((acc, session) => {
+    const angle = session.boardAngle || 40;
+    const bracket = angle < 25 ? 'Slab' : angle < 40 ? 'Vert' : angle < 50 ? 'Steep' : 'Cave';
+    acc[bracket] = (acc[bracket] || 0) + session.problemsSent;
+    return acc;
+  }, {} as Record<string, number>) ?? {};
 
-  const maxKilterCount = Math.max(...kilterGradeBreakdown.map(g => g.count), 1);
+  const angleLabels = [
+    { key: 'Slab', icon: '📐', range: '<25°' },
+    { key: 'Vert', icon: '📏', range: '25-40°' },
+    { key: 'Steep', icon: '📈', range: '40-50°' },
+    { key: 'Cave', icon: '🦇', range: '50°+' },
+  ];
 
-  // Recent Kilter sessions - empty if not connected
-  const recentKilterClimbs = kilterStats?.sessions?.slice(0, 4).flatMap(session =>
-    (session.climbs || []).slice(0, 2).map(climb => ({
-      climb_name: climb.name,
-      angle: session.boardAngle || 40,
-      logged_grade: climb.grade,
-      displayed_grade: climb.grade,
-      is_benchmark: false,
-      tries: climb.attempts,
-      sessions_count: 1,
-      is_ascent: climb.sent,
-      date: new Date(session.sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }))
-  ).slice(0, 4) ?? [];
+  // Milestones
+  const maxGradeNum = parseInt(kilterStats?.maxGrade?.replace('V', '') || '0');
+  const milestones = [
+    { label: 'First V3', achieved: maxGradeNum >= 3, emoji: '🌱' },
+    { label: 'Crack V5', achieved: maxGradeNum >= 5, emoji: '🔥' },
+    { label: 'Send V7', achieved: maxGradeNum >= 7, emoji: '💎' },
+    { label: '100 Sends', achieved: (kilterStats?.totalProblemsSent ?? 0) >= 100, emoji: '💯' },
+    { label: '50% Flash', achieved: (kilterStats?.flashRate ?? 0) >= 50, emoji: '⚡' },
+    { label: '20 Sessions', achieved: (kilterStats?.totalSessions ?? 0) >= 20, emoji: '🏆' },
+  ];
 
-  // Strava climbing data - use real data only (no demo fallback)
-  const stravaConnected = stravaClimbingStats?.isConnected ?? false;
-  const stravaHasClimbingActivities = stravaClimbingStats && stravaClimbingStats.totalActivities > 0;
-  // Normalize to common format - empty state instead of demo
-  const stravaThisWeek = stravaClimbingStats?.thisWeek ?? {
-    activities: 0,
-    timeHours: 0,
-    calories: 0,
-    elevationFt: 0,
-  };
-  const stravaThisMonth = stravaClimbingStats?.thisMonth ?? {
-    activities: 0,
-    timeHours: 0,
-    calories: 0,
-    elevationFt: 0,
-  };
-  const stravaRecentActivities = stravaClimbingStats?.recentActivities?.map(a => ({
-    name: a.name,
-    type: a.type,
-    moving_time: a.durationMinutes,
-    elapsed_time: a.durationMinutes,
-    total_elevation_gain: a.elevationGain,
-    start_date: a.date,
-    location: a.location,
-    calories: a.calories,
-    average_heartrate: a.heartRate || 0,
-  })) ?? [];
+  if (isLoadingKilter) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="text-4xl"
+        >
+          🧗
+        </motion.div>
+      </div>
+    );
+  }
 
-  const getRouteTypeIcon = (type: string) => {
-    if (type === "Boulder") return "🪨";
-    if (type === "Trad") return "⛰️";
-    return "🧗";
-  };
+  if (!isConnected) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8">
+        <motion.div
+          className="text-7xl"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          🧗
+        </motion.div>
+        <div className="text-xl font-semibold text-white">Connect Kilter Board</div>
+        <div className="text-sm text-muted-foreground text-center max-w-sm">
+          Link your Kilter Board account to unlock personality insights, session history, and fun stats
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 grid grid-cols-6 grid-rows-[auto_1fr_1fr_auto] gap-3 min-h-0">
-      {/* ═══════════ ROW 1: Hero Stats ═══════════ */}
+      {/* ═══════════ ROW 1: Personality Hero + Max Grade ═══════════ */}
 
-      {/* OUTDOOR HERO - Highest Redpoint (Climbing Log) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
-        <div className="flex items-start justify-between relative z-10">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
-              Outdoor Log
-            </div>
-            {isLoadingClimbingLog ? (
-              <div className="text-5xl font-bold mt-1 text-orange-500/50">...</div>
-            ) : hasData ? (
-              <div className="text-5xl font-bold mt-1 text-orange-500">{highestRedpoint}</div>
-            ) : (
-              <div className="text-3xl font-bold mt-1 text-orange-500/50">No ticks yet</div>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-emerald-400 font-semibold">{totalTicks} ticks</span>
-              <span className="text-xs text-muted-foreground">logged</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-purple-400">{hasData ? highestBoulder : "—"}</div>
-            <div className="text-xs text-muted-foreground">Boulder</div>
-          </div>
-        </div>
-        {/* Mini sparkline - only show when has data */}
-        {hasData ? (
-          <div className="mt-auto pt-3 relative z-10">
-            <div className="flex items-end gap-1 h-6">
-              {[4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t" style={{ height: `${h * 2}px`, background: i === 11 ? "#f97316" : "rgba(249, 115, 22, 0.3)" }} />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Jan</span><span>Nov</span></div>
-          </div>
-        ) : (
-          <div className="mt-auto pt-3 relative z-10 text-center">
-            <button
-              onClick={() => setShowLogDialog(true)}
-              className="text-sm px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 transition-colors"
+      {/* Personality Hero - 4 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          "col-span-4 glass-card rounded-xl p-5 flex items-center gap-5 relative overflow-hidden bg-card/80 backdrop-blur-xl",
+          displayInfo && `bg-gradient-to-br ${displayInfo.bgGradient}`
+        )}
+        style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
+      >
+        {displayInfo ? (
+          <>
+            {/* Giant emoji with glow */}
+            <motion.div
+              className="text-7xl flex-shrink-0 relative"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity }}
             >
-              Log your first climb
-            </button>
-          </div>
-        )}
-      </div>
+              {displayInfo.emoji}
+              <div
+                className="absolute inset-0 blur-xl opacity-30"
+                style={{ backgroundColor: displayInfo.color }}
+              />
+            </motion.div>
 
-      {/* KILTER HERO - Highest Grade (BoardLib) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
-        <div className="flex items-start justify-between relative z-10">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
-              Kilter Board {!kilterConnected && <span className="text-yellow-500 text-[10px]">(Demo)</span>}
-            </div>
-            <div className="text-5xl font-bold mt-1 text-purple-500">{isLoadingKilter ? "..." : kilterHighestGrade}</div>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-sm text-emerald-400 font-semibold">{kilterTotalClimbs} climbs</span>
-              <span className="text-xs text-muted-foreground">{kilterTotalSessions} sessions</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-cyan-400">{kilterAvgAngle}°</div>
-            <div className="text-xs text-muted-foreground">Avg Angle</div>
-          </div>
-        </div>
-        {/* Angle distribution mini bars - only show if Kilter connected */}
-        {kilterConnected && kilterTotalSessions > 0 && (
-          <div className="mt-auto pt-3 relative z-10">
-            <div className="text-xs text-muted-foreground mb-1">Preferred angle: {kilterAvgAngle}°</div>
-          </div>
-        )}
-      </div>
+            {/* Personality info */}
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-1">
+                Your Climbing Personality
+              </div>
+              <div
+                className="text-3xl font-bold truncate tracking-tight"
+                style={{ color: displayInfo.color }}
+              >
+                {displayInfo.displayName}
+              </div>
+              <div className="text-sm text-white/70 mt-1 line-clamp-1">
+                {personality?.tagline}
+              </div>
 
-      {/* REDPOINT/STRAVA - Activity Summary */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
-          <span className={cn("w-2 h-2 rounded-full", stravaConnected ? "bg-cyan-500" : "bg-gray-500")} />
-          Climbing via Strava {!stravaConnected && <span className="text-yellow-500 text-[10px]">(Not connected)</span>}
-        </div>
-        {stravaConnected && !stravaHasClimbingActivities ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
-            <Activity className="w-8 h-8 text-cyan-500/40 mb-2" />
-            <div className="text-sm text-muted-foreground">No climbing activities found</div>
-            <div className="text-xs text-muted-foreground/70 mt-1">Log activities in Strava as "RockClimbing"</div>
-          </div>
+              {/* Trait pills */}
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {personality?.traits.slice(0, 3).map((trait, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * i }}
+                    className="px-2 py-0.5 text-[10px] rounded-full bg-white/10 text-white/80 border border-white/5"
+                  >
+                    {trait}
+                  </motion.span>
+                ))}
+              </div>
+            </div>
+
+            {/* Score badge */}
+            <div className="absolute top-3 right-3 text-right">
+              <motion.div
+                className="text-2xl font-bold tabular-nums"
+                style={{ color: displayInfo.color }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.3 }}
+              >
+                {personality?.scores[personality.primary]}%
+              </motion.div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">match</div>
+            </div>
+          </>
         ) : (
-          <div className="flex-1 grid grid-cols-2 gap-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-400">{stravaThisWeek.timeHours}h</div>
-              <div className="text-xs text-muted-foreground">This Week</div>
+          <div className="flex-1 text-center py-4">
+            <div className="text-5xl mb-3">🔮</div>
+            <div className="text-white/80 font-medium">
+              Unlock your personality
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-400">{(stravaThisWeek.elevationFt / 1000).toFixed(1)}k</div>
-              <div className="text-xs text-muted-foreground">Elev (ft)</div>
+            <div className="text-sm text-muted-foreground/70 mt-1">
+              Complete 5 sessions ({kilterStats?.totalSessions ?? 0}/5)
             </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-orange-400">{stravaThisWeek.activities}</div>
-              <div className="text-xs text-muted-foreground">Activities</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-purple-400">{stravaThisWeek.calories}</div>
-              <div className="text-xs text-muted-foreground">Calories</div>
+            <div className="w-32 h-1.5 bg-white/10 rounded-full mx-auto mt-3 overflow-hidden">
+              <motion.div
+                className="h-full bg-purple-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, ((kilterStats?.totalSessions ?? 0) / 5) * 100)}%` }}
+              />
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* ═══════════ ROW 2: Recent Activity Columns ═══════════ */}
+      {/* Max Grade Card - 2 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="col-span-2 glass-card rounded-xl p-4 flex flex-col justify-center bg-card/80 backdrop-blur-xl relative overflow-hidden"
+      >
+        {/* Subtle gradient accent */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-500/20 to-transparent rounded-bl-full" />
 
-      {/* OUTDOOR TICKS (Climbing Log) */}
-      <div className="row-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center justify-between">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">
+          Highest Send
+        </div>
+        <div className="text-5xl font-black text-purple-400 mt-1 tracking-tight">
+          {kilterStats?.maxGrade ?? 'V0'}
+        </div>
+        <div className="flex items-center gap-3 mt-3 text-sm">
           <div className="flex items-center gap-1.5">
-            <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
-            Recent Ticks
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-emerald-400 font-medium">{kilterStats?.totalProblemsSent ?? 0}</span>
+            <span className="text-muted-foreground/60 text-xs">sends</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <Target className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-cyan-400 font-medium">{kilterStats?.totalSessions ?? 0}</span>
+            <span className="text-muted-foreground/60 text-xs">sessions</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ═══════════ ROW 2: Milestones + Pyramid + Angle ═══════════ */}
+
+      {/* Milestones - 2 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-3">
+          Milestones
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {milestones.map((m, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 + i * 0.05 }}
+              className={cn(
+                "flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all",
+                m.achieved
+                  ? "bg-white/10"
+                  : "bg-white/5 opacity-40"
+              )}
+            >
+              <span className={cn("text-lg", !m.achieved && "grayscale")}>
+                {m.emoji}
+              </span>
+              <span className={cn(
+                "text-[11px] font-medium",
+                m.achieved ? "text-white" : "text-muted-foreground"
+              )}>
+                {m.label}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Grade Pyramid - 2 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
+          Grade Pyramid
+        </div>
+        <div className="flex-1 flex flex-col justify-center gap-1">
+          {gradePyramid.length > 0 ? gradePyramid.map(({ grade, count }, i) => (
+            <div key={grade} className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground w-6 text-right font-mono">{grade}</span>
+              <div className="flex-1 h-3 bg-white/5 rounded overflow-hidden">
+                <motion.div
+                  className="h-full rounded bg-gradient-to-r from-purple-600 to-purple-400"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(count / maxPyramidCount) * 100}%` }}
+                  transition={{ delay: 0.3 + i * 0.05, duration: 0.5 }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-purple-400 w-5 tabular-nums">{count}</span>
+            </div>
+          )) : (
+            <div className="text-center text-muted-foreground text-sm py-4">
+              No sends yet
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Angle Performance - 2 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
+          Angle Performance
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {angleLabels.map(({ key, icon, range }) => (
+            <div key={key} className="text-center py-2 rounded-lg bg-white/5">
+              <div className="text-lg mb-0.5">{icon}</div>
+              <div className="text-lg font-bold text-cyan-400 tabular-nums">
+                {anglePerformance[key] ?? 0}
+              </div>
+              <div className="text-[10px] text-muted-foreground">{key}</div>
+              <div className="text-[9px] text-muted-foreground/50">{range}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* ═══════════ ROW 3: Recent Sends + Session Calendar ═══════════ */}
+
+      {/* Recent Sends - 3 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <TrendingUp className="w-3 h-3" />
+            Recent Sends
+          </span>
           <button
             onClick={() => setShowLogDialog(true)}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 transition-colors"
           >
             <Plus className="w-3 h-3" />
             Log
           </button>
         </div>
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {isLoadingClimbingLog ? (
-            <div className="flex-1 flex flex-col gap-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse flex items-start gap-2 p-2 rounded-lg bg-muted/20">
-                  <div className="w-6 h-6 rounded bg-muted/40" />
-                  <div className="flex-1 space-y-1">
-                    <div className="h-4 bg-muted/40 rounded w-3/4" />
-                    <div className="h-3 bg-muted/30 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : recentTicks.length > 0 ? recentTicks.map((tick) => (
-            <div key={tick.id} className={cn("group flex items-start gap-2 p-2 rounded-lg border relative", tick.style === "Onsight" || tick.style === "Flash" ? "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/30" : "bg-white/[0.02] border-border/20")}>
-              <span className="text-base">{getRouteTypeIcon(tick.routeType)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{tick.name}</div>
-                <div className="text-xs text-muted-foreground">{tick.grade} • {tick.style}</div>
-                <div className="text-xs text-muted-foreground/70">{tick.location} • {"★".repeat(tick.stars)}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">{tick.date}</span>
-                {/* Edit/Delete buttons - only show for real data */}
-                {hasData && (
-                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 ml-1 transition-opacity">
-                    <button
-                      onClick={() => {
-                        const rawTick = recentTicksRaw.find(t => t.id === tick.id);
-                        if (rawTick) {
-                          setEditingTick(rawTick);
-                          setShowLogDialog(true);
-                        }
-                      }}
-                      className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                      title="Edit"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete "${tick.name}"?`)) {
-                          onDeleteTick(tick.id);
-                        }
-                      }}
-                      className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-              <div className="text-4xl mb-2">🧗</div>
-              <div className="text-sm text-muted-foreground">No ticks yet</div>
-              <button
-                onClick={() => setShowLogDialog(true)}
-                className="mt-3 text-xs px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors"
-              >
-                Log Your First Climb
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* KILTER RECENT (BoardLib) */}
-      <div className="row-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
-          Kilter Sends
-        </div>
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {recentKilterClimbs.length > 0 ? recentKilterClimbs.map((climb, i) => (
-            <div key={i} className={cn("flex items-start gap-2 p-2 rounded-lg border", climb.tries === 1 ? "bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/30" : "bg-white/[0.02] border-border/20")}>
-              <div className="text-center flex-shrink-0">
-                <div className="text-lg font-bold text-purple-400">{climb.logged_grade}</div>
-                <div className="text-xs text-muted-foreground">{climb.angle}°</div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{climb.climb_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {climb.tries === 1 ? "⚡ Flash" : `↻ ${climb.tries} tries`}
-                  {climb.is_benchmark && <span className="ml-1 text-amber-400">★ BM</span>}
-                </div>
-              </div>
-              <span className="text-xs text-muted-foreground">{climb.date}</span>
-            </div>
-          )) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              {kilterConnected ? "No recent climbs" : "Connect Kilter Board to see climbs"}
-            </div>
-          )}
-        </div>
-        {/* Kilter Stats Summary */}
-        {kilterConnected && kilterTotalSessions > 0 && (
-          <div className="border-t border-border/20 pt-2 mt-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Sessions</span>
-              <span className="font-medium text-purple-400">{kilterTotalSessions}</span>
-            </div>
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-muted-foreground">Send Rate</span>
-              <span className="font-medium text-emerald-400">{kilterSendRate}%</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* PROGRESS + STATS (Combined) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex gap-4 bg-card/80 backdrop-blur-xl">
-        <div className="w-16 h-16 relative flex-shrink-0">
-          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#f97316" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${progressPercent * 2.51} 251`} />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-lg font-bold text-orange-400">{progressPercent}%</div>
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col justify-center gap-0.5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Outdoor Goal</div>
-          <div className="text-sm flex items-center gap-1"><span className="font-semibold">{totalTicks}</span> / <EditableGoal value={yearlyClimbsGoal} unit="" goalKey="yearly_climbs" onUpdate={onUpdateGoal} isUpdating={isUpdating} /> ticks</div>
-          <div className="text-xs text-emerald-400">Need {ticksPerMonth}/month</div>
-          <div className="text-xs text-muted-foreground">{outdoorDays} outdoor days</div>
-        </div>
-      </div>
-
-      {/* REDPOINT ACTIVITIES (Strava) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Recent Activities</div>
         <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
-          {stravaRecentActivities.length > 0 ? stravaRecentActivities.slice(0, 3).map((act, i) => (
-            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-border/20">
-              <div className="text-center flex-shrink-0 w-12">
-                <div className="text-sm font-semibold text-cyan-400">{Math.round(act.moving_time)}m</div>
+          {recentSends.length > 0 ? recentSends.map((climb, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 + i * 0.05 }}
+              className={cn(
+                "flex items-center gap-2 p-2 rounded-lg border",
+                climb.attempts === 1
+                  ? "bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/20"
+                  : "bg-white/[0.02] border-white/5"
+              )}
+            >
+              <div className="text-center flex-shrink-0 w-10">
+                <div className="text-sm font-bold text-purple-400">{climb.grade}</div>
+                <div className="text-[9px] text-muted-foreground">{climb.angle}°</div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{act.name}</div>
-                <div className="text-xs text-muted-foreground">{act.location}</div>
+                <div className="text-sm font-medium truncate text-white/90">{climb.name}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {climb.attempts === 1 ? (
+                    <span className="text-emerald-400">⚡ Flash</span>
+                  ) : (
+                    <span>↻ {climb.attempts} tries</span>
+                  )}
+                </div>
               </div>
-              <div className="text-right">
-                {act.total_elevation_gain > 0 && <div className="text-xs text-emerald-400">↑{Math.round(act.total_elevation_gain * 3.28084)}ft</div>}
-                <div className="text-xs text-muted-foreground">{act.calories} cal</div>
-              </div>
-            </div>
+              <span className="text-[10px] text-muted-foreground/60">{climb.date}</span>
+            </motion.div>
           )) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              {stravaConnected ? "No recent climbing activities" : "Connect Strava to see activities"}
+              No recent sends
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* ═══════════ ROW 3: Pyramids & Breakdowns ═══════════ */}
+      {/* Session Calendar - 3 cols */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="col-span-3 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+      >
+        <SessionCalendar
+          sessions={kilterStats?.sessions ?? []}
+        />
+      </motion.div>
 
-      {/* OUTDOOR PYRAMID (Climbing Log) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-orange-500" : "bg-gray-500")} />
-          Route Pyramid
-        </div>
-        <div className="flex-1 flex flex-col justify-center gap-1">
-          {gradePyramid.map(({ grade, count }, i) => (
-            <div key={grade} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-10 text-right font-medium">{grade}</span>
-              <div className="flex-1 h-3.5 bg-muted/30 rounded overflow-hidden">
-                <div className="h-full rounded" style={{ width: `${(count / maxPyramidCount) * 100}%`, background: pyramidColors[i] }} />
-              </div>
-              <span className="text-xs font-semibold w-6" style={{ color: pyramidColors[i] }}>{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ═══════════ ROW 4: Absurd Facts Ticker ═══════════ */}
 
-      {/* KILTER PYRAMID (BoardLib) */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <span className={cn("w-2 h-2 rounded-full", kilterConnected ? "bg-purple-500" : "bg-gray-500")} />
-          Kilter Pyramid
-        </div>
-        <div className="flex-1 flex flex-col justify-center gap-1">
-          {kilterGradeBreakdown.map(({ grade, count, ascents }) => (
-            <div key={grade} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-8 text-right font-medium">{grade}</span>
-              <div className="flex-1 h-3.5 bg-muted/30 rounded overflow-hidden relative">
-                <div className="h-full rounded absolute" style={{ width: `${(count / maxKilterCount) * 100}%`, background: "rgba(168, 85, 247, 0.3)" }} />
-                <div className="h-full rounded absolute" style={{ width: `${(ascents / maxKilterCount) * 100}%`, background: "#a855f7" }} />
-              </div>
-              <span className="text-xs font-semibold w-10 text-purple-400">{ascents}/{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* STYLE BREAKDOWN (Climbing Log) */}
-      <div className="col-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Style Mix</div>
-        <div className="flex-1 flex flex-col justify-center gap-2">
-          {[
-            { label: "Sport", value: styleBreakdown.sport, color: "#f97316" },
-            { label: "Boulder", value: styleBreakdown.boulder, color: "#a855f7" },
-            { label: "Trad", value: styleBreakdown.trad, color: "#06b6d4" },
-          ].map((style) => (
-            <div key={style.label} className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: style.color }} />
-              <span className="text-xs text-muted-foreground flex-1">{style.label}</span>
-              <span className="text-sm font-medium" style={{ color: style.color }}>{style.value}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* KILTER STATS (BoardLib) */}
-      <div className="col-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Kilter Stats</div>
-        <div className="flex-1 flex flex-col justify-center gap-1.5">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Flash</span>
-            <span className="font-semibold text-emerald-400">{kilterFlashRate}%</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Send</span>
-            <span className="font-semibold text-purple-400">{kilterSendRate}%</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Avg Tries</span>
-            <span className="font-semibold text-cyan-400">{kilterAvgTries}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════ ROW 4: Bottom Stats Bar ═══════════ */}
-
-      {/* STRAVA CLIMBING STATS */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">Strava Climbing Summary</div>
-        {stravaConnected && stravaHasClimbingActivities ? (
-          <div className="flex-1 flex items-center justify-around">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-400">{stravaClimbingStats?.totalActivities ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Activities</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">{stravaClimbingStats?.totalTimeHours?.toFixed(1) ?? 0}h</div>
-              <div className="text-xs text-muted-foreground">Total Time</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-400">{((stravaClimbingStats?.thisMonth.elevationFt ?? 0) / 1000).toFixed(1)}k</div>
-              <div className="text-xs text-muted-foreground">Monthly Elev (ft)</div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            {stravaConnected ? "No climbing activities in Strava" : "Connect Strava to see climbing stats"}
-          </div>
-        )}
-      </div>
-
-      {/* QUICK STATS */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex items-center justify-around bg-card/80 backdrop-blur-xl">
-        {[
-          { label: "Outdoor Days", value: outdoorDays.toString(), color: "#06b6d4" },
-          { label: "Total Ticks", value: totalTicks.toString(), color: "#10b981" },
-          { label: "This Month", value: stravaThisMonth.activities.toString(), color: "#f97316" },
-          { label: "This Week", value: stravaThisWeek.activities.toString(), color: "#a855f7" },
-        ].map((stat) => (
-          <div key={stat.label} className="text-center">
-            <div className="text-xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
-            <div className="text-xs text-muted-foreground">{stat.label}</div>
-          </div>
-        ))}
-      </div>
+      {kilterStats?.absurd && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="col-span-6"
+        >
+          <AbsurdFactsTicker absurd={kilterStats.absurd} />
+        </motion.div>
+      )}
 
       {/* Climbing Log Dialog */}
       <ClimbingLogDialog
         open={showLogDialog}
-        onOpenChange={(open) => {
-          setShowLogDialog(open);
-          if (!open) setEditingTick(undefined); // Clear editing state when closing
-        }}
+        onOpenChange={setShowLogDialog}
         onSubmit={async (tick) => {
-          if (editingTick) {
-            await onUpdateTick({ id: editingTick.id, ...tick });
-          } else {
-            await onCreateTick(tick);
-          }
-          setEditingTick(undefined);
+          await onCreateTick(tick);
         }}
-        editingTick={editingTick}
         isSubmitting={isCreatingTick}
       />
     </div>

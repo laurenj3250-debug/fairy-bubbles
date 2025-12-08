@@ -63,6 +63,47 @@ const PERSONALITY_DATA: Record<PersonalityType, {
 };
 
 /**
+ * Display mapping for personality types - emoji-forward design
+ */
+export const PERSONALITY_DISPLAY: Record<PersonalityType, {
+  displayName: string;
+  emoji: string;
+  color: string;
+  bgGradient: string;
+}> = {
+  FLASH_MASTER: {
+    displayName: 'The Flasher',
+    emoji: '⚡',
+    color: '#10b981',
+    bgGradient: 'from-emerald-500/20 via-emerald-600/10 to-transparent',
+  },
+  PROJECT_CRUSHER: {
+    displayName: 'The Projector',
+    emoji: '🎯',
+    color: '#a855f7',
+    bgGradient: 'from-purple-500/20 via-purple-600/10 to-transparent',
+  },
+  VOLUME_WARRIOR: {
+    displayName: 'The Crusher',
+    emoji: '💪',
+    color: '#f97316',
+    bgGradient: 'from-orange-500/20 via-orange-600/10 to-transparent',
+  },
+  CONSISTENCY_KING: {
+    displayName: 'The Consistent',
+    emoji: '🎸',
+    color: '#06b6d4',
+    bgGradient: 'from-cyan-500/20 via-cyan-600/10 to-transparent',
+  },
+  ANGLE_DEMON: {
+    displayName: 'The Explorer',
+    emoji: '🧭',
+    color: '#f59e0b',
+    bgGradient: 'from-amber-500/20 via-amber-600/10 to-transparent',
+  },
+};
+
+/**
  * Clamp value between 0 and 100
  */
 function clamp(value: number): number {
