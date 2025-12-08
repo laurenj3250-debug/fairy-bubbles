@@ -65,6 +65,8 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
   const [cadence, setCadence] = useState<"daily" | "weekly">(habit?.cadence || "daily");
   const [targetPerWeek, setTargetPerWeek] = useState(habit?.targetPerWeek || 3);
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(habit?.linkedGoalId || null);
+  const [requiresNote, setRequiresNote] = useState(habit?.requiresNote || false);
+  const [notePlaceholder, setNotePlaceholder] = useState(habit?.notePlaceholder || "");
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch goals for linking
@@ -107,6 +109,8 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
         cadence,
         targetPerWeek: cadence === "weekly" ? targetPerWeek : null,
         linkedGoalId: linkedGoalId || null,
+        requiresNote,
+        notePlaceholder: requiresNote ? notePlaceholder : null,
       };
 
       if (habit) {
@@ -529,6 +533,64 @@ export function HabitDialog({ open, onClose, habit }: HabitDialogProps) {
               </div>
             </div>
           )}
+
+          {/* Requires Note Toggle */}
+          <div style={{ marginBottom: "20px", padding: "16px", background: "#fffbeb", borderRadius: "12px", border: "2px solid #fcd34d" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+              <label style={{ fontSize: "14px", fontWeight: "600", color: "#000" }}>
+                📝 Prompt for Note
+              </label>
+              <button
+                type="button"
+                onClick={() => setRequiresNote(!requiresNote)}
+                style={{
+                  width: "48px",
+                  height: "24px",
+                  borderRadius: "12px",
+                  border: "none",
+                  background: requiresNote ? "#f59e0b" : "#e5e7eb",
+                  cursor: "pointer",
+                  position: "relative",
+                  transition: "all 0.2s",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "2px",
+                    left: requiresNote ? "26px" : "2px",
+                    width: "20px",
+                    height: "20px",
+                    background: "white",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                  }}
+                />
+              </button>
+            </div>
+            <p style={{ fontSize: "12px", color: "#666", marginBottom: requiresNote ? "12px" : "0" }}>
+              Ask for a note when completing this habit
+            </p>
+            {requiresNote && (
+              <input
+                type="text"
+                value={notePlaceholder}
+                onChange={(e) => setNotePlaceholder(e.target.value)}
+                placeholder="e.g., What did you learn today?"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "2px solid #fcd34d",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  outline: "none",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#fcd34d"}
+              />
+            )}
+          </div>
 
           {/* Link to Goal */}
           {goals.length > 0 && (

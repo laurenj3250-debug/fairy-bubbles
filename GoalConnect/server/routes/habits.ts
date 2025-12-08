@@ -454,11 +454,11 @@ export function registerHabitRoutes(app: Express) {
     }
   });
 
-  // POST toggle habit log completion (supports cumulative goals)
+  // POST toggle habit log completion (supports cumulative goals and notes)
   app.post("/api/habit-logs/toggle", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const { habitId, date, durationMinutes, quantityCompleted, sessionType, incrementValue } = req.body;
+      const { habitId, date, durationMinutes, quantityCompleted, sessionType, incrementValue, note } = req.body;
 
       if (!habitId || !date) {
         return res.status(400).json({ error: "habitId and date are required" });
@@ -491,6 +491,7 @@ export function registerHabitRoutes(app: Express) {
           quantityCompleted,
           sessionType,
           incrementValue: incrementValue || 1,
+          note: note || existingLog.note, // Preserve existing note if not provided
         });
         logResult = updatedLog;
 
@@ -511,6 +512,7 @@ export function registerHabitRoutes(app: Express) {
           quantityCompleted,
           sessionType,
           incrementValue: incrementValue || 1,
+          note,
         });
         const newLog = await storage.createHabitLog({
           habitId,
@@ -521,6 +523,7 @@ export function registerHabitRoutes(app: Express) {
           quantityCompleted,
           sessionType,
           incrementValue: incrementValue || 1,
+          note,
         });
         logResult = newLog;
 

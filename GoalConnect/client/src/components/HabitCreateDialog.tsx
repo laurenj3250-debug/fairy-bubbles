@@ -150,6 +150,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
     type: FrequencyType.DAILY
   });
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(null);
+  const [requiresNote, setRequiresNote] = useState(false);
+  const [notePlaceholder, setNotePlaceholder] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(true);
@@ -209,6 +211,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
         }
 
         setLinkedGoalId(activeHabit.linkedGoalId || null);
+        setRequiresNote(activeHabit.requiresNote || false);
+        setNotePlaceholder(activeHabit.notePlaceholder || "");
       } else {
         // New habit - show templates
         setShowTemplates(true);
@@ -223,6 +227,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
           type: FrequencyType.DAILY
         });
         setLinkedGoalId(null);
+        setRequiresNote(false);
+        setNotePlaceholder("");
       }
       setError(null);
     }
@@ -262,6 +268,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
         targetPerWeek: frequency.denominator === 7 ? frequency.numerator : null,
         difficulty: effort === "light" ? "easy" : effort === "medium" ? "medium" : "hard",
         linkedGoalId: linkedGoalId,
+        requiresNote,
+        notePlaceholder: requiresNote ? notePlaceholder : null,
       };
 
       if (activeHabit) {
@@ -515,6 +523,42 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
                 Frequency
               </label>
               <FrequencySelector value={frequency} onChange={setFrequency} />
+            </div>
+
+            {/* Requires Note Toggle */}
+            <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  📝 Prompt for Note
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setRequiresNote(!requiresNote)}
+                  className={cn(
+                    "relative w-12 h-6 rounded-full transition-colors",
+                    requiresNote ? "bg-amber-500" : "bg-muted/30"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow",
+                      requiresNote ? "left-7" : "left-1"
+                    )}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Ask for a note when completing this habit (e.g., "What did you learn?")
+              </p>
+              {requiresNote && (
+                <input
+                  type="text"
+                  value={notePlaceholder}
+                  onChange={(e) => setNotePlaceholder(e.target.value)}
+                  placeholder="e.g., What did you learn today?"
+                  className="w-full px-4 py-2 border-2 border-amber-500/30 rounded-xl bg-card/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-500/50 transition-colors text-sm"
+                />
+              )}
             </div>
 
             {/* Link to Route (Goal) */}

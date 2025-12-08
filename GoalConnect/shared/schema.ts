@@ -47,6 +47,9 @@ export const habits = pgTable("habits", {
   isLocked: boolean("is_locked").notNull().default(false), // Prevent easy editing
   primaryGoalAchieved: boolean("primary_goal_achieved").notNull().default(false), // "Send 6b on kilter" achieved?
   primaryGoalAchievedDate: varchar("primary_goal_achieved_date", { length: 10 }), // When was it achieved
+  // NOTE INPUT - Habits that prompt for text when completing
+  requiresNote: boolean("requires_note").notNull().default(false), // Show text input on completion
+  notePlaceholder: text("note_placeholder"), // Optional placeholder text like "What did you learn?"
 });
 
 export const habitLogs = pgTable("habit_logs", {

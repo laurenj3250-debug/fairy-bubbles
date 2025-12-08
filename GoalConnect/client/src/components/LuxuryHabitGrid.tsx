@@ -13,6 +13,7 @@ interface LuxuryHabitGridProps {
   dayLabels?: string[];
   todayIndex?: number;
   onToggle?: (habitId: number, date: string) => void;
+  onHabitClick?: (habitId: number) => void;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export function LuxuryHabitGrid({
   dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
   todayIndex = 0,
   onToggle,
+  onHabitClick,
   className,
 }: LuxuryHabitGridProps) {
   const fullDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -56,13 +58,18 @@ export function LuxuryHabitGrid({
       {/* Habit rows */}
       {habits.map((habit) => (
         <div key={habit.id} role="row" className="flex items-center">
-          <span
+          <button
+            type="button"
             role="rowheader"
-            className="w-20 shrink-0 font-body text-[11px] text-[var(--text-secondary)] truncate pr-2"
+            onClick={() => onHabitClick?.(habit.id)}
+            className={cn(
+              "w-20 shrink-0 font-body text-[11px] text-[var(--text-secondary)] truncate pr-2 text-left",
+              onHabitClick && "cursor-pointer hover:text-peach-400 transition-colors"
+            )}
             title={habit.name}
           >
             {habit.name}
-          </span>
+          </button>
 
           <div className="flex-1 flex justify-between px-1">
             {habit.days.map((day, j) => (

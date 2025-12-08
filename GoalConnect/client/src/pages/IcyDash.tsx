@@ -30,6 +30,8 @@ import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
 import { LuxuryStudyTracker } from '@/components/LuxuryStudyTracker';
 import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 import { DreamScrollWidget } from '@/components/DreamScrollWidget';
+import { HabitNoteDialog } from '@/components/HabitNoteDialog';
+import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 
 // Drag and Drop
 import {
@@ -228,6 +230,14 @@ export default function DashboardV4() {
   // Track recently completed tasks for linger effect (task id -> completion timestamp)
   const [recentlyCompleted, setRecentlyCompleted] = useState<Record<number, number>>({});
 
+  // Note dialog state for habits that require notes
+  const [noteDialogHabit, setNoteDialogHabit] = useState<HabitWithData | null>(null);
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+
+  // Detail dialog state for viewing habit history/notes
+  const [detailDialogHabit, setDetailDialogHabit] = useState<HabitWithData | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
   // Quick add handler - opens inline add for today
   const handleQuickAdd = useCallback(() => {
     setInlineAddDay(week.todayIndex);
@@ -292,13 +302,22 @@ export default function DashboardV4() {
     },
   });
 
+  // Handler for viewing habit details (click on habit name, not toggle)
+  const handleViewHabitDetail = useCallback((habitId: number) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (habit) {
+      setDetailDialogHabit(habit);
+      setDetailDialogOpen(true);
+    }
+  }, [habits]);
+
   // ============================================================================
   // MUTATIONS
   // ============================================================================
 
   const toggleHabitMutation = useMutation({
-    mutationFn: async ({ habitId, date }: { habitId: number; date: string }) => {
-      return await apiRequest('/api/habit-logs/toggle', 'POST', { habitId, date });
+    mutationFn: async ({ habitId, date, note }: { habitId: number; date: string; note?: string }) => {
+      return await apiRequest('/api/habit-logs/toggle', 'POST', { habitId, date, note });
     },
     onMutate: async ({ habitId, date }) => {
       const wasCompleted = completionMap[habitId]?.[date] ?? false;
@@ -651,8 +670,23 @@ export default function DashboardV4() {
   }, [habits]);
 
   const handleToggleHabit = useCallback((habitId: number) => {
+    const habit = habits.find(h => h.id === habitId);
+    const isCompleted = completionMap[habitId]?.[todayStr] ?? false;
+
+    // If habit requires note and is not already completed, show the note dialog
+    if (habit?.requiresNote && !isCompleted) {
+      setNoteDialogHabit(habit);
+      setNoteDialogOpen(true);
+      return;
+    }
+
     toggleHabitMutation.mutate({ habitId, date: todayStr });
-  }, [toggleHabitMutation, todayStr]);
+  }, [toggleHabitMutation, todayStr, habits, completionMap]);
+
+  // Handle note dialog submission
+  const handleNoteDialogSubmit = useCallback((habitId: number, date: string, note: string) => {
+    toggleHabitMutation.mutate({ habitId, date, note });
+  }, [toggleHabitMutation]);
 
   const handleToggleTodo = useCallback((todoId: number) => {
     toggleTodoMutation.mutate(todoId);
@@ -809,6 +843,7 @@ export default function DashboardV4() {
                   }))}
                   todayIndex={week.todayIndex}
                   onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
+                  onHabitClick={handleViewHabitDetail}
                   className="w-full"
                 />
               </div>
@@ -949,6 +984,22 @@ export default function DashboardV4() {
       <FAB
         onClick={handleQuickAdd}
         className="bg-peach-400 hover:bg-peach-500 text-white"
+      />
+
+      {/* Habit Note Dialog */}
+      <HabitNoteDialog
+        habit={noteDialogHabit}
+        date={todayStr}
+        open={noteDialogOpen}
+        onOpenChange={setNoteDialogOpen}
+        onSubmit={handleNoteDialogSubmit}
+      />
+
+      {/* Habit Detail Dialog - view history and edit notes */}
+      <HabitDetailDialog
+        habit={detailDialogHabit}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
       />
     </div>
   );
