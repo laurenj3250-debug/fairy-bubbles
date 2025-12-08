@@ -1039,11 +1039,14 @@ export async function runMigrations() {
             set_number INTEGER NOT NULL,
             reps INTEGER NOT NULL,
             weight_lbs DECIMAL(10,2) NOT NULL,
+            rpe INTEGER,
             is_pr BOOLEAN NOT NULL DEFAULT false,
             notes TEXT,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
+        // Add rpe column if it doesn't exist (for tables created without it)
+        await db.execute(sql`ALTER TABLE lifting_sets ADD COLUMN IF NOT EXISTS rpe INTEGER`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_user_id ON lifting_sets(user_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_exercise_id ON lifting_sets(exercise_id)`);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_date ON lifting_sets(user_id, workout_date)`);

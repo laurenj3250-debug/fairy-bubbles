@@ -498,14 +498,18 @@ export function registerLiftingRoutes(app: Express) {
             }
           }
 
-          // Import sets
+          // Import sets - only completed sets with actual data
           const allSets = [...(entry.warmupSets || []), ...(entry.sets || [])];
           let setNumber = 0;
 
           for (const set of allSets) {
+            // Only import completed sets
+            if (!set.isCompleted) continue;
+
             setNumber++;
 
             // Extract weight - Liftosaur uses { value, unit } format
+            // Completed sets have completedWeight, fall back to weight if not present
             let weightLbs = 0;
             if (set.completedWeight) {
               weightLbs = set.completedWeight.value || 0;
@@ -533,8 +537,11 @@ export function registerLiftingRoutes(app: Express) {
                   isPR: false, // Will recalculate PRs separately
                 });
                 setsImported++;
-              } catch (e) {
-                // Duplicate set, skip
+              } catch (e: any) {
+                // Log the actual error for debugging
+                if (!e.message?.includes('duplicate')) {
+                  log.error(`[lifting] Failed to insert set: ${e.message}`, e);
+                }
               }
             }
           }
