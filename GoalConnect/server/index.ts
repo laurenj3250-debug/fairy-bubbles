@@ -112,6 +112,7 @@ declare module 'http' {
   }
 }
 app.use(express.json({
+  limit: '10mb', // Liftosaur exports can be large
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }

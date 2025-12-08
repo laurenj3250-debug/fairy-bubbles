@@ -961,6 +961,75 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create study_schedule_config table:', error);
       }
 
+      // ========== LIFTING/LIFTOSAUR TABLES ==========
+
+      try {
+        // Create lifting_exercises table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS lifting_exercises (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            category VARCHAR(30) NOT NULL DEFAULT 'compound',
+            equipment VARCHAR(30) NOT NULL DEFAULT 'barbell',
+            primary_muscle TEXT,
+            is_custom BOOLEAN NOT NULL DEFAULT false,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_exercises_user_id ON lifting_exercises(user_id)`);
+        log.info('[migrate] ✅ Lifting exercises table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create lifting_exercises table:', error);
+      }
+
+      try {
+        // Create lifting_workouts table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS lifting_workouts (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            workout_date VARCHAR(10) NOT NULL,
+            name TEXT,
+            duration_minutes INTEGER,
+            total_volume INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            UNIQUE(user_id, workout_date)
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_workouts_user_id ON lifting_workouts(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_workouts_date ON lifting_workouts(user_id, workout_date)`);
+        log.info('[migrate] ✅ Lifting workouts table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create lifting_workouts table:', error);
+      }
+
+      try {
+        // Create lifting_sets table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS lifting_sets (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            exercise_id INTEGER NOT NULL REFERENCES lifting_exercises(id) ON DELETE CASCADE,
+            workout_date VARCHAR(10) NOT NULL,
+            set_number INTEGER NOT NULL,
+            reps INTEGER NOT NULL,
+            weight_lbs DECIMAL(10,2) NOT NULL,
+            is_pr BOOLEAN NOT NULL DEFAULT false,
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_user_id ON lifting_sets(user_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_exercise_id ON lifting_sets(exercise_id)`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_sets_date ON lifting_sets(user_id, workout_date)`);
+        log.info('[migrate] ✅ Lifting sets table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create lifting_sets table:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
