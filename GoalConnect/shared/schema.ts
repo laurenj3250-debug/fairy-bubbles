@@ -47,6 +47,9 @@ export const habits = pgTable("habits", {
   isLocked: boolean("is_locked").notNull().default(false), // Prevent easy editing
   primaryGoalAchieved: boolean("primary_goal_achieved").notNull().default(false), // "Send 6b on kilter" achieved?
   primaryGoalAchievedDate: varchar("primary_goal_achieved_date", { length: 10 }), // When was it achieved
+  // MULTIPLE DAILY LOGS - Track habits with daily targets (e.g., "drink 2L water")
+  allowMultipleLogs: boolean("allow_multiple_logs").notNull().default(false), // Allow logging multiple times per day
+  dailyTargetValue: integer("daily_target_value"), // Target for each day (e.g., 2 for 2L of water)
 });
 
 export const habitLogs = pgTable("habit_logs", {

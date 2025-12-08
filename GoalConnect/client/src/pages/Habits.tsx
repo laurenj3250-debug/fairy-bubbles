@@ -19,7 +19,7 @@ import {
 interface HabitWithData extends Habit {
   streak: { streak: number };
   weeklyCompletion: number;
-  history: Array<{ date: string; completed: boolean }>;
+  history: Array<{ date: string; completed: boolean; quantityCompleted?: number }>;
 }
 
 export default function Habits() {
@@ -79,6 +79,25 @@ export default function Habits() {
     },
   });
 
+  // Decrement habit (for multiple daily logs)
+  const decrementMutation = useMutation({
+    mutationFn: async (habitId: number) => {
+      return await apiRequest("/api/habit-logs/decrement", "POST", {
+        habitId,
+        date: today,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+      queryClient.invalidateQueries({ predicate: (query) =>
+        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+    },
+  });
+
   // Delete habit
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
@@ -89,6 +108,11 @@ export default function Habits() {
 
   const isCompletedToday = (habitId: number) => {
     return todayLogs.some(log => log.habitId === habitId && log.completed);
+  };
+
+  const getTodayQuantity = (habitId: number) => {
+    const log = todayLogs.find(log => log.habitId === habitId);
+    return log?.quantityCompleted || 0;
   };
 
   const isCompletedOnDate = (habitId: number, logs: HabitLog[]) => {
@@ -269,10 +293,12 @@ export default function Habits() {
                 key={habit.id}
                 habit={habit}
                 isCompletedToday={isCompletedToday(habit.id)}
+                todayQuantity={getTodayQuantity(habit.id)}
                 onToggle={() => toggleMutation.mutate(habit.id)}
+                onDecrement={() => decrementMutation.mutate(habit.id)}
                 onEdit={() => handleEdit(habit)}
                 onDelete={() => handleDelete(habit)}
-                isToggling={toggleMutation.isPending}
+                isToggling={toggleMutation.isPending || decrementMutation.isPending}
               />
             ))}
           </div>

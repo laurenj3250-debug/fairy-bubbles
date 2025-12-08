@@ -454,7 +454,7 @@ export function registerHabitRoutes(app: Express) {
     }
   });
 
-  // POST toggle habit log completion (supports cumulative goals)
+  // POST toggle habit log completion (supports cumulative goals and multiple daily logs)
   app.post("/api/habit-logs/toggle", async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -483,52 +483,111 @@ export function registerHabitRoutes(app: Express) {
 
       let logResult;
 
-      if (existingLog) {
-        // Toggle the completion status
-        const updatedLog = await storage.updateHabitLog(existingLog.id, {
-          completed: !existingLog.completed,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-        });
-        logResult = updatedLog;
+      // MULTIPLE DAILY LOGS: Handle habits with daily targets (e.g., "drink 2L water")
+      if (habit.allowMultipleLogs) {
+        const dailyTarget = habit.dailyTargetValue || 1;
 
-        // For cumulative goals: update currentValue
-        if (habit.goalType === "cumulative" && updatedLog) {
-          const delta = updatedLog.completed ? (incrementValue || 1) : -(incrementValue || 1);
-          await db.update(habits)
-            .set({ currentValue: (habit.currentValue || 0) + delta })
-            .where(eq(habits.id, habitId));
+        if (existingLog) {
+          // Increment the quantity
+          const newQuantity = (existingLog.quantityCompleted || 0) + 1;
+          const isCompleted = newQuantity >= dailyTarget;
+
+          const updatedLog = await storage.updateHabitLog(existingLog.id, {
+            quantityCompleted: newQuantity,
+            completed: isCompleted,
+            durationMinutes,
+            sessionType,
+            incrementValue: incrementValue || 1,
+          });
+          logResult = updatedLog;
+
+          // For cumulative goals: update currentValue
+          if (habit.goalType === "cumulative") {
+            await db.update(habits)
+              .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
+              .where(eq(habits.id, habitId));
+          }
+        } else {
+          // Create new log with quantity 1
+          const isCompleted = 1 >= dailyTarget;
+
+          log.debug('[habits] Creating habit log (multiple daily) with:', {
+            habitId,
+            userId,
+            date,
+            quantityCompleted: 1,
+            dailyTarget,
+            isCompleted,
+          });
+
+          const newLog = await storage.createHabitLog({
+            habitId,
+            userId,
+            date,
+            completed: isCompleted,
+            quantityCompleted: 1,
+            durationMinutes,
+            sessionType,
+            incrementValue: incrementValue || 1,
+          });
+          logResult = newLog;
+
+          // For cumulative goals: increment currentValue
+          if (habit.goalType === "cumulative") {
+            await db.update(habits)
+              .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
+              .where(eq(habits.id, habitId));
+          }
         }
       } else {
-        // Create new log
-        log.debug('[habits] Creating habit log with:', {
-          habitId,
-          userId,
-          date,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-        });
-        const newLog = await storage.createHabitLog({
-          habitId,
-          userId,
-          date,
-          completed: true,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-        });
-        logResult = newLog;
+        // STANDARD TOGGLE: Original behavior for binary habits
+        if (existingLog) {
+          // Toggle the completion status
+          const updatedLog = await storage.updateHabitLog(existingLog.id, {
+            completed: !existingLog.completed,
+            durationMinutes,
+            quantityCompleted,
+            sessionType,
+            incrementValue: incrementValue || 1,
+          });
+          logResult = updatedLog;
 
-        // For cumulative goals: increment currentValue
-        if (habit.goalType === "cumulative") {
-          await db.update(habits)
-            .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
-            .where(eq(habits.id, habitId));
+          // For cumulative goals: update currentValue
+          if (habit.goalType === "cumulative" && updatedLog) {
+            const delta = updatedLog.completed ? (incrementValue || 1) : -(incrementValue || 1);
+            await db.update(habits)
+              .set({ currentValue: (habit.currentValue || 0) + delta })
+              .where(eq(habits.id, habitId));
+          }
+        } else {
+          // Create new log
+          log.debug('[habits] Creating habit log with:', {
+            habitId,
+            userId,
+            date,
+            durationMinutes,
+            quantityCompleted,
+            sessionType,
+            incrementValue: incrementValue || 1,
+          });
+          const newLog = await storage.createHabitLog({
+            habitId,
+            userId,
+            date,
+            completed: true,
+            durationMinutes,
+            quantityCompleted,
+            sessionType,
+            incrementValue: incrementValue || 1,
+          });
+          logResult = newLog;
+
+          // For cumulative goals: increment currentValue
+          if (habit.goalType === "cumulative") {
+            await db.update(habits)
+              .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
+              .where(eq(habits.id, habitId));
+          }
         }
       }
 
@@ -540,6 +599,7 @@ export function registerHabitRoutes(app: Express) {
         // Return score info with log response
         return res.json({
           ...logResult,
+          dailyTarget: habit.allowMultipleLogs ? (habit.dailyTargetValue || 1) : undefined,
           score: {
             current: scoreResult.newScore,
             change: scoreResult.scoreChange,
@@ -549,10 +609,88 @@ export function registerHabitRoutes(app: Express) {
       } catch (scoreError: any) {
         log.error('[habits] Score update failed:', scoreError);
         // Don't fail the whole request if scoring fails (graceful degradation)
-        return res.json(logResult);
+        return res.json({
+          ...logResult,
+          dailyTarget: habit.allowMultipleLogs ? (habit.dailyTargetValue || 1) : undefined,
+        });
       }
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to toggle habit log" });
+    }
+  });
+
+  // POST decrement habit log (for multiple daily logs - undo one unit)
+  app.post("/api/habit-logs/decrement", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { habitId, date } = req.body;
+
+      if (!habitId || !date) {
+        return res.status(400).json({ error: "habitId and date are required" });
+      }
+
+      // Verify habit exists and user owns it
+      const habit = await storage.getHabit(habitId);
+      if (!habit) {
+        return res.status(404).json({ error: "Habit not found" });
+      }
+      if (habit.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Only allow decrement for multiple daily log habits
+      if (!habit.allowMultipleLogs) {
+        return res.status(400).json({ error: "Decrement only supported for habits with multiple daily logs" });
+      }
+
+      const db = getDb();
+      const { habits } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Check if log exists for this date
+      const allLogs = await storage.getHabitLogs(habitId);
+      const existingLog = allLogs.find((log) => log.date === date);
+
+      if (!existingLog) {
+        return res.status(404).json({ error: "No log found for this date" });
+      }
+
+      const currentQuantity = existingLog.quantityCompleted || 0;
+      if (currentQuantity <= 0) {
+        return res.status(400).json({ error: "Cannot decrement below 0" });
+      }
+
+      const dailyTarget = habit.dailyTargetValue || 1;
+      const newQuantity = currentQuantity - 1;
+      const isCompleted = newQuantity >= dailyTarget;
+
+      let logResult;
+
+      if (newQuantity === 0) {
+        // Delete the log if quantity reaches 0
+        await storage.deleteHabitLog(existingLog.id);
+        logResult = { deleted: true, habitId, date };
+      } else {
+        // Update the log with decremented quantity
+        logResult = await storage.updateHabitLog(existingLog.id, {
+          quantityCompleted: newQuantity,
+          completed: isCompleted,
+        });
+      }
+
+      // For cumulative goals: decrement currentValue
+      if (habit.goalType === "cumulative") {
+        await db.update(habits)
+          .set({ currentValue: Math.max(0, (habit.currentValue || 0) - 1) })
+          .where(eq(habits.id, habitId));
+      }
+
+      return res.json({
+        ...logResult,
+        dailyTarget,
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to decrement habit log" });
     }
   });
 }

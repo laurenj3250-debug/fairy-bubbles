@@ -104,10 +104,29 @@ export default function HabitsMountain() {
     },
   });
 
+  // Decrement habit (for multiple daily logs)
+  const decrementMutation = useMutation({
+    mutationFn: async (habitId: number) => {
+      return await apiRequest("/api/habit-logs/decrement", "POST", {
+        habitId,
+        date: selectedDate,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+    },
+  });
+
   const isCompletedToday = (habitId: number) => {
     return logsData?.some(
       (log) => log.habitId === habitId && log.date === selectedDate && log.completed
     ) || false;
+  };
+
+  const getTodayQuantity = (habitId: number) => {
+    const log = logsData?.find((log) => log.habitId === habitId && log.date === selectedDate);
+    return log?.quantityCompleted || 0;
   };
 
   const handleCreateNew = () => {
@@ -362,9 +381,11 @@ export default function HabitsMountain() {
                   key={habit.id}
                   habit={habit}
                   completed={completed}
+                  todayQuantity={getTodayQuantity(habit.id)}
                   color={color}
                   isCompleting={isCompleting}
                   onToggle={() => toggleHabitMutation.mutate(habit.id)}
+                  onDecrement={() => decrementMutation.mutate(habit.id)}
                   onEdit={() => handleEdit(habit)}
                   onDelete={() => handleDelete(habit.id)}
                 />
@@ -384,12 +405,14 @@ export default function HabitsMountain() {
 }
 
 // Mountain-themed Habit Card Component
-function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, onDelete }: {
+function HabitCard({ habit, completed, todayQuantity = 0, color, isCompleting, onToggle, onDecrement, onEdit, onDelete }: {
   habit: HabitWithData;
   completed: boolean;
+  todayQuantity?: number;
   color: { bg: string; name: string; border: string };
   isCompleting: boolean;
   onToggle: () => void;
+  onDecrement?: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -402,6 +425,12 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
   const isWeekly = habit.cadence === 'weekly';
   const progress = weeklyProgress?.progress || 0;
   const target = weeklyProgress?.targetPerWeek || 3;
+
+  // Multiple daily logs support
+  const isMultipleLogsHabit = habit.allowMultipleLogs || false;
+  const dailyTarget = habit.dailyTargetValue || 1;
+  const currentQuantity = todayQuantity;
+  const dailyProgress = isMultipleLogsHabit ? Math.min(100, (currentQuantity / dailyTarget) * 100) : 0;
 
   // Calculate energy earned (renamed from points)
   const calculateEnergyEarned = () => {
@@ -580,44 +609,103 @@ function HabitCard({ habit, completed, color, isCompleting, onToggle, onEdit, on
 
         {/* Right side: Completion Button */}
         <div className="flex flex-col gap-3 items-end relative">
-          <button
-            onClick={handleToggleWithFeedback}
-            disabled={isCompleting}
-            className={`px-6 py-4 rounded-xl font-bold transition-all duration-500 border shadow-lg hover:shadow-xl ${
-              completed
-                ? 'text-white'
-                : 'text-foreground'
-            }`}
-            style={{
-              background: completed
-                ? `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))`
-                : 'hsl(var(--background) / 0.6)',
-              cursor: isCompleting ? 'not-allowed' : 'pointer',
-              transform: isCompleting ? 'scale(1.05)' : 'scale(1)',
-              boxShadow: completed
-                ? '0 4px 20px hsl(var(--accent) / 0.3)'
-                : '0 2px 10px hsl(var(--foreground) / 0.1)',
-              minWidth: '100px',
-              borderColor: completed ? 'hsl(var(--accent) / 0.4)' : 'hsl(var(--foreground) / 0.15)',
-            }}
-          >
-            {isCompleting ? (
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 animate-pulse" />
-                <span>Done!</span>
+          {/* Multiple Daily Logs UI */}
+          {isMultipleLogsHabit ? (
+            <div className="flex items-center gap-3">
+              {/* Decrement Button */}
+              <button
+                onClick={onDecrement}
+                disabled={isCompleting || currentQuantity === 0}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 border ${
+                  currentQuantity > 0
+                    ? 'border-foreground/20 hover:border-primary/50 text-foreground/60 hover:text-primary hover:bg-foreground/5'
+                    : 'border-foreground/10 text-foreground/20 cursor-not-allowed'
+                }`}
+              >
+                <ChevronDown className="w-5 h-5" />
+              </button>
+
+              {/* Progress Circle */}
+              <div className="relative w-16 h-16">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle
+                    className="stroke-foreground/10"
+                    strokeWidth="5"
+                    fill="none"
+                    r="26"
+                    cx="32"
+                    cy="32"
+                  />
+                  <circle
+                    className={`transition-all duration-500 ${completed ? 'stroke-primary' : 'stroke-primary/60'}`}
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    fill="none"
+                    r="26"
+                    cx="32"
+                    cy="32"
+                    strokeDasharray={`${(dailyProgress / 100) * 163.36} 163.36`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className={`text-lg font-bold ${completed ? 'text-primary' : 'text-foreground/80'}`}>
+                    {currentQuantity}/{dailyTarget}
+                  </span>
+                </div>
               </div>
-            ) : completed ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xl">✓</span>
-                <span>Done</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Mountain className="w-5 h-5" />
-                <span>Mark</span>
-              </div>
-            )}
-          </button>
+
+              {/* Increment Button */}
+              <button
+                onClick={handleToggleWithFeedback}
+                disabled={isCompleting}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 border ${
+                  'border-primary/50 hover:border-primary bg-primary/10 text-primary hover:bg-primary/20'
+                } ${isCompleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <ChevronUp className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            /* Standard Completion Button */
+            <button
+              onClick={handleToggleWithFeedback}
+              disabled={isCompleting}
+              className={`px-6 py-4 rounded-xl font-bold transition-all duration-500 border shadow-lg hover:shadow-xl ${
+                completed
+                  ? 'text-white'
+                  : 'text-foreground'
+              }`}
+              style={{
+                background: completed
+                  ? `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))`
+                  : 'hsl(var(--background) / 0.6)',
+                cursor: isCompleting ? 'not-allowed' : 'pointer',
+                transform: isCompleting ? 'scale(1.05)' : 'scale(1)',
+                boxShadow: completed
+                  ? '0 4px 20px hsl(var(--accent) / 0.3)'
+                  : '0 2px 10px hsl(var(--foreground) / 0.1)',
+                minWidth: '100px',
+                borderColor: completed ? 'hsl(var(--accent) / 0.4)' : 'hsl(var(--foreground) / 0.15)',
+              }}
+            >
+              {isCompleting ? (
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 animate-pulse" />
+                  <span>Done!</span>
+                </div>
+              ) : completed ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✓</span>
+                  <span>Done</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Mountain className="w-5 h-5" />
+                  <span>Mark</span>
+                </div>
+              )}
+            </button>
+          )}
 
           {/* Energy Earned Feedback */}
           {showEnergyFeedback && (

@@ -150,6 +150,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
     type: FrequencyType.DAILY
   });
   const [linkedGoalId, setLinkedGoalId] = useState<number | null>(null);
+  const [allowMultipleLogs, setAllowMultipleLogs] = useState(false);
+  const [dailyTargetValue, setDailyTargetValue] = useState<number>(2);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(true);
@@ -209,6 +211,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
         }
 
         setLinkedGoalId(activeHabit.linkedGoalId || null);
+        setAllowMultipleLogs(activeHabit.allowMultipleLogs || false);
+        setDailyTargetValue(activeHabit.dailyTargetValue || 2);
       } else {
         // New habit - show templates
         setShowTemplates(true);
@@ -223,6 +227,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
           type: FrequencyType.DAILY
         });
         setLinkedGoalId(null);
+        setAllowMultipleLogs(false);
+        setDailyTargetValue(2);
       }
       setError(null);
     }
@@ -262,6 +268,8 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
         targetPerWeek: frequency.denominator === 7 ? frequency.numerator : null,
         difficulty: effort === "light" ? "easy" : effort === "medium" ? "medium" : "hard",
         linkedGoalId: linkedGoalId,
+        allowMultipleLogs: allowMultipleLogs,
+        dailyTargetValue: allowMultipleLogs ? dailyTargetValue : null,
       };
 
       if (activeHabit) {
@@ -515,6 +523,63 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
                 Frequency
               </label>
               <FrequencySelector value={frequency} onChange={setFrequency} />
+            </div>
+
+            {/* Multiple Daily Logs */}
+            <div className="bg-blue-500/5 border-2 border-blue-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  💧 Track Daily Target
+                  <span className="text-xs font-normal text-muted-foreground">(e.g., 2L water)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setAllowMultipleLogs(!allowMultipleLogs)}
+                  className={cn(
+                    "w-12 h-6 rounded-full transition-all relative",
+                    allowMultipleLogs ? "bg-primary" : "bg-muted/30"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "w-5 h-5 rounded-full bg-white shadow-md absolute top-0.5 transition-all",
+                      allowMultipleLogs ? "left-6" : "left-0.5"
+                    )}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Log multiple times per day toward a daily goal. Progress resets each day.
+              </p>
+              {allowMultipleLogs && (
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-foreground">Daily target:</label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDailyTargetValue(Math.max(1, dailyTargetValue - 1))}
+                      className="w-8 h-8 rounded-lg border-2 border-card-border bg-card/40 hover:border-primary/50 transition-colors flex items-center justify-center text-lg font-bold"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={dailyTargetValue}
+                      onChange={(e) => setDailyTargetValue(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 px-2 py-1 text-center border-2 border-card-border rounded-lg bg-card/40 text-foreground focus:outline-none focus:border-primary/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDailyTargetValue(Math.min(100, dailyTargetValue + 1))}
+                      className="w-8 h-8 rounded-lg border-2 border-card-border bg-card/40 hover:border-primary/50 transition-colors flex items-center justify-center text-lg font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Link to Route (Goal) */}
