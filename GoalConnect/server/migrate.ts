@@ -964,20 +964,42 @@ export async function runMigrations() {
       // ========== LIFTING/LIFTOSAUR TABLES ==========
 
       try {
+        // Create lifting enums if they don't exist
+        await db.execute(sql`
+          DO $$ BEGIN
+            CREATE TYPE lifting_category AS ENUM('push', 'pull', 'legs', 'core', 'compound', 'accessory');
+          EXCEPTION
+            WHEN duplicate_object THEN null;
+          END $$;
+        `);
+        await db.execute(sql`
+          DO $$ BEGIN
+            CREATE TYPE equipment_type AS ENUM('barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other');
+          EXCEPTION
+            WHEN duplicate_object THEN null;
+          END $$;
+        `);
+        log.info('[migrate] ✅ Lifting enums created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create lifting enums:', error);
+      }
+
+      try {
         // Create lifting_exercises table
         await db.execute(sql`
           CREATE TABLE IF NOT EXISTS lifting_exercises (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             name TEXT NOT NULL,
-            category VARCHAR(30) NOT NULL DEFAULT 'compound',
-            equipment VARCHAR(30) NOT NULL DEFAULT 'barbell',
+            category lifting_category NOT NULL DEFAULT 'compound',
+            equipment equipment_type NOT NULL DEFAULT 'barbell',
             primary_muscle TEXT,
-            is_custom BOOLEAN NOT NULL DEFAULT false,
+            is_custom BOOLEAN NOT NULL DEFAULT true,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_lifting_exercises_user_id ON lifting_exercises(user_id)`);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS lifting_exercises_user_name_key ON lifting_exercises(user_id, name)`);
         log.info('[migrate] ✅ Lifting exercises table created/verified');
       } catch (error) {
         log.error('[migrate] ⚠️  Failed to create lifting_exercises table:', error);
