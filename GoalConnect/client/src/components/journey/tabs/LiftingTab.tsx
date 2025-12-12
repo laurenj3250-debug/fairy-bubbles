@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Activity, Dumbbell, Flame, Plus, Timer, TrendingUp, Trophy, Upload, Weight, Zap } from "lucide-react";
+import { Dumbbell, Plus, Trophy, Upload, Weight, Flame, TrendingUp, Trash2 } from "lucide-react";
 import { EditableGoal } from "../shared";
 import { useLiftingLog, LiftingWorkout, LiftingSet } from "@/hooks/useLiftingLog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { calculateLiftingAbsurdComparisons } from "@/lib/liftingAbsurdComparisons";
+import { LiftingFactsTicker } from "../LiftingFactsTicker";
+import { WorkoutCalendar } from "../WorkoutCalendar";
+import { MuscleDistribution } from "../MuscleDistribution";
 
 interface LiftingTabProps {
   yearlyWorkoutsGoal: number;
@@ -23,39 +28,19 @@ interface LiftingTabProps {
   isUpdating: boolean;
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return date.toLocaleDateString("en-US", { weekday: "short" });
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function formatVolume(volume: number): string {
   if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
   if (volume >= 1000) return `${(volume / 1000).toFixed(1)}k`;
   return volume.toLocaleString();
 }
 
-function groupSetsByExercise(sets: LiftingSet[]): Record<string, LiftingSet[]> {
-  return sets.reduce((acc, set) => {
-    const name = set.exercise?.name || set.exerciseName || "Unknown";
-    if (!acc[name]) acc[name] = [];
-    acc[name].push(set);
-    return acc;
-  }, {} as Record<string, LiftingSet[]>);
-}
-
-export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUpdating }: LiftingTabProps) {
+export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: LiftingTabProps) {
   const { toast } = useToast();
   const {
     exercises,
     workouts,
     stats,
+    calendarWorkouts,
     isLoading,
     seedExercises,
     isSeedingExercises,
@@ -64,10 +49,11 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
     isLoggingSet,
     importLiftosaur,
     isImportingLiftosaur,
+    resetData,
+    isResettingData,
   } = useLiftingLog();
 
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [weight, setWeight] = useState<string>("");
   const [reps, setReps] = useState<string>("");
@@ -82,7 +68,6 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
       const text = await file.text();
       const data = JSON.parse(text);
 
-      // Liftosaur exports have a "history" array
       if (!data.history) {
         toast({ title: "Invalid file", description: "This doesn't look like a Liftosaur export. Expected { history: [...] }", variant: "destructive" });
         return;
@@ -93,26 +78,43 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
         title: "Import successful!",
         description: `Imported ${result.imported.workouts} workouts, ${result.imported.sets} sets, ${result.imported.exercises} new exercises`,
       });
-      setIsImportDialogOpen(false);
     } catch (error) {
       toast({ title: "Import failed", description: "Could not parse the file. Make sure it's a valid Liftosaur JSON export.", variant: "destructive" });
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
+  const handleReset = async () => {
+    if (!confirm("This will delete ALL your lifting data (workouts, sets, exercises). Are you sure?")) {
+      return;
+    }
+    try {
+      await resetData();
+      toast({
+        title: "Data cleared",
+        description: "All lifting data has been deleted. You can now re-import.",
+      });
+    } catch (error) {
+      toast({ title: "Reset failed", description: "Could not clear lifting data.", variant: "destructive" });
+    }
+  };
+
   const ytdWorkouts = stats?.ytdWorkouts || 0;
-  const thisMonthWorkouts = stats?.thisMonthWorkouts || 0;
   const ytdVolume = stats?.ytdVolume || 0;
-  const thisMonthVolume = stats?.thisMonthVolume || 0;
+  const bestLift = stats?.bestLift || 0;
+  const totalSets = stats?.totalSets || 0;
+  const muscleVolumes = stats?.muscleVolumes || [];
 
   const progressPercent = yearlyWorkoutsGoal > 0 ? Math.round((ytdWorkouts / yearlyWorkoutsGoal) * 100) : 0;
   const workoutsRemaining = Math.max(0, yearlyWorkoutsGoal - ytdWorkouts);
   const weeksLeft = Math.max(1, Math.ceil((new Date(new Date().getFullYear(), 11, 31).getTime() - new Date().getTime()) / (7 * 24 * 60 * 60 * 1000)));
   const workoutsPerWeek = (workoutsRemaining / weeksLeft).toFixed(1);
+
+  // Calculate absurd comparisons
+  const absurdComparisons = calculateLiftingAbsurdComparisons(ytdVolume, bestLift);
 
   const handleLogSet = async () => {
     if (!selectedExercise || !weight || !reps) return;
@@ -120,10 +122,8 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
     const today = new Date().toISOString().split("T")[0];
     const numSets = parseInt(sets) || 1;
 
-    // Create/update workout for today
     await saveWorkout({ workoutDate: today });
 
-    // Log each set
     for (let i = 0; i < numSets; i++) {
       await logSet({
         exerciseId: parseInt(selectedExercise),
@@ -134,7 +134,6 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
       });
     }
 
-    // Reset form
     setSelectedExercise("");
     setWeight("");
     setReps("");
@@ -153,11 +152,15 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
           accept=".json"
           className="hidden"
         />
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+        <motion.div
+          className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-orange-500/20 flex items-center justify-center"
+          animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        >
           <Dumbbell className="w-12 h-12 text-purple-500" />
-        </div>
+        </motion.div>
         <div>
-          <h3 className="text-xl font-semibold mb-2">Set Up Lifting Log</h3>
+          <h3 className="text-xl font-semibold mb-2">Temple of Gains</h3>
           <p className="text-muted-foreground max-w-sm">
             Import your workout history from Liftosaur, or start fresh with a library of common exercises.
           </p>
@@ -167,7 +170,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
             onClick={() => fileInputRef.current?.click()}
             disabled={isImportingLiftosaur}
             variant="default"
-            className="px-6 py-3 bg-purple-500 hover:bg-purple-600"
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600"
           >
             <Upload className="w-4 h-4 mr-2" />
             {isImportingLiftosaur ? "Importing..." : "Import from Liftosaur"}
@@ -190,7 +193,6 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
 
   return (
     <div className="flex-1 grid grid-cols-6 grid-rows-[auto_1fr_auto] gap-3 min-h-0">
-      {/* Hidden file input for import */}
       <input
         type="file"
         ref={fileInputRef}
@@ -198,81 +200,59 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
         accept=".json"
         className="hidden"
       />
-      {/* ═══════════ ROW 1: Hero Stats ═══════════ */}
 
-      {/* HERO - YTD Workouts */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.5)" }}>
-        <div className="flex items-start justify-between relative z-10">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              YTD Workouts
-            </div>
-            <div className="text-5xl font-bold mt-1 text-purple-500">{ytdWorkouts}</div>
-            <div className="text-sm text-muted-foreground mt-2">
-              {workoutsPerWeek}/week to hit goal
-            </div>
+      {/* ═══════════ ROW 1: Hero Stats & Absurd Facts ═══════════ */}
+
+      {/* HERO - YTD Stats with gradient background */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-card/80 to-orange-900/20 backdrop-blur-xl"
+        style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.5)" }}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
+        <div className="relative z-10">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
+            <Flame className="w-3 h-3 text-orange-400" />
+            Year to Date
           </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-orange-400">{formatVolume(ytdVolume)}</div>
-            <div className="text-xs text-muted-foreground">lbs lifted</div>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-orange-400 bg-clip-text text-transparent">
+              {ytdWorkouts}
+            </span>
+            <span className="text-muted-foreground text-sm">workouts</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <div className="text-lg font-bold text-orange-400">{formatVolume(ytdVolume)}</div>
+              <div className="text-xs text-muted-foreground">lbs lifted</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-purple-400">{totalSets}</div>
+              <div className="text-xs text-muted-foreground">total sets</div>
+            </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* ABSURD FACTS TICKER */}
+      <div className="col-span-4">
+        <LiftingFactsTicker absurd={absurdComparisons} className="h-full" />
       </div>
 
-      {/* GOAL PROGRESS */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
-          <span className="w-2 h-2 rounded-full bg-purple-500" />
-          Goal Progress
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 relative flex-shrink-0">
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#a855f7" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${Math.min(progressPercent, 100) * 2.51} 251`} />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-lg font-bold text-purple-400">{progressPercent}%</div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm flex items-center gap-1">
-              <span className="font-semibold">{ytdWorkouts}</span> /
-              <EditableGoal value={yearlyWorkoutsGoal} unit="" goalKey="yearly_workouts" onUpdate={onUpdateGoal} isUpdating={isUpdating} />
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">{workoutsRemaining} workouts remaining</div>
-            <div className="text-xs text-emerald-400">Need {workoutsPerWeek}/week</div>
-          </div>
-        </div>
-      </div>
+      {/* ═══════════ ROW 2: Main Content ═══════════ */}
 
-      {/* THIS MONTH */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
-          <span className="w-2 h-2 rounded-full bg-orange-500" />
-          This Month
-        </div>
-        <div className="flex-1 grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{thisMonthWorkouts}</div>
-            <div className="text-xs text-muted-foreground">Workouts</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-400">{formatVolume(thisMonthVolume)}</div>
-            <div className="text-xs text-muted-foreground">Volume (lbs)</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════ ROW 2: Recent Workouts & PRs ═══════════ */}
-
-      {/* RECENT WORKOUTS */}
-      <div className="col-span-4 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
+      {/* MUSCLE DISTRIBUTION + CALENDAR */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="col-span-4 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
+      >
         <div className="flex items-center justify-between mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-            Recent Workouts
+            <Dumbbell className="w-3 h-3 text-purple-400" />
+            Your Lifting Journey
           </div>
           <div className="flex gap-2">
             <Button
@@ -287,206 +267,248 @@ export function LiftingTab({ yearlyWorkoutsGoal, stravaStats, onUpdateGoal, isUp
             </Button>
             <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-500/30 hover:bg-purple-500/10">
                   <Plus className="w-3 h-3" />
                   Log Set
                 </Button>
               </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Log Exercise Set</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label>Exercise</Label>
-                  <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select exercise" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {exercises.map((ex) => (
-                        <SelectItem key={ex.id} value={ex.id.toString()}>
-                          {ex.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Log Exercise Set</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Exercise</Label>
+                    <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select exercise" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {exercises.map((ex) => (
+                          <SelectItem key={ex.id} value={ex.id.toString()}>
+                            {ex.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label>Weight (lbs)</Label>
+                      <Input
+                        type="number"
+                        placeholder="135"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Reps</Label>
+                      <Input
+                        type="number"
+                        placeholder="8"
+                        value={reps}
+                        onChange={(e) => setReps(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sets</Label>
+                      <Input
+                        type="number"
+                        placeholder="3"
+                        value={sets}
+                        onChange={(e) => setSets(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleLogSet}
+                    disabled={!selectedExercise || !weight || !reps || isLoggingSet}
+                    className="w-full bg-gradient-to-r from-purple-500 to-orange-500"
+                  >
+                    {isLoggingSet ? "Logging..." : "Log Set"}
+                  </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-2">
-                    <Label>Weight (lbs)</Label>
-                    <Input
-                      type="number"
-                      placeholder="135"
-                      value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Reps</Label>
-                    <Input
-                      type="number"
-                      placeholder="8"
-                      value={reps}
-                      onChange={(e) => setReps(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Sets</Label>
-                    <Input
-                      type="number"
-                      placeholder="3"
-                      value={sets}
-                      onChange={(e) => setSets(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <Button
-                  onClick={handleLogSet}
-                  disabled={!selectedExercise || !weight || !reps || isLoggingSet}
-                  className="w-full"
-                >
-                  {isLoggingSet ? "Logging..." : "Log Set"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              Loading workouts...
-            </div>
-          ) : workouts.length > 0 ? (
-            workouts.slice(0, 5).map((workout) => {
-              const groupedSets = workout.sets ? groupSetsByExercise(workout.sets) : {};
-              const exerciseNames = Object.keys(groupedSets);
-              const hasPR = workout.sets?.some((s) => s.isPR);
 
-              return (
-                <div
-                  key={workout.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-muted/30",
-                    hasPR
-                      ? "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/30"
-                      : "bg-white/[0.02] border-border/20"
-                  )}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                    <Dumbbell className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        {workout.name || formatDate(workout.workoutDate)}
-                      </span>
-                      {hasPR && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
-                          PR
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {exerciseNames.length > 0
-                        ? exerciseNames.slice(0, 3).join(", ") + (exerciseNames.length > 3 ? ` +${exerciseNames.length - 3} more` : "")
-                        : "No exercises logged"}
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-lg font-semibold text-purple-400">
-                      {formatVolume(workout.totalVolume)} lbs
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {workout.sets?.length || 0} sets
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-              <Dumbbell className="w-12 h-12 text-muted-foreground/30 mb-3" />
-              <div className="text-sm text-muted-foreground">No workouts logged yet</div>
-              <div className="text-xs text-muted-foreground/70 mt-1">
-                Use the "Log Set" button to start tracking
+        {/* Two-column layout: Muscle Distribution + Calendar */}
+        <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden">
+          <MuscleDistribution muscleVolumes={muscleVolumes} />
+          <WorkoutCalendar workouts={calendarWorkouts} />
+        </div>
+      </motion.div>
+
+      {/* GOAL PROGRESS + PRs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="col-span-2 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
+      >
+        {/* Goal Ring */}
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-3">
+          <TrendingUp className="w-3 h-3 text-emerald-400" />
+          Goal Progress
+        </div>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 relative flex-shrink-0">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="url(#progress-gradient)"
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${Math.min(progressPercent, 100) * 2.51} 251`}
+              />
+              <defs>
+                <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#f97316" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="text-lg font-bold bg-gradient-to-r from-purple-400 to-orange-400 bg-clip-text text-transparent">
+                {progressPercent}%
               </div>
             </div>
-          )}
+          </div>
+          <div className="flex-1">
+            <div className="text-sm flex items-center gap-1">
+              <span className="font-semibold">{ytdWorkouts}</span> /
+              <EditableGoal value={yearlyWorkoutsGoal} unit="" goalKey="yearly_workouts" onUpdate={onUpdateGoal} isUpdating={isUpdating} />
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">{workoutsRemaining} remaining</div>
+            <div className="text-xs text-emerald-400">{workoutsPerWeek}/week to go</div>
+          </div>
         </div>
-      </div>
 
-      {/* PERSONAL RECORDS */}
-      <div className="col-span-2 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3 flex items-center gap-1.5">
+        {/* Recent PRs */}
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
           <Trophy className="w-3 h-3 text-amber-400" />
-          Personal Records
+          Recent PRs
         </div>
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-          {stats?.prs && stats.prs.length > 0 ? (
-            stats.prs.slice(0, 5).map((pr) => (
-              <div key={pr.exerciseId} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
+        <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
+          {stats?.recentPRs && stats.recentPRs.length > 0 ? (
+            stats.recentPRs.slice(0, 4).map((pr, i) => (
+              <motion.div
+                key={pr.id}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-center justify-between p-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20"
+              >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
-                    <Weight className="w-3 h-3 text-purple-500" />
-                  </div>
-                  <span className="text-sm text-muted-foreground truncate max-w-[100px]">
+                  <Flame className="w-3 h-3 text-amber-400" />
+                  <span className="text-xs text-muted-foreground truncate max-w-[80px]">
                     {pr.exerciseName}
                   </span>
                 </div>
-                <span className="text-sm font-bold text-purple-400">{pr.weight} lbs</span>
-              </div>
+                <span className="text-sm font-bold text-amber-400">{Number(pr.weightLbs)} lbs</span>
+              </motion.div>
             ))
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs">
-              Log sets to track PRs
+              Hit new PRs to see them here
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* ═══════════ ROW 3: Bottom Stats ═══════════ */}
 
-      {/* RECENT PRs */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
+      {/* ALL-TIME PRs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
+      >
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-          <Zap className="w-3 h-3 text-amber-400" />
-          Recent PRs
+          <Weight className="w-3 h-3 text-purple-400" />
+          Top Lifts
         </div>
         <div className="flex-1 flex items-center justify-around">
-          {stats?.recentPRs && stats.recentPRs.length > 0 ? (
-            stats.recentPRs.slice(0, 3).map((pr) => (
-              <div key={pr.id} className="text-center">
-                <div className="text-xl font-bold text-amber-400">{Number(pr.weightLbs)} lbs</div>
+          {stats?.prs && stats.prs.length > 0 ? (
+            stats.prs.slice(0, 3).map((pr, i) => (
+              <motion.div
+                key={pr.exerciseId}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+              >
+                <div className="text-2xl font-bold text-purple-400">{pr.weight} lbs</div>
                 <div className="text-xs text-muted-foreground truncate max-w-[80px]">
                   {pr.exerciseName}
                 </div>
-              </div>
+              </motion.div>
             ))
           ) : (
-            <div className="text-sm text-muted-foreground">No recent PRs</div>
+            <div className="text-sm text-muted-foreground">Log sets to track PRs</div>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* YTD SUMMARY */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex items-center justify-around bg-card/80 backdrop-blur-xl">
+      {/* QUICK STATS + ACTIONS */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="col-span-3 glass-card rounded-xl p-4 flex items-center justify-between bg-gradient-to-r from-purple-900/20 via-card/80 to-orange-900/20 backdrop-blur-xl"
+      >
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="ghost"
+            size="sm"
+            disabled={isImportingLiftosaur}
+            className="text-xs"
+          >
+            <Upload className="w-3 h-3 mr-1" />
+            {isImportingLiftosaur ? "..." : "Import"}
+          </Button>
+          <Button
+            onClick={handleReset}
+            variant="ghost"
+            size="sm"
+            disabled={isResettingData}
+            className="text-xs text-red-400 hover:text-red-300"
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            {isResettingData ? "..." : "Reset"}
+          </Button>
+        </div>
+        <div className="flex items-center justify-around flex-1">
         {[
-          { label: "Workouts", value: ytdWorkouts.toString(), color: "#a855f7", icon: Dumbbell },
-          { label: "Volume", value: formatVolume(ytdVolume), color: "#f97316", icon: Weight },
-          { label: "PRs", value: (stats?.prs?.length || 0).toString(), color: "#eab308", icon: Trophy },
-          { label: "Goal", value: `${progressPercent}%`, color: "#10b981", icon: TrendingUp },
-        ].map((stat) => (
-          <div key={stat.label} className="text-center">
-            <div className="text-xl font-bold flex items-center justify-center gap-1" style={{ color: stat.color }}>
-              <stat.icon className="w-4 h-4" />
-              {stat.value}
+          { label: "Workouts", value: ytdWorkouts.toString(), color: "from-purple-400 to-purple-500", icon: Dumbbell },
+          { label: "Best Lift", value: `${bestLift}`, unit: "lbs", color: "from-orange-400 to-orange-500", icon: Weight },
+          { label: "PRs", value: (stats?.prs?.length || 0).toString(), color: "from-amber-400 to-amber-500", icon: Trophy },
+          { label: "Goal", value: `${progressPercent}%`, color: "from-emerald-400 to-emerald-500", icon: TrendingUp },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            className="text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + i * 0.05 }}
+          >
+            <div className={cn("text-xl font-bold flex items-center justify-center gap-1 bg-gradient-to-r bg-clip-text text-transparent", stat.color)}>
+              <stat.icon className="w-4 h-4" style={{ color: stat.color.includes("purple") ? "#a855f7" : stat.color.includes("orange") ? "#f97316" : stat.color.includes("amber") ? "#f59e0b" : "#10b981" }} />
+              {stat.value}{stat.unit && <span className="text-xs ml-0.5">{stat.unit}</span>}
             </div>
             <div className="text-xs text-muted-foreground">{stat.label}</div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

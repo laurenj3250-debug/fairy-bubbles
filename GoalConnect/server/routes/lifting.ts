@@ -19,6 +19,7 @@ import { eq, and, desc, sql, gte, count, max, sum } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import { log } from "../lib/logger";
 import { z } from "zod";
+import { inferMuscleGroup } from "@shared/exerciseMuscleMap";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -310,7 +311,7 @@ export function registerLiftingRoutes(app: Express) {
 
   /**
    * GET /api/lifting/stats
-   * Get lifting stats and PRs
+   * Get lifting stats, PRs, and muscle volume distribution
    */
   app.get("/api/lifting/stats", async (req: Request, res: Response) => {
     try {
@@ -371,11 +372,56 @@ export function registerLiftingRoutes(app: Express) {
         .orderBy(desc(liftingSets.createdAt))
         .limit(5);
 
+      // Calculate muscle volume distribution (all time)
+      const allSets = await db
+        .select({
+          exerciseName: liftingExercises.name,
+          primaryMuscle: liftingExercises.primaryMuscle,
+          reps: liftingSets.reps,
+          weightLbs: liftingSets.weightLbs,
+        })
+        .from(liftingSets)
+        .innerJoin(liftingExercises, eq(liftingSets.exerciseId, liftingExercises.id))
+        .where(eq(liftingSets.userId, userId));
+
+      // Build muscle volume map using inferMuscleGroup for exercises without primaryMuscle
+      const muscleVolumeMap = new Map<string, number>();
+      let totalSets = 0;
+      let bestLift = 0;
+
+      for (const set of allSets) {
+        totalSets++;
+        const volume = set.reps * Number(set.weightLbs);
+        const weight = Number(set.weightLbs);
+        if (weight > bestLift) bestLift = weight;
+
+        // Try exercise's primaryMuscle first, then infer from name
+        let muscle = set.primaryMuscle;
+        if (!muscle) {
+          muscle = inferMuscleGroup(set.exerciseName) || 'other';
+        }
+
+        muscleVolumeMap.set(muscle, (muscleVolumeMap.get(muscle) || 0) + volume);
+      }
+
+      // Calculate total volume and convert to percentages
+      const totalMuscleVolume = Array.from(muscleVolumeMap.values()).reduce((a, b) => a + b, 0);
+      const muscleVolumes = Array.from(muscleVolumeMap.entries())
+        .map(([muscle, volume]) => ({
+          muscle,
+          volume,
+          percentage: totalMuscleVolume > 0 ? Math.round((volume / totalMuscleVolume) * 100) : 0,
+        }))
+        .sort((a, b) => b.volume - a.volume);
+
       res.json({
         ytdWorkouts,
         thisMonthWorkouts,
         ytdVolume,
         thisMonthVolume,
+        totalSets,
+        bestLift,
+        muscleVolumes,
         prs: prs.map((p) => ({
           exerciseId: p.exerciseId,
           exerciseName: p.exerciseName,
@@ -390,6 +436,66 @@ export function registerLiftingRoutes(app: Express) {
     } catch (error) {
       log.error("[lifting] Error fetching stats:", error);
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  // ==================== CALENDAR ====================
+
+  /**
+   * GET /api/lifting/calendar
+   * Get workout data for last 90 days for heatmap/calendar view
+   */
+  app.get("/api/lifting/calendar", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+
+      // Last 90 days
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const startDate = ninetyDaysAgo.toISOString().split('T')[0];
+
+      const workouts = await db
+        .select({
+          workoutDate: liftingWorkouts.workoutDate,
+          totalVolume: liftingWorkouts.totalVolume,
+        })
+        .from(liftingWorkouts)
+        .where(
+          and(
+            eq(liftingWorkouts.userId, userId),
+            gte(liftingWorkouts.workoutDate, startDate)
+          )
+        )
+        .orderBy(liftingWorkouts.workoutDate);
+
+      // Also check which days have PRs
+      const prDays = await db
+        .select({
+          workoutDate: liftingSets.workoutDate,
+        })
+        .from(liftingSets)
+        .where(
+          and(
+            eq(liftingSets.userId, userId),
+            eq(liftingSets.isPR, true),
+            gte(liftingSets.workoutDate, startDate)
+          )
+        )
+        .groupBy(liftingSets.workoutDate);
+
+      const prDaySet = new Set(prDays.map(p => p.workoutDate));
+
+      const calendarData = workouts.map(w => ({
+        workoutDate: w.workoutDate,
+        totalVolume: w.totalVolume || 0,
+        hasPR: prDaySet.has(w.workoutDate),
+      }));
+
+      res.json({ workouts: calendarData });
+    } catch (error) {
+      log.error("[lifting] Error fetching calendar data:", error);
+      res.status(500).json({ error: "Failed to fetch calendar data" });
     }
   });
 
@@ -417,6 +523,20 @@ export function registerLiftingRoutes(app: Express) {
 
       if (!history || !Array.isArray(history)) {
         return res.status(400).json({ error: "Invalid Liftosaur export format. Expected { history: [...] }" });
+      }
+
+      // Debug: log overall structure
+      log.info(`[lifting] Starting Liftosaur import: ${history.length} records`);
+      if (history.length > 0) {
+        const firstRecord = history[0];
+        log.info(`[lifting] First record keys: ${Object.keys(firstRecord).join(', ')}`);
+        if (firstRecord.entries && firstRecord.entries.length > 0) {
+          const firstEntry = firstRecord.entries[0];
+          log.info(`[lifting] First entry keys: ${Object.keys(firstEntry).join(', ')}`);
+          if (firstEntry.sets && firstEntry.sets.length > 0) {
+            log.info(`[lifting] First set keys: ${Object.keys(firstEntry.sets[0]).join(', ')}`);
+          }
+        }
       }
 
       let workoutsImported = 0;
@@ -498,50 +618,71 @@ export function registerLiftingRoutes(app: Express) {
             }
           }
 
-          // Import sets - only completed sets with actual data
+          // Import sets - historical data is always "completed"
           const allSets = [...(entry.warmupSets || []), ...(entry.sets || [])];
           let setNumber = 0;
 
+          // Debug: log first set structure for this entry (once per workout)
+          if (allSets.length > 0 && workoutsImported === 1) {
+            log.info(`[lifting] Sample set structure: ${JSON.stringify(allSets[0], null, 2)}`);
+          }
+
           for (const set of allSets) {
-            // Only import completed sets
-            if (!set.isCompleted) continue;
+            // For historical data, treat all sets as completed unless explicitly marked as not
+            // Liftosaur history only includes finished workouts
+            if (set.isCompleted === false) continue;
 
             setNumber++;
 
             // Extract weight - Liftosaur uses { value, unit } format
-            // Completed sets have completedWeight, fall back to weight if not present
+            // Try multiple paths for weight data
             let weightLbs = 0;
-            if (set.completedWeight) {
-              weightLbs = set.completedWeight.value || 0;
+
+            // Check completedWeight first (preferred for history)
+            if (set.completedWeight?.value !== undefined) {
+              weightLbs = Number(set.completedWeight.value) || 0;
               if (set.completedWeight.unit === "kg") {
-                weightLbs = weightLbs * 2.20462; // Convert kg to lbs
+                weightLbs = weightLbs * 2.20462;
               }
-            } else if (set.weight) {
-              weightLbs = set.weight.value || 0;
+            }
+            // Fallback to weight object
+            else if (set.weight?.value !== undefined) {
+              weightLbs = Number(set.weight.value) || 0;
               if (set.weight.unit === "kg") {
                 weightLbs = weightLbs * 2.20462;
               }
             }
+            // Direct weight value (some exports use this)
+            else if (typeof set.weight === 'number') {
+              weightLbs = set.weight;
+            }
 
-            const reps = set.completedReps ?? set.reps ?? 0;
+            // Get reps - try completedReps first, then reps
+            const reps = Number(set.completedReps) || Number(set.reps) || 0;
 
-            if (reps > 0 && weightLbs > 0) {
-              try {
-                await db.insert(liftingSets).values({
-                  userId,
-                  exerciseId,
-                  workoutDate,
-                  setNumber,
-                  reps,
-                  weightLbs: weightLbs.toFixed(2),
-                  isPR: false, // Will recalculate PRs separately
-                });
-                setsImported++;
-              } catch (e: any) {
-                // Log the actual error for debugging
-                if (!e.message?.includes('duplicate')) {
-                  log.error(`[lifting] Failed to insert set: ${e.message}`, e);
-                }
+            // Log if we're skipping due to 0 values (debug only first workout)
+            if (reps === 0 || weightLbs === 0) {
+              if (workoutsImported === 1 && setNumber <= 3) {
+                log.info(`[lifting] Skipping set: reps=${reps}, weight=${weightLbs}, original=${JSON.stringify(set)}`);
+              }
+              continue; // Skip sets with no data
+            }
+
+            try {
+              await db.insert(liftingSets).values({
+                userId,
+                exerciseId,
+                workoutDate,
+                setNumber,
+                reps,
+                weightLbs: weightLbs.toFixed(2),
+                isPR: false, // Will recalculate PRs separately
+              });
+              setsImported++;
+            } catch (e: any) {
+              // Log the actual error for debugging
+              if (!e.message?.includes('duplicate')) {
+                log.error(`[lifting] Failed to insert set: ${e.message}`, e);
               }
             }
           }
@@ -567,6 +708,31 @@ export function registerLiftingRoutes(app: Express) {
     } catch (error) {
       log.error("[lifting] Error importing Liftosaur data:", error);
       res.status(500).json({ error: "Failed to import Liftosaur data" });
+    }
+  });
+
+  // ==================== RESET/CLEAR DATA ====================
+
+  /**
+   * DELETE /api/lifting/reset
+   * Clear all lifting data for the user (for re-importing)
+   */
+  app.delete("/api/lifting/reset", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+
+      // Delete in order: sets first (has foreign key to exercises), then workouts, then exercises
+      await db.delete(liftingSets).where(eq(liftingSets.userId, userId));
+      await db.delete(liftingWorkouts).where(eq(liftingWorkouts.userId, userId));
+      await db.delete(liftingExercises).where(eq(liftingExercises.userId, userId));
+
+      log.info(`[lifting] Reset all lifting data for user ${userId}`);
+
+      res.json({ success: true, message: "All lifting data cleared" });
+    } catch (error) {
+      log.error("[lifting] Error resetting lifting data:", error);
+      res.status(500).json({ error: "Failed to reset lifting data" });
     }
   });
 }

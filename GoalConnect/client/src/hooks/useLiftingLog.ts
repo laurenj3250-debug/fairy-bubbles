@@ -45,17 +45,32 @@ export interface LiftingWorkout {
   sets?: LiftingSet[];
 }
 
+export interface MuscleVolume {
+  muscle: string;
+  volume: number;
+  percentage: number;
+}
+
 export interface LiftingStats {
   ytdWorkouts: number;
   thisMonthWorkouts: number;
   ytdVolume: number;
   thisMonthVolume: number;
+  totalSets: number;
+  bestLift: number;
+  muscleVolumes: MuscleVolume[];
   prs: Array<{
     exerciseId: number;
     exerciseName: string;
     weight: number;
   }>;
   recentPRs: Array<LiftingSet & { exerciseName: string }>;
+}
+
+export interface CalendarWorkout {
+  workoutDate: string;
+  totalVolume: number;
+  hasPR: boolean;
 }
 
 export function useLiftingLog() {
@@ -86,6 +101,15 @@ export function useLiftingLog() {
   } = useQuery<LiftingStats>({
     queryKey: ["/api/lifting/stats"],
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Fetch calendar data (last 90 days)
+  const {
+    data: calendarData,
+    isLoading: isLoadingCalendar,
+  } = useQuery<{ workouts: CalendarWorkout[] }>({
+    queryKey: ["/api/lifting/calendar"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Seed default exercises
@@ -188,24 +212,46 @@ export function useLiftingLog() {
       queryClient.invalidateQueries({ queryKey: ["/api/lifting/exercises"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lifting/workouts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/lifting/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/calendar"] });
+    },
+  });
+
+  // Reset all lifting data
+  const resetDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/lifting/reset", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to reset lifting data");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/exercises"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lifting/calendar"] });
     },
   });
 
   const exercises = exercisesData?.exercises || [];
   const workouts = workoutsData?.workouts || [];
   const stats = statsData || null;
+  const calendarWorkouts = calendarData?.workouts || [];
 
   return {
     // Data
     exercises,
     workouts,
     stats,
+    calendarWorkouts,
 
     // Loading states
     isLoading: isLoadingExercises || isLoadingWorkouts || isLoadingStats,
     isLoadingExercises,
     isLoadingWorkouts,
     isLoadingStats,
+    isLoadingCalendar,
 
     // Mutations
     seedExercises: seedExercisesMutation.mutate,
@@ -214,6 +260,7 @@ export function useLiftingLog() {
     logSet: logSetMutation.mutate,
     deleteSet: deleteSetMutation.mutate,
     importLiftosaur: importLiftosaurMutation.mutateAsync,
+    resetData: resetDataMutation.mutateAsync,
 
     // Mutation states
     isSeedingExercises: seedExercisesMutation.isPending,
@@ -222,5 +269,6 @@ export function useLiftingLog() {
     isLoggingSet: logSetMutation.isPending,
     isDeletingSet: deleteSetMutation.isPending,
     isImportingLiftosaur: importLiftosaurMutation.isPending,
+    isResettingData: resetDataMutation.isPending,
   };
 }
