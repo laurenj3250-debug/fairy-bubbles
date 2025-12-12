@@ -250,12 +250,16 @@ export function HabitContributionGraph({
                   return (
                     <Tooltip key={day.dateStr}>
                       <TooltipTrigger asChild>
-                        <div
-                          onClick={() => {
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             if (!isFuture && onDayClick) {
                               onDayClick(day.dateStr);
                             }
                           }}
+                          disabled={isFuture}
                           className={cn(
                             "w-3 h-3 rounded-sm transition-all",
                             isFuture

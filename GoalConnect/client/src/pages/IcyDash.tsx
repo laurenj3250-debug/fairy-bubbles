@@ -474,7 +474,6 @@ export default function DashboardV4() {
   const monthlyGoals = useMemo(() => {
     const now = new Date();
     const currentMonth = format(now, 'yyyy-MM'); // e.g., "2025-12"
-    const weeklyIds = new Set(weeklyGoals.map(g => g.id));
 
     return goals
       .filter(g => {
@@ -482,10 +481,11 @@ export default function DashboardV4() {
         // OR if the month field matches current month
         const deadlineMonth = g.deadline?.substring(0, 7); // "2025-12-31" -> "2025-12"
         const isInCurrentMonth = deadlineMonth === currentMonth || g.month === currentMonth;
-        return isInCurrentMonth && !weeklyIds.has(g.id) && !g.archived;
+        // Show monthly goals regardless of weekly - they're different views
+        return isInCurrentMonth && !g.archived;
       })
       .slice(0, 3); // Show up to 3 monthly goals in gauges
-  }, [goals, weeklyGoals]);
+  }, [goals]);
 
   // Effect to clean up linger entries after 2 seconds
   useEffect(() => {

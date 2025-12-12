@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getTaskGrade } from "@/lib/climbingRanks";
 import { useFocusManagement, FOCUS_RING_STYLES } from "@/hooks/useFocusManagement";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { ForestBackground } from "@/components/ForestBackground";
+import { Link } from "wouter";
 
 interface Subtask {
   id: string;
@@ -484,232 +486,226 @@ export default function Todos() {
   });
 
   return (
-    <div className="min-h-screen pb-20 px-4 pt-6 relative" role="main" aria-label="Tasks page">
-      {/* Header */}
-      <div className={cn("mx-auto mb-6", view === "week" ? "max-w-[1600px]" : "max-w-4xl")}>
-        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-6 relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
-            }}
-          />
-          <div className="flex items-center justify-between relative z-10">
+    <div className="min-h-screen relative" role="main" aria-label="Tasks page">
+      {/* Forest background */}
+      <ForestBackground />
+
+      {/* Sidebar Navigation */}
+      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+        <div className="space-y-4">
+          <Link href="/">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              dashboard
+            </span>
+          </Link>
+          <Link href="/habits">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              habits
+            </span>
+          </Link>
+          <Link href="/goals">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              goals
+            </span>
+          </Link>
+          <Link href="/todos">
+            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
+              todos
+            </span>
+          </Link>
+          <Link href="/study">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              study
+            </span>
+          </Link>
+          <Link href="/journey">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              journey
+            </span>
+          </Link>
+          <Link href="/settings">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              settings
+            </span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+        <div className={cn("ml-[188px] space-y-5", view === "week" ? "max-w-[1600px]" : "max-w-[900px]")}>
+          {/* Header */}
+          <header className="flex items-center justify-between mb-6">
             <div>
-              <h1
-                className="text-3xl font-bold mb-2"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                Expedition Tasks
-              </h1>
-              <p className="text-sm text-foreground/60">
+              <h1 className="logo-text tracking-wider text-2xl">TODOS</h1>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 {pendingCount} pending, {completedCount} completed
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => setQuickAddOpen(true)}
-                className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  color: 'white'
-                }}
+                className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
                 aria-label="Quick add new task (Command K or Control K)"
                 title="Quick add task (⌘K)"
               >
                 <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                 New Task
-                <span className="ml-2 text-xs opacity-75" aria-hidden="true">⌘K</span>
               </Button>
               <Button
                 onClick={() => setShortcutsHelpOpen(true)}
-                className="rounded-full px-4 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  color: 'white'
-                }}
+                className="rounded-full px-4 py-2 bg-white/10 hover:bg-white/20 text-white transition-all"
                 aria-label="Show keyboard shortcuts help"
                 title="Keyboard shortcuts (?)"
               >
                 ?
               </Button>
             </div>
-          </div>
-        </div>
+          </header>
 
-        {/* View and Filters */}
-        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 mb-6 inline-flex gap-2 flex-wrap">
-          {/* View Toggle */}
-          <button
-            onClick={() => setView("list")}
-            className={cn(
-              "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
-              view === "list"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={view === "list" ? {
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-            } : {}}
-          >
-            <ListTodo className="w-4 h-4" />
-            List
-          </button>
-          <button
-            onClick={() => setView("week")}
-            className={cn(
-              "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
-              view === "week"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={view === "week" ? {
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-            } : {}}
-          >
-            <CalendarDays className="w-4 h-4" />
-            Week
-          </button>
+          {/* View and Filters */}
+          <div className="glass-card frost-accent p-2 inline-flex gap-2 flex-wrap">
+            {/* View Toggle */}
+            <button
+              onClick={() => setView("list")}
+              className={cn(
+                "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+                view === "list"
+                  ? "bg-peach-400 text-white"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+              )}
+            >
+              <ListTodo className="w-4 h-4" />
+              List
+            </button>
+            <button
+              onClick={() => setView("week")}
+              className={cn(
+                "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+                view === "week"
+                  ? "bg-peach-400 text-white"
+                  : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+              )}
+            >
+              <CalendarDays className="w-4 h-4" />
+              Week
+            </button>
 
-          {/* Filters (only in list view) */}
-          {view === "list" && (
-            <>
-              <div className="w-px bg-foreground/10" />
-              <button
-                onClick={() => setFilter("all")}
-                className={cn(
-                  "px-4 py-2 rounded-xl font-medium transition-all",
-                  filter === "all"
-                    ? "text-white shadow-lg"
-                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-                )}
-                style={filter === "all" ? {
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-                } : {}}
-              >
-                All ({todos.length})
-              </button>
-              <button
-                onClick={() => setFilter("pending")}
-                className={cn(
-                  "px-4 py-2 rounded-xl font-medium transition-all",
-                  filter === "pending"
-                    ? "text-white shadow-lg"
-                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-                )}
-                style={filter === "pending" ? {
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-                } : {}}
-              >
-                Pending ({pendingCount})
-              </button>
-              <button
-                onClick={() => setFilter("completed")}
-                className={cn(
-                  "px-4 py-2 rounded-xl font-medium transition-all",
-                  filter === "completed"
-                    ? "text-white shadow-lg"
-                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-                )}
-                style={filter === "completed" ? {
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-                } : {}}
-              >
-                Completed ({completedCount})
-              </button>
+            {/* Filters (only in list view) */}
+            {view === "list" && (
+              <>
+                <div className="w-px bg-white/10" />
+                <button
+                  onClick={() => setFilter("all")}
+                  className={cn(
+                    "px-4 py-2 rounded-xl font-medium transition-all",
+                    filter === "all"
+                      ? "bg-peach-400 text-white"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  All ({todos.length})
+                </button>
+                <button
+                  onClick={() => setFilter("pending")}
+                  className={cn(
+                    "px-4 py-2 rounded-xl font-medium transition-all",
+                    filter === "pending"
+                      ? "bg-peach-400 text-white"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  Pending ({pendingCount})
+                </button>
+                <button
+                  onClick={() => setFilter("completed")}
+                  className={cn(
+                    "px-4 py-2 rounded-xl font-medium transition-all",
+                    filter === "completed"
+                      ? "bg-peach-400 text-white"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  Completed ({completedCount})
+                </button>
 
-              {/* New Filters: Project, Label, Priority */}
-              {projects.length > 0 && (
-                <>
-                  <div className="w-px bg-foreground/10" />
+                {/* New Filters: Project, Label, Priority */}
+                {projects.length > 0 && (
+                  <>
+                    <div className="w-px bg-white/10" />
+                    <select
+                      value={filterProjectId || ""}
+                      onChange={(e) => setFilterProjectId(e.target.value ? parseInt(e.target.value) : null)}
+                      className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white text-sm font-medium transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-peach-400/50"
+                    >
+                      <option value="">All Projects</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.icon} {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                )}
+
+                {labels.length > 0 && (
                   <select
-                    value={filterProjectId || ""}
-                    onChange={(e) => setFilterProjectId(e.target.value ? parseInt(e.target.value) : null)}
-                    className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={filterLabelId || ""}
+                    onChange={(e) => setFilterLabelId(e.target.value ? parseInt(e.target.value) : null)}
+                    className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white text-sm font-medium transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-peach-400/50"
                   >
-                    <option value="">All Projects</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.icon} {project.name}
+                    <option value="">All Labels</option>
+                    {labels.map((label) => (
+                      <option key={label.id} value={label.id}>
+                        #{label.name}
                       </option>
                     ))}
                   </select>
-                </>
-              )}
-
-              {labels.length > 0 && (
-                <select
-                  value={filterLabelId || ""}
-                  onChange={(e) => setFilterLabelId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">All Labels</option>
-                  {labels.map((label) => (
-                    <option key={label.id} value={label.id}>
-                      #{label.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              <select
-                value={filterPriority || ""}
-                onChange={(e) => setFilterPriority(e.target.value ? parseInt(e.target.value) : null)}
-                className="px-4 py-2 rounded-xl bg-background/60 border border-foreground/10 text-foreground text-sm font-medium transition-all hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="">All Priorities</option>
-                <option value="1">🚩 P1 - Urgent</option>
-                <option value="2">🚩 P2 - High</option>
-                <option value="3">🚩 P3 - Medium</option>
-                <option value="4">🏳️ P4 - Low</option>
-              </select>
-
-              {/* Manual Sort Toggle */}
-              <div className="w-px bg-foreground/10" />
-              <button
-                onClick={() => setIsManualSort(!isManualSort)}
-                className={cn(
-                  "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
-                  isManualSort
-                    ? "text-white shadow-lg"
-                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
                 )}
-                style={isManualSort ? {
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-                } : {}}
-                title="Enable drag & drop to manually reorder tasks"
-              >
-                <GripVertical className="w-4 h-4" />
-                Manual Sort
-              </button>
-            </>
-          )}
-        </div>
 
-        {/* List View */}
-        {view === "list" && (
-          <>
-            {isLoading ? (
-              <div className="text-center py-12" role="status" aria-live="polite">
-                <div className="inline-block w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
-                <span className="sr-only">Loading tasks</span>
-              </div>
-            ) : sortedTodos.length === 0 ? (
-              <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-12 text-center relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-10 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle at center, hsl(var(--primary) / 0.3), transparent 70%)`
-                  }}
-                />
-                <div className="relative z-10 text-center">
-                  <ListTodo className="w-16 h-16 mx-auto mb-4" style={{ color: 'hsl(var(--primary) / 0.6)' }} />
-                  <p className="text-foreground/60 mb-4">
+                <select
+                  value={filterPriority || ""}
+                  onChange={(e) => setFilterPriority(e.target.value ? parseInt(e.target.value) : null)}
+                  className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white text-sm font-medium transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-peach-400/50"
+                >
+                  <option value="">All Priorities</option>
+                  <option value="1">🚩 P1 - Urgent</option>
+                  <option value="2">🚩 P2 - High</option>
+                  <option value="3">🚩 P3 - Medium</option>
+                  <option value="4">🏳️ P4 - Low</option>
+                </select>
+
+                {/* Manual Sort Toggle */}
+                <div className="w-px bg-white/10" />
+                <button
+                  onClick={() => setIsManualSort(!isManualSort)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2",
+                    isManualSort
+                      ? "bg-peach-400 text-white"
+                      : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                  )}
+                  title="Enable drag & drop to manually reorder tasks"
+                >
+                  <GripVertical className="w-4 h-4" />
+                  Manual Sort
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* List View */}
+          {view === "list" && (
+            <>
+              {isLoading ? (
+                <div className="glass-card frost-accent p-12 text-center" role="status" aria-live="polite">
+                  <div className="w-8 h-8 border-4 border-white/20 border-t-peach-400 rounded-full animate-spin mx-auto" />
+                  <span className="sr-only">Loading tasks</span>
+                </div>
+              ) : sortedTodos.length === 0 ? (
+                <div className="glass-card frost-accent p-12 text-center">
+                  <ListTodo className="w-16 h-16 mx-auto mb-4 text-peach-400/60" />
+                  <p className="text-[var(--text-muted)] mb-4">
                     {filter === "all" && "No tasks yet. Create your first one!"}
                     {filter === "pending" && "No pending tasks. Great job!"}
                     {filter === "completed" && "No completed tasks yet."}
@@ -717,20 +713,15 @@ export default function Todos() {
                   {filter === "all" && (
                     <Button
                       onClick={() => setTodoDialogOpen(true)}
-                      className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-                      style={{
-                        background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                        color: 'white'
-                      }}
+                      className="rounded-full px-6 py-3 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create Task
                     </Button>
                   )}
                 </div>
-              </div>
-            ) : (
-              <SortableTaskList
+              ) : (
+                <SortableTaskList
                 todos={sortedTodos}
                 isDraggable={isManualSort && view === "list"}
                 onReorder={handleReorder}
@@ -747,186 +738,141 @@ export default function Todos() {
         )}
 
 
-        {/* Week View */}
-        {view === "week" && (
-          <div>
-            {/* Enhanced Week Header Bar */}
-            <div className="rounded-2xl bg-background/40 backdrop-blur-xl border border-foreground/10 px-6 py-4 mb-6 shadow-xl relative overflow-hidden">
-              {/* Soft gradient overlay */}
-              <div
-                className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle at left, hsl(var(--secondary) / 0.3), transparent 70%)`
-                }}
-              />
-
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setWeekOffset(weekOffset - 1)}
-                    className="h-8 w-8 rounded-full border border-foreground/20 flex items-center justify-center hover:bg-foreground/10 transition"
-                    style={{ color: 'hsl(var(--foreground))' }}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.14em] mb-1" style={{ color: 'hsl(var(--foreground) / 0.7)' }}>
-                      Expedition week
-                    </div>
-                    <div className="text-lg font-semibold tracking-wide text-foreground">
-                      {formatWeekRange()}
-                    </div>
-
-                    {/* Ridge tracker - 7 dots */}
-                    <div className="mt-2 flex gap-1">
-                      {weekDates.map((d) => {
-                        const dateKey = formatDateKey(d);
-                        const isToday = formatDateKey(new Date()) === dateKey;
-                        const dayTodos = todos.filter(t => t.dueDate === dateKey);
-                        const hasCompleted = dayTodos.some(t => t.completed);
-
-                        return (
-                          <span
-                            key={dateKey}
-                            className="h-1.5 w-4 rounded-full transition"
-                            style={{
-                              background: isToday
-                                ? 'hsl(var(--primary))'
-                                : hasCompleted
-                                ? 'hsl(var(--accent) / 0.6)'
-                                : 'hsl(var(--foreground) / 0.1)'
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-foreground/80">
-                    {weeklyStats.pending} pending · <span style={{ color: 'hsl(var(--accent))' }}>{weeklyStats.completed} completed</span>
-                  </span>
-                  <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full border" style={{
-                    background: 'hsl(var(--accent) / 0.15)',
-                    borderColor: 'hsl(var(--accent) / 0.3)',
-                    color: 'hsl(var(--accent))'
-                  }}>
-                    {weeklyStats.totalTokens} tokens this week
-                  </span>
-                  <button
-                    onClick={() => setWeekOffset(weekOffset + 1)}
-                    className="h-8 w-8 rounded-full border border-foreground/20 flex items-center justify-center hover:bg-foreground/10 transition"
-                    style={{ color: 'hsl(var(--foreground))' }}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Horizontal scroll container */}
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {/* Unscheduled Tasks Card */}
-              <div className="min-w-[230px] flex-shrink-0 rounded-2xl bg-background/40 backdrop-blur-xl border border-foreground/10 shadow-lg p-4 relative overflow-hidden">
-                {/* Soft gradient overlay */}
-                <div
-                  className="absolute inset-0 opacity-10 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle at top, hsl(var(--accent) / 0.3), transparent 70%)`
-                  }}
-                />
-
-                <div className="relative z-10 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
+          {/* Week View */}
+          {view === "week" && (
+            <div>
+              {/* Enhanced Week Header Bar */}
+              <div className="glass-card frost-accent px-6 py-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setWeekOffset(weekOffset - 1)}
+                      className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition text-white"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
                     <div>
-                      <div className="text-xs uppercase tracking-[0.16em] text-foreground/60">
-                        Unscheduled
+                      <div className="text-xs uppercase tracking-[0.14em] mb-1 text-[var(--text-muted)]">
+                        Expedition week
                       </div>
-                      <div className="font-semibold text-foreground">Basecamp Tasks</div>
+                      <div className="text-lg font-semibold tracking-wide text-white">
+                        {formatWeekRange()}
+                      </div>
+
+                      {/* Ridge tracker - 7 dots */}
+                      <div className="mt-2 flex gap-1">
+                        {weekDates.map((d) => {
+                          const dateKey = formatDateKey(d);
+                          const isToday = formatDateKey(new Date()) === dateKey;
+                          const dayTodos = todos.filter(t => t.dueDate === dateKey);
+                          const hasCompleted = dayTodos.some(t => t.completed);
+
+                          return (
+                            <span
+                              key={dateKey}
+                              className={cn(
+                                "h-1.5 w-4 rounded-full transition",
+                                isToday
+                                  ? "bg-peach-400"
+                                  : hasCompleted
+                                  ? "bg-peach-400/60"
+                                  : "bg-white/10"
+                              )}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs" style={{
-                      background: 'hsl(var(--accent) / 0.15)',
-                      borderColor: 'hsl(var(--accent) / 0.3)'
-                    }}>
-                      🧺
-                    </span>
                   </div>
 
-                  {todos.filter(t => !t.dueDate && !t.completed).length === 0 ? (
-                    <p className="text-xs text-foreground/60 mt-1">
-                      Drop ideas here to sort them into the week later.
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {todos.filter(t => !t.dueDate && !t.completed).map((todo) => {
-                        const gradeInfo = getTaskGrade(todo.difficulty);
-                        return (
-                          <button
-                            key={todo.id}
-                            onClick={() => toggleTodoMutation.mutate(todo.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] hover:bg-foreground/5 transition-colors text-foreground"
-                            style={{
-                              background: 'hsl(var(--background) / 0.6)',
-                              borderColor: 'hsl(var(--accent) / 0.4)'
-                            }}
-                          >
-                            <span className="truncate max-w-[140px]">{todo.title}</span>
-                            <span className="flex items-center gap-0.5" style={{ color: 'hsl(var(--accent))' }}>
-                              ⛰
-                              <span>{gradeInfo.points}</span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-[var(--text-muted)]">
+                      {weeklyStats.pending} pending · <span className="text-peach-400">{weeklyStats.completed} completed</span>
+                    </span>
+                    <span className="hidden md:inline-block text-xs px-3 py-1 rounded-full border bg-peach-400/15 border-peach-400/30 text-peach-400">
+                      {weeklyStats.totalTokens} tokens this week
+                    </span>
+                    <button
+                      onClick={() => setWeekOffset(weekOffset + 1)}
+                      className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition text-white"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Day Cards - Horizontal Scroll */}
-              {weekDates.map((date) => {
-                const dateKey = formatDateKey(date);
-                const dayTodos = todos.filter(t => t.dueDate === dateKey && !t.completed);
-                const isToday = formatDateKey(new Date()) === dateKey;
-                const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              {/* Horizontal scroll container */}
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {/* Unscheduled Tasks Card */}
+                <div className="min-w-[230px] flex-shrink-0 glass-card frost-accent p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                          Unscheduled
+                        </div>
+                        <div className="font-semibold text-white">Basecamp Tasks</div>
+                      </div>
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border bg-peach-400/15 border-peach-400/30 text-xs">
+                        🧺
+                      </span>
+                    </div>
 
-                return (
-                  <div
-                    key={dateKey}
-                    className="min-w-[170px] flex-shrink-0 rounded-2xl border shadow-lg hover:shadow-xl backdrop-blur-xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5 relative overflow-hidden"
-                    style={{
-                      background: 'hsl(var(--background) / 0.4)',
-                      borderColor: isToday ? 'hsl(var(--primary) / 0.4)' : 'hsl(var(--foreground) / 0.1)',
-                      boxShadow: isToday ? '0 4px 20px hsl(var(--primary) / 0.2)' : undefined
-                    }}
-                  >
-                    {/* Soft gradient overlay for today */}
-                    {isToday && (
-                      <div
-                        className="absolute inset-0 opacity-10 pointer-events-none"
-                        style={{
-                          background: `radial-gradient(circle at top, hsl(var(--primary) / 0.4), transparent 70%)`
-                        }}
-                      />
+                    {todos.filter(t => !t.dueDate && !t.completed).length === 0 ? (
+                      <p className="text-xs text-[var(--text-muted)] mt-1">
+                        Drop ideas here to sort them into the week later.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {todos.filter(t => !t.dueDate && !t.completed).map((todo) => {
+                          const gradeInfo = getTaskGrade(todo.difficulty);
+                          return (
+                            <button
+                              key={todo.id}
+                              onClick={() => toggleTodoMutation.mutate(todo.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] hover:bg-white/10 transition-colors text-white bg-white/5 border-peach-400/40"
+                            >
+                              <span className="truncate max-w-[140px]">{todo.title}</span>
+                              <span className="flex items-center gap-0.5 text-peach-400">
+                                ⛰
+                                <span>{gradeInfo.points}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
+                  </div>
+                </div>
 
-                    <div className="relative z-10">
+                {/* Day Cards - Horizontal Scroll */}
+                {weekDates.map((date) => {
+                  const dateKey = formatDateKey(date);
+                  const dayTodos = todos.filter(t => t.dueDate === dateKey && !t.completed);
+                  const isToday = formatDateKey(new Date()) === dateKey;
+                  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+                  return (
+                    <div
+                      key={dateKey}
+                      className={cn(
+                        "min-w-[170px] flex-shrink-0 glass-card p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5",
+                        isToday && "border-peach-400/40 shadow-[0_4px_20px_rgba(255,180,128,0.2)]"
+                      )}
+                    >
                       {/* Day header */}
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[11px] uppercase tracking-[0.18em] text-foreground/60">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
                             {dayNames[date.getDay()]}
                           </div>
-                          <div className="text-2xl font-semibold leading-none text-foreground">
+                          <div className="text-2xl font-semibold leading-none text-white">
                             {date.getDate()}
                           </div>
                         </div>
                         {isToday && (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] border text-white" style={{
-                            background: 'hsl(var(--primary) / 0.3)',
-                            borderColor: 'hsl(var(--primary) / 0.5)'
-                          }}>
+                          <span className="px-2 py-0.5 rounded-full text-[11px] border bg-peach-400/30 border-peach-400/50 text-white">
                             Today
                           </span>
                         )}
@@ -935,8 +881,8 @@ export default function Todos() {
                       {/* Tasks pills */}
                       <div className="flex-1 mt-3 space-y-2 min-h-[120px]">
                         {dayTodos.length === 0 ? (
-                          <p className="text-[11px] text-foreground/60">
-                            Rest day · no tasks ✨
+                          <p className="text-[11px] text-[var(--text-muted)]">
+                            Rest day · no tasks
                           </p>
                         ) : (
                           <>
@@ -946,27 +892,17 @@ export default function Todos() {
                                 <button
                                   key={todo.id}
                                   onClick={() => toggleTodoMutation.mutate(todo.id)}
-                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-colors w-full text-foreground"
-                                  style={{
-                                    background: 'hsl(var(--primary) / 0.15)',
-                                    borderColor: 'hsl(var(--primary) / 0.3)'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'hsl(var(--primary) / 0.25)';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'hsl(var(--primary) / 0.15)';
-                                  }}
+                                  className="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-colors w-full text-white bg-peach-400/15 border-peach-400/30 hover:bg-peach-400/25"
                                 >
                                   <span className="truncate">{todo.title}</span>
-                                  <span className="flex items-center gap-0.5 text-[11px] shrink-0 ml-1" style={{ color: 'hsl(var(--accent))' }}>
+                                  <span className="flex items-center gap-0.5 text-[11px] shrink-0 ml-1 text-peach-400">
                                     ⛰<span>{gradeInfo.points}</span>
                                   </span>
                                 </button>
                               );
                             })}
                             {dayTodos.length > 3 && (
-                              <div className="text-[11px] text-foreground/60">
+                              <div className="text-[11px] text-[var(--text-muted)]">
                                 +{dayTodos.length - 3} more…
                               </div>
                             )}
@@ -982,30 +918,18 @@ export default function Todos() {
                             quickAddTodoMutation.mutate({ title: title.trim(), dueDate: dateKey });
                           }
                         }}
-                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 border text-foreground transition-colors w-full"
-                        style={{
-                          background: 'hsl(var(--primary) / 0.15)',
-                          borderColor: 'hsl(var(--primary) / 0.3)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'hsl(var(--primary) / 0.25)';
-                          e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.5)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'hsl(var(--primary) / 0.15)';
-                          e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.3)';
-                        }}
+                        className="mt-1 inline-flex items-center justify-center gap-1 rounded-full text-xs px-3 py-1.5 border text-white transition-colors w-full bg-peach-400/15 border-peach-400/30 hover:bg-peach-400/25 hover:border-peach-400/50"
                       >
                         <span className="text-sm">＋</span>
                         Add task
                       </button>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Todo Dialog */}

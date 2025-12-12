@@ -1,10 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mountain, Lock, Check, ArrowLeft, Download, ChevronRight } from "lucide-react";
+import { Mountain, Lock, Check, Download, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ForestBackground } from "@/components/ForestBackground";
 
 interface MountainBackground {
   id: number;
@@ -44,67 +43,95 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      <div className="container max-w-6xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/">
-            <Button variant="outline" size="icon" className="mb-4">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <h1
-            className="text-3xl font-bold mb-2"
-            style={{
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            Settings
-          </h1>
-          <p className="text-muted-foreground">Customize your climbing experience</p>
-        </div>
+    <div className="min-h-screen relative">
+      {/* Forest background */}
+      <ForestBackground />
 
-        {/* Import Data Link */}
-        <Link href="/settings/import">
-          <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 mb-8 shadow-lg cursor-pointer transition-all hover:shadow-xl hover:scale-[1.01]">
-            <CardContent className="py-4">
+      {/* Sidebar Navigation */}
+      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+        <div className="space-y-4">
+          <Link href="/">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              dashboard
+            </span>
+          </Link>
+          <Link href="/habits">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              habits
+            </span>
+          </Link>
+          <Link href="/goals">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              goals
+            </span>
+          </Link>
+          <Link href="/todos">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              todos
+            </span>
+          </Link>
+          <Link href="/study">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              study
+            </span>
+          </Link>
+          <Link href="/journey">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              journey
+            </span>
+          </Link>
+          <Link href="/settings">
+            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
+              settings
+            </span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+        <div className="max-w-[900px] ml-[188px] space-y-5">
+          {/* Header */}
+          <header className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="logo-text tracking-wider text-2xl">SETTINGS</h1>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Customize your experience
+              </p>
+            </div>
+          </header>
+
+          {/* Import Data Link */}
+          <Link href="/settings/import">
+            <div className="glass-card frost-accent p-4 cursor-pointer transition-all hover:scale-[1.01] mb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2))'
-                  }}>
-                    <Download className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-peach-400/20">
+                    <Download className="w-6 h-6 text-peach-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Import Data</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-semibold text-lg text-white">Import Data</h3>
+                    <p className="text-sm text-[var(--text-muted)]">
                       Connect Apple Health, Kilter Board & more
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />
               </div>
-            </CardContent>
-          </Card>
-        </Link>
+            </div>
+          </Link>
 
-        {/* Unlocked Backgrounds */}
-        <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 mb-8 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mountain className="w-5 h-5" />
-              Unlocked Backgrounds
-            </CardTitle>
-            <CardDescription>
+          {/* Unlocked Backgrounds */}
+          <div className="glass-card frost-accent p-5 mb-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Mountain className="w-5 h-5 text-peach-400" />
+              <span className="card-title">Unlocked Backgrounds</span>
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
               {unlockedBackgrounds.length > 0
                 ? `${unlockedBackgrounds.length} background${unlockedBackgrounds.length !== 1 ? 's' : ''} unlocked`
                 : "Summit mountains to unlock backgrounds"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map(i => (
@@ -185,22 +212,18 @@ export default function Settings() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Locked Backgrounds */}
-        {lockedBackgrounds.length > 0 && (
-          <Card className="bg-background/40 backdrop-blur-xl border-foreground/10 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Locked Backgrounds
-              </CardTitle>
-              <CardDescription>
+          {/* Locked Backgrounds */}
+          {lockedBackgrounds.length > 0 && (
+            <div className="glass-card frost-accent p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Lock className="w-5 h-5 text-[var(--text-muted)]" />
+                <span className="card-title">Locked Backgrounds</span>
+              </div>
+              <p className="text-sm text-[var(--text-muted)] mb-4">
                 Summit these mountains to unlock their backgrounds
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {lockedBackgrounds.map(bg => (
                   <div
@@ -214,12 +237,12 @@ export default function Settings() {
                         alt={bg.name}
                         className="w-full h-full object-cover filter grayscale"
                       />
-                      <div className="absolute inset-0" style={{ background: 'hsl(var(--background) / 0.8)' }} />
+                      <div className="absolute inset-0 bg-black/60" />
 
                       {/* Lock Icon */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="rounded-full p-4 backdrop-blur-sm" style={{ background: 'hsl(var(--background) / 0.6)' }}>
-                          <Lock className="w-8 h-8" style={{ color: 'hsl(var(--foreground) / 0.4)' }} />
+                        <div className="rounded-full p-4 backdrop-blur-sm bg-black/40">
+                          <Lock className="w-8 h-8 text-white/40" />
                         </div>
                       </div>
 
@@ -242,9 +265,9 @@ export default function Settings() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

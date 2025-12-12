@@ -9,6 +9,8 @@ import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Plus, Flame, Check, X, Calendar } from "lucide-react";
 import { getToday, cn } from "@/lib/utils";
 import { HabitContributionGraph } from "@/components/HabitContributionGraph";
+import { ForestBackground } from "@/components/ForestBackground";
+import { Link } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -161,122 +163,139 @@ export default function Habits() {
   }, [habits]);
 
   return (
-    <div className="min-h-screen pb-20 px-4 pt-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-6 relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
-            }}
-          />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1
-                  className="text-3xl font-bold mb-2"
-                  style={{
-                    background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}
-                >
-                  Habits
-                </h1>
-                <p className="text-sm text-foreground/60">
-                  {completedToday}/{totalHabits} completed today
-                </p>
-              </div>
+    <div className="min-h-screen relative">
+      {/* Forest background */}
+      <ForestBackground />
 
-              <Button
-                onClick={() => {
-                  setEditingHabit(undefined);
-                  setHabitDialogOpen(true);
-                }}
-                className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  color: 'white'
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Habit
-              </Button>
+      {/* Sidebar Navigation */}
+      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+        <div className="space-y-4">
+          <Link href="/">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              dashboard
+            </span>
+          </Link>
+          <Link href="/habits">
+            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
+              habits
+            </span>
+          </Link>
+          <Link href="/goals">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              goals
+            </span>
+          </Link>
+          <Link href="/todos">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              todos
+            </span>
+          </Link>
+          <Link href="/study">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              study
+            </span>
+          </Link>
+          <Link href="/journey">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              journey
+            </span>
+          </Link>
+          <Link href="/settings">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              settings
+            </span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+        <div className="max-w-[900px] ml-[188px] space-y-5">
+
+          {/* Header */}
+          <header className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="logo-text tracking-wider text-2xl">HABITS</h1>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                {completedToday}/{totalHabits} completed today
+                {overallStreak > 0 && (
+                  <span className="ml-3 inline-flex items-center gap-1">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-peach-400">{overallStreak}</span> day streak
+                  </span>
+                )}
+              </p>
             </div>
 
-            {/* Overall Streak */}
-            {overallStreak > 0 && (
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <Flame className="w-5 h-5 text-orange-500" />
-                <span className="text-foreground/70">
-                  Perfect streak: <span className="font-bold text-foreground">{overallStreak} days</span>
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Contribution Graph - Interactive! Click to backfill */}
-        {habits.length > 0 && contributionData.length > 0 && (
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl p-4 mb-6">
-            <HabitContributionGraph
-              history={contributionData}
-              weeks={12}
-              title="Activity Overview"
-              showMonthLabels={true}
-              onDayClick={(date) => setBackfillDate(date)}
-              selectedDate={backfillDate}
-            />
-            <p className="text-xs text-foreground/40 mt-2 text-center">
-              Click any day to mark habits you missed
-            </p>
-          </div>
-        )}
-
-        {/* Habits List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin" />
-          </div>
-        ) : habits.length === 0 ? (
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-12 text-center">
-            <div className="text-6xl mb-4">🎯</div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">No habits yet</h2>
-            <p className="text-foreground/60 mb-6">
-              Start building better habits today
-            </p>
             <Button
               onClick={() => {
                 setEditingHabit(undefined);
                 setHabitDialogOpen(true);
               }}
-              className="rounded-full px-6 py-3"
-              style={{
-                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                color: 'white'
-              }}
+              className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Your First Habit
+              New Habit
             </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {habits.map((habit) => (
-              <HabitCard
-                key={habit.id}
-                habit={habit}
-                isCompletedToday={isCompletedToday(habit.id)}
-                onToggle={() => toggleMutation.mutate(habit.id)}
-                onEdit={() => handleEdit(habit)}
-                onDelete={() => handleDelete(habit)}
-                isToggling={toggleMutation.isPending}
+          </header>
+
+          {/* Contribution Graph */}
+          {habits.length > 0 && contributionData.length > 0 && (
+            <div className="glass-card frost-accent p-4">
+              <span className="card-title">Activity Overview</span>
+              <HabitContributionGraph
+                history={contributionData}
+                weeks={12}
+                title=""
+                showMonthLabels={true}
+                onDayClick={(date) => setBackfillDate(date)}
+                selectedDate={backfillDate}
               />
-            ))}
-          </div>
-        )}
+              <p className="text-xs text-[var(--text-muted)] mt-2 text-center">
+                Click any day to mark habits you missed
+              </p>
+            </div>
+          )}
+
+          {/* Habits List */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-white/20 border-t-peach-400 rounded-full animate-spin" />
+            </div>
+          ) : habits.length === 0 ? (
+            <div className="glass-card frost-accent p-12 text-center">
+              <div className="text-6xl mb-4">🎯</div>
+              <h2 className="text-xl font-semibold text-white mb-2">No habits yet</h2>
+              <p className="text-[var(--text-muted)] mb-6">
+                Start building better habits today
+              </p>
+              <Button
+                onClick={() => {
+                  setEditingHabit(undefined);
+                  setHabitDialogOpen(true);
+                }}
+                className="rounded-full px-6 py-3 bg-peach-400 hover:bg-peach-500 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Habit
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {habits.map((habit) => (
+                <HabitCard
+                  key={habit.id}
+                  habit={habit}
+                  isCompletedToday={isCompletedToday(habit.id)}
+                  onToggle={() => toggleMutation.mutate(habit.id)}
+                  onEdit={() => handleEdit(habit)}
+                  onDelete={() => handleDelete(habit)}
+                  isToggling={toggleMutation.isPending}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create/Edit Dialog */}

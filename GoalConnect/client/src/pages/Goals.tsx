@@ -13,8 +13,8 @@ import { useJourneyGoals } from "@/hooks/useJourneyGoals";
 import { useStravaStats } from "@/hooks/useStravaStats";
 import { useLiftingStats } from "@/hooks/useLiftingStats";
 import { useClimbingStats } from "@/hooks/useClimbingStats";
-
-// REMOVED: MagicalCanvas - No longer needed for mountain aesthetic
+import { ForestBackground } from "@/components/ForestBackground";
+import { Link } from "wouter";
 
 type ViewType = "all" | "weekly" | "monthly" | "archived";
 
@@ -145,13 +145,58 @@ export default function Goals() {
   const completedGoals = filteredGoals.filter(g => (g.currentValue / g.targetValue) >= 1).length;
   const inProgressGoals = filteredGoals.length - completedGoals;
 
+  // Sidebar navigation component
+  const SidebarNav = () => (
+    <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+      <div className="space-y-4">
+        <Link href="/">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            dashboard
+          </span>
+        </Link>
+        <Link href="/habits">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            habits
+          </span>
+        </Link>
+        <Link href="/goals">
+          <span className="block text-peach-400 text-sm font-heading cursor-pointer">
+            goals
+          </span>
+        </Link>
+        <Link href="/todos">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            todos
+          </span>
+        </Link>
+        <Link href="/study">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            study
+          </span>
+        </Link>
+        <Link href="/journey">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            journey
+          </span>
+        </Link>
+        <Link href="/settings">
+          <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+            settings
+          </span>
+        </Link>
+      </div>
+    </nav>
+  );
+
   if (isLoading) {
     return (
-      <div className="min-h-screen">
-        <div className="relative z-10 max-w-5xl mx-auto p-6">
-          <div className="space-y-4">
+      <div className="min-h-screen relative">
+        <ForestBackground />
+        <SidebarNav />
+        <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+          <div className="max-w-[900px] ml-[188px] space-y-5">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-card/40 backdrop-blur-sm border border-card-border rounded-2xl shadow-lg topo-pattern h-40 animate-pulse"></div>
+              <div key={i} className="glass-card frost-accent h-40 animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -160,129 +205,45 @@ export default function Goals() {
   }
 
   return (
-    <div className="min-h-screen pb-24">
-      <div className="max-w-5xl mx-auto p-4 md:p-6">
-        {/* Header - Glass morphism with soft shadows */}
-        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-4 md:p-8 mb-6 md:mb-8 relative overflow-hidden">
-          {/* Soft gradient overlay */}
-          <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at top left,
-                hsl(var(--primary) / 0.3),
-                transparent 60%)`
-            }}
-          />
+    <div className="min-h-screen relative">
+      <ForestBackground />
+      <SidebarNav />
 
-          <div className="flex items-center justify-between relative z-10">
+      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+        <div className="max-w-[900px] ml-[188px] space-y-5">
+
+          {/* Header */}
+          <header className="flex items-center justify-between mb-6">
             <div>
-              <h1
-                className="text-4xl font-bold mb-2"
-                style={{
-                  background: `linear-gradient(135deg,
-                    hsl(var(--primary)),
-                    hsl(var(--accent)))`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                Your Summits
-              </h1>
-              <p className="text-sm text-foreground/60">
+              <h1 className="logo-text tracking-wider text-2xl">GOALS</h1>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Track your journey to each peak
               </p>
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-6 py-3 shadow-lg transition-all duration-300 hover:scale-105"
-              style={{
-                background: `linear-gradient(135deg,
-                  hsl(var(--primary)),
-                  hsl(var(--accent)))`,
-                color: 'white'
-              }}
+              className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              <span className="font-semibold">New Summit</span>
+              <Plus className="w-4 h-4 mr-2" />
+              New Goal
             </Button>
-          </div>
-        </div>
+          </header>
 
-        {/* Stats Overview - Soft glass cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
-            <div
-              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at center, hsl(var(--primary) / 0.4), transparent 70%)`
-              }}
-            />
-            <div className="flex items-center gap-4 relative z-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.1))`,
-                  border: '1px solid hsl(var(--primary) / 0.3)'
-                }}
-              >
-                <Trophy className="w-7 h-7" style={{ color: 'hsl(var(--primary))' }} />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-foreground">{completedGoals}</div>
-                <div className="text-sm text-foreground/60">Summited</div>
-              </div>
+          {/* Stats Overview */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="glass-card frost-accent p-4 text-center">
+              <div className="text-3xl font-bold text-peach-400">{completedGoals}</div>
+              <div className="text-sm text-[var(--text-muted)]">Completed</div>
+            </div>
+            <div className="glass-card frost-accent p-4 text-center">
+              <div className="text-3xl font-bold text-white">{inProgressGoals}</div>
+              <div className="text-sm text-[var(--text-muted)]">In Progress</div>
+            </div>
+            <div className="glass-card frost-accent p-4 text-center">
+              <div className="text-3xl font-bold text-white">{goals.length}</div>
+              <div className="text-sm text-[var(--text-muted)]">Total</div>
             </div>
           </div>
-
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
-            <div
-              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at center, hsl(var(--accent) / 0.4), transparent 70%)`
-              }}
-            />
-            <div className="flex items-center gap-4 relative z-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--accent) / 0.2), hsl(var(--accent) / 0.1))`,
-                  border: '1px solid hsl(var(--accent) / 0.3)'
-                }}
-              >
-                <TrendingUp className="w-7 h-7" style={{ color: 'hsl(var(--accent))' }} />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-foreground">{inProgressGoals}</div>
-                <div className="text-sm text-foreground/60">Climbing</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
-            <div
-              className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at center, hsl(var(--secondary) / 0.4), transparent 70%)`
-              }}
-            />
-            <div className="flex items-center gap-4 relative z-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--secondary) / 0.2), hsl(var(--secondary) / 0.1))`,
-                  border: '1px solid hsl(var(--secondary) / 0.3)'
-                }}
-              >
-                <Target className="w-7 h-7" style={{ color: 'hsl(var(--secondary))' }} />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-foreground">{goals.length}</div>
-                <div className="text-sm text-foreground/60">Total Peaks</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Fitness Progress from Journey (read-only) */}
         <JourneyGoalsSection
@@ -302,130 +263,71 @@ export default function Goals() {
           }}
         />
 
-        {/* View Tabs - Soft glass toggle */}
-        <div className="bg-background/30 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-lg p-2 flex flex-col sm:flex-row gap-2 mb-6 md:mb-8">
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
-              activeView === "all"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={activeView === "all" ? {
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-            } : {}}
-            onClick={() => setActiveView("all")}
-          >
-            <Target className="w-4 h-4 mr-2" />
-            All Peaks
-          </Button>
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
-              activeView === "weekly"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={activeView === "weekly" ? {
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-            } : {}}
-            onClick={() => setActiveView("weekly")}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            This Week
-          </Button>
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
-              activeView === "monthly"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={activeView === "monthly" ? {
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`
-            } : {}}
-            onClick={() => setActiveView("monthly")}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            This Month
-          </Button>
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex-1 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-300",
-              activeView === "archived"
-                ? "text-white shadow-lg"
-                : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
-            )}
-            style={activeView === "archived" ? {
-              background: `linear-gradient(135deg, hsl(var(--muted-foreground)), hsl(var(--muted-foreground) / 0.8))`
-            } : {}}
-            onClick={() => setActiveView("archived")}
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Archived
-            {archivedCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-foreground/20">
-                {archivedCount}
-              </span>
-            )}
-          </Button>
-        </div>
+        {/* View Tabs */}
+          <div className="glass-card frost-accent p-2 flex flex-wrap gap-2">
+            {[
+              { key: "all", label: "All", icon: Target },
+              { key: "weekly", label: "Week", icon: Calendar },
+              { key: "monthly", label: "Month", icon: Calendar },
+              { key: "archived", label: "Archived", icon: AlertTriangle, count: archivedCount },
+            ].map(tab => (
+              <Button
+                key={tab.key}
+                variant="ghost"
+                className={cn(
+                  "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+                  activeView === tab.key
+                    ? "bg-peach-400 text-white"
+                    : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                )}
+                onClick={() => setActiveView(tab.key as ViewType)}
+              >
+                <tab.icon className="w-4 h-4 mr-2" />
+                {tab.label}
+                {tab.count && tab.count > 0 && (
+                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                    {tab.count}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
 
-        {/* Goals List */}
-        {filteredGoals.length === 0 ? (
-          <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-16 text-center relative overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at center, hsl(var(--primary) / 0.3), transparent 70%)`
-              }}
-            />
-            <div className="relative z-10">
-              <Target
-                className="w-20 h-20 mx-auto mb-6"
-                style={{ color: 'hsl(var(--primary) / 0.6)' }}
-              />
-              <h2 className="text-3xl font-bold text-foreground mb-4">
-                No Peaks Yet
-              </h2>
-              <p className="text-foreground/60 mb-8 text-lg max-w-md mx-auto">
+          {/* Goals List */}
+          {filteredGoals.length === 0 ? (
+            <div className="glass-card frost-accent p-12 text-center">
+              <Target className="w-16 h-16 mx-auto mb-4 text-peach-400/60" />
+              <h2 className="text-2xl font-bold text-white mb-2">No Goals Yet</h2>
+              <p className="text-[var(--text-muted)] mb-6">
                 {activeView === "all"
-                  ? "Begin your journey by choosing your first summit to conquer"
+                  ? "Start by creating your first goal"
                   : activeView === "weekly"
-                  ? "No summits planned for this week"
+                  ? "No goals for this week"
                   : activeView === "monthly"
-                  ? "No summits planned for this month"
-                  : "No past-due goals - great job staying on track!"}
+                  ? "No goals for this month"
+                  : "No archived goals"}
               </p>
               <Button
                 onClick={handleCreateNew}
-                className="rounded-full px-8 py-4 text-lg shadow-xl hover:scale-105 transition-all duration-300"
-                style={{
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  color: 'white'
-                }}
+                className="rounded-full px-6 py-3 bg-peach-400 hover:bg-peach-500 text-white"
               >
-                Choose Your First Summit
+                Create Your First Goal
               </Button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredGoals.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                onEdit={() => handleEdit(goal)}
-                onAddProgress={() => handleAddProgress(goal)}
-                onDelete={() => handleDelete(goal.id)}
-              />
-            ))}
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4">
+              {filteredGoals.map((goal) => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  onEdit={() => handleEdit(goal)}
+                  onAddProgress={() => handleAddProgress(goal)}
+                  onDelete={() => handleDelete(goal.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <GoalDialog
@@ -507,7 +409,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
   return (
     <div
-      className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group"
+      className="glass-card frost-accent p-5 transition-all duration-300 hover:scale-[1.01] group"
     >
       {/* Soft gradient overlay based on progress */}
       <div
@@ -787,16 +689,14 @@ function JourneyGoalsSection({
   ];
 
   return (
-    <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-6 mb-8">
+    <div className="glass-card frost-accent p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-foreground">Fitness Progress</h2>
-        <a
-          href="/journey"
-          className="text-sm font-medium flex items-center gap-1 hover:underline"
-          style={{ color: 'hsl(var(--primary))' }}
-        >
-          Edit on Journey <ArrowRight className="w-4 h-4" />
-        </a>
+        <span className="card-title">Fitness Progress</span>
+        <Link href="/journey">
+          <span className="text-sm font-medium flex items-center gap-1 text-peach-400 hover:underline cursor-pointer">
+            Edit on Journey <ArrowRight className="w-4 h-4" />
+          </span>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
