@@ -502,6 +502,27 @@ export function registerHabitRoutes(app: Express) {
             .set({ currentValue: (habit.currentValue || 0) + delta })
             .where(eq(habits.id, habitId));
         }
+
+        // Update linked goal when toggling habit log
+        if (habit.linkedGoalId && updatedLog) {
+          try {
+            const linkedGoal = await storage.getGoal(habit.linkedGoalId);
+            if (linkedGoal) {
+              // Increment if now completed, decrement if now uncompleted
+              const newValue = updatedLog.completed
+                ? (linkedGoal.currentValue || 0) + 1
+                : Math.max(0, (linkedGoal.currentValue || 0) - 1);
+              await storage.updateGoal(habit.linkedGoalId, { currentValue: newValue });
+              log.debug('[habits] Updated linked goal on toggle', {
+                goalId: habit.linkedGoalId,
+                completed: updatedLog.completed,
+                newValue,
+              });
+            }
+          } catch (goalError) {
+            log.error('[habits] Failed to update linked goal on toggle:', goalError);
+          }
+        }
       } else {
         // Create new log
         log.debug('[habits] Creating habit log with:', {
@@ -532,6 +553,24 @@ export function registerHabitRoutes(app: Express) {
           await db.update(habits)
             .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
             .where(eq(habits.id, habitId));
+        }
+
+        // Update linked goal when creating new habit log (always completed)
+        if (habit.linkedGoalId) {
+          try {
+            const linkedGoal = await storage.getGoal(habit.linkedGoalId);
+            if (linkedGoal) {
+              await storage.updateGoal(habit.linkedGoalId, {
+                currentValue: (linkedGoal.currentValue || 0) + 1,
+              });
+              log.debug('[habits] Updated linked goal on new log', {
+                goalId: habit.linkedGoalId,
+                newValue: (linkedGoal.currentValue || 0) + 1,
+              });
+            }
+          } catch (goalError) {
+            log.error('[habits] Failed to update linked goal on new log:', goalError);
+          }
         }
       }
 

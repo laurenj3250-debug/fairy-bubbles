@@ -1201,3 +1201,123 @@ export const insertStudyScheduleLogSchema = createInsertSchema(studyScheduleLogs
   id: true,
   createdAt: true,
 });
+
+// ========== YEARLY GOALS ==========
+// Central hub for tracking annual goals with multi-source integration
+
+// Goal type enum
+export const yearlyGoalTypeEnum = pgEnum('yearly_goal_type', ['binary', 'count', 'compound']);
+
+// Category order (for display)
+export const YEARLY_GOAL_CATEGORY_ORDER = [
+  'residency',
+  'fitness',
+  'climbing',
+  'outdoor',
+  'german',
+  'books',
+  'piano',
+  'travel',
+  'relationship',
+  'social',
+  'financial',
+  'bucket_list',
+] as const;
+
+export const YEARLY_GOAL_CATEGORY_LABELS: Record<string, string> = {
+  residency: 'Residency',
+  fitness: 'Fitness',
+  climbing: 'Climbing',
+  outdoor: 'Outdoor',
+  german: 'German',
+  books: 'Books',
+  piano: 'Piano',
+  travel: 'Travel',
+  relationship: 'Relationship',
+  social: 'Social',
+  financial: 'Financial',
+  bucket_list: 'Bucket List',
+};
+
+// Sub-item type for compound goals
+export interface YearlyGoalSubItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  completedAt?: string;
+}
+
+// Yearly goals table
+export const yearlyGoals = pgTable("yearly_goals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  year: varchar("year", { length: 4 }).notNull(),
+
+  title: text("title").notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 30 }).notNull(),
+  position: integer("position").notNull().default(0),
+
+  goalType: yearlyGoalTypeEnum("goal_type").notNull().default("binary"),
+  targetValue: integer("target_value").notNull().default(1),
+  currentValue: integer("current_value").notNull().default(0),
+
+  // Integration links (mutually exclusive)
+  linkedHabitId: integer("linked_habit_id").references(() => habits.id, { onDelete: "set null" }),
+  linkedJourneyKey: varchar("linked_journey_key", { length: 50 }),
+  linkedDreamScrollCategory: varchar("linked_dream_scroll_category", { length: 20 }),
+
+  // Compound goals: nested sub-items as JSONB (max 20 items)
+  subItems: jsonb("sub_items").$type<YearlyGoalSubItem[]>().default([]).notNull(),
+
+  // Completion tracking
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+
+  // Rewards
+  xpReward: integer("xp_reward").notNull().default(100),
+  rewardClaimed: boolean("reward_claimed").notNull().default(false),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userYearTitleIdx: uniqueIndex("yearly_goals_user_year_title_key").on(table.userId, table.year, table.title),
+  };
+});
+
+// Progress logs for audit trail
+export const yearlyGoalProgressLogs = pgTable("yearly_goal_progress_logs", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id").notNull().references(() => yearlyGoals.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
+  changeType: varchar("change_type", { length: 20 }).notNull(),
+  previousValue: integer("previous_value"),
+  newValue: integer("new_value"),
+  subItemId: varchar("sub_item_id", { length: 50 }),
+
+  source: varchar("source", { length: 30 }).notNull(),
+  note: text("note"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// TypeScript types
+export type YearlyGoal = typeof yearlyGoals.$inferSelect;
+export type YearlyGoalProgressLog = typeof yearlyGoalProgressLogs.$inferSelect;
+export type InsertYearlyGoal = typeof yearlyGoals.$inferInsert;
+export type InsertYearlyGoalProgressLog = typeof yearlyGoalProgressLogs.$inferInsert;
+
+// Insert schemas
+export const insertYearlyGoalSchema = createInsertSchema(yearlyGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+});
+
+export const insertYearlyGoalProgressLogSchema = createInsertSchema(yearlyGoalProgressLogs).omit({
+  id: true,
+  createdAt: true,
+});

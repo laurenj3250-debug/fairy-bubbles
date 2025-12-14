@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoalDialog } from "@/components/GoalDialog";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
@@ -291,6 +291,16 @@ export default function Goals() {
                 )}
               </Button>
             ))}
+            {/* Yearly Goals Link */}
+            <Link href="/yearly-goals">
+              <Button
+                variant="ghost"
+                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                Yearly
+              </Button>
+            </Link>
           </div>
 
           {/* Goals List */}

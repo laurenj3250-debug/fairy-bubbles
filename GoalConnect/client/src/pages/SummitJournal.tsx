@@ -232,11 +232,11 @@ function PersonalityCard({ stats }: { stats: ClimbingStats }) {
   const Icon = config.icon;
 
   const types = [
-    { key: "VOLUME_WARRIOR", label: "Volume", short: "VOL" },
-    { key: "PROJECT_CRUSHER", label: "Project", short: "PRJ" },
-    { key: "FLASH_MASTER", label: "Flash", short: "FLS" },
-    { key: "ANGLE_DEMON", label: "Steep", short: "STP" },
-    { key: "CONSISTENCY_KING", label: "Steady", short: "STD" },
+    { key: "VOLUME_WARRIOR", label: "Volume Warrior", description: "Crushes lots of problems" },
+    { key: "PROJECT_CRUSHER", label: "Project Crusher", description: "Works hard on single routes" },
+    { key: "FLASH_MASTER", label: "Flash Master", description: "First-try sends" },
+    { key: "ANGLE_DEMON", label: "Angle Demon", description: "Loves steep walls" },
+    { key: "CONSISTENCY_KING", label: "Consistency King", description: "Steady climber" },
   ] as const;
 
   return (
@@ -253,7 +253,7 @@ function PersonalityCard({ stats }: { stats: ClimbingStats }) {
         <div className="flex-1 min-w-0">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Climbing Style</div>
           <div className={`text-lg font-bold ${config.color}`}>
-            {personality.primary.replace("_", " ")}
+            {types.find(t => t.key === personality.primary)?.label || personality.primary.replace("_", " ")}
           </div>
         </div>
       </div>
@@ -268,7 +268,7 @@ function PersonalityCard({ stats }: { stats: ClimbingStats }) {
           const typeConfig = PERSONALITY_CONFIG[key];
           return (
             <div key={key} className="flex items-center gap-2">
-              <span className="text-[10px] w-14 text-muted-foreground">{label}</span>
+              <span className="text-[10px] w-24 text-muted-foreground truncate">{label}</span>
               <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
                 <motion.div
                   className={`h-full rounded-full ${isPrimary ? typeConfig.color.replace("text-", "bg-") : "bg-muted-foreground/30"}`}

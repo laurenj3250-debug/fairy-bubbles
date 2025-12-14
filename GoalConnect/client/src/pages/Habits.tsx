@@ -242,7 +242,19 @@ export default function Habits() {
           {/* Contribution Graph */}
           {habits.length > 0 && contributionData.length > 0 && (
             <div className="glass-card frost-accent p-4">
-              <span className="card-title">Activity Overview</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="card-title">Activity Overview</span>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-[var(--text-muted)]">Log for date:</label>
+                  <input
+                    type="date"
+                    max={today}
+                    value={backfillDate || ""}
+                    onChange={(e) => setBackfillDate(e.target.value || null)}
+                    className="px-3 py-1.5 text-sm rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-peach-400/50"
+                  />
+                </div>
+              </div>
               <HabitContributionGraph
                 history={contributionData}
                 weeks={12}
@@ -252,7 +264,7 @@ export default function Habits() {
                 selectedDate={backfillDate}
               />
               <p className="text-xs text-[var(--text-muted)] mt-2 text-center">
-                Click any day to mark habits you missed
+                Click any day or use the date picker above to mark habits
               </p>
             </div>
           )}

@@ -46,6 +46,7 @@ import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import { registerLiftingRoutes } from "./routes/lifting";
 import { registerMoodRoutes } from "./routes/mood";
 import { registerStudyPlannerRoutes } from "./routes/study-planner";
+import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import {
   DatabaseError,
   ValidationError,
@@ -2915,6 +2916,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register study planner routes
   registerStudyPlannerRoutes(app);
+
+  // Register yearly goals routes
+  registerYearlyGoalRoutes(app);
 
   const httpServer = createServer(app);
 

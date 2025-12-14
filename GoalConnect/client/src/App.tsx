@@ -30,6 +30,7 @@ import IcyDash from "@/pages/IcyDash";
 import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
 import StudyPlanner from "@/pages/StudyPlanner";
+import YearlyGoals from "@/pages/YearlyGoals";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -263,6 +264,11 @@ function AppRoutes() {
           <MainLayout>
             <StudyPlanner />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/yearly-goals">
+        <RequireAuth>
+          <YearlyGoals />
         </RequireAuth>
       </Route>
       <Route component={NotFound} />

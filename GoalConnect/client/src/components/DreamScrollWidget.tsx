@@ -11,12 +11,12 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = [
-  { value: "do", label: "Peaks to Climb", emoji: "⛰️" },
-  { value: "buy", label: "Gear Wishlist", emoji: "🎒" },
-  { value: "see", label: "Views to Witness", emoji: "🏔️" },
-  { value: "visit", label: "Ranges to Explore", emoji: "🗺️" },
-  { value: "learn", label: "Skills to Master", emoji: "🧗" },
-  { value: "experience", label: "Alpine Adventures", emoji: "⚡" },
+  { value: "do", label: "Things to Do", emoji: "✅" },
+  { value: "buy", label: "Things to Buy", emoji: "🛒" },
+  { value: "see", label: "Things to See", emoji: "👀" },
+  { value: "visit", label: "Places to Visit", emoji: "📍" },
+  { value: "learn", label: "Things to Learn", emoji: "📚" },
+  { value: "experience", label: "Experiences", emoji: "⭐" },
 ] as const;
 
 export function DreamScrollWidget() {
