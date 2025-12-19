@@ -81,6 +81,16 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
     refetch,
   } = useQuery<{ goals: YearlyGoalWithProgress[] }>({
     queryKey: ["/api/yearly-goals/with-progress", { year }],
+    queryFn: async () => {
+      const res = await fetch(`/api/yearly-goals/with-progress?year=${encodeURIComponent(year)}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`${res.status}: ${text}`);
+      }
+      return res.json();
+    },
     staleTime: 30 * 1000, // 30 seconds
   });
 
