@@ -9,15 +9,17 @@ import {
   ChevronDown,
   ChevronRight,
   Zap,
+  Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
-import { GoalProgressBar } from "./GoalProgressBar";
 import { SubItemList } from "./SubItemList";
+import { CategoryStyle } from "./categoryStyles";
 import confetti from "canvas-confetti";
 
 interface YearlyGoalRowProps {
   goal: YearlyGoalWithProgress;
+  categoryStyle: CategoryStyle;
   onToggle: () => void;
   onIncrement: (amount: number) => void;
   onToggleSubItem: (subItemId: string) => void;
@@ -25,10 +27,12 @@ interface YearlyGoalRowProps {
   isToggling?: boolean;
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
+  isLast?: boolean;
 }
 
 export function YearlyGoalRow({
   goal,
+  categoryStyle,
   onToggle,
   onIncrement,
   onToggleSubItem,
@@ -36,6 +40,7 @@ export function YearlyGoalRow({
   isToggling,
   isIncrementing,
   isClaimingReward,
+  isLast,
 }: YearlyGoalRowProps) {
   const [expanded, setExpanded] = useState(false);
   const isManual = goal.source === "manual";
@@ -44,7 +49,6 @@ export function YearlyGoalRow({
   // Trigger confetti on completion
   const handleToggle = () => {
     if (goal.goalType === "binary" && !goal.isCompleted) {
-      // Will become completed
       confetti({
         particleCount: 100,
         spread: 70,
@@ -57,7 +61,6 @@ export function YearlyGoalRow({
   const handleIncrement = (amount: number) => {
     const newValue = goal.computedValue + amount;
     if (!goal.isCompleted && newValue >= goal.targetValue) {
-      // Will become completed
       confetti({
         particleCount: 150,
         spread: 70,
@@ -77,68 +80,81 @@ export function YearlyGoalRow({
   };
 
   return (
-    <div className="border-b border-stone-800 last:border-b-0">
-      <div className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-        {/* Checkbox / Toggle */}
+    <div className={cn(
+      "transition-colors",
+      !isLast && "border-b border-white/5"
+    )}>
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+        {/* Checkbox / Toggle / Expand button */}
         {goal.goalType === "binary" ? (
           <button
             onClick={handleToggle}
             disabled={isDisabled || isToggling}
             className={cn(
-              "w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
+              "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
               goal.isCompleted
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "bg-stone-800 text-stone-500 hover:text-stone-300",
-              isDisabled && "opacity-60 cursor-not-allowed"
+                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                : cn("bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] ring-1 ring-white/10", !isDisabled && "hover:ring-white/20"),
+              isDisabled && "opacity-50 cursor-not-allowed"
             )}
           >
             {goal.isCompleted ? (
-              <Check className="w-5 h-5 sm:w-4 sm:h-4" />
+              <Check className="w-4 h-4" />
             ) : (
-              <Circle className="w-5 h-5 sm:w-4 sm:h-4" />
+              <Circle className="w-4 h-4" />
             )}
           </button>
         ) : goal.goalType === "compound" ? (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors flex-shrink-0"
+            className={cn(
+              "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
+              expanded
+                ? cn("ring-1", categoryStyle.iconBg)
+                : "bg-white/5 ring-1 ring-white/10 hover:ring-white/20",
+              expanded ? categoryStyle.accentColor : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            )}
           >
             {expanded ? (
-              <ChevronDown className="w-5 h-5 sm:w-4 sm:h-4" />
+              <ChevronDown className="w-4 h-4" />
             ) : (
-              <ChevronRight className="w-5 h-5 sm:w-4 sm:h-4" />
+              <ChevronRight className="w-4 h-4" />
             )}
           </button>
         ) : (
+          // Count goal indicator
           <div
             className={cn(
-              "w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg flex-shrink-0",
+              "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0",
               goal.isCompleted
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "bg-stone-800 text-stone-500"
+                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                : cn("ring-1", categoryStyle.iconBg, categoryStyle.accentColor)
             )}
           >
             {goal.isCompleted ? (
-              <Check className="w-5 h-5 sm:w-4 sm:h-4" />
+              <Check className="w-4 h-4" />
             ) : (
-              <span className="text-xs font-medium">{goal.progressPercent}%</span>
+              <span className="text-[10px] font-bold tabular-nums">{goal.progressPercent}%</span>
             )}
           </div>
         )}
 
-        {/* Title and progress */}
+        {/* Title and meta info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "text-sm sm:text-base font-medium truncate",
-                goal.isCompleted ? "text-stone-500 line-through" : "text-stone-200"
+                "text-sm font-body font-medium truncate",
+                goal.isCompleted ? "text-[var(--text-muted)] line-through" : "text-[var(--text-primary)]"
               )}
             >
               {goal.title}
             </span>
+
+            {/* Auto-tracked badge */}
             {goal.source === "auto" && goal.sourceLabel && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-stone-500 flex-shrink-0">
+              <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--text-muted)] border border-white/10 flex-shrink-0">
+                <LinkIcon className="w-2.5 h-2.5" />
                 {goal.sourceLabel}
               </span>
             )}
@@ -146,13 +162,17 @@ export function YearlyGoalRow({
 
           {/* Progress bar for count goals */}
           {goal.goalType === "count" && (
-            <div className="mt-1.5 flex items-center gap-3">
-              <GoalProgressBar
-                value={goal.computedValue}
-                max={goal.targetValue}
-                className="flex-1"
-              />
-              <span className="text-xs text-stone-500 flex-shrink-0">
+            <div className="mt-2 flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r",
+                    goal.isCompleted ? "from-emerald-400 to-emerald-500" : categoryStyle.progressColor
+                  )}
+                  style={{ width: `${goal.progressPercent}%` }}
+                />
+              </div>
+              <span className="text-xs text-[var(--text-muted)] tabular-nums font-body">
                 {goal.computedValue}/{goal.targetValue}
               </span>
             </div>
@@ -160,37 +180,50 @@ export function YearlyGoalRow({
 
           {/* Progress for compound goals */}
           {goal.goalType === "compound" && (
-            <div className="mt-1 text-xs text-stone-500">
-              {goal.computedValue}/{goal.targetValue} completed
+            <div className="mt-1 flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {goal.subItems.map((item, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "w-4 h-1 rounded-full transition-colors",
+                      item.completed ? "bg-emerald-400" : "bg-white/10"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-[var(--text-muted)] font-body">
+                {goal.computedValue}/{goal.targetValue}
+              </span>
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Increment/decrement for manual count goals */}
           {isManual && goal.goalType === "count" && !goal.isCompleted && (
-            <>
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => handleIncrement(-1)}
                 disabled={isIncrementing || goal.computedValue <= 0}
                 className={cn(
-                  "w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-stone-800 transition-colors",
+                  "w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 transition-all",
                   goal.computedValue <= 0
-                    ? "opacity-40 cursor-not-allowed"
-                    : "hover:bg-stone-700 text-stone-400"
+                    ? "opacity-30 cursor-not-allowed"
+                    : "hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 )}
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleIncrement(1)}
                 disabled={isIncrementing}
-                className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 transition-colors"
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
-            </>
+            </div>
           )}
 
           {/* Reward claim button */}
@@ -202,20 +235,21 @@ export function YearlyGoalRow({
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
                 "bg-gradient-to-r from-amber-500/20 to-yellow-500/20",
                 "hover:from-amber-500/30 hover:to-yellow-500/30",
-                "text-amber-400 text-sm font-medium",
+                "text-amber-400 text-sm font-medium font-body",
+                "ring-1 ring-amber-500/30",
                 "animate-pulse"
               )}
             >
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">+{goal.xpReward} XP</span>
+              <span>+{goal.xpReward}</span>
             </button>
           )}
 
           {/* Claimed indicator */}
           {goal.isCompleted && goal.rewardClaimed && (
-            <div className="flex items-center gap-1 px-2 py-1 text-emerald-500 text-xs">
+            <div className="flex items-center gap-1.5 px-2 py-1 text-emerald-400">
               <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Claimed</span>
+              <span className="text-xs font-body">Claimed</span>
             </div>
           )}
         </div>
@@ -223,10 +257,11 @@ export function YearlyGoalRow({
 
       {/* Expanded sub-items for compound goals */}
       {goal.goalType === "compound" && expanded && (
-        <div className="pb-3 px-3 sm:px-4">
+        <div className="pb-3 px-4 ml-11">
           <SubItemList
             subItems={goal.subItems}
             onToggle={onToggleSubItem}
+            categoryStyle={categoryStyle}
           />
         </div>
       )}

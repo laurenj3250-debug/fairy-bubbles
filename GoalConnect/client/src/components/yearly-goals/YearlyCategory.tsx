@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { YearlyGoalRow } from "./YearlyGoalRow";
-import { GoalProgressBar } from "./GoalProgressBar";
+import { getCategoryStyle } from "./categoryStyles";
 
 interface YearlyCategoryProps {
   category: string;
@@ -32,51 +32,108 @@ export function YearlyCategory({
 }: YearlyCategoryProps) {
   const [collapsed, setCollapsed] = useState(false);
 
+  // Get category styling
+  const style = getCategoryStyle(category);
+  const CategoryIcon = style.icon;
+
   // Calculate category stats
   const completedCount = goals.filter((g) => g.isCompleted).length;
   const totalCount = goals.length;
   const progressPercent =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const isComplete = completedCount === totalCount && totalCount > 0;
 
   return (
-    <div className="bg-stone-900/50 rounded-xl border border-stone-800 overflow-hidden">
+    <div className={cn(
+      "glass-card overflow-hidden transition-all duration-300",
+      isComplete && "ring-1 ring-emerald-500/30"
+    )}>
       {/* Category header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-800/30 transition-colors"
+        className="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors group"
       >
-        <div className="w-6 h-6 flex items-center justify-center text-stone-400">
+        {/* Category icon */}
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-105",
+          style.iconBg
+        )}>
+          <CategoryIcon className={cn("w-5 h-5", style.accentColor)} />
+        </div>
+
+        {/* Category name and progress text */}
+        <div className="flex-1 text-left">
+          <h3 className="text-lg font-heading font-medium text-[var(--text-primary)]">
+            {categoryLabel}
+          </h3>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={cn("text-sm font-body", style.accentColor)}>
+              {completedCount} of {totalCount} complete
+            </span>
+            {isComplete && (
+              <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <Check className="w-3 h-3" />
+                Done
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Progress ring */}
+        <div className="relative w-12 h-12 flex-shrink-0">
+          <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+            {/* Background ring */}
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+              className="text-white/5"
+            />
+            {/* Progress ring */}
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              stroke={isComplete ? "#10b981" : "currentColor"}
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+              className={cn(!isComplete && style.accentColor)}
+              style={{
+                strokeDasharray: 2 * Math.PI * 20,
+                strokeDashoffset: 2 * Math.PI * 20 * (1 - progressPercent / 100),
+                transition: 'stroke-dashoffset 0.5s ease-out',
+              }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs font-medium text-[var(--text-primary)] tabular-nums">
+              {progressPercent}%
+            </span>
+          </div>
+        </div>
+
+        {/* Expand/collapse chevron */}
+        <div className="w-6 h-6 flex items-center justify-center text-[var(--text-muted)] transition-transform duration-200">
           {collapsed ? (
             <ChevronRight className="w-5 h-5" />
           ) : (
             <ChevronDown className="w-5 h-5" />
           )}
         </div>
-
-        <h3 className="text-base font-semibold text-stone-200 flex-1 text-left">
-          {categoryLabel}
-        </h3>
-
-        {/* Category progress */}
-        <div className="flex items-center gap-3">
-          <GoalProgressBar
-            value={completedCount}
-            max={totalCount}
-            className="w-20 sm:w-32"
-          />
-          <span className="text-sm text-stone-500 w-16 text-right">
-            {completedCount}/{totalCount}
-          </span>
-        </div>
       </button>
 
       {/* Goals list */}
       {!collapsed && (
-        <div className="border-t border-stone-800">
-          {goals.map((goal) => (
+        <div className="border-t border-white/5">
+          {goals.map((goal, index) => (
             <YearlyGoalRow
               key={goal.id}
               goal={goal}
+              categoryStyle={style}
               onToggle={() => onToggle(goal.id)}
               onIncrement={(amount) => onIncrement(goal.id, amount)}
               onToggleSubItem={(subItemId) => onToggleSubItem(goal.id, subItemId)}
@@ -84,6 +141,7 @@ export function YearlyCategory({
               isToggling={isToggling}
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}
+              isLast={index === goals.length - 1}
             />
           ))}
         </div>
