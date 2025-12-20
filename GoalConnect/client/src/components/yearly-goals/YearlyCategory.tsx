@@ -39,23 +39,21 @@ export function YearlyCategory({
   // Calculate category stats
   const completedCount = goals.filter((g) => g.isCompleted).length;
   const totalCount = goals.length;
-  const progressPercent =
-    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const isComplete = completedCount === totalCount && totalCount > 0;
 
   return (
     <div className={cn(
-      "glass-card overflow-hidden transition-all duration-300",
+      "glass-card frost-accent overflow-hidden",
       isComplete && "ring-1 ring-emerald-500/30"
     )}>
-      {/* Category header */}
+      {/* Category header - simplified */}
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors group"
       >
         {/* Category icon */}
         <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-105",
+          "w-10 h-10 rounded-xl flex items-center justify-center border",
           style.iconBg
         )}>
           <CategoryIcon className={cn("w-5 h-5", style.accentColor)} />
@@ -67,7 +65,7 @@ export function YearlyCategory({
             {categoryLabel}
           </h3>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className={cn("text-sm font-body", style.accentColor)}>
+            <span className={cn("text-sm", style.accentColor)}>
               {completedCount} of {totalCount} complete
             </span>
             {isComplete && (
@@ -76,43 +74,6 @@ export function YearlyCategory({
                 Done
               </span>
             )}
-          </div>
-        </div>
-
-        {/* Progress ring */}
-        <div className="relative w-12 h-12 flex-shrink-0">
-          <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-            {/* Background ring */}
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="3"
-              fill="none"
-              className="text-white/5"
-            />
-            {/* Progress ring */}
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke={isComplete ? "#10b981" : "currentColor"}
-              strokeWidth="3"
-              fill="none"
-              strokeLinecap="round"
-              className={cn(!isComplete && style.accentColor)}
-              style={{
-                strokeDasharray: 2 * Math.PI * 20,
-                strokeDashoffset: 2 * Math.PI * 20 * (1 - progressPercent / 100),
-                transition: 'stroke-dashoffset 0.5s ease-out',
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-medium text-[var(--text-primary)] tabular-nums">
-              {progressPercent}%
-            </span>
           </div>
         </div>
 

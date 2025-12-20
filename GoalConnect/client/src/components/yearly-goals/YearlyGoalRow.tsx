@@ -8,7 +8,6 @@ import {
   Sparkles,
   ChevronDown,
   ChevronRight,
-  Zap,
   Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -110,9 +109,8 @@ export function YearlyGoalRow({
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
               expanded
-                ? cn("ring-1", categoryStyle.iconBg)
-                : "bg-white/5 ring-1 ring-white/10 hover:ring-white/20",
-              expanded ? categoryStyle.accentColor : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                ? "bg-peach-400/10 ring-1 ring-peach-400/30 text-peach-400"
+                : "bg-white/5 ring-1 ring-white/10 hover:ring-white/20 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             )}
           >
             {expanded ? (
@@ -128,7 +126,7 @@ export function YearlyGoalRow({
               "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0",
               goal.isCompleted
                 ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                : cn("ring-1", categoryStyle.iconBg, categoryStyle.accentColor)
+                : "bg-peach-400/10 text-peach-400 ring-1 ring-peach-400/30"
             )}
           >
             {goal.isCompleted ? (
@@ -144,7 +142,7 @@ export function YearlyGoalRow({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "text-sm font-body font-medium truncate",
+                "text-sm font-medium truncate",
                 goal.isCompleted ? "text-[var(--text-muted)] line-through" : "text-[var(--text-primary)]"
               )}
             >
@@ -166,13 +164,13 @@ export function YearlyGoalRow({
               <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className={cn(
-                    "h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r",
-                    goal.isCompleted ? "from-emerald-400 to-emerald-500" : categoryStyle.progressColor
+                    "h-full rounded-full transition-all duration-500 ease-out",
+                    goal.isCompleted ? "bg-emerald-400" : "bg-peach-400"
                   )}
                   style={{ width: `${goal.progressPercent}%` }}
                 />
               </div>
-              <span className="text-xs text-[var(--text-muted)] tabular-nums font-body">
+              <span className="text-xs text-[var(--text-muted)] tabular-nums">
                 {goal.computedValue}/{goal.targetValue}
               </span>
             </div>
@@ -192,7 +190,7 @@ export function YearlyGoalRow({
                   />
                 ))}
               </div>
-              <span className="text-xs text-[var(--text-muted)] font-body">
+              <span className="text-xs text-[var(--text-muted)]">
                 {goal.computedValue}/{goal.targetValue}
               </span>
             </div>
@@ -233,10 +231,9 @@ export function YearlyGoalRow({
               disabled={isClaimingReward}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
-                "bg-gradient-to-r from-amber-500/20 to-yellow-500/20",
-                "hover:from-amber-500/30 hover:to-yellow-500/30",
-                "text-amber-400 text-sm font-medium font-body",
-                "ring-1 ring-amber-500/30",
+                "bg-peach-400/20 hover:bg-peach-400/30",
+                "text-peach-400 text-sm font-medium",
+                "ring-1 ring-peach-400/30",
                 "animate-pulse"
               )}
             >
@@ -249,7 +246,7 @@ export function YearlyGoalRow({
           {goal.isCompleted && goal.rewardClaimed && (
             <div className="flex items-center gap-1.5 px-2 py-1 text-emerald-400">
               <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-xs font-body">Claimed</span>
+              <span className="text-xs">Claimed</span>
             </div>
           )}
         </div>
