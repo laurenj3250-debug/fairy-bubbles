@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, addDays, subDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { FAB } from '@/components/FAB';
-import { Eye, EyeOff } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
+import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 
 // V2 Components
@@ -216,6 +218,10 @@ export default function DashboardV4() {
   const { toast } = useToast();
   const week = useWeekData();
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
+
+  // Mobile 3-day schedule navigation (offset from today: -1 = yesterday centered, 0 = today centered, 1 = tomorrow centered)
+  const [scheduleOffset, setScheduleOffset] = useState(0);
 
   // Inline task add state
   const [inlineAddDay, setInlineAddDay] = useState<number | null>(null);
@@ -701,6 +707,29 @@ export default function DashboardV4() {
     toggleTodoMutation.mutate(todoId);
   }, [toggleTodoMutation]);
 
+  // Mobile 3-day schedule data
+  const threeDaySchedule = useMemo(() => {
+    const today = new Date();
+    const centerDate = addDays(today, scheduleOffset);
+
+    return [-1, 0, 1].map(offset => {
+      const date = addDays(centerDate, offset);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const dayIndex = week.dates.indexOf(dateStr);
+      const isToday = dateStr === todayStr;
+
+      return {
+        date: dateStr,
+        dayName: format(date, 'EEE'),
+        dayNum: format(date, 'd'),
+        isToday,
+        dayIndex,
+        todos: dayIndex >= 0 ? (todosByDay[dayIndex] || []) : [],
+        studyTasks: dayIndex >= 0 ? (studyTasksByDay[dayIndex] || []) : [],
+      };
+    });
+  }, [scheduleOffset, week.dates, todayStr, todosByDay, studyTasksByDay]);
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -713,8 +742,8 @@ export default function DashboardV4() {
       {/* Mountain hero section */}
       <MountainHero />
 
-      {/* Sidebar Navigation */}
-      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+      {/* Sidebar Navigation - Hidden on mobile */}
+      <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
         <div className="space-y-4">
           <Link href="/">
             <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
@@ -755,23 +784,23 @@ export default function DashboardV4() {
       </nav>
 
       {/* Main dashboard content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24">
-        <div className="max-w-[900px] ml-[188px] space-y-5">
+      <div className="relative z-10 px-4 md:px-8 pb-20 md:pb-24">
+        <div className="max-w-[900px] mx-auto md:ml-[188px] md:mr-0 space-y-4 md:space-y-5">
 
           {/* HEADER: Simplified - Logo + Stats */}
-          <header className="flex items-center justify-between mb-6">
+          <header className="flex items-center justify-between mb-4 md:mb-6 pt-2 md:pt-0">
             {/* Left: Logo */}
-            <h1 className="logo-text tracking-wider">
+            <h1 className="logo-text tracking-wider text-base md:text-lg">
               GOAL CONNECT
             </h1>
 
-            {/* Center: Habit Orbs (clickable to habits) */}
-            <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
+            {/* Center: Habit Orbs (clickable to habits) - Hidden on mobile */}
+            <Link href="/habits" className="hidden md:flex flex-shrink-0 hover:scale-105 transition-transform">
               <GlowingOrbHabits />
             </Link>
 
             {/* Right: Stats - subtle, not competing with content */}
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2 md:gap-4 text-xs">
               <div className="text-[var(--text-muted)]">
                 <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
                 <span className="ml-1 opacity-70">pts</span>
@@ -787,10 +816,10 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* ROW 1: Weekly Goals + Study Tracker (2 columns) */}
-          <div className="card-grid grid grid-cols-2 gap-5">
+          {/* ROW 1: Weekly Goals + Study Tracker (2 columns on desktop, 1 on mobile) */}
+          <div className="card-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {/* Weekly Goals */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[180px] md:min-h-[220px] flex flex-col">
               <span className="card-title">Weekly Goals</span>
               <div className="flex-1 flex flex-col justify-center">
                 {goalsLoading ? (
@@ -820,8 +849,8 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Study Tracker */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+            {/* Study Tracker - Hidden on mobile */}
+            <div className="hidden md:flex glass-card frost-accent min-h-[220px] flex-col">
               <span className="card-title">Study Tracker</span>
               <div className="flex-1 flex items-center justify-center">
                 <LuxuryStudyTracker
@@ -833,10 +862,10 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
-          <div className="card-grid grid grid-cols-2 gap-5">
+          {/* ROW 2: This Week Habits + Dream Scroll (2 columns on desktop, 1 on mobile) */}
+          <div className="card-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {/* This Week Habits */}
-            <div className="glass-card frost-accent min-h-[320px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[200px] md:min-h-[320px] flex flex-col">
               <span className="card-title">This Week</span>
               <div className="flex-1">
                 <LuxuryHabitGrid
@@ -858,16 +887,16 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Dream Scroll Widget */}
-            <div className="min-h-[320px]">
+            {/* Dream Scroll Widget - Hidden on mobile */}
+            <div className="hidden md:block min-h-[320px]">
               <DreamScrollWidget />
             </div>
           </div>
 
-          {/* ROW 3: Monthly Progress + Weekly Rhythm + Destination (3 columns, small) */}
-          <div className="card-grid grid grid-cols-3 gap-5">
+          {/* ROW 3: Monthly Progress + Weekly Rhythm + Destination (3 columns on desktop, 1 on mobile) */}
+          <div className="card-grid grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {/* Monthly Progress - Habit Completions */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
+            <div className="glass-card frost-accent min-h-[160px] md:min-h-[200px] flex flex-col">
               <span className="card-title">Monthly Progress</span>
               <div className="flex-1 flex items-center justify-around pt-2">
                 {monthlyHabitProgress.length === 0 ? (
@@ -889,16 +918,16 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Weekly Rhythm */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
+            {/* Weekly Rhythm - Hidden on mobile */}
+            <div className="hidden md:flex glass-card frost-accent min-h-[200px] flex-col">
               <span className="card-title">Weekly Rhythm</span>
               <div className="flex-1 flex items-end">
                 <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
               </div>
             </div>
 
-            {/* Destination Spotlight */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
+            {/* Destination Spotlight - Hidden on mobile */}
+            <div className="hidden md:flex glass-card frost-accent min-h-[200px] flex-col">
               <span className="card-title">Destination</span>
               <div className="flex-1">
                 {(() => {
@@ -915,8 +944,8 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 4: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
-          <div className="glass-card frost-accent min-h-[280px]">
+          {/* ROW 4: Weekly Schedule */}
+          <div className="glass-card frost-accent min-h-[200px] md:min-h-[280px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <span className="card-title">Schedule</span>
@@ -933,54 +962,130 @@ export default function DashboardV4() {
                   {hideCompleted ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <span className="font-body text-xs text-[var(--text-muted)]">{week.formatRange}</span>
+              <span className="font-body text-xs text-[var(--text-muted)]">
+                {isMobile ? `${threeDaySchedule[0].dayName} ${threeDaySchedule[0].dayNum} - ${threeDaySchedule[2].dayName} ${threeDaySchedule[2].dayNum}` : week.formatRange}
+              </span>
             </div>
 
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={(e) => setActiveTaskId(e.active.id as number)}
-              onDragEnd={handleDragEnd}
-              onDragCancel={() => setActiveTaskId(null)}
-            >
-              <div className="grid grid-cols-7 gap-2">
-                {week.dayNames.map((day, i) => (
-                  <DroppableDayColumn
-                    key={`${day}-${i}`}
-                    dayIndex={i}
-                    dayName={day}
-                    date={week.dates[i]}
-                    isToday={i === week.todayIndex}
-                    todos={todosByDay[i] || []}
-                    studyTasks={studyTasksByDay[i] || []}
-                    onToggle={handleToggleTodo}
-                    onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
-                    onDelete={(id) => deleteTodoMutation.mutate(id)}
-                    onAdd={() => setInlineAddDay(i)}
-                    onStudyToggle={(taskType) => handleStudyTaskToggle(taskType, week.dates[i])}
-                    isAddingDay={inlineAddDay}
-                    inlineAddTitle={inlineAddTitle}
-                    setInlineAddTitle={setInlineAddTitle}
-                    setInlineAddDay={setInlineAddDay}
-                    onSubmitAdd={(dueDate) => {
-                      createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate });
-                    }}
-                    isCreating={createTodoMutation.isPending}
-                    isUpdating={updateTodoMutation.isPending}
-                    isDeleting={deleteTodoMutation.isPending}
-                  />
-                ))}
-              </div>
+            {/* Mobile 3-Day View */}
+            {isMobile ? (
+              <div className="flex items-center gap-2">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => setScheduleOffset(prev => prev - 1)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 flex-shrink-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
 
-              {/* Drag overlay for visual feedback */}
-              <DragOverlay>
-                {activeTask && (
-                  <div className="bg-ice-card/90 p-1 rounded shadow-lg text-[0.65rem] border border-peach-400/50 max-w-[100px] truncate">
-                    {activeTask.title}
-                  </div>
-                )}
-              </DragOverlay>
-            </DndContext>
+                {/* 3 Day Cards */}
+                <div className="flex gap-2 flex-1 overflow-hidden">
+                  {threeDaySchedule.map((dayData) => (
+                    <div
+                      key={dayData.date}
+                      className={cn(
+                        "flex-1 rounded-xl p-3 min-w-0",
+                        dayData.isToday
+                          ? "bg-peach-400/10 border border-peach-400/30"
+                          : "bg-white/5"
+                      )}
+                    >
+                      <div className={cn(
+                        "text-xs mb-1",
+                        dayData.isToday ? "text-peach-400" : "text-[var(--text-muted)]"
+                      )}>
+                        {dayData.dayName}{dayData.isToday && " · Today"}
+                      </div>
+                      <div className={cn(
+                        "text-sm font-semibold mb-2",
+                        dayData.isToday ? "text-peach-400" : "text-white"
+                      )}>
+                        {dayData.dayNum}
+                      </div>
+                      <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                        {dayData.todos.slice(0, 4).map(todo => (
+                          <div
+                            key={todo.id}
+                            onClick={() => handleToggleTodo(todo.id)}
+                            className={cn(
+                              "bg-white/5 rounded-lg px-2 py-1.5 text-xs cursor-pointer",
+                              todo.completed && "line-through opacity-50"
+                            )}
+                          >
+                            {todo.title}
+                          </div>
+                        ))}
+                        {dayData.todos.length > 4 && (
+                          <div className="text-xs text-[var(--text-muted)] text-center">
+                            +{dayData.todos.length - 4} more
+                          </div>
+                        )}
+                        {dayData.todos.length === 0 && (
+                          <div className="text-xs text-[var(--text-muted)] text-center py-2">
+                            No tasks
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right Arrow */}
+                <button
+                  onClick={() => setScheduleOffset(prev => prev + 1)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 flex-shrink-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              /* Desktop 7-Day View */
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={(e) => setActiveTaskId(e.active.id as number)}
+                onDragEnd={handleDragEnd}
+                onDragCancel={() => setActiveTaskId(null)}
+              >
+                <div className="grid grid-cols-7 gap-2">
+                  {week.dayNames.map((day, i) => (
+                    <DroppableDayColumn
+                      key={`${day}-${i}`}
+                      dayIndex={i}
+                      dayName={day}
+                      date={week.dates[i]}
+                      isToday={i === week.todayIndex}
+                      todos={todosByDay[i] || []}
+                      studyTasks={studyTasksByDay[i] || []}
+                      onToggle={handleToggleTodo}
+                      onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
+                      onDelete={(id) => deleteTodoMutation.mutate(id)}
+                      onAdd={() => setInlineAddDay(i)}
+                      onStudyToggle={(taskType) => handleStudyTaskToggle(taskType, week.dates[i])}
+                      isAddingDay={inlineAddDay}
+                      inlineAddTitle={inlineAddTitle}
+                      setInlineAddTitle={setInlineAddTitle}
+                      setInlineAddDay={setInlineAddDay}
+                      onSubmitAdd={(dueDate) => {
+                        createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate });
+                      }}
+                      isCreating={createTodoMutation.isPending}
+                      isUpdating={updateTodoMutation.isPending}
+                      isDeleting={deleteTodoMutation.isPending}
+                    />
+                  ))}
+                </div>
+
+                {/* Drag overlay for visual feedback */}
+                <DragOverlay>
+                  {activeTask && (
+                    <div className="bg-ice-card/90 p-1 rounded shadow-lg text-[0.65rem] border border-peach-400/50 max-w-[100px] truncate">
+                      {activeTask.title}
+                    </div>
+                  )}
+                </DragOverlay>
+              </DndContext>
+            )}
           </div>
 
         </div>
@@ -1007,6 +1112,12 @@ export default function DashboardV4() {
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
       />
+
+      {/* Bottom Navigation - Mobile only */}
+      {isMobile && <BottomNav />}
+
+      {/* Extra padding for bottom nav on mobile */}
+      {isMobile && <div className="h-16" />}
     </div>
   );
 }

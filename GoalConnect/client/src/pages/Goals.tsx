@@ -4,6 +4,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { BottomNav } from "@/components/BottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoalDialog } from "@/components/GoalDialog";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
@@ -19,6 +21,7 @@ import { Link } from "wouter";
 type ViewType = "all" | "weekly" | "monthly" | "archived";
 
 export default function Goals() {
+  const isMobile = useIsMobile();
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
@@ -145,9 +148,9 @@ export default function Goals() {
   const completedGoals = filteredGoals.filter(g => (g.currentValue / g.targetValue) >= 1).length;
   const inProgressGoals = filteredGoals.length - completedGoals;
 
-  // Sidebar navigation component
+  // Sidebar navigation component - Hidden on mobile
   const SidebarNav = () => (
-    <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+    <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
       <div className="space-y-4">
         <Link href="/">
           <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
@@ -193,13 +196,14 @@ export default function Goals() {
       <div className="min-h-screen relative">
         <ForestBackground />
         <SidebarNav />
-        <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-          <div className="max-w-[900px] ml-[188px] space-y-5">
+        <div className="relative z-10 px-4 md:px-8 pb-24 pt-6 md:pt-8">
+          <div className="max-w-[900px] mx-auto md:ml-[188px] md:mr-0 space-y-4 md:space-y-5">
             {[1, 2, 3].map(i => (
               <div key={i} className="glass-card frost-accent h-40 animate-pulse"></div>
             ))}
           </div>
         </div>
+        {isMobile && <BottomNav />}
       </div>
     );
   }
@@ -209,39 +213,39 @@ export default function Goals() {
       <ForestBackground />
       <SidebarNav />
 
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-[188px] space-y-5">
+      <div className="relative z-10 px-4 md:px-8 pb-20 md:pb-24 pt-6 md:pt-8">
+        <div className="max-w-[900px] mx-auto md:ml-[188px] md:mr-0 space-y-4 md:space-y-5">
 
           {/* Header */}
-          <header className="flex items-center justify-between mb-6">
+          <header className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <h1 className="logo-text tracking-wider text-2xl">GOALS</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
+              <h1 className="logo-text tracking-wider text-xl md:text-2xl">GOALS</h1>
+              <p className="text-xs md:text-sm text-[var(--text-muted)] mt-1">
                 Track your journey to each peak
               </p>
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
+              className="rounded-full px-3 md:px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105 text-sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Goal
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">New Goal</span>
             </Button>
           </header>
 
           {/* Stats Overview */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-peach-400">{completedGoals}</div>
-              <div className="text-sm text-[var(--text-muted)]">Completed</div>
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <div className="glass-card frost-accent p-3 md:p-4 text-center">
+              <div className="text-2xl md:text-3xl font-bold text-peach-400">{completedGoals}</div>
+              <div className="text-xs md:text-sm text-[var(--text-muted)]">Completed</div>
             </div>
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-white">{inProgressGoals}</div>
-              <div className="text-sm text-[var(--text-muted)]">In Progress</div>
+            <div className="glass-card frost-accent p-3 md:p-4 text-center">
+              <div className="text-2xl md:text-3xl font-bold text-white">{inProgressGoals}</div>
+              <div className="text-xs md:text-sm text-[var(--text-muted)]">In Progress</div>
             </div>
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-white">{goals.length}</div>
-              <div className="text-sm text-[var(--text-muted)]">Total</div>
+            <div className="glass-card frost-accent p-3 md:p-4 text-center">
+              <div className="text-2xl md:text-3xl font-bold text-white">{goals.length}</div>
+              <div className="text-xs md:text-sm text-[var(--text-muted)]">Total</div>
             </div>
           </div>
 
@@ -350,6 +354,9 @@ export default function Goals() {
         onOpenChange={setProgressDialogOpen}
         goal={progressGoal}
       />
+
+      {/* Bottom Navigation - Mobile only */}
+      {isMobile && <BottomNav />}
     </div>
   );
 }
