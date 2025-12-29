@@ -4,14 +4,15 @@ import { motion } from 'framer-motion';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, addDays, subDays } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, addDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { FAB } from '@/components/FAB';
 import { BottomNav } from '@/components/BottomNav';
-import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MobileSchedule } from '@/components/MobileSchedule';
+import { Eye, EyeOff } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 
 // V2 Components
@@ -219,9 +220,6 @@ export default function DashboardV4() {
   const week = useWeekData();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
-
-  // Mobile 3-day schedule navigation (offset from today: -1 = yesterday centered, 0 = today centered, 1 = tomorrow centered)
-  const [scheduleOffset, setScheduleOffset] = useState(0);
 
   // Inline task add state
   const [inlineAddDay, setInlineAddDay] = useState<number | null>(null);
@@ -736,29 +734,6 @@ export default function DashboardV4() {
     toggleTodoMutation.mutate(todoId);
   }, [toggleTodoMutation]);
 
-  // Mobile 3-day schedule data
-  const threeDaySchedule = useMemo(() => {
-    const today = new Date();
-    const centerDate = addDays(today, scheduleOffset);
-
-    return [-1, 0, 1].map(offset => {
-      const date = addDays(centerDate, offset);
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const dayIndex = week.dates.indexOf(dateStr);
-      const isToday = dateStr === todayStr;
-
-      return {
-        date: dateStr,
-        dayName: format(date, 'EEE'),
-        dayNum: format(date, 'd'),
-        isToday,
-        dayIndex,
-        todos: dayIndex >= 0 ? (todosByDay[dayIndex] || []) : [],
-        studyTasks: dayIndex >= 0 ? (studyTasksByDay[dayIndex] || []) : [],
-      };
-    });
-  }, [scheduleOffset, week.dates, todayStr, todosByDay, studyTasksByDay]);
-
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -992,83 +967,21 @@ export default function DashboardV4() {
                 </button>
               </div>
               <span className="font-body text-xs text-[var(--text-muted)]">
-                {isMobile ? `${threeDaySchedule[0].dayName} ${threeDaySchedule[0].dayNum} - ${threeDaySchedule[2].dayName} ${threeDaySchedule[2].dayNum}` : week.formatRange}
+                {week.formatRange}
               </span>
             </div>
 
-            {/* Mobile 3-Day View */}
-            {isMobile ? (
-              <div className="flex items-center gap-2">
-                {/* Left Arrow */}
-                <button
-                  onClick={() => setScheduleOffset(prev => prev - 1)}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 flex-shrink-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
+            {/* Mobile: 3-day view */}
+            <div className="md:hidden">
+              <MobileSchedule
+                getTodosForDate={getTodosForDate}
+                onToggleTodo={handleToggleTodo}
+                maxOffset={7}
+              />
+            </div>
 
-                {/* 3 Day Cards */}
-                <div className="flex gap-2 flex-1 overflow-hidden">
-                  {threeDaySchedule.map((dayData) => (
-                    <div
-                      key={dayData.date}
-                      className={cn(
-                        "flex-1 rounded-xl p-3 min-w-0",
-                        dayData.isToday
-                          ? "bg-peach-400/10 border border-peach-400/30"
-                          : "bg-white/5"
-                      )}
-                    >
-                      <div className={cn(
-                        "text-xs mb-1",
-                        dayData.isToday ? "text-peach-400" : "text-[var(--text-muted)]"
-                      )}>
-                        {dayData.dayName}{dayData.isToday && " · Today"}
-                      </div>
-                      <div className={cn(
-                        "text-sm font-semibold mb-2",
-                        dayData.isToday ? "text-peach-400" : "text-white"
-                      )}>
-                        {dayData.dayNum}
-                      </div>
-                      <div className="space-y-1 max-h-[120px] overflow-y-auto">
-                        {dayData.todos.slice(0, 4).map(todo => (
-                          <div
-                            key={todo.id}
-                            onClick={() => handleToggleTodo(todo.id)}
-                            className={cn(
-                              "bg-white/5 rounded-lg px-2 py-1.5 text-xs cursor-pointer",
-                              todo.completed && "line-through opacity-50"
-                            )}
-                          >
-                            {todo.title}
-                          </div>
-                        ))}
-                        {dayData.todos.length > 4 && (
-                          <div className="text-xs text-[var(--text-muted)] text-center">
-                            +{dayData.todos.length - 4} more
-                          </div>
-                        )}
-                        {dayData.todos.length === 0 && (
-                          <div className="text-xs text-[var(--text-muted)] text-center py-2">
-                            No tasks
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Right Arrow */}
-                <button
-                  onClick={() => setScheduleOffset(prev => prev + 1)}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 flex-shrink-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              /* Desktop 7-Day View */
+            {/* Desktop: 7-day grid */}
+            <div className="hidden md:block">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -1114,7 +1027,7 @@ export default function DashboardV4() {
                   )}
                 </DragOverlay>
               </DndContext>
-            )}
+            </div>
           </div>
 
         </div>
