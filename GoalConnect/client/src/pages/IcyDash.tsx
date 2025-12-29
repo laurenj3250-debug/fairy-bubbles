@@ -575,6 +575,35 @@ export default function DashboardV4() {
     return byDay;
   }, [todos, week.dates, hideCompleted, recentlyCompleted]);
 
+  // Extended todos map for mobile schedule (±8 days from today)
+  const extendedTodosMap = useMemo(() => {
+    const map: Record<string, TodoWithMetadata[]> = {};
+    const today = new Date();
+
+    // Initialize all dates in range
+    for (let i = -8; i <= 8; i++) {
+      const date = addDays(today, i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      map[dateStr] = [];
+    }
+
+    // Populate from todos
+    todos.forEach(todo => {
+      if (todo.dueDate && map[todo.dueDate] !== undefined) {
+        if (!hideCompleted || !todo.completed) {
+          map[todo.dueDate].push(todo);
+        }
+      }
+    });
+
+    return map;
+  }, [todos, hideCompleted]);
+
+  // Callback for MobileSchedule
+  const getTodosForDate = useCallback((date: string) => {
+    return extendedTodosMap[date] || [];
+  }, [extendedTodosMap]);
+
   const quickTasks = useMemo(() => {
     return todos.filter(t => !t.completed).slice(0, 5);
   }, [todos]);
