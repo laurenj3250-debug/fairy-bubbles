@@ -14,13 +14,29 @@ interface MobileScheduleProps {
   getTodosForDate: (date: string) => Todo[];
   onToggleTodo: (id: number) => void;
   maxOffset?: number; // Limit navigation range, default ±7
+  isLoading?: boolean;
 }
 
 export function MobileSchedule({
   getTodosForDate,
   onToggleTodo,
-  maxOffset = 7
+  maxOffset = 7,
+  isLoading = false
 }: MobileScheduleProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-11 h-11 rounded-full bg-white/5 animate-pulse" />
+        <div className="flex gap-2 flex-1">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex-1 rounded-xl p-3 bg-white/5 animate-pulse h-[140px]" />
+          ))}
+        </div>
+        <div className="w-11 h-11 rounded-full bg-white/5 animate-pulse" />
+      </div>
+    );
+  }
+
   const [offset, setOffset] = useState(0);
   const today = useMemo(() => new Date(), []);
   const todayStr = format(today, 'yyyy-MM-dd');

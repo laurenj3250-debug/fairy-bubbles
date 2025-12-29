@@ -977,6 +977,7 @@ export default function DashboardV4() {
                 getTodosForDate={getTodosForDate}
                 onToggleTodo={handleToggleTodo}
                 maxOffset={7}
+                isLoading={todosLoading}
               />
             </div>
 
