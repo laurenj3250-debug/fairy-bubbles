@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
-import { insertGoalSchema, insertGoalUpdateSchema } from "@shared/schema";
+import { insertGoalSchema, insertGoalUpdateSchema, yearlyGoals, YearlyGoalSubItem } from "@shared/schema";
+import { getDb } from "../db";
+import { eq, and } from "drizzle-orm";
+import { log } from "../lib/logger";
 
 const getUserId = (req: any) => requireUser(req).id;
 
@@ -114,7 +117,63 @@ export function registerGoalRoutes(app: Express) {
       if (existing.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
+
+      const wasCompleted = existing.currentValue >= existing.targetValue;
       const goal = await storage.updateGoal(id, req.body);
+      if (!goal) {
+        return res.status(500).json({ error: "Failed to update goal" });
+      }
+      const isNowCompleted = goal.currentValue >= goal.targetValue;
+
+      // Sync with linked yearly goal sub-item if completion status changed
+      // Link data is stored in description field after "|||" separator
+      if (goal.description && goal.description.includes("|||") && wasCompleted !== isNowCompleted) {
+        try {
+          const linkDataStr = goal.description.split("|||")[1];
+          const linkData = JSON.parse(linkDataStr);
+          if (linkData.linkedYearlyGoalId && linkData.linkedSubItemId) {
+            const db = getDb();
+            const [yearlyGoal] = await db
+              .select()
+              .from(yearlyGoals)
+              .where(
+                and(
+                  eq(yearlyGoals.id, linkData.linkedYearlyGoalId),
+                  eq(yearlyGoals.userId, userId)
+                )
+              );
+
+            if (yearlyGoal && yearlyGoal.goalType === "compound") {
+              const subItems = yearlyGoal.subItems as YearlyGoalSubItem[];
+              const itemIndex = subItems.findIndex((item) => item.id === linkData.linkedSubItemId);
+
+              if (itemIndex !== -1) {
+                subItems[itemIndex].completed = isNowCompleted;
+                subItems[itemIndex].completedAt = isNowCompleted ? new Date().toISOString() : undefined;
+
+                const completedCount = subItems.filter((item) => item.completed).length;
+                const isGoalCompleted = completedCount >= yearlyGoal.targetValue;
+
+                await db
+                  .update(yearlyGoals)
+                  .set({
+                    subItems,
+                    currentValue: completedCount,
+                    completed: isGoalCompleted,
+                    completedAt: isGoalCompleted ? new Date() : null,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(yearlyGoals.id, linkData.linkedYearlyGoalId));
+
+                log.info(`[goals] Synced weekly goal #${id} -> yearly goal #${linkData.linkedYearlyGoalId} sub-item ${linkData.linkedSubItemId} (completed: ${isNowCompleted})`);
+              }
+            }
+          }
+        } catch (parseError) {
+          // Notes field doesn't contain valid JSON link data, skip sync
+        }
+      }
+
       res.json(goal);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });

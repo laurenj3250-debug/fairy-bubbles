@@ -2979,16 +2979,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
 
+      // Generate sub-items with IDs upfront so we can link them to weekly goals
+      const subItemsWithIds: Array<{ id: string; weekNumber: number; title: string; completed: boolean }> = READING_SCHEDULE.map((week) => ({
+        id: randomUUID(),
+        weekNumber: week.week,
+        title: `Week ${week.week}: pp. ${week.startPage}–${week.endPage} (${week.content})`,
+        completed: false,
+      }));
+
+      let yearlyGoalId: number;
       let yearlyGoalCreated = false;
+
       if (existingYearlyGoal.length === 0) {
         // Create compound yearly goal with 26 sub-items
-        const subItems = READING_SCHEDULE.map((week) => ({
-          id: randomUUID(),
-          title: `Week ${week.week}: pp. ${week.startPage}–${week.endPage} (${week.content})`,
-          completed: false,
-        }));
+        const subItems = subItemsWithIds.map(({ id, title, completed }) => ({ id, title, completed }));
 
-        await db.insert(schema.yearlyGoals).values({
+        const [newYearlyGoal] = await db.insert(schema.yearlyGoals).values({
           userId,
           year: "2025",
           title: "Complete de Lahunta",
@@ -2999,13 +3005,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentValue: 0,
           subItems,
           xpReward: 500,
-        });
+        }).returning();
+        yearlyGoalId = newYearlyGoal.id;
         yearlyGoalCreated = true;
+      } else {
+        yearlyGoalId = existingYearlyGoal[0].id;
+        // Use existing sub-items for linking
+        const existingSubItems = existingYearlyGoal[0].subItems as Array<{ id: string; title: string; completed: boolean }>;
+        existingSubItems.forEach((item, idx) => {
+          if (idx < subItemsWithIds.length) {
+            subItemsWithIds[idx].id = item.id;
+          }
+        });
       }
 
-      // Create weekly goals
+      // Create weekly goals linked to yearly goal sub-items
       let weeklyGoalsCreated = 0;
-      for (const week of READING_SCHEDULE) {
+      for (let i = 0; i < READING_SCHEDULE.length; i++) {
+        const week = READING_SCHEDULE[i];
+        const subItem = subItemsWithIds[i];
         const isoWeek = getISOWeekString(week.startDate);
         const title = `Read de Lahunta pp. ${week.startPage}–${week.endPage}`;
 
@@ -3021,10 +3039,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
         if (existingWeeklyGoal.length === 0) {
+          // Store link to yearly goal sub-item in description field as JSON suffix
+          const linkData = JSON.stringify({
+            linkedYearlyGoalId: yearlyGoalId,
+            linkedSubItemId: subItem.id,
+          });
+
           await db.insert(schema.goals).values({
             userId,
             title,
-            description: week.content,
+            description: `${week.content}|||${linkData}`,
             targetValue: 1,
             currentValue: 0,
             unit: "complete",
@@ -3041,8 +3065,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         yearlyGoalCreated,
+        yearlyGoalId,
         weeklyGoalsCreated,
-        message: `Created yearly goal: ${yearlyGoalCreated}, weekly goals: ${weeklyGoalsCreated}/26`,
+        message: `Created yearly goal: ${yearlyGoalCreated}, weekly goals: ${weeklyGoalsCreated}/26 (linked to yearly goal #${yearlyGoalId})`,
       });
     } catch (error) {
       log.error("[seed] Error seeding reading schedule:", error);
