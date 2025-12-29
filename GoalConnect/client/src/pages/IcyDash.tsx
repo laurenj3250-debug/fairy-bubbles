@@ -788,7 +788,7 @@ export default function DashboardV4() {
       </nav>
 
       {/* Main dashboard content */}
-      <div className="relative z-10 px-4 md:px-8 pb-20 md:pb-24">
+      <div className="relative z-10 px-4 md:px-8 pb-24">
         <div className="max-w-[900px] mx-auto md:ml-[188px] md:mr-0 space-y-4 md:space-y-5">
 
           {/* HEADER: Simplified - Logo + Stats */}
@@ -1057,9 +1057,6 @@ export default function DashboardV4() {
 
       {/* Bottom Navigation - Mobile only */}
       {isMobile && <BottomNav />}
-
-      {/* Extra padding for bottom nav on mobile */}
-      {isMobile && <div className="h-16" />}
     </div>
   );
 }

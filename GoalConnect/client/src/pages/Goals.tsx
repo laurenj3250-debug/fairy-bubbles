@@ -213,7 +213,7 @@ export default function Goals() {
       <ForestBackground />
       <SidebarNav />
 
-      <div className="relative z-10 px-4 md:px-8 pb-20 md:pb-24 pt-6 md:pt-8">
+      <div className="relative z-10 px-4 md:px-8 pb-24 pt-6 md:pt-8">
         <div className="max-w-[900px] mx-auto md:ml-[188px] md:mr-0 space-y-4 md:space-y-5">
 
           {/* Header */}
