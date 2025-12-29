@@ -1,9 +1,25 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
-import { insertGoalSchema, insertGoalUpdateSchema } from "@shared/schema";
+import { insertGoalSchema, insertGoalUpdateSchema, yearlyGoals, YearlyGoalSubItem } from "@shared/schema";
+import { getDb } from "../db";
+import { eq, and } from "drizzle-orm";
+import { log } from "../lib/logger";
 
 const getUserId = (req: any) => requireUser(req).id;
+
+// Strip internal link metadata from description before sending to client
+const cleanDescription = (description: string): string => {
+  if (description && description.includes("|||")) {
+    return description.split("|||")[0];
+  }
+  return description;
+};
+
+const cleanGoal = <T extends { description: string }>(goal: T): T => ({
+  ...goal,
+  description: cleanDescription(goal.description),
+});
 
 export function registerGoalRoutes(app: Express) {
   // GET all goals for user
@@ -11,7 +27,7 @@ export function registerGoalRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const goals = await storage.getGoals(userId);
-      res.json(goals);
+      res.json(goals.map(cleanGoal));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goals" });
     }
@@ -38,11 +54,11 @@ export function registerGoalRoutes(app: Express) {
 
         // If no updates, use a very old date to consider it abandoned
         if (updates.length === 0) {
-          abandonedGoals.push({
+          abandonedGoals.push(cleanGoal({
             ...goal,
             lastUpdateDate: null,
             daysSinceUpdate: 999,
-          });
+          }));
           continue;
         }
 
@@ -56,11 +72,11 @@ export function registerGoalRoutes(app: Express) {
 
         // Include if last update was more than 90 days ago
         if (daysSinceUpdate >= 90) {
-          abandonedGoals.push({
+          abandonedGoals.push(cleanGoal({
             ...goal,
             lastUpdateDate: lastUpdate.date,
             daysSinceUpdate,
-          });
+          }));
         }
       }
 
@@ -83,7 +99,7 @@ export function registerGoalRoutes(app: Express) {
       if (goal.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
-      res.json(goal);
+      res.json(cleanGoal(goal));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goal" });
     }
@@ -114,8 +130,64 @@ export function registerGoalRoutes(app: Express) {
       if (existing.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
+
+      const wasCompleted = existing.currentValue >= existing.targetValue;
       const goal = await storage.updateGoal(id, req.body);
-      res.json(goal);
+      if (!goal) {
+        return res.status(500).json({ error: "Failed to update goal" });
+      }
+      const isNowCompleted = goal.currentValue >= goal.targetValue;
+
+      // Sync with linked yearly goal sub-item if completion status changed
+      // Link data is stored in description field after "|||" separator
+      if (goal.description && goal.description.includes("|||") && wasCompleted !== isNowCompleted) {
+        try {
+          const linkDataStr = goal.description.split("|||")[1];
+          const linkData = JSON.parse(linkDataStr);
+          if (linkData.linkedYearlyGoalId && linkData.linkedSubItemId) {
+            const db = getDb();
+            const [yearlyGoal] = await db
+              .select()
+              .from(yearlyGoals)
+              .where(
+                and(
+                  eq(yearlyGoals.id, linkData.linkedYearlyGoalId),
+                  eq(yearlyGoals.userId, userId)
+                )
+              );
+
+            if (yearlyGoal && yearlyGoal.goalType === "compound") {
+              const subItems = yearlyGoal.subItems as YearlyGoalSubItem[];
+              const itemIndex = subItems.findIndex((item) => item.id === linkData.linkedSubItemId);
+
+              if (itemIndex !== -1) {
+                subItems[itemIndex].completed = isNowCompleted;
+                subItems[itemIndex].completedAt = isNowCompleted ? new Date().toISOString() : undefined;
+
+                const completedCount = subItems.filter((item) => item.completed).length;
+                const isGoalCompleted = completedCount >= yearlyGoal.targetValue;
+
+                await db
+                  .update(yearlyGoals)
+                  .set({
+                    subItems,
+                    currentValue: completedCount,
+                    completed: isGoalCompleted,
+                    completedAt: isGoalCompleted ? new Date() : null,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(yearlyGoals.id, linkData.linkedYearlyGoalId));
+
+                log.info(`[goals] Synced weekly goal #${id} -> yearly goal #${linkData.linkedYearlyGoalId} sub-item ${linkData.linkedSubItemId} (completed: ${isNowCompleted})`);
+              }
+            }
+          }
+        } catch (parseError) {
+          // Notes field doesn't contain valid JSON link data, skip sync
+        }
+      }
+
+      res.json(cleanGoal(goal));
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });
     }
@@ -166,7 +238,7 @@ export function registerGoalRoutes(app: Express) {
         note: "Goal reactivated from abandoned gear",
       });
 
-      res.json({ success: true, goal: existing, update });
+      res.json({ success: true, goal: cleanGoal(existing), update });
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to reactivate goal" });
     }
