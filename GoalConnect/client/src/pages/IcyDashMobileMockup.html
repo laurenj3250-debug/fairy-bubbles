@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IcyDash Mobile Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-dark: #0f1419;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-muted: rgba(255, 255, 255, 0.6);
+      --peach: #f97316;
+      --peach-light: #fb923c;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(180deg, #0f1419 0%, #1a2332 50%, #0d1117 100%);
+      min-height: 100vh;
+    }
+
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .peach-text { color: var(--peach); }
+    .peach-bg { background: var(--peach); }
+
+    /* Phone frame */
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      border: 8px solid #333;
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+      background: var(--bg-dark);
+    }
+
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(15, 20, 25, 0.95);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .nav-item.active {
+      color: var(--peach);
+    }
+
+    .habit-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .habit-dot.completed {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .habit-dot.empty {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .day-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 12px;
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+
+    .day-card.today {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .task-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: white;
+      margin-bottom: 6px;
+    }
+
+    .progress-ring {
+      width: 60px;
+      height: 60px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8 bg-gray-900">
+
+  <div class="text-center">
+    <h1 class="text-white text-2xl font-bold mb-2">IcyDash Mobile Mockup</h1>
+    <p class="text-gray-400 mb-8">Single column, touch-optimized, 3-day schedule view</p>
+
+    <!-- Phone Frame -->
+    <div class="phone-frame mx-auto overflow-y-auto">
+      <div class="notch"></div>
+
+      <!-- Content Area -->
+      <div class="pt-12 pb-20 px-4 space-y-4 overflow-y-auto h-full">
+
+        <!-- Header -->
+        <header class="flex items-center justify-between py-2">
+          <h1 class="text-white font-bold text-lg tracking-wide">GOAL CONNECT</h1>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="peach-text font-semibold">1,250 <span class="text-gray-500">pts</span></span>
+            <span class="peach-text font-semibold">7 <span class="text-gray-500">streak</span></span>
+          </div>
+        </header>
+
+        <!-- Weekly Goals Card -->
+        <div class="glass-card p-4">
+          <span class="card-title">Weekly Goals</span>
+          <div class="mt-3 space-y-3">
+            <!-- Goal Item 1 -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <div class="text-white text-sm font-medium">Run 15 miles</div>
+                <div class="h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" style="width: 60%"></div>
+                </div>
+              </div>
+              <span class="text-white text-sm font-bold">9/15</span>
+              <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-lg hover:bg-white/20">+</button>
+            </div>
+            <!-- Goal Item 2 -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <div class="text-white text-sm font-medium">Read 2 books</div>
+                <div class="h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full" style="width: 50%"></div>
+                </div>
+              </div>
+              <span class="text-white text-sm font-bold">1/2</span>
+              <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-lg hover:bg-white/20">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- This Week Habits Card -->
+        <div class="glass-card p-4">
+          <span class="card-title">This Week</span>
+          <div class="mt-3 space-y-3">
+            <!-- Habit Row -->
+            <div class="flex items-center gap-2">
+              <span class="text-white text-xs w-20 truncate">Meditate</span>
+              <div class="flex gap-1 flex-1 justify-end">
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+              </div>
+            </div>
+            <!-- Habit Row 2 -->
+            <div class="flex items-center gap-2">
+              <span class="text-white text-xs w-20 truncate">Exercise</span>
+              <div class="flex gap-1 flex-1 justify-end">
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+              </div>
+            </div>
+            <!-- Habit Row 3 -->
+            <div class="flex items-center gap-2">
+              <span class="text-white text-xs w-20 truncate">Journal</span>
+              <div class="flex gap-1 flex-1 justify-end">
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot completed">&#10003;</div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+                <div class="habit-dot empty"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Progress Card -->
+        <div class="glass-card p-4">
+          <span class="card-title">Monthly Progress</span>
+          <div class="mt-3 flex justify-around">
+            <!-- Progress Ring 1 -->
+            <div class="text-center">
+              <svg class="progress-ring" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="30" cy="30" r="26" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round"
+                        stroke-dasharray="163.36" stroke-dashoffset="49" transform="rotate(-90 30 30)"/>
+                <text x="30" y="34" text-anchor="middle" fill="white" font-size="12" font-weight="bold">70%</text>
+              </svg>
+              <div class="text-xs text-gray-400 mt-1">Meditate</div>
+            </div>
+            <!-- Progress Ring 2 -->
+            <div class="text-center">
+              <svg class="progress-ring" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="30" cy="30" r="26" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"
+                        stroke-dasharray="163.36" stroke-dashoffset="65" transform="rotate(-90 30 30)"/>
+                <text x="30" y="34" text-anchor="middle" fill="white" font-size="12" font-weight="bold">60%</text>
+              </svg>
+              <div class="text-xs text-gray-400 mt-1">Exercise</div>
+            </div>
+            <!-- Progress Ring 3 -->
+            <div class="text-center">
+              <svg class="progress-ring" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                <circle cx="30" cy="30" r="26" fill="none" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round"
+                        stroke-dasharray="163.36" stroke-dashoffset="32.67" transform="rotate(-90 30 30)"/>
+                <text x="30" y="34" text-anchor="middle" fill="white" font-size="12" font-weight="bold">80%</text>
+              </svg>
+              <div class="text-xs text-gray-400 mt-1">Journal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Card - 3 Day View -->
+        <div class="glass-card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="card-title">Schedule</span>
+            <span class="text-xs text-gray-500">Dec 28 - 30</span>
+          </div>
+
+          <!-- 3-Day Navigation -->
+          <div class="flex items-center gap-2">
+            <!-- Left Arrow -->
+            <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+
+            <!-- 3 Day Cards -->
+            <div class="flex gap-2 flex-1 overflow-hidden">
+              <!-- Yesterday -->
+              <div class="day-card flex-1">
+                <div class="text-xs text-gray-500 mb-1">Sat</div>
+                <div class="text-sm font-semibold text-white mb-2">28</div>
+                <div class="space-y-1">
+                  <div class="task-item line-through opacity-50">Team standup</div>
+                  <div class="task-item line-through opacity-50">Review PRs</div>
+                </div>
+              </div>
+
+              <!-- Today -->
+              <div class="day-card today flex-1">
+                <div class="text-xs peach-text mb-1">Sun</div>
+                <div class="text-sm font-semibold peach-text mb-2">29 <span class="text-xs font-normal">Today</span></div>
+                <div class="space-y-1">
+                  <div class="task-item">Finish mockup</div>
+                  <div class="task-item">Call mom</div>
+                  <button class="w-full text-center text-xs text-gray-500 py-1 hover:text-white">+ Add</button>
+                </div>
+              </div>
+
+              <!-- Tomorrow -->
+              <div class="day-card flex-1">
+                <div class="text-xs text-gray-500 mb-1">Mon</div>
+                <div class="text-sm font-semibold text-white mb-2">30</div>
+                <div class="space-y-1">
+                  <div class="task-item">Sprint planning</div>
+                  <div class="task-item">Gym</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Arrow -->
+            <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Spacer for bottom nav -->
+        <div class="h-4"></div>
+
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <span>Habits</span>
+        </div>
+        <div class="nav-item">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>Goals</span>
+        </div>
+        <div class="nav-item">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+          <span>More</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Design Notes -->
+  <div class="ml-8 max-w-sm text-left">
+    <h2 class="text-white font-bold text-lg mb-4">Design Decisions</h2>
+    <ul class="space-y-3 text-gray-300 text-sm">
+      <li class="flex gap-2">
+        <span class="peach-text">1.</span>
+        <span><strong>Single column</strong> - All widgets stack vertically for easy thumb scrolling</span>
+      </li>
+      <li class="flex gap-2">
+        <span class="peach-text">2.</span>
+        <span><strong>4 focused widgets</strong> - Weekly Goals, Habits, Monthly Progress, Schedule</span>
+      </li>
+      <li class="flex gap-2">
+        <span class="peach-text">3.</span>
+        <span><strong>3-day schedule</strong> - Yesterday/Today/Tomorrow with arrow navigation</span>
+      </li>
+      <li class="flex gap-2">
+        <span class="peach-text">4.</span>
+        <span><strong>Bottom nav</strong> - Thumb-friendly navigation replaces sidebar</span>
+      </li>
+      <li class="flex gap-2">
+        <span class="peach-text">5. </span>
+        <span><strong>Touch targets</strong> - Large +/checkbox buttons (44px+ tap area)</span>
+      </li>
+      <li class="flex gap-2">
+        <span class="peach-text">6.</span>
+        <span><strong>Compact header</strong> - Logo + key stats, no wasted space</span>
+      </li>
+    </ul>
+
+    <h3 class="text-white font-bold mt-6 mb-2">Hidden on Mobile:</h3>
+    <ul class="text-gray-400 text-sm space-y-1">
+      <li>- Study Tracker</li>
+      <li>- Dream Scroll Widget</li>
+      <li>- Weekly Rhythm bars</li>
+      <li>- Destination/Fun Facts</li>
+      <li>- Fixed sidebar navigation</li>
+    </ul>
+  </div>
+
+</body>
+</html>
