@@ -23,6 +23,11 @@ export function MobileSchedule({
   maxOffset = 7,
   isLoading = false
 }: MobileScheduleProps) {
+  // Hooks must be called unconditionally at the top level
+  const [offset, setOffset] = useState(0);
+  const today = useMemo(() => new Date(), []);
+  const todayStr = format(today, 'yyyy-MM-dd');
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-2">
@@ -36,10 +41,6 @@ export function MobileSchedule({
       </div>
     );
   }
-
-  const [offset, setOffset] = useState(0);
-  const today = useMemo(() => new Date(), []);
-  const todayStr = format(today, 'yyyy-MM-dd');
 
   const threeDays = useMemo(() => {
     const centerDate = addDays(today, offset);
