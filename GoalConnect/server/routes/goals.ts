@@ -8,13 +8,26 @@ import { log } from "../lib/logger";
 
 const getUserId = (req: any) => requireUser(req).id;
 
+// Strip internal link metadata from description before sending to client
+const cleanDescription = (description: string): string => {
+  if (description && description.includes("|||")) {
+    return description.split("|||")[0];
+  }
+  return description;
+};
+
+const cleanGoal = <T extends { description: string }>(goal: T): T => ({
+  ...goal,
+  description: cleanDescription(goal.description),
+});
+
 export function registerGoalRoutes(app: Express) {
   // GET all goals for user
   app.get("/api/goals", async (req, res) => {
     try {
       const userId = getUserId(req);
       const goals = await storage.getGoals(userId);
-      res.json(goals);
+      res.json(goals.map(cleanGoal));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goals" });
     }
@@ -41,11 +54,11 @@ export function registerGoalRoutes(app: Express) {
 
         // If no updates, use a very old date to consider it abandoned
         if (updates.length === 0) {
-          abandonedGoals.push({
+          abandonedGoals.push(cleanGoal({
             ...goal,
             lastUpdateDate: null,
             daysSinceUpdate: 999,
-          });
+          }));
           continue;
         }
 
@@ -59,11 +72,11 @@ export function registerGoalRoutes(app: Express) {
 
         // Include if last update was more than 90 days ago
         if (daysSinceUpdate >= 90) {
-          abandonedGoals.push({
+          abandonedGoals.push(cleanGoal({
             ...goal,
             lastUpdateDate: lastUpdate.date,
             daysSinceUpdate,
-          });
+          }));
         }
       }
 
@@ -86,7 +99,7 @@ export function registerGoalRoutes(app: Express) {
       if (goal.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
-      res.json(goal);
+      res.json(cleanGoal(goal));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goal" });
     }
@@ -174,7 +187,7 @@ export function registerGoalRoutes(app: Express) {
         }
       }
 
-      res.json(goal);
+      res.json(cleanGoal(goal));
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });
     }
@@ -225,7 +238,7 @@ export function registerGoalRoutes(app: Express) {
         note: "Goal reactivated from abandoned gear",
       });
 
-      res.json({ success: true, goal: existing, update });
+      res.json({ success: true, goal: cleanGoal(existing), update });
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to reactivate goal" });
     }
