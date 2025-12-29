@@ -49,14 +49,14 @@ export function MobileSchedule({
         onClick={() => canGoBack && setOffset(o => o - 1)}
         disabled={!canGoBack}
         className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+          "w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
           canGoBack
             ? "bg-white/10 text-white hover:bg-white/20 active:scale-95"
             : "bg-white/5 text-white/30 cursor-not-allowed"
         )}
         aria-label="Previous days"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-6 h-6" />
       </button>
 
       <div className="flex gap-2 flex-1 overflow-hidden">
@@ -73,14 +73,14 @@ export function MobileSchedule({
         onClick={() => canGoForward && setOffset(o => o + 1)}
         disabled={!canGoForward}
         className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+          "w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
           canGoForward
             ? "bg-white/10 text-white hover:bg-white/20 active:scale-95"
             : "bg-white/5 text-white/30 cursor-not-allowed"
         )}
         aria-label="Next days"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="w-6 h-6" />
       </button>
     </div>
   );
@@ -128,7 +128,7 @@ function DayCard({
             key={todo.id}
             onClick={() => onToggle(todo.id)}
             className={cn(
-              "w-full text-left bg-white/5 rounded-lg px-2 py-2 text-xs transition-all",
+              "w-full text-left bg-white/5 rounded-lg px-2 py-2.5 min-h-[44px] text-xs transition-all",
               "hover:bg-white/10 active:scale-[0.98]",
               todo.completed && "line-through opacity-50"
             )}
