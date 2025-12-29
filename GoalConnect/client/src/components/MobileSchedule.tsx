@@ -1,5 +1,5 @@
 // client/src/components/MobileSchedule.tsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,8 +59,21 @@ export function MobileSchedule({
   const canGoBack = offset > -maxOffset;
   const canGoForward = offset < maxOffset;
 
+  const handleReset = useCallback(() => {
+    setOffset(0);
+  }, []);
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="relative">
+      {offset !== 0 && (
+        <button
+          onClick={handleReset}
+          className="absolute -top-6 right-0 text-xs text-peach-400 hover:underline"
+        >
+          ← Back to today
+        </button>
+      )}
+      <div className="flex items-center gap-2">
       <button
         onClick={() => canGoBack && setOffset(o => o - 1)}
         disabled={!canGoBack}
@@ -98,6 +111,7 @@ export function MobileSchedule({
       >
         <ChevronRight className="w-6 h-6" />
       </button>
+      </div>
     </div>
   );
 }
