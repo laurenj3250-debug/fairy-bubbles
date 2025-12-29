@@ -303,6 +303,7 @@ export default function Habits() {
                   onEdit={() => handleEdit(habit)}
                   onDelete={() => handleDelete(habit)}
                   isToggling={toggleMutation.isPending}
+                  onDayClick={(date) => setBackfillDate(date)}
                 />
               ))}
             </div>

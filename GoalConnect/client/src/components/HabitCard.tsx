@@ -16,6 +16,7 @@ interface HabitCardProps {
   onEdit: () => void;
   onDelete: () => void;
   isToggling?: boolean;
+  onDayClick?: (date: string) => void;
 }
 
 /**
@@ -33,6 +34,7 @@ export function HabitCard({
   onEdit,
   onDelete,
   isToggling,
+  onDayClick,
 }: HabitCardProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -137,7 +139,7 @@ export function HabitCard({
 
       {/* Heatmap */}
       <div className="mb-4">
-        <HabitHeatmapCompact history={history} />
+        <HabitHeatmapCompact history={history} onDayClick={onDayClick} />
       </div>
 
       {/* Stats Row */}
