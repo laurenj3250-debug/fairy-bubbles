@@ -4,13 +4,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface HabitHeatmapCompactProps {
   history: Array<{ date: string; completed: boolean }>;
   className?: string;
+  onDayClick?: (date: string) => void;
 }
 
 /**
  * Compact 4-week calendar heatmap for habit cards
  * Shows S M T W T F S as columns, weeks as rows (like the uHabit style)
  */
-export function HabitHeatmapCompact({ history, className }: HabitHeatmapCompactProps) {
+export function HabitHeatmapCompact({ history, className, onDayClick }: HabitHeatmapCompactProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().split('T')[0];
@@ -75,14 +76,23 @@ export function HabitHeatmapCompact({ history, className }: HabitHeatmapCompactP
             {week.map((day) => (
               <Tooltip key={day.date}>
                 <TooltipTrigger asChild>
-                  <div
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (day.completed !== null && onDayClick) {
+                        onDayClick(day.date);
+                      }
+                    }}
+                    disabled={day.completed === null}
                     className={cn(
-                      "w-5 h-5 rounded-sm transition-all cursor-pointer",
+                      "w-5 h-5 rounded-sm transition-all",
                       day.completed === null
-                        ? "bg-foreground/5" // Future date
-                        : day.completed
-                          ? "bg-primary hover:bg-primary/80" // Completed - use theme color
-                          : "bg-foreground/10 hover:bg-foreground/20", // Missed
+                        ? "bg-foreground/5 cursor-not-allowed" // Future date
+                        : "cursor-pointer",
+                      day.completed === true && "bg-primary hover:bg-primary/80", // Completed
+                      day.completed === false && "bg-foreground/10 hover:bg-foreground/20", // Missed
                       day.isToday && "ring-2 ring-accent ring-offset-1 ring-offset-background"
                     )}
                   />
