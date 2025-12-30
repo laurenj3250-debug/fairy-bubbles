@@ -2,16 +2,42 @@ import { useState } from "react";
 import { useYearlyGoals } from "@/hooks/useYearlyGoals";
 import { ForestBackground } from "@/components/ForestBackground";
 import { Link } from "wouter";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, BookOpen } from "lucide-react";
 import {
   YearlyGoalsHeader,
   YearlyCategory,
 } from "@/components/yearly-goals";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function YearlyGoals() {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Seed reading schedule mutation
+  const seedReadingSchedule = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/seed/reading-schedule", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to seed reading schedule");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      toast({
+        title: "Reading schedule created!",
+        description: data.message,
+      });
+    },
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to seed",
+        variant: "destructive",
+      });
+    },
+  });
 
   const {
     goals,
@@ -176,10 +202,20 @@ export default function YearlyGoals() {
               <h3 className="text-xl font-heading font-medium text-[var(--text-primary)] mb-2">
                 No goals for {year}
               </h3>
-              <p className="text-[var(--text-muted)] font-body max-w-md mx-auto">
+              <p className="text-[var(--text-muted)] font-body max-w-md mx-auto mb-4">
                 Set some ambitious goals to track your progress throughout the year.
                 Goals can be linked to habits and journey activities for automatic tracking.
               </p>
+              {year === "2025" && (
+                <button
+                  onClick={() => seedReadingSchedule.mutate()}
+                  disabled={seedReadingSchedule.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-peach-400/20 hover:bg-peach-400/30 text-peach-400 rounded-lg transition-colors font-body text-sm"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  {seedReadingSchedule.isPending ? "Creating..." : "Add de Lahunta Reading Schedule"}
+                </button>
+              )}
             </div>
           )}
 
@@ -201,6 +237,20 @@ export default function YearlyGoals() {
                   isClaimingReward={isClaimingReward}
                 />
               ))}
+
+              {/* Add reading schedule button if not already present */}
+              {year === "2025" && !goals.some(g => g.title === "Complete de Lahunta") && (
+                <div className="glass-card p-4 text-center">
+                  <button
+                    onClick={() => seedReadingSchedule.mutate()}
+                    disabled={seedReadingSchedule.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-peach-400/20 hover:bg-peach-400/30 text-peach-400 rounded-lg transition-colors font-body text-sm"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {seedReadingSchedule.isPending ? "Creating..." : "Add de Lahunta Reading Schedule"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
