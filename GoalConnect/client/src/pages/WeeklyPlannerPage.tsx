@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfWeek, endOfWeek, addDays, isToday, isBefore, getISOWeek, getYear } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays, isToday, isBefore, getISOWeek, getISOWeekYear } from "date-fns";
 import type { Goal, Habit, HabitLog, Todo } from "@shared/schema";
 import { TodoDialogEnhanced } from "@/components/TodoDialogEnhanced";
 import { GoalDialog } from "@/components/GoalDialog";
@@ -32,7 +32,7 @@ export default function WeeklyPlannerPage() {
   // Current dates
   const now = new Date();
   const currentMonth = format(now, "yyyy-MM");
-  const currentWeek = `${getYear(now)}-W${String(getISOWeek(now)).padStart(2, '0')}`;
+  const currentWeek = `${getISOWeekYear(now)}-W${String(getISOWeek(now)).padStart(2, '0')}`;
   const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
