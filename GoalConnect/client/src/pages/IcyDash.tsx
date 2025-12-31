@@ -946,13 +946,14 @@ export default function DashboardV4() {
                   </span>
                 </Link>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {yearlyCategories.map((category) => (
                   <YearlyCategory
                     key={category}
                     category={category}
                     categoryLabel={categoryLabels[category] || category}
                     goals={goalsByCategory[category]}
+                    defaultCollapsed={true}
                     onToggle={async (goalId) => {
                       try {
                         await toggleGoal(goalId);
