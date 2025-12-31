@@ -1321,3 +1321,106 @@ export const insertYearlyGoalProgressLogSchema = createInsertSchema(yearlyGoalPr
   id: true,
   createdAt: true,
 });
+
+// ========== RESIDENCY MOOD TRACKER ==========
+// Decision-support tool for veterinary neurology residency
+// Tracks mood, quit/stay feelings, activities, and confounders
+
+// Residency tracker entries - main check-in data
+export const residencyEntries = pgTable("residency_entries", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
+  // Core mood/decision capture
+  mood: integer("mood").notNull(), // 1-5 scale
+  decision: varchar("decision", { length: 10 }).notNull().$type<"quit" | "stay">(),
+
+  // Optional activity tracking
+  activity: text("activity"), // What they just did (nullable)
+  activityRating: integer("activity_rating"), // 1-5 scale, separate from mood
+
+  // Confounders at time of entry (array of confounder names)
+  confounders: jsonb("confounders").$type<string[]>().default([]).notNull(),
+
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User-defined activities (persisted list)
+export const residencyActivities = pgTable("residency_activities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One activity name per user
+    userActivityIdx: uniqueIndex("residency_activities_user_name_key").on(table.userId, table.name),
+  };
+});
+
+// User-defined confounders (persisted list)
+export const residencyConfounders = pgTable("residency_confounders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    // One confounder name per user
+    userConfounderIdx: uniqueIndex("residency_confounders_user_name_key").on(table.userId, table.name),
+  };
+});
+
+// Sticky confounder state (remembers which confounders are active until changed)
+export const residencyConfounderState = pgTable("residency_confounder_state", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  activeConfounders: jsonb("active_confounders").$type<string[]>().default([]).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Default activities for new users
+export const DEFAULT_RESIDENCY_ACTIVITIES = [
+  "MRI",
+  "Anaesthesia",
+  "Consult",
+  "Surgery",
+] as const;
+
+// Default confounders for new users
+export const DEFAULT_RESIDENCY_CONFOUNDERS = [
+  "Poor sleep",
+  "Long day",
+  "No outdoors",
+  "Antihistamine",
+  "Visited Adam",
+] as const;
+
+// TypeScript types
+export type ResidencyEntry = typeof residencyEntries.$inferSelect;
+export type ResidencyActivity = typeof residencyActivities.$inferSelect;
+export type ResidencyConfounder = typeof residencyConfounders.$inferSelect;
+export type ResidencyConfounderState = typeof residencyConfounderState.$inferSelect;
+
+export type InsertResidencyEntry = typeof residencyEntries.$inferInsert;
+export type InsertResidencyActivity = typeof residencyActivities.$inferInsert;
+export type InsertResidencyConfounder = typeof residencyConfounders.$inferInsert;
+
+// Insert schemas
+export const insertResidencyEntrySchema = createInsertSchema(residencyEntries).omit({
+  id: true,
+  timestamp: true,
+  createdAt: true,
+});
+
+export const insertResidencyActivitySchema = createInsertSchema(residencyActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertResidencyConfounderSchema = createInsertSchema(residencyConfounders).omit({
+  id: true,
+  createdAt: true,
+});

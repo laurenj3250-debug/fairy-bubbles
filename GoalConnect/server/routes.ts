@@ -45,6 +45,7 @@ import { registerJourneyGoalRoutes } from "./routes/journey-goals";
 import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import { registerLiftingRoutes } from "./routes/lifting";
 import { registerMoodRoutes } from "./routes/mood";
+import { registerResidencyRoutes } from "./routes/residency";
 import { registerStudyPlannerRoutes } from "./routes/study-planner";
 import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import {
@@ -2907,6 +2908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerClimbingLogRoutes(app);
   registerLiftingRoutes(app);
   registerMoodRoutes(app);
+  registerResidencyRoutes(app);
 
   // Register task management routes
   registerProjectRoutes(app);

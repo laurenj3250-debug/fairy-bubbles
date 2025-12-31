@@ -34,8 +34,16 @@ import type {
   // Journey Goals
   JourneyGoal,
   InsertJourneyGoal,
+  // Residency Tracker
+  ResidencyEntry,
+  InsertResidencyEntry,
+  ResidencyActivity,
+  InsertResidencyActivity,
+  ResidencyConfounder,
+  InsertResidencyConfounder,
+  ResidencyConfounderState,
 } from "@shared/schema";
-import { DEFAULT_JOURNEY_GOALS } from "@shared/schema";
+import { DEFAULT_JOURNEY_GOALS, DEFAULT_RESIDENCY_ACTIVITIES, DEFAULT_RESIDENCY_CONFOUNDERS } from "@shared/schema";
 import type { IStorage } from "./storage";
 
 export class DbStorage implements IStorage {
@@ -1068,4 +1076,154 @@ export class DbStorage implements IStorage {
   }
 
   // NOTE: Linking methods removed - Journey is source of truth, Goals page displays read-only
+
+  // ============ RESIDENCY TRACKER ============
+
+  async getResidencyEntries(userId: number): Promise<ResidencyEntry[]> {
+    return await this.db
+      .select()
+      .from(schema.residencyEntries)
+      .where(eq(schema.residencyEntries.userId, userId))
+      .orderBy(desc(schema.residencyEntries.timestamp));
+  }
+
+  async getResidencyEntriesByDateRange(userId: number, startDate: string, endDate: string): Promise<ResidencyEntry[]> {
+    const startTimestamp = new Date(startDate);
+    const endTimestamp = new Date(endDate + 'T23:59:59.999Z');
+
+    return await this.db
+      .select()
+      .from(schema.residencyEntries)
+      .where(
+        and(
+          eq(schema.residencyEntries.userId, userId),
+          gte(schema.residencyEntries.timestamp, startTimestamp),
+          lte(schema.residencyEntries.timestamp, endTimestamp)
+        )
+      )
+      .orderBy(desc(schema.residencyEntries.timestamp));
+  }
+
+  async createResidencyEntry(entry: InsertResidencyEntry): Promise<ResidencyEntry> {
+    const [newEntry] = await this.db
+      .insert(schema.residencyEntries)
+      .values(entry as any)
+      .returning();
+    return newEntry;
+  }
+
+  async deleteResidencyEntry(id: number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.residencyEntries)
+      .where(eq(schema.residencyEntries.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getResidencyActivities(userId: number): Promise<ResidencyActivity[]> {
+    return await this.db
+      .select()
+      .from(schema.residencyActivities)
+      .where(eq(schema.residencyActivities.userId, userId))
+      .orderBy(schema.residencyActivities.position);
+  }
+
+  async createResidencyActivity(activity: InsertResidencyActivity): Promise<ResidencyActivity> {
+    const [newActivity] = await this.db
+      .insert(schema.residencyActivities)
+      .values(activity as any)
+      .returning();
+    return newActivity;
+  }
+
+  async deleteResidencyActivity(id: number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.residencyActivities)
+      .where(eq(schema.residencyActivities.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getResidencyConfounders(userId: number): Promise<ResidencyConfounder[]> {
+    return await this.db
+      .select()
+      .from(schema.residencyConfounders)
+      .where(eq(schema.residencyConfounders.userId, userId))
+      .orderBy(schema.residencyConfounders.position);
+  }
+
+  async createResidencyConfounder(confounder: InsertResidencyConfounder): Promise<ResidencyConfounder> {
+    const [newConfounder] = await this.db
+      .insert(schema.residencyConfounders)
+      .values(confounder as any)
+      .returning();
+    return newConfounder;
+  }
+
+  async deleteResidencyConfounder(id: number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.residencyConfounders)
+      .where(eq(schema.residencyConfounders.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getResidencyConfounderState(userId: number): Promise<ResidencyConfounderState | undefined> {
+    const [state] = await this.db
+      .select()
+      .from(schema.residencyConfounderState)
+      .where(eq(schema.residencyConfounderState.userId, userId));
+    return state;
+  }
+
+  async updateResidencyConfounderState(userId: number, activeConfounders: string[]): Promise<ResidencyConfounderState> {
+    // Upsert - insert if not exists, update if exists
+    const existing = await this.getResidencyConfounderState(userId);
+
+    if (existing) {
+      const [updated] = await this.db
+        .update(schema.residencyConfounderState)
+        .set({ activeConfounders, updatedAt: new Date() })
+        .where(eq(schema.residencyConfounderState.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await this.db
+        .insert(schema.residencyConfounderState)
+        .values({ userId, activeConfounders } as any)
+        .returning();
+      return created;
+    }
+  }
+
+  async initializeResidencyDefaults(userId: number): Promise<void> {
+    // Check if activities already exist
+    const existingActivities = await this.getResidencyActivities(userId);
+    if (existingActivities.length === 0) {
+      // Add default activities
+      for (let i = 0; i < DEFAULT_RESIDENCY_ACTIVITIES.length; i++) {
+        await this.createResidencyActivity({
+          userId,
+          name: DEFAULT_RESIDENCY_ACTIVITIES[i],
+          position: i,
+        });
+      }
+    }
+
+    // Check if confounders already exist
+    const existingConfounders = await this.getResidencyConfounders(userId);
+    if (existingConfounders.length === 0) {
+      // Add default confounders
+      for (let i = 0; i < DEFAULT_RESIDENCY_CONFOUNDERS.length; i++) {
+        await this.createResidencyConfounder({
+          userId,
+          name: DEFAULT_RESIDENCY_CONFOUNDERS[i],
+          position: i,
+        });
+      }
+    }
+
+    // Initialize confounder state if not exists
+    const state = await this.getResidencyConfounderState(userId);
+    if (!state) {
+      await this.updateResidencyConfounderState(userId, []);
+    }
+  }
 }
