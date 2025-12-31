@@ -1,4 +1,4 @@
-import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays } from "lucide-react";
+import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays, HeartPulse } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -6,7 +6,7 @@ const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/planner", label: "Planner", icon: CalendarDays },
   { path: "/habits", label: "Habits", icon: Mountain },
-  { path: "/goals", label: "Goals", icon: Target },
+  { path: "/residency", label: "Check-in", icon: HeartPulse },
   { path: "/todos", label: "Tasks", icon: CheckSquare },
 ];
 
