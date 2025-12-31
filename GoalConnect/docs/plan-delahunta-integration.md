@@ -1,30 +1,28 @@
 # de Lahunta Reading Schedule Integration Plan
 
 ## Overview
-Fully integrate the de Lahunta textbook reading schedule into the app with week-by-week tracking, dashboard visibility, and auto-sync with yearly goals.
+Integrate the de Lahunta textbook reading schedule into yearly goals as a compound goal with 26 week-by-week sub-items.
 
 ---
 
 ## Current State
 
 ### What Exists:
-1. **Seed endpoint** (`POST /api/seed/reading-schedule`) - Creates 26-week schedule for 2025
+1. **Seed endpoint** (`POST /api/seed/reading-schedule`) - Creates 26-week schedule (currently 2025)
 2. **26-week breakdown** - pp. 1-621, ~23 pages/week, Chapters 1-22
 3. **Compound yearly goal support** - `goalType: "compound"` with `subItems[]`
-4. **Weekly goals table** - Can link to yearly goal sub-items via description field
 
 ### What's Missing:
-1. 2026 version of the reading schedule (current is 2025)
-2. Dashboard widget showing "This week's reading"
-3. Auto-population in weekly planner
-4. Visual progress on IcyDash
+1. 2026 version of the reading schedule
+2. de Lahunta as compound goal in seed-2026-goals.ts (currently just binary)
 
 ---
 
 ## Phase 1: Update Seed Script for 2026
 
-### Task 1.1: Create new reading schedule dates
-Update `scripts/seed-2026-goals.ts` to include de Lahunta as compound goal:
+### Task 1.1: Update seed-2026-goals.ts
+
+Change de Lahunta from binary to compound goal with 26 sub-items:
 
 ```typescript
 // Change from:
@@ -38,218 +36,54 @@ Update `scripts/seed-2026-goals.ts` to include de Lahunta as compound goal:
   targetValue: 26,
   xpReward: 500,
   subItems: [
-    { id: uuid(), title: "Week 1: pp. 1-23 (Ch 1 + Ch 2)", completed: false },
-    { id: uuid(), title: "Week 2: pp. 24-46 (Ch 2 + Ch 3)", completed: false },
-    // ... all 26 weeks
+    { id: randomUUID(), title: "Week 1: pp. 1-23 (Ch 1 + Ch 2)", completed: false },
+    { id: randomUUID(), title: "Week 2: pp. 24-46 (Ch 2 + Ch 3)", completed: false },
+    { id: randomUUID(), title: "Week 3: pp. 47-69 (Ch 3)", completed: false },
+    { id: randomUUID(), title: "Week 4: pp. 70-92 (Ch 3 + Ch 4)", completed: false },
+    { id: randomUUID(), title: "Week 5: pp. 93-115 (Ch 4 + Ch 5)", completed: false },
+    { id: randomUUID(), title: "Week 6: pp. 116-138 (Ch 5)", completed: false },
+    { id: randomUUID(), title: "Week 7: pp. 139-161 (Ch 5)", completed: false },
+    { id: randomUUID(), title: "Week 8: pp. 162-184 (Ch 5 + Ch 6)", completed: false },
+    { id: randomUUID(), title: "Week 9: pp. 185-207 (Ch 6 + Ch 7)", completed: false },
+    { id: randomUUID(), title: "Week 10: pp. 208-229 (Ch 7)", completed: false },
+    { id: randomUUID(), title: "Week 11: pp. 246-268 (Ch 9 + Ch 10)", completed: false },
+    { id: randomUUID(), title: "Week 12: pp. 269-291 (Ch 10)", completed: false },
+    { id: randomUUID(), title: "Week 13: pp. 292-314 (Ch 10 + Ch 11)", completed: false },
+    { id: randomUUID(), title: "Week 14: pp. 315-337 (Ch 11)", completed: false },
+    { id: randomUUID(), title: "Week 15: pp. 338-360 (Ch 11 + Ch 12)", completed: false },
+    { id: randomUUID(), title: "Week 16: pp. 361-383 (Ch 12 + Ch 13)", completed: false },
+    { id: randomUUID(), title: "Week 17: pp. 384-406 (Ch 13)", completed: false },
+    { id: randomUUID(), title: "Week 18: pp. 407-429 (Ch 13 + Ch 14)", completed: false },
+    { id: randomUUID(), title: "Week 19: pp. 430-452 (Ch 14)", completed: false },
+    { id: randomUUID(), title: "Week 20: pp. 453-475 (Ch 14-17)", completed: false },
+    { id: randomUUID(), title: "Week 21: pp. 476-498 (Ch 17 + Ch 18)", completed: false },
+    { id: randomUUID(), title: "Week 22: pp. 499-521 (Ch 18-20)", completed: false },
+    { id: randomUUID(), title: "Week 23: pp. 522-544 (Ch 20 + Ch 21)", completed: false },
+    { id: randomUUID(), title: "Week 24: pp. 545-567 (Ch 21 + Ch 22)", completed: false },
+    { id: randomUUID(), title: "Week 25: pp. 568-590 (Ch 22)", completed: false },
+    { id: randomUUID(), title: "Week 26: pp. 591-621 (Ch 22)", completed: false },
   ]
 }
 ```
 
-### Task 1.2: Calculate 2026 dates
-- Start: Week of Jan 5, 2026 (first full week)
-- End: Week of June 28, 2026 (26 weeks later)
-- Each week: Monday start date
-
-**Files to modify:**
+**File to modify:**
 - `scripts/seed-2026-goals.ts`
 
 ---
 
-## Phase 2: Dashboard Widget - "This Week's Reading"
+## Implementation
 
-### Task 2.1: Create ReadingWidget component
-
-Location: `client/src/components/ReadingWidget.tsx`
-
-```tsx
-// Compact widget showing:
-// ┌─────────────────────────────────────┐
-// │ 📖 de Lahunta                       │
-// │ This week: pp. 47-69 (Ch 3)         │
-// │ ████████░░░░░░░░░░░░░  5/26         │
-// │                          [✓] Done   │
-// └─────────────────────────────────────┘
-```
-
-### Task 2.2: Add hook to get current week's reading
-
-Location: `client/src/hooks/useCurrentReading.ts`
-
-```typescript
-export function useCurrentReading() {
-  const { goals } = useYearlyGoals("2026");
-
-  // Find de Lahunta goal
-  const deLahunta = goals.find(g =>
-    g.title.includes("de Lahunta") && g.goalType === "compound"
-  );
-
-  // Calculate current week based on date
-  const currentWeekIndex = calculateWeekIndex();
-
-  // Get current sub-item
-  const currentReading = deLahunta?.subItems[currentWeekIndex];
-  const completedWeeks = deLahunta?.subItems.filter(s => s.completed).length;
-
-  return {
-    goal: deLahunta,
-    currentWeek: currentWeekIndex + 1,
-    currentReading,
-    completedWeeks,
-    totalWeeks: 26,
-    isCurrentWeekDone: currentReading?.completed,
-  };
-}
-```
-
-### Task 2.3: Add widget to IcyDash
-
-Place in ROW 1 or ROW 2 (small, doesn't take much space):
-
-```tsx
-{/* Near Study Tracker */}
-<ReadingWidget
-  onToggle={() => toggleSubItem({
-    goalId: deLahunta.id,
-    subItemId: currentReading.id
-  })}
-/>
-```
-
-**Files to create:**
-- `client/src/components/ReadingWidget.tsx`
-- `client/src/hooks/useCurrentReading.ts`
-
-**Files to modify:**
-- `client/src/pages/IcyDash.tsx`
-
----
-
-## Phase 3: Weekly Planner Integration
-
-### Task 3.1: Auto-create weekly goal for current de Lahunta reading
-
-When user views weekly planner, check if de Lahunta goal exists for that week:
-
-```typescript
-// In useWeeklyPlanner or similar
-const ensureReadingGoalExists = async (weekStart: string) => {
-  const existingGoal = weeklyGoals.find(g =>
-    g.title.includes("de Lahunta") && g.week === isoWeek
-  );
-
-  if (!existingGoal && currentReadingWeek) {
-    await createWeeklyGoal({
-      title: `Read de Lahunta pp. ${currentReading.startPage}-${currentReading.endPage}`,
-      week: isoWeek,
-      linkedYearlyGoalId: deLahuntaGoal.id,
-      linkedSubItemId: currentReading.id,
-    });
-  }
-};
-```
-
-### Task 3.2: Sync completion between weekly goal and yearly sub-item
-
-When weekly goal is completed → mark yearly goal sub-item as complete:
-
-```typescript
-// In goal completion handler
-if (goal.linkedYearlyGoalId && goal.linkedSubItemId) {
-  await toggleYearlySubItem({
-    goalId: goal.linkedYearlyGoalId,
-    subItemId: goal.linkedSubItemId,
-  });
-}
-```
-
-**Files to modify:**
-- `client/src/hooks/useWeeklyPlanner.ts` (or create)
-- `server/routes/goals.ts` (add sync logic)
-
----
-
-## Phase 4: Visual Polish
-
-### Task 4.1: Progress visualization in yearly goals
-
-When viewing de Lahunta in Goals page (Yearly tab):
-- Expand to show all 26 weeks as sub-items
-- Highlight current week with different color
-- Show checkmarks for completed weeks
-- Mini calendar view option?
-
-### Task 4.2: Reading streak tracking
-
-Track consecutive weeks completed:
-- "🔥 5 week reading streak!"
-- Bonus XP for streaks (5 weeks = +50 XP, 10 weeks = +100 XP)
-
----
-
-## Data Model Reference
-
-### Yearly Goal (compound type):
-```typescript
-{
-  id: 123,
-  title: "Complete de Lahunta",
-  goalType: "compound",
-  targetValue: 26,
-  subItems: [
-    { id: "uuid-1", title: "Week 1: pp. 1-23 (Ch 1 + Ch 2)", completed: true },
-    { id: "uuid-2", title: "Week 2: pp. 24-46 (Ch 2 + Ch 3)", completed: true },
-    { id: "uuid-3", title: "Week 3: pp. 47-69 (Ch 3)", completed: false },  // current
-    // ...
-  ],
-  computedValue: 2,  // auto-calculated from completed sub-items
-  progressPercent: 8,
-}
-```
-
-### Reading Schedule Data:
-```typescript
-const READING_SCHEDULE_2026 = [
-  { week: 1, startDate: "2026-01-05", endDate: "2026-01-11", startPage: 1, endPage: 23, content: "Ch 1 + Ch 2" },
-  { week: 2, startDate: "2026-01-12", endDate: "2026-01-18", startPage: 24, endPage: 46, content: "Ch 2 + Ch 3" },
-  { week: 3, startDate: "2026-01-19", endDate: "2026-01-25", startPage: 47, endPage: 69, content: "Ch 3" },
-  // ... through week 26
-  { week: 26, startDate: "2026-06-22", endDate: "2026-06-28", startPage: 591, endPage: 621, content: "Ch 22" },
-];
-```
-
----
-
-## Implementation Order
-
-1. **Phase 1** - Update seed script (30 min)
-   - Quick win, gets data in place
-
-2. **Phase 2** - Dashboard widget (1-2 hours)
-   - Most visible improvement
-   - User sees "this week's reading" immediately
-
-3. **Phase 3** - Weekly planner sync (1-2 hours)
-   - More complex, involves bi-directional sync
-
-4. **Phase 4** - Polish (optional)
-   - Streaks, visual improvements
-
----
-
-## Questions to Resolve
-
-1. Should 2025 schedule be migrated to 2026, or keep both?
-2. What if user is behind schedule - show "catch up" mode?
-3. Should reading widget replace something on dashboard or be added?
-4. XP rewards per week completed? (currently sub-items give 25 XP each)
+Single task:
+1. Update seed script with compound de Lahunta goal
+2. Run seed script to populate database
+3. de Lahunta shows in yearly goals on IcyDash (collapsed by default)
+4. User expands "Residency" category → sees 26 checkable sub-items
 
 ---
 
 ## Success Criteria
 
 - [ ] "Complete de Lahunta" shows as compound goal with 26 sub-items
-- [ ] IcyDash shows "This week: pp. X-Y" widget
-- [ ] Clicking checkbox marks sub-item complete
-- [ ] Progress bar shows 5/26, 10/26, etc.
-- [ ] Weekly planner shows de Lahunta reading for current week
+- [ ] Each sub-item shows week number, page range, and chapters
+- [ ] Checking a sub-item updates progress (e.g., 5/26)
+- [ ] Goal auto-completes when all 26 sub-items are done
