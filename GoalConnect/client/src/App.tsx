@@ -31,6 +31,7 @@ import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
 import StudyPlanner from "@/pages/StudyPlanner";
 import YearlyGoals from "@/pages/YearlyGoals";
+import ResidencyTracker from "@/pages/ResidencyTracker";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -271,6 +272,11 @@ function AppRoutes() {
           <MainLayout>
             <YearlyGoals />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/residency">
+        <RequireAuth>
+          <ResidencyTracker />
         </RequireAuth>
       </Route>
       <Route component={NotFound} />

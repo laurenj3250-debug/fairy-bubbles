@@ -29,6 +29,14 @@ import {
   type DreamScrollTag,
   type DreamScrollItem,
   type InsertDreamScrollItem,
+  // Residency Tracker types
+  type ResidencyEntry,
+  type InsertResidencyEntry,
+  type ResidencyActivity,
+  type InsertResidencyActivity,
+  type ResidencyConfounder,
+  type InsertResidencyConfounder,
+  type ResidencyConfounderState,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 import { log } from "./lib/logger";
@@ -136,6 +144,25 @@ export interface IStorage {
   getMountainsByRequiredLevel(level: number): Promise<any[]>;
   getPlayerClimbingStats(userId: number): Promise<any>;
   updatePlayerClimbingStats(userId: number, data: Partial<any>): Promise<any>;
+
+  // Residency Tracker
+  getResidencyEntries(userId: number): Promise<ResidencyEntry[]>;
+  getResidencyEntriesByDateRange(userId: number, startDate: string, endDate: string): Promise<ResidencyEntry[]>;
+  createResidencyEntry(entry: InsertResidencyEntry): Promise<ResidencyEntry>;
+  deleteResidencyEntry(id: number): Promise<boolean>;
+
+  getResidencyActivities(userId: number): Promise<ResidencyActivity[]>;
+  createResidencyActivity(activity: InsertResidencyActivity): Promise<ResidencyActivity>;
+  deleteResidencyActivity(id: number): Promise<boolean>;
+
+  getResidencyConfounders(userId: number): Promise<ResidencyConfounder[]>;
+  createResidencyConfounder(confounder: InsertResidencyConfounder): Promise<ResidencyConfounder>;
+  deleteResidencyConfounder(id: number): Promise<boolean>;
+
+  getResidencyConfounderState(userId: number): Promise<ResidencyConfounderState | undefined>;
+  updateResidencyConfounderState(userId: number, activeConfounders: string[]): Promise<ResidencyConfounderState>;
+
+  initializeResidencyDefaults(userId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -845,6 +872,59 @@ export class MemStorage implements IStorage {
 
   async getUserMoodTags(userId: number): Promise<string[]> {
     return [];
+  }
+
+  // Residency Tracker stubs (MemStorage is not used in production)
+  async getResidencyEntries(userId: number): Promise<ResidencyEntry[]> {
+    return [];
+  }
+
+  async getResidencyEntriesByDateRange(userId: number, startDate: string, endDate: string): Promise<ResidencyEntry[]> {
+    return [];
+  }
+
+  async createResidencyEntry(entry: InsertResidencyEntry): Promise<ResidencyEntry> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async deleteResidencyEntry(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getResidencyActivities(userId: number): Promise<ResidencyActivity[]> {
+    return [];
+  }
+
+  async createResidencyActivity(activity: InsertResidencyActivity): Promise<ResidencyActivity> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async deleteResidencyActivity(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getResidencyConfounders(userId: number): Promise<ResidencyConfounder[]> {
+    return [];
+  }
+
+  async createResidencyConfounder(confounder: InsertResidencyConfounder): Promise<ResidencyConfounder> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async deleteResidencyConfounder(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getResidencyConfounderState(userId: number): Promise<ResidencyConfounderState | undefined> {
+    return undefined;
+  }
+
+  async updateResidencyConfounderState(userId: number, activeConfounders: string[]): Promise<ResidencyConfounderState> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async initializeResidencyDefaults(userId: number): Promise<void> {
+    // noop
   }
 }
 
