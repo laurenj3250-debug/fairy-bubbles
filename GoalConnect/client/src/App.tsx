@@ -268,7 +268,9 @@ function AppRoutes() {
       </Route>
       <Route path="/yearly-goals">
         <RequireAuth>
-          <YearlyGoals />
+          <MainLayout>
+            <YearlyGoals />
+          </MainLayout>
         </RequireAuth>
       </Route>
       <Route component={NotFound} />

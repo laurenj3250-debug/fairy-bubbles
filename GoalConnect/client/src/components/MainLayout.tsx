@@ -1,4 +1,4 @@
-import { Home, Target, ListTodo, Settings, Mountain, BookOpen, TrendingUp, GraduationCap } from "lucide-react";
+import { Home, Target, ListTodo, Settings, Mountain, BookOpen, TrendingUp, GraduationCap, CalendarCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
@@ -8,6 +8,7 @@ const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/habits", icon: Mountain, label: "Habits" },
   { path: "/goals", icon: Target, label: "Goals" },
+  { path: "/yearly-goals", icon: CalendarCheck, label: "Yearly Goals" },
   { path: "/todos", icon: ListTodo, label: "Tasks" },
   { path: "/journey", icon: TrendingUp, label: "Journey" },
   { path: "/summit-journal", icon: BookOpen, label: "Summit Journal" },

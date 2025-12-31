@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useYearlyGoals } from "@/hooks/useYearlyGoals";
 import { ForestBackground } from "@/components/ForestBackground";
-import { Link } from "wouter";
 import { Loader2, Sparkles } from "lucide-react";
 import {
   YearlyGoalsHeader,
@@ -94,54 +93,8 @@ export default function YearlyGoals() {
     <div className="min-h-screen relative">
       <ForestBackground />
 
-      {/* Sidebar Navigation */}
-      <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6 hidden md:flex">
-        <div className="space-y-4">
-          <Link href="/">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              dashboard
-            </span>
-          </Link>
-          <Link href="/habits">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              habits
-            </span>
-          </Link>
-          <Link href="/goals">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              goals
-            </span>
-          </Link>
-          <Link href="/yearly-goals">
-            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
-              yearly goals
-            </span>
-          </Link>
-          <Link href="/todos">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              todos
-            </span>
-          </Link>
-          <Link href="/study">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              study
-            </span>
-          </Link>
-          <Link href="/journey">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              journey
-            </span>
-          </Link>
-          <Link href="/settings">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              settings
-            </span>
-          </Link>
-        </div>
-      </nav>
-
       {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 md:ml-[160px] pb-24 pt-8">
+      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
         <div className="max-w-4xl mx-auto">
           <YearlyGoalsHeader
             year={year}
