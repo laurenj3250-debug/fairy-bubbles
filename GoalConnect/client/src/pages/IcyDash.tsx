@@ -937,7 +937,7 @@ export default function DashboardV4() {
 
           {/* ROW 4: Yearly Goals (full-width) */}
           {yearlyGoals.length > 0 && (
-            <div className="glass-card frost-accent">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="card-title">{currentYear} Goals</span>
                 <Link href="/goals">
