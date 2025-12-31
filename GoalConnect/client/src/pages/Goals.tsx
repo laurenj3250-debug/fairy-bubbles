@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star, Loader2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoalDialog } from "@/components/GoalDialog";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
@@ -15,8 +15,11 @@ import { useLiftingStats } from "@/hooks/useLiftingStats";
 import { useClimbingStats } from "@/hooks/useClimbingStats";
 import { ForestBackground } from "@/components/ForestBackground";
 import { Link } from "wouter";
+import { useYearlyGoals } from "@/hooks/useYearlyGoals";
+import { YearlyCategory } from "@/components/yearly-goals";
+import { useToast } from "@/hooks/use-toast";
 
-type ViewType = "all" | "weekly" | "monthly" | "archived";
+type ViewType = "all" | "weekly" | "monthly" | "archived" | "yearly";
 
 export default function Goals() {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
@@ -24,10 +27,31 @@ export default function Goals() {
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
   const [progressGoal, setProgressGoal] = useState<Goal | null>(null);
   const [activeView, setActiveView] = useState<ViewType>("all");
+  const { toast } = useToast();
 
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
   });
+
+  // Yearly goals - show 2026 goals (the active planning year)
+  const currentYear = "2026";
+  const {
+    goals: yearlyGoals,
+    goalsByCategory,
+    categories,
+    stats: yearlyStats,
+    isLoading: yearlyLoading,
+    error: yearlyError,
+    categoryLabels,
+    toggleGoal,
+    incrementGoal,
+    toggleSubItem,
+    claimReward,
+    isToggling,
+    isIncrementing,
+    isTogglingSubItem,
+    isClaimingReward,
+  } = useYearlyGoals(currentYear);
 
   // Journey goals - read-only display (Journey page is source of truth)
   const { targets: journeyTargets } = useJourneyGoals();
@@ -269,6 +293,7 @@ export default function Goals() {
               { key: "all", label: "All", icon: Target },
               { key: "weekly", label: "Week", icon: Calendar },
               { key: "monthly", label: "Month", icon: Calendar },
+              { key: "yearly", label: "Yearly", icon: Star, count: yearlyStats.totalGoals },
               { key: "archived", label: "Archived", icon: AlertTriangle, count: archivedCount },
             ].map(tab => (
               <Button
@@ -284,27 +309,99 @@ export default function Goals() {
               >
                 <tab.icon className="w-4 h-4 mr-2" />
                 {tab.label}
-                {tab.count && tab.count > 0 && (
+                {tab.count !== undefined && tab.count > 0 && (
                   <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
                     {tab.count}
                   </span>
                 )}
               </Button>
             ))}
-            {/* Yearly Goals Link */}
-            <Link href="/yearly-goals">
-              <Button
-                variant="ghost"
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all text-[var(--text-muted)] hover:text-white hover:bg-white/10"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Yearly
-              </Button>
-            </Link>
           </div>
 
-          {/* Goals List */}
-          {filteredGoals.length === 0 ? (
+          {/* Goals List - Regular goals or Yearly goals */}
+          {activeView === "yearly" ? (
+            // Yearly Goals View
+            <>
+              {yearlyLoading && (
+                <div className="glass-card frost-accent flex items-center justify-center py-20">
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-peach-400" />
+                    <span className="text-sm text-[var(--text-muted)] font-body">Loading yearly goals...</span>
+                  </div>
+                </div>
+              )}
+
+              {yearlyError && (
+                <div className="glass-card frost-accent !border-red-500/30 p-8 text-center">
+                  <p className="text-red-400 font-body">Failed to load yearly goals</p>
+                  <p className="text-sm text-[var(--text-muted)] mt-2 font-body">Please try refreshing the page</p>
+                </div>
+              )}
+
+              {!yearlyLoading && !yearlyError && yearlyGoals.length === 0 && (
+                <div className="glass-card frost-accent p-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-peach-400/10 flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-peach-400" />
+                  </div>
+                  <h3 className="text-xl font-heading font-medium text-[var(--text-primary)] mb-2">
+                    No goals for {currentYear}
+                  </h3>
+                  <p className="text-[var(--text-muted)] font-body max-w-md mx-auto">
+                    Set some ambitious goals to track your progress throughout the year.
+                  </p>
+                </div>
+              )}
+
+              {!yearlyLoading && !yearlyError && yearlyGoals.length > 0 && (
+                <div className="space-y-4">
+                  {categories.map((category) => (
+                    <YearlyCategory
+                      key={category}
+                      category={category}
+                      categoryLabel={categoryLabels[category] || category}
+                      goals={goalsByCategory[category]}
+                      onToggle={async (goalId) => {
+                        try {
+                          await toggleGoal(goalId);
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+                        }
+                      }}
+                      onIncrement={async (goalId, amount) => {
+                        try {
+                          await incrementGoal({ id: goalId, amount });
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+                        }
+                      }}
+                      onToggleSubItem={async (goalId, subItemId) => {
+                        try {
+                          const result = await toggleSubItem({ goalId, subItemId });
+                          if (result.isGoalCompleted) {
+                            toast({ title: "Goal completed!", description: "All sub-items are done. Don't forget to claim your reward!" });
+                          }
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+                        }
+                      }}
+                      onClaimReward={async (goalId) => {
+                        try {
+                          const result = await claimReward(goalId);
+                          const bonus = result.categoryBonus > 0 ? ` +${result.categoryBonus} category bonus!` : "";
+                          toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned${bonus}` });
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+                        }
+                      }}
+                      isToggling={isToggling}
+                      isIncrementing={isIncrementing}
+                      isClaimingReward={isClaimingReward}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : filteredGoals.length === 0 ? (
             <div className="glass-card frost-accent p-12 text-center">
               <Target className="w-16 h-16 mx-auto mb-4 text-peach-400/60" />
               <h2 className="text-2xl font-bold text-white mb-2">No Goals Yet</h2>

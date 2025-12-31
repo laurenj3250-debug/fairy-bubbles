@@ -49,6 +49,8 @@ import { DroppableDayColumn, type StudyTaskItem } from '@/components/dashboard/D
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/useStudyPlanner';
 import type { StudyTaskType } from '@shared/types/study';
+import { useYearlyGoals } from '@/hooks/useYearlyGoals';
+import { YearlyCategory } from '@/components/yearly-goals';
 
 // ============================================================================
 // TYPES
@@ -301,6 +303,24 @@ export default function DashboardV4() {
       return res.json();
     },
   });
+
+  // Yearly goals - show 2026 goals (the active planning year)
+  const currentYear = "2026";
+  const {
+    goals: yearlyGoals,
+    goalsByCategory,
+    categories: yearlyCategories,
+    stats: yearlyStats,
+    isLoading: yearlyLoading,
+    categoryLabels,
+    toggleGoal,
+    incrementGoal,
+    toggleSubItem,
+    claimReward,
+    isToggling,
+    isIncrementing,
+    isClaimingReward,
+  } = useYearlyGoals(currentYear);
 
   // Handler for viewing habit details (click on habit name, not toggle)
   const handleViewHabitDetail = useCallback((habitId: number) => {
@@ -915,7 +935,69 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 4: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
+          {/* ROW 4: Yearly Goals (full-width) */}
+          {yearlyGoals.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="card-title">{currentYear} Goals</span>
+                <Link href="/goals">
+                  <span className="text-xs text-peach-400 hover:underline cursor-pointer">
+                    {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
+                  </span>
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {yearlyCategories.map((category) => (
+                  <YearlyCategory
+                    key={category}
+                    category={category}
+                    categoryLabel={categoryLabels[category] || category}
+                    goals={goalsByCategory[category]}
+                    onToggle={async (goalId) => {
+                      try {
+                        await toggleGoal(goalId);
+                        triggerConfetti();
+                      } catch (err) {
+                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+                      }
+                    }}
+                    onIncrement={async (goalId, amount) => {
+                      try {
+                        await incrementGoal({ id: goalId, amount });
+                      } catch (err) {
+                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+                      }
+                    }}
+                    onToggleSubItem={async (goalId, subItemId) => {
+                      try {
+                        const result = await toggleSubItem({ goalId, subItemId });
+                        if (result.isGoalCompleted) {
+                          triggerConfetti();
+                          toast({ title: "Goal completed!", description: "All sub-items are done!" });
+                        }
+                      } catch (err) {
+                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+                      }
+                    }}
+                    onClaimReward={async (goalId) => {
+                      try {
+                        const result = await claimReward(goalId);
+                        triggerConfetti();
+                        toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
+                      } catch (err) {
+                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+                      }
+                    }}
+                    isToggling={isToggling}
+                    isIncrementing={isIncrementing}
+                    isClaimingReward={isClaimingReward}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ROW 5: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
           <div className="glass-card frost-accent min-h-[280px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
