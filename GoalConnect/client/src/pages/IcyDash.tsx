@@ -50,7 +50,6 @@ import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/useStudyPlanner';
 import type { StudyTaskType } from '@shared/types/study';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
-import { YearlyCategory } from '@/components/yearly-goals';
 
 // ============================================================================
 // TYPES
@@ -308,18 +307,7 @@ export default function DashboardV4() {
   const currentYear = "2026";
   const {
     goals: yearlyGoals,
-    goalsByCategory,
-    categories: yearlyCategories,
     stats: yearlyStats,
-    isLoading: yearlyLoading,
-    categoryLabels,
-    toggleGoal,
-    incrementGoal,
-    toggleSubItem,
-    claimReward,
-    isToggling,
-    isIncrementing,
-    isClaimingReward,
   } = useYearlyGoals(currentYear);
 
   // Handler for viewing habit details (click on habit name, not toggle)
@@ -935,67 +923,32 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 4: Yearly Goals (full-width) */}
+          {/* ROW 4: Yearly Goals (compact summary card) */}
           {yearlyGoals.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="card-title">{currentYear} Goals</span>
-                <Link href="/goals">
-                  <span className="text-xs text-peach-400 hover:underline cursor-pointer">
-                    {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
-                  </span>
-                </Link>
+            <Link href="/goals">
+              <div className="glass-card frost-accent p-4 hover:bg-white/5 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🎯</span>
+                    <div>
+                      <span className="card-title text-base">{currentYear} Goals</span>
+                      <div className="text-xs text-[var(--text-muted)]">
+                        {yearlyStats.completedGoals} of {yearlyStats.totalGoals} complete
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-peach-400 rounded-full transition-all"
+                        style={{ width: `${yearlyStats.totalGoals > 0 ? (yearlyStats.completedGoals / yearlyStats.totalGoals) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-peach-400">→</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                {yearlyCategories.map((category) => (
-                  <YearlyCategory
-                    key={category}
-                    category={category}
-                    categoryLabel={categoryLabels[category] || category}
-                    goals={goalsByCategory[category]}
-                    defaultCollapsed={true}
-                    onToggle={async (goalId) => {
-                      try {
-                        await toggleGoal(goalId);
-                        triggerConfetti();
-                      } catch (err) {
-                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
-                      }
-                    }}
-                    onIncrement={async (goalId, amount) => {
-                      try {
-                        await incrementGoal({ id: goalId, amount });
-                      } catch (err) {
-                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
-                      }
-                    }}
-                    onToggleSubItem={async (goalId, subItemId) => {
-                      try {
-                        const result = await toggleSubItem({ goalId, subItemId });
-                        if (result.isGoalCompleted) {
-                          triggerConfetti();
-                          toast({ title: "Goal completed!", description: "All sub-items are done!" });
-                        }
-                      } catch (err) {
-                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
-                      }
-                    }}
-                    onClaimReward={async (goalId) => {
-                      try {
-                        const result = await claimReward(goalId);
-                        triggerConfetti();
-                        toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
-                      } catch (err) {
-                        toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
-                      }
-                    }}
-                    isToggling={isToggling}
-                    isIncrementing={isIncrementing}
-                    isClaimingReward={isClaimingReward}
-                  />
-                ))}
-              </div>
-            </div>
+            </Link>
           )}
 
           {/* ROW 5: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
