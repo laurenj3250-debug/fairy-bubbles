@@ -16,6 +16,7 @@ interface YearlyCategoryProps {
   isToggling?: boolean;
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export function YearlyCategory({
@@ -29,8 +30,9 @@ export function YearlyCategory({
   isToggling,
   isIncrementing,
   isClaimingReward,
+  defaultCollapsed = false,
 }: YearlyCategoryProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   // Get category styling
   const style = getCategoryStyle(category);
