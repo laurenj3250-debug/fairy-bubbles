@@ -33,8 +33,8 @@ export default function Goals() {
     queryKey: ["/api/goals"],
   });
 
-  // Yearly goals
-  const currentYear = new Date().getFullYear().toString();
+  // Yearly goals - show 2026 goals (the active planning year)
+  const currentYear = "2026";
   const {
     goals: yearlyGoals,
     goalsByCategory,
