@@ -2927,34 +2927,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const db = getDb();
       const { randomUUID } = await import("crypto");
 
-      // Reading schedule data
+      // Reading schedule data (2026)
       const READING_SCHEDULE = [
-        { week: 1, startDate: "2024-12-30", endDate: "2025-01-05", startPage: 1, endPage: 23, content: "Ch 1 + Ch 2" },
-        { week: 2, startDate: "2025-01-06", endDate: "2025-01-12", startPage: 24, endPage: 46, content: "Ch 2 + Ch 3" },
-        { week: 3, startDate: "2025-01-13", endDate: "2025-01-19", startPage: 47, endPage: 69, content: "Ch 3" },
-        { week: 4, startDate: "2025-01-20", endDate: "2025-01-26", startPage: 70, endPage: 92, content: "Ch 3 + Ch 4" },
-        { week: 5, startDate: "2025-01-27", endDate: "2025-02-02", startPage: 93, endPage: 115, content: "Ch 4 + Ch 5" },
-        { week: 6, startDate: "2025-02-03", endDate: "2025-02-09", startPage: 116, endPage: 138, content: "Ch 5" },
-        { week: 7, startDate: "2025-02-10", endDate: "2025-02-16", startPage: 139, endPage: 161, content: "Ch 5" },
-        { week: 8, startDate: "2025-02-17", endDate: "2025-02-23", startPage: 162, endPage: 184, content: "Ch 5 + Ch 6" },
-        { week: 9, startDate: "2025-02-24", endDate: "2025-03-02", startPage: 185, endPage: 207, content: "Ch 6 + Ch 7" },
-        { week: 10, startDate: "2025-03-03", endDate: "2025-03-09", startPage: 208, endPage: 229, content: "Ch 7" },
-        { week: 11, startDate: "2025-03-10", endDate: "2025-03-16", startPage: 246, endPage: 268, content: "Ch 9 + Ch 10" },
-        { week: 12, startDate: "2025-03-17", endDate: "2025-03-23", startPage: 269, endPage: 291, content: "Ch 10" },
-        { week: 13, startDate: "2025-03-24", endDate: "2025-03-30", startPage: 292, endPage: 314, content: "Ch 10 + Ch 11" },
-        { week: 14, startDate: "2025-03-31", endDate: "2025-04-06", startPage: 315, endPage: 337, content: "Ch 11" },
-        { week: 15, startDate: "2025-04-07", endDate: "2025-04-13", startPage: 338, endPage: 360, content: "Ch 11 + Ch 12" },
-        { week: 16, startDate: "2025-04-14", endDate: "2025-04-20", startPage: 361, endPage: 383, content: "Ch 12 + Ch 13" },
-        { week: 17, startDate: "2025-04-21", endDate: "2025-04-27", startPage: 384, endPage: 406, content: "Ch 13" },
-        { week: 18, startDate: "2025-04-28", endDate: "2025-05-04", startPage: 407, endPage: 429, content: "Ch 13 + Ch 14" },
-        { week: 19, startDate: "2025-05-05", endDate: "2025-05-11", startPage: 430, endPage: 452, content: "Ch 14" },
-        { week: 20, startDate: "2025-05-12", endDate: "2025-05-18", startPage: 453, endPage: 475, content: "Ch 14 + Ch 15 + Ch 16 + Ch 17" },
-        { week: 21, startDate: "2025-05-19", endDate: "2025-05-25", startPage: 476, endPage: 498, content: "Ch 17 + Ch 18" },
-        { week: 22, startDate: "2025-05-26", endDate: "2025-06-01", startPage: 499, endPage: 521, content: "Ch 18 + Ch 19 + Ch 20" },
-        { week: 23, startDate: "2025-06-02", endDate: "2025-06-08", startPage: 522, endPage: 544, content: "Ch 20 + Ch 21" },
-        { week: 24, startDate: "2025-06-09", endDate: "2025-06-15", startPage: 545, endPage: 567, content: "Ch 21 + Ch 22" },
-        { week: 25, startDate: "2025-06-16", endDate: "2025-06-22", startPage: 568, endPage: 590, content: "Ch 22" },
-        { week: 26, startDate: "2025-06-23", endDate: "2025-06-29", startPage: 591, endPage: 621, content: "Ch 22" },
+        { week: 1, startDate: "2025-12-29", endDate: "2026-01-04", startPage: 1, endPage: 23, content: "Ch 1 + Ch 2" },
+        { week: 2, startDate: "2026-01-05", endDate: "2026-01-11", startPage: 24, endPage: 46, content: "Ch 2 + Ch 3" },
+        { week: 3, startDate: "2026-01-12", endDate: "2026-01-18", startPage: 47, endPage: 69, content: "Ch 3" },
+        { week: 4, startDate: "2026-01-19", endDate: "2026-01-25", startPage: 70, endPage: 92, content: "Ch 3 + Ch 4" },
+        { week: 5, startDate: "2026-01-26", endDate: "2026-02-01", startPage: 93, endPage: 115, content: "Ch 4 + Ch 5" },
+        { week: 6, startDate: "2026-02-02", endDate: "2026-02-08", startPage: 116, endPage: 138, content: "Ch 5" },
+        { week: 7, startDate: "2026-02-09", endDate: "2026-02-15", startPage: 139, endPage: 161, content: "Ch 5" },
+        { week: 8, startDate: "2026-02-16", endDate: "2026-02-22", startPage: 162, endPage: 184, content: "Ch 5 + Ch 6" },
+        { week: 9, startDate: "2026-02-23", endDate: "2026-03-01", startPage: 185, endPage: 207, content: "Ch 6 + Ch 7" },
+        { week: 10, startDate: "2026-03-02", endDate: "2026-03-08", startPage: 208, endPage: 229, content: "Ch 7" },
+        { week: 11, startDate: "2026-03-09", endDate: "2026-03-15", startPage: 246, endPage: 268, content: "Ch 9 + Ch 10" },
+        { week: 12, startDate: "2026-03-16", endDate: "2026-03-22", startPage: 269, endPage: 291, content: "Ch 10" },
+        { week: 13, startDate: "2026-03-23", endDate: "2026-03-29", startPage: 292, endPage: 314, content: "Ch 10 + Ch 11" },
+        { week: 14, startDate: "2026-03-30", endDate: "2026-04-05", startPage: 315, endPage: 337, content: "Ch 11" },
+        { week: 15, startDate: "2026-04-06", endDate: "2026-04-12", startPage: 338, endPage: 360, content: "Ch 11 + Ch 12" },
+        { week: 16, startDate: "2026-04-13", endDate: "2026-04-19", startPage: 361, endPage: 383, content: "Ch 12 + Ch 13" },
+        { week: 17, startDate: "2026-04-20", endDate: "2026-04-26", startPage: 384, endPage: 406, content: "Ch 13" },
+        { week: 18, startDate: "2026-04-27", endDate: "2026-05-03", startPage: 407, endPage: 429, content: "Ch 13 + Ch 14" },
+        { week: 19, startDate: "2026-05-04", endDate: "2026-05-10", startPage: 430, endPage: 452, content: "Ch 14" },
+        { week: 20, startDate: "2026-05-11", endDate: "2026-05-17", startPage: 453, endPage: 475, content: "Ch 14 + Ch 15 + Ch 16 + Ch 17" },
+        { week: 21, startDate: "2026-05-18", endDate: "2026-05-24", startPage: 476, endPage: 498, content: "Ch 17 + Ch 18" },
+        { week: 22, startDate: "2026-05-25", endDate: "2026-05-31", startPage: 499, endPage: 521, content: "Ch 18 + Ch 19 + Ch 20" },
+        { week: 23, startDate: "2026-06-01", endDate: "2026-06-07", startPage: 522, endPage: 544, content: "Ch 20 + Ch 21" },
+        { week: 24, startDate: "2026-06-08", endDate: "2026-06-14", startPage: 545, endPage: 567, content: "Ch 21 + Ch 22" },
+        { week: 25, startDate: "2026-06-15", endDate: "2026-06-21", startPage: 568, endPage: 590, content: "Ch 22" },
+        { week: 26, startDate: "2026-06-22", endDate: "2026-06-28", startPage: 591, endPage: 621, content: "Ch 22" },
       ];
 
       // Helper to get ISO week string
@@ -2974,7 +2974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(
           and(
             eq(schema.yearlyGoals.userId, userId),
-            eq(schema.yearlyGoals.year, "2025"),
+            eq(schema.yearlyGoals.year, "2026"),
             eq(schema.yearlyGoals.title, "Complete de Lahunta")
           )
         );
@@ -2996,10 +2996,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const [newYearlyGoal] = await db.insert(schema.yearlyGoals).values({
           userId,
-          year: "2025",
+          year: "2026",
           title: "Complete de Lahunta",
           description: "Read de Lahunta's Veterinary Neuroanatomy and Clinical Neurology (~23 pages/week, done June 29)",
-          category: "books",
+          category: "residency",
           goalType: "compound",
           targetValue: 26,
           currentValue: 0,
