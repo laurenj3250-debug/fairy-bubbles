@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap } from "lucide-react";
+import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
@@ -177,6 +177,63 @@ export function CompactGoalCard({
             />
           </div>
         </div>
+
+        {/* Action buttons for manual goals */}
+        {isManual && !goal.isCompleted && (
+          <div className="flex items-center gap-2 mb-2">
+            {goal.goalType === "binary" ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggle();
+                }}
+                disabled={isToggling}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                  "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
+                  "hover:bg-emerald-500/30 transition-colors",
+                  isToggling && "opacity-50"
+                )}
+              >
+                <Check className="w-3.5 h-3.5" />
+                Complete
+              </button>
+            ) : goal.goalType === "count" ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onIncrement) onIncrement(-1);
+                  }}
+                  disabled={isIncrementing || goal.computedValue <= 0}
+                  className={cn(
+                    "p-1.5 rounded-lg",
+                    "bg-white/5 text-[var(--text-muted)] ring-1 ring-white/10",
+                    "hover:bg-white/10 hover:text-[var(--text-primary)] transition-colors",
+                    (isIncrementing || goal.computedValue <= 0) && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onIncrement) onIncrement(1);
+                  }}
+                  disabled={isIncrementing}
+                  className={cn(
+                    "p-1.5 rounded-lg",
+                    "bg-peach-400/20 text-peach-400 ring-1 ring-peach-400/30",
+                    "hover:bg-peach-400/30 transition-colors",
+                    isIncrementing && "opacity-50"
+                  )}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         {/* Footer: Progress text + Status + XP */}
         <div className="flex items-center justify-between gap-2">
