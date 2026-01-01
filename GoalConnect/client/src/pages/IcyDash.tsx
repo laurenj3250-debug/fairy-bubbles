@@ -51,6 +51,7 @@ import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
+import { MediaWidget } from '@/components/MediaWidget';
 import { useGoalCalendar } from '@/hooks/useGoalCalendar';
 
 // ============================================================================
@@ -796,22 +797,8 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Destination Spotlight */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
-              <span className="card-title">Destination</span>
-              <div className="flex-1">
-                {(() => {
-                  const fact = getDailyFunFact();
-                  return (
-                    <LuxuryFunFact
-                      title={fact.title}
-                      content={fact.content}
-                      category={fact.category}
-                    />
-                  );
-                })()}
-              </div>
-            </div>
+            {/* Media Library Widget */}
+            <MediaWidget />
           </div>
 
           {/* ROW 4: Yearly Goals (grouped by category) */}

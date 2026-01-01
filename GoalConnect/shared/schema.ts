@@ -1442,3 +1442,67 @@ export const insertResidencyConfounderSchema = createInsertSchema(residencyConfo
   id: true,
   createdAt: true,
 });
+
+// ========== MEDIA LIBRARY ==========
+// Track books, TV shows, movies, audiobooks, and podcasts
+
+export const mediaTypeEnum = pgEnum('media_type', [
+  'book',        // Progress: pages or %
+  'tv_show',     // Progress: season/episode
+  'movie',       // Binary: watched or not
+  'audiobook',   // Progress: % or chapters
+  'podcast',     // Progress: episodes (ongoing series)
+]);
+
+export const mediaStatusEnum = pgEnum('media_status', [
+  'want',        // Want to watch/read
+  'current',     // Currently consuming
+  'paused',      // Stopped but might continue
+  'done',        // Finished
+  'abandoned',   // Dropped, won't continue
+]);
+
+export const mediaItems = pgTable("media_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
+  // Core fields
+  title: text("title").notNull(),
+  mediaType: mediaTypeEnum("media_type").notNull(),
+  status: mediaStatusEnum("status").notNull().default("want"),
+
+  // Metadata
+  author: text("author"),           // Author/creator/director
+  year: integer("year"),            // Release year
+  imageUrl: text("image_url"),      // Cover art URL
+
+  // Progress tracking (flexible for different media types)
+  // TV: "S2E5" for season 2, episode 5
+  // Books: "145" (page) or "45%" (percent)
+  // Podcasts: "23" (episode number)
+  currentProgress: text("current_progress"),
+  totalProgress: text("total_progress"),  // "8 seasons", "342 pages", etc.
+
+  // Rating & notes
+  rating: integer("rating"),        // 1-5 stars
+  notes: text("notes"),
+
+  // Timestamps
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// TypeScript types
+export type MediaItem = typeof mediaItems.$inferSelect;
+export type InsertMediaItem = typeof mediaItems.$inferInsert;
+
+// Insert schema
+export const insertMediaItemSchema = createInsertSchema(mediaItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  startedAt: true,
+});
