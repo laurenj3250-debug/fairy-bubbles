@@ -342,6 +342,14 @@ export default function DashboardV4() {
     isClaimingReward,
   } = useYearlyGoals(currentYear);
 
+  const collapseAllCategories = useCallback(() => {
+    setCollapsedCategories(new Set(yearlyCategories));
+  }, [yearlyCategories]);
+
+  const expandAllCategories = useCallback(() => {
+    setCollapsedCategories(new Set());
+  }, []);
+
   // Handler for viewing habit details (click on habit name, not toggle)
   const handleViewHabitDetail = useCallback((habitId: number) => {
     const habit = habits.find(h => h.id === habitId);
@@ -959,7 +967,24 @@ export default function DashboardV4() {
           {yearlyGoals.length > 0 && (
             <div className="glass-card frost-accent">
               <div className="flex items-center justify-between mb-4">
-                <span className="card-title">{currentYear} Goals</span>
+                <div className="flex items-center gap-3">
+                  <span className="card-title">{currentYear} Goals</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={expandAllCategories}
+                      className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                    >
+                      expand
+                    </button>
+                    <span className="text-[var(--text-muted)]">·</span>
+                    <button
+                      onClick={collapseAllCategories}
+                      className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                    >
+                      collapse
+                    </button>
+                  </div>
+                </div>
                 <Link href="/goals">
                   <span className="text-xs text-peach-400 hover:underline cursor-pointer">
                     {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
