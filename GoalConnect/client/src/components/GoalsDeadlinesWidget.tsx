@@ -1,13 +1,12 @@
 /**
  * GoalsDeadlinesWidget
- * Single unified list of all goals due this month (weekly goals + milestones)
+ * Consolidated view of goals due this month - each goal appears once with milestone counts
  */
 
-import { useMemo } from "react";
 import { format, parseISO, isBefore } from "date-fns";
 import { Calendar, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGoalCalendar, type CalendarGoalWithStatus } from "@/hooks/useGoalCalendar";
+import { useGoalCalendar, type ConsolidatedGoal } from "@/hooks/useGoalCalendar";
 
 interface GoalsDeadlinesWidgetProps {
   onIncrement: (goalId: number) => void;
@@ -19,38 +18,35 @@ export function GoalsDeadlinesWidget({
   isIncrementing,
 }: GoalsDeadlinesWidgetProps) {
   const currentMonth = new Date();
-  const { goals: calendarGoals, isLoading } = useGoalCalendar(currentMonth);
+  const { consolidatedGoals, isLoading } = useGoalCalendar(currentMonth);
 
-  // All goals sorted by due date
-  const allGoals = useMemo(() => {
-    return [...calendarGoals].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-  }, [calendarGoals]);
+  const getStatusInfo = (goal: ConsolidatedGoal) => {
+    const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
+    const someMet = goal.milestonesMet > 0;
+    const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
 
-  const getStatusIcon = (goal: CalendarGoalWithStatus) => {
-    const isDone = goal.status === "completed" || goal.status === "milestone-met";
-    const isOverdue = goal.status === "overdue" || goal.status === "milestone-behind";
-
-    if (isDone) return <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />;
-    if (isOverdue) return <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />;
-    if (goal.status === "due-soon") return <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />;
-    return <Calendar className="w-4 h-4 text-sky-400 flex-shrink-0" />;
-  };
-
-  const getStatusColor = (goal: CalendarGoalWithStatus) => {
-    switch (goal.status) {
-      case "completed":
-      case "milestone-met":
-        return "text-emerald-400";
-      case "overdue":
-      case "milestone-behind":
-        return "text-rose-400";
-      case "due-soon":
-        return "text-amber-400";
-      case "behind":
-        return "text-orange-400";
-      default:
-        return "text-[var(--text-primary)]";
+    if (goal.isCompleted || allMet) {
+      return {
+        icon: <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />,
+        color: "text-emerald-400"
+      };
     }
+    if (isOverdue) {
+      return {
+        icon: <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />,
+        color: "text-rose-400"
+      };
+    }
+    if (someMet) {
+      return {
+        icon: <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />,
+        color: "text-sky-400"
+      };
+    }
+    return {
+      icon: <Calendar className="w-4 h-4 text-sky-400 flex-shrink-0" />,
+      color: "text-[var(--text-primary)]"
+    };
   };
 
   return (
@@ -73,36 +69,34 @@ export function GoalsDeadlinesWidget({
       )}
 
       {/* Empty state */}
-      {!isLoading && allGoals.length === 0 && (
+      {!isLoading && consolidatedGoals.length === 0 && (
         <div className="text-center py-8">
           <Calendar className="w-8 h-8 text-[var(--text-muted)]/40 mx-auto mb-2" />
           <p className="text-sm text-[var(--text-muted)]">No goals due this month</p>
         </div>
       )}
 
-      {/* Unified goals list */}
-      {!isLoading && allGoals.length > 0 && (
+      {/* Consolidated goals list */}
+      {!isLoading && consolidatedGoals.length > 0 && (
         <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-          {allGoals.map((goal) => {
-            const isDone = goal.status === "completed" || goal.status === "milestone-met";
-            const isOverdue = isBefore(parseISO(goal.dueDate), new Date()) && !isDone;
-            const isWeeklyGoal = goal.source === "weekly";
-            const progress = goal.targetValue > 0
-              ? Math.round((goal.currentValue / goal.targetValue) * 100)
-              : 0;
+          {consolidatedGoals.map((goal) => {
+            const { icon, color } = getStatusInfo(goal);
+            const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
+            const canIncrement = !goal.isCompleted && goal.targetValue > 1;
+            const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
 
             return (
               <div
-                key={`${goal.source}-${goal.id}`}
+                key={goal.goalId}
                 className={cn(
                   "flex items-center gap-3 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors",
-                  isDone && "opacity-60"
+                  allMet && "opacity-60"
                 )}
               >
-                {/* Increment button for weekly goals, status icon for others */}
-                {isWeeklyGoal && !isDone ? (
+                {/* Increment button or status icon */}
+                {canIncrement ? (
                   <button
-                    onClick={() => onIncrement(goal.id)}
+                    onClick={() => onIncrement(goal.goalId)}
                     disabled={isIncrementing}
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all flex-shrink-0"
                   >
@@ -110,7 +104,7 @@ export function GoalsDeadlinesWidget({
                   </button>
                 ) : (
                   <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
-                    {getStatusIcon(goal)}
+                    {icon}
                   </div>
                 )}
 
@@ -118,23 +112,32 @@ export function GoalsDeadlinesWidget({
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     "text-sm truncate",
-                    isDone ? "line-through text-emerald-400" : getStatusColor(goal)
+                    allMet ? "line-through text-emerald-400" : color
                   )}>
                     {goal.title}
-                    {goal.isMilestone && goal.checkpointNumber && (
-                      <span className="text-[var(--text-muted)]"> #{goal.checkpointNumber}</span>
-                    )}
                   </p>
 
+                  {/* Milestone count badge */}
+                  {goal.milestonesThisMonth > 1 && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-[var(--text-muted)]">
+                        <span className={goal.milestonesMet > 0 ? "text-emerald-400" : ""}>
+                          {goal.milestonesMet}
+                        </span>
+                        /{goal.milestonesThisMonth} due this month
+                      </span>
+                    </div>
+                  )}
+
                   {/* Progress bar for count goals */}
-                  {goal.targetValue > 1 && !isDone && (
+                  {goal.targetValue > 1 && !allMet && (
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className={cn("h-full rounded-full",
                             isOverdue ? "bg-rose-400" : "bg-peach-400"
                           )}
-                          style={{ width: `${Math.min(progress, 100)}%` }}
+                          style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
                         />
                       </div>
                       <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
@@ -144,13 +147,15 @@ export function GoalsDeadlinesWidget({
                   )}
                 </div>
 
-                {/* Due date */}
-                <span className={cn(
-                  "text-xs whitespace-nowrap",
-                  isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
-                )}>
-                  {format(parseISO(goal.dueDate), "MMM d")}
-                </span>
+                {/* Next due date */}
+                {goal.nextDueDate && (
+                  <span className={cn(
+                    "text-xs whitespace-nowrap",
+                    isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
+                  )}>
+                    {format(parseISO(goal.nextDueDate), "MMM d")}
+                  </span>
+                )}
               </div>
             );
           })}
