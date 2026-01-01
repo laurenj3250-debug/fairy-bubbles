@@ -33,6 +33,8 @@ export function CompactGoalCard({
   const CategoryIcon = categoryStyle.icon;
   const isManual = goal.source === "manual";
   const hasSubItems = goal.goalType === "compound" && goal.subItems.length > 0;
+  // Book-linked goals have chapter ids like "ch-123" and are toggleable
+  const isBookLinked = hasSubItems && goal.subItems[0]?.id?.startsWith("ch-");
 
   const handleToggle = () => {
     if (!onToggle) return;
@@ -178,8 +180,8 @@ export function CompactGoalCard({
                 "hover:bg-white/[0.03] transition-colors"
               )}
             >
-              {/* Checkbox for manual goals */}
-              {isManual ? (
+              {/* Checkbox for manual goals and book-linked chapters */}
+              {(isManual || isBookLinked) ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

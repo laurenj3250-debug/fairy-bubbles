@@ -314,7 +314,10 @@ export default function DashboardV4() {
   }, []);
   const {
     goals: yearlyGoals,
+    goalsByCategory,
+    categories: yearlyCategories,
     stats: yearlyStats,
+    categoryLabels,
     toggleGoal,
     incrementGoal,
     toggleSubItem,
@@ -937,7 +940,7 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 4: Yearly Goals (full-width, compact grid) */}
+          {/* ROW 4: Yearly Goals (grouped by category) */}
           {yearlyGoals.length > 0 && (
             <div className="glass-card frost-accent">
               <div className="flex items-center justify-between mb-4">
@@ -948,47 +951,56 @@ export default function DashboardV4() {
                   </span>
                 </Link>
               </div>
-              <CompactGoalGrid
-                goals={yearlyGoals}
-                onToggle={async (goalId) => {
-                  try {
-                    await toggleGoal(goalId);
-                    triggerConfetti();
-                  } catch (err) {
-                    toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
-                  }
-                }}
-                onIncrement={async (goalId, amount) => {
-                  try {
-                    await incrementGoal({ id: goalId, amount });
-                  } catch (err) {
-                    toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
-                  }
-                }}
-                onToggleSubItem={async (goalId, subItemId) => {
-                  try {
-                    const result = await toggleSubItem({ goalId, subItemId });
-                    if (result.isGoalCompleted) {
-                      triggerConfetti();
-                      toast({ title: "Goal completed!", description: "All sub-items are done!" });
-                    }
-                  } catch (err) {
-                    toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
-                  }
-                }}
-                onClaimReward={async (goalId) => {
-                  try {
-                    const result = await claimReward(goalId);
-                    triggerConfetti();
-                    toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
-                  } catch (err) {
-                    toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
-                  }
-                }}
-                isToggling={isToggling}
-                isIncrementing={isIncrementing}
-                isClaimingReward={isClaimingReward}
-              />
+              <div className="space-y-4">
+                {yearlyCategories.map((category) => (
+                  <div key={category}>
+                    <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                      {categoryLabels[category] || category}
+                    </h4>
+                    <CompactGoalGrid
+                      goals={goalsByCategory[category]}
+                      onToggle={async (goalId) => {
+                        try {
+                          await toggleGoal(goalId);
+                          triggerConfetti();
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+                        }
+                      }}
+                      onIncrement={async (goalId, amount) => {
+                        try {
+                          await incrementGoal({ id: goalId, amount });
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+                        }
+                      }}
+                      onToggleSubItem={async (goalId, subItemId) => {
+                        try {
+                          const result = await toggleSubItem({ goalId, subItemId });
+                          if (result.isGoalCompleted) {
+                            triggerConfetti();
+                            toast({ title: "Goal completed!", description: "All sub-items are done!" });
+                          }
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+                        }
+                      }}
+                      onClaimReward={async (goalId) => {
+                        try {
+                          const result = await claimReward(goalId);
+                          triggerConfetti();
+                          toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
+                        } catch (err) {
+                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+                        }
+                      }}
+                      isToggling={isToggling}
+                      isIncrementing={isIncrementing}
+                      isClaimingReward={isClaimingReward}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

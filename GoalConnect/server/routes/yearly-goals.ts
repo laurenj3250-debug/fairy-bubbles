@@ -620,7 +620,7 @@ export function registerYearlyGoalRoutes(app: Express) {
 
   /**
    * POST /api/yearly-goals/:id/sub-item/:subItemId/toggle
-   * Toggle compound goal sub-item
+   * Toggle compound goal sub-item (handles both manual subItems and book-linked chapters)
    */
   app.post(
     "/api/yearly-goals/:id/sub-item/:subItemId/toggle",
@@ -644,6 +644,80 @@ export function registerYearlyGoalRoutes(app: Express) {
           return res.status(400).json({ error: "Only compound goals have sub-items" });
         }
 
+        // Handle book-linked goals - toggle study chapter completion
+        if (goal.linkedBookId && subItemId.startsWith("ch-")) {
+          const chapterId = parseInt(subItemId.replace("ch-", ""));
+
+          const [chapter] = await db
+            .select()
+            .from(studyChapters)
+            .where(and(
+              eq(studyChapters.id, chapterId),
+              eq(studyChapters.bookId, goal.linkedBookId)
+            ));
+
+          if (!chapter) {
+            return res.status(404).json({ error: "Chapter not found" });
+          }
+
+          // Toggle imagesCompleted (primary completion flag for yearly goals)
+          const wasCompleted = chapter.imagesCompleted;
+          const nowCompleted = !wasCompleted;
+
+          await db
+            .update(studyChapters)
+            .set({
+              imagesCompleted: nowCompleted,
+              imagesCompletedAt: nowCompleted ? new Date() : null,
+            })
+            .where(eq(studyChapters.id, chapterId));
+
+          // Recompute progress
+          const allChapters = await db
+            .select()
+            .from(studyChapters)
+            .where(eq(studyChapters.bookId, goal.linkedBookId));
+
+          const completedCount = allChapters.filter(
+            (ch) => ch.id === chapterId ? nowCompleted : (ch.imagesCompleted || ch.cardsCompleted)
+          ).length;
+          const isGoalCompleted = completedCount >= goal.targetValue;
+
+          // Log progress
+          await db.insert(yearlyGoalProgressLogs).values({
+            goalId,
+            userId,
+            changeType: "toggle_sub_item",
+            previousValue: wasCompleted ? 1 : 0,
+            newValue: nowCompleted ? 1 : 0,
+            subItemId,
+            source: "study_chapter",
+          });
+
+          // Award 25 XP for completing a chapter
+          if (nowCompleted) {
+            await storage.addPoints(
+              userId,
+              25,
+              "goal_progress",
+              goalId,
+              `Chapter completed: ${chapter.title}`
+            );
+          }
+
+          return res.json({
+            goal,
+            subItem: {
+              id: subItemId,
+              title: chapter.title,
+              completed: nowCompleted,
+            },
+            isGoalCompleted,
+            completedCount,
+          });
+        }
+
+        // Handle manual subItems (original logic)
         const subItems = goal.subItems as YearlyGoalSubItem[];
         const itemIndex = subItems.findIndex((item) => item.id === subItemId);
 
