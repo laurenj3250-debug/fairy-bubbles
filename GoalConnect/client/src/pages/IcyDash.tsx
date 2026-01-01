@@ -49,6 +49,8 @@ import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
+import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
+import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 
 // ============================================================================
 // TYPES
@@ -731,6 +733,11 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
+          {/* Residency Countdown - small accent widget */}
+          <div className="max-w-[280px]">
+            <ResidencyCountdownWidget />
+          </div>
+
           {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
             {/* All Goals Due This Month */}
@@ -774,8 +781,11 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Weekly Rhythm + Destination (2 columns, small) */}
-          <div className="card-grid grid grid-cols-2 gap-5">
+          {/* ROW 3: Milestone Donut + Weekly Rhythm + Destination (3 columns, small) */}
+          <div className="card-grid grid grid-cols-3 gap-5">
+            {/* Milestone Donut */}
+            <MilestoneDonutWidget />
+
             {/* Weekly Rhythm */}
             <div className="glass-card frost-accent min-h-[200px] flex flex-col">
               <span className="card-title">Weekly Rhythm</span>
