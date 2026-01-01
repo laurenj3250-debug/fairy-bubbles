@@ -27,7 +27,6 @@ import { LuxuryProgressRing } from '@/components/LuxuryProgressRing';
 import { LuxuryWeeklyRhythm } from '@/components/LuxuryWeeklyRhythm';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
-import { LuxuryStudyTracker } from '@/components/LuxuryStudyTracker';
 import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
@@ -869,17 +868,6 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Study Tracker */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
-              <span className="card-title">Study Tracker</span>
-              <div className="flex-1 flex items-center justify-center">
-                <LuxuryStudyTracker
-                  tasks={studyTasks.map(t => ({ id: t.id, title: t.title, completed: t.completed }))}
-                  onToggle={(id) => handleStudyTaskToggle(id as string)}
-                  onStartSession={() => setLocation('/study')}
-                />
-              </div>
-            </div>
           </div>
 
           {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
