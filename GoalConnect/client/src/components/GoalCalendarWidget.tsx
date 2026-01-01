@@ -139,16 +139,20 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
   const hasGoals = goals.length > 0;
   const today = isToday(date);
 
-  // Sort goals by urgency for display priority
-  const sortedGoals = useMemo(() => {
+  // Get most urgent status for the colored bar
+  const urgentStatus = useMemo((): GoalStatus | null => {
+    if (goals.length === 0) return null;
     const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "milestone-behind", "on-track", "milestone-met", "completed"];
-    return [...goals].sort((a, b) => priorities.indexOf(a.status) - priorities.indexOf(b.status));
+    for (const status of priorities) {
+      if (goals.some(g => g.status === status)) return status;
+    }
+    return "on-track";
   }, [goals]);
 
   const cellContent = (
     <div
       className={cn(
-        "h-8 w-full flex flex-col items-center justify-center rounded-md text-xs relative",
+        "h-9 w-full flex flex-col items-center justify-center rounded-md text-xs relative",
         !isCurrentMonth && "text-[var(--text-muted)]/30",
         isCurrentMonth && "text-[var(--text-primary)]",
         today && "ring-1 ring-peach-400 bg-peach-400/10",
@@ -156,18 +160,12 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
       )}
     >
       <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
-      {hasGoals && isCurrentMonth && (
-        <div className="flex items-center gap-[3px] absolute -bottom-0.5">
-          {/* Show up to 3 uniform dots, sorted by urgency */}
-          {sortedGoals.slice(0, 3).map((goal, idx) => (
-            <div
-              key={`${goal.source}-${goal.id}-${idx}`}
-              className={cn("w-[5px] h-[5px] rounded-full", STATUS_COLORS[goal.status])}
-            />
-          ))}
-          {/* Count badge for overflow */}
-          {sortedGoals.length > 3 && (
-            <span className="text-[7px] text-[var(--text-muted)] font-medium">+{sortedGoals.length - 3}</span>
+      {/* Colored underline bar for days with goals */}
+      {hasGoals && isCurrentMonth && urgentStatus && (
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1">
+          <div className={cn("h-[3px] w-5 rounded-full", STATUS_COLORS[urgentStatus])} />
+          {goals.length > 1 && (
+            <span className="text-[8px] text-[var(--text-muted)] font-medium">{goals.length}</span>
           )}
         </div>
       )}
