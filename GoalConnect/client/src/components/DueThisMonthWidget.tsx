@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from "react";
-import { format, parseISO, isBefore, startOfMonth, endOfMonth } from "date-fns";
+import { format, parseISO, isBefore } from "date-fns";
 import { Calendar, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGoalCalendar, type CalendarGoalWithStatus } from "@/hooks/useGoalCalendar";
