@@ -1210,6 +1210,17 @@ export const insertStudyScheduleLogSchema = createInsertSchema(studyScheduleLogs
 // Goal type enum
 export const yearlyGoalTypeEnum = pgEnum('yearly_goal_type', ['binary', 'count', 'compound']);
 
+// Milestone cadence for recurring checkpoints
+export const milestoneCadenceEnum = pgEnum('milestone_cadence', [
+  'daily',      // 365 checkpoints
+  'weekly',     // 52 checkpoints
+  'biweekly',   // 26 checkpoints
+  'monthly',    // 12 checkpoints
+  'bimonthly',  // 6 checkpoints (every 2 months)
+  'quarterly',  // 4 checkpoints
+  'semiannual', // 2 checkpoints (every 6 months)
+]);
+
 // Category order (for display)
 export const YEARLY_GOAL_CATEGORY_ORDER = [
   'residency',
@@ -1275,6 +1286,7 @@ export const yearlyGoals = pgTable("yearly_goals", {
 
   // Scheduling
   dueDate: varchar("due_date", { length: 10 }),  // YYYY-MM-DD format
+  milestoneCadence: milestoneCadenceEnum("milestone_cadence"),  // For recurring checkpoints
 
   // Completion tracking
   completed: boolean("completed").notNull().default(false),

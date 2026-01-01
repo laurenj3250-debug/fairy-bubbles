@@ -1,6 +1,7 @@
 /**
  * useGoalCalendar Hook
- * Fetches goals with due dates for calendar visualization
+ * Fetches goals with due dates for calendar visualization,
+ * including milestone checkpoints
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { startOfMonth, endOfMonth, format, parseISO, isBefore, differenceInDays 
 
 export interface CalendarGoal {
   id: number;
-  source: "yearly" | "weekly";
+  source: "yearly" | "weekly" | "milestone";
   title: string;
   dueDate: string;
   completed: boolean;
@@ -17,9 +18,21 @@ export interface CalendarGoal {
   targetValue: number;
   category: string;
   goalType: string;
+  // Milestone-specific fields
+  isMilestone?: boolean;
+  checkpointNumber?: number;
+  expectedValue?: number;
+  goalId?: number;
 }
 
-export type GoalStatus = "completed" | "on-track" | "due-soon" | "overdue" | "behind";
+export type GoalStatus =
+  | "completed"
+  | "on-track"
+  | "due-soon"
+  | "overdue"
+  | "behind"
+  | "milestone-met"
+  | "milestone-behind";
 
 export interface CalendarGoalWithStatus extends CalendarGoal {
   status: GoalStatus;
@@ -27,6 +40,27 @@ export interface CalendarGoalWithStatus extends CalendarGoal {
 }
 
 function calculateGoalStatus(goal: CalendarGoal): GoalStatus {
+  // Handle milestones differently
+  if (goal.isMilestone || goal.source === "milestone") {
+    const now = new Date();
+    const dueDate = parseISO(goal.dueDate);
+    const expectedValue = goal.expectedValue || goal.targetValue;
+
+    // Check if milestone is met
+    if (goal.currentValue >= expectedValue) {
+      return "milestone-met";
+    }
+
+    // Check if milestone is overdue
+    if (isBefore(dueDate, now)) {
+      return "milestone-behind";
+    }
+
+    // Upcoming milestone - check if on track
+    return "on-track";
+  }
+
+  // Regular goal status calculation
   if (goal.completed) return "completed";
 
   const now = new Date();
@@ -78,6 +112,22 @@ export function useGoalCalendar(month: Date) {
     }));
   }, [data]);
 
+  // Separate milestones from regular goals
+  const { regularGoals, milestones } = useMemo(() => {
+    const regular: CalendarGoalWithStatus[] = [];
+    const miles: CalendarGoalWithStatus[] = [];
+
+    goalsWithStatus.forEach((goal) => {
+      if (goal.isMilestone || goal.source === "milestone") {
+        miles.push(goal);
+      } else {
+        regular.push(goal);
+      }
+    });
+
+    return { regularGoals: regular, milestones: miles };
+  }, [goalsWithStatus]);
+
   // Group goals by date for calendar rendering
   const goalsByDate = useMemo(() => {
     const map = new Map<string, CalendarGoalWithStatus[]>();
@@ -91,9 +141,19 @@ export function useGoalCalendar(month: Date) {
     return map;
   }, [goalsWithStatus]);
 
+  // Get all goals for this month (for deadline summary)
+  const goalsThisMonth = useMemo(() => {
+    return goalsWithStatus
+      .filter((g) => !g.isMilestone && g.source !== "milestone")
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  }, [goalsWithStatus]);
+
   return {
     goals: goalsWithStatus,
+    regularGoals,
+    milestones,
     goalsByDate,
+    goalsThisMonth,
     isLoading,
     error,
     refetch,

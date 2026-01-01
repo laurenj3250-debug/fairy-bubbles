@@ -1,6 +1,7 @@
 /**
  * GoalCalendarWidget
  * Month calendar showing goals with due dates, color-coded by status
+ * Includes milestone checkpoints and deadline summary
  */
 
 import { useState, useMemo } from "react";
@@ -15,8 +16,10 @@ import {
   startOfWeek,
   endOfWeek,
   isToday,
+  parseISO,
+  isBefore,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGoalCalendar, type CalendarGoalWithStatus, type GoalStatus } from "@/hooks/useGoalCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,6 +30,8 @@ const STATUS_COLORS: Record<GoalStatus, string> = {
   "due-soon": "bg-yellow-500",
   overdue: "bg-red-500",
   behind: "bg-orange-500",
+  "milestone-met": "bg-emerald-400/70",
+  "milestone-behind": "bg-red-400/70",
 };
 
 const STATUS_LABELS: Record<GoalStatus, string> = {
@@ -35,6 +40,8 @@ const STATUS_LABELS: Record<GoalStatus, string> = {
   "due-soon": "Due Soon",
   overdue: "Overdue",
   behind: "Behind Pace",
+  "milestone-met": "On Pace",
+  "milestone-behind": "Behind",
 };
 
 interface GoalPopoverContentProps {
@@ -42,6 +49,36 @@ interface GoalPopoverContentProps {
 }
 
 function GoalPopoverContent({ goal }: GoalPopoverContentProps) {
+  const isMilestone = goal.isMilestone || goal.source === "milestone";
+
+  if (isMilestone) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className={cn("w-2 h-2 rounded-full", STATUS_COLORS[goal.status])} />
+          <h4 className="font-medium text-sm text-[var(--text-primary)]">
+            {goal.title} #{goal.checkpointNumber}
+          </h4>
+        </div>
+        <p className="text-xs text-[var(--text-muted)]">
+          Expected: {goal.expectedValue || goal.targetValue} by {format(parseISO(goal.dueDate), "MMM d")}
+        </p>
+        <p className="text-xs text-[var(--text-muted)]">
+          Actual: {goal.currentValue}
+        </p>
+        {goal.currentValue >= (goal.expectedValue || goal.targetValue) ? (
+          <span className="text-xs text-emerald-400 flex items-center gap-1">
+            <Check className="w-3 h-3" /> On pace!
+          </span>
+        ) : (
+          <span className="text-xs text-orange-400">
+            Behind by {(goal.expectedValue || goal.targetValue) - goal.currentValue}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-2">
@@ -49,7 +86,7 @@ function GoalPopoverContent({ goal }: GoalPopoverContentProps) {
         <div>
           <h4 className="font-medium text-sm text-[var(--text-primary)]">{goal.title}</h4>
           <p className="text-xs text-[var(--text-muted)]">
-            Due: {format(new Date(goal.dueDate), "MMMM d, yyyy")}
+            Due: {format(parseISO(goal.dueDate), "MMMM d, yyyy")}
           </p>
         </div>
       </div>
@@ -101,10 +138,14 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
   const hasGoals = goals.length > 0;
   const today = isToday(date);
 
+  // Separate milestones from regular goals
+  const regularGoals = goals.filter(g => !g.isMilestone && g.source !== "milestone");
+  const milestones = goals.filter(g => g.isMilestone || g.source === "milestone");
+
   // Get most urgent status for the day (for visual priority)
   const urgentStatus = useMemo(() => {
     if (goals.length === 0) return null;
-    const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "on-track", "completed"];
+    const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "milestone-behind", "on-track", "milestone-met", "completed"];
     for (const status of priorities) {
       if (goals.some(g => g.status === status)) return status;
     }
@@ -124,14 +165,22 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
       <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
       {hasGoals && isCurrentMonth && (
         <div className="flex gap-0.5 absolute -bottom-0.5">
-          {goals.slice(0, 3).map((goal) => (
+          {/* Regular goals - larger dots */}
+          {regularGoals.slice(0, 2).map((goal) => (
             <div
               key={`${goal.source}-${goal.id}`}
-              className={cn("w-1 h-1 rounded-full", STATUS_COLORS[goal.status])}
+              className={cn("w-1.5 h-1.5 rounded-full", STATUS_COLORS[goal.status])}
             />
           ))}
-          {goals.length > 3 && (
-            <span className="text-[6px] text-[var(--text-muted)] ml-0.5">+{goals.length - 3}</span>
+          {/* Milestones - smaller dots */}
+          {milestones.slice(0, 2).map((goal) => (
+            <div
+              key={`${goal.source}-${goal.id}`}
+              className={cn("w-1 h-1 rounded-full opacity-70", STATUS_COLORS[goal.status])}
+            />
+          ))}
+          {goals.length > 4 && (
+            <span className="text-[6px] text-[var(--text-muted)] ml-0.5">+{goals.length - 4}</span>
           )}
         </div>
       )}
@@ -148,13 +197,13 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
         {cellContent}
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 bg-[var(--bg-card)] border-white/10 p-4"
+        className="w-72 bg-[var(--bg-card)] border-white/10 p-4 max-h-80 overflow-y-auto"
         align="center"
         sideOffset={8}
       >
         <div className="space-y-3">
           <h3 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-            {format(date, "MMMM d")} - {goals.length} goal{goals.length > 1 ? "s" : ""}
+            {format(date, "MMMM d")} - {goals.length} item{goals.length > 1 ? "s" : ""}
           </h3>
           <div className="space-y-4">
             {goals.map((goal) => (
@@ -169,7 +218,7 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
 
 export function GoalCalendarWidget() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { goalsByDate, isLoading, goals } = useGoalCalendar(currentMonth);
+  const { goalsByDate, isLoading, goals, goalsThisMonth } = useGoalCalendar(currentMonth);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -183,11 +232,12 @@ export function GoalCalendarWidget() {
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToToday = () => setCurrentMonth(new Date());
 
-  // Stats for header
+  // Stats for header (exclude milestones from counts)
   const stats = useMemo(() => {
-    const total = goals.length;
-    const completed = goals.filter(g => g.status === "completed").length;
-    const urgent = goals.filter(g => g.status === "overdue" || g.status === "due-soon").length;
+    const nonMilestones = goals.filter(g => !g.isMilestone && g.source !== "milestone");
+    const total = nonMilestones.length;
+    const completed = nonMilestones.filter(g => g.status === "completed").length;
+    const urgent = nonMilestones.filter(g => g.status === "overdue" || g.status === "due-soon").length;
     return { total, completed, urgent };
   }, [goals]);
 
@@ -267,6 +317,49 @@ export function GoalCalendarWidget() {
           </div>
         )}
       </div>
+
+      {/* Deadline Summary - Simple list */}
+      {!isLoading && goalsThisMonth && goalsThisMonth.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <h4 className="text-[10px] font-medium text-[var(--text-muted)] uppercase mb-2">
+            Due This Month
+          </h4>
+          <div className="space-y-1 max-h-20 overflow-y-auto">
+            {goalsThisMonth.slice(0, 5).map((goal) => {
+              const isOverdue = isBefore(parseISO(goal.dueDate), new Date());
+              const isDueSoon = !isOverdue && goal.status === "due-soon";
+
+              return (
+                <div key={`summary-${goal.source}-${goal.id}`} className="flex items-center justify-between text-xs">
+                  <span className={cn(
+                    "truncate max-w-[140px]",
+                    goal.completed || goal.status === "completed"
+                      ? "text-emerald-400 line-through"
+                      : isOverdue
+                        ? "text-red-400"
+                        : isDueSoon
+                          ? "text-yellow-400"
+                          : "text-[var(--text-primary)]"
+                  )}>
+                    {goal.title}
+                  </span>
+                  <span className={cn(
+                    "text-[10px] ml-2",
+                    isOverdue ? "text-red-400" : "text-[var(--text-muted)]"
+                  )}>
+                    {format(parseISO(goal.dueDate), "MMM d")}
+                  </span>
+                </div>
+              );
+            })}
+            {goalsThisMonth.length > 5 && (
+              <div className="text-[10px] text-[var(--text-muted)]">
+                +{goalsThisMonth.length - 5} more
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {!isLoading && goals.length === 0 && (
