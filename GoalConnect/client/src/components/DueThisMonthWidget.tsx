@@ -13,11 +13,9 @@ export function DueThisMonthWidget() {
   const currentMonth = new Date();
   const { goals, isLoading } = useGoalCalendar(currentMonth);
 
-  // Filter to non-milestone goals and sort by due date
+  // Include all goals (including milestones) and sort by due date
   const dueThisMonth = useMemo(() => {
-    return goals
-      .filter(g => !g.isMilestone && g.source !== "milestone")
-      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return goals.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   }, [goals]);
 
   // Stats
@@ -113,6 +111,9 @@ export function DueThisMonthWidget() {
                     goal.status === "completed" && "line-through"
                   )}>
                     {goal.title}
+                    {goal.isMilestone && goal.checkpointNumber && (
+                      <span className="text-[var(--text-muted)]"> #{goal.checkpointNumber}</span>
+                    )}
                   </p>
 
                   {/* Progress bar for count goals */}

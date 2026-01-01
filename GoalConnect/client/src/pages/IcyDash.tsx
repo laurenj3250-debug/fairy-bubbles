@@ -51,7 +51,7 @@ import type { StudyTaskType } from '@shared/types/study';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
-import { DueThisMonthWidget } from '@/components/DueThisMonthWidget';
+import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 
 // ============================================================================
 // TYPES
@@ -837,44 +837,18 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* ROW 1: Weekly Goals + Deadline Calendar (2 columns) */}
+          {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
-            {/* Weekly Goals */}
-            <div className="glass-card frost-accent min-h-[220px] flex flex-col">
-              <span className="card-title">Weekly Goals</span>
-              <div className="flex-1 flex flex-col justify-center">
-                {goalsLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map(i => <div key={i} className="h-12 bg-white/5 animate-pulse rounded-xl" />)}
-                  </div>
-                ) : weeklyGoals.length === 0 ? (
-                  <Link href="/goals">
-                    <div className="font-body text-sm text-[var(--text-muted)] hover:text-peach-400 py-8 text-center cursor-pointer transition-colors">
-                      + Add weekly goals
-                    </div>
-                  </Link>
-                ) : (
-                  <div className="space-y-2">
-                    {weeklyGoals.map(goal => (
-                      <LuxuryGoalItem
-                        key={goal.id}
-                        title={goal.title}
-                        current={goal.currentValue}
-                        target={goal.targetValue}
-                        onIncrement={() => incrementGoalMutation.mutate(goal.id)}
-                        isPending={incrementGoalMutation.isPending}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Merged Goals + Deadlines Widget */}
+            <GoalsDeadlinesWidget
+              weeklyGoals={weeklyGoals}
+              weeklyLoading={goalsLoading}
+              onIncrement={(id) => incrementGoalMutation.mutate(id)}
+              isIncrementing={incrementGoalMutation.isPending}
+            />
 
-            {/* Right column: Calendar + Due This Month stacked */}
-            <div className="space-y-5">
-              <GoalCalendarWidget />
-              <DueThisMonthWidget />
-            </div>
+            {/* Goal Deadline Calendar */}
+            <GoalCalendarWidget />
           </div>
 
           {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}

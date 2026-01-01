@@ -139,14 +139,10 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
   const hasGoals = goals.length > 0;
   const today = isToday(date);
 
-  // Get most urgent status for the colored bar
-  const urgentStatus = useMemo((): GoalStatus | null => {
-    if (goals.length === 0) return null;
+  // Sort goals by urgency for stacked display
+  const sortedGoals = useMemo(() => {
     const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "milestone-behind", "on-track", "milestone-met", "completed"];
-    for (const status of priorities) {
-      if (goals.some(g => g.status === status)) return status;
-    }
-    return "on-track";
+    return [...goals].sort((a, b) => priorities.indexOf(a.status) - priorities.indexOf(b.status));
   }, [goals]);
 
   const cellContent = (
@@ -160,12 +156,17 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
       )}
     >
       <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
-      {/* Colored underline bar for days with goals */}
-      {hasGoals && isCurrentMonth && urgentStatus && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1">
-          <div className={cn("h-[3px] w-5 rounded-full", STATUS_COLORS[urgentStatus])} />
-          {goals.length > 1 && (
-            <span className="text-[8px] text-[var(--text-muted)] font-medium">{goals.length}</span>
+      {/* Stacked colored bars for days with goals */}
+      {hasGoals && isCurrentMonth && (
+        <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex flex-col gap-[1px]">
+          {sortedGoals.slice(0, 3).map((goal, idx) => (
+            <div
+              key={`${goal.source}-${goal.id}-${idx}`}
+              className={cn("h-[2px] w-4 rounded-full", STATUS_COLORS[goal.status])}
+            />
+          ))}
+          {goals.length > 3 && (
+            <div className="h-[2px] w-4 rounded-full bg-white/30" />
           )}
         </div>
       )}
