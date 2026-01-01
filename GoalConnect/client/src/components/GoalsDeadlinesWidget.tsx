@@ -35,7 +35,7 @@ export function GoalsDeadlinesWidget({
 
   // Get deadlines due this month (all goals including milestones)
   const dueThisMonth = useMemo(() => {
-    return calendarGoals.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return [...calendarGoals].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   }, [calendarGoals]);
 
   const getStatusIcon = (goal: CalendarGoalWithStatus) => {
