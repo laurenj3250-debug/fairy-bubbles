@@ -134,7 +134,7 @@ export function useStravaActivities() {
     error,
     refetch,
   } = useQuery<ActivitiesResponse>({
-    queryKey: ["/api/import/strava/activities", { limit: 50 }],
+    queryKey: ["/api/import/strava/activities?limit=50"],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

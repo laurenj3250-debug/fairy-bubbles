@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Station - Check In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Climbing-themed custom colors */
+    :root {
+      --chalk-white: #f8f7f4;
+      --granite-dark: #2d3436;
+      --rope-orange: #e17055;
+      --carabiner-gold: #fdcb6e;
+      --sky-blue: #74b9ff;
+      --forest-green: #00b894;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Emoji button states */
+    .emoji-btn {
+      transition: all 0.15s ease;
+      font-size: 2rem;
+      padding: 0.75rem;
+      border-radius: 1rem;
+      background: transparent;
+      border: 2px solid transparent;
+    }
+
+    .emoji-btn:hover {
+      transform: scale(1.1);
+      background: rgba(116, 185, 255, 0.1);
+    }
+
+    .emoji-btn.selected {
+      background: rgba(116, 185, 255, 0.2);
+      border-color: var(--sky-blue);
+      transform: scale(1.15);
+    }
+
+    /* Slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #ff6b6b 0%, #feca57 50%, #1dd1a1 100%);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      border: 3px solid var(--sky-blue);
+    }
+
+    /* Tag chip styling */
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      background: #f0f0f0;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 2px solid transparent;
+    }
+
+    .tag-chip:hover {
+      background: #e8e8e8;
+    }
+
+    .tag-chip.selected {
+      background: rgba(116, 185, 255, 0.2);
+      border-color: var(--sky-blue);
+    }
+
+    /* Quick add animation */
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .pop-in {
+      animation: pop 0.2s ease-out;
+    }
+
+    /* Success animation */
+    @keyframes checkmark {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .success-check {
+      animation: checkmark 0.4s ease-out;
+    }
+
+    /* Variable card */
+    .variable-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body class="p-4">
+  <!-- Header -->
+  <div class="max-w-md mx-auto mb-6 text-center text-white">
+    <div class="text-4xl mb-2">🏔️</div>
+    <h1 class="text-2xl font-bold">Weather Station</h1>
+    <p class="text-white/80 text-sm">How's the climb today?</p>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card max-w-md mx-auto rounded-3xl p-6 shadow-xl">
+
+    <!-- Quick Mood (Main Question) -->
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4 text-center">Right now I feel...</h2>
+      <div class="flex justify-center gap-2" id="mood-picker">
+        <button class="emoji-btn" data-value="1" onclick="selectMood(this)">😫</button>
+        <button class="emoji-btn" data-value="2" onclick="selectMood(this)">😔</button>
+        <button class="emoji-btn" data-value="3" onclick="selectMood(this)">😐</button>
+        <button class="emoji-btn" data-value="4" onclick="selectMood(this)">🙂</button>
+        <button class="emoji-btn" data-value="5" onclick="selectMood(this)">😄</button>
+      </div>
+    </div>
+
+    <!-- Expandable Section (appears after mood selection) -->
+    <div id="details-section" class="hidden">
+
+      <!-- Divider -->
+      <div class="border-t border-gray-100 mb-6"></div>
+
+      <!-- Quick Context Tags -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-gray-500 mb-3">What's going on? <span class="text-gray-400">(optional)</span></h3>
+        <div class="flex flex-wrap gap-2" id="tag-container">
+          <button class="tag-chip" onclick="toggleTag(this)">☕ coffee</button>
+          <button class="tag-chip" onclick="toggleTag(this)">💼 work</button>
+          <button class="tag-chip" onclick="toggleTag(this)">🏋️ exercised</button>
+          <button class="tag-chip" onclick="toggleTag(this)">😴 tired</button>
+          <button class="tag-chip" onclick="toggleTag(this)">🌧️ bad weather</button>
+          <button class="tag-chip" onclick="toggleTag(this)">🧗 climbed</button>
+        </div>
+
+        <!-- Add custom tag -->
+        <div class="mt-3 flex gap-2">
+          <input
+            type="text"
+            id="custom-tag-input"
+            placeholder="+ add tag"
+            class="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:border-sky-400"
+            onkeypress="if(event.key==='Enter')addCustomTag()"
+          >
+        </div>
+      </div>
+
+      <!-- Optional Variables (collapsed by default) -->
+      <details class="mb-6">
+        <summary class="text-sm font-medium text-gray-500 cursor-pointer hover:text-gray-700 mb-3">
+          Track more variables
+        </summary>
+
+        <div class="mt-4 space-y-4">
+          <!-- Energy Slider -->
+          <div class="variable-card">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">⚡ Energy</span>
+              <span class="text-sm text-gray-400" id="energy-value">5</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value="5"
+              oninput="document.getElementById('energy-value').textContent = this.value"
+            >
+          </div>
+
+          <!-- Sleep Slider -->
+          <div class="variable-card">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">😴 Sleep quality</span>
+              <span class="text-sm text-gray-400" id="sleep-value">5</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value="5"
+              oninput="document.getElementById('sleep-value').textContent = this.value"
+            >
+          </div>
+
+          <!-- Anxiety Quick Pick -->
+          <div class="variable-card">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">😰 Anxiety</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="tag-chip text-xs" onclick="selectAnxiety(this, 'none')">None</button>
+              <button class="tag-chip text-xs" onclick="selectAnxiety(this, 'mild')">Mild</button>
+              <button class="tag-chip text-xs" onclick="selectAnxiety(this, 'moderate')">Moderate</button>
+              <button class="tag-chip text-xs" onclick="selectAnxiety(this, 'high')">High</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Save Button -->
+      <button
+        id="save-btn"
+        class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+        onclick="saveEntry()"
+      >
+        Log Check-in ✓
+      </button>
+
+      <!-- Skip hint -->
+      <p class="text-center text-xs text-gray-400 mt-3">
+        Tap mood → save. That's it. Everything else is optional.
+      </p>
+    </div>
+
+    <!-- Success State (hidden by default) -->
+    <div id="success-state" class="hidden text-center py-8">
+      <div class="text-6xl success-check mb-4">✓</div>
+      <h2 class="text-xl font-semibold text-gray-700 mb-2">Logged!</h2>
+      <p class="text-gray-500 text-sm mb-6">Keep climbing 🏔️</p>
+      <button
+        class="px-6 py-2 text-indigo-600 font-medium hover:bg-indigo-50 rounded-lg transition-colors"
+        onclick="resetForm()"
+      >
+        Log another
+      </button>
+    </div>
+  </div>
+
+  <!-- Mini Stats Preview (shows after first log) -->
+  <div class="max-w-md mx-auto mt-6 p-4 rounded-2xl bg-white/10 text-white/80 text-sm">
+    <div class="flex justify-between items-center">
+      <span>Today's logs: <strong class="text-white">2</strong></span>
+      <span>Avg mood: <strong class="text-white">🙂 3.8</strong></span>
+      <a href="#" class="text-white underline">View trends →</a>
+    </div>
+  </div>
+
+  <!-- Bottom spacing for mobile -->
+  <div class="h-20"></div>
+
+  <script>
+    let selectedMood = null;
+    let selectedTags = new Set();
+    let anxietyLevel = null;
+
+    function selectMood(btn) {
+      // Deselect all
+      document.querySelectorAll('#mood-picker .emoji-btn').forEach(b => {
+        b.classList.remove('selected');
+      });
+
+      // Select this one
+      btn.classList.add('selected');
+      selectedMood = btn.dataset.value;
+
+      // Show details section with animation
+      const details = document.getElementById('details-section');
+      if (details.classList.contains('hidden')) {
+        details.classList.remove('hidden');
+        details.classList.add('pop-in');
+      }
+    }
+
+    function toggleTag(btn) {
+      btn.classList.toggle('selected');
+      const tag = btn.textContent.trim();
+      if (selectedTags.has(tag)) {
+        selectedTags.delete(tag);
+      } else {
+        selectedTags.add(tag);
+      }
+    }
+
+    function addCustomTag() {
+      const input = document.getElementById('custom-tag-input');
+      const value = input.value.trim();
+      if (value) {
+        const container = document.getElementById('tag-container');
+        const newTag = document.createElement('button');
+        newTag.className = 'tag-chip selected pop-in';
+        newTag.textContent = value;
+        newTag.onclick = function() { toggleTag(this); };
+        container.appendChild(newTag);
+        selectedTags.add(value);
+        input.value = '';
+      }
+    }
+
+    function selectAnxiety(btn, level) {
+      // Deselect siblings
+      btn.parentElement.querySelectorAll('.tag-chip').forEach(b => {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+      anxietyLevel = level;
+    }
+
+    function saveEntry() {
+      // Hide form, show success
+      document.getElementById('details-section').classList.add('hidden');
+      document.getElementById('mood-picker').classList.add('hidden');
+      document.querySelector('h2').classList.add('hidden');
+      document.getElementById('success-state').classList.remove('hidden');
+
+      // Log what would be saved
+      console.log('Saving entry:', {
+        mood: selectedMood,
+        tags: Array.from(selectedTags),
+        energy: document.querySelector('input[type="range"]')?.value,
+        anxiety: anxietyLevel,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    function resetForm() {
+      // Reset state
+      selectedMood = null;
+      selectedTags.clear();
+      anxietyLevel = null;
+
+      // Reset UI
+      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.tag-chip').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('input[type="range"]').forEach(r => r.value = 5);
+      document.getElementById('energy-value').textContent = '5';
+      document.getElementById('sleep-value').textContent = '5';
+
+      // Show form, hide success
+      document.getElementById('success-state').classList.add('hidden');
+      document.getElementById('mood-picker').classList.remove('hidden');
+      document.querySelector('h2').classList.remove('hidden');
+      document.getElementById('details-section').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yearly Goals Redesign - Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            peach: {
+              50: '#fdf8f6',
+              100: '#fdf6f0',
+              200: '#f8e4d6',
+              300: '#f0c9ae',
+              400: '#e4a880',
+              500: '#d4936a',
+              600: '#c07850',
+            }
+          },
+          fontFamily: {
+            heading: ['Cormorant Garamond', 'Georgia', 'serif'],
+            body: ['Source Sans 3', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-deep: #070f1a;
+      --bg-primary: #0c1a28;
+      --bg-card: #0f2433;
+      --bg-card-alpha: rgba(15, 36, 51, 0.78);
+      --text-primary: #f5f2ed;
+      --text-secondary: #c8d4e0;
+      --text-muted: #9aaab8;
+      --border-card: rgba(228, 168, 128, 0.08);
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-primary) 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+    }
+
+    .glass-card {
+      background: var(--bg-card-alpha);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .frost-accent::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, rgba(228, 168, 128, 0.15) 0%, transparent 50%);
+      border-radius: 0 20px 0 24px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="p-8">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header Section -->
+    <div class="mb-8">
+      <!-- Title and Year Selector Row -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-peach-400/20 to-peach-500/10 flex items-center justify-center border border-peach-400/20">
+            <svg class="w-5 h-5 text-peach-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke-width="2"/>
+              <path stroke-width="2" d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-heading font-semibold tracking-wide" style="color: var(--text-primary)">
+              Yearly Goals
+            </h1>
+            <p class="text-sm font-body" style="color: var(--text-muted)">
+              Your aspirations for the year
+            </p>
+          </div>
+        </div>
+
+        <!-- Year selector -->
+        <div class="glass-card frost-accent !p-1 flex items-center gap-1">
+          <button class="p-2 rounded-lg hover:bg-white/10 transition-colors" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="text-lg font-heading font-medium min-w-[72px] text-center tabular-nums" style="color: var(--text-primary)">
+            2025
+          </span>
+          <button class="p-2 rounded-lg hover:bg-white/10 transition-colors" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Dashboard -->
+      <div class="glass-card frost-accent !p-6">
+        <div class="flex items-center gap-8">
+          <!-- Circular Progress -->
+          <div class="relative flex-shrink-0">
+            <svg class="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="none"/>
+              <circle cx="60" cy="60" r="54" stroke="url(#grad)" stroke-width="8" fill="none" stroke-linecap="round"
+                style="stroke-dasharray: 339.29; stroke-dashoffset: 237.5"/>
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f0c9ae"/>
+                  <stop offset="100%" stop-color="#d4936a"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-3xl font-heading font-light tabular-nums" style="color: var(--text-primary)">30%</span>
+              <span class="text-xs font-body uppercase tracking-wider" style="color: var(--text-muted)">complete</span>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="flex-1 grid grid-cols-3 gap-6">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2" style="color: var(--text-muted)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                <span class="text-xs uppercase tracking-wider font-body">Total</span>
+              </div>
+              <div class="text-3xl font-heading font-light tabular-nums" style="color: var(--text-primary)">27</div>
+              <div class="text-xs font-body" style="color: var(--text-muted)">goals set</div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-emerald-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15l-2-2m0 0l2-2m-2 2h12M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+                <span class="text-xs uppercase tracking-wider font-body">Done</span>
+              </div>
+              <div class="text-3xl font-heading font-light text-emerald-400 tabular-nums">8</div>
+              <div class="text-xs font-body" style="color: var(--text-muted)">achieved</div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-amber-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                <span class="text-xs uppercase tracking-wider font-body">Progress</span>
+              </div>
+              <div class="text-3xl font-heading font-light text-amber-400 tabular-nums">42%</div>
+              <div class="text-xs font-body" style="color: var(--text-muted)">average</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="space-y-4">
+
+      <!-- Residency Category -->
+      <div class="glass-card overflow-hidden !p-0">
+        <button class="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border bg-rose-500/15 border-rose-500/30">
+            <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <h3 class="text-lg font-heading font-medium" style="color: var(--text-primary)">Residency</h3>
+            <span class="text-sm font-body text-rose-400">2 of 5 complete</span>
+          </div>
+          <!-- Progress ring -->
+          <div class="relative w-12 h-12 flex-shrink-0">
+            <svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
+              <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" class="text-rose-400"
+                style="stroke-dasharray: 125.66; stroke-dashoffset: 75.4"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-medium tabular-nums" style="color: var(--text-primary)">40%</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 flex items-center justify-center" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </button>
+
+        <!-- Goals list -->
+        <div class="border-t border-white/5">
+          <!-- Goal row - binary completed -->
+          <div class="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] border-b border-white/5">
+            <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-body font-medium line-through" style="color: var(--text-muted)">Complete a solo hemilaminectomy</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-2 py-1 text-emerald-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+              <span class="text-xs font-body">Claimed</span>
+            </div>
+          </div>
+
+          <!-- Goal row - binary incomplete -->
+          <div class="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] border-b border-white/5">
+            <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 hover:ring-white/20" style="color: var(--text-muted)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-body font-medium" style="color: var(--text-primary)">Finish de Lahunta</span>
+            </div>
+          </div>
+
+          <!-- Goal row - count type with progress -->
+          <div class="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+            <div class="w-8 h-8 flex items-center justify-center rounded-lg ring-1 bg-rose-500/15 border-rose-500/30 text-rose-400">
+              <span class="text-[10px] font-bold tabular-nums">67%</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-body font-medium" style="color: var(--text-primary)">Complete 30 neuro cases</span>
+                <span class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10" style="color: var(--text-muted)">
+                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                  Case Log
+                </span>
+              </div>
+              <div class="mt-2 flex items-center gap-3">
+                <div class="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500" style="width: 67%"></div>
+                </div>
+                <span class="text-xs tabular-nums font-body" style="color: var(--text-muted)">20/30</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Climbing Category (Complete) -->
+      <div class="glass-card overflow-hidden !p-0 ring-1 ring-emerald-500/30">
+        <button class="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border bg-sky-500/15 border-sky-500/30">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" d="M3 21l6-6m0 0l6 6m-6-6v-9m6 9l6-6"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <h3 class="text-lg font-heading font-medium" style="color: var(--text-primary)">Climbing</h3>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-sm font-body text-sky-400">3 of 3 complete</span>
+              <span class="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Done
+              </span>
+            </div>
+          </div>
+          <div class="relative w-12 h-12 flex-shrink-0">
+            <svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
+              <circle cx="24" cy="24" r="20" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"
+                style="stroke-dasharray: 125.66; stroke-dashoffset: 0"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-medium tabular-nums" style="color: var(--text-primary)">100%</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 flex items-center justify-center" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </button>
+      </div>
+
+      <!-- Fitness Category -->
+      <div class="glass-card overflow-hidden !p-0">
+        <button class="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border bg-orange-500/15 border-orange-500/30">
+            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" d="M4 8h2m0 0h2M6 8V6m0 2v2m12-2h2m-2 0h-2m2 0V6m0 2v2M3 12h18M4 16h2m0 0h2m-2 0v-2m0 2v2m12-2h2m-2 0h-2m2 0v-2m0 2v2"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <h3 class="text-lg font-heading font-medium" style="color: var(--text-primary)">Fitness</h3>
+            <span class="text-sm font-body text-orange-400">1 of 4 complete</span>
+          </div>
+          <div class="relative w-12 h-12 flex-shrink-0">
+            <svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
+              <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" class="text-orange-400"
+                style="stroke-dasharray: 125.66; stroke-dashoffset: 94.25"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-medium tabular-nums" style="color: var(--text-primary)">25%</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 flex items-center justify-center" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </button>
+
+        <div class="border-t border-white/5">
+          <!-- Compound goal with sub-items -->
+          <div class="border-b border-white/5">
+            <div class="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg ring-1 bg-orange-500/15 border-orange-500/30 text-orange-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-body font-medium" style="color: var(--text-primary)">Complete strength milestones</span>
+                <div class="mt-1 flex items-center gap-2">
+                  <div class="flex gap-0.5">
+                    <div class="w-4 h-1 rounded-full bg-emerald-400"></div>
+                    <div class="w-4 h-1 rounded-full bg-emerald-400"></div>
+                    <div class="w-4 h-1 rounded-full bg-white/10"></div>
+                    <div class="w-4 h-1 rounded-full bg-white/10"></div>
+                  </div>
+                  <span class="text-xs font-body" style="color: var(--text-muted)">2/4</span>
+                </div>
+              </div>
+            </div>
+            <!-- Sub-items -->
+            <div class="pb-3 px-4 ml-11 space-y-1">
+              <button class="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/[0.03]">
+                <div class="w-5 h-5 rounded-md flex items-center justify-center ring-1 bg-emerald-500/20 text-emerald-400 ring-emerald-500/30">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <span class="text-sm font-body line-through" style="color: var(--text-muted)">Bench press 135 lbs</span>
+              </button>
+              <button class="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/[0.03]">
+                <div class="w-5 h-5 rounded-md flex items-center justify-center ring-1 bg-emerald-500/20 text-emerald-400 ring-emerald-500/30">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <span class="text-sm font-body line-through" style="color: var(--text-muted)">Squat 185 lbs</span>
+              </button>
+              <button class="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/[0.03]">
+                <div class="w-5 h-5 rounded-md flex items-center justify-center ring-1 bg-white/5 ring-white/10" style="color: var(--text-muted)">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <span class="text-sm font-body" style="color: var(--text-secondary)">Deadlift 225 lbs</span>
+              </button>
+              <button class="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/[0.03]">
+                <div class="w-5 h-5 rounded-md flex items-center justify-center ring-1 bg-white/5 ring-white/10" style="color: var(--text-muted)">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <span class="text-sm font-body" style="color: var(--text-secondary)">5 pull-ups</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Goal with claim button -->
+          <div class="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02]">
+            <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-body font-medium line-through" style="color: var(--text-muted)">100 lifting workouts</span>
+              <div class="mt-2 flex items-center gap-3">
+                <div class="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500" style="width: 100%"></div>
+                </div>
+                <span class="text-xs tabular-nums font-body" style="color: var(--text-muted)">100/100</span>
+              </div>
+            </div>
+            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-400 text-sm font-medium font-body ring-1 ring-amber-500/30 animate-pulse">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15l-2-2m0 0l2-2m-2 2h12M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+              <span>+100</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Books Category (collapsed) -->
+      <div class="glass-card overflow-hidden !p-0">
+        <button class="w-full flex items-center gap-4 p-4 hover:bg-white/[0.02] transition-colors">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center border bg-violet-500/15 border-violet-500/30">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <h3 class="text-lg font-heading font-medium" style="color: var(--text-primary)">Books</h3>
+            <span class="text-sm font-body text-violet-400">2 of 6 complete</span>
+          </div>
+          <div class="relative w-12 h-12 flex-shrink-0">
+            <svg class="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
+              <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" class="text-violet-400"
+                style="stroke-dasharray: 125.66; stroke-dashoffset: 83.77"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-medium tabular-nums" style="color: var(--text-primary)">33%</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 flex items-center justify-center" style="color: var(--text-muted)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </button>
+      </div>
+
+    </div>
+
+    <p class="text-center mt-8 text-sm font-body" style="color: var(--text-muted)">
+      This is a preview mockup of the redesigned Yearly Goals page
+    </p>
+  </div>
+</body>
+</html>

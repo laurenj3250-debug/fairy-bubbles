@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Station v5 - Full Featured</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Mood picker - bigger, more expressive */
+    .mood-picker {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.375rem;
+      padding: 0.5rem;
+      background: #f5f5f5;
+      border-radius: 1rem;
+    }
+
+    .mood-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem 0.25rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: transparent;
+    }
+
+    .mood-btn:hover {
+      background: white;
+    }
+
+    .mood-btn.selected {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: scale(1.05);
+    }
+
+    .mood-btn .emoji { font-size: 1.5rem; }
+    .mood-btn .label { font-size: 0.6rem; font-weight: 600; color: #666; margin-top: 2px; }
+    .mood-btn.selected .label { color: #333; }
+
+    /* Variable sliders */
+    .variable-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .variable-row:last-child {
+      border-bottom: none;
+    }
+
+    .variable-icon {
+      font-size: 1.25rem;
+      width: 32px;
+      text-align: center;
+    }
+
+    .variable-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #444;
+      width: 80px;
+    }
+
+    .variable-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ff6b6b 0%, #feca57 50%, #1dd1a1 100%);
+    }
+
+    .variable-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    .variable-value {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #666;
+      width: 24px;
+      text-align: right;
+    }
+
+    /* Activity chips */
+    .chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 2rem;
+      background: #f0f0f0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      border: 2px solid transparent;
+    }
+
+    .chip:hover {
+      background: #e8e8e8;
+    }
+
+    .chip.selected {
+      background: #e3f2fd;
+      border-color: #64b5f6;
+    }
+
+    .chip.negative.selected {
+      background: #ffebee;
+      border-color: #ef9a9a;
+    }
+
+    .chip .icon { font-size: 0.9rem; }
+
+    /* Section styling */
+    .section {
+      margin-bottom: 1.25rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+    }
+
+    .section-hint {
+      font-size: 0.65rem;
+      color: #aaa;
+    }
+
+    /* Tag input */
+    .tag-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .tag-input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .tag-input:focus {
+      border-color: #64b5f6;
+    }
+
+    .tag-add-btn {
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Notes */
+    .notes-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 0.75rem;
+      font-size: 0.85rem;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .notes-input:focus {
+      border-color: #64b5f6;
+    }
+
+    /* Save button */
+    .save-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .save-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .save-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-up {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    /* Success view */
+    .success-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+    }
+
+    .success-day {
+      aspect-ratio: 1;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    /* Collapsible */
+    details summary {
+      cursor: pointer;
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    /* Tap options for variables */
+    .tap-option {
+      flex: 1;
+      padding: 0.625rem 0;
+      background: #f0f0f0;
+      border: 2px solid transparent;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .tap-option:hover {
+      background: #e8e8e8;
+    }
+
+    .tap-option.selected {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <!-- Header -->
+  <div class="max-w-md mx-auto mb-3 flex items-center justify-between text-white">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🏔️</span>
+      <div>
+        <h1 class="text-lg font-bold leading-tight">Weather Station</h1>
+        <p class="text-white/60 text-xs">Thursday, Dec 12</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full text-xs">
+      🔥 <span class="font-semibold">8</span>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card max-w-md mx-auto rounded-2xl shadow-xl overflow-hidden">
+
+    <!-- Entry Form -->
+    <div id="form-view" class="p-5">
+
+      <!-- MOOD -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Overall Mood</span>
+        </div>
+        <div class="mood-picker">
+          <button class="mood-btn" data-mood="1" onclick="selectMood(this)">
+            <span class="emoji">😞</span>
+            <span class="label">Awful</span>
+          </button>
+          <button class="mood-btn" data-mood="2" onclick="selectMood(this)">
+            <span class="emoji">😔</span>
+            <span class="label">Bad</span>
+          </button>
+          <button class="mood-btn" data-mood="3" onclick="selectMood(this)">
+            <span class="emoji">😐</span>
+            <span class="label">Meh</span>
+          </button>
+          <button class="mood-btn" data-mood="4" onclick="selectMood(this)">
+            <span class="emoji">🙂</span>
+            <span class="label">Good</span>
+          </button>
+          <button class="mood-btn" data-mood="5" onclick="selectMood(this)">
+            <span class="emoji">😄</span>
+            <span class="label">Great</span>
+          </button>
+          <button class="mood-btn" data-mood="6" onclick="selectMood(this)">
+            <span class="emoji">✨</span>
+            <span class="label">Alive</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VARIABLES - tap to select -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">How's your...</span>
+          <span class="section-hint">tap to rate</span>
+        </div>
+        <div class="space-y-3">
+          <!-- Energy -->
+          <div class="variable-tap-row">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">⚡</span>
+              <span class="text-sm font-medium text-gray-700">Energy</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="tap-option" data-var="energy" data-val="1" onclick="selectVar(this)">1</button>
+              <button class="tap-option" data-var="energy" data-val="2" onclick="selectVar(this)">2</button>
+              <button class="tap-option" data-var="energy" data-val="3" onclick="selectVar(this)">3</button>
+              <button class="tap-option" data-var="energy" data-val="4" onclick="selectVar(this)">4</button>
+              <button class="tap-option" data-var="energy" data-val="5" onclick="selectVar(this)">5</button>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1 px-1">
+              <span>Exhausted</span>
+              <span>Wired</span>
+            </div>
+          </div>
+
+          <!-- Anxiety -->
+          <div class="variable-tap-row">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">😰</span>
+              <span class="text-sm font-medium text-gray-700">Anxiety</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="tap-option" data-var="anxiety" data-val="1" onclick="selectVar(this)">1</button>
+              <button class="tap-option" data-var="anxiety" data-val="2" onclick="selectVar(this)">2</button>
+              <button class="tap-option" data-var="anxiety" data-val="3" onclick="selectVar(this)">3</button>
+              <button class="tap-option" data-var="anxiety" data-val="4" onclick="selectVar(this)">4</button>
+              <button class="tap-option" data-var="anxiety" data-val="5" onclick="selectVar(this)">5</button>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1 px-1">
+              <span>Calm</span>
+              <span>Spiraling</span>
+            </div>
+          </div>
+
+          <!-- Focus -->
+          <div class="variable-tap-row">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">🎯</span>
+              <span class="text-sm font-medium text-gray-700">Focus</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="tap-option" data-var="focus" data-val="1" onclick="selectVar(this)">1</button>
+              <button class="tap-option" data-var="focus" data-val="2" onclick="selectVar(this)">2</button>
+              <button class="tap-option" data-var="focus" data-val="3" onclick="selectVar(this)">3</button>
+              <button class="tap-option" data-var="focus" data-val="4" onclick="selectVar(this)">4</button>
+              <button class="tap-option" data-var="focus" data-val="5" onclick="selectVar(this)">5</button>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1 px-1">
+              <span>Scattered</span>
+              <span>Locked in</span>
+            </div>
+          </div>
+
+          <!-- Sleep -->
+          <div class="variable-tap-row">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">😴</span>
+              <span class="text-sm font-medium text-gray-700">Sleep</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="tap-option" data-var="sleep" data-val="1" onclick="selectVar(this)">1</button>
+              <button class="tap-option" data-var="sleep" data-val="2" onclick="selectVar(this)">2</button>
+              <button class="tap-option" data-var="sleep" data-val="3" onclick="selectVar(this)">3</button>
+              <button class="tap-option" data-var="sleep" data-val="4" onclick="selectVar(this)">4</button>
+              <button class="tap-option" data-var="sleep" data-val="5" onclick="selectVar(this)">5</button>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1 px-1">
+              <span>Awful</span>
+              <span>Amazing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITIES - Positive -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">What Helped</span>
+          <span class="section-hint">tap all that apply</span>
+        </div>
+        <div class="chip-grid">
+          <button class="chip" onclick="toggle(this)"><span class="icon">🧗</span>Climbed outdoor</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🧱</span>Gym climb</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🏋️</span>Lifted</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🌲</span>Nature</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">💬</span>Adam</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🇩🇪</span>German</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">📖</span>Studied</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🌊</span>Flow state</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">👥</span>Social</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🎯</span>Achieved</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🍿</span>Good rest</button>
+        </div>
+      </div>
+
+      <!-- ACTIVITIES - Negative -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">What Drained</span>
+        </div>
+        <div class="chip-grid">
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">💼</span>Work drain</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">📱</span>Scrolled</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">🍔</span>Binge</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">🙅</span>Bailed</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">🏠</span>Stuck inside</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">😵</span>Overwhelmed</button>
+          <button class="chip negative" onclick="toggle(this)"><span class="icon">💭</span>Ruminating</button>
+        </div>
+      </div>
+
+      <!-- CONTEXT TAGS -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Context Tags</span>
+          <span class="section-hint">add your own</span>
+        </div>
+        <div class="chip-grid" id="custom-tags">
+          <button class="chip" onclick="toggle(this)"><span class="icon">☕</span>Caffeine</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🌧️</span>Bad weather</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">🩸</span>Period</button>
+          <button class="chip" onclick="toggle(this)"><span class="icon">💊</span>Meds</button>
+        </div>
+        <div class="tag-input-row">
+          <input type="text" class="tag-input" placeholder="+ Add tag..." id="new-tag-input" onkeypress="if(event.key==='Enter')addTag()">
+          <button class="tag-add-btn" onclick="addTag()">Add</button>
+        </div>
+      </div>
+
+      <!-- NOTES (collapsed) -->
+      <details class="section">
+        <summary class="section-header" style="margin-bottom: 0;">
+          <span class="section-title">Notes (optional)</span>
+          <span class="section-hint">▼</span>
+        </summary>
+        <div class="mt-3">
+          <textarea class="notes-input" rows="3" placeholder="Anything else worth remembering..."></textarea>
+        </div>
+      </details>
+
+      <!-- SAVE -->
+      <button class="save-btn" onclick="save()">
+        Log Entry ✓
+      </button>
+
+    </div>
+
+    <!-- Success View -->
+    <div id="success-view" class="hidden p-5 text-center slide-up">
+      <div class="text-5xl mb-3">🏔️</div>
+      <h2 class="text-xl font-bold text-gray-800 mb-1">Logged!</h2>
+      <p class="text-gray-500 text-sm mb-6">Entry saved • 8 day streak</p>
+
+      <!-- Week view -->
+      <div class="bg-gray-50 rounded-xl p-4 mb-4">
+        <p class="text-xs text-gray-500 mb-2 text-left font-medium">This Week</p>
+        <div class="success-grid">
+          <div class="success-day bg-yellow-100">😐</div>
+          <div class="success-day bg-green-100">🙂</div>
+          <div class="success-day bg-yellow-100">😐</div>
+          <div class="success-day bg-red-100">😔</div>
+          <div class="success-day bg-blue-100">✨</div>
+          <div class="success-day bg-green-100">🙂</div>
+          <div class="success-day bg-indigo-200 ring-2 ring-indigo-400" id="today-cell">?</div>
+        </div>
+      </div>
+
+      <!-- Insight -->
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-4 text-left border-l-4 border-indigo-400">
+        <p class="text-xs text-indigo-600 font-semibold mb-1">Pattern detected</p>
+        <p class="text-sm text-gray-700">Your mood is <strong>40% better</strong> on days you climb outdoors vs. stay inside.</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button class="flex-1 py-3 text-indigo-600 font-medium hover:bg-indigo-50 rounded-xl text-sm" onclick="reset()">
+          Edit Entry
+        </button>
+        <button class="flex-1 py-3 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-xl text-sm">
+          View Insights →
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="h-8"></div>
+
+  <script>
+    let selectedMood = null;
+
+    function selectMood(btn) {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedMood = parseInt(btn.dataset.mood);
+    }
+
+    function toggle(btn) {
+      btn.classList.toggle('selected');
+    }
+
+    function selectVar(btn) {
+      const varName = btn.dataset.var;
+      // Deselect siblings
+      document.querySelectorAll(`.tap-option[data-var="${varName}"]`).forEach(b => {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+    }
+
+    function addTag() {
+      const input = document.getElementById('new-tag-input');
+      const value = input.value.trim();
+      if (value) {
+        const container = document.getElementById('custom-tags');
+        const chip = document.createElement('button');
+        chip.className = 'chip selected';
+        chip.innerHTML = `<span class="icon">🏷️</span>${value}`;
+        chip.onclick = function() { toggle(this); };
+        container.appendChild(chip);
+        input.value = '';
+      }
+    }
+
+    function save() {
+      if (!selectedMood) {
+        alert('Please select a mood first');
+        return;
+      }
+
+      const emojis = ['', '😞', '😔', '😐', '🙂', '😄', '✨'];
+      document.getElementById('today-cell').textContent = emojis[selectedMood];
+
+      const sliders = document.querySelectorAll('.variable-slider');
+      const variables = {};
+      sliders.forEach(s => {
+        const name = s.parentElement.querySelector('.variable-name').textContent;
+        variables[name] = s.value;
+      });
+
+      const activities = Array.from(document.querySelectorAll('.chip.selected'))
+        .map(c => c.textContent.trim());
+
+      console.log('Saved:', {
+        mood: selectedMood,
+        variables,
+        activities,
+        notes: document.querySelector('.notes-input').value,
+        timestamp: new Date().toISOString()
+      });
+
+      document.getElementById('form-view').classList.add('hidden');
+      document.getElementById('success-view').classList.remove('hidden');
+    }
+
+    function reset() {
+      document.getElementById('success-view').classList.add('hidden');
+      document.getElementById('form-view').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

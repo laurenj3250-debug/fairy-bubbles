@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Station v2 - What Happened Today?</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --chalk-white: #f8f7f4;
+      --granite-dark: #2d3436;
+      --rope-orange: #e17055;
+      --carabiner-gold: #fdcb6e;
+      --sky-blue: #74b9ff;
+      --forest-green: #00b894;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Simple 3-mood picker */
+    .mood-btn {
+      transition: all 0.15s ease;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1rem;
+      background: #f5f5f5;
+      border: 3px solid transparent;
+      cursor: pointer;
+    }
+
+    .mood-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .mood-btn.selected {
+      transform: scale(1.1);
+    }
+
+    .mood-btn.rough { border-color: #ff6b6b; background: #fff5f5; }
+    .mood-btn.meh { border-color: #feca57; background: #fffbf0; }
+    .mood-btn.alive { border-color: #1dd1a1; background: #f0fff9; }
+
+    .mood-btn .emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .mood-btn .label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    .mood-btn.rough .label { color: #c0392b; }
+    .mood-btn.meh .label { color: #b38600; }
+    .mood-btn.alive .label { color: #00a676; }
+
+    /* Activity toggles - bigger, easier to tap */
+    .activity-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      border-radius: 0.75rem;
+      background: #f8f8f8;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      width: 100%;
+      text-align: left;
+    }
+
+    .activity-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .activity-btn.selected {
+      background: #e8f4fd;
+      border-color: var(--sky-blue);
+    }
+
+    .activity-btn .icon {
+      font-size: 1.25rem;
+      width: 32px;
+      text-align: center;
+    }
+
+    .activity-btn .text {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .activity-btn .check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: transparent;
+      transition: all 0.15s ease;
+    }
+
+    .activity-btn.selected .check {
+      background: var(--sky-blue);
+      border-color: var(--sky-blue);
+      color: white;
+    }
+
+    /* Quick add animation */
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .pop-in {
+      animation: pop 0.2s ease-out;
+    }
+
+    /* Category divider */
+    .category-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #999;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Streak counter style */
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 1rem;
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <!-- Header -->
+  <div class="max-w-md mx-auto mb-4 text-center text-white">
+    <div class="flex justify-center items-center gap-2 mb-2">
+      <span class="text-3xl">🏔️</span>
+      <h1 class="text-xl font-bold">Weather Station</h1>
+    </div>
+    <div class="streak-badge mx-auto">
+      <span>🔥</span>
+      <span>3 day streak</span>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card max-w-md mx-auto rounded-3xl p-5 shadow-xl">
+
+    <!-- STEP 1: Simple mood - only 3 options -->
+    <div class="mb-6">
+      <h2 class="text-sm font-medium text-gray-500 mb-3 text-center">Today was...</h2>
+      <div class="flex justify-center gap-4" id="mood-picker">
+        <button class="mood-btn rough" onclick="selectMood(this, 'rough')">
+          <span class="emoji">😞</span>
+          <span class="label">Rough</span>
+        </button>
+        <button class="mood-btn meh" onclick="selectMood(this, 'meh')">
+          <span class="emoji">😐</span>
+          <span class="label">Meh</span>
+        </button>
+        <button class="mood-btn alive" onclick="selectMood(this, 'alive')">
+          <span class="emoji">✨</span>
+          <span class="label">Alive</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: What happened? (tap to select, no typing) -->
+    <div id="activities-section" class="hidden">
+      <div class="border-t border-gray-100 pt-4 mb-4"></div>
+
+      <h2 class="text-sm font-medium text-gray-500 mb-1">What happened?</h2>
+      <p class="text-xs text-gray-400 mb-3">Tap all that apply • this helps find patterns</p>
+
+      <!-- Energizers (things that help) -->
+      <div class="category-label">Energizers</div>
+      <div class="space-y-2 mb-4">
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🧗</span>
+          <span class="text">Climbed outdoors</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🧱</span>
+          <span class="text">Gym climbing</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🏋️</span>
+          <span class="text">Lifted</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🌲</span>
+          <span class="text">Was outside / nature</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">💬</span>
+          <span class="text">Talked to Adam</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🇩🇪</span>
+          <span class="text">German practice</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🌊</span>
+          <span class="text">Flow state (anything)</span>
+          <span class="check">✓</span>
+        </button>
+      </div>
+
+      <!-- Drainers (things to notice) -->
+      <div class="category-label">Drainers</div>
+      <div class="space-y-2 mb-4">
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">💼</span>
+          <span class="text">Worked (draining day)</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">📱</span>
+          <span class="text">Black hole scrolling</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">😴</span>
+          <span class="text">Bad sleep</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🏠</span>
+          <span class="text">Didn't leave the house</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="activity-btn" onclick="toggleActivity(this)">
+          <span class="icon">🙅</span>
+          <span class="text">Bailed on plans</span>
+          <span class="check">✓</span>
+        </button>
+      </div>
+
+      <!-- Expand for more -->
+      <details class="mb-4">
+        <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+          + More activities
+        </summary>
+        <div class="mt-3 space-y-2">
+          <button class="activity-btn" onclick="toggleActivity(this)">
+            <span class="icon">👥</span>
+            <span class="text">Social thing</span>
+            <span class="check">✓</span>
+          </button>
+          <button class="activity-btn" onclick="toggleActivity(this)">
+            <span class="icon">📖</span>
+            <span class="text">Studied neuro</span>
+            <span class="check">✓</span>
+          </button>
+          <button class="activity-btn" onclick="toggleActivity(this)">
+            <span class="icon">🎯</span>
+            <span class="text">Achieved something hard</span>
+            <span class="check">✓</span>
+          </button>
+          <button class="activity-btn" onclick="toggleActivity(this)">
+            <span class="icon">🍿</span>
+            <span class="text">Rest / recovery</span>
+            <span class="check">✓</span>
+          </button>
+        </div>
+      </details>
+
+      <!-- Save -->
+      <button
+        id="save-btn"
+        class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+        onclick="saveEntry()"
+      >
+        Done ✓
+      </button>
+
+      <p class="text-center text-xs text-gray-400 mt-2">
+        Mood required • activities optional
+      </p>
+    </div>
+
+    <!-- Success State -->
+    <div id="success-state" class="hidden text-center py-6">
+      <div class="text-5xl mb-3">🏔️</div>
+      <h2 class="text-lg font-semibold text-gray-700 mb-1">Logged!</h2>
+      <p class="text-gray-500 text-sm mb-4">One more data point 📊</p>
+
+      <!-- Mini insight teaser -->
+      <div class="bg-gray-50 rounded-xl p-3 mb-4 text-left">
+        <p class="text-xs text-gray-500 mb-1">Pattern spotted:</p>
+        <p class="text-sm text-gray-700">You're <strong class="text-green-600">2x more likely</strong> to feel alive on days you climb outdoors vs gym.</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          class="flex-1 py-2 text-indigo-600 font-medium hover:bg-indigo-50 rounded-lg transition-colors text-sm"
+          onclick="resetForm()"
+        >
+          Log another
+        </button>
+        <button
+          class="flex-1 py-2 bg-indigo-50 text-indigo-600 font-medium hover:bg-indigo-100 rounded-lg transition-colors text-sm"
+        >
+          View trends →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="max-w-md mx-auto mt-4 px-4 text-white/80 text-xs">
+    <div class="flex justify-between">
+      <span>This week: 4 logs</span>
+      <span>Avg: Meh (improving)</span>
+    </div>
+  </div>
+
+  <!-- Bottom spacing -->
+  <div class="h-16"></div>
+
+  <script>
+    let selectedMood = null;
+    let selectedActivities = new Set();
+
+    function selectMood(btn, mood) {
+      // Deselect all
+      document.querySelectorAll('.mood-btn').forEach(b => {
+        b.classList.remove('selected', 'rough', 'meh', 'alive');
+        b.classList.add(b.dataset.type || '');
+      });
+
+      // Store type for reset
+      document.querySelectorAll('.mood-btn').forEach(b => {
+        if (b.classList.contains('rough') || b.textContent.includes('Rough')) b.dataset.type = 'rough';
+        if (b.classList.contains('meh') || b.textContent.includes('Meh')) b.dataset.type = 'meh';
+        if (b.classList.contains('alive') || b.textContent.includes('Alive')) b.dataset.type = 'alive';
+      });
+
+      // Select this one
+      btn.classList.add('selected', mood);
+      selectedMood = mood;
+
+      // Show activities
+      const section = document.getElementById('activities-section');
+      if (section.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+        section.classList.add('pop-in');
+      }
+    }
+
+    function toggleActivity(btn) {
+      btn.classList.toggle('selected');
+      const text = btn.querySelector('.text').textContent;
+      if (selectedActivities.has(text)) {
+        selectedActivities.delete(text);
+      } else {
+        selectedActivities.add(text);
+      }
+    }
+
+    function saveEntry() {
+      // Log what would be saved
+      console.log('Saving:', {
+        mood: selectedMood,
+        activities: Array.from(selectedActivities),
+        timestamp: new Date().toISOString()
+      });
+
+      // Show success
+      document.getElementById('mood-picker').parentElement.classList.add('hidden');
+      document.getElementById('activities-section').classList.add('hidden');
+      document.getElementById('success-state').classList.remove('hidden');
+    }
+
+    function resetForm() {
+      selectedMood = null;
+      selectedActivities.clear();
+
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
+
+      document.getElementById('success-state').classList.add('hidden');
+      document.getElementById('activities-section').classList.add('hidden');
+      document.getElementById('mood-picker').parentElement.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
