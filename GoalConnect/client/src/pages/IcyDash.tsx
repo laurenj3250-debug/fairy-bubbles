@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FAB } from '@/components/FAB';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 
 // V2 Components
@@ -239,6 +239,21 @@ export default function DashboardV4() {
   // Detail dialog state for viewing habit history/notes
   const [detailDialogHabit, setDetailDialogHabit] = useState<HabitWithData | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  // Collapsed goal categories (all collapsed by default)
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategoryCollapse = useCallback((category: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }, []);
 
   // Quick add handler - opens inline add for today
   const handleQuickAdd = useCallback(() => {
@@ -951,55 +966,78 @@ export default function DashboardV4() {
                   </span>
                 </Link>
               </div>
-              <div className="space-y-4">
-                {yearlyCategories.map((category) => (
-                  <div key={category}>
-                    <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                      {categoryLabels[category] || category}
-                    </h4>
-                    <CompactGoalGrid
-                      goals={goalsByCategory[category]}
-                      onToggle={async (goalId) => {
-                        try {
-                          await toggleGoal(goalId);
-                          triggerConfetti();
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
-                        }
-                      }}
-                      onIncrement={async (goalId, amount) => {
-                        try {
-                          await incrementGoal({ id: goalId, amount });
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
-                        }
-                      }}
-                      onToggleSubItem={async (goalId, subItemId) => {
-                        try {
-                          const result = await toggleSubItem({ goalId, subItemId });
-                          if (result.isGoalCompleted) {
-                            triggerConfetti();
-                            toast({ title: "Goal completed!", description: "All sub-items are done!" });
-                          }
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
-                        }
-                      }}
-                      onClaimReward={async (goalId) => {
-                        try {
-                          const result = await claimReward(goalId);
-                          triggerConfetti();
-                          toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
-                        }
-                      }}
-                      isToggling={isToggling}
-                      isIncrementing={isIncrementing}
-                      isClaimingReward={isClaimingReward}
-                    />
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {yearlyCategories.map((category) => {
+                  const isCollapsed = collapsedCategories.has(category);
+                  const categoryGoals = goalsByCategory[category];
+                  const completedInCategory = categoryGoals.filter(g => g.isCompleted).length;
+
+                  return (
+                    <div key={category}>
+                      <button
+                        onClick={() => toggleCategoryCollapse(category)}
+                        className="w-full flex items-center gap-2 py-1.5 text-left group"
+                      >
+                        {isCollapsed ? (
+                          <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
+                        )}
+                        <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider group-hover:text-[var(--text-primary)] transition-colors">
+                          {categoryLabels[category] || category}
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
+                          {completedInCategory}/{categoryGoals.length}
+                        </span>
+                      </button>
+                      {!isCollapsed && (
+                        <div className="mt-2">
+                          <CompactGoalGrid
+                            goals={categoryGoals}
+                            onToggle={async (goalId) => {
+                              try {
+                                await toggleGoal(goalId);
+                                triggerConfetti();
+                              } catch (err) {
+                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+                              }
+                            }}
+                            onIncrement={async (goalId, amount) => {
+                              try {
+                                await incrementGoal({ id: goalId, amount });
+                              } catch (err) {
+                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+                              }
+                            }}
+                            onToggleSubItem={async (goalId, subItemId) => {
+                              try {
+                                const result = await toggleSubItem({ goalId, subItemId });
+                                if (result.isGoalCompleted) {
+                                  triggerConfetti();
+                                  toast({ title: "Goal completed!", description: "All sub-items are done!" });
+                                }
+                              } catch (err) {
+                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+                              }
+                            }}
+                            onClaimReward={async (goalId) => {
+                              try {
+                                const result = await claimReward(goalId);
+                                triggerConfetti();
+                                toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
+                              } catch (err) {
+                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+                              }
+                            }}
+                            isToggling={isToggling}
+                            isIncrementing={isIncrementing}
+                            isClaimingReward={isClaimingReward}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
