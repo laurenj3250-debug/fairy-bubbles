@@ -304,8 +304,14 @@ export default function DashboardV4() {
     },
   });
 
-  // Yearly goals - show 2026 goals (the active planning year)
-  const currentYear = "2026";
+  // Yearly goals - show current year, or next year if in December (planning mode)
+  const currentYear = useMemo(() => {
+    const now = new Date();
+    const month = now.getMonth();
+    return month === 11
+      ? (now.getFullYear() + 1).toString()
+      : now.getFullYear().toString();
+  }, []);
   const {
     goals: yearlyGoals,
     goalsByCategory,
