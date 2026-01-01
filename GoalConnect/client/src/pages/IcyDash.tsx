@@ -51,6 +51,7 @@ import type { StudyTaskType } from '@shared/types/study';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
+import { DueThisMonthWidget } from '@/components/DueThisMonthWidget';
 
 // ============================================================================
 // TYPES
@@ -869,8 +870,11 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Goal Deadline Calendar */}
-            <GoalCalendarWidget />
+            {/* Right column: Calendar + Due This Month stacked */}
+            <div className="space-y-5">
+              <GoalCalendarWidget />
+              <DueThisMonthWidget />
+            </div>
           </div>
 
           {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
