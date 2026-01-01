@@ -780,13 +780,13 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Milestone Donut + Residency + Weekly Rhythm + Destination (4 columns, small) */}
-          <div className="card-grid grid grid-cols-4 gap-5">
-            {/* Milestone Donut */}
-            <MilestoneDonutWidget />
-
-            {/* Residency Countdown */}
-            <ResidencyCountdownWidget />
+          {/* ROW 3: Milestone Donut + Weekly Rhythm + Destination (3 columns, small) */}
+          <div className="card-grid grid grid-cols-3 gap-5">
+            {/* Milestone Donut with Residency bar above */}
+            <div className="flex flex-col gap-2">
+              <ResidencyCountdownWidget />
+              <MilestoneDonutWidget />
+            </div>
 
             {/* Weekly Rhythm */}
             <div className="glass-card frost-accent min-h-[200px] flex flex-col">
