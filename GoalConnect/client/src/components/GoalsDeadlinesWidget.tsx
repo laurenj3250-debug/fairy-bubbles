@@ -117,17 +117,15 @@ export function GoalsDeadlinesWidget({
                     {goal.title}
                   </p>
 
-                  {/* Milestone count badge */}
-                  {goal.milestonesThisMonth > 1 && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-[var(--text-muted)]">
-                        <span className={goal.milestonesMet > 0 ? "text-emerald-400" : ""}>
-                          {goal.milestonesMet}
-                        </span>
-                        /{goal.milestonesThisMonth} due this month
+                  {/* Milestone count badge - always show for consistency */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] text-[var(--text-muted)]">
+                      <span className={goal.milestonesMet > 0 ? "text-emerald-400" : ""}>
+                        {goal.milestonesMet}
                       </span>
-                    </div>
-                  )}
+                      /{goal.milestonesThisMonth} due this month
+                    </span>
+                  </div>
 
                   {/* Progress bar for count goals */}
                   {goal.targetValue > 1 && !allMet && (

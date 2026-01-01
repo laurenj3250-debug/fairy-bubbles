@@ -23,7 +23,6 @@ import { MountainHero } from '@/components/MountainHero';
 import { ForestBackground } from '@/components/ForestBackground';
 
 // V5 Luxury Components
-import { LuxuryProgressRing } from '@/components/LuxuryProgressRing';
 import { LuxuryWeeklyRhythm } from '@/components/LuxuryWeeklyRhythm';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
@@ -520,30 +519,6 @@ export default function DashboardV4() {
       .slice(0, 3);
   }, [goals, week.weekStart, week.weekEnd]);
 
-  // Monthly habit completion progress
-  const monthlyHabitProgress = useMemo(() => {
-    const now = new Date();
-    const currentMonth = format(now, 'yyyy-MM'); // e.g., "2025-12"
-    const dayOfMonth = now.getDate(); // How many days have passed this month
-
-    return habits.map(habit => {
-      // Count completions in the current month from habit history
-      const monthCompletions = (habit.history || []).filter(entry => {
-        return entry.date.startsWith(currentMonth) && entry.completed;
-      }).length;
-
-      // Calculate percentage: completions / days elapsed in month
-      const progress = dayOfMonth > 0 ? Math.round((monthCompletions / dayOfMonth) * 100) : 0;
-
-      return {
-        id: habit.id,
-        title: habit.title,
-        completions: monthCompletions,
-        daysInMonth: dayOfMonth,
-        progress: Math.min(progress, 100),
-      };
-    }).slice(0, 3); // Show up to 3 habits
-  }, [habits]);
 
   // Effect to clean up linger entries after 2 seconds
   useEffect(() => {
@@ -879,31 +854,8 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Monthly Progress + Weekly Rhythm + Destination (3 columns, small) */}
-          <div className="card-grid grid grid-cols-3 gap-5">
-            {/* Monthly Progress - Habit Completions */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
-              <span className="card-title">Monthly Progress</span>
-              <div className="flex-1 flex items-center justify-around pt-2">
-                {monthlyHabitProgress.length === 0 ? (
-                  <Link href="/habits">
-                    <div className="font-body text-sm text-[var(--text-muted)] hover:text-peach-400 py-4 text-center cursor-pointer transition-colors">
-                      + Add habits to track
-                    </div>
-                  </Link>
-                ) : (
-                  monthlyHabitProgress.map(habit => (
-                    <LuxuryProgressRing
-                      key={habit.id}
-                      progress={habit.progress}
-                      label={habit.title}
-                      size={80}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-
+          {/* ROW 3: Weekly Rhythm + Destination (2 columns, small) */}
+          <div className="card-grid grid grid-cols-2 gap-5">
             {/* Weekly Rhythm */}
             <div className="glass-card frost-accent min-h-[200px] flex flex-col">
               <span className="card-title">Weekly Rhythm</span>
