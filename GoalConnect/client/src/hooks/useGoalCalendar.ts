@@ -39,6 +39,20 @@ export interface CalendarGoalWithStatus extends CalendarGoal {
   progressPercent: number;
 }
 
+export interface ConsolidatedGoal {
+  goalId: number;
+  title: string;
+  source: "yearly" | "weekly" | "milestone";
+  category: string;
+  currentValue: number;
+  targetValue: number;
+  milestonesThisMonth: number;
+  milestonesMet: number;
+  nextDueDate: string | null;
+  isCompleted: boolean;
+  progressPercent: number;
+}
+
 function calculateGoalStatus(goal: CalendarGoal): GoalStatus {
   // Handle milestones differently
   if (goal.isMilestone || goal.source === "milestone") {
@@ -148,8 +162,61 @@ export function useGoalCalendar(month: Date) {
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   }, [goalsWithStatus]);
 
+  // Consolidate goals - group milestones by parent goal
+  const consolidatedGoals = useMemo((): ConsolidatedGoal[] => {
+    const goalMap = new Map<number, ConsolidatedGoal>();
+
+    goalsWithStatus.forEach((goal) => {
+      // For milestones, use goalId; for regular goals, use id
+      const parentId = goal.goalId || goal.id;
+
+      const existing = goalMap.get(parentId);
+
+      if (existing) {
+        // Add to existing consolidated goal
+        existing.milestonesThisMonth += 1;
+        if (goal.status === "milestone-met" || goal.status === "completed") {
+          existing.milestonesMet += 1;
+        }
+        // Track earliest unmet due date
+        if (!existing.nextDueDate ||
+            (goal.status !== "milestone-met" && goal.status !== "completed" &&
+             goal.dueDate < existing.nextDueDate)) {
+          existing.nextDueDate = goal.dueDate;
+        }
+      } else {
+        // Create new consolidated goal entry
+        const isMet = goal.status === "milestone-met" || goal.status === "completed";
+        goalMap.set(parentId, {
+          goalId: parentId,
+          title: goal.title,
+          source: goal.source,
+          category: goal.category,
+          currentValue: goal.currentValue,
+          targetValue: goal.targetValue,
+          milestonesThisMonth: 1,
+          milestonesMet: isMet ? 1 : 0,
+          nextDueDate: isMet ? null : goal.dueDate,
+          isCompleted: goal.currentValue >= goal.targetValue,
+          progressPercent: goal.targetValue > 0
+            ? Math.round((goal.currentValue / goal.targetValue) * 100)
+            : 0,
+        });
+      }
+    });
+
+    // Sort by next due date (nulls last = completed goals at end)
+    return Array.from(goalMap.values()).sort((a, b) => {
+      if (!a.nextDueDate && !b.nextDueDate) return 0;
+      if (!a.nextDueDate) return 1;
+      if (!b.nextDueDate) return -1;
+      return a.nextDueDate.localeCompare(b.nextDueDate);
+    });
+  }, [goalsWithStatus]);
+
   return {
     goals: goalsWithStatus,
+    consolidatedGoals,
     regularGoals,
     milestones,
     goalsByDate,
