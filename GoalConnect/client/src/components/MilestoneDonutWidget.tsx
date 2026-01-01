@@ -3,12 +3,13 @@
  * Animated donut chart showing monthly milestone completion rate
  */
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { useGoalCalendar } from "@/hooks/useGoalCalendar";
 
 export function MilestoneDonutWidget() {
+  const gradientId = useId();
   const currentMonth = new Date();
   const { consolidatedGoals, isLoading } = useGoalCalendar(currentMonth);
 
@@ -23,13 +24,12 @@ export function MilestoneDonutWidget() {
       totalMilestones += goal.milestonesThisMonth;
       totalMet += goal.milestonesMet;
 
-      // Count goals that are on track vs behind
-      if (goal.milestonesMet >= goal.milestonesThisMonth) {
+      // On-track: completed all milestones OR completed 50%+ of milestones
+      // Behind: completed less than 50% of milestones
+      if (goal.milestonesMet >= goal.milestonesThisMonth * 0.5) {
         onTrack++;
-      } else if (goal.milestonesMet < goal.milestonesThisMonth * 0.5) {
-        behind++;
       } else {
-        onTrack++;
+        behind++;
       }
     });
 
@@ -46,8 +46,8 @@ export function MilestoneDonutWidget() {
     { name: "Remaining", value: Math.max(0, stats.totalMilestones - stats.totalMet) },
   ];
 
-  // Gradient colors for the filled portion
-  const COLORS = ["url(#donutGradient)", "rgba(255,255,255,0.08)"];
+  // Gradient colors for the filled portion (using unique ID to prevent collision)
+  const COLORS = [`url(#${gradientId})`, "rgba(255,255,255,0.08)"];
 
   if (isLoading) {
     return (
@@ -70,7 +70,7 @@ export function MilestoneDonutWidget() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <defs>
-                <linearGradient id="donutGradient" x1="0" y1="0" x2="1" y2="1">
+                <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stopColor="#F97316" />
                   <stop offset="100%" stopColor="#FBBF24" />
                 </linearGradient>
