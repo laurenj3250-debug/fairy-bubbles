@@ -71,8 +71,8 @@ export function MilestoneDonutWidget() {
             <PieChart>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#F97316" />
-                  <stop offset="100%" stopColor="#FBBF24" />
+                  <stop offset="0%" stopColor="#d4936a" />
+                  <stop offset="100%" stopColor="#f0c9ae" />
                 </linearGradient>
               </defs>
               <Pie
@@ -102,7 +102,7 @@ export function MilestoneDonutWidget() {
 
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-heading font-bold text-peach-400">
+            <span className="text-2xl font-heading font-bold" style={{ color: '#e4a880' }}>
               {stats.percentage}%
             </span>
             <span className="text-xs text-[var(--text-muted)]">

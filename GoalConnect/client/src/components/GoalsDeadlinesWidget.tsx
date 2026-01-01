@@ -4,9 +4,43 @@
  */
 
 import { format, parseISO, isBefore } from "date-fns";
-import { Calendar, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  GraduationCap,
+  Dumbbell,
+  Mountain,
+  TreePine,
+  Globe,
+  BookOpen,
+  Music,
+  Plane,
+  Heart,
+  Users,
+  Wallet,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGoalCalendar, type ConsolidatedGoal } from "@/hooks/useGoalCalendar";
+
+// Category to icon mapping
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  residency: GraduationCap,
+  fitness: Dumbbell,
+  climbing: Mountain,
+  outdoor: TreePine,
+  german: Globe,
+  books: BookOpen,
+  piano: Music,
+  travel: Plane,
+  relationship: Heart,
+  social: Users,
+  financial: Wallet,
+  bucket_list: Star,
+};
 
 interface GoalsDeadlinesWidgetProps {
   onIncrement: (goalId: number) => void;
@@ -80,10 +114,11 @@ export function GoalsDeadlinesWidget({
       {!isLoading && consolidatedGoals.length > 0 && (
         <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
           {consolidatedGoals.map((goal) => {
-            const { icon, color } = getStatusInfo(goal);
+            const { icon: statusIcon, color } = getStatusInfo(goal);
             const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
             const canIncrement = !goal.isCompleted && goal.targetValue > 1;
             const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
+            const CategoryIcon = CATEGORY_ICONS[goal.category] || Calendar;
 
             return (
               <div
@@ -93,20 +128,15 @@ export function GoalsDeadlinesWidget({
                   allMet && "opacity-60"
                 )}
               >
-                {/* Increment button or status icon */}
-                {canIncrement ? (
-                  <button
-                    onClick={() => onIncrement(goal.goalId)}
-                    disabled={isIncrementing}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all flex-shrink-0"
-                  >
-                    +1
-                  </button>
-                ) : (
-                  <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
-                    {icon}
-                  </div>
-                )}
+                {/* Category icon */}
+                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                  <CategoryIcon
+                    className={cn(
+                      "w-4 h-4",
+                      allMet ? "text-emerald-400" : "text-[var(--text-muted)]"
+                    )}
+                  />
+                </div>
 
                 {/* Goal info */}
                 <div className="flex-1 min-w-0">
@@ -145,15 +175,37 @@ export function GoalsDeadlinesWidget({
                   )}
                 </div>
 
-                {/* Next due date */}
-                {goal.nextDueDate && (
-                  <span className={cn(
-                    "text-xs whitespace-nowrap",
-                    isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
-                  )}>
-                    {format(parseISO(goal.nextDueDate), "MMM d")}
-                  </span>
-                )}
+                {/* Right side: due date + increment button */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Next due date */}
+                  {goal.nextDueDate && (
+                    <span className={cn(
+                      "text-xs whitespace-nowrap",
+                      isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
+                    )}>
+                      {format(parseISO(goal.nextDueDate), "MMM d")}
+                    </span>
+                  )}
+
+                  {/* Increment/log button */}
+                  {canIncrement && (
+                    <button
+                      onClick={() => onIncrement(goal.goalId)}
+                      disabled={isIncrementing}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all disabled:opacity-50"
+                      title="Log progress"
+                    >
+                      +1
+                    </button>
+                  )}
+
+                  {/* Status indicator for completed goals */}
+                  {allMet && (
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      {statusIcon}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

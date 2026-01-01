@@ -51,6 +51,7 @@ import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
+import { useGoalCalendar } from '@/hooks/useGoalCalendar';
 
 // ============================================================================
 // TYPES
@@ -319,6 +320,9 @@ export default function DashboardV4() {
       return res.json();
     },
   });
+
+  // Goal milestones for the current week (for Schedule view)
+  const { goalsByDate: weekGoalsByDate } = useGoalCalendar(new Date());
 
   // Yearly goals - show current year, or next year if in December (planning mode)
   const currentYear = useMemo(() => {
@@ -733,11 +737,6 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* Residency Countdown - small accent widget */}
-          <div className="max-w-[280px]">
-            <ResidencyCountdownWidget />
-          </div>
-
           {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
             {/* All Goals Due This Month */}
@@ -781,10 +780,13 @@ export default function DashboardV4() {
             </div>
           </div>
 
-          {/* ROW 3: Milestone Donut + Weekly Rhythm + Destination (3 columns, small) */}
-          <div className="card-grid grid grid-cols-3 gap-5">
+          {/* ROW 3: Milestone Donut + Residency + Weekly Rhythm + Destination (4 columns, small) */}
+          <div className="card-grid grid grid-cols-4 gap-5">
             {/* Milestone Donut */}
             <MilestoneDonutWidget />
+
+            {/* Residency Countdown */}
+            <ResidencyCountdownWidget />
 
             {/* Weekly Rhythm */}
             <div className="glass-card frost-accent min-h-[200px] flex flex-col">
@@ -965,10 +967,12 @@ export default function DashboardV4() {
                     date={week.dates[i]}
                     isToday={i === week.todayIndex}
                     todos={todosByDay[i] || []}
+                    goalMilestones={weekGoalsByDate.get(week.dates[i]) || []}
                     onToggle={handleToggleTodo}
                     onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
                     onDelete={(id) => deleteTodoMutation.mutate(id)}
                     onAdd={() => setInlineAddDay(i)}
+                    onGoalIncrement={(id) => incrementGoalMutation.mutate(id)}
                     isAddingDay={inlineAddDay}
                     inlineAddTitle={inlineAddTitle}
                     setInlineAddTitle={setInlineAddTitle}

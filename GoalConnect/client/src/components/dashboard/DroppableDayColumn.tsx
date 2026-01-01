@@ -2,14 +2,26 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
 import { DraggableScheduleTask } from './DraggableScheduleTask';
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, Target } from 'lucide-react';
 import type { Todo } from '@shared/schema';
+import type { CalendarGoalWithStatus } from '@/hooks/useGoalCalendar';
 
 export interface StudyTaskItem {
   id: string;
   title: string;
   completed: boolean;
   taskType: string;
+}
+
+export interface GoalMilestoneItem {
+  id: number;
+  title: string;
+  category: string;
+  currentValue: number;
+  targetValue: number;
+  expectedValue?: number;
+  status: string;
+  isMilestone?: boolean;
 }
 
 interface DroppableDayColumnProps {
@@ -19,11 +31,13 @@ interface DroppableDayColumnProps {
   isToday: boolean;
   todos: Todo[];
   studyTasks?: StudyTaskItem[];
+  goalMilestones?: CalendarGoalWithStatus[];
   onToggle: (id: number) => void;
   onUpdate: (id: number, title: string) => void;
   onDelete: (id: number) => void;
   onAdd: () => void;
   onStudyToggle?: (taskType: string) => void;
+  onGoalIncrement?: (goalId: number) => void;
   isAddingDay: number | null;
   inlineAddTitle: string;
   setInlineAddTitle: (value: string) => void;
@@ -41,11 +55,13 @@ export function DroppableDayColumn({
   isToday,
   todos,
   studyTasks = [],
+  goalMilestones = [],
   onToggle,
   onUpdate,
   onDelete,
   onAdd,
   onStudyToggle,
+  onGoalIncrement,
   isAddingDay,
   inlineAddTitle,
   setInlineAddTitle,
@@ -170,6 +186,49 @@ export function DroppableDayColumn({
                   </span>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Goal Milestones Section */}
+          {goalMilestones.length > 0 && (
+            <div className="mt-2 pt-2 border-t" style={{ borderColor: 'rgba(228, 168, 128, 0.2)' }}>
+              {goalMilestones.slice(0, 3).map(goal => {
+                const isMet = goal.status === 'milestone-met' || goal.status === 'completed';
+                const canIncrement = goal.targetValue > 1 && !isMet;
+                const goalId = goal.goalId || goal.id;
+
+                return (
+                  <div
+                    key={`goal-${goal.id}-${goal.dueDate}`}
+                    className={cn(
+                      "w-full flex items-center gap-1 p-1 rounded text-[0.55rem] text-left transition-all",
+                      isMet ? "opacity-50" : "hover:bg-white/5"
+                    )}
+                  >
+                    {canIncrement ? (
+                      <button
+                        type="button"
+                        onClick={() => onGoalIncrement?.(goalId)}
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0 hover:bg-white/10 transition-colors"
+                        style={{ color: '#e4a880' }}
+                        title="Log progress"
+                      >
+                        +1
+                      </button>
+                    ) : isMet ? (
+                      <CheckCircle2 className="w-3 h-3 shrink-0 text-emerald-400" />
+                    ) : (
+                      <Target className="w-3 h-3 shrink-0" style={{ color: '#e4a880' }} />
+                    )}
+                    <span className={cn(
+                      "font-body truncate",
+                      isMet ? "line-through text-emerald-400/50" : ""
+                    )} style={{ color: isMet ? undefined : '#e4a880' }}>
+                      {goal.title}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
