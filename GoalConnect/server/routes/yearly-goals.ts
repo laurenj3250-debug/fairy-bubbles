@@ -96,14 +96,14 @@ async function computeGoalProgress(
 
     switch (goal.linkedJourneyKey) {
       case "lifting_workouts": {
-        sourceLabel = "Apple Watch";
+        sourceLabel = "Strava/Watch";
         const result = await db
           .select({ count: count() })
           .from(externalWorkouts)
           .where(
             and(
               eq(externalWorkouts.userId, userId),
-              sql`${externalWorkouts.workoutType} IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining')`,
+              sql`${externalWorkouts.workoutType} IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')`,
               gte(externalWorkouts.startTime, new Date(startDate)),
               lte(externalWorkouts.startTime, new Date(endDate))
             )

@@ -242,6 +242,7 @@ export default function DashboardV4() {
 
   // Collapsed goal categories (all collapsed by default)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [goalsHidden, setGoalsHidden] = useState(false);
 
   const toggleCategoryCollapse = useCallback((category: string) => {
     setCollapsedCategories(prev => {
@@ -966,32 +967,44 @@ export default function DashboardV4() {
           {/* ROW 4: Yearly Goals (grouped by category) */}
           {yearlyGoals.length > 0 && (
             <div className="glass-card frost-accent">
-              <div className="flex items-center justify-between mb-4">
+              <div className={cn("flex items-center justify-between", !goalsHidden && "mb-4")}>
+                <button
+                  onClick={() => setGoalsHidden(!goalsHidden)}
+                  className="flex items-center gap-2 group"
+                >
+                  {goalsHidden ? (
+                    <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
+                  )}
+                  <span className="card-title group-hover:text-peach-400 transition-colors">{currentYear} Goals</span>
+                </button>
                 <div className="flex items-center gap-3">
-                  <span className="card-title">{currentYear} Goals</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={expandAllCategories}
-                      className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
-                    >
-                      expand
-                    </button>
-                    <span className="text-[var(--text-muted)]">·</span>
-                    <button
-                      onClick={collapseAllCategories}
-                      className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
-                    >
-                      collapse
-                    </button>
-                  </div>
+                  {!goalsHidden && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={expandAllCategories}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                      >
+                        expand
+                      </button>
+                      <span className="text-[var(--text-muted)]">·</span>
+                      <button
+                        onClick={collapseAllCategories}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                      >
+                        collapse
+                      </button>
+                    </div>
+                  )}
+                  <Link href="/goals">
+                    <span className="text-xs text-peach-400 hover:underline cursor-pointer">
+                      {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
+                    </span>
+                  </Link>
                 </div>
-                <Link href="/goals">
-                  <span className="text-xs text-peach-400 hover:underline cursor-pointer">
-                    {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
-                  </span>
-                </Link>
               </div>
-              <div className="space-y-3">
+              {!goalsHidden && <div className="space-y-3">
                 {yearlyCategories.map((category) => {
                   const isCollapsed = collapsedCategories.has(category);
                   const categoryGoals = goalsByCategory[category];
@@ -1063,7 +1076,7 @@ export default function DashboardV4() {
                     </div>
                   );
                 })}
-              </div>
+              </div>}
             </div>
           )}
 
