@@ -134,16 +134,28 @@ interface DayCellProps {
   goals: CalendarGoalWithStatus[];
 }
 
+// Color palette for different goals (by goalId)
+const GOAL_COLORS = [
+  "bg-sky-400",
+  "bg-violet-400",
+  "bg-pink-400",
+  "bg-amber-400",
+  "bg-teal-400",
+  "bg-rose-400",
+  "bg-indigo-400",
+  "bg-orange-400",
+];
+
+function getGoalColor(goal: CalendarGoalWithStatus): string {
+  // Use goalId for milestones, or id for regular goals
+  const id = goal.goalId || goal.id;
+  return GOAL_COLORS[id % GOAL_COLORS.length];
+}
+
 function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
   const dayNumber = format(date, "d");
   const hasGoals = goals.length > 0;
   const today = isToday(date);
-
-  // Sort goals by urgency for stacked display
-  const sortedGoals = useMemo(() => {
-    const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "milestone-behind", "on-track", "milestone-met", "completed"];
-    return [...goals].sort((a, b) => priorities.indexOf(a.status) - priorities.indexOf(b.status));
-  }, [goals]);
 
   const cellContent = (
     <div
@@ -156,15 +168,21 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
       )}
     >
       <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
-      {/* Stacked colored bars for days with goals */}
+      {/* Stacked colored bars - different color per goal, green if done */}
       {hasGoals && isCurrentMonth && (
         <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex flex-col gap-[1px]">
-          {sortedGoals.slice(0, 3).map((goal, idx) => (
-            <div
-              key={`${goal.source}-${goal.id}-${idx}`}
-              className={cn("h-[2px] w-4 rounded-full", STATUS_COLORS[goal.status])}
-            />
-          ))}
+          {goals.slice(0, 3).map((goal, idx) => {
+            const isDone = goal.status === "completed" || goal.status === "milestone-met";
+            return (
+              <div
+                key={`${goal.source}-${goal.id}-${idx}`}
+                className={cn(
+                  "h-[2px] w-4 rounded-full",
+                  isDone ? "bg-emerald-400" : getGoalColor(goal)
+                )}
+              />
+            );
+          })}
           {goals.length > 3 && (
             <div className="h-[2px] w-4 rounded-full bg-white/30" />
           )}
