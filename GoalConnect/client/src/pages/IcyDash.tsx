@@ -402,14 +402,13 @@ export default function DashboardV4() {
 
   const incrementGoalMutation = useMutation({
     mutationFn: async (goalId: number) => {
-      const goal = goals.find(g => g.id === goalId);
-      if (!goal) throw new Error('Goal not found');
-      return await apiRequest(`/api/goals/${goalId}`, 'PATCH', {
-        currentValue: Math.min(goal.currentValue + 1, goal.targetValue),
-      });
+      // Use yearly goals increment endpoint
+      return await apiRequest(`/api/yearly-goals/${goalId}/increment`, 'POST', { amount: 1 });
     },
     onSuccess: () => {
       triggerConfetti();
+      queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/goal-calendar'] });
       queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
     },
