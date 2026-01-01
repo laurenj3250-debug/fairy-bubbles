@@ -1,0 +1,279 @@
+/**
+ * GoalCalendarWidget
+ * Month calendar showing goals with due dates, color-coded by status
+ */
+
+import { useState, useMemo } from "react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  isToday,
+} from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useGoalCalendar, type CalendarGoalWithStatus, type GoalStatus } from "@/hooks/useGoalCalendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const STATUS_COLORS: Record<GoalStatus, string> = {
+  completed: "bg-emerald-500",
+  "on-track": "bg-sky-500",
+  "due-soon": "bg-yellow-500",
+  overdue: "bg-red-500",
+  behind: "bg-orange-500",
+};
+
+const STATUS_LABELS: Record<GoalStatus, string> = {
+  completed: "Completed",
+  "on-track": "On Track",
+  "due-soon": "Due Soon",
+  overdue: "Overdue",
+  behind: "Behind Pace",
+};
+
+interface GoalPopoverContentProps {
+  goal: CalendarGoalWithStatus;
+}
+
+function GoalPopoverContent({ goal }: GoalPopoverContentProps) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-2">
+        <div className={cn("w-2 h-2 rounded-full mt-1.5 flex-shrink-0", STATUS_COLORS[goal.status])} />
+        <div>
+          <h4 className="font-medium text-sm text-[var(--text-primary)]">{goal.title}</h4>
+          <p className="text-xs text-[var(--text-muted)]">
+            Due: {format(new Date(goal.dueDate), "MMMM d, yyyy")}
+          </p>
+        </div>
+      </div>
+
+      {/* Progress bar for count goals */}
+      {goal.targetValue > 1 && (
+        <div className="space-y-1">
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all", STATUS_COLORS[goal.status])}
+              style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-[var(--text-muted)]">
+            <span>{goal.currentValue} / {goal.targetValue}</span>
+            <span>{goal.progressPercent}%</span>
+          </div>
+        </div>
+      )}
+
+      {/* Status badge */}
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          "text-xs px-2 py-0.5 rounded-full",
+          goal.status === "completed" && "bg-emerald-500/20 text-emerald-400",
+          goal.status === "on-track" && "bg-sky-500/20 text-sky-400",
+          goal.status === "due-soon" && "bg-yellow-500/20 text-yellow-400",
+          goal.status === "overdue" && "bg-red-500/20 text-red-400",
+          goal.status === "behind" && "bg-orange-500/20 text-orange-400",
+        )}>
+          {STATUS_LABELS[goal.status]}
+        </span>
+        <span className="text-xs text-[var(--text-muted)] capitalize">
+          {goal.source} goal
+        </span>
+      </div>
+    </div>
+  );
+}
+
+interface DayCellProps {
+  date: Date;
+  isCurrentMonth: boolean;
+  goals: CalendarGoalWithStatus[];
+}
+
+function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
+  const dayNumber = format(date, "d");
+  const hasGoals = goals.length > 0;
+  const today = isToday(date);
+
+  // Get most urgent status for the day (for visual priority)
+  const urgentStatus = useMemo(() => {
+    if (goals.length === 0) return null;
+    const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "on-track", "completed"];
+    for (const status of priorities) {
+      if (goals.some(g => g.status === status)) return status;
+    }
+    return "on-track";
+  }, [goals]);
+
+  const cellContent = (
+    <div
+      className={cn(
+        "h-8 w-full flex flex-col items-center justify-center rounded-md text-xs relative",
+        !isCurrentMonth && "text-[var(--text-muted)]/30",
+        isCurrentMonth && "text-[var(--text-primary)]",
+        today && "ring-1 ring-peach-400 bg-peach-400/10",
+        hasGoals && isCurrentMonth && "cursor-pointer hover:bg-white/5 transition-colors",
+      )}
+    >
+      <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
+      {hasGoals && isCurrentMonth && (
+        <div className="flex gap-0.5 absolute -bottom-0.5">
+          {goals.slice(0, 3).map((goal) => (
+            <div
+              key={`${goal.source}-${goal.id}`}
+              className={cn("w-1 h-1 rounded-full", STATUS_COLORS[goal.status])}
+            />
+          ))}
+          {goals.length > 3 && (
+            <span className="text-[6px] text-[var(--text-muted)] ml-0.5">+{goals.length - 3}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  if (!hasGoals || !isCurrentMonth) {
+    return cellContent;
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        {cellContent}
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-72 bg-[var(--bg-card)] border-white/10 p-4"
+        align="center"
+        sideOffset={8}
+      >
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+            {format(date, "MMMM d")} - {goals.length} goal{goals.length > 1 ? "s" : ""}
+          </h3>
+          <div className="space-y-4">
+            {goals.map((goal) => (
+              <GoalPopoverContent key={`${goal.source}-${goal.id}`} goal={goal} />
+            ))}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function GoalCalendarWidget() {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { goalsByDate, isLoading, goals } = useGoalCalendar(currentMonth);
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+
+  // Get calendar grid (including days from prev/next months to fill weeks)
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  const goToPrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const goToToday = () => setCurrentMonth(new Date());
+
+  // Stats for header
+  const stats = useMemo(() => {
+    const total = goals.length;
+    const completed = goals.filter(g => g.status === "completed").length;
+    const urgent = goals.filter(g => g.status === "overdue" || g.status === "due-soon").length;
+    return { total, completed, urgent };
+  }, [goals]);
+
+  return (
+    <div className="glass-card frost-accent min-h-[220px] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="card-title">Deadlines</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={goToPrevMonth}
+            className="p-1 text-[var(--text-muted)] hover:text-peach-400 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={goToToday}
+            className="text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors px-2 min-w-[80px] text-center"
+          >
+            {format(currentMonth, "MMM yyyy")}
+          </button>
+          <button
+            onClick={goToNextMonth}
+            className="p-1 text-[var(--text-muted)] hover:text-peach-400 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mini stats */}
+      {stats.total > 0 && (
+        <div className="flex items-center gap-3 mb-2 text-[10px]">
+          <span className="text-[var(--text-muted)]">
+            <span className="text-emerald-400 font-medium">{stats.completed}</span>/{stats.total} done
+          </span>
+          {stats.urgent > 0 && (
+            <span className="text-yellow-400">
+              {stats.urgent} urgent
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Calendar grid */}
+      <div className="flex-1">
+        {/* Day labels */}
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+            <div key={i} className="h-5 flex items-center justify-center text-[9px] text-[var(--text-muted)] uppercase">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Days grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-7 gap-0.5">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="h-8 bg-white/5 animate-pulse rounded-md" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-0.5">
+            {calendarDays.map((date) => {
+              const dateStr = format(date, "yyyy-MM-dd");
+              const dayGoals = goalsByDate.get(dateStr) || [];
+              return (
+                <DayCell
+                  key={dateStr}
+                  date={date}
+                  isCurrentMonth={isSameMonth(date, currentMonth)}
+                  goals={dayGoals}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {!isLoading && goals.length === 0 && (
+        <div className="text-center py-2 text-[10px] text-[var(--text-muted)]">
+          No goals with due dates this month
+        </div>
+      )}
+    </div>
+  );
+}

@@ -50,6 +50,7 @@ import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/u
 import type { StudyTaskType } from '@shared/types/study';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { CompactGoalGrid } from '@/components/yearly-goals';
+import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 
 // ============================================================================
 // TYPES
@@ -835,7 +836,7 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* ROW 1: Weekly Goals + Study Tracker (2 columns) */}
+          {/* ROW 1: Weekly Goals + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
             {/* Weekly Goals */}
             <div className="glass-card frost-accent min-h-[220px] flex flex-col">
@@ -868,6 +869,8 @@ export default function DashboardV4() {
               </div>
             </div>
 
+            {/* Goal Deadline Calendar */}
+            <GoalCalendarWidget />
           </div>
 
           {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
