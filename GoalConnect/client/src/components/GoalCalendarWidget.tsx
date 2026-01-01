@@ -24,14 +24,15 @@ import { cn } from "@/lib/utils";
 import { useGoalCalendar, type CalendarGoalWithStatus, type GoalStatus } from "@/hooks/useGoalCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+// More distinct, vibrant colors for better visibility
 const STATUS_COLORS: Record<GoalStatus, string> = {
-  completed: "bg-emerald-500",
-  "on-track": "bg-sky-500",
-  "due-soon": "bg-yellow-500",
-  overdue: "bg-red-500",
-  behind: "bg-orange-500",
-  "milestone-met": "bg-emerald-400/70",
-  "milestone-behind": "bg-red-400/70",
+  completed: "bg-emerald-400",
+  "on-track": "bg-sky-400",
+  "due-soon": "bg-amber-400",
+  overdue: "bg-rose-500",
+  behind: "bg-orange-400",
+  "milestone-met": "bg-emerald-400",
+  "milestone-behind": "bg-rose-400",
 };
 
 const STATUS_LABELS: Record<GoalStatus, string> = {
@@ -138,18 +139,10 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
   const hasGoals = goals.length > 0;
   const today = isToday(date);
 
-  // Separate milestones from regular goals
-  const regularGoals = goals.filter(g => !g.isMilestone && g.source !== "milestone");
-  const milestones = goals.filter(g => g.isMilestone || g.source === "milestone");
-
-  // Get most urgent status for the day (for visual priority)
-  const urgentStatus = useMemo(() => {
-    if (goals.length === 0) return null;
+  // Sort goals by urgency for display priority
+  const sortedGoals = useMemo(() => {
     const priorities: GoalStatus[] = ["overdue", "due-soon", "behind", "milestone-behind", "on-track", "milestone-met", "completed"];
-    for (const status of priorities) {
-      if (goals.some(g => g.status === status)) return status;
-    }
-    return "on-track";
+    return [...goals].sort((a, b) => priorities.indexOf(a.status) - priorities.indexOf(b.status));
   }, [goals]);
 
   const cellContent = (
@@ -164,23 +157,17 @@ function DayCell({ date, isCurrentMonth, goals }: DayCellProps) {
     >
       <span className={cn(today && "font-semibold text-peach-400")}>{dayNumber}</span>
       {hasGoals && isCurrentMonth && (
-        <div className="flex gap-0.5 absolute -bottom-0.5">
-          {/* Regular goals - larger dots */}
-          {regularGoals.slice(0, 2).map((goal) => (
+        <div className="flex items-center gap-[3px] absolute -bottom-0.5">
+          {/* Show up to 3 uniform dots, sorted by urgency */}
+          {sortedGoals.slice(0, 3).map((goal, idx) => (
             <div
-              key={`${goal.source}-${goal.id}`}
-              className={cn("w-1.5 h-1.5 rounded-full", STATUS_COLORS[goal.status])}
+              key={`${goal.source}-${goal.id}-${idx}`}
+              className={cn("w-[5px] h-[5px] rounded-full", STATUS_COLORS[goal.status])}
             />
           ))}
-          {/* Milestones - smaller dots */}
-          {milestones.slice(0, 2).map((goal) => (
-            <div
-              key={`${goal.source}-${goal.id}`}
-              className={cn("w-1 h-1 rounded-full opacity-70", STATUS_COLORS[goal.status])}
-            />
-          ))}
-          {goals.length > 4 && (
-            <span className="text-[6px] text-[var(--text-muted)] ml-0.5">+{goals.length - 4}</span>
+          {/* Count badge for overflow */}
+          {sortedGoals.length > 3 && (
+            <span className="text-[7px] text-[var(--text-muted)] font-medium">+{sortedGoals.length - 3}</span>
           )}
         </div>
       )}
