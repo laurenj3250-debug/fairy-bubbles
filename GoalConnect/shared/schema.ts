@@ -1273,6 +1273,9 @@ export const yearlyGoals = pgTable("yearly_goals", {
   // Compound goals: nested sub-items as JSONB (max 20 items)
   subItems: jsonb("sub_items").$type<YearlyGoalSubItem[]>().default([]).notNull(),
 
+  // Scheduling
+  dueDate: varchar("due_date", { length: 10 }),  // YYYY-MM-DD format
+
   // Completion tracking
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),

@@ -62,6 +62,7 @@ const createYearlyGoalSchema = z.object({
   linkedJourneyKey: z.string().max(50).optional(),
   linkedDreamScrollCategory: z.string().max(20).optional(),
   xpReward: z.number().int().min(0).max(1000).default(100),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),  // YYYY-MM-DD
 });
 
 const updateYearlyGoalSchema = z.object({
@@ -70,6 +71,7 @@ const updateYearlyGoalSchema = z.object({
   targetValue: z.number().int().min(1).max(10000).optional(),
   position: z.number().int().min(0).optional(),
   xpReward: z.number().int().min(0).max(1000).optional(),
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),  // YYYY-MM-DD or null to clear
 });
 
 /**
@@ -384,6 +386,7 @@ export function registerYearlyGoalRoutes(app: Express) {
           linkedJourneyKey: data.linkedJourneyKey,
           linkedDreamScrollCategory: data.linkedDreamScrollCategory,
           xpReward: data.xpReward,
+          dueDate: data.dueDate,
         })
         .returning();
 

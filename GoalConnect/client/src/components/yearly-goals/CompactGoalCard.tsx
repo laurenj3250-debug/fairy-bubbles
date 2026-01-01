@@ -1,9 +1,46 @@
-import { useState } from "react";
-import { Check, Trophy, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
 import confetti from "canvas-confetti";
+
+// Calculate progress status based on expected vs actual progress
+function getProgressStatus(goal: YearlyGoalWithProgress): "ahead" | "on-track" | "behind" | null {
+  // Only calculate for count goals that aren't completed
+  if (goal.isCompleted || goal.goalType === "binary") return null;
+  if (goal.targetValue <= 1) return null;
+
+  const now = new Date();
+  const yearStart = new Date(parseInt(goal.year), 0, 1);
+  const yearEnd = goal.dueDate
+    ? new Date(goal.dueDate)
+    : new Date(parseInt(goal.year), 11, 31);
+
+  // If past due date, don't show status (will show overdue instead)
+  if (goal.dueDate && now > yearEnd) return null;
+
+  const totalDays = (yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24);
+  const daysPassed = Math.max(0, (now.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24));
+  const expectedProgress = (daysPassed / totalDays) * goal.targetValue;
+
+  const buffer = 0.15; // 15% buffer for "on-track"
+  if (goal.computedValue >= expectedProgress * (1 + buffer)) return "ahead";
+  if (goal.computedValue >= expectedProgress * (1 - buffer)) return "on-track";
+  return "behind";
+}
+
+// Get due date status
+function getDueDateStatus(dueDate: string | null): "overdue" | "soon" | "ok" | null {
+  if (!dueDate) return null;
+  const now = new Date();
+  const due = new Date(dueDate);
+  const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysUntil < 0) return "overdue";
+  if (daysUntil <= 14) return "soon";
+  return "ok";
+}
 
 interface CompactGoalCardProps {
   goal: YearlyGoalWithProgress;
@@ -89,16 +126,26 @@ export function CompactGoalCard({
             <CategoryIcon className={cn("w-3.5 h-3.5", categoryStyle.accentColor)} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3
-              className={cn(
-                "text-sm font-medium leading-tight line-clamp-2",
-                goal.isCompleted
-                  ? "text-[var(--text-muted)] line-through"
-                  : "text-[var(--text-primary)]"
+            <div className="flex items-start gap-1.5">
+              <h3
+                className={cn(
+                  "text-sm font-medium leading-tight line-clamp-2",
+                  goal.isCompleted
+                    ? "text-[var(--text-muted)] line-through"
+                    : "text-[var(--text-primary)]"
+                )}
+              >
+                {goal.title}
+              </h3>
+              {goal.source === "auto" && (
+                <span
+                  className="flex-shrink-0 flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded bg-sky-500/20 text-sky-400"
+                  title={goal.sourceLabel ? `Auto-tracks from ${goal.sourceLabel}` : "Auto-tracking"}
+                >
+                  <Zap className="w-2.5 h-2.5" />
+                </span>
               )}
-            >
-              {goal.title}
-            </h3>
+            </div>
           </div>
           {/* Expand indicator for compound goals */}
           {hasSubItems && (
@@ -131,12 +178,46 @@ export function CompactGoalCard({
           </div>
         </div>
 
-        {/* Footer: Progress text + XP */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[var(--text-muted)] tabular-nums">
-            {goal.computedValue}/{goal.targetValue}
-            {goal.goalType === "compound" && " chapters"}
-          </span>
+        {/* Footer: Progress text + Status + XP */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="text-xs text-[var(--text-muted)] tabular-nums">
+              {goal.computedValue}/{goal.targetValue}
+              {goal.goalType === "compound" && " chapters"}
+            </span>
+
+            {/* Progress status badge */}
+            {(() => {
+              const status = getProgressStatus(goal);
+              if (!status) return null;
+              return (
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                  status === "ahead" && "bg-emerald-500/20 text-emerald-400",
+                  status === "on-track" && "bg-yellow-500/20 text-yellow-400",
+                  status === "behind" && "bg-red-500/20 text-red-400"
+                )}>
+                  {status === "ahead" ? "ahead" : status === "on-track" ? "on track" : "behind"}
+                </span>
+              );
+            })()}
+
+            {/* Due date indicator */}
+            {goal.dueDate && !goal.isCompleted && (() => {
+              const status = getDueDateStatus(goal.dueDate);
+              if (!status || status === "ok") return null;
+              return (
+                <span className={cn(
+                  "flex items-center gap-0.5 text-[10px]",
+                  status === "overdue" && "text-red-400",
+                  status === "soon" && "text-yellow-400"
+                )}>
+                  <Calendar className="w-2.5 h-2.5" />
+                  {status === "overdue" ? "overdue" : "due soon"}
+                </span>
+              );
+            })()}
+          </div>
 
           {/* XP reward or claim button */}
           {goal.isCompleted && !goal.rewardClaimed ? (

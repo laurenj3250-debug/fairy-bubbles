@@ -26,7 +26,9 @@ export interface YearlyGoalWithProgress {
   linkedHabitId: number | null;
   linkedJourneyKey: string | null;
   linkedDreamScrollCategory: string | null;
+  linkedBookId: number | null;
   subItems: YearlyGoalSubItem[];
+  dueDate: string | null;
   completed: boolean;
   completedAt: string | null;
   xpReward: number;
