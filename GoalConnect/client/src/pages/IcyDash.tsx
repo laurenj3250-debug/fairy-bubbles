@@ -42,11 +42,9 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { DroppableDayColumn, type StudyTaskItem } from '@/components/dashboard/DroppableDayColumn';
+import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
-import { useStudyPlanner, TASK_CONFIG, DEFAULT_WEEKLY_SCHEDULE } from '@/hooks/useStudyPlanner';
-import type { StudyTaskType } from '@shared/types/study';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
@@ -597,79 +595,6 @@ export default function DashboardV4() {
     return todos.filter(t => !t.completed).slice(0, 5);
   }, [todos]);
 
-  // Study planner data with local state for immediate toggle feedback
-  const {
-    weekData,
-    toggleSchedule: toggleStudyTask,
-    isTaskCompleted: isStudyTaskCompleted,
-  } = useStudyPlanner();
-
-  // Local state to track completed study tasks for immediate UI feedback
-  const [localCompletedStudyTasks, setLocalCompletedStudyTasks] = useState<Set<string>>(new Set());
-
-  // Get today's scheduled study tasks from the default schedule
-  const studyTasks = useMemo(() => {
-    const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
-
-    // Use default schedule - API is unreliable
-    const scheduleForDay = DEFAULT_WEEKLY_SCHEDULE.find(d => d.day === dayOfWeek);
-    if (!scheduleForDay) return [];
-
-    const taskTypes = scheduleForDay.tasks as StudyTaskType[];
-
-    return taskTypes.map(taskType => {
-      const config = TASK_CONFIG[taskType];
-      // Check local state first, then API state
-      const localCompleted = localCompletedStudyTasks.has(taskType);
-      const apiCompleted = isStudyTaskCompleted(todayStr, taskType);
-      return {
-        id: taskType,
-        title: config.label,
-        completed: localCompleted || apiCompleted,
-        taskType,
-      };
-    });
-  }, [todayStr, isStudyTaskCompleted, localCompletedStudyTasks, weekData]);
-
-  // Study tasks for each day of the week (for weekly schedule display)
-  const studyTasksByDay = useMemo((): StudyTaskItem[][] =>
-    week.dates.map((date, dayIndex) => {
-      const scheduleForDay = DEFAULT_WEEKLY_SCHEDULE.find(d => d.day === dayIndex);
-      if (!scheduleForDay) return [];
-
-      return (scheduleForDay.tasks as StudyTaskType[]).map(taskType => {
-        const config = TASK_CONFIG[taskType];
-        const isToday = date === todayStr;
-        const localCompleted = isToday && localCompletedStudyTasks.has(taskType);
-        return {
-          id: `${date}-${taskType}`,
-          title: config.label,
-          completed: localCompleted || isStudyTaskCompleted(date, taskType),
-          taskType,
-        };
-      });
-    })
-  , [week.dates, todayStr, isStudyTaskCompleted, localCompletedStudyTasks, weekData]);
-
-  // Unified study task toggle handler - works for any date
-  const handleStudyTaskToggle = useCallback((taskType: string, date = todayStr) => {
-    // For today, update local state for immediate UI feedback
-    if (date === todayStr) {
-      setLocalCompletedStudyTasks(prev => {
-        const next = new Set(prev);
-        if (next.has(taskType)) {
-          next.delete(taskType);
-        } else {
-          next.add(taskType);
-          triggerConfetti();
-        }
-        return next;
-      });
-    }
-    // Sync with API
-    toggleStudyTask({ date, taskType: taskType as StudyTaskType });
-  }, [todayStr, toggleStudyTask]);
-
   // Weekly rhythm data (habits completed per day)
   const weeklyRhythm = useMemo(() => {
     return week.dates.map((date, i) => {
@@ -758,11 +683,6 @@ export default function DashboardV4() {
           <Link href="/todos">
             <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
               todos
-            </span>
-          </Link>
-          <Link href="/study">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              study
             </span>
           </Link>
           <Link href="/journey">
@@ -1035,12 +955,10 @@ export default function DashboardV4() {
                     date={week.dates[i]}
                     isToday={i === week.todayIndex}
                     todos={todosByDay[i] || []}
-                    studyTasks={studyTasksByDay[i] || []}
                     onToggle={handleToggleTodo}
                     onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
                     onDelete={(id) => deleteTodoMutation.mutate(id)}
                     onAdd={() => setInlineAddDay(i)}
-                    onStudyToggle={(taskType) => handleStudyTaskToggle(taskType, week.dates[i])}
                     isAddingDay={inlineAddDay}
                     inlineAddTitle={inlineAddTitle}
                     setInlineAddTitle={setInlineAddTitle}
