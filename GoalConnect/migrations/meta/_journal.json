@@ -43,6 +43,13 @@
       "when": 1764432776486,
       "tag": "0005_handy_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767277120811,
+      "tag": "0006_yummy_giant_girl",
+      "breakpoints": true
     }
   ]
 }

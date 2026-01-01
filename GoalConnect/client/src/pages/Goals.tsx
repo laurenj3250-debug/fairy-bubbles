@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star, Loader2, Sparkles } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, AlertCircle, Trophy, Edit, Trash2, PlusCircle, ArrowRight, Bike, Dumbbell, Mountain, AlertTriangle, Star, Loader2, Sparkles, LayoutGrid, List } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoalDialog } from "@/components/GoalDialog";
 import { GoalProgressDialog } from "@/components/GoalProgressDialog";
@@ -16,7 +16,7 @@ import { useClimbingStats } from "@/hooks/useClimbingStats";
 import { ForestBackground } from "@/components/ForestBackground";
 import { Link } from "wouter";
 import { useYearlyGoals } from "@/hooks/useYearlyGoals";
-import { YearlyCategory } from "@/components/yearly-goals";
+import { YearlyCategory, CompactGoalGrid } from "@/components/yearly-goals";
 import { useToast } from "@/hooks/use-toast";
 
 type ViewType = "all" | "weekly" | "monthly" | "archived" | "yearly";
@@ -27,6 +27,7 @@ export default function Goals() {
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
   const [progressGoal, setProgressGoal] = useState<Goal | null>(null);
   const [activeView, setActiveView] = useState<ViewType>("all");
+  const [yearlyViewCompact, setYearlyViewCompact] = useState(true);
   const { toast } = useToast();
 
   const { data: goals = [], isLoading } = useQuery<Goal[]>({
@@ -58,6 +59,44 @@ export default function Goals() {
   const { stats: stravaStats, isLoading: stravaLoading, error: stravaError } = useStravaStats();
   const { stats: liftingStats, isLoading: liftingLoading, error: liftingError } = useLiftingStats();
   const { stats: climbingStats, isLoading: climbingLoading, error: climbingError } = useClimbingStats();
+
+  // Yearly goal handlers (extracted to avoid duplication)
+  const handleYearlyToggle = async (goalId: number) => {
+    try {
+      await toggleGoal(goalId);
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+    }
+  };
+
+  const handleYearlyIncrement = async (goalId: number, amount: number) => {
+    try {
+      await incrementGoal({ id: goalId, amount });
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+    }
+  };
+
+  const handleYearlyToggleSubItem = async (goalId: number, subItemId: string) => {
+    try {
+      const result = await toggleSubItem({ goalId, subItemId });
+      if (result.isGoalCompleted) {
+        toast({ title: "Goal completed!", description: "All sub-items are done. Don't forget to claim your reward!" });
+      }
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+    }
+  };
+
+  const handleYearlyClaimReward = async (goalId: number) => {
+    try {
+      const result = await claimReward(goalId);
+      const bonus = result.categoryBonus > 0 ? ` +${result.categoryBonus} category bonus!` : "";
+      toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned${bonus}` });
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+    }
+  };
 
   const deleteGoalMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/goals/${id}`, "DELETE"),
@@ -354,50 +393,70 @@ export default function Goals() {
 
               {!yearlyLoading && !yearlyError && yearlyGoals.length > 0 && (
                 <div className="space-y-4">
-                  {categories.map((category) => (
-                    <YearlyCategory
-                      key={category}
-                      category={category}
-                      categoryLabel={categoryLabels[category] || category}
-                      goals={goalsByCategory[category]}
-                      onToggle={async (goalId) => {
-                        try {
-                          await toggleGoal(goalId);
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
-                        }
-                      }}
-                      onIncrement={async (goalId, amount) => {
-                        try {
-                          await incrementGoal({ id: goalId, amount });
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
-                        }
-                      }}
-                      onToggleSubItem={async (goalId, subItemId) => {
-                        try {
-                          const result = await toggleSubItem({ goalId, subItemId });
-                          if (result.isGoalCompleted) {
-                            toast({ title: "Goal completed!", description: "All sub-items are done. Don't forget to claim your reward!" });
-                          }
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
-                        }
-                      }}
-                      onClaimReward={async (goalId) => {
-                        try {
-                          const result = await claimReward(goalId);
-                          const bonus = result.categoryBonus > 0 ? ` +${result.categoryBonus} category bonus!` : "";
-                          toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned${bonus}` });
-                        } catch (err) {
-                          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
-                        }
-                      }}
-                      isToggling={isToggling}
-                      isIncrementing={isIncrementing}
-                      isClaimingReward={isClaimingReward}
-                    />
-                  ))}
+                  {/* View toggle */}
+                  <div className="flex justify-end" role="group" aria-label="View options">
+                    <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
+                      <button
+                        onClick={() => setYearlyViewCompact(true)}
+                        className={cn(
+                          "p-1.5 rounded transition-colors",
+                          yearlyViewCompact
+                            ? "bg-peach-400/20 text-peach-400"
+                            : "text-[var(--text-muted)] hover:text-white"
+                        )}
+                        aria-label="Grid view"
+                        aria-pressed={yearlyViewCompact}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setYearlyViewCompact(false)}
+                        className={cn(
+                          "p-1.5 rounded transition-colors",
+                          !yearlyViewCompact
+                            ? "bg-peach-400/20 text-peach-400"
+                            : "text-[var(--text-muted)] hover:text-white"
+                        )}
+                        aria-label="List view"
+                        aria-pressed={!yearlyViewCompact}
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Compact Grid View */}
+                  {yearlyViewCompact ? (
+                    <div className="glass-card frost-accent p-4">
+                      <CompactGoalGrid
+                        goals={yearlyGoals}
+                        onToggle={handleYearlyToggle}
+                        onIncrement={handleYearlyIncrement}
+                        onToggleSubItem={handleYearlyToggleSubItem}
+                        onClaimReward={handleYearlyClaimReward}
+                        isToggling={isToggling}
+                        isIncrementing={isIncrementing}
+                        isClaimingReward={isClaimingReward}
+                      />
+                    </div>
+                  ) : (
+                    /* List View by Category */
+                    categories.map((category) => (
+                      <YearlyCategory
+                        key={category}
+                        category={category}
+                        categoryLabel={categoryLabels[category] || category}
+                        goals={goalsByCategory[category]}
+                        onToggle={handleYearlyToggle}
+                        onIncrement={handleYearlyIncrement}
+                        onToggleSubItem={handleYearlyToggleSubItem}
+                        onClaimReward={handleYearlyClaimReward}
+                        isToggling={isToggling}
+                        isIncrementing={isIncrementing}
+                        isClaimingReward={isClaimingReward}
+                      />
+                    ))
+                  )}
                 </div>
               )}
             </>

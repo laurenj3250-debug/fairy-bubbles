@@ -1089,6 +1089,8 @@ export const studyChapters = pgTable("study_chapters", {
   cardsCompleted: boolean("cards_completed").notNull().default(false),
   cardsCompletedAt: timestamp("cards_completed_at"),
   position: integer("position").notNull().default(0),
+  pageStart: integer("page_start"),
+  pageEnd: integer("page_end"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -1266,6 +1268,7 @@ export const yearlyGoals = pgTable("yearly_goals", {
   linkedHabitId: integer("linked_habit_id").references(() => habits.id, { onDelete: "set null" }),
   linkedJourneyKey: varchar("linked_journey_key", { length: 50 }),
   linkedDreamScrollCategory: varchar("linked_dream_scroll_category", { length: 20 }),
+  linkedBookId: integer("linked_book_id").references(() => studyBooks.id, { onDelete: "set null" }),
 
   // Compound goals: nested sub-items as JSONB (max 20 items)
   subItems: jsonb("sub_items").$type<YearlyGoalSubItem[]>().default([]).notNull(),

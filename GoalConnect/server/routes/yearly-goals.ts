@@ -19,6 +19,7 @@ import {
   outdoorClimbingTicks,
   climbingSessions,
   dreamScrollItems,
+  studyChapters,
   insertYearlyGoalSchema,
   insertYearlyGoalProgressLogSchema,
   YEARLY_GOAL_CATEGORY_ORDER,
@@ -205,8 +206,39 @@ async function computeGoalProgress(
     computedValue = Number(result[0]?.count ?? 0);
   }
 
-  // Compound goals: compute from sub-items
-  if (goal.goalType === "compound") {
+  // Study book integration - compute progress from study_chapters
+  if (goal.linkedBookId) {
+    source = "auto";
+    sourceLabel = "Study Planner";
+
+    const chapters = await db
+      .select()
+      .from(studyChapters)
+      .where(eq(studyChapters.bookId, goal.linkedBookId))
+      .orderBy(studyChapters.position);
+
+    // Consider chapter complete if either images or cards completed
+    const completedCount = chapters.filter(
+      (ch) => ch.imagesCompleted || ch.cardsCompleted
+    ).length;
+
+    computedValue = completedCount;
+
+    // Override subItems with computed chapters (for compound goals with linkedBookId)
+    if (goal.goalType === "compound") {
+      (goal as any).subItems = chapters.map((ch, i) => ({
+        id: `ch-${ch.id}`,
+        title: `${i + 1}. ${ch.title}`,
+        completed: ch.imagesCompleted || ch.cardsCompleted,
+        pageStart: ch.pageStart,
+        pageEnd: ch.pageEnd,
+        pageCount: ch.pageEnd && ch.pageStart ? ch.pageEnd - ch.pageStart + 1 : null,
+      }));
+    }
+  }
+
+  // Compound goals: compute from sub-items (only if not linked to a book)
+  if (goal.goalType === "compound" && !goal.linkedBookId) {
     const subItems = goal.subItems as YearlyGoalSubItem[];
     computedValue = subItems.filter((item) => item.completed).length;
   }
