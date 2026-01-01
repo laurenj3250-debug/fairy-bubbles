@@ -839,10 +839,8 @@ export default function DashboardV4() {
 
           {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
-            {/* Merged Goals + Deadlines Widget */}
+            {/* All Goals Due This Month */}
             <GoalsDeadlinesWidget
-              weeklyGoals={weeklyGoals}
-              weeklyLoading={goalsLoading}
               onIncrement={(id) => incrementGoalMutation.mutate(id)}
               isIncrementing={incrementGoalMutation.isPending}
             />
