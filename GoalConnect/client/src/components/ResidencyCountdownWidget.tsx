@@ -26,7 +26,7 @@ export function ResidencyCountdownWidget() {
   const isComplete = daysUntilEnd <= 0;
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-lg px-3 py-2">
+    <div className="glass-card frost-accent px-3 py-2">
       <div className="flex items-center gap-3">
         {/* Icon */}
         <GraduationCap className="w-4 h-4 flex-shrink-0" style={{ color: '#e4a880' }} />
