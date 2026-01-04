@@ -30,7 +30,7 @@ import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
-import { ClimbingLogDialog } from '@/components/ClimbingLogDialog';
+import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
 import { AddBookDialog } from '@/components/AddBookDialog';
 
 // Drag and Drop
@@ -358,8 +358,8 @@ export default function DashboardV4() {
     isClaimingReward,
   } = useYearlyGoals(currentYear);
 
-  // Climbing log hook for adding ticks
-  const { createTick, isCreating: isCreatingClimbTick } = useClimbingLog();
+  // Climbing log hook for quick logging days
+  const { quickLogDay, isQuickLogging } = useClimbingLog();
 
   // Study planner hook for adding books
   const { createBook, isPending } = useStudyPlanner();
@@ -1028,18 +1028,18 @@ export default function DashboardV4() {
         onOpenChange={setDetailDialogOpen}
       />
 
-      {/* Climbing Log Dialog - log outdoor climbs */}
-      <ClimbingLogDialog
+      {/* Quick Climbing Day Dialog - log outdoor days */}
+      <QuickClimbingDayDialog
         open={climbingDialogOpen}
         onOpenChange={setClimbingDialogOpen}
-        onSubmit={async (tick) => {
-          await createTick(tick);
+        onSubmit={async (data) => {
+          await quickLogDay(data);
           triggerConfetti();
-          toast({ title: "Climb logged!", description: "Your outdoor day has been recorded" });
+          toast({ title: "Climbing day logged!", description: "Your outdoor day has been recorded" });
           // Invalidate yearly goals to refresh the auto-tracked goal
           queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
         }}
-        isSubmitting={isCreatingClimbTick}
+        isSubmitting={isQuickLogging}
       />
 
       {/* Add Book Dialog - add books to study planner */}

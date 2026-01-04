@@ -193,6 +193,57 @@ export function registerClimbingLogRoutes(app: Express) {
   });
 
   /**
+   * POST /api/climbing-log/quick
+   * Quick log an outdoor climbing day without route details
+   */
+  app.post("/api/climbing-log/quick", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      const db = getDb();
+
+      // Validate minimal input
+      const quickLogSchema = z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        location: z.string().optional(),
+        notes: z.string().optional(),
+      });
+
+      const validationResult = quickLogSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid input",
+          details: validationResult.error.flatten(),
+        });
+      }
+
+      const { date, location, notes } = validationResult.data;
+
+      // Create a minimal tick entry
+      const [tick] = await db
+        .insert(outdoorClimbingTicks)
+        .values({
+          userId,
+          routeName: "Outdoor Day",
+          grade: "N/A",
+          routeType: "sport",
+          ascentStyle: "send",
+          date,
+          location: location || null,
+          notes: notes || null,
+          pitches: 1,
+        })
+        .returning();
+
+      log.info(`[climbing-log] Quick logged outdoor day for user ${userId} on ${date}`);
+      res.status(201).json(tick);
+    } catch (error) {
+      log.error("[climbing-log] Error quick logging:", error);
+      res.status(500).json({ error: "Failed to log climbing day" });
+    }
+  });
+
+  /**
    * PUT /api/climbing-log/:id
    * Update a climbing tick
    */
