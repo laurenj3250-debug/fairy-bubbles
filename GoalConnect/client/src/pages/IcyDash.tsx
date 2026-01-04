@@ -254,7 +254,7 @@ export default function DashboardV4() {
 
   // Collapsed goal categories (all collapsed by default)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [goalsHidden, setGoalsHidden] = useState(false);
+  const [goalsHidden, setGoalsHidden] = useState(true); // Start minimized
 
   const toggleCategoryCollapse = useCallback((category: string) => {
     setCollapsedCategories(prev => {
