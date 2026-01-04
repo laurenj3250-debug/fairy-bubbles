@@ -1,14 +1,13 @@
 /**
  * GoalsDeadlinesWidget
- * Consolidated view of goals due this month - each goal appears once with milestone counts
+ * Clean, minimal view of goals due this month
  */
 
 import { format, parseISO, isBefore } from "date-fns";
 import {
   Calendar,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
+  Check,
+  AlertTriangle,
   GraduationCap,
   Dumbbell,
   Mountain,
@@ -21,6 +20,7 @@ import {
   Users,
   Wallet,
   Star,
+  Circle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,169 +54,164 @@ export function GoalsDeadlinesWidget({
   const currentMonth = new Date();
   const { consolidatedGoals, isLoading } = useGoalCalendar(currentMonth);
 
-  const getStatusInfo = (goal: ConsolidatedGoal) => {
-    const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
-    const someMet = goal.milestonesMet > 0;
-    const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
-
-    if (goal.isCompleted || allMet) {
-      return {
-        icon: <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />,
-        color: "text-emerald-400"
-      };
-    }
-    if (isOverdue) {
-      return {
-        icon: <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />,
-        color: "text-rose-400"
-      };
-    }
-    if (someMet) {
-      return {
-        icon: <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />,
-        color: "text-sky-400"
-      };
-    }
-    return {
-      icon: <Calendar className="w-4 h-4 text-sky-400 flex-shrink-0" />,
-      color: "text-[var(--text-primary)]"
-    };
-  };
-
   return (
     <div className="glass-card frost-accent flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="card-title">Due This Month</span>
-        <span className="text-xs text-[var(--text-muted)]">
-          {format(currentMonth, "MMMM")}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[var(--text-primary)]">
+          Due This Month
+        </h3>
+        <span className="text-xs text-[var(--text-muted)] font-medium">
+          {format(currentMonth, "MMMM yyyy")}
         </span>
       </div>
 
       {/* Loading state */}
       {isLoading && (
-        <div className="space-y-2">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-12 bg-white/5 animate-pulse rounded-lg" />
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-14 bg-white/5 animate-pulse rounded-xl" />
           ))}
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && consolidatedGoals.length === 0 && (
-        <div className="text-center py-8">
-          <Calendar className="w-8 h-8 text-[var(--text-muted)]/40 mx-auto mb-2" />
-          <p className="text-sm text-[var(--text-muted)]">No goals due this month</p>
+        <div className="text-center py-10">
+          <Calendar className="w-10 h-10 text-[var(--text-muted)]/30 mx-auto mb-3" />
+          <p className="text-sm text-[var(--text-muted)]">No deadlines this month</p>
         </div>
       )}
 
-      {/* Consolidated goals list */}
+      {/* Goals list */}
       {!isLoading && consolidatedGoals.length > 0 && (
-        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[340px] overflow-y-auto">
           {consolidatedGoals.map((goal) => {
-            const { icon: statusIcon, color } = getStatusInfo(goal);
             const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
             const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
             const CategoryIcon = CATEGORY_ICONS[goal.category] || Calendar;
+            const progressPct = goal.targetValue > 0
+              ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100))
+              : 0;
 
             return (
               <div
                 key={goal.goalId}
                 className={cn(
-                  "flex items-center gap-3 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors",
-                  allMet && "opacity-60"
+                  "group relative rounded-xl p-3 transition-all",
+                  "bg-white/[0.03] hover:bg-white/[0.06]",
+                  "border border-white/[0.06]",
+                  allMet && "opacity-50"
                 )}
               >
-                {/* Category icon */}
-                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-                  <CategoryIcon
-                    className={cn(
-                      "w-4 h-4",
-                      allMet ? "text-emerald-400" : "text-[var(--text-muted)]"
-                    )}
-                  />
-                </div>
-
-                {/* Goal info */}
-                <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm truncate",
-                    allMet ? "line-through text-emerald-400" : color
+                <div className="flex items-center gap-3">
+                  {/* Status indicator */}
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                    allMet ? "bg-emerald-500/20" :
+                    isOverdue ? "bg-rose-500/20" :
+                    "bg-white/5"
                   )}>
-                    {goal.title}
-                  </p>
-
-                  {/* Milestone count badge - always show for consistency */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-[var(--text-muted)]">
-                      <span className={goal.milestonesMet > 0 ? "text-emerald-400" : ""}>
-                        {goal.milestonesMet}
-                      </span>
-                      /{goal.milestonesThisMonth} due this month
-                    </span>
+                    <CategoryIcon className={cn(
+                      "w-4 h-4",
+                      allMet ? "text-emerald-400" :
+                      isOverdue ? "text-rose-400" :
+                      "text-[var(--text-muted)]"
+                    )} />
                   </div>
 
-                  {/* Progress bar for count goals */}
-                  {goal.targetValue > 1 && !allMet && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className={cn("h-full rounded-full",
-                            isOverdue ? "bg-rose-400" : "bg-peach-400"
-                          )}
-                          style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
-                        {goal.currentValue}/{goal.targetValue}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-sm font-medium truncate",
+                        allMet ? "text-emerald-400 line-through" :
+                        isOverdue ? "text-rose-400" :
+                        "text-[var(--text-primary)]"
+                      )}>
+                        {goal.title}
                       </span>
                     </div>
-                  )}
-                </div>
 
-                {/* Right side: due date + action button */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Next due date */}
-                  {goal.nextDueDate && (
-                    <span className={cn(
-                      "text-xs whitespace-nowrap",
-                      isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
-                    )}>
-                      {format(parseISO(goal.nextDueDate), "MMM d")}
-                    </span>
-                  )}
+                    {/* Progress info */}
+                    <div className="flex items-center gap-3 mt-1.5">
+                      {/* Progress bar */}
+                      {goal.targetValue > 1 && (
+                        <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden max-w-[100px]">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              allMet ? "bg-emerald-400" :
+                              isOverdue ? "bg-rose-400" :
+                              "bg-peach-400"
+                            )}
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                      )}
 
-                  {/* Action buttons based on goal type */}
-                  {!allMet && !goal.isCompleted && (
-                    goal.targetValue > 1 ? (
-                      /* Increment button for count goals */
-                      <button
-                        onClick={() => onIncrement(goal.goalId)}
-                        disabled={isIncrementing}
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all disabled:opacity-50"
-                        title="Log progress"
-                      >
-                        +1
-                      </button>
-                    ) : (
-                      /* Checkbox for binary goals */
-                      <button
-                        onClick={() => onIncrement(goal.goalId)}
-                        disabled={isIncrementing}
-                        className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 text-[var(--text-primary)] hover:bg-emerald-400/20 hover:text-emerald-400 transition-all disabled:opacity-50"
-                        title="Mark complete"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                      </button>
-                    )
-                  )}
+                      {/* Progress text */}
+                      <span className="text-[11px] text-[var(--text-muted)] tabular-nums">
+                        {goal.currentValue}/{goal.targetValue}
+                      </span>
 
-                  {/* Status indicator for completed goals */}
-                  {allMet && (
-                    <div className="w-5 h-5 flex items-center justify-center">
-                      {statusIcon}
+                      {/* Milestone dots */}
+                      {goal.milestonesThisMonth > 1 && (
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: goal.milestonesThisMonth }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                i < goal.milestonesMet ? "bg-emerald-400" : "bg-white/20"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Right side: date + action */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Due date */}
+                    {goal.nextDueDate && !allMet && (
+                      <span className={cn(
+                        "text-[11px] tabular-nums",
+                        isOverdue ? "text-rose-400 font-medium" : "text-[var(--text-muted)]"
+                      )}>
+                        {format(parseISO(goal.nextDueDate), "MMM d")}
+                      </span>
+                    )}
+
+                    {/* Action button */}
+                    {!allMet && !goal.isCompleted && (
+                      <button
+                        onClick={() => onIncrement(goal.goalId)}
+                        disabled={isIncrementing}
+                        className={cn(
+                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
+                          "bg-white/10 hover:bg-peach-400/20",
+                          "text-[var(--text-muted)] hover:text-peach-400",
+                          "disabled:opacity-50 disabled:cursor-not-allowed"
+                        )}
+                        title={goal.targetValue > 1 ? "Log progress" : "Mark complete"}
+                      >
+                        {goal.targetValue > 1 ? (
+                          <span className="text-xs font-medium">+1</span>
+                        ) : (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+
+                    {/* Completed indicator */}
+                    {allMet && (
+                      <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
