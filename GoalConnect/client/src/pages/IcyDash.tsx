@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
@@ -11,22 +10,11 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FAB } from '@/components/FAB';
 import { Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
-
-// V2 Components
 import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
-import { HabitHeatmap } from '@/components/HabitHeatmap';
-import { WeeklyRhythm } from '@/components/WeeklyRhythm';
-import { PeakLoreWidget } from '@/components/PeakLoreWidget';
-import { AlpenglowOrb } from '@/components/AlpenglowOrb';
-import { SummitPill } from '@/components/SummitPill';
 import { MountainHero } from '@/components/MountainHero';
 import { ForestBackground } from '@/components/ForestBackground';
-
-// V5 Luxury Components
 import { LuxuryWeeklyRhythm } from '@/components/LuxuryWeeklyRhythm';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
-import { LuxuryGoalItem } from '@/components/LuxuryGoalItem';
-import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
