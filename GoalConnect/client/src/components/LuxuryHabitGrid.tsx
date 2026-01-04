@@ -1,8 +1,10 @@
 import { cn } from '@/lib/utils';
+import { Flame } from 'lucide-react';
 
 interface HabitRow {
   id: number;
   name: string;
+  streak?: number;
   days: { date: string; completed: boolean }[];
   completed: number;
   total: number;
@@ -58,18 +60,34 @@ export function LuxuryHabitGrid({
       {/* Habit rows */}
       {habits.map((habit) => (
         <div key={habit.id} role="row" className="flex items-center">
-          <button
-            type="button"
-            role="rowheader"
-            onClick={() => onHabitClick?.(habit.id)}
-            className={cn(
-              "w-20 shrink-0 font-body text-[11px] text-[var(--text-secondary)] truncate pr-2 text-left",
-              onHabitClick && "cursor-pointer hover:text-peach-400 transition-colors"
+          <div className="w-20 shrink-0 flex items-center gap-1 pr-1">
+            <button
+              type="button"
+              role="rowheader"
+              onClick={() => onHabitClick?.(habit.id)}
+              className={cn(
+                "font-body text-[11px] text-[var(--text-secondary)] truncate text-left flex-1 min-w-0",
+                onHabitClick && "cursor-pointer hover:text-peach-400 transition-colors"
+              )}
+              title={habit.name}
+            >
+              {habit.name}
+            </button>
+            {habit.streak && habit.streak > 0 && (
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0",
+                  habit.streak >= 30 ? "bg-orange-500/20 text-orange-400" :
+                  habit.streak >= 7 ? "bg-amber-500/20 text-amber-400" :
+                  "bg-white/10 text-[var(--text-muted)]"
+                )}
+                title={`${habit.streak} day streak`}
+              >
+                <Flame className="w-2.5 h-2.5" />
+                {habit.streak}
+              </span>
             )}
-            title={habit.name}
-          >
-            {habit.name}
-          </button>
+          </div>
 
           <div className="flex-1 flex justify-between px-1">
             {habit.days.map((day, j) => (

@@ -792,6 +792,7 @@ export default function DashboardV4() {
                   habits={todayHabits.map(habit => ({
                     id: habit.id,
                     name: habit.title,
+                    streak: habit.streak?.streak ?? 0,
                     days: week.dates.map(date => ({
                       date,
                       completed: completionMap[habit.id]?.[date] ?? false,
