@@ -33,6 +33,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
+import { TodayFocusCard } from '@/components/dashboard/TodayFocusCard';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
@@ -507,6 +508,30 @@ export default function DashboardV4() {
     return todayHabits.filter(h => completionMap[h.id]?.[todayStr]).length;
   }, [todayHabits, completionMap, todayStr]);
 
+  // Urgent goals for Today's Focus card - goals due within a week
+  const urgentGoals = useMemo(() => {
+    const now = new Date();
+    const weekFromNow = new Date();
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+    return yearlyGoals
+      .filter(g => {
+        if (g.isCompleted) return false;
+        // Has deadline due within a week
+        if (!g.dueDate) return false;
+        const dueDate = new Date(g.dueDate);
+        return dueDate <= weekFromNow;
+      })
+      .map(g => ({
+        id: g.id,
+        title: g.title,
+        dueDate: g.dueDate!,
+        isOverdue: new Date(g.dueDate!) < now,
+      }))
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 3);
+  }, [yearlyGoals]);
+
   const weeklyGoals = useMemo(() => {
     return goals
       .filter(g => {
@@ -732,6 +757,18 @@ export default function DashboardV4() {
 
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
+
+          {/* TODAY'S FOCUS - Primary CTA */}
+          <TodayFocusCard
+            date={new Date()}
+            habits={{
+              completed: completedTodayCount,
+              total: todayHabits.length,
+            }}
+            topStreak={dayStreak}
+            urgentGoals={urgentGoals}
+            onHabitClick={() => setLocation('/habits')}
+          />
 
           {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
           <div className="card-grid grid grid-cols-2 gap-5">
