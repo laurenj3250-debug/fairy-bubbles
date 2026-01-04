@@ -45,6 +45,7 @@ import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
+import { ActivityHeatmapWidget } from '@/components/ActivityHeatmapWidget';
 import { useGoalCalendar } from '@/hooks/useGoalCalendar';
 
 // ============================================================================
@@ -793,8 +794,8 @@ export default function DashboardV4() {
           {/* Residency bar - spans full width above ROW 3 */}
           <ResidencyCountdownWidget />
 
-          {/* ROW 3: Milestone Donut + Weekly Rhythm + Destination (3 columns, small) */}
-          <div className="card-grid grid grid-cols-3 gap-5">
+          {/* ROW 3: Milestone Donut + Weekly Rhythm + Activity + Media (4 columns, small) */}
+          <div className="card-grid grid grid-cols-4 gap-5">
             {/* Milestone Donut */}
             <MilestoneDonutWidget />
 
@@ -805,6 +806,9 @@ export default function DashboardV4() {
                 <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
               </div>
             </div>
+
+            {/* Activity Heatmap */}
+            <ActivityHeatmapWidget data={heatmapData} />
 
             {/* Media Library Widget */}
             <MediaWidget />
