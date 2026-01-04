@@ -34,12 +34,12 @@ import {
 } from '@dnd-kit/core';
 import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
 import { TodayFocusCard } from '@/components/dashboard/TodayFocusCard';
+import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useClimbingLog } from '@/hooks/useClimbingLog';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
-import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
@@ -228,22 +228,6 @@ export default function DashboardV4() {
   // Add book dialog state
   const [addBookDialogOpen, setAddBookDialogOpen] = useState(false);
 
-  // Collapsed goal categories (all collapsed by default)
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [goalsHidden, setGoalsHidden] = useState(true); // Start minimized
-
-  const toggleCategoryCollapse = useCallback((category: string) => {
-    setCollapsedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
-      return next;
-    });
-  }, []);
-
   // Quick add handler - opens inline add for today
   const handleQuickAdd = useCallback(() => {
     setInlineAddDay(week.todayIndex);
@@ -339,14 +323,6 @@ export default function DashboardV4() {
 
   // Study planner hook for adding books
   const { createBook, isPending } = useStudyPlanner();
-
-  const collapseAllCategories = useCallback(() => {
-    setCollapsedCategories(new Set(yearlyCategories));
-  }, [yearlyCategories]);
-
-  const expandAllCategories = useCallback(() => {
-    setCollapsedCategories(new Set());
-  }, []);
 
   // Handler for viewing habit details (click on habit name, not toggle)
   const handleViewHabitDetail = useCallback((habitId: number) => {
@@ -835,122 +811,23 @@ export default function DashboardV4() {
           </div>
 
           {/* ROW 4: Yearly Goals (grouped by category) */}
-          {yearlyGoals.length > 0 && (
-            <div className="glass-card frost-accent">
-              <div className={cn("flex items-center justify-between", !goalsHidden && "mb-4")}>
-                <button
-                  onClick={() => setGoalsHidden(!goalsHidden)}
-                  className="flex items-center gap-2 group"
-                >
-                  {goalsHidden ? (
-                    <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
-                  )}
-                  <span className="card-title group-hover:text-peach-400 transition-colors">{currentYear} Goals</span>
-                </button>
-                <div className="flex items-center gap-3">
-                  {!goalsHidden && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={expandAllCategories}
-                        className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
-                      >
-                        expand
-                      </button>
-                      <span className="text-[var(--text-muted)]">·</span>
-                      <button
-                        onClick={collapseAllCategories}
-                        className="text-[10px] text-[var(--text-muted)] hover:text-peach-400 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
-                      >
-                        collapse
-                      </button>
-                    </div>
-                  )}
-                  <Link href="/goals">
-                    <span className="text-xs text-peach-400 hover:underline cursor-pointer">
-                      {yearlyStats.completedGoals}/{yearlyStats.totalGoals} complete
-                    </span>
-                  </Link>
-                </div>
-              </div>
-              {!goalsHidden && <div className="space-y-3">
-                {yearlyCategories.map((category) => {
-                  const isCollapsed = collapsedCategories.has(category);
-                  const categoryGoals = goalsByCategory[category];
-                  const completedInCategory = categoryGoals.filter(g => g.isCompleted).length;
-
-                  return (
-                    <div key={category}>
-                      <button
-                        onClick={() => toggleCategoryCollapse(category)}
-                        className="w-full flex items-center gap-2 py-1.5 text-left group"
-                      >
-                        {isCollapsed ? (
-                          <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-peach-400 transition-colors" />
-                        )}
-                        <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider group-hover:text-[var(--text-primary)] transition-colors">
-                          {categoryLabels[category] || category}
-                        </span>
-                        <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
-                          {completedInCategory}/{categoryGoals.length}
-                        </span>
-                      </button>
-                      {!isCollapsed && (
-                        <div className="mt-2">
-                          <CompactGoalGrid
-                            goals={categoryGoals}
-                            onToggle={async (goalId) => {
-                              try {
-                                await toggleGoal(goalId);
-                                triggerConfetti('goal_completed');
-                              } catch (err) {
-                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
-                              }
-                            }}
-                            onIncrement={async (goalId, amount) => {
-                              try {
-                                await incrementGoal({ id: goalId, amount });
-                              } catch (err) {
-                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
-                              }
-                            }}
-                            onLogClimb={() => setClimbingDialogOpen(true)}
-                            onAddBook={() => setAddBookDialogOpen(true)}
-                            onToggleSubItem={async (goalId, subItemId) => {
-                              try {
-                                const result = await toggleSubItem({ goalId, subItemId });
-                                if (result.isGoalCompleted) {
-                                  triggerConfetti('goal_completed');
-                                  toast({ title: "Goal completed!", description: "All sub-items are done!" });
-                                }
-                              } catch (err) {
-                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
-                              }
-                            }}
-                            onClaimReward={async (goalId) => {
-                              try {
-                                const result = await claimReward(goalId);
-                                triggerConfetti('reward_claimed');
-                                toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
-                              } catch (err) {
-                                toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
-                              }
-                            }}
-                            isToggling={isToggling}
-                            isIncrementing={isIncrementing}
-                            isClaimingReward={isClaimingReward}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>}
-            </div>
-          )}
+          <YearlyGoalsSection
+            year={currentYear}
+            goals={yearlyGoals}
+            goalsByCategory={goalsByCategory}
+            categories={yearlyCategories}
+            categoryLabels={categoryLabels}
+            stats={yearlyStats}
+            toggleGoal={toggleGoal}
+            incrementGoal={incrementGoal}
+            toggleSubItem={toggleSubItem}
+            claimReward={claimReward}
+            isToggling={isToggling}
+            isIncrementing={isIncrementing}
+            isClaimingReward={isClaimingReward}
+            onLogClimb={() => setClimbingDialogOpen(true)}
+            onAddBook={() => setAddBookDialogOpen(true)}
+          />
 
           {/* ROW 5: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
           <div className="glass-card frost-accent min-h-[280px]">
