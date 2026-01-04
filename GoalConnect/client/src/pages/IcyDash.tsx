@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
+import { triggerConfetti, checkAllHabitsComplete } from '@/lib/confetti';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
@@ -151,19 +151,6 @@ function useWeekData() {
       formatRange: `${format(weekStart, 'MMMM d')}–${format(weekEnd, 'd')}`,
     };
   }, []);
-}
-
-// ============================================================================
-// CONFETTI
-// ============================================================================
-
-function triggerConfetti() {
-  confetti({
-    particleCount: 80,
-    spread: 60,
-    origin: { y: 0.7 },
-    colors: ['#F97316', '#10B981', '#3B82F6', '#8B5CF6'],
-  });
 }
 
 // ============================================================================
@@ -382,7 +369,13 @@ export default function DashboardV4() {
       return { wasCompleted };
     },
     onSuccess: (_, __, context) => {
-      if (!context?.wasCompleted) triggerConfetti();
+      // Only confetti if completing (not uncompleting) AND all habits now done
+      if (!context?.wasCompleted) {
+        const newCompletedCount = completedTodayCount + 1;
+        if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
+          triggerConfetti('all_habits_today');
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
@@ -397,7 +390,6 @@ export default function DashboardV4() {
       return await apiRequest(`/api/todos/${todoId}/complete`, 'POST');
     },
     onSuccess: (_, todoId) => {
-      triggerConfetti();
       // Track for linger effect - will be hidden after 2 seconds
       setRecentlyCompleted(prev => ({ ...prev, [todoId]: Date.now() }));
       queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
@@ -414,7 +406,7 @@ export default function DashboardV4() {
       return await apiRequest(`/api/yearly-goals/${goalId}/increment`, 'POST', { amount: 1 });
     },
     onSuccess: () => {
-      triggerConfetti();
+      // No confetti for individual increments - save celebration for completion
       queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/goal-calendar'] });
       queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
@@ -875,7 +867,7 @@ export default function DashboardV4() {
                             onToggle={async (goalId) => {
                               try {
                                 await toggleGoal(goalId);
-                                triggerConfetti();
+                                triggerConfetti('goal_completed');
                               } catch (err) {
                                 toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
                               }
@@ -893,7 +885,7 @@ export default function DashboardV4() {
                               try {
                                 const result = await toggleSubItem({ goalId, subItemId });
                                 if (result.isGoalCompleted) {
-                                  triggerConfetti();
+                                  triggerConfetti('goal_completed');
                                   toast({ title: "Goal completed!", description: "All sub-items are done!" });
                                 }
                               } catch (err) {
@@ -903,7 +895,7 @@ export default function DashboardV4() {
                             onClaimReward={async (goalId) => {
                               try {
                                 const result = await claimReward(goalId);
-                                triggerConfetti();
+                                triggerConfetti('reward_claimed');
                                 toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned` });
                               } catch (err) {
                                 toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
@@ -1021,7 +1013,6 @@ export default function DashboardV4() {
         onOpenChange={setClimbingDialogOpen}
         onSubmit={async (data) => {
           await quickLogDay(data);
-          triggerConfetti();
           toast({ title: "Climbing day logged!", description: "Your outdoor day has been recorded" });
           // Invalidate yearly goals to refresh the auto-tracked goal
           queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
