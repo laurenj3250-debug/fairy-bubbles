@@ -508,9 +508,8 @@ export default function DashboardV4() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  const todayHabits = useMemo(() => {
-    return habits; // Show all habits
-  }, [habits]);
+  // All habits shown on dashboard
+  const todayHabits = habits;
 
   const completedTodayCount = useMemo(() => {
     return todayHabits.filter(h => completionMap[h.id]?.[todayStr]).length;
