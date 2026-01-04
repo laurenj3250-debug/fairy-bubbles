@@ -30,6 +30,8 @@ import { LuxuryFunFact } from '@/components/LuxuryFunFact';
 import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
+import { ClimbingLogDialog } from '@/components/ClimbingLogDialog';
+import { AddBookDialog } from '@/components/AddBookDialog';
 
 // Drag and Drop
 import {
@@ -46,6 +48,8 @@ import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
 
 import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
+import { useClimbingLog } from '@/hooks/useClimbingLog';
+import { useStudyPlanner } from '@/hooks/useStudyPlanner';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
@@ -242,6 +246,12 @@ export default function DashboardV4() {
   const [detailDialogHabit, setDetailDialogHabit] = useState<HabitWithData | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
+  // Climbing log dialog state
+  const [climbingDialogOpen, setClimbingDialogOpen] = useState(false);
+
+  // Add book dialog state
+  const [addBookDialogOpen, setAddBookDialogOpen] = useState(false);
+
   // Collapsed goal categories (all collapsed by default)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [goalsHidden, setGoalsHidden] = useState(false);
@@ -347,6 +357,12 @@ export default function DashboardV4() {
     isIncrementing,
     isClaimingReward,
   } = useYearlyGoals(currentYear);
+
+  // Climbing log hook for adding ticks
+  const { createTick, isCreating: isCreatingClimbTick } = useClimbingLog();
+
+  // Study planner hook for adding books
+  const { createBook, isPending } = useStudyPlanner();
 
   const collapseAllCategories = useCallback(() => {
     setCollapsedCategories(new Set(yearlyCategories));
@@ -884,6 +900,8 @@ export default function DashboardV4() {
                                 toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
                               }
                             }}
+                            onLogClimb={() => setClimbingDialogOpen(true)}
+                            onAddBook={() => setAddBookDialogOpen(true)}
                             onToggleSubItem={async (goalId, subItemId) => {
                               try {
                                 const result = await toggleSubItem({ goalId, subItemId });
@@ -1008,6 +1026,33 @@ export default function DashboardV4() {
         habit={detailDialogHabit}
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
+      />
+
+      {/* Climbing Log Dialog - log outdoor climbs */}
+      <ClimbingLogDialog
+        open={climbingDialogOpen}
+        onOpenChange={setClimbingDialogOpen}
+        onSubmit={async (tick) => {
+          await createTick(tick);
+          triggerConfetti();
+          toast({ title: "Climb logged!", description: "Your outdoor day has been recorded" });
+          // Invalidate yearly goals to refresh the auto-tracked goal
+          queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+        }}
+        isSubmitting={isCreatingClimbTick}
+      />
+
+      {/* Add Book Dialog - add books to study planner */}
+      <AddBookDialog
+        open={addBookDialogOpen}
+        onOpenChange={setAddBookDialogOpen}
+        onSubmit={(data) => {
+          createBook(data);
+          toast({ title: "Book added!", description: "Your book has been added to the study planner" });
+          // Invalidate yearly goals to refresh the auto-tracked goal
+          queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+        }}
+        isSubmitting={isPending.createBook}
       />
     </div>
   );

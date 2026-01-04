@@ -116,7 +116,6 @@ export function GoalsDeadlinesWidget({
           {consolidatedGoals.map((goal) => {
             const { icon: statusIcon, color } = getStatusInfo(goal);
             const allMet = goal.milestonesMet >= goal.milestonesThisMonth;
-            const canIncrement = !goal.isCompleted && goal.targetValue > 1;
             const isOverdue = goal.nextDueDate && isBefore(parseISO(goal.nextDueDate), new Date());
             const CategoryIcon = CATEGORY_ICONS[goal.category] || Calendar;
 
@@ -175,7 +174,7 @@ export function GoalsDeadlinesWidget({
                   )}
                 </div>
 
-                {/* Right side: due date + increment button */}
+                {/* Right side: due date + action button */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {/* Next due date */}
                   {goal.nextDueDate && (
@@ -187,16 +186,29 @@ export function GoalsDeadlinesWidget({
                     </span>
                   )}
 
-                  {/* Increment/log button */}
-                  {canIncrement && (
-                    <button
-                      onClick={() => onIncrement(goal.goalId)}
-                      disabled={isIncrementing}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all disabled:opacity-50"
-                      title="Log progress"
-                    >
-                      +1
-                    </button>
+                  {/* Action buttons based on goal type */}
+                  {!allMet && !goal.isCompleted && (
+                    goal.targetValue > 1 ? (
+                      /* Increment button for count goals */
+                      <button
+                        onClick={() => onIncrement(goal.goalId)}
+                        disabled={isIncrementing}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium bg-white/10 text-[var(--text-primary)] hover:bg-peach-400/20 hover:text-peach-400 transition-all disabled:opacity-50"
+                        title="Log progress"
+                      >
+                        +1
+                      </button>
+                    ) : (
+                      /* Checkbox for binary goals */
+                      <button
+                        onClick={() => onIncrement(goal.goalId)}
+                        disabled={isIncrementing}
+                        className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 text-[var(--text-primary)] hover:bg-emerald-400/20 hover:text-emerald-400 transition-all disabled:opacity-50"
+                        title="Mark complete"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                    )
                   )}
 
                   {/* Status indicator for completed goals */}

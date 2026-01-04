@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus } from "lucide-react";
+import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus, Mountain, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
@@ -52,6 +52,9 @@ interface CompactGoalCardProps {
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
   onClick?: () => void;
+  // Auto goal action callbacks
+  onLogClimb?: () => void;
+  onAddBook?: () => void;
 }
 
 export function CompactGoalCard({
@@ -64,6 +67,8 @@ export function CompactGoalCard({
   isIncrementing,
   isClaimingReward,
   onClick,
+  onLogClimb,
+  onAddBook,
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
@@ -232,6 +237,44 @@ export function CompactGoalCard({
                 </button>
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* Action buttons for auto-tracked goals */}
+        {!isManual && !goal.isCompleted && (
+          <div className="flex items-center gap-2 mb-2">
+            {goal.sourceLabel === "Climbing Log" && onLogClimb && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLogClimb();
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                  "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30",
+                  "hover:bg-sky-500/30 transition-colors"
+                )}
+              >
+                <Mountain className="w-3.5 h-3.5" />
+                Log climb
+              </button>
+            )}
+            {goal.sourceLabel === "Study Planner" && onAddBook && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddBook();
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                  "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
+                  "hover:bg-emerald-500/30 transition-colors"
+                )}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Add book
+              </button>
+            )}
           </div>
         )}
 
