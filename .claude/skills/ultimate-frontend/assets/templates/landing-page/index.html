@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Product - Tagline Here</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+    <!-- Navigation -->
+    <header class="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
+        <div class="container mx-auto px-4">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center gap-8">
+                    <a href="#" class="text-2xl font-bold text-primary">Logo</a>
+                    <nav class="hidden md:flex gap-6">
+                        <a href="#features" class="text-sm font-medium hover:text-primary transition">Features</a>
+                        <a href="#pricing" class="text-sm font-medium hover:text-primary transition">Pricing</a>
+                        <a href="#faq" class="text-sm font-medium hover:text-primary transition">FAQ</a>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="#" class="text-sm font-medium hover:text-primary transition">Sign In</a>
+                    <a href="#" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative py-20 lg:py-32 overflow-hidden">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
+                    Build Something Amazing
+                </h1>
+                <p class="text-xl text-neutral-600 mb-8">
+                    A compelling description of your product that explains the value proposition clearly and concisely.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#" class="px-8 py-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition text-lg font-medium">
+                        Get Started Free
+                    </a>
+                    <a href="#" class="px-8 py-4 border border-neutral-300 rounded-lg hover:border-primary transition text-lg font-medium">
+                        Watch Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-4">Powerful Features</h2>
+                <p class="text-xl text-neutral-600">Everything you need to succeed</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-xl border border-neutral-200 hover:border-primary transition">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Fast Performance</h3>
+                    <p class="text-neutral-600">Lightning-fast speeds that keep your users engaged and happy.</p>
+                </div>
+                <div class="p-8 rounded-xl border border-neutral-200 hover:border-primary transition">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Secure by Default</h3>
+                    <p class="text-neutral-600">Enterprise-grade security to protect your data and privacy.</p>
+                </div>
+                <div class="p-8 rounded-xl border border-neutral-200 hover:border-primary transition">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Easy Integration</h3>
+                    <p class="text-neutral-600">Seamlessly integrate with your existing tools and workflow.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-4">Simple Pricing</h2>
+                <p class="text-xl text-neutral-600">Choose the plan that's right for you</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="p-8 rounded-xl border border-neutral-200">
+                    <h3 class="text-2xl font-bold mb-2">Starter</h3>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold">$19</span>
+                        <span class="text-neutral-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Up to 10 projects</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Basic analytics</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Email support</span>
+                        </li>
+                    </ul>
+                    <a href="#" class="block w-full px-4 py-3 text-center border border-neutral-300 rounded-lg hover:border-primary transition font-medium">
+                        Get Started
+                    </a>
+                </div>
+                <div class="p-8 rounded-xl border-2 border-primary relative">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                        Popular
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Professional</h3>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold">$49</span>
+                        <span class="text-neutral-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Unlimited projects</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Advanced analytics</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Priority support</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Custom integrations</span>
+                        </li>
+                    </ul>
+                    <a href="#" class="block w-full px-4 py-3 text-center bg-primary text-white rounded-lg hover:bg-primary/90 transition font-medium">
+                        Get Started
+                    </a>
+                </div>
+                <div class="p-8 rounded-xl border border-neutral-200">
+                    <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Everything in Pro</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Dedicated support</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Custom SLA</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>On-premise option</span>
+                        </li>
+                    </ul>
+                    <a href="#" class="block w-full px-4 py-3 text-center border border-neutral-300 rounded-lg hover:border-primary transition font-medium">
+                        Contact Sales
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 bg-white">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl lg:text-5xl font-bold mb-4">Frequently Asked Questions</h2>
+            </div>
+            <div class="space-y-6">
+                <details class="group p-6 rounded-xl border border-neutral-200">
+                    <summary class="cursor-pointer font-medium text-lg">How does it work?</summary>
+                    <p class="mt-4 text-neutral-600">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </details>
+                <details class="group p-6 rounded-xl border border-neutral-200">
+                    <summary class="cursor-pointer font-medium text-lg">Can I cancel anytime?</summary>
+                    <p class="mt-4 text-neutral-600">Yes, you can cancel your subscription at any time with no penalties.</p>
+                </details>
+                <details class="group p-6 rounded-xl border border-neutral-200">
+                    <summary class="cursor-pointer font-medium text-lg">Is there a free trial?</summary>
+                    <p class="mt-4 text-neutral-600">We offer a 14-day free trial for all new users. No credit card required.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-2xl font-bold text-primary">Logo</div>
+                <div class="flex gap-6">
+                    <a href="#" class="text-neutral-600 hover:text-primary transition">Privacy</a>
+                    <a href="#" class="text-neutral-600 hover:text-primary transition">Terms</a>
+                    <a href="#" class="text-neutral-600 hover:text-primary transition">Contact</a>
+                </div>
+            </div>
+            <div class="text-center mt-8 text-neutral-600 text-sm">
+                © 2025 Your Company. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

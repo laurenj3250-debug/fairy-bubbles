@@ -1,0 +1,49 @@
+/* Custom theme variables - will be replaced by setup script */
+:root {
+  --primary: #0077BE;
+  --secondary: #00A5E0;
+  --accent: #FFB81C;
+  --neutral-50: #F8FAFB;
+  --neutral-100: #F1F4F6;
+  --neutral-200: #E3E8EC;
+  --neutral-300: #D5DCE2;
+  --neutral-400: #B8C4CE;
+  --neutral-500: #9BABB9;
+  --neutral-600: #7E93A5;
+  --neutral-700: #627A91;
+  --neutral-800: #4D6276;
+  --neutral-900: #384A5C;
+}
+
+/* Apply custom colors */
+.bg-primary { background-color: var(--primary); }
+.text-primary { color: var(--primary); }
+.border-primary { border-color: var(--primary); }
+.hover\:bg-primary\/90:hover { background-color: var(--primary); opacity: 0.9; }
+.hover\:text-primary:hover { color: var(--primary); }
+.hover\:border-primary:hover { border-color: var(--primary); }
+
+.bg-neutral-50 { background-color: var(--neutral-50); }
+.bg-neutral-200 { background-color: var(--neutral-200); }
+.text-neutral-600 { color: var(--neutral-600); }
+.text-neutral-900 { color: var(--neutral-900); }
+.border-neutral-200 { border-color: var(--neutral-200); }
+.border-neutral-300 { border-color: var(--neutral-300); }
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Details/summary styling */
+details summary {
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] summary {
+  margin-bottom: 0.5rem;
+}
