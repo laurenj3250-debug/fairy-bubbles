@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FAB } from '@/components/FAB';
-import { Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
 import { MountainHero } from '@/components/MountainHero';
@@ -20,6 +20,7 @@ import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
 import { AddBookDialog } from '@/components/AddBookDialog';
+import { HabitCreateDialog } from '@/components/HabitCreateDialog';
 
 // Drag and Drop
 import {
@@ -228,6 +229,9 @@ export default function DashboardV4() {
 
   // Add book dialog state
   const [addBookDialogOpen, setAddBookDialogOpen] = useState(false);
+
+  // Habit create dialog state
+  const [habitCreateDialogOpen, setHabitCreateDialogOpen] = useState(false);
 
   // Quick add handler - opens inline add for today
   const handleQuickAdd = useCallback(() => {
@@ -713,10 +717,19 @@ export default function DashboardV4() {
               GOAL CONNECT
             </h1>
 
-            {/* Center: Habit Orbs (clickable to habits) */}
-            <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
-              <GlowingOrbHabits />
-            </Link>
+            {/* Center: Habit Orbs (clickable to habits) + Add button */}
+            <div className="flex items-center gap-2">
+              <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
+                <GlowingOrbHabits />
+              </Link>
+              <button
+                onClick={() => setHabitCreateDialogOpen(true)}
+                className="p-2 rounded-full bg-peach-400/20 hover:bg-peach-400/40 text-peach-400 transition-all hover:scale-110"
+                title="Add new habit"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
 
             {/* Right: Stats - subtle, not competing with content */}
             <div className="flex items-center gap-4 text-xs">
@@ -950,6 +963,12 @@ export default function DashboardV4() {
           queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
         }}
         isSubmitting={isPending.createBook}
+      />
+
+      {/* Habit Create Dialog - create new habits from dashboard */}
+      <HabitCreateDialog
+        open={habitCreateDialogOpen}
+        onOpenChange={setHabitCreateDialogOpen}
       />
     </div>
   );

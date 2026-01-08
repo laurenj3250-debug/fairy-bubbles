@@ -232,7 +232,7 @@ export function HabitCreateDialog({ open, onClose, onOpenChange, habit, editHabi
       }
       setError(null);
     }
-  }, [open, habit]);
+  }, [open, habit, editHabit]);
 
   const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
