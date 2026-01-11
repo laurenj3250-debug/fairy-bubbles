@@ -5,3 +5,4 @@ export { SubItemList } from "./SubItemList";
 export { GoalProgressBar } from "./GoalProgressBar";
 export { CompactGoalCard } from "./CompactGoalCard";
 export { CompactGoalGrid } from "./CompactGoalGrid";
+export { GoalChips } from "./GoalChips";
