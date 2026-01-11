@@ -33,6 +33,7 @@ import StudyPlanner from "@/pages/StudyPlanner";
 import YearlyGoals from "@/pages/YearlyGoals";
 import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
+import Adventures from "@/pages/Adventures";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -284,6 +285,13 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <MediaLibrary />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/adventures">
+        <RequireAuth>
+          <MainLayout>
+            <Adventures />
           </MainLayout>
         </RequireAuth>
       </Route>

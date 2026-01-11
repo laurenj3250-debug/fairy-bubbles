@@ -20,6 +20,8 @@ import {
   climbingSessions,
   dreamScrollItems,
   studyChapters,
+  outdoorAdventures,
+  birdSightings,
   insertYearlyGoalSchema,
   insertYearlyGoalProgressLogSchema,
   YEARLY_GOAL_CATEGORY_ORDER,
@@ -113,15 +115,32 @@ async function computeGoalProgress(
       }
 
       case "outdoor_days": {
-        sourceLabel = "Climbing Log";
+        sourceLabel = "Adventures";
+        // Union of dates from outdoor climbing ticks + outdoor adventures
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT date) as count FROM (
+            SELECT date FROM outdoor_climbing_ticks
+            WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+            UNION
+            SELECT date FROM outdoor_adventures
+            WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+          ) AS all_dates
+        `);
+        computedValue = Number(result.rows[0]?.count ?? 0);
+        break;
+      }
+
+      case "bird_species": {
+        sourceLabel = "Life List";
+        // Count species first seen in current year
         const result = await db
-          .select({ count: countDistinct(outdoorClimbingTicks.date) })
-          .from(outdoorClimbingTicks)
+          .select({ count: count() })
+          .from(birdSightings)
           .where(
             and(
-              eq(outdoorClimbingTicks.userId, userId),
-              gte(outdoorClimbingTicks.date, startDate),
-              lte(outdoorClimbingTicks.date, endDate)
+              eq(birdSightings.userId, userId),
+              gte(birdSightings.firstSeenDate, startDate),
+              lte(birdSightings.firstSeenDate, endDate)
             )
           );
         computedValue = Number(result[0]?.count ?? 0);

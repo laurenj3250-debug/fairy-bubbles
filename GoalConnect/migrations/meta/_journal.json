@@ -50,6 +50,13 @@
       "when": 1767277120811,
       "tag": "0006_yummy_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1768095018191,
+      "tag": "0007_classy_inertia",
+      "breakpoints": true
     }
   ]
 }

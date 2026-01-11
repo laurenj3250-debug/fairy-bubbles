@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp, varchar, uniqueIndex, decimal, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, varchar, uniqueIndex, decimal, jsonb, pgEnum, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -1505,4 +1505,57 @@ export const insertMediaItemSchema = createInsertSchema(mediaItems).omit({
   updatedAt: true,
   completedAt: true,
   startedAt: true,
+});
+
+// ========== OUTDOOR ADVENTURES ==========
+// Photo board for outdoor activities - feeds "52 outdoor days" goal
+
+export const outdoorAdventures = pgTable("outdoor_adventures", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD (multiple per day allowed)
+  activity: text("activity").notNull(), // "birding", "hiking", "climbing", etc
+  location: text("location"),
+  photoPath: text("photo_path"), // "/uploads/{userId}/adventures/xxx.jpg"
+  thumbPath: text("thumb_path"), // thumbnail for grid
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type OutdoorAdventure = typeof outdoorAdventures.$inferSelect;
+export type InsertOutdoorAdventure = typeof outdoorAdventures.$inferInsert;
+
+export const insertOutdoorAdventureSchema = createInsertSchema(outdoorAdventures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// ========== BIRD LIFE LIST ==========
+// Track bird species spotted - feeds "100 new bird species" goal
+
+export const birdSightings = pgTable("bird_sightings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  speciesName: text("species_name").notNull(), // "Northern Cardinal"
+  firstSeenDate: varchar("first_seen_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  firstSeenAdventureId: integer("first_seen_adventure_id").references(() => outdoorAdventures.id, { onDelete: "set null" }),
+  location: text("location"), // Where first spotted
+  photoPath: text("photo_path"), // Best photo (can be updated)
+  thumbPath: text("thumb_path"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserSpecies: unique().on(table.userId, table.speciesName),
+}));
+
+export type BirdSighting = typeof birdSightings.$inferSelect;
+export type InsertBirdSighting = typeof birdSightings.$inferInsert;
+
+export const insertBirdSightingSchema = createInsertSchema(birdSightings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });

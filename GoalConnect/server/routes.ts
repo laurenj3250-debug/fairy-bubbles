@@ -50,6 +50,7 @@ import { registerStudyPlannerRoutes } from "./routes/study-planner";
 import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
+import { registerAdventuresRoutes } from "./routes/adventures";
 import {
   DatabaseError,
   ValidationError,
@@ -2929,6 +2930,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register media library routes
   registerMediaLibraryRoutes(app);
+
+  // Register adventures & birds routes
+  registerAdventuresRoutes(app);
 
   // Seed de Lahunta reading schedule (one-time use)
   app.post("/api/seed/reading-schedule", async (req, res) => {
