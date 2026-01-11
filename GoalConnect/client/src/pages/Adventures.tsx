@@ -3,8 +3,10 @@
  * Photo-centric tracking for outdoor adventures and bird life list
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   Mountain,
   Bird,
@@ -86,6 +88,7 @@ export default function Adventures() {
 function AdventuresTab({ year }: { year: string }) {
   const [showModal, setShowModal] = useState(false);
   const [editingAdventure, setEditingAdventure] = useState<Adventure | null>(null);
+  const { toast } = useToast();
 
   const {
     adventures,
@@ -100,18 +103,45 @@ function AdventuresTab({ year }: { year: string }) {
   } = useAdventures({ year });
 
   const handleCreate = async (input: AdventureInput) => {
-    await createAdventure(input);
-    setShowModal(false);
+    try {
+      await createAdventure(input);
+      setShowModal(false);
+      toast({ title: "Adventure added!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add adventure",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUpdate = async (input: AdventureInput & { id: number }) => {
-    await updateAdventure(input);
-    setEditingAdventure(null);
+    try {
+      await updateAdventure(input);
+      setEditingAdventure(null);
+      toast({ title: "Adventure updated!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update adventure",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (confirm("Delete this adventure?")) {
-      await deleteAdventure(id);
+      try {
+        await deleteAdventure(id);
+        toast({ title: "Adventure deleted" });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete adventure",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -206,13 +236,9 @@ function AdventureCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [showActions, setShowActions] = useState(false);
-
   return (
     <div
       className="group relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-peach-500/30 transition-colors cursor-pointer"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       onClick={onEdit}
     >
       {/* Photo or placeholder */}
@@ -245,29 +271,27 @@ function AdventureCard({
         )}
       </div>
 
-      {/* Actions */}
-      {showActions && (
-        <div className="absolute top-2 right-2 flex gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="p-1.5 bg-black/50 hover:bg-black/70 rounded text-white/80 hover:text-white transition-colors"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="p-1.5 bg-black/50 hover:bg-red-500/50 rounded text-white/80 hover:text-white transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Actions - visible on mobile, hover on desktop */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-2 bg-black/50 hover:bg-black/70 rounded text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-2 bg-black/50 hover:bg-red-500/50 rounded text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -289,13 +313,38 @@ function AdventureModal({
   const [notes, setNotes] = useState(adventure?.notes || "");
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(adventure?.thumbPath || null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup Object URL on unmount or when localPreview changes
+  useEffect(() => {
+    return () => {
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
+
+  // Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Revoke old URL before creating new one
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+      const newUrl = URL.createObjectURL(file);
+      setLocalPreview(newUrl);
+      setPreview(newUrl);
       setPhoto(file);
-      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -313,8 +362,14 @@ function AdventureModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="glass-card frost-accent w-full max-w-md p-6 space-y-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="glass-card frost-accent w-full max-w-md p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">
             {adventure ? "Edit Adventure" : "New Adventure"}
@@ -427,6 +482,8 @@ function BirdsTab({ year }: { year: string }) {
   const [editingBird, setEditingBird] = useState<BirdSighting | null>(null);
   const [sort, setSort] = useState<BirdSort>("alphabetical");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const { toast } = useToast();
 
   const {
     birds,
@@ -438,21 +495,48 @@ function BirdsTab({ year }: { year: string }) {
     isCreating,
     isUpdating,
     isDeleting,
-  } = useBirds({ sort, search: search || undefined });
+  } = useBirds({ sort, search: debouncedSearch || undefined });
 
   const handleCreate = async (input: BirdInput) => {
-    await createBird(input);
-    setShowModal(false);
+    try {
+      await createBird(input);
+      setShowModal(false);
+      toast({ title: "Species added to life list!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add species",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUpdate = async (input: BirdInput & { id: number }) => {
-    await updateBird(input);
-    setEditingBird(null);
+    try {
+      await updateBird(input);
+      setEditingBird(null);
+      toast({ title: "Species updated!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update species",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (confirm("Remove this species from your life list?")) {
-      await deleteBird(id);
+      try {
+        await deleteBird(id);
+        toast({ title: "Species removed from life list" });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to remove species",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -579,13 +663,9 @@ function BirdCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [showActions, setShowActions] = useState(false);
-
   return (
     <div
       className="group relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-sky-500/30 transition-colors cursor-pointer"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       onClick={onEdit}
     >
       {/* Photo or placeholder */}
@@ -618,29 +698,27 @@ function BirdCard({
         )}
       </div>
 
-      {/* Actions */}
-      {showActions && (
-        <div className="absolute top-2 right-2 flex gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="p-1.5 bg-black/50 hover:bg-black/70 rounded text-white/80 hover:text-white transition-colors"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="p-1.5 bg-black/50 hover:bg-red-500/50 rounded text-white/80 hover:text-white transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Actions - visible on mobile, hover on desktop */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-2 bg-black/50 hover:bg-black/70 rounded text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-2 bg-black/50 hover:bg-red-500/50 rounded text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -662,13 +740,38 @@ function BirdModal({
   const [notes, setNotes] = useState(bird?.notes || "");
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(bird?.thumbPath || null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup Object URL on unmount or when localPreview changes
+  useEffect(() => {
+    return () => {
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
+
+  // Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Revoke old URL before creating new one
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
+      const newUrl = URL.createObjectURL(file);
+      setLocalPreview(newUrl);
+      setPreview(newUrl);
       setPhoto(file);
-      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -686,8 +789,14 @@ function BirdModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="glass-card frost-accent w-full max-w-md p-6 space-y-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="glass-card frost-accent w-full max-w-md p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">
             {bird ? "Edit Species" : "Add Species"}
