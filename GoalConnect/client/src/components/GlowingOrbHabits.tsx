@@ -1,63 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { apiRequest } from "@/lib/queryClient";
 
-interface Habit {
+// Use the same enriched habit type that IcyDash uses
+interface HabitWithData {
   id: number;
   title: string;
-}
-
-interface HabitLog {
-  id: number;
-  habitId: number;
-  completed: boolean;
+  history: Array<{ date: string; completed: boolean }>;
 }
 
 export function GlowingOrbHabits() {
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
 
-  const { data: allHabits = [] } = useQuery<Habit[]>({
-    queryKey: ["/api/habits"],
-  });
-
-  const { data: habitLogs = [] } = useQuery<HabitLog[]>({
-    queryKey: [`/api/habit-logs/${today}`],
+  // Use the SAME query key as IcyDash - this way data stays in sync
+  const { data: habits = [] } = useQuery<HabitWithData[]>({
+    queryKey: ['/api/habits-with-data'],
   });
 
   const toggleMutation = useMutation({
     mutationFn: async ({ habitId }: { habitId: number }) => {
-      const response = await fetch(`/api/habit-logs/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ habitId, date: today }),
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to toggle habit");
-      return response.json();
+      return await apiRequest('/api/habit-logs/toggle', 'POST', { habitId, date: today });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
-      queryClient.invalidateQueries({ predicate: (query) =>
-        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs')
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+      // Only need to invalidate ONE query - the shared source
+      queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
     },
   });
 
-  const isCompleted = (habitId: number) => {
-    return habitLogs.some(l => l.habitId === habitId && l.completed);
+  // Check completion from the shared enriched data
+  const isCompleted = (habit: HabitWithData) => {
+    return habit.history?.some(h => h.date === today && h.completed) ?? false;
   };
 
-  // Get first 2-3 letters of habit title to fit in circles
   const getShortName = (title: string) => {
-    // Use first 3 chars, uppercase for readability
     return title.substring(0, 3).toUpperCase();
   };
 
   return (
     <div className="flex gap-2">
-      {allHabits.slice(0, 5).map((habit, index) => {
-        const completed = isCompleted(habit.id);
+      {habits.slice(0, 5).map((habit, index) => {
+        const completed = isCompleted(habit);
 
         return (
           <motion.button

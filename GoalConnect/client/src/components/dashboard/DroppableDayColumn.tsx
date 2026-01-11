@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
@@ -71,6 +72,9 @@ export function DroppableDayColumn({
   isUpdating,
   isDeleting,
 }: DroppableDayColumnProps) {
+  // Track submission state synchronously to prevent blur closing form during submit
+  const isSubmittingRef = useRef(false);
+
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayIndex}`,
     data: { date, dayIndex },
@@ -117,8 +121,10 @@ export function DroppableDayColumn({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (inlineAddTitle.trim() && !isCreating) {
+                  if (inlineAddTitle.trim() && !isCreating && !isSubmittingRef.current) {
+                    isSubmittingRef.current = true;
                     onSubmitAdd(date);
+                    // Reset ref after mutation completes (parent will clear isCreating)
                   }
                 }}
                 className="flex gap-1"
@@ -132,14 +138,25 @@ export function DroppableDayColumn({
                   maxLength={500}
                   disabled={isCreating}
                   onBlur={() => {
-                    if (!inlineAddTitle.trim() && !isCreating) {
+                    // Only close if empty AND not currently submitting
+                    if (!inlineAddTitle.trim() && !isCreating && !isSubmittingRef.current) {
                       setInlineAddDay(null);
+                    }
+                    // Reset the ref when blur happens after submit completes
+                    if (!isCreating) {
+                      isSubmittingRef.current = false;
                     }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape' && !isCreating) {
+                      isSubmittingRef.current = false;
                       setInlineAddTitle('');
                       setInlineAddDay(null);
+                    }
+                    if (e.key === 'Enter' && !isCreating && inlineAddTitle.trim() && !isSubmittingRef.current) {
+                      e.preventDefault();
+                      isSubmittingRef.current = true;
+                      onSubmitAdd(date);
                     }
                   }}
                   className={cn(

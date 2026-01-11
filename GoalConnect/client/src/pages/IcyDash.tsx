@@ -1,52 +1,30 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { cn } from '@/lib/utils';
 import { triggerConfetti, checkAllHabitsComplete } from '@/lib/confetti';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { FAB } from '@/components/FAB';
-import { Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
 import { MountainHero } from '@/components/MountainHero';
 import { ForestBackground } from '@/components/ForestBackground';
-import { LuxuryWeeklyRhythm } from '@/components/LuxuryWeeklyRhythm';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
-import { DreamScrollWidget } from '@/components/DreamScrollWidget';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
 import { AddBookDialog } from '@/components/AddBookDialog';
-
-// Drag and Drop
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { DroppableDayColumn } from '@/components/dashboard/DroppableDayColumn';
-import { TodayFocusCard } from '@/components/dashboard/TodayFocusCard';
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 
-import type { Habit, HabitLog, Goal, Todo, Project } from '@shared/schema';
+import type { Habit, HabitLog, Goal } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useClimbingLog } from '@/hooks/useClimbingLog';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
-import { GoalCalendarWidget } from '@/components/GoalCalendarWidget';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
-import { ActivityHeatmapWidget } from '@/components/ActivityHeatmapWidget';
-import { useGoalCalendar } from '@/hooks/useGoalCalendar';
 
 // ============================================================================
 // TYPES
@@ -62,16 +40,6 @@ interface UserPoints {
   available: number;
   total: number;
   spent: number;
-}
-
-interface StreakData {
-  currentStreak: number;
-  longestStreak: number;
-}
-
-interface TodoWithMetadata extends Todo {
-  project?: Project | null;
-  labels?: Array<{ id: number; name: string; color: string }>;
 }
 
 // ============================================================================
@@ -202,19 +170,6 @@ export default function DashboardV4() {
   const week = useWeekData();
   const [, setLocation] = useLocation();
 
-  // Inline task add state
-  const [inlineAddDay, setInlineAddDay] = useState<number | null>(null);
-  const [inlineAddTitle, setInlineAddTitle] = useState('');
-
-  // Drag and drop state
-  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
-
-  // Hide completed toggle
-  const [hideCompleted, setHideCompleted] = useState(false);
-
-  // Track recently completed tasks for linger effect (task id -> completion timestamp)
-  const [recentlyCompleted, setRecentlyCompleted] = useState<Record<number, number>>({});
-
   // Note dialog state for habits that require notes
   const [noteDialogHabit, setNoteDialogHabit] = useState<HabitWithData | null>(null);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
@@ -229,19 +184,8 @@ export default function DashboardV4() {
   // Add book dialog state
   const [addBookDialogOpen, setAddBookDialogOpen] = useState(false);
 
-  // Quick add handler - opens inline add for today
-  const handleQuickAdd = useCallback(() => {
-    setInlineAddDay(week.todayIndex);
-    // Focus will happen via autoFocus on the input
-  }, [week.todayIndex]);
-
   // Keyboard shortcuts
   useKeyboardShortcuts([
-    {
-      key: 'n',
-      description: 'New task',
-      action: handleQuickAdd,
-    },
     {
       key: 'h',
       description: 'Go to Habits',
@@ -259,11 +203,6 @@ export default function DashboardV4() {
     },
   ]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
-  );
-
   // ============================================================================
   // DATA FETCHING
   // ============================================================================
@@ -276,12 +215,8 @@ export default function DashboardV4() {
     queryKey: ['/api/points'],
   });
 
-  const { data: goals = [], isLoading: goalsLoading } = useQuery<Goal[]>({
+  const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ['/api/goals'],
-  });
-
-  const { data: todos = [], isLoading: todosLoading } = useQuery<TodoWithMetadata[]>({
-    queryKey: ['/api/todos-with-metadata'],
   });
 
   const { data: weekLogs = [] } = useQuery<HabitLog[]>({
@@ -292,9 +227,6 @@ export default function DashboardV4() {
       return res.json();
     },
   });
-
-  // Goal milestones for the current week (for Schedule view)
-  const { goalsByDate: weekGoalsByDate } = useGoalCalendar(new Date());
 
   // Yearly goals - show current year, or next year if in December (planning mode)
   const currentYear = useMemo(() => {
@@ -354,27 +286,13 @@ export default function DashboardV4() {
           triggerConfetti('all_habits_today');
         }
       }
+      // Single shared data source - GlowingOrbHabits also uses this
       queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const toggleTodoMutation = useMutation({
-    mutationFn: async (todoId: number) => {
-      return await apiRequest(`/api/todos/${todoId}/complete`, 'POST');
-    },
-    onSuccess: (_, todoId) => {
-      // Track for linger effect - will be hidden after 2 seconds
-      setRecentlyCompleted(prev => ({ ...prev, [todoId]: Date.now() }));
-      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Failed to complete task", description: error.message, variant: "destructive" });
     },
   });
 
@@ -394,74 +312,6 @@ export default function DashboardV4() {
       toast({ title: "Failed to update goal", description: error.message, variant: "destructive" });
     },
   });
-
-  const createTodoMutation = useMutation({
-    mutationFn: async ({ title, dueDate }: { title: string; dueDate: string }) => {
-      const trimmedTitle = title.trim();
-      if (!trimmedTitle || trimmedTitle.length > 500) {
-        throw new Error('Task title must be 1-500 characters');
-      }
-      return await apiRequest('/api/todos', 'POST', {
-        title: trimmedTitle,
-        dueDate,
-        priority: 4,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
-      // Reset inline add form state after successful creation
-      setInlineAddTitle('');
-      setInlineAddDay(null);
-    },
-    onError: (error: Error) => {
-      toast({ title: "Failed to create task", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const updateTodoMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; title?: string; dueDate?: string }) => {
-      return await apiRequest(`/api/todos/${id}`, 'PATCH', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Failed to update task", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const deleteTodoMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/todos/${id}`, 'DELETE');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos-with-metadata'] });
-      toast({ title: "Task deleted" });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Failed to delete task", description: error.message, variant: "destructive" });
-    },
-  });
-
-  // Drag and drop handler
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveTaskId(null);
-
-    if (!over) return;
-
-    const taskId = active.id as number;
-    const overData = over.data.current as { date: string; dayIndex: number } | undefined;
-
-    if (overData?.date) {
-      const task = todos.find(t => t.id === taskId);
-      if (task && task.dueDate !== overData.date) {
-        updateTodoMutation.mutate({ id: taskId, dueDate: overData.date });
-      }
-    }
-  };
-
-  const activeTask = activeTaskId ? todos.find(t => t.id === activeTaskId) : null;
 
   // ============================================================================
   // COMPUTED DATA
@@ -484,144 +334,6 @@ export default function DashboardV4() {
   const completedTodayCount = useMemo(() => {
     return todayHabits.filter(h => completionMap[h.id]?.[todayStr]).length;
   }, [todayHabits, completionMap, todayStr]);
-
-  // Urgent goals for Today's Focus card - goals due within a week
-  const urgentGoals = useMemo(() => {
-    const now = new Date();
-    const weekFromNow = new Date();
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
-
-    return yearlyGoals
-      .filter(g => {
-        if (g.isCompleted) return false;
-        // Has deadline due within a week
-        if (!g.dueDate) return false;
-        const dueDate = new Date(g.dueDate);
-        return dueDate <= weekFromNow;
-      })
-      .map(g => ({
-        id: g.id,
-        title: g.title,
-        dueDate: g.dueDate!,
-        isOverdue: new Date(g.dueDate!) < now,
-      }))
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .slice(0, 3);
-  }, [yearlyGoals]);
-
-  const weeklyGoals = useMemo(() => {
-    return goals
-      .filter(g => {
-        // Must have deadline in current week
-        const hasWeeklyDeadline = g.deadline && g.deadline <= week.weekEnd && g.deadline >= week.weekStart;
-        // Must NOT be completed (currentValue < targetValue)
-        const isIncomplete = g.currentValue < g.targetValue;
-        return hasWeeklyDeadline && isIncomplete;
-      })
-      .slice(0, 3);
-  }, [goals, week.weekStart, week.weekEnd]);
-
-
-  // Effect to clean up linger entries after 2 seconds
-  useEffect(() => {
-    const entries = Object.entries(recentlyCompleted);
-    if (entries.length === 0) return;
-
-    const now = Date.now();
-    const LINGER_MS = 2000;
-
-    // Check if any need cleanup
-    const needsCleanup = entries.some(([, timestamp]) => now - timestamp >= LINGER_MS);
-    if (needsCleanup) {
-      setRecentlyCompleted(prev => {
-        const updated: Record<number, number> = {};
-        Object.entries(prev).forEach(([id, timestamp]) => {
-          if (now - timestamp < LINGER_MS) {
-            updated[Number(id)] = timestamp;
-          }
-        });
-        return updated;
-      });
-    }
-
-    // Set timeout for the next cleanup
-    const nextExpiry = entries.reduce((min, [, timestamp]) => {
-      const remaining = LINGER_MS - (now - timestamp);
-      return remaining > 0 && remaining < min ? remaining : min;
-    }, LINGER_MS);
-
-    const timer = setTimeout(() => {
-      setRecentlyCompleted(prev => {
-        const updated: Record<number, number> = {};
-        const checkTime = Date.now();
-        Object.entries(prev).forEach(([id, timestamp]) => {
-          if (checkTime - timestamp < LINGER_MS) {
-            updated[Number(id)] = timestamp;
-          }
-        });
-        return updated;
-      });
-    }, nextExpiry + 50);
-
-    return () => clearTimeout(timer);
-  }, [recentlyCompleted]);
-
-  const todosByDay = useMemo(() => {
-    const byDay: Record<number, TodoWithMetadata[]> = {};
-    week.dates.forEach((_, i) => { byDay[i] = []; });
-
-    const now = Date.now();
-    const LINGER_MS = 2000;
-
-    todos.forEach(todo => {
-      if (todo.dueDate) {
-        const idx = week.dates.indexOf(todo.dueDate);
-        if (idx !== -1) {
-          // Filter logic when hideCompleted is on
-          if (hideCompleted && todo.completed) {
-            // Check if it's still in linger period
-            const completedAt = recentlyCompleted[todo.id];
-            if (completedAt && now - completedAt < LINGER_MS) {
-              // Still lingering - include it but mark for fade-out
-              byDay[idx].push(todo);
-            }
-            // Otherwise skip (already hidden)
-          } else {
-            byDay[idx].push(todo);
-          }
-        }
-      }
-    });
-    return byDay;
-  }, [todos, week.dates, hideCompleted, recentlyCompleted]);
-
-  const quickTasks = useMemo(() => {
-    return todos.filter(t => !t.completed).slice(0, 5);
-  }, [todos]);
-
-  // Weekly rhythm data (habits completed per day)
-  const weeklyRhythm = useMemo(() => {
-    return week.dates.map((date, i) => {
-      const completed = habits.filter(h => completionMap[h.id]?.[date]).length;
-      const total = habits.length || 1;
-      return { day: week.dayNames[i].charAt(0), height: Math.round((completed / total) * 100), isToday: i === week.todayIndex };
-    });
-  }, [habits, completionMap, week]);
-
-  // Heatmap data (last 28 days)
-  const heatmapData = useMemo(() => {
-    const data: number[] = [];
-    for (let i = 27; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const completed = habits.filter(h => completionMap[h.id]?.[dateStr]).length;
-      const total = habits.length || 1;
-      const level = Math.ceil((completed / total) * 4);
-      data.push(level);
-    }
-    return data;
-  }, [habits, completionMap]);
 
   const xp = points?.available ?? 0;
 
@@ -649,10 +361,6 @@ export default function DashboardV4() {
   const handleNoteDialogSubmit = useCallback((habitId: number, date: string, note: string) => {
     toggleHabitMutation.mutate({ habitId, date, note });
   }, [toggleHabitMutation]);
-
-  const handleToggleTodo = useCallback((todoId: number) => {
-    toggleTodoMutation.mutate(todoId);
-  }, [toggleTodoMutation]);
 
   // ============================================================================
   // RENDER
@@ -718,7 +426,7 @@ export default function DashboardV4() {
               <GlowingOrbHabits />
             </Link>
 
-            {/* Right: Stats - subtle, not competing with content */}
+            {/* Right: Stats + Residency */}
             <div className="flex items-center gap-4 text-xs">
               <div className="text-[var(--text-muted)]">
                 <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
@@ -729,40 +437,18 @@ export default function DashboardV4() {
                 <span className="font-heading text-sm text-peach-400">{dayStreak}</span>
                 <span className="ml-1 opacity-70">streak</span>
               </div>
+              <div className="w-px h-3 bg-white/20" />
+              <ResidencyCountdownWidget compact />
             </div>
           </header>
 
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* TODAY'S FOCUS - Primary CTA */}
-          <TodayFocusCard
-            date={new Date()}
-            habits={{
-              completed: completedTodayCount,
-              total: todayHabits.length,
-            }}
-            topStreak={dayStreak}
-            urgentGoals={urgentGoals}
-            onHabitClick={() => setLocation('/habits')}
-          />
-
-          {/* ROW 1: Goals & Deadlines + Deadline Calendar (2 columns) */}
-          <div className="card-grid grid grid-cols-2 gap-5">
-            {/* All Goals Due This Month */}
-            <GoalsDeadlinesWidget
-              onIncrement={(id) => incrementGoalMutation.mutate(id)}
-              isIncrementing={incrementGoalMutation.isPending}
-            />
-
-            {/* Goal Deadline Calendar */}
-            <GoalCalendarWidget />
-          </div>
-
-          {/* ROW 2: This Week Habits + Dream Scroll (2 columns, tall) */}
-          <div className="card-grid grid grid-cols-2 gap-5">
-            {/* This Week Habits */}
-            <div className="glass-card frost-accent min-h-[320px] flex flex-col">
+          {/* MAIN GRID: 3 columns - Habits (2col) + Right sidebar (1col) */}
+          <div className="grid grid-cols-3 gap-5">
+            {/* LEFT: Habits - spans 2 columns */}
+            <div className="col-span-2 glass-card frost-accent flex flex-col">
               <span className="card-title">This Week</span>
               <div className="flex-1">
                 <LuxuryHabitGrid
@@ -785,34 +471,21 @@ export default function DashboardV4() {
               </div>
             </div>
 
-            {/* Dream Scroll Widget */}
-            <div className="min-h-[320px]">
-              <DreamScrollWidget />
+            {/* RIGHT SIDEBAR: Stacked widgets */}
+            <div className="space-y-4">
+              {/* Currently Reading/Watching */}
+              <MediaWidget />
+
+              {/* Monthly Progress */}
+              <MilestoneDonutWidget />
             </div>
           </div>
 
-          {/* Residency bar - spans full width above ROW 3 */}
-          <ResidencyCountdownWidget />
-
-          {/* ROW 3: Milestone Donut + Weekly Rhythm + Activity + Media (4 columns, small) */}
-          <div className="card-grid grid grid-cols-4 gap-5">
-            {/* Milestone Donut */}
-            <MilestoneDonutWidget />
-
-            {/* Weekly Rhythm */}
-            <div className="glass-card frost-accent min-h-[200px] flex flex-col">
-              <span className="card-title">Weekly Rhythm</span>
-              <div className="flex-1 flex items-end">
-                <LuxuryWeeklyRhythm data={weeklyRhythm} className="w-full" />
-              </div>
-            </div>
-
-            {/* Activity Heatmap */}
-            <ActivityHeatmapWidget data={heatmapData} />
-
-            {/* Media Library Widget */}
-            <MediaWidget />
-          </div>
+          {/* ROW 2: Goals Due This Month (full width, compact) */}
+          <GoalsDeadlinesWidget
+            onIncrement={(id) => incrementGoalMutation.mutate(id)}
+            isIncrementing={incrementGoalMutation.isPending}
+          />
 
           {/* ROW 4: Yearly Goals (grouped by category) */}
           <YearlyGoalsSection
@@ -833,82 +506,8 @@ export default function DashboardV4() {
             onAddBook={() => setAddBookDialogOpen(true)}
           />
 
-          {/* ROW 5: Weekly Schedule (full-width, 7-day tasks with drag-drop) */}
-          <div className="glass-card frost-accent min-h-[280px]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <span className="card-title">Schedule</span>
-                <button
-                  onClick={() => setHideCompleted(!hideCompleted)}
-                  className={cn(
-                    "p-1 rounded transition-colors",
-                    hideCompleted
-                      ? "text-peach-400 bg-peach-400/10"
-                      : "text-[var(--text-muted)] hover:text-peach-400"
-                  )}
-                  title={hideCompleted ? "Show completed" : "Hide completed"}
-                >
-                  {hideCompleted ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <span className="font-body text-xs text-[var(--text-muted)]">{week.formatRange}</span>
-            </div>
-
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={(e) => setActiveTaskId(e.active.id as number)}
-              onDragEnd={handleDragEnd}
-              onDragCancel={() => setActiveTaskId(null)}
-            >
-              <div className="grid grid-cols-7 gap-2">
-                {week.dayNames.map((day, i) => (
-                  <DroppableDayColumn
-                    key={`${day}-${i}`}
-                    dayIndex={i}
-                    dayName={day}
-                    date={week.dates[i]}
-                    isToday={i === week.todayIndex}
-                    todos={todosByDay[i] || []}
-                    goalMilestones={weekGoalsByDate.get(week.dates[i]) || []}
-                    onToggle={handleToggleTodo}
-                    onUpdate={(id, title) => updateTodoMutation.mutate({ id, title })}
-                    onDelete={(id) => deleteTodoMutation.mutate(id)}
-                    onAdd={() => setInlineAddDay(i)}
-                    onGoalIncrement={(id) => incrementGoalMutation.mutate(id)}
-                    isAddingDay={inlineAddDay}
-                    inlineAddTitle={inlineAddTitle}
-                    setInlineAddTitle={setInlineAddTitle}
-                    setInlineAddDay={setInlineAddDay}
-                    onSubmitAdd={(dueDate) => {
-                      createTodoMutation.mutate({ title: inlineAddTitle.trim(), dueDate });
-                    }}
-                    isCreating={createTodoMutation.isPending}
-                    isUpdating={updateTodoMutation.isPending}
-                    isDeleting={deleteTodoMutation.isPending}
-                  />
-                ))}
-              </div>
-
-              {/* Drag overlay for visual feedback */}
-              <DragOverlay>
-                {activeTask && (
-                  <div className="bg-ice-card/90 p-1 rounded shadow-lg text-[0.65rem] border border-peach-400/50 max-w-[100px] truncate">
-                    {activeTask.title}
-                  </div>
-                )}
-              </DragOverlay>
-            </DndContext>
-          </div>
-
         </div>
       </div>
-
-      {/* FAB for quick task add */}
-      <FAB
-        onClick={handleQuickAdd}
-        className="bg-peach-400 hover:bg-peach-500 text-white"
-      />
 
       {/* Habit Note Dialog */}
       <HabitNoteDialog

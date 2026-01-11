@@ -51,85 +51,63 @@ export function MilestoneDonutWidget() {
 
   if (isLoading) {
     return (
-      <div className="glass-card frost-accent min-h-[200px] flex flex-col">
-        <span className="card-title">Monthly Milestones</span>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-[120px] h-[120px] rounded-full bg-white/5 animate-pulse" />
-        </div>
+      <div className="glass-card frost-accent py-4 flex flex-col items-center">
+        <div className="w-[100px] h-[100px] rounded-full bg-white/5 animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="glass-card frost-accent min-h-[200px] flex flex-col">
-      <span className="card-title">Monthly Milestones</span>
+    <div className="glass-card frost-accent py-4 flex flex-col items-center">
+      {/* Compact donut with inline label */}
+      <div className="relative w-[110px] h-[110px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#d4936a" />
+                <stop offset="100%" stopColor="#f0c9ae" />
+              </linearGradient>
+            </defs>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={36}
+              outerRadius={48}
+              paddingAngle={2}
+              dataKey="value"
+              startAngle={90}
+              endAngle={-270}
+              animationBegin={0}
+              animationDuration={800}
+              animationEasing="ease-out"
+            >
+              {chartData.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index]}
+                  stroke="none"
+                />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
 
-      <div className="flex-1 flex flex-col items-center justify-center -mt-2">
-        {/* Donut Chart */}
-        <div className="relative w-[130px] h-[130px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#d4936a" />
-                  <stop offset="100%" stopColor="#f0c9ae" />
-                </linearGradient>
-              </defs>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={42}
-                outerRadius={58}
-                paddingAngle={2}
-                dataKey="value"
-                startAngle={90}
-                endAngle={-270}
-                animationBegin={0}
-                animationDuration={800}
-                animationEasing="ease-out"
-              >
-                {chartData.map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index]}
-                    stroke="none"
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-
-          {/* Center Text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-heading font-bold" style={{ color: '#e4a880' }}>
-              {stats.percentage}%
-            </span>
-            <span className="text-xs text-[var(--text-muted)]">
-              {stats.totalMet} / {stats.totalMilestones}
-            </span>
-            <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)]/60">
-              milestones
-            </span>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-3 text-[10px]">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-[var(--text-muted)]">{stats.onTrack} on track</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-rose-400" />
-            <span className="text-[var(--text-muted)]">{stats.behind} behind</span>
-          </div>
+        {/* Center Text - compact */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-xl font-heading font-bold" style={{ color: '#e4a880' }}>
+            {stats.percentage}%
+          </span>
+          <span className="text-[10px] text-[var(--text-muted)]">
+            {stats.totalMet}/{stats.totalMilestones}
+          </span>
         </div>
       </div>
 
-      {/* Month label */}
-      <div className="text-center text-[10px] text-[var(--text-muted)]/50 -mt-1 pb-1">
-        {format(currentMonth, "MMMM yyyy")}
+      {/* Compact label */}
+      <div className="text-[10px] text-[var(--text-muted)] mt-2">
+        {format(currentMonth, "MMM")} milestones
       </div>
     </div>
   );

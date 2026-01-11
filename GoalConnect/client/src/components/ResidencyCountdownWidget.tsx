@@ -10,7 +10,11 @@ import { GraduationCap } from "lucide-react";
 const RESIDENCY_START = new Date(2025, 6, 14); // July 14, 2025
 const RESIDENCY_END = new Date(2028, 6, 14);   // July 14, 2028
 
-export function ResidencyCountdownWidget() {
+interface ResidencyCountdownWidgetProps {
+  compact?: boolean;
+}
+
+export function ResidencyCountdownWidget({ compact = false }: ResidencyCountdownWidgetProps) {
   // Calculate stats fresh each render (cheap calculation, ensures accuracy)
   const now = new Date();
   const totalDays = differenceInDays(RESIDENCY_END, RESIDENCY_START);
@@ -24,6 +28,27 @@ export function ResidencyCountdownWidget() {
   const monthsRemainder = monthsRemaining % 12;
 
   const isComplete = daysUntilEnd <= 0;
+
+  // Compact version for header - just icon + progress bar + days
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        <GraduationCap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#e4a880' }} />
+        <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${progressPercent}%`,
+              background: 'linear-gradient(to right, #d4936a, #f0c9ae)'
+            }}
+          />
+        </div>
+        <span className="text-sm font-heading text-peach-400 tabular-nums">
+          {isComplete ? "Done!" : `${yearsRemaining > 0 ? `${yearsRemaining}y` : `${monthsRemainder}m`}`}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card frost-accent px-3 py-2">
