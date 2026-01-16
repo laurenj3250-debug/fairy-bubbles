@@ -75,8 +75,6 @@ export function CompactGoalCard({
   const CategoryIcon = categoryStyle.icon;
   const isManual = goal.source === "manual";
   const hasSubItems = goal.goalType === "compound" && goal.subItems.length > 0;
-  // Book-linked goals have chapter ids like "ch-123" and are toggleable
-  const isBookLinked = hasSubItems && goal.subItems[0]?.id?.startsWith("ch-");
 
   const handleToggle = () => {
     if (!onToggle) return;
