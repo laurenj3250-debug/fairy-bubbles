@@ -523,6 +523,11 @@ export default function Todos() {
               journey
             </span>
           </Link>
+          <Link href="/adventures">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              adventures
+            </span>
+          </Link>
           <Link href="/settings">
             <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
               settings

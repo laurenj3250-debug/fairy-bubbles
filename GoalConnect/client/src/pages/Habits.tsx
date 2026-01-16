@@ -32,9 +32,15 @@ export default function Habits() {
   const today = getToday();
 
   // Fetch habits with data
-  const { data: habits = [], isLoading } = useQuery<HabitWithData[]>({
+  const { data: habitsRaw = [], isLoading } = useQuery<HabitWithData[]>({
     queryKey: ["/api/habits-with-data"],
   });
+
+  // Sort habits by ID for stable ordering (prevents visual rearranging on toggle)
+  const habits = useMemo(() =>
+    [...habitsRaw].sort((a, b) => a.id - b.id),
+    [habitsRaw]
+  );
 
   // Fetch today's logs
   const { data: todayLogs = [] } = useQuery<HabitLog[]>({
@@ -198,6 +204,11 @@ export default function Habits() {
           <Link href="/journey">
             <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
               journey
+            </span>
+          </Link>
+          <Link href="/adventures">
+            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
+              adventures
             </span>
           </Link>
           <Link href="/settings">
