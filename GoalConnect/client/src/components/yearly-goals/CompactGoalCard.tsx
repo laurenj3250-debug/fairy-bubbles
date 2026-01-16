@@ -361,12 +361,12 @@ export function CompactGoalCard({
                 "hover:bg-white/[0.03] transition-colors"
               )}
             >
-              {/* Checkbox for manual goals and book-linked chapters */}
-              {(isManual || isBookLinked) ? (
+              {/* Checkbox - clickable if onToggleSubItem provided */}
+              {onToggleSubItem ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onToggleSubItem) onToggleSubItem(item.id);
+                    onToggleSubItem(item.id);
                   }}
                   className={cn(
                     "w-4 h-4 rounded flex items-center justify-center flex-shrink-0 mt-0.5",
