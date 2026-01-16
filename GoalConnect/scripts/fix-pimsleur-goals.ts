@@ -49,28 +49,31 @@ async function fixPimsleurGoals() {
   const existingCompleted = existingSubItems.filter(s => s.completed).length;
   console.log(`Existing completed lessons: ${existingCompleted}\n`);
 
-  // Generate 30 lessons for Module 3 only
+  // Generate 30 lessons for each of modules 3, 4, 5
   // BUT preserve completion state from existing items with matching titles
+  const modules = [3, 4, 5];
   const newSubItems: SubItem[] = [];
   let preservedCount = 0;
   let newCount = 0;
 
-  for (let lessonNum = 1; lessonNum <= 30; lessonNum++) {
-    const title = `Module 3 - Lesson ${lessonNum}`;
-    const existing = existingByTitle.get(title);
+  for (const moduleNum of modules) {
+    for (let lessonNum = 1; lessonNum <= 30; lessonNum++) {
+      const title = `Module ${moduleNum} - Lesson ${lessonNum}`;
+      const existing = existingByTitle.get(title);
 
-    if (existing) {
-      // Preserve the existing item (keeps its ID and completion state)
-      newSubItems.push(existing);
-      if (existing.completed) preservedCount++;
-    } else {
-      // Create new item
-      newSubItems.push({
-        id: randomUUID(),
-        title,
-        completed: false,
-      });
-      newCount++;
+      if (existing) {
+        // Preserve the existing item (keeps its ID and completion state)
+        newSubItems.push(existing);
+        if (existing.completed) preservedCount++;
+      } else {
+        // Create new item
+        newSubItems.push({
+          id: randomUUID(),
+          title,
+          completed: false,
+        });
+        newCount++;
+      }
     }
   }
 
@@ -82,13 +85,13 @@ async function fixPimsleurGoals() {
   console.log(`  - Added ${newCount} new lessons`);
   console.log(`  - Total: ${newSubItems.length} lessons`);
   console.log(`  - New currentValue: ${completedCount}`);
-  console.log(`  - New targetValue: 30\n`);
+  console.log(`  - New targetValue: 90\n`);
 
   // Update the goal
   const [updated] = await db
     .update(yearlyGoals)
     .set({
-      targetValue: 30, // 30 lessons for Module 3 only
+      targetValue: 90, // 30 lessons × 3 modules
       currentValue: completedCount,
       subItems: newSubItems,
     })
