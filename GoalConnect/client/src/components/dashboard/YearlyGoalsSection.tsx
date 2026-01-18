@@ -1,12 +1,13 @@
 /**
  * YearlyGoalsSection
- * Minimal chip-based yearly goals display
+ * Expandable yearly goals display with sub-item toggling support
  */
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
-import { GoalChips } from '@/components/yearly-goals';
+import { CompactGoalGrid } from '@/components/yearly-goals';
+import { useToast } from '@/hooks/use-toast';
 import type { YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 
 interface YearlyGoalsSectionProps {
@@ -32,9 +33,19 @@ export function YearlyGoalsSection({
   year,
   goals,
   stats,
+  toggleGoal,
+  incrementGoal,
+  toggleSubItem,
+  claimReward,
+  isToggling,
+  isIncrementing,
+  isClaimingReward,
+  onLogClimb,
+  onAddBook,
   defaultHidden = true,
 }: YearlyGoalsSectionProps) {
   const [goalsHidden, setGoalsHidden] = useState(defaultHidden);
+  const { toast } = useToast();
 
   if (goals.length === 0) return null;
 
@@ -43,6 +54,44 @@ export function YearlyGoalsSection({
     if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
     return b.progressPercent - a.progressPercent;
   });
+
+  // Handlers for goal actions
+  const handleToggle = async (goalId: number) => {
+    try {
+      await toggleGoal(goalId);
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle goal", variant: "destructive" });
+    }
+  };
+
+  const handleIncrement = async (goalId: number, amount: number) => {
+    try {
+      await incrementGoal({ id: goalId, amount });
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to update progress", variant: "destructive" });
+    }
+  };
+
+  const handleToggleSubItem = async (goalId: number, subItemId: string) => {
+    try {
+      const result = await toggleSubItem({ goalId, subItemId });
+      if (result.isGoalCompleted) {
+        toast({ title: "Goal completed!", description: "All sub-items are done. Don't forget to claim your reward!" });
+      }
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to toggle sub-item", variant: "destructive" });
+    }
+  };
+
+  const handleClaimReward = async (goalId: number) => {
+    try {
+      const result = await claimReward(goalId);
+      const bonus = (result as any).categoryBonus > 0 ? ` +${(result as any).categoryBonus} category bonus!` : "";
+      toast({ title: "Reward claimed!", description: `+${result.pointsAwarded} XP earned${bonus}` });
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed to claim reward", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="glass-card frost-accent py-3 px-4">
@@ -68,11 +117,19 @@ export function YearlyGoalsSection({
         </Link>
       </div>
 
-      {/* Chips - click to go to goals page */}
+      {/* Goal cards with expandable sub-items */}
       {!goalsHidden && (
-        <GoalChips
+        <CompactGoalGrid
           goals={sortedGoals}
-          onGoalClick={() => window.location.href = '/goals'}
+          onToggle={handleToggle}
+          onIncrement={handleIncrement}
+          onToggleSubItem={handleToggleSubItem}
+          onClaimReward={handleClaimReward}
+          isToggling={isToggling}
+          isIncrementing={isIncrementing}
+          isClaimingReward={isClaimingReward}
+          onLogClimb={onLogClimb}
+          onAddBook={onAddBook}
         />
       )}
     </div>
