@@ -522,7 +522,11 @@ function TimelineTab({ year }: { year: string }) {
         await deleteAdventure(id);
         toast({ title: "Adventure deleted" });
       } catch (error) {
-        toast({ title: "Error", variant: "destructive" });
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete adventure",
+          variant: "destructive",
+        });
       }
     }
   };
