@@ -16,6 +16,7 @@ import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
 import { AddBookDialog } from '@/components/AddBookDialog';
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import type { Habit, HabitLog, Goal } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
@@ -162,6 +163,81 @@ function ProgressRing({ progress, color, size = 56 }: { progress: number; color:
 }
 
 // ============================================================================
+// LOADING SKELETONS
+// ============================================================================
+
+/** Skeleton for the GlowingOrbHabits - 5 circular orbs */
+function GlowingOrbsSkeleton() {
+  return (
+    <div className="flex gap-2">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Skeleton key={i} className="w-10 h-10 rounded-full" />
+      ))}
+    </div>
+  );
+}
+
+/** Skeleton for LuxuryHabitGrid - habit rows with day cells */
+function HabitsGridSkeleton() {
+  return (
+    <div className="space-y-1.5">
+      {/* Day headers skeleton */}
+      <div className="flex items-center">
+        <div className="w-20 shrink-0" />
+        <div className="flex-1 flex justify-between px-1">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <Skeleton key={i} className="w-5 h-3 rounded" />
+          ))}
+        </div>
+      </div>
+      {/* Habit row skeletons (4 habits) */}
+      {[1, 2, 3, 4].map((row) => (
+        <div key={row} className="flex items-center">
+          <div className="w-20 shrink-0 pr-1">
+            <Skeleton className="h-4 w-16 rounded" />
+          </div>
+          <div className="flex-1 flex justify-between px-1">
+            {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+              <Skeleton key={day} className="w-5 h-5 rounded-full" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Skeleton for YearlyGoalsSection - goal cards with progress */
+function YearlyGoalsSkeleton() {
+  return (
+    <div className="glass-card frost-accent py-3 px-4">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-3.5 h-3.5 rounded" />
+          <Skeleton className="w-20 h-3 rounded" />
+        </div>
+        <Skeleton className="w-8 h-3 rounded" />
+      </div>
+      {/* Goal cards skeleton (3 cards in a grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="p-3 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Skeleton className="w-6 h-6 rounded" />
+              <Skeleton className="h-4 flex-1 rounded" />
+            </div>
+            {/* Progress bar skeleton */}
+            <Skeleton className="h-1.5 w-full rounded-full mb-2" />
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -249,6 +325,7 @@ export default function DashboardV4() {
     isToggling,
     isIncrementing,
     isClaimingReward,
+    isLoading: yearlyGoalsLoading,
   } = useYearlyGoals(currentYear);
 
   // Climbing log hook for quick logging days
@@ -428,7 +505,7 @@ export default function DashboardV4() {
 
             {/* Center: Habit Orbs (clickable to habits) */}
             <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
-              <GlowingOrbHabits />
+              {habitsLoading ? <GlowingOrbsSkeleton /> : <GlowingOrbHabits />}
             </Link>
 
             {/* Right: Stats + Residency */}
@@ -456,23 +533,27 @@ export default function DashboardV4() {
             <div className="col-span-2 glass-card frost-accent flex flex-col">
               <span className="card-title">This Week</span>
               <div className="flex-1">
-                <LuxuryHabitGrid
-                  habits={todayHabits.map(habit => ({
-                    id: habit.id,
-                    name: habit.title,
-                    streak: habit.streak?.streak ?? 0,
-                    days: week.dates.map(date => ({
-                      date,
-                      completed: completionMap[habit.id]?.[date] ?? false,
-                    })),
-                    completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
-                    total: 7,
-                  }))}
-                  todayIndex={week.todayIndex}
-                  onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
-                  onHabitClick={handleViewHabitDetail}
-                  className="w-full"
-                />
+                {habitsLoading ? (
+                  <HabitsGridSkeleton />
+                ) : (
+                  <LuxuryHabitGrid
+                    habits={todayHabits.map(habit => ({
+                      id: habit.id,
+                      name: habit.title,
+                      streak: habit.streak?.streak ?? 0,
+                      days: week.dates.map(date => ({
+                        date,
+                        completed: completionMap[habit.id]?.[date] ?? false,
+                      })),
+                      completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
+                      total: 7,
+                    }))}
+                    todayIndex={week.todayIndex}
+                    onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
+                    onHabitClick={handleViewHabitDetail}
+                    className="w-full"
+                  />
+                )}
               </div>
             </div>
 
@@ -493,23 +574,27 @@ export default function DashboardV4() {
           />
 
           {/* ROW 4: Yearly Goals (grouped by category) */}
-          <YearlyGoalsSection
-            year={currentYear}
-            goals={yearlyGoals}
-            goalsByCategory={goalsByCategory}
-            categories={yearlyCategories}
-            categoryLabels={categoryLabels}
-            stats={yearlyStats}
-            toggleGoal={toggleGoal}
-            incrementGoal={incrementGoal}
-            toggleSubItem={toggleSubItem}
-            claimReward={claimReward}
-            isToggling={isToggling}
-            isIncrementing={isIncrementing}
-            isClaimingReward={isClaimingReward}
-            onLogClimb={() => setClimbingDialogOpen(true)}
-            onAddBook={() => setAddBookDialogOpen(true)}
-          />
+          {yearlyGoalsLoading ? (
+            <YearlyGoalsSkeleton />
+          ) : (
+            <YearlyGoalsSection
+              year={currentYear}
+              goals={yearlyGoals}
+              goalsByCategory={goalsByCategory}
+              categories={yearlyCategories}
+              categoryLabels={categoryLabels}
+              stats={yearlyStats}
+              toggleGoal={toggleGoal}
+              incrementGoal={incrementGoal}
+              toggleSubItem={toggleSubItem}
+              claimReward={claimReward}
+              isToggling={isToggling}
+              isIncrementing={isIncrementing}
+              isClaimingReward={isClaimingReward}
+              onLogClimb={() => setClimbingDialogOpen(true)}
+              onAddBook={() => setAddBookDialogOpen(true)}
+            />
+          )}
 
         </div>
       </div>
