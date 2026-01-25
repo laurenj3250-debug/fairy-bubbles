@@ -5,3 +5,6 @@
 
 export { AdventureTimeline } from "./AdventureTimeline";
 export type { default as AdventureTimelineDefault } from "./AdventureTimeline";
+
+export { AdventureModal } from "./AdventureModal";
+export type { default as AdventureModalDefault } from "./AdventureModal";

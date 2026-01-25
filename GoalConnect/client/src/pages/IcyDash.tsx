@@ -20,6 +20,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Habit, HabitLog, Goal } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useClimbingLog } from '@/hooks/useClimbingLog';
+import { useAdventures } from '@/hooks/useAdventures';
+import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
@@ -255,6 +257,7 @@ export default function DashboardV4() {
 
   // Climbing log dialog state
   const [climbingDialogOpen, setClimbingDialogOpen] = useState(false);
+  const [adventureDialogOpen, setAdventureDialogOpen] = useState(false);
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -326,6 +329,12 @@ export default function DashboardV4() {
 
   // Climbing log hook for quick logging days
   const { quickLogDay, isQuickLogging } = useClimbingLog();
+
+  // Adventure hook for quick logging outdoor adventures
+  const { createAdventure, isCreating: isCreatingAdventure } = useAdventures({
+    year: currentYear,
+    limit: 1
+  });
 
   // Handler for viewing habit details (click on habit name, not toggle)
   const handleViewHabitDetail = useCallback((habitId: number) => {
@@ -588,6 +597,7 @@ export default function DashboardV4() {
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}
               onLogClimb={() => setClimbingDialogOpen(true)}
+              onLogAdventure={() => setAdventureDialogOpen(true)}
             />
           )}
 
@@ -622,6 +632,21 @@ export default function DashboardV4() {
         }}
         isSubmitting={isQuickLogging}
       />
+
+      {/* Quick Adventure Dialog */}
+      {adventureDialogOpen && (
+        <AdventureModal
+          adventure={null}
+          onClose={() => setAdventureDialogOpen(false)}
+          onSubmit={async (input) => {
+            await createAdventure(input);
+            setAdventureDialogOpen(false);
+            toast({ title: "Adventure logged!", description: "Your outdoor adventure has been recorded" });
+            queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+          }}
+          isSubmitting={isCreatingAdventure}
+        />
+      )}
     </div>
   );
 }
