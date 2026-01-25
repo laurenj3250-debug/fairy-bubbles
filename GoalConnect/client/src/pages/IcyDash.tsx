@@ -644,7 +644,6 @@ export default function DashboardV4() {
             await createAdventure(input);
             setAdventureDialogOpen(false);
             toast({ title: "Adventure logged!", description: "Your outdoor adventure has been recorded" });
-            queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
           }}
           isSubmitting={isCreatingAdventure}
         />
