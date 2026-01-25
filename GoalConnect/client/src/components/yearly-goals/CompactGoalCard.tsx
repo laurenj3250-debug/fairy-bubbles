@@ -52,9 +52,8 @@ interface CompactGoalCardProps {
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
   onClick?: () => void;
-  // Auto goal action callbacks
-  onLogClimb?: () => void;
-  onLogAdventure?: () => void;
+  // Outdoor day logging callback - receives "quick" or "full"
+  onLogOutdoorDay?: (type: "quick" | "full") => void;
 }
 
 export function CompactGoalCard({
@@ -67,8 +66,7 @@ export function CompactGoalCard({
   isIncrementing,
   isClaimingReward,
   onClick,
-  onLogClimb,
-  onLogAdventure,
+  onLogOutdoorDay,
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
