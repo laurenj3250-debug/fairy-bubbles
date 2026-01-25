@@ -137,7 +137,7 @@ export function GoalsDeadlinesWidget({
                     "w-6 h-6 rounded flex items-center justify-center transition-all",
                     "bg-white/5 hover:bg-peach-400/20",
                     "text-[var(--text-muted)] hover:text-peach-400",
-                    "opacity-0 group-hover:opacity-100",
+                    "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                     "disabled:opacity-50"
                   )}
                 >
