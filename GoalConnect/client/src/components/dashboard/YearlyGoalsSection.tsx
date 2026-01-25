@@ -65,6 +65,23 @@ export function YearlyGoalsSection({
     }
   };
 
+  // Wrap claimReward with success/error toast
+  const handleClaimReward = async (goalId: number) => {
+    try {
+      const result = await claimReward(goalId);
+      toast({
+        title: "Reward claimed!",
+        description: `+${result.pointsAwarded} XP earned`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to claim reward",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (goals.length === 0) return null;
 
   // Sort: incomplete first, then by progress %
@@ -104,7 +121,7 @@ export function YearlyGoalsSection({
           onToggle={(goalId) => toggleGoal(goalId)}
           onIncrement={(goalId, amount) => incrementGoal({ id: goalId, amount })}
           onToggleSubItem={handleToggleSubItem}
-          onClaimReward={(goalId) => claimReward(goalId)}
+          onClaimReward={handleClaimReward}
           isToggling={isToggling}
           isIncrementing={isIncrementing}
           isClaimingReward={isClaimingReward}

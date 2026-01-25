@@ -441,6 +441,21 @@ export default function DashboardV4() {
     toggleHabitMutation.mutate({ habitId, date, note });
   }, [toggleHabitMutation]);
 
+  // Date-aware toggle handler for LuxuryHabitGrid (checks requiresNote for today only)
+  const handleToggleHabitForDate = useCallback((habitId: number, date: string) => {
+    const habit = habits.find(h => h.id === habitId);
+    const isCompleted = completionMap[habitId]?.[date] ?? false;
+
+    // Only show note dialog for today and if habit requires note
+    if (date === todayStr && habit?.requiresNote && !isCompleted) {
+      setNoteDialogHabit(habit);
+      setNoteDialogOpen(true);
+      return;
+    }
+
+    toggleHabitMutation.mutate({ habitId, date });
+  }, [toggleHabitMutation, todayStr, habits, completionMap]);
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -551,7 +566,7 @@ export default function DashboardV4() {
                       total: 7,
                     }))}
                     todayIndex={week.todayIndex}
-                    onToggle={(habitId, date) => toggleHabitMutation.mutate({ habitId, date })}
+                    onToggle={handleToggleHabitForDate}
                     onHabitClick={handleViewHabitDetail}
                     className="w-full"
                   />

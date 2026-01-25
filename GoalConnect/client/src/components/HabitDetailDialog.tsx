@@ -85,7 +85,7 @@ export function HabitDetailDialog({
             <div>
               <div>{habit.title}</div>
               <div className="text-sm font-normal text-slate-400">
-                {sortedLogs.length} completion{sortedLogs.length !== 1 ? 's' : ''} with notes
+                {sortedLogs.length} completion{sortedLogs.length !== 1 ? 's' : ''}
               </div>
             </div>
           </DialogTitle>
