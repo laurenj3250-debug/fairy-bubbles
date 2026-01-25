@@ -491,14 +491,17 @@ function AdventureModal({
 
 function TimelineTab({ year }: { year: string }) {
   const [editingAdventure, setEditingAdventure] = useState<Adventure | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const { toast } = useToast();
 
   const {
     adventures,
     isLoading,
     error,
+    createAdventure,
     updateAdventure,
     deleteAdventure,
+    isCreating,
     isUpdating,
   } = useAdventures({ year, limit: 100 }); // Higher limit for timeline
 
@@ -531,6 +534,20 @@ function TimelineTab({ year }: { year: string }) {
     }
   };
 
+  const handleCreate = async (input: AdventureInput) => {
+    try {
+      await createAdventure(input);
+      setShowAddModal(false);
+      toast({ title: "Adventure added!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add adventure",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -555,12 +572,47 @@ function TimelineTab({ year }: { year: string }) {
 
   return (
     <>
+      {/* Stats header with Add button */}
+      <div className="glass-card frost-accent p-4 flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <div className="text-lg font-bold text-[var(--text-primary)]">
+              Memory Lane
+            </div>
+            <div className="text-xs text-[var(--text-muted)]">
+              {adventures.length} adventures
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Adventure
+        </button>
+      </div>
+
       <AdventureTimeline
         adventures={adventures}
         onEdit={setEditingAdventure}
         onDelete={handleDelete}
       />
 
+      {/* Add Modal */}
+      {showAddModal && (
+        <AdventureModal
+          adventure={null}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleCreate}
+          isSubmitting={isCreating}
+        />
+      )}
+
+      {/* Edit Modal */}
       {editingAdventure && (
         <AdventureModal
           adventure={editingAdventure}
