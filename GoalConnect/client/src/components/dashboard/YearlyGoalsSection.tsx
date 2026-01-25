@@ -3,7 +3,7 @@
  * Interactive yearly goals display with full functionality
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
 import { CompactGoalGrid } from '@/components/yearly-goals';
@@ -84,11 +84,31 @@ export function YearlyGoalsSection({
 
   if (goals.length === 0) return null;
 
-  // Sort: incomplete first, then by progress %
-  const sortedGoals = [...goals].sort((a, b) => {
-    if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
-    return b.progressPercent - a.progressPercent;
-  });
+  // Create stable sort order that only changes when the SET of goals changes
+  // (not when progress values change) to prevent UI jumping during interactions
+  const goalIds = goals.map(g => g.id).sort().join(',');
+  const sortOrderRef = useRef<number[]>([]);
+
+  // Compute sort order only when goal set changes (add/remove goals)
+  const sortedGoals = useMemo(() => {
+    // Sort by: incomplete first, then by progress %, then by ID for stability
+    const sorted = [...goals].sort((a, b) => {
+      if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+      if (b.progressPercent !== a.progressPercent) return b.progressPercent - a.progressPercent;
+      return a.id - b.id; // Stable tiebreaker
+    });
+    sortOrderRef.current = sorted.map(g => g.id);
+    return sorted;
+  }, [goalIds]); // Only recompute when goal IDs change, not when progress changes
+
+  // Apply stored sort order to current goals data (with updated progress values)
+  const stableSortedGoals = useMemo(() => {
+    if (sortOrderRef.current.length === 0) return sortedGoals;
+    const goalMap = new Map(goals.map(g => [g.id, g]));
+    return sortOrderRef.current
+      .map(id => goalMap.get(id))
+      .filter((g): g is YearlyGoalWithProgress => g !== undefined);
+  }, [goals, sortedGoals]);
 
   return (
     <div className="glass-card frost-accent py-3 px-4">
@@ -117,7 +137,7 @@ export function YearlyGoalsSection({
       {/* Interactive goal cards with full functionality */}
       {!goalsHidden && (
         <CompactGoalGrid
-          goals={sortedGoals}
+          goals={stableSortedGoals}
           onToggle={(goalId) => toggleGoal(goalId)}
           onIncrement={(goalId, amount) => incrementGoal({ id: goalId, amount })}
           onToggleSubItem={handleToggleSubItem}
