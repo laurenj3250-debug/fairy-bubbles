@@ -54,7 +54,6 @@ interface CompactGoalCardProps {
   onClick?: () => void;
   // Auto goal action callbacks
   onLogClimb?: () => void;
-  // REMOVED: onAddBook (Study Planner feature no longer needed)
 }
 
 export function CompactGoalCard({
@@ -68,7 +67,6 @@ export function CompactGoalCard({
   isClaimingReward,
   onClick,
   onLogClimb,
-  // REMOVED: onAddBook (Study Planner feature no longer needed)
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
@@ -257,7 +255,6 @@ export function CompactGoalCard({
                 Log climb
               </button>
             )}
-            {/* REMOVED: Study Planner "Add book" button (feature no longer needed) */}
           </div>
         )}
 

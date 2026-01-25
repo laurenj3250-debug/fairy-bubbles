@@ -39,14 +39,12 @@ import { registerImportRoutes } from "./routes/import";
 import { registerKilterBoardRoutes } from "./routes/kilter-board";
 import { registerStravaRoutes } from "./routes/strava";
 import { registerHabitMappingRoutes } from "./routes/habit-mappings";
-// REMOVED: import { registerPetRoutes } from "./routes/pet";
 import { registerPointRoutes } from "./routes/points";
 import { registerJourneyGoalRoutes } from "./routes/journey-goals";
 import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import { registerLiftingRoutes } from "./routes/lifting";
 import { registerMoodRoutes } from "./routes/mood";
 import { registerResidencyRoutes } from "./routes/residency";
-// REMOVED: import { registerStudyPlannerRoutes } from "./routes/study-planner"; - board exam prep feature no longer needed
 import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
@@ -2905,7 +2903,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerKilterBoardRoutes(app);
   registerStravaRoutes(app);
   registerHabitMappingRoutes(app);
-  // REMOVED: registerPetRoutes(app);
   registerPointRoutes(app);
   registerJourneyGoalRoutes(app);
   registerClimbingLogRoutes(app);
@@ -2918,8 +2915,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerLabelRoutes(app);
   registerTodosEnhancedRoutes(app);
   registerRecurrenceRoutes(app);
-
-  // REMOVED: registerStudyPlannerRoutes(app); - board exam prep feature no longer needed
 
   // Register yearly goals routes
   registerYearlyGoalRoutes(app);
