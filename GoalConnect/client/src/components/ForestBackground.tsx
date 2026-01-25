@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 /**
@@ -7,9 +8,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 export function ForestBackground() {
   const isMobile = useIsMobile();
 
+  // Track if component has mounted (for hydration safety)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Reduce particle count on mobile for better performance
-  const starCount = isMobile ? 10 : 35;
-  const snowflakeCount = isMobile ? 6 : 20;
+  // Start with mobile-friendly defaults to prevent flash during hydration
+  const starCount = !mounted || isMobile ? 10 : 35;
+  const snowflakeCount = !mounted || isMobile ? 6 : 20;
 
   return (
     <>
