@@ -596,8 +596,10 @@ export default function DashboardV4() {
               isToggling={isToggling}
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}
-              onLogClimb={() => setClimbingDialogOpen(true)}
-              onLogAdventure={() => setAdventureDialogOpen(true)}
+              onLogOutdoorDay={(type) => {
+                if (type === "quick") setClimbingDialogOpen(true);
+                else setAdventureDialogOpen(true);
+              }}
             />
           )}
 
