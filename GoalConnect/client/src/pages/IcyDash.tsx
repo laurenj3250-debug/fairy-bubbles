@@ -641,9 +641,19 @@ export default function DashboardV4() {
           adventure={null}
           onClose={() => setAdventureDialogOpen(false)}
           onSubmit={async (input) => {
-            await createAdventure(input);
-            setAdventureDialogOpen(false);
-            toast({ title: "Adventure logged!", description: "Your outdoor adventure has been recorded" });
+            try {
+              await createAdventure(input);
+              setAdventureDialogOpen(false); // Only close on success
+              toast({ title: "Adventure logged!", description: "Your outdoor adventure has been recorded" });
+            } catch (error) {
+              toast({
+                title: "Failed to log adventure",
+                description: error instanceof Error ? error.message : "Please try again",
+                variant: "destructive"
+              });
+              // Don't close - let user retry
+              throw error; // Re-throw so AdventureModal's catch block also knows it failed
+            }
           }}
           isSubmitting={isCreatingAdventure}
         />

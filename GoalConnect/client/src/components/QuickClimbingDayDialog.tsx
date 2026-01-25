@@ -47,13 +47,17 @@ export function QuickClimbingDayDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await onSubmit({
-      date,
-      location: location.trim() || undefined,
-      notes: notes.trim() || undefined,
-    });
-
-    onOpenChange(false);
+    try {
+      await onSubmit({
+        date,
+        location: location.trim() || undefined,
+        notes: notes.trim() || undefined,
+      });
+      onOpenChange(false); // Only close on success
+    } catch (error) {
+      // Error will be handled by parent's toast
+      // Keep dialog open so user can retry
+    }
   };
 
   return (

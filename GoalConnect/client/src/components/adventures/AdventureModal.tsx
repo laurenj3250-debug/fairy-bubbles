@@ -66,13 +66,19 @@ export function AdventureModal({
     e.preventDefault();
     if (!activity.trim()) return;
 
-    await onSubmit({
-      date,
-      activity: activity.trim(),
-      location: location.trim() || undefined,
-      notes: notes.trim() || undefined,
-      photo: photo || undefined,
-    });
+    try {
+      await onSubmit({
+        date,
+        activity: activity.trim(),
+        location: location.trim() || undefined,
+        notes: notes.trim() || undefined,
+        photo: photo || undefined,
+      });
+      // onClose will be called by parent on success
+    } catch (error) {
+      // Error will be handled by parent's toast
+      // Keep modal open so user can retry
+    }
   };
 
   return (
