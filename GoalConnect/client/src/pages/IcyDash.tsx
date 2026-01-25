@@ -26,6 +26,7 @@ import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
+import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
 
 // ============================================================================
 // TYPES
@@ -561,6 +562,9 @@ export default function DashboardV4() {
             <div className="space-y-4">
               {/* Currently Reading/Watching */}
               <MediaWidget />
+
+              {/* Recent Adventures */}
+              <RecentAdventuresWidget />
 
               {/* Monthly Progress */}
               <MilestoneDonutWidget />
