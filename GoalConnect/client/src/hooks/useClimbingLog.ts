@@ -120,6 +120,7 @@ export function useClimbingLog(options: UseClimbingLogOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/climbing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
@@ -139,6 +140,7 @@ export function useClimbingLog(options: UseClimbingLogOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/climbing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
@@ -158,6 +160,7 @@ export function useClimbingLog(options: UseClimbingLogOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/climbing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
@@ -175,6 +178,7 @@ export function useClimbingLog(options: UseClimbingLogOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/climbing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 

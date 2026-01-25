@@ -88,7 +88,7 @@ export function useAdventures(options: UseAdventuresOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adventures"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
@@ -114,6 +114,7 @@ export function useAdventures(options: UseAdventuresOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adventures"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
@@ -126,7 +127,7 @@ export function useAdventures(options: UseAdventuresOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adventures"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
     },
   });
 
