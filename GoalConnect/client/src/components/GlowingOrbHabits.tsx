@@ -1,32 +1,24 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { apiRequest } from "@/lib/queryClient";
 
 // Use the same enriched habit type that IcyDash uses
 interface HabitWithData {
   id: number;
   title: string;
+  requiresNote?: boolean;
   history: Array<{ date: string; completed: boolean }>;
 }
 
-export function GlowingOrbHabits() {
-  const queryClient = useQueryClient();
+interface GlowingOrbHabitsProps {
+  onToggle?: (habitId: number) => void;
+}
+
+export function GlowingOrbHabits({ onToggle }: GlowingOrbHabitsProps) {
   const today = new Date().toISOString().split('T')[0];
 
   // Use the SAME query key as IcyDash - this way data stays in sync
   const { data: habits = [] } = useQuery<HabitWithData[]>({
     queryKey: ['/api/habits-with-data'],
-  });
-
-  const toggleMutation = useMutation({
-    mutationFn: async ({ habitId }: { habitId: number }) => {
-      return await apiRequest('/api/habit-logs/toggle', 'POST', { habitId, date: today });
-    },
-    onSuccess: () => {
-      // Only need to invalidate ONE query - the shared source
-      queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
-    },
   });
 
   // Check completion from the shared enriched data
@@ -49,7 +41,7 @@ export function GlowingOrbHabits() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: index * 0.05 }}
-            onClick={() => toggleMutation.mutate({ habitId: habit.id })}
+            onClick={() => onToggle?.(habit.id)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[0.5rem] font-medium uppercase tracking-wide transition-all cursor-pointer"

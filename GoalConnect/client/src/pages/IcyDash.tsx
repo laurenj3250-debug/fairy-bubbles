@@ -507,7 +507,7 @@ export default function DashboardV4() {
 
             {/* Center: Habit Orbs (clickable to habits) */}
             <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
-              {habitsLoading ? <GlowingOrbsSkeleton /> : <GlowingOrbHabits />}
+              {habitsLoading ? <GlowingOrbsSkeleton /> : <GlowingOrbHabits onToggle={handleToggleHabit} />}
             </Link>
 
             {/* Right: Stats + Residency */}
