@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
 import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus, Mountain } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
@@ -236,41 +242,48 @@ export function CompactGoalCard({
           </div>
         )}
 
-        {/* Action buttons for auto-tracked goals */}
-        {!isManual && !goal.isCompleted && (
+        {/* Action button for outdoor day goals */}
+        {!goal.isCompleted && onLogOutdoorDay && (goal.sourceLabel === "Climbing Log" || goal.sourceLabel === "Adventures") && (
           <div className="flex items-center gap-2 mb-2">
-            {goal.sourceLabel === "Climbing Log" && onLogClimb && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLogClimb();
-                }}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
-                  "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30",
-                  "hover:bg-sky-500/30 transition-colors"
-                )}
-              >
-                <Mountain className="w-3.5 h-3.5" />
-                Log climb
-              </button>
-            )}
-            {goal.sourceLabel === "Adventures" && onLogAdventure && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLogAdventure();
-                }}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
-                  "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
-                  "hover:bg-amber-500/30 transition-colors"
-                )}
-              >
-                <Mountain className="w-3.5 h-3.5" />
-                Log adventure
-              </button>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                    "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
+                    "hover:bg-amber-500/30 transition-colors"
+                  )}
+                >
+                  <Mountain className="w-3.5 h-3.5" />
+                  Log outdoor day
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogOutdoorDay("quick");
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 mr-2 text-sky-400" />
+                  Quick log
+                  <span className="ml-auto text-[10px] text-[var(--text-muted)]">date + notes</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogOutdoorDay("full");
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Mountain className="w-4 h-4 mr-2 text-amber-400" />
+                  Full adventure
+                  <span className="ml-auto text-[10px] text-[var(--text-muted)]">+ photos</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
 
