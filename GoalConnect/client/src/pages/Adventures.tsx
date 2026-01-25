@@ -21,12 +21,14 @@ import {
   ImageOff,
   ChevronDown,
   Loader2,
+  Clock,
 } from "lucide-react";
+import { AdventureTimeline } from "@/components/adventures";
 import { useAdventures, type Adventure, type AdventureInput } from "@/hooks/useAdventures";
 import { useBirds, type BirdSighting, type BirdInput, type BirdSort } from "@/hooks/useBirds";
 import { format } from "date-fns";
 
-type Tab = "adventures" | "birds";
+type Tab = "adventures" | "timeline" | "birds";
 
 export default function Adventures() {
   const [activeTab, setActiveTab] = useState<Tab>("adventures");
@@ -57,6 +59,18 @@ export default function Adventures() {
             Adventures
           </button>
           <button
+            onClick={() => setActiveTab("timeline")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              activeTab === "timeline"
+                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                : "bg-white/5 text-[var(--text-muted)] border border-white/10 hover:bg-white/10"
+            )}
+          >
+            <Clock className="w-4 h-4" />
+            Memory Lane
+          </button>
+          <button
             onClick={() => setActiveTab("birds")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
@@ -71,11 +85,9 @@ export default function Adventures() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "adventures" ? (
-          <AdventuresTab year={currentYear} />
-        ) : (
-          <BirdsTab year={currentYear} />
-        )}
+        {activeTab === "adventures" && <AdventuresTab year={currentYear} />}
+        {activeTab === "timeline" && <TimelineTab year={currentYear} />}
+        {activeTab === "birds" && <BirdsTab year={currentYear} />}
       </div>
     </div>
   );
@@ -470,6 +482,75 @@ function AdventureModal({
         </form>
       </div>
     </div>
+  );
+}
+
+// =============================================================================
+// TIMELINE TAB (Memory Lane)
+// =============================================================================
+
+function TimelineTab({ year }: { year: string }) {
+  const [editingAdventure, setEditingAdventure] = useState<Adventure | null>(null);
+  const { toast } = useToast();
+
+  const {
+    adventures,
+    isLoading,
+    updateAdventure,
+    deleteAdventure,
+    isUpdating,
+  } = useAdventures({ year, limit: 100 }); // Higher limit for timeline
+
+  const handleUpdate = async (input: AdventureInput & { id: number }) => {
+    try {
+      await updateAdventure(input);
+      setEditingAdventure(null);
+      toast({ title: "Adventure updated!" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Delete this adventure?")) {
+      try {
+        await deleteAdventure(id);
+        toast({ title: "Adventure deleted" });
+      } catch (error) {
+        toast({ title: "Error", variant: "destructive" });
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <AdventureTimeline
+        adventures={adventures}
+        onEdit={setEditingAdventure}
+        onDelete={handleDelete}
+      />
+
+      {editingAdventure && (
+        <AdventureModal
+          adventure={editingAdventure}
+          onClose={() => setEditingAdventure(null)}
+          onSubmit={(input) => handleUpdate({ ...input, id: editingAdventure.id })}
+          isSubmitting={isUpdating}
+        />
+      )}
+    </>
   );
 }
 
