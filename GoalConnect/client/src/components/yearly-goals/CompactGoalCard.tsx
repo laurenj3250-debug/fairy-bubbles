@@ -364,7 +364,10 @@ export function CompactGoalCard({
 
       {/* Expanded sub-items for compound goals */}
       {hasSubItems && expanded && (
-        <div className="border-t border-white/5 px-3 py-2 space-y-1.5 max-h-64 overflow-y-auto">
+        <div
+          className="border-t border-white/5 px-3 py-2 space-y-1.5 max-h-64 overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {goal.subItems.map((item, idx) => (
             <div
               key={item.id}
