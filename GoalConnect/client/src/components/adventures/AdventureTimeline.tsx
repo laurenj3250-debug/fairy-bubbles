@@ -156,13 +156,12 @@ function TimelineMonth({
 
           {/* Adventure entries */}
           <div className="space-y-4 pl-10 md:pl-6">
-            {adventures.map((adventure, index) => (
+            {adventures.map((adventure) => (
               <TimelineEntry
                 key={adventure.id}
                 adventure={adventure}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                isLast={index === adventures.length - 1}
               />
             ))}
           </div>
@@ -179,7 +178,6 @@ interface TimelineEntryProps {
   adventure: Adventure;
   onEdit?: (adventure: Adventure) => void;
   onDelete?: (id: number) => void;
-  isLast: boolean;
 }
 
 function TimelineEntry({
