@@ -1,8 +1,16 @@
+import { useIsMobile } from '@/hooks/use-mobile';
+
 /**
  * ForestBackground - Icy winter night theme
  */
 
 export function ForestBackground() {
+  const isMobile = useIsMobile();
+
+  // Reduce particle count on mobile for better performance
+  const starCount = isMobile ? 10 : 35;
+  const snowflakeCount = isMobile ? 6 : 20;
+
   return (
     <>
       {/* Base icy dark teal */}
@@ -53,7 +61,7 @@ export function ForestBackground() {
 
       {/* Twinkling stars - brighter for winter night */}
       <div className="fixed inset-0 z-[3] pointer-events-none overflow-hidden">
-        {[...Array(35)].map((_, i) => (
+        {[...Array(starCount)].map((_, i) => (
           <div
             key={`star-${i}`}
             className="absolute rounded-full"
@@ -82,7 +90,7 @@ export function ForestBackground() {
 
       {/* Falling snowflakes */}
       <div className="fixed inset-0 z-[3] pointer-events-none overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(snowflakeCount)].map((_, i) => (
           <div
             key={`snow-${i}`}
             className="absolute rounded-full"
