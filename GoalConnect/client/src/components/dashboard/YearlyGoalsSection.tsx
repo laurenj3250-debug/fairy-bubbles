@@ -1,12 +1,12 @@
 /**
  * YearlyGoalsSection
- * Minimal chip-based yearly goals display
+ * Interactive yearly goals display with full functionality
  */
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
-import { GoalChips } from '@/components/yearly-goals';
+import { CompactGoalGrid } from '@/components/yearly-goals';
 import type { YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 
 interface YearlyGoalsSectionProps {
@@ -32,7 +32,16 @@ export function YearlyGoalsSection({
   year,
   goals,
   stats,
-  defaultHidden = true,
+  toggleGoal,
+  incrementGoal,
+  toggleSubItem,
+  claimReward,
+  isToggling,
+  isIncrementing,
+  isClaimingReward,
+  onLogClimb,
+  onAddBook,
+  defaultHidden = false,
 }: YearlyGoalsSectionProps) {
   const [goalsHidden, setGoalsHidden] = useState(defaultHidden);
 
@@ -68,11 +77,19 @@ export function YearlyGoalsSection({
         </Link>
       </div>
 
-      {/* Chips - click to go to goals page */}
+      {/* Interactive goal cards with full functionality */}
       {!goalsHidden && (
-        <GoalChips
+        <CompactGoalGrid
           goals={sortedGoals}
-          onGoalClick={() => window.location.href = '/goals'}
+          onToggle={(goalId) => toggleGoal(goalId)}
+          onIncrement={(goalId, amount) => incrementGoal({ id: goalId, amount })}
+          onToggleSubItem={(goalId, subItemId) => toggleSubItem({ goalId, subItemId })}
+          onClaimReward={(goalId) => claimReward(goalId)}
+          isToggling={isToggling}
+          isIncrementing={isIncrementing}
+          isClaimingReward={isClaimingReward}
+          onLogClimb={onLogClimb}
+          onAddBook={onAddBook}
         />
       )}
     </div>
