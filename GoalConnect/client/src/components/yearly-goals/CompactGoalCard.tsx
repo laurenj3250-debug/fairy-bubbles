@@ -243,7 +243,7 @@ export function CompactGoalCard({
         )}
 
         {/* Action button for outdoor day goals */}
-        {!goal.isCompleted && onLogOutdoorDay && (goal.sourceLabel === "Climbing Log" || goal.sourceLabel === "Adventures") && (
+        {!goal.isCompleted && onLogOutdoorDay && goal.sourceLabel === "Adventures" && (
           <div className="flex items-center gap-2 mb-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
