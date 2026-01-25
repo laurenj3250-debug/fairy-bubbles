@@ -210,7 +210,7 @@ export default function Goals() {
 
   // Sidebar navigation component
   const SidebarNav = () => (
-    <nav className="fixed left-0 top-0 h-full w-[160px] z-20 flex flex-col justify-center pl-6">
+    <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
       <div className="space-y-4">
         <Link href="/">
           <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
@@ -262,7 +262,7 @@ export default function Goals() {
         <ForestBackground />
         <SidebarNav />
         <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-          <div className="max-w-[900px] ml-[188px] space-y-5">
+          <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
             {[1, 2, 3].map(i => (
               <div key={i} className="glass-card frost-accent h-40 animate-pulse"></div>
             ))}
@@ -278,7 +278,7 @@ export default function Goals() {
       <SidebarNav />
 
       <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-[188px] space-y-5">
+        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
 
           {/* Header */}
           <header className="flex items-center justify-between mb-6">

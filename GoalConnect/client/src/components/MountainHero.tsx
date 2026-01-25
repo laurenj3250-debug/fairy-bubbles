@@ -38,8 +38,8 @@ export function MountainHero() {
 
   return (
     <div className="relative z-[2] h-[28vh] min-h-[220px] flex flex-col justify-start pt-6">
-      {/* Hero title - centered over content area (250px left margin + 750px width) */}
-      <div className="ml-[300px] max-w-[750px]">
+      {/* Hero title - centered over content area (188px sidebar + 750px content) */}
+      <div className="ml-0 md:ml-[188px] max-w-[750px]">
         <h1 className="font-heading text-[3rem] md:text-[4rem] font-normal text-forest-cream mb-3 tracking-wide relative z-10 text-center italic">
           Your Summit Awaits
         </h1>
