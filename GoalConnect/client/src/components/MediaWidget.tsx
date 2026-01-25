@@ -40,7 +40,7 @@ export function MediaWidget() {
   const { currentItems, isLoadingCurrent } = useMediaLibrary();
 
   return (
-    <div className="glass-card frost-accent h-full flex flex-col">
+    <div className="glass-card frost-accent flex flex-col">
       {/* Header with link */}
       <div className="flex items-center justify-between mb-4">
         <span className="card-title flex items-center gap-2">
@@ -64,7 +64,7 @@ export function MediaWidget() {
 
       {/* Empty state - cuter */}
       {!isLoadingCurrent && currentItems.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center py-8">
+        <div className="flex flex-col items-center justify-center py-6">
           <div className="flex gap-1 mb-3">
             {/* Cute stacked books illustration */}
             <div className="w-3 h-10 rounded-sm bg-gradient-to-b from-blue-400/40 to-blue-500/40 transform -rotate-3" />
