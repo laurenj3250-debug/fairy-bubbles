@@ -496,6 +496,7 @@ function TimelineTab({ year }: { year: string }) {
   const {
     adventures,
     isLoading,
+    error,
     updateAdventure,
     deleteAdventure,
     isUpdating,
@@ -530,6 +531,20 @@ function TimelineTab({ year }: { year: string }) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-card frost-accent p-12 text-center">
+        <Mountain className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
+          Failed to load adventures
+        </h3>
+        <p className="text-sm text-[var(--text-muted)]">
+          {error instanceof Error ? error.message : "Please try again later"}
+        </p>
       </div>
     );
   }
