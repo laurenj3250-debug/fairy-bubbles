@@ -63,7 +63,6 @@ interface CompactGoalCardProps {
   onClick?: () => void;
   // Outdoor day logging callback
   onLogOutdoorDay?: (type: OutdoorLogType) => void;
-  isLoggingOutdoor?: boolean;
 }
 
 export function CompactGoalCard({
@@ -77,7 +76,6 @@ export function CompactGoalCard({
   isClaimingReward,
   onClick,
   onLogOutdoorDay,
-  isLoggingOutdoor,
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
@@ -254,16 +252,14 @@ export function CompactGoalCard({
               <DropdownMenuTrigger asChild>
                 <button
                   onClick={(e) => e.stopPropagation()}
-                  disabled={isLoggingOutdoor}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
                     "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
-                    "hover:bg-amber-500/30 transition-colors",
-                    isLoggingOutdoor && "opacity-50 cursor-not-allowed"
+                    "hover:bg-amber-500/30 transition-colors"
                   )}
                 >
                   <Mountain className="w-3.5 h-3.5" />
-                  {isLoggingOutdoor ? "Logging..." : "Log outdoor day"}
+                  Log outdoor day
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">

@@ -600,7 +600,6 @@ export default function DashboardV4() {
                 if (type === "quick") setClimbingDialogOpen(true);
                 else setAdventureDialogOpen(true);
               }}
-              isLoggingOutdoor={isQuickLogging || isCreatingAdventure}
             />
           )}
 

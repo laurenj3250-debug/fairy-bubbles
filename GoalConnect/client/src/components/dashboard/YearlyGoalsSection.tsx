@@ -25,7 +25,6 @@ interface YearlyGoalsSectionProps {
   isIncrementing: boolean;
   isClaimingReward: boolean;
   onLogOutdoorDay?: (type: OutdoorLogType) => void;
-  isLoggingOutdoor?: boolean;
   defaultHidden?: boolean;
 }
 
@@ -41,7 +40,6 @@ export function YearlyGoalsSection({
   isIncrementing,
   isClaimingReward,
   onLogOutdoorDay,
-  isLoggingOutdoor,
   defaultHidden = false,
 }: YearlyGoalsSectionProps) {
   const [goalsHidden, setGoalsHidden] = useState(defaultHidden);
@@ -90,7 +88,6 @@ export function YearlyGoalsSection({
           isIncrementing={isIncrementing}
           isClaimingReward={isClaimingReward}
           onLogOutdoorDay={onLogOutdoorDay}
-          isLoggingOutdoor={isLoggingOutdoor}
         />
       )}
     </div>

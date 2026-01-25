@@ -13,7 +13,6 @@ interface CompactGoalGridProps {
   onCardClick?: (goal: YearlyGoalWithProgress) => void;
   // Outdoor day logging callback
   onLogOutdoorDay?: (type: OutdoorLogType) => void;
-  isLoggingOutdoor?: boolean;
 }
 
 export function CompactGoalGrid({
@@ -27,7 +26,6 @@ export function CompactGoalGrid({
   isClaimingReward,
   onCardClick,
   onLogOutdoorDay,
-  isLoggingOutdoor,
 }: CompactGoalGridProps) {
   if (goals.length === 0) {
     return null;
@@ -48,7 +46,6 @@ export function CompactGoalGrid({
           isClaimingReward={isClaimingReward}
           onClick={onCardClick ? () => onCardClick(goal) : undefined}
           onLogOutdoorDay={onLogOutdoorDay}
-          isLoggingOutdoor={isLoggingOutdoor}
         />
       ))}
     </div>
