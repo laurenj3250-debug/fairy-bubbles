@@ -71,7 +71,7 @@ export function YearlyGoalsSection({
       const result = await claimReward(goalId);
       toast({
         title: "Reward claimed!",
-        description: `+${result.pointsAwarded} XP earned`,
+        description: `+${result?.pointsAwarded ?? 0} XP earned`,
       });
     } catch (err) {
       toast({
