@@ -1,5 +1,5 @@
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
-import { CompactGoalCard } from "./CompactGoalCard";
+import { CompactGoalCard, OutdoorLogType } from "./CompactGoalCard";
 
 interface CompactGoalGridProps {
   goals: YearlyGoalWithProgress[];
@@ -11,8 +11,8 @@ interface CompactGoalGridProps {
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
   onCardClick?: (goal: YearlyGoalWithProgress) => void;
-  // Outdoor day logging callback - receives "quick" or "full"
-  onLogOutdoorDay?: (type: "quick" | "full") => void;
+  // Outdoor day logging callback
+  onLogOutdoorDay?: (type: OutdoorLogType) => void;
 }
 
 export function CompactGoalGrid({

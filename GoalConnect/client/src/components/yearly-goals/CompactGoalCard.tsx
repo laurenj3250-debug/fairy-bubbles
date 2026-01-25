@@ -11,6 +11,9 @@ import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
 import confetti from "canvas-confetti";
 
+// Type for outdoor logging options
+export type OutdoorLogType = "quick" | "full";
+
 // Calculate progress status based on expected vs actual progress
 function getProgressStatus(goal: YearlyGoalWithProgress): "ahead" | "on-track" | "behind" | null {
   // Only calculate for count goals that aren't completed
@@ -58,8 +61,8 @@ interface CompactGoalCardProps {
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
   onClick?: () => void;
-  // Outdoor day logging callback - receives "quick" or "full"
-  onLogOutdoorDay?: (type: "quick" | "full") => void;
+  // Outdoor day logging callback
+  onLogOutdoorDay?: (type: OutdoorLogType) => void;
 }
 
 export function CompactGoalCard({

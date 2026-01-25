@@ -8,6 +8,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import type { YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
+import type { OutdoorLogType } from '@/components/yearly-goals/CompactGoalCard';
 
 interface YearlyGoalsSectionProps {
   year: string;
@@ -23,7 +24,7 @@ interface YearlyGoalsSectionProps {
   isToggling: boolean;
   isIncrementing: boolean;
   isClaimingReward: boolean;
-  onLogOutdoorDay?: (type: "quick" | "full") => void;
+  onLogOutdoorDay?: (type: OutdoorLogType) => void;
   defaultHidden?: boolean;
 }
 
