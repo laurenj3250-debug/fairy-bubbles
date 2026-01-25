@@ -54,6 +54,7 @@ interface CompactGoalCardProps {
   onClick?: () => void;
   // Auto goal action callbacks
   onLogClimb?: () => void;
+  onLogAdventure?: () => void;
 }
 
 export function CompactGoalCard({
@@ -67,6 +68,7 @@ export function CompactGoalCard({
   isClaimingReward,
   onClick,
   onLogClimb,
+  onLogAdventure,
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
@@ -253,6 +255,22 @@ export function CompactGoalCard({
               >
                 <Mountain className="w-3.5 h-3.5" />
                 Log climb
+              </button>
+            )}
+            {goal.sourceLabel === "Adventures" && onLogAdventure && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLogAdventure();
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                  "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
+                  "hover:bg-amber-500/30 transition-colors"
+                )}
+              >
+                <Mountain className="w-3.5 h-3.5" />
+                Log adventure
               </button>
             )}
           </div>
