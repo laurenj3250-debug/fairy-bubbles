@@ -202,9 +202,9 @@ function TimelineEntry({
       >
         {/* Photo - larger aspect ratio for timeline view */}
         <div className="relative aspect-video md:aspect-[21/9] bg-white/5">
-          {adventure.photoPath ? (
+          {(adventure.photoPath || adventure.thumbPath) ? (
             <img
-              src={adventure.photoPath}
+              src={(adventure.photoPath || adventure.thumbPath)!}
               alt={adventure.activity}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
