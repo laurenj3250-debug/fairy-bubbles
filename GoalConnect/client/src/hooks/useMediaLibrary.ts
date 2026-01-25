@@ -111,6 +111,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
     },
   });
 
@@ -130,6 +131,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
     },
   });
 
@@ -149,6 +151,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
     },
   });
 
@@ -168,6 +171,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
     },
   });
 
@@ -184,6 +188,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
     },
   });
 
