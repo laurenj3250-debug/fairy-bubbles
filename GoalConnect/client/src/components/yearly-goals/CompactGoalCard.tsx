@@ -257,7 +257,7 @@ export function CompactGoalCard({
                 Log climb
               </button>
             )}
-            {goal.sourceLabel === "Adventures" && onLogAdventure && (
+            {(goal.sourceLabel === "Adventures" || goal.sourceLabel === "Climbing Log") && onLogAdventure && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
