@@ -11,9 +11,8 @@ interface CompactGoalGridProps {
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
   onCardClick?: (goal: YearlyGoalWithProgress) => void;
-  // Auto goal action callbacks
-  onLogClimb?: () => void;
-  onLogAdventure?: () => void;
+  // Outdoor day logging callback - receives "quick" or "full"
+  onLogOutdoorDay?: (type: "quick" | "full") => void;
 }
 
 export function CompactGoalGrid({
@@ -26,8 +25,7 @@ export function CompactGoalGrid({
   isIncrementing,
   isClaimingReward,
   onCardClick,
-  onLogClimb,
-  onLogAdventure,
+  onLogOutdoorDay,
 }: CompactGoalGridProps) {
   if (goals.length === 0) {
     return null;
@@ -47,8 +45,7 @@ export function CompactGoalGrid({
           isIncrementing={isIncrementing}
           isClaimingReward={isClaimingReward}
           onClick={onCardClick ? () => onCardClick(goal) : undefined}
-          onLogClimb={onLogClimb}
-          onLogAdventure={onLogAdventure}
+          onLogOutdoorDay={onLogOutdoorDay}
         />
       ))}
     </div>
