@@ -14,14 +14,14 @@ import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
-import { AddBookDialog } from '@/components/AddBookDialog';
+// REMOVED: AddBookDialog (Study Planner feature no longer needed)
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import type { Habit, HabitLog, Goal } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useClimbingLog } from '@/hooks/useClimbingLog';
-import { useStudyPlanner } from '@/hooks/useStudyPlanner';
+// REMOVED: useStudyPlanner (Study Planner feature no longer needed)
 import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
@@ -258,8 +258,7 @@ export default function DashboardV4() {
   // Climbing log dialog state
   const [climbingDialogOpen, setClimbingDialogOpen] = useState(false);
 
-  // Add book dialog state
-  const [addBookDialogOpen, setAddBookDialogOpen] = useState(false);
+  // REMOVED: addBookDialogOpen state (Study Planner feature no longer needed)
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -332,8 +331,7 @@ export default function DashboardV4() {
   // Climbing log hook for quick logging days
   const { quickLogDay, isQuickLogging } = useClimbingLog();
 
-  // Study planner hook for adding books
-  const { createBook, isPending } = useStudyPlanner();
+  // REMOVED: useStudyPlanner hook (Study Planner feature no longer needed)
 
   // Handler for viewing habit details (click on habit name, not toggle)
   const handleViewHabitDetail = useCallback((habitId: number) => {
@@ -596,7 +594,7 @@ export default function DashboardV4() {
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}
               onLogClimb={() => setClimbingDialogOpen(true)}
-              onAddBook={() => setAddBookDialogOpen(true)}
+              // REMOVED: onAddBook (Study Planner feature no longer needed)
             />
           )}
 
@@ -632,18 +630,7 @@ export default function DashboardV4() {
         isSubmitting={isQuickLogging}
       />
 
-      {/* Add Book Dialog - add books to study planner */}
-      <AddBookDialog
-        open={addBookDialogOpen}
-        onOpenChange={setAddBookDialogOpen}
-        onSubmit={(data) => {
-          createBook(data);
-          toast({ title: "Book added!", description: "Your book has been added to the study planner" });
-          // Invalidate yearly goals to refresh the auto-tracked goal
-          queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
-        }}
-        isSubmitting={isPending.createBook}
-      />
+      {/* REMOVED: AddBookDialog (Study Planner feature no longer needed) */}
     </div>
   );
 }

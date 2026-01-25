@@ -46,7 +46,7 @@ import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import { registerLiftingRoutes } from "./routes/lifting";
 import { registerMoodRoutes } from "./routes/mood";
 import { registerResidencyRoutes } from "./routes/residency";
-import { registerStudyPlannerRoutes } from "./routes/study-planner";
+// REMOVED: import { registerStudyPlannerRoutes } from "./routes/study-planner"; - board exam prep feature no longer needed
 import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
@@ -2919,8 +2919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTodosEnhancedRoutes(app);
   registerRecurrenceRoutes(app);
 
-  // Register study planner routes
-  registerStudyPlannerRoutes(app);
+  // REMOVED: registerStudyPlannerRoutes(app); - board exam prep feature no longer needed
 
   // Register yearly goals routes
   registerYearlyGoalRoutes(app);

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus, Mountain, BookOpen } from "lucide-react";
+import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus, Mountain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
@@ -54,7 +54,7 @@ interface CompactGoalCardProps {
   onClick?: () => void;
   // Auto goal action callbacks
   onLogClimb?: () => void;
-  onAddBook?: () => void;
+  // REMOVED: onAddBook (Study Planner feature no longer needed)
 }
 
 export function CompactGoalCard({
@@ -68,7 +68,7 @@ export function CompactGoalCard({
   isClaimingReward,
   onClick,
   onLogClimb,
-  onAddBook,
+  // REMOVED: onAddBook (Study Planner feature no longer needed)
 }: CompactGoalCardProps) {
   const [expanded, setExpanded] = useState(false);
   const categoryStyle = getCategoryStyle(goal.category);
@@ -257,22 +257,7 @@ export function CompactGoalCard({
                 Log climb
               </button>
             )}
-            {goal.sourceLabel === "Study Planner" && onAddBook && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddBook();
-                }}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
-                  "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
-                  "hover:bg-emerald-500/30 transition-colors"
-                )}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                Add book
-              </button>
-            )}
+            {/* REMOVED: Study Planner "Add book" button (feature no longer needed) */}
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { Home, Target, ListTodo, Settings, Mountain, BookOpen, TrendingUp, GraduationCap, Compass } from "lucide-react";
+import { Home, Target, ListTodo, Settings, Mountain, BookOpen, TrendingUp, Compass } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
@@ -12,7 +12,7 @@ const navItems = [
   { path: "/adventures", icon: Compass, label: "Outdoors" },
   { path: "/journey", icon: TrendingUp, label: "Journey" },
   { path: "/summit-journal", icon: BookOpen, label: "Summit Journal" },
-  { path: "/study", icon: GraduationCap, label: "Study" },
+  // REMOVED: { path: "/study", icon: GraduationCap, label: "Study" } - board exam prep feature no longer needed
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 

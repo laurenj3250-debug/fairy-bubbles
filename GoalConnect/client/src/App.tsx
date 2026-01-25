@@ -29,7 +29,7 @@ import V2Dashboard from "@/pages/V2Dashboard";
 import IcyDash from "@/pages/IcyDash";
 import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
-import StudyPlanner from "@/pages/StudyPlanner";
+// REMOVED: Study Planner (board exam prep feature - no longer needed)
 import YearlyGoals from "@/pages/YearlyGoals";
 import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
@@ -262,13 +262,7 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
-      <Route path="/study">
-        <RequireAuth>
-          <MainLayout>
-            <StudyPlanner />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
+      {/* REMOVED: /study route (Study Planner board exam prep feature - no longer needed) */}
       <Route path="/yearly-goals">
         <RequireAuth>
           <MainLayout>

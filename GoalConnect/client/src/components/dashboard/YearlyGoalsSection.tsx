@@ -24,7 +24,7 @@ interface YearlyGoalsSectionProps {
   isIncrementing: boolean;
   isClaimingReward: boolean;
   onLogClimb: () => void;
-  onAddBook: () => void;
+  // REMOVED: onAddBook (Study Planner feature no longer needed)
   defaultHidden?: boolean;
 }
 
@@ -40,7 +40,7 @@ export function YearlyGoalsSection({
   isIncrementing,
   isClaimingReward,
   onLogClimb,
-  onAddBook,
+  // REMOVED: onAddBook (Study Planner feature no longer needed)
   defaultHidden = false,
 }: YearlyGoalsSectionProps) {
   const [goalsHidden, setGoalsHidden] = useState(defaultHidden);
@@ -89,7 +89,7 @@ export function YearlyGoalsSection({
           isIncrementing={isIncrementing}
           isClaimingReward={isClaimingReward}
           onLogClimb={onLogClimb}
-          onAddBook={onAddBook}
+          // REMOVED: onAddBook (Study Planner feature no longer needed)
         />
       )}
     </div>
