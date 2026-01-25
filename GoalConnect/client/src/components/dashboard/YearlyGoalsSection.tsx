@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
 import { CompactGoalGrid } from '@/components/yearly-goals';
+import { useToast } from '@/hooks/use-toast';
 import type { YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 import type { OutdoorLogType } from '@/components/yearly-goals/CompactGoalCard';
 
@@ -43,6 +44,26 @@ export function YearlyGoalsSection({
   defaultHidden = false,
 }: YearlyGoalsSectionProps) {
   const [goalsHidden, setGoalsHidden] = useState(defaultHidden);
+  const { toast } = useToast();
+
+  // Wrap toggleSubItem with error handling and success toast
+  const handleToggleSubItem = async (goalId: number, subItemId: string) => {
+    try {
+      const result = await toggleSubItem({ goalId, subItemId });
+      if (result.isGoalCompleted) {
+        toast({
+          title: "Goal completed!",
+          description: "All sub-items done. Claim your reward!",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to toggle sub-item",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (goals.length === 0) return null;
 
@@ -82,7 +103,7 @@ export function YearlyGoalsSection({
           goals={sortedGoals}
           onToggle={(goalId) => toggleGoal(goalId)}
           onIncrement={(goalId, amount) => incrementGoal({ id: goalId, amount })}
-          onToggleSubItem={(goalId, subItemId) => toggleSubItem({ goalId, subItemId })}
+          onToggleSubItem={handleToggleSubItem}
           onClaimReward={(goalId) => claimReward(goalId)}
           isToggling={isToggling}
           isIncrementing={isIncrementing}
