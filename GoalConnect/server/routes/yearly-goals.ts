@@ -195,6 +195,36 @@ async function computeGoalProgress(
         break;
       }
 
+      case "audiobooks_completed": {
+        sourceLabel = "Media Library";
+        // Count audiobooks with status = 'done' completed this year
+        const result = await db.execute(sql`
+          SELECT COUNT(*) as count
+          FROM media_items
+          WHERE user_id = ${userId}
+            AND media_type = 'audiobook'
+            AND status = 'done'
+            AND EXTRACT(YEAR FROM completed_at) = ${parseInt(year)}
+        `);
+        computedValue = Number(result.rows[0]?.count ?? 0);
+        break;
+      }
+
+      case "books_completed": {
+        sourceLabel = "Media Library";
+        // Count physical books (type = 'book') with status = 'done' completed this year
+        const result = await db.execute(sql`
+          SELECT COUNT(*) as count
+          FROM media_items
+          WHERE user_id = ${userId}
+            AND media_type = 'book'
+            AND status = 'done'
+            AND EXTRACT(YEAR FROM completed_at) = ${parseInt(year)}
+        `);
+        computedValue = Number(result.rows[0]?.count ?? 0);
+        break;
+      }
+
       default:
         log.warn(`[yearly-goals] Unknown linkedJourneyKey: ${goal.linkedJourneyKey}`);
     }

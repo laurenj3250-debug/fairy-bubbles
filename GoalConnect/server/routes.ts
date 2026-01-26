@@ -49,6 +49,7 @@ import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
 import { registerAdventuresRoutes } from "./routes/adventures";
+import { registerRecentActivitiesRoutes } from "./routes/recent-activities";
 import {
   DatabaseError,
   ValidationError,
@@ -2927,6 +2928,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register adventures & birds routes
   registerAdventuresRoutes(app);
+
+  // Register unified recent outdoor activities
+  registerRecentActivitiesRoutes(app);
 
   // Seed de Lahunta reading schedule (one-time use)
   app.post("/api/seed/reading-schedule", async (req, res) => {

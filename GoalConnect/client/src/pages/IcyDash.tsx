@@ -547,9 +547,9 @@ export default function DashboardV4() {
           {/* MAIN GRID: 3 columns - Habits (2col) + Right sidebar (1col) */}
           <div className="grid grid-cols-3 gap-5">
             {/* LEFT: Habits - spans 2 columns */}
-            <div className="col-span-2 glass-card frost-accent flex flex-col">
+            <div className="col-span-2 glass-card frost-accent">
               <span className="card-title">This Week</span>
-              <div className="flex-1">
+              <div>
                 {habitsLoading ? (
                   <HabitsGridSkeleton />
                 ) : (
