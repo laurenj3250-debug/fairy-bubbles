@@ -37,7 +37,10 @@ const GENRE_COLORS: Record<string, string> = {
 };
 
 export function MediaWidget() {
-  const { currentItems, isLoadingCurrent } = useMediaLibrary();
+  const { widgetItems, widgetMode, isLoadingWidget } = useMediaLibrary();
+
+  // Dynamic label based on what we're showing
+  const headerLabel = widgetMode === "current" ? "Currently" : "Recent";
 
   return (
     <div className="glass-card frost-accent flex flex-col">
@@ -45,25 +48,23 @@ export function MediaWidget() {
       <div className="flex items-center justify-between mb-4">
         <span className="card-title flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-peach-400" />
-          Currently
+          {headerLabel}
         </span>
-        <Link href="/media">
-          <a className="flex items-center gap-0.5 text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors">
-            All
-            <ChevronRight className="w-3 h-3" />
-          </a>
+        <Link href="/media" className="flex items-center gap-0.5 text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors">
+          All
+          <ChevronRight className="w-3 h-3" />
         </Link>
       </div>
 
       {/* Loading state */}
-      {isLoadingCurrent && (
+      {isLoadingWidget && (
         <div className="flex-1 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-peach-400/20 border-t-peach-400 rounded-full animate-spin" />
         </div>
       )}
 
       {/* Empty state - cuter */}
-      {!isLoadingCurrent && currentItems.length === 0 && (
+      {!isLoadingWidget && widgetItems.length === 0 && (
         <div className="flex flex-col items-center justify-center py-6">
           <div className="flex gap-1 mb-3">
             {/* Cute stacked books illustration */}
@@ -72,16 +73,16 @@ export function MediaWidget() {
             <div className="w-3 h-9 rounded-sm bg-gradient-to-b from-amber-400/40 to-amber-500/40 transform rotate-2" />
           </div>
           <p className="text-xs text-[var(--text-muted)]">Nothing yet</p>
-          <Link href="/media">
-            <a className="text-xs text-peach-400 mt-1 hover:underline">+ Add something</a>
+          <Link href="/media" className="text-xs text-peach-400 mt-1 hover:underline">
+            + Add something
           </Link>
         </div>
       )}
 
       {/* Items list - cuter with book spine visualization */}
-      {!isLoadingCurrent && currentItems.length > 0 && (
+      {!isLoadingWidget && widgetItems.length > 0 && (
         <div className="space-y-3 flex-1">
-          {currentItems.slice(0, 5).map((item) => {
+          {widgetItems.slice(0, 5).map((item) => {
             const Icon = MEDIA_ICONS[item.mediaType];
             const colorClass = item.mediaType === "book"
               ? GENRE_COLORS.default
@@ -117,11 +118,9 @@ export function MediaWidget() {
           })}
 
           {/* "More" link if there are more than 5 */}
-          {currentItems.length > 5 && (
-            <Link href="/media">
-              <a className="block text-center text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors py-1">
-                +{currentItems.length - 5} more
-              </a>
+          {widgetItems.length > 5 && (
+            <Link href="/media" className="block text-center text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors py-1">
+              +{widgetItems.length - 5} more
             </Link>
           )}
         </div>

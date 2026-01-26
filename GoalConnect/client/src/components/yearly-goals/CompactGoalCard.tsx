@@ -246,7 +246,7 @@ export function CompactGoalCard({
         )}
 
         {/* Action button for outdoor day goals */}
-        {!goal.isCompleted && onLogOutdoorDay && goal.sourceLabel === "Adventures" && (
+        {!goal.isCompleted && onLogOutdoorDay && (goal.sourceLabel === "Adventures" || goal.sourceLabel === "Climbing Log") && (
           <div className="flex items-center gap-2 mb-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -262,7 +262,7 @@ export function CompactGoalCard({
                   Log outdoor day
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
@@ -271,8 +271,10 @@ export function CompactGoalCard({
                   className="cursor-pointer"
                 >
                   <Zap className="w-4 h-4 mr-2 text-sky-400" />
-                  Quick log
-                  <span className="ml-auto text-[10px] text-[var(--text-muted)]">date + notes</span>
+                  <div className="flex flex-col">
+                    <span>Count outdoor day</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">Just tracks the day count</span>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -282,8 +284,10 @@ export function CompactGoalCard({
                   className="cursor-pointer"
                 >
                   <Mountain className="w-4 h-4 mr-2 text-amber-400" />
-                  Full adventure
-                  <span className="ml-auto text-[10px] text-[var(--text-muted)]">+ photos</span>
+                  <div className="flex flex-col">
+                    <span>Log adventure</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">With photos & details</span>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

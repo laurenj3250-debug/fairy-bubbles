@@ -71,7 +71,7 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     },
   });
 
-  // Fetch current items only (for widget)
+  // Fetch current items only (for widget - status="current")
   const {
     data: currentItems,
     isLoading: isLoadingCurrent,
@@ -83,6 +83,28 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
       return res.json();
     },
   });
+
+  // Fetch recent items (for widget fallback when no "current" items)
+  const {
+    data: recentItems,
+    isLoading: isLoadingRecent,
+  } = useQuery<MediaItem[]>({
+    queryKey: ["/api/media-library/recent"],
+    queryFn: async () => {
+      const res = await fetch("/api/media-library?sort=recent&limit=5");
+      if (!res.ok) throw new Error("Failed to fetch recent media items");
+      return res.json();
+    },
+  });
+
+  // For widget: show current items if any, otherwise show recent
+  const widgetItems = useMemo(() => {
+    if (currentItems && currentItems.length > 0) return currentItems;
+    return recentItems ?? [];
+  }, [currentItems, recentItems]);
+
+  // Widget mode: "current" if showing active items, "recent" if fallback
+  const widgetMode = (currentItems && currentItems.length > 0) ? "current" : "recent";
 
   // Group items by type
   const itemsByType = useMemo(() => {
@@ -196,11 +218,15 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
     // Data
     items: items ?? [],
     currentItems: currentItems ?? [],
+    recentItems: recentItems ?? [],
+    widgetItems,
+    widgetMode,
     itemsByType,
 
     // Loading states
     isLoading,
     isLoadingCurrent,
+    isLoadingWidget: isLoadingCurrent || isLoadingRecent,
 
     // Errors
     error,

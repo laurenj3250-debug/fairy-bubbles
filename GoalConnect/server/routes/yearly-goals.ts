@@ -183,6 +183,18 @@ async function computeGoalProgress(
         break;
       }
 
+      case "outdoor_climbing_days": {
+        sourceLabel = "Climbing Log";
+        // Count distinct dates from outdoor climbing ticks only (not adventures)
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT date) as count
+          FROM outdoor_climbing_ticks
+          WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+        `);
+        computedValue = Number(result.rows[0]?.count ?? 0);
+        break;
+      }
+
       default:
         log.warn(`[yearly-goals] Unknown linkedJourneyKey: ${goal.linkedJourneyKey}`);
     }
