@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Mountain, Package, Lock, Check } from "lucide-react";
+import { ArrowLeft, Mountain, Package, Lock, Check, Gift } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -66,6 +66,7 @@ export default function AlpineShop() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/alpine-gear/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       toast({
         title: "Gear Purchased!",
         description: "New equipment added to your inventory",
@@ -141,6 +142,12 @@ export default function AlpineShop() {
               Equip yourself for the mountains ahead
             </p>
           </div>
+          <Link href="/rewards">
+            <Button variant="outline" className="gap-2">
+              <Gift className="w-4 h-4" />
+              My Rewards
+            </Button>
+          </Link>
           {stats && (
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Climbing Level</div>

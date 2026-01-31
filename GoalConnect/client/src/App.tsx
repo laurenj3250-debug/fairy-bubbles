@@ -34,6 +34,7 @@ import YearlyGoals from "@/pages/YearlyGoals";
 import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
 import Adventures from "@/pages/Adventures";
+import PersonalRewards from "@/pages/PersonalRewards";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -185,6 +186,13 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <AlpineShop />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/rewards">
+        <RequireAuth>
+          <MainLayout>
+            <PersonalRewards />
           </MainLayout>
         </RequireAuth>
       </Route>

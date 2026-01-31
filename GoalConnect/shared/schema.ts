@@ -1559,3 +1559,33 @@ export const insertBirdSightingSchema = createInsertSchema(birdSightings).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// ========== PERSONAL REWARDS SYSTEM ==========
+
+export const personalRewards = pgTable("personal_rewards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  cost: integer("cost").notNull(), // Token cost to redeem
+  category: varchar("category", { length: 30 }).notNull().default("treat")
+    .$type<"treat" | "experience" | "gear" | "self_care" | "splurge">(),
+  icon: varchar("icon", { length: 10 }), // Emoji icon
+  redeemed: boolean("redeemed").default(false).notNull(),
+  redeemedAt: timestamp("redeemed_at"),
+  archived: boolean("archived").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PersonalReward = typeof personalRewards.$inferSelect;
+export type InsertPersonalReward = typeof personalRewards.$inferInsert;
+
+export const insertPersonalRewardSchema = createInsertSchema(personalRewards).omit({
+  id: true,
+  redeemed: true,
+  redeemedAt: true,
+  archived: true,
+  createdAt: true,
+  updatedAt: true,
+});

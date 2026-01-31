@@ -574,6 +574,38 @@ export function registerHabitRoutes(app: Express) {
         }
       }
 
+      // Award points for habit completion
+      const isNowCompleted = logResult && ('completed' in logResult) && logResult.completed;
+      let pointsAwarded = 0;
+
+      if (isNowCompleted) {
+        try {
+          // Difficulty-based point rewards
+          const difficultyPoints: Record<string, number> = {
+            easy: 5,
+            medium: 10,
+            hard: 15,
+          };
+          const basePoints = difficultyPoints[habit.difficulty || 'medium'] || 10;
+
+          await storage.addPoints(
+            userId,
+            basePoints,
+            'habit_complete',
+            habitId,
+            `Completed habit: ${habit.title}`
+          );
+          pointsAwarded = basePoints;
+          log.debug('[habits] Awarded points for habit completion', {
+            habitId,
+            difficulty: habit.difficulty,
+            points: basePoints,
+          });
+        } catch (pointError) {
+          log.error('[habits] Failed to award points:', pointError);
+        }
+      }
+
       // NEW: Update habit score after logging
       try {
         const { updateHabitScore } = await import("../services/habitScoring");
@@ -586,12 +618,13 @@ export function registerHabitRoutes(app: Express) {
             current: scoreResult.newScore,
             change: scoreResult.scoreChange,
             percentage: Math.round(scoreResult.newScore * 100)
-          }
+          },
+          pointsAwarded,
         });
       } catch (scoreError: any) {
         log.error('[habits] Score update failed:', scoreError);
         // Don't fail the whole request if scoring fails (graceful degradation)
-        return res.json(logResult);
+        return res.json({ ...logResult, pointsAwarded });
       }
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to toggle habit log" });

@@ -757,8 +757,26 @@ export class DbStorage implements IStorage {
       throw new Error("Gear not found");
     }
 
-    // TODO: Check if player has enough coins/points and deduct
-    // TODO: Check if player meets unlock requirements
+    // Check if player meets unlock requirements
+    if (gear.unlockLevel && gear.unlockLevel > 1) {
+      const [stats] = await this.db
+        .select()
+        .from(schema.playerClimbingStats)
+        .where(eq(schema.playerClimbingStats.userId, userId));
+      const playerLevel = stats?.climbingLevel || 1;
+      if (playerLevel < gear.unlockLevel) {
+        throw new Error(`Requires climbing level ${gear.unlockLevel} (you are level ${playerLevel})`);
+      }
+    }
+
+    // Check if player has enough points and deduct
+    const cost = gear.cost || 0;
+    if (cost > 0) {
+      const success = await this.spendPoints(userId, cost, `Purchased gear: ${gear.name}`);
+      if (!success) {
+        throw new Error(`Not enough tokens. This gear costs ${cost} tokens.`);
+      }
+    }
 
     // Add to inventory
     const [newInventoryItem] = await this.db
@@ -990,6 +1008,46 @@ export class DbStorage implements IStorage {
     return this.updateStreakFreeze(userId, {
       freezeCount: freeze.freezeCount - 1,
     });
+  }
+
+  // ============ PERSONAL REWARDS ============
+
+  async getPersonalRewards(userId: number): Promise<any[]> {
+    return await this.db
+      .select()
+      .from(schema.personalRewards)
+      .where(and(eq(schema.personalRewards.userId, userId), eq(schema.personalRewards.archived, false)))
+      .orderBy(schema.personalRewards.cost);
+  }
+
+  async getPersonalReward(id: number): Promise<any> {
+    const [reward] = await this.db
+      .select()
+      .from(schema.personalRewards)
+      .where(eq(schema.personalRewards.id, id));
+    return reward;
+  }
+
+  async createPersonalReward(data: any): Promise<any> {
+    const [reward] = await this.db
+      .insert(schema.personalRewards)
+      .values(data)
+      .returning();
+    return reward;
+  }
+
+  async updatePersonalReward(id: number, data: Partial<any>): Promise<any> {
+    const [updated] = await this.db
+      .update(schema.personalRewards)
+      .set({ ...data, updatedAt: new Date() } as any)
+      .where(eq(schema.personalRewards.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deletePersonalReward(id: number): Promise<boolean> {
+    const result = await this.db.delete(schema.personalRewards).where(eq(schema.personalRewards.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // ============ JOURNEY GOALS ============

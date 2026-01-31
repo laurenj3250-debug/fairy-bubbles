@@ -1169,15 +1169,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
 
       // Get or create combo stats
-      // let stats = await storage.getComboStats(userId);
-
-      // if (!stats) {
-      //   stats = await storage.createComboStats(userId);
-      // }
+      let stats = await storage.getComboStats(userId);
+      if (!stats) {
+        stats = await storage.createComboStats(userId);
+      }
 
       // Check if combo has expired (5 minutes)
       const now = new Date();
-      const stats = { currentCombo: 0, dailyHighScore: 0, comboExpiresAt: null };
       const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
 
       let currentCombo = stats.currentCombo;
@@ -1186,10 +1184,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (comboExpiresAt && now > comboExpiresAt) {
         // Combo expired, reset
         currentCombo = 0;
-        // await storage.updateComboStats(userId, {
-        //   currentCombo: 0,
-        //   comboExpiresAt: null,
-        // });
+        await storage.updateComboStats(userId, {
+          currentCombo: 0,
+          comboExpiresAt: null,
+        });
       } else if (comboExpiresAt) {
         expiresIn = Math.floor((comboExpiresAt.getTime() - now.getTime()) / 1000);
       }
@@ -1220,14 +1218,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
 
       // Get or create combo stats
-      // let stats = await storage.getComboStats(userId);
-
-      // if (!stats) {
-      //   stats = await storage.createComboStats(userId);
-      // }
+      let stats = await storage.getComboStats(userId);
+      if (!stats) {
+        stats = await storage.createComboStats(userId);
+      }
 
       // Check if previous combo is still valid (within 5 minutes)
-      const stats = { currentCombo: 0, dailyHighScore: 0, comboExpiresAt: null };
       const comboExpiresAt = stats.comboExpiresAt ? new Date(stats.comboExpiresAt) : null;
       let currentCombo = stats.currentCombo;
 
@@ -1248,17 +1244,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate multiplier
       const multiplier = currentCombo >= 4 ? 1.3 : currentCombo >= 3 ? 1.2 : currentCombo >= 2 ? 1.1 : 1.0;
 
-      // await storage.updateComboStats(userId, {
-      //   currentCombo,
-      //   dailyHighScore,
-      //   lastCompletionTime: now.toISOString(),
-      //   comboExpiresAt: newExpiresAt.toISOString(),
-      // });
+      // Award combo bonus points if multiplier > 1.0
+      let bonusPoints = 0;
+      if (multiplier > 1.0) {
+        bonusPoints = Math.round((multiplier - 1.0) * 10); // 1-3 bonus points
+        await storage.addPoints(
+          userId,
+          bonusPoints,
+          'habit_complete',
+          null,
+          `Combo bonus x${multiplier} (${currentCombo} streak)`
+        );
+      }
+
+      await storage.updateComboStats(userId, {
+        currentCombo,
+        dailyHighScore,
+        lastCompletionTime: now,
+        comboExpiresAt: newExpiresAt,
+      });
 
       res.json({
         currentCombo,
         dailyHighScore,
         multiplier,
+        bonusPoints,
         expiresIn: 300, // 5 minutes in seconds
       });
     } catch (error) {
@@ -1268,6 +1278,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========== DAILY QUEST SYSTEM ROUTES ==========
+
+  // Daily quest templates (seeded on first request if empty)
+  const QUEST_TEMPLATES = [
+    { questType: "complete_3_habits", title: "Habit Hiker", description: "Complete 3 habits today", targetValue: 3, rewardTokens: 15 },
+    { questType: "complete_5_habits", title: "Habit Mountaineer", description: "Complete 5 habits today", targetValue: 5, rewardTokens: 30 },
+    { questType: "complete_all_habits", title: "Summit Day", description: "Complete all habits today", targetValue: 99, rewardTokens: 50 },
+    { questType: "complete_training", title: "Training Camp", description: "Complete 2 training habits", targetValue: 2, rewardTokens: 20 },
+    { questType: "complete_mind", title: "Mind Summit", description: "Complete 2 mind habits", targetValue: 2, rewardTokens: 20 },
+    { questType: "complete_foundation", title: "Base Camp", description: "Complete 2 foundation habits", targetValue: 2, rewardTokens: 20 },
+    { questType: "complete_1_todo", title: "Task Tackler", description: "Complete a todo item", targetValue: 1, rewardTokens: 10 },
+    { questType: "log_adventure", title: "Explorer", description: "Log an outdoor adventure", targetValue: 1, rewardTokens: 25 },
+  ];
+
+  // Helper: pick 3 deterministic quests for a given date
+  function pickDailyQuests(date: string, templates: any[]): any[] {
+    if (templates.length <= 3) return templates;
+    // Simple hash from date string to pick 3
+    let hash = 0;
+    for (let i = 0; i < date.length; i++) {
+      hash = ((hash << 5) - hash) + date.charCodeAt(i);
+      hash |= 0;
+    }
+    const indices = new Set<number>();
+    let h = Math.abs(hash);
+    while (indices.size < 3) {
+      indices.add(h % templates.length);
+      h = Math.abs((h * 31 + 7) | 0);
+    }
+    return Array.from(indices).map(i => templates[i]);
+  }
+
+  // Helper: calculate quest progress from today's habit logs
+  async function calculateQuestProgress(userId: number, quest: any, today: string): Promise<number> {
+    const habits = await storage.getHabits(userId);
+    const allLogs = await Promise.all(habits.map(h => storage.getHabitLogs(h.id)));
+    const todayLogs = allLogs.flat().filter(l => l.date === today && l.completed);
+
+    switch (quest.questType) {
+      case "complete_3_habits":
+      case "complete_5_habits":
+        return todayLogs.length;
+      case "complete_all_habits": {
+        // For "all habits" quest, set target dynamically
+        const dailyHabits = habits.filter(h => h.frequencyType === 'daily' || !h.frequencyType);
+        const completedCount = todayLogs.length;
+        return completedCount >= dailyHabits.length && dailyHabits.length > 0 ? dailyHabits.length : completedCount;
+      }
+      case "complete_training":
+        return todayLogs.filter(l => {
+          const h = habits.find(hab => hab.id === l.habitId);
+          return h?.category === 'training';
+        }).length;
+      case "complete_mind":
+        return todayLogs.filter(l => {
+          const h = habits.find(hab => hab.id === l.habitId);
+          return h?.category === 'mind';
+        }).length;
+      case "complete_foundation":
+        return todayLogs.filter(l => {
+          const h = habits.find(hab => hab.id === l.habitId);
+          return h?.category === 'foundation';
+        }).length;
+      case "complete_1_todo":
+      case "log_adventure":
+        // These are tracked via their own endpoints; progress stored in DB
+        return 0;
+      default:
+        return 0;
+    }
+  }
 
   // Get today's daily quests with progress
   app.get("/api/daily-quests", async (req, res) => {
@@ -1279,10 +1359,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const today = new Date().toISOString().split('T')[0];
 
-      // Get all quest templates
-      // const questTemplates = await storage.getDailyQuestTemplates();
-      // TODO: Daily quests feature not implemented yet
-      res.json([]);
+      // Seed quest templates if they don't exist
+      let templates = await storage.getDailyQuestTemplates();
+      if (templates.length === 0) {
+        const db = getDb();
+        for (const t of QUEST_TEMPLATES) {
+          await db.insert(schema.dailyQuests).values(t).onConflictDoNothing();
+        }
+        templates = await storage.getDailyQuestTemplates();
+      }
+
+      // Pick today's 3 quests
+      const todaysTemplates = pickDailyQuests(today, templates);
+
+      // Get or create user quest records for today
+      const userQuests = await storage.getUserDailyQuests(userId, today);
+
+      const results = [];
+      for (const template of todaysTemplates) {
+        let userQuest = userQuests.find((uq: any) => uq.questId === template.id);
+
+        if (!userQuest) {
+          // Create user quest record
+          userQuest = await storage.createUserDailyQuest({
+            userId,
+            questDate: today,
+            questId: template.id,
+            progress: 0,
+            completed: false,
+            claimed: false,
+          });
+        }
+
+        // Calculate real-time progress for habit-based quests
+        const liveProgress = await calculateQuestProgress(userId, template, today);
+        const progress = Math.max(userQuest.progress || 0, liveProgress);
+
+        // Determine effective target (for "complete all" quest, use actual habit count)
+        let effectiveTarget = template.targetValue;
+        if (template.questType === "complete_all_habits") {
+          const habits = await storage.getHabits(userId);
+          effectiveTarget = habits.filter((h: any) => h.frequencyType === 'daily' || !h.frequencyType).length || 1;
+        }
+
+        const completed = progress >= effectiveTarget;
+
+        // Update progress if changed
+        if (progress !== userQuest.progress || completed !== userQuest.completed) {
+          await storage.updateUserDailyQuest(userQuest.id, { progress, completed });
+        }
+
+        results.push({
+          id: userQuest.id,
+          questId: template.id,
+          questType: template.questType,
+          title: template.title,
+          description: template.description,
+          targetValue: effectiveTarget,
+          rewardTokens: template.rewardTokens,
+          progress,
+          completed,
+          claimed: userQuest.claimed,
+        });
+      }
+
+      res.json(results);
     } catch (error) {
       log.error('[daily-quests] Get error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
@@ -1297,10 +1438,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      const questId = parseInt(req.params.id);
+      const userQuestId = parseInt(req.params.id);
 
-      // TODO: Daily quests feature not implemented yet
-      res.status(404).json({ error: "Quest not found" });
+      // Get user quest
+      const userQuest = await storage.getUserDailyQuestById(userQuestId);
+      if (!userQuest || userQuest.userId !== userId) {
+        return res.status(404).json({ error: "Quest not found" });
+      }
+
+      if (!userQuest.completed) {
+        return res.status(400).json({ error: "Quest not yet completed" });
+      }
+
+      if (userQuest.claimed) {
+        return res.status(400).json({ error: "Reward already claimed" });
+      }
+
+      // Get the template to find reward amount
+      const template = await storage.getDailyQuestTemplate(userQuest.questId);
+      if (!template) {
+        return res.status(404).json({ error: "Quest template not found" });
+      }
+
+      // Award points
+      await storage.addPoints(
+        userId,
+        template.rewardTokens,
+        'goal_progress',
+        userQuestId,
+        `Daily quest reward: ${template.title}`
+      );
+
+      // Mark as claimed
+      await storage.updateUserDailyQuest(userQuestId, { claimed: true });
+
+      res.json({
+        claimed: true,
+        pointsAwarded: template.rewardTokens,
+        questTitle: template.title,
+      });
     } catch (error) {
       log.error('[daily-quests] Claim error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
@@ -1317,12 +1493,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      // let freezeData = await storage.getStreakFreeze(userId);
+      let freezeData = await storage.getStreakFreeze(userId);
 
-      // TODO: Streak freeze feature not implemented yet
+      if (!freezeData) {
+        freezeData = await storage.createStreakFreeze(userId);
+      }
+
       res.json({
-        freezeCount: 0,
-        canEarn: false,
+        freezeCount: freezeData.freezeCount,
+        maxFreezes: 3,
+        purchaseCost: 100,
+        lastEarnedDate: freezeData.lastEarnedDate,
       });
     } catch (error) {
       log.error('[streak-freezes] Get error:', error);
@@ -1338,11 +1519,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
+      const FREEZE_COST = 100;
 
-      // TODO: Streak freeze feature not implemented yet
-      res.status(400).json({ error: "Feature not available" });
+      // Get current freeze count
+      let freezeData = await storage.getStreakFreeze(userId);
+      if (!freezeData) {
+        freezeData = await storage.createStreakFreeze(userId);
+      }
+
+      if (freezeData.freezeCount >= 3) {
+        return res.status(400).json({ error: "Maximum streak freezes reached (3)" });
+      }
+
+      // Deduct points
+      const success = await storage.spendPoints(userId, FREEZE_COST, "Purchased streak freeze");
+      if (!success) {
+        return res.status(400).json({ error: `Not enough tokens. Streak freezes cost ${FREEZE_COST} tokens.` });
+      }
+
+      // Increment freeze count
+      const updated = await storage.incrementStreakFreeze(userId);
+
+      res.json({
+        freezeCount: updated.freezeCount,
+        maxFreezes: 3,
+        purchaseCost: FREEZE_COST,
+        pointsSpent: FREEZE_COST,
+      });
     } catch (error) {
       log.error('[streak-freezes] Purchase error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Use a streak freeze (called when streak would break)
+  app.post("/api/streak-freezes/use", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+
+      let freezeData = await storage.getStreakFreeze(userId);
+      if (!freezeData || freezeData.freezeCount <= 0) {
+        return res.status(400).json({ error: "No streak freezes available" });
+      }
+
+      const updated = await storage.decrementStreakFreeze(userId);
+
+      res.json({
+        used: true,
+        freezeCount: updated.freezeCount,
+        message: "Streak freeze applied! Your streak is safe.",
+      });
+    } catch (error) {
+      log.error('[streak-freezes] Use error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -3084,6 +3316,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       log.error("[seed] Error seeding reading schedule:", error);
       res.status(500).json({ error: "Failed to seed reading schedule" });
+    }
+  });
+
+  // ========== PERSONAL REWARDS ROUTES ==========
+
+  // Get all personal rewards for user
+  app.get("/api/personal-rewards", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const rewards = await storage.getPersonalRewards(userId);
+      const points = await storage.getUserPoints(userId);
+      res.json({ rewards, availableTokens: points.available });
+    } catch (error) {
+      log.error('[personal-rewards] Get error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Create a personal reward
+  app.post("/api/personal-rewards", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { title, description, cost, category, icon } = req.body;
+
+      if (!title || !cost || cost < 1) {
+        return res.status(400).json({ error: "Title and cost (>0) are required" });
+      }
+
+      const reward = await storage.createPersonalReward({
+        userId,
+        title,
+        description: description || null,
+        cost,
+        category: category || "treat",
+        icon: icon || null,
+      });
+
+      res.json(reward);
+    } catch (error) {
+      log.error('[personal-rewards] Create error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Update a personal reward
+  app.patch("/api/personal-rewards/:id", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+
+      const reward = await storage.getPersonalReward(id);
+      if (!reward || reward.userId !== userId) {
+        return res.status(404).json({ error: "Reward not found" });
+      }
+
+      const updated = await storage.updatePersonalReward(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      log.error('[personal-rewards] Update error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Redeem a personal reward (spend tokens)
+  app.post("/api/personal-rewards/:id/redeem", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+
+      const reward = await storage.getPersonalReward(id);
+      if (!reward || reward.userId !== userId) {
+        return res.status(404).json({ error: "Reward not found" });
+      }
+
+      if (reward.redeemed) {
+        return res.status(400).json({ error: "Reward already redeemed" });
+      }
+
+      // Deduct tokens
+      const success = await storage.spendPoints(userId, reward.cost, `Redeemed reward: ${reward.title}`);
+      if (!success) {
+        return res.status(400).json({ error: `Not enough tokens. This reward costs ${reward.cost} tokens.` });
+      }
+
+      // Mark as redeemed
+      const updated = await storage.updatePersonalReward(id, {
+        redeemed: true,
+        redeemedAt: new Date(),
+      });
+
+      const points = await storage.getUserPoints(userId);
+
+      res.json({
+        reward: updated,
+        tokensSpent: reward.cost,
+        remainingTokens: points.available,
+        message: `You've earned "${reward.title}"! Enjoy it!`,
+      });
+    } catch (error) {
+      log.error('[personal-rewards] Redeem error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Delete a personal reward
+  app.delete("/api/personal-rewards/:id", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+
+      const reward = await storage.getPersonalReward(id);
+      if (!reward || reward.userId !== userId) {
+        return res.status(404).json({ error: "Reward not found" });
+      }
+
+      await storage.deletePersonalReward(id);
+      res.status(204).send();
+    } catch (error) {
+      log.error('[personal-rewards] Delete error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
     }
   });
 
