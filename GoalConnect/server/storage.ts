@@ -37,6 +37,9 @@ import {
   type ResidencyConfounder,
   type InsertResidencyConfounder,
   type ResidencyConfounderState,
+  type CustomReward,
+  type InsertCustomReward,
+  type StreakFreezeApplication,
 } from "@shared/schema";
 import { DbStorage } from "./db-storage";
 import { log } from "./lib/logger";
@@ -93,8 +96,28 @@ export interface IStorage {
   
   getUserPoints(userId: number): Promise<UserPoints>;
   addPoints(userId: number, amount: number, type: PointTransaction['type'], relatedId: number | null, description: string): Promise<PointTransaction>;
-  spendPoints(userId: number, amount: number, description: string): Promise<boolean>;
+  spendPoints(userId: number, amount: number, type?: PointTransaction['type'], description?: string): Promise<boolean>;
   getPointTransactions(userId: number): Promise<PointTransaction[]>;
+  getPointTransactionsByDateRange(userId: number, since: string): Promise<PointTransaction[]>;
+  getPointTransactionByTypeAndRelatedId(userId: number, type: PointTransaction['type'], relatedId: number): Promise<PointTransaction | undefined>;
+  getPointTransactionByTypeAndDate(userId: number, type: PointTransaction['type'], date: string): Promise<PointTransaction | undefined>;
+
+  // Custom Rewards
+  getRewards(userId: number): Promise<CustomReward[]>;
+  getReward(id: number): Promise<CustomReward | undefined>;
+  createReward(data: InsertCustomReward): Promise<CustomReward>;
+  updateReward(id: number, data: Partial<CustomReward>): Promise<CustomReward | undefined>;
+  deleteReward(id: number): Promise<boolean>;
+
+  // Streak Freezes
+  getStreakFreeze(userId: number): Promise<any>;
+  incrementStreakFreeze(userId: number): Promise<any>;
+  decrementStreakFreeze(userId: number): Promise<any>;
+
+  // Streak Freeze Applications
+  getStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication | undefined>;
+  createStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication>;
+  getStreakFreezeApplications(userId: number): Promise<StreakFreezeApplication[]>;
   
   getTodos(userId: number): Promise<Todo[]>;
   getTodo(id: number): Promise<Todo | undefined>;
@@ -636,7 +659,7 @@ export class MemStorage implements IStorage {
     return transaction;
   }
 
-  async spendPoints(userId: number, amount: number, description: string): Promise<boolean> {
+  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "costume_purchase", description: string = ""): Promise<boolean> {
     const points = await this.getUserPoints(userId);
     if (points.available < amount) return false;
 
@@ -645,7 +668,7 @@ export class MemStorage implements IStorage {
       id,
       userId,
       amount: -amount,
-      type: "costume_purchase",
+      type,
       relatedId: null,
       description,
       createdAt: new Date(),
@@ -926,6 +949,43 @@ export class MemStorage implements IStorage {
   async initializeResidencyDefaults(userId: number): Promise<void> {
     // noop
   }
+
+  // Point transaction query methods (MemStorage stubs)
+  async getPointTransactionsByDateRange(userId: number, since: string): Promise<PointTransaction[]> {
+    const sinceDate = new Date(since);
+    return Array.from(this.pointTransactions.values())
+      .filter(tx => tx.userId === userId && tx.createdAt >= sinceDate)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getPointTransactionByTypeAndRelatedId(userId: number, type: PointTransaction['type'], relatedId: number): Promise<PointTransaction | undefined> {
+    return Array.from(this.pointTransactions.values())
+      .find(tx => tx.userId === userId && tx.type === type && tx.relatedId === relatedId);
+  }
+
+  async getPointTransactionByTypeAndDate(userId: number, type: PointTransaction['type'], date: string): Promise<PointTransaction | undefined> {
+    const dayStart = new Date(date + 'T00:00:00.000Z');
+    const dayEnd = new Date(date + 'T23:59:59.999Z');
+    return Array.from(this.pointTransactions.values())
+      .find(tx => tx.userId === userId && tx.type === type && tx.createdAt >= dayStart && tx.createdAt <= dayEnd);
+  }
+
+  // Custom Rewards (MemStorage stubs)
+  async getRewards(userId: number): Promise<CustomReward[]> { throw new Error("Not implemented in MemStorage"); }
+  async getReward(id: number): Promise<CustomReward | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async createReward(data: InsertCustomReward): Promise<CustomReward> { throw new Error("Not implemented in MemStorage"); }
+  async updateReward(id: number, data: Partial<CustomReward>): Promise<CustomReward | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async deleteReward(id: number): Promise<boolean> { throw new Error("Not implemented in MemStorage"); }
+
+  // Streak Freezes (MemStorage stubs)
+  async getStreakFreeze(userId: number): Promise<any> { return null; }
+  async incrementStreakFreeze(userId: number): Promise<any> { return null; }
+  async decrementStreakFreeze(userId: number): Promise<any> { return null; }
+
+  // Streak Freeze Applications (MemStorage stubs)
+  async getStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async createStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication> { throw new Error("Not implemented in MemStorage"); }
+  async getStreakFreezeApplications(userId: number): Promise<StreakFreezeApplication[]> { throw new Error("Not implemented in MemStorage"); }
 }
 
 // Simple storage selection: Use database if available, otherwise in-memory

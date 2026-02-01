@@ -22,11 +22,13 @@ import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useClimbingLog } from '@/hooks/useClimbingLog';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
-import { GoalsDeadlinesWidget } from '@/components/GoalsDeadlinesWidget';
+import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
 import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
+import { PointsBreakdownPopover } from '@/components/dashboard/PointsBreakdownPopover';
+import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
 
 // ============================================================================
 // TYPES
@@ -40,8 +42,8 @@ interface HabitWithData extends Habit {
 
 interface UserPoints {
   available: number;
-  total: number;
-  spent: number;
+  totalEarned: number;
+  totalSpent: number;
 }
 
 // ============================================================================
@@ -357,18 +359,25 @@ export default function DashboardV4() {
       const wasCompleted = completionMap[habitId]?.[date] ?? false;
       return { wasCompleted };
     },
-    onSuccess: (_, __, context) => {
+    onSuccess: (data: any, _, context) => {
       // Only confetti if completing (not uncompleting) AND all habits now done
       if (!context?.wasCompleted) {
         const newCompletedCount = completedTodayCount + 1;
         if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
           triggerConfetti('all_habits_today');
         }
+
+        // XP toast on habit completion
+        if (data?.pointsEarned > 0) {
+          const streakText = data.streakDays > 1 ? ` (${data.streakDays}-day streak!)` : '';
+          toast({ title: `+${data.pointsEarned} XP${streakText}` });
+        }
       }
       // Single shared data source - GlowingOrbHabits also uses this
       queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/points/transactions'] });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
@@ -527,10 +536,12 @@ export default function DashboardV4() {
 
             {/* Right: Stats + Residency */}
             <div className="flex items-center gap-4 text-xs">
-              <div className="text-[var(--text-muted)]">
-                <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
-                <span className="ml-1 opacity-70">pts</span>
-              </div>
+              <PointsBreakdownPopover>
+                <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+                  <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
+                  <span className="ml-1 opacity-70">pts</span>
+                </button>
+              </PointsBreakdownPopover>
               <div className="w-px h-3 bg-white/20" />
               <div className="text-[var(--text-muted)]">
                 <span className="font-heading text-sm text-peach-400">{dayStreak}</span>
@@ -584,14 +595,14 @@ export default function DashboardV4() {
 
               {/* Monthly Progress */}
               <MilestoneDonutWidget />
+
+              {/* Next Reward */}
+              <NextRewardWidget />
             </div>
           </div>
 
-          {/* ROW 2: Goals Due This Month (full width, compact) */}
-          <GoalsDeadlinesWidget
-            onIncrement={(id) => incrementGoalMutation.mutate(id)}
-            isIncrementing={incrementGoalMutation.isPending}
-          />
+          {/* ROW 2: Weekly & Monthly Goals (full width, compact) */}
+          <WeeklyMonthlyGoalsWidget />
 
           {/* ROW 4: Yearly Goals (grouped by category) */}
           {yearlyGoalsLoading ? (

@@ -7,6 +7,7 @@ import { useId, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { useGoalCalendar } from "@/hooks/useGoalCalendar";
+import { Link } from "wouter";
 
 export function MilestoneDonutWidget() {
   const gradientId = useId();
@@ -58,7 +59,8 @@ export function MilestoneDonutWidget() {
   }
 
   return (
-    <div className="glass-card frost-accent py-4 flex flex-col items-center">
+    <Link href="/goals?view=monthly" className="block">
+    <div className="glass-card frost-accent py-4 flex flex-col items-center cursor-pointer hover:border-white/20 transition-colors">
       {/* Compact donut with inline label */}
       <div className="relative w-[110px] h-[110px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -110,5 +112,6 @@ export function MilestoneDonutWidget() {
         {format(currentMonth, "MMM")} milestones
       </div>
     </div>
+    </Link>
   );
 }

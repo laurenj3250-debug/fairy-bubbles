@@ -12,7 +12,8 @@ import Habits from "@/pages/Habits";
 import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
 import Todos from "@/pages/Todos";
-import AlpineShop from "@/pages/AlpineShop";
+// DEPRECATED: Alpine Shop replaced by personal Rewards system
+// import AlpineShop from "@/pages/AlpineShop";
 import WorldMap from "@/pages/WorldMap";
 // ARCHIVED: Alpine Expeditions (System A)
 // import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
@@ -34,6 +35,7 @@ import YearlyGoals from "@/pages/YearlyGoals";
 import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
 import Adventures from "@/pages/Adventures";
+import RewardsPage from "@/pages/Rewards";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -181,11 +183,10 @@ function AppRoutes() {
           <Redirect to="/" />
         </RequireAuth>
       </Route>
+      {/* Alpine Shop deprecated — redirect to personal Rewards */}
       <Route path="/alpine-shop">
         <RequireAuth>
-          <MainLayout>
-            <AlpineShop />
-          </MainLayout>
+          <Redirect to="/rewards" />
         </RequireAuth>
       </Route>
       <Route path="/world-map">
@@ -286,6 +287,13 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <Adventures />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/rewards">
+        <RequireAuth>
+          <MainLayout>
+            <RewardsPage />
           </MainLayout>
         </RequireAuth>
       </Route>

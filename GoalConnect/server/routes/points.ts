@@ -30,7 +30,12 @@ export function registerPointRoutes(app: Express) {
   app.get("/api/points/transactions", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const transactions = await storage.getPointTransactions(userId);
+      const since = req.query.since as string | undefined;
+
+      const transactions = since
+        ? await storage.getPointTransactionsByDateRange(userId, since)
+        : await storage.getPointTransactions(userId);
+
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch transactions" });

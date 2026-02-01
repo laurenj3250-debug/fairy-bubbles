@@ -50,6 +50,7 @@ import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
 import { registerAdventuresRoutes } from "./routes/adventures";
 import { registerRecentActivitiesRoutes } from "./routes/recent-activities";
+import { registerRewardRoutes } from "./routes/rewards";
 import {
   DatabaseError,
   ValidationError,
@@ -60,6 +61,7 @@ import {
 } from "./errors";
 import { parseNumericId, validateNumericId } from "./validation";
 import { sendError, asyncHandler } from "./error-handler";
+import { awardDailyBonusIfNeeded } from "./services/dailyBonus";
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -397,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Purchase costume
-      const success = await storage.spendPoints(userId, costume.price, `Purchased ${costume.name}`);
+      const success = await storage.spendPoints(userId, costume.price, "costume_purchase", `Purchased ${costume.name}`);
       if (!success) {
         return res.status(400).json({ error: "Failed to deduct points" });
       }
@@ -624,6 +626,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (goalError) {
           log.error('[todos] Failed to auto-increment goal progress:', goalError);
           // Don't fail the request, task was still completed
+        }
+      }
+
+      // Award XP on todo completion (only if transitioning from incomplete → complete)
+      if (!existing.completed) {
+        try {
+          // Per-todo XP (5 XP flat)
+          await storage.addPoints(userId, 5, 'todo_complete', id,
+            `Completed task: ${existing.title || 'Untitled'}`
+          );
+        } catch (xpError) {
+          log.error('[todos] Todo XP award failed:', xpError);
+        }
+
+        try {
+          await awardDailyBonusIfNeeded(userId);
+        } catch (bonusError) {
+          log.error('[todos] Daily bonus failed:', bonusError);
         }
       }
 
@@ -1317,12 +1337,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      // let freezeData = await storage.getStreakFreeze(userId);
-
-      // TODO: Streak freeze feature not implemented yet
+      const freezeData = await storage.getStreakFreeze(userId);
       res.json({
-        freezeCount: 0,
-        canEarn: false,
+        freezeCount: freezeData?.freezeCount || 0,
+        maxFreezes: 2,
       });
     } catch (error) {
       log.error('[streak-freezes] Get error:', error);
@@ -1330,7 +1348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Purchase a streak freeze
+  // Purchase a streak freeze (costs 250 XP)
   app.post("/api/streak-freezes/purchase", async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -1338,11 +1356,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
+      const freezeData = await storage.getStreakFreeze(userId);
+      const currentCount = freezeData?.freezeCount || 0;
 
-      // TODO: Streak freeze feature not implemented yet
-      res.status(400).json({ error: "Feature not available" });
+      if (currentCount >= 2) {
+        return res.status(400).json({ error: "Already have maximum streak freezes (2)" });
+      }
+
+      const FREEZE_COST = 250;
+
+      // spendPoints is atomic (WHERE available >= amount) — race-safe
+      const success = await storage.spendPoints(userId, FREEZE_COST, "costume_purchase", "Streak freeze purchase");
+      if (!success) {
+        return res.status(400).json({ error: `Insufficient XP (need ${FREEZE_COST})` });
+      }
+
+      // incrementStreakFreeze uses SQL increment — safe for concurrent calls
+      // Worst case: user ends up with 3 freezes from 2 concurrent requests,
+      // but the points are already atomically spent so no economic exploit
+      await storage.incrementStreakFreeze(userId);
+      const updated = await storage.getStreakFreeze(userId);
+
+      log.info(`[streak-freezes] User ${userId} purchased streak freeze (${FREEZE_COST} XP)`);
+
+      res.json({
+        freezeCount: updated?.freezeCount || currentCount + 1,
+        pointsSpent: FREEZE_COST,
+      });
     } catch (error) {
       log.error('[streak-freezes] Purchase error:', error);
+      res.status(500).json({ error: getErrorMessage(error) });
+    }
+  });
+
+  // Apply a streak freeze to a specific date
+  app.post("/api/streak-freeze/apply", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { frozenDate } = req.body;
+
+      if (!frozenDate || !/^\d{4}-\d{2}-\d{2}$/.test(frozenDate)) {
+        return res.status(400).json({ error: "Invalid date format (expected YYYY-MM-DD)" });
+      }
+
+      // Idempotency check
+      const existing = await storage.getStreakFreezeApplication(userId, frozenDate);
+      if (existing) {
+        return res.json({ applied: true, message: "Already applied" });
+      }
+
+      // Check freeze inventory
+      const freezeData = await storage.getStreakFreeze(userId);
+      if (!freezeData || freezeData.freezeCount <= 0) {
+        return res.status(400).json({ error: "No streak freezes available" });
+      }
+
+      // Apply: decrement inventory + record application
+      await storage.decrementStreakFreeze(userId);
+      await storage.createStreakFreezeApplication(userId, frozenDate);
+
+      log.info(`[streak-freezes] User ${userId} applied freeze for ${frozenDate}`);
+
+      res.json({
+        applied: true,
+        freezeCount: freezeData.freezeCount - 1,
+      });
+    } catch (error) {
+      log.error('[streak-freezes] Apply error:', error);
       res.status(500).json({ error: getErrorMessage(error) });
     }
   });
@@ -2931,6 +3015,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register unified recent outdoor activities
   registerRecentActivitiesRoutes(app);
+
+  // Register reward shop routes
+  registerRewardRoutes(app);
 
   // Seed de Lahunta reading schedule (one-time use)
   app.post("/api/seed/reading-schedule", async (req, res) => {

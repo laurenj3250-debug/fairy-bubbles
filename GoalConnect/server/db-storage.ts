@@ -1,4 +1,4 @@
-import { eq, and, desc, gte, lte, isNotNull } from "drizzle-orm";
+import { eq, and, desc, gte, lte, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import * as schema from "@shared/schema";
 import type {
@@ -42,6 +42,9 @@ import type {
   ResidencyConfounder,
   InsertResidencyConfounder,
   ResidencyConfounderState,
+  CustomReward,
+  InsertCustomReward,
+  StreakFreezeApplication,
 } from "@shared/schema";
 import { DEFAULT_JOURNEY_GOALS, DEFAULT_RESIDENCY_ACTIVITIES, DEFAULT_RESIDENCY_CONFOUNDERS } from "@shared/schema";
 import type { IStorage } from "./storage";
@@ -424,39 +427,39 @@ export class DbStorage implements IStorage {
     return transaction;
   }
 
-  async spendPoints(userId: number, amount: number, description: string): Promise<boolean> {
-    const currentPoints = await this.getUserPoints(userId);
-    
-    // Guard against insufficient funds
-    if (currentPoints.available < amount) {
-      return false;
-    }
+  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "costume_purchase", description: string): Promise<boolean> {
+    // Wrap in DB transaction so balance deduction + audit record are atomic
+    return await this.db.transaction(async (tx) => {
+      // Atomic spend: UPDATE ... WHERE available >= amount prevents race conditions
+      const result = await tx
+        .update(schema.userPoints)
+        .set({
+          totalSpent: sql`${schema.userPoints.totalSpent} + ${amount}`,
+          available: sql`${schema.userPoints.available} - ${amount}`,
+        })
+        .where(
+          and(
+            eq(schema.userPoints.userId, userId),
+            gte(schema.userPoints.available, amount)
+          )
+        )
+        .returning();
 
-    // Verify balance again before spending to prevent race conditions
-    const newAvailable = currentPoints.available - amount;
-    if (newAvailable < 0) {
-      return false;
-    }
+      if (result.length === 0) {
+        return false; // Insufficient funds (or user not found)
+      }
 
-    // Create transaction
-    await this.db.insert(schema.pointTransactions).values({
-      userId,
-      amount: -amount,
-      type: "costume_purchase",
-      relatedId: null,
-      description,
+      // Record the transaction (same DB transaction — rolls back if this fails)
+      await tx.insert(schema.pointTransactions).values({
+        userId,
+        amount: -amount,
+        type,
+        relatedId: null,
+        description,
+      });
+
+      return true;
     });
-
-    // Update user points with verified calculations
-    await this.db
-      .update(schema.userPoints)
-      .set({
-        totalSpent: currentPoints.totalSpent + amount,
-        available: newAvailable,
-      })
-      .where(eq(schema.userPoints.userId, userId));
-
-    return true;
   }
 
   async getPointTransactions(userId: number): Promise<PointTransaction[]> {
@@ -465,6 +468,134 @@ export class DbStorage implements IStorage {
       .from(schema.pointTransactions)
       .where(eq(schema.pointTransactions.userId, userId))
       .orderBy(desc(schema.pointTransactions.createdAt));
+  }
+
+  async getPointTransactionsByDateRange(userId: number, since: string): Promise<PointTransaction[]> {
+    return await this.db
+      .select()
+      .from(schema.pointTransactions)
+      .where(
+        and(
+          eq(schema.pointTransactions.userId, userId),
+          gte(schema.pointTransactions.createdAt, new Date(since))
+        )
+      )
+      .orderBy(desc(schema.pointTransactions.createdAt));
+  }
+
+  async getPointTransactionByTypeAndRelatedId(
+    userId: number,
+    type: PointTransaction['type'],
+    relatedId: number
+  ): Promise<PointTransaction | undefined> {
+    const [tx] = await this.db
+      .select()
+      .from(schema.pointTransactions)
+      .where(
+        and(
+          eq(schema.pointTransactions.userId, userId),
+          eq(schema.pointTransactions.type, type),
+          eq(schema.pointTransactions.relatedId, relatedId)
+        )
+      )
+      .limit(1);
+    return tx;
+  }
+
+  async getPointTransactionByTypeAndDate(
+    userId: number,
+    type: PointTransaction['type'],
+    date: string
+  ): Promise<PointTransaction | undefined> {
+    const dayStart = new Date(date + 'T00:00:00.000Z');
+    const dayEnd = new Date(date + 'T23:59:59.999Z');
+    const [tx] = await this.db
+      .select()
+      .from(schema.pointTransactions)
+      .where(
+        and(
+          eq(schema.pointTransactions.userId, userId),
+          eq(schema.pointTransactions.type, type),
+          gte(schema.pointTransactions.createdAt, dayStart),
+          lte(schema.pointTransactions.createdAt, dayEnd)
+        )
+      )
+      .limit(1);
+    return tx;
+  }
+
+  // ========== CUSTOM REWARDS ==========
+
+  async getRewards(userId: number): Promise<CustomReward[]> {
+    return await this.db
+      .select()
+      .from(schema.customRewards)
+      .where(eq(schema.customRewards.userId, userId))
+      .orderBy(desc(schema.customRewards.createdAt));
+  }
+
+  async getReward(id: number): Promise<CustomReward | undefined> {
+    const [reward] = await this.db
+      .select()
+      .from(schema.customRewards)
+      .where(eq(schema.customRewards.id, id))
+      .limit(1);
+    return reward;
+  }
+
+  async createReward(data: InsertCustomReward): Promise<CustomReward> {
+    const [reward] = await this.db
+      .insert(schema.customRewards)
+      .values(data as any)
+      .returning();
+    return reward;
+  }
+
+  async updateReward(id: number, data: Partial<CustomReward>): Promise<CustomReward | undefined> {
+    const [reward] = await this.db
+      .update(schema.customRewards)
+      .set(data as any)
+      .where(eq(schema.customRewards.id, id))
+      .returning();
+    return reward;
+  }
+
+  async deleteReward(id: number): Promise<boolean> {
+    const result = await this.db
+      .delete(schema.customRewards)
+      .where(eq(schema.customRewards.id, id));
+    return true;
+  }
+
+  // ========== STREAK FREEZE APPLICATIONS ==========
+
+  async getStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication | undefined> {
+    const [app] = await this.db
+      .select()
+      .from(schema.streakFreezeApplications)
+      .where(
+        and(
+          eq(schema.streakFreezeApplications.userId, userId),
+          eq(schema.streakFreezeApplications.frozenDate, frozenDate)
+        )
+      )
+      .limit(1);
+    return app;
+  }
+
+  async createStreakFreezeApplication(userId: number, frozenDate: string): Promise<StreakFreezeApplication> {
+    const [app] = await this.db
+      .insert(schema.streakFreezeApplications)
+      .values({ userId, frozenDate })
+      .returning();
+    return app;
+  }
+
+  async getStreakFreezeApplications(userId: number): Promise<StreakFreezeApplication[]> {
+    return await this.db
+      .select()
+      .from(schema.streakFreezeApplications)
+      .where(eq(schema.streakFreezeApplications.userId, userId));
   }
 
   async getTodos(userId: number): Promise<Todo[]> {

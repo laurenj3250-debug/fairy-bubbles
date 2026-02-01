@@ -1055,6 +1055,56 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create lifting_sets table:', error);
       }
 
+      // ========== CUSTOM REWARDS TABLE (Gamification) ==========
+
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS custom_rewards (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            description TEXT,
+            cost INTEGER NOT NULL,
+            image_url TEXT,
+            redeemed BOOLEAN NOT NULL DEFAULT false,
+            redeemed_at TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_custom_rewards_user_id ON custom_rewards(user_id)`);
+        log.info('[migrate] ✅ Custom rewards table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create custom_rewards table:', error);
+      }
+
+      // ========== STREAK FREEZE APPLICATIONS TABLE ==========
+
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS streak_freeze_applications (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            frozen_date VARCHAR(10) NOT NULL,
+            applied_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            UNIQUE(user_id, frozen_date)
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freeze_apps_user_id ON streak_freeze_applications(user_id)`);
+        log.info('[migrate] ✅ Streak freeze applications table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create streak_freeze_applications table:', error);
+      }
+
+      // ========== POINT TRANSACTION INDEXES (Gamification query performance) ==========
+
+      try {
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_point_tx_user_type_related ON point_transactions(user_id, type, related_id) WHERE related_id IS NOT NULL`);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_point_tx_user_type_date ON point_transactions(user_id, type, created_at)`);
+        log.info('[migrate] ✅ Point transaction indexes created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create point transaction indexes:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
@@ -1301,6 +1351,34 @@ export async function runMigrations() {
     await db.execute(sql`CREATE INDEX idx_dream_scroll_category ON dream_scroll_items(user_id, category)`);
     await db.execute(sql`CREATE INDEX idx_dream_scroll_completed ON dream_scroll_items(user_id, completed)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
+
+    // Custom Rewards table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS custom_rewards (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        cost INTEGER NOT NULL,
+        image_url TEXT,
+        redeemed BOOLEAN NOT NULL DEFAULT false,
+        redeemed_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`CREATE INDEX idx_custom_rewards_user_id ON custom_rewards(user_id)`);
+
+    // Streak Freeze Applications table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS streak_freeze_applications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        frozen_date VARCHAR(10) NOT NULL,
+        applied_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, frozen_date)
+      )
+    `);
+    await db.execute(sql`CREATE INDEX idx_streak_freeze_apps_user_id ON streak_freeze_applications(user_id)`);
 
     log.info('[migrate] ✅ Fresh database schema created successfully');
     log.info('[migrate] ✅ Ready for new user signups');

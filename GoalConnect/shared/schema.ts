@@ -777,6 +777,45 @@ export const streakFreezes = pgTable("streak_freezes", {
 export type StreakFreeze = typeof streakFreezes.$inferSelect;
 export type InsertStreakFreeze = typeof streakFreezes.$inferInsert;
 
+// Streak Freeze Applications (idempotent freeze tracking)
+export const streakFreezeApplications = pgTable("streak_freeze_applications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  frozenDate: varchar("frozen_date", { length: 10 }).notNull(), // YYYY-MM-DD
+  appliedAt: timestamp("applied_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserDate: unique().on(table.userId, table.frozenDate),
+}));
+
+export type StreakFreezeApplication = typeof streakFreezeApplications.$inferSelect;
+
+// ========== CUSTOM REWARDS ==========
+
+export const customRewards = pgTable("custom_rewards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  cost: integer("cost").notNull(), // minimum 50 enforced by Zod
+  imageUrl: text("image_url"),
+  redeemed: boolean("redeemed").notNull().default(false),
+  redeemedAt: timestamp("redeemed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type CustomReward = typeof customRewards.$inferSelect;
+
+export const insertCustomRewardSchema = createInsertSchema(customRewards)
+  .omit({ id: true, redeemed: true, redeemedAt: true, createdAt: true })
+  .extend({
+    cost: z.number().int().min(50, "Minimum reward cost is 50 XP"),
+    title: z.string().min(1, "Title is required").max(200),
+    description: z.string().max(1000).optional().nullable(),
+    imageUrl: z.string().url().optional().nullable(),
+  });
+
+export type InsertCustomReward = z.infer<typeof insertCustomRewardSchema>;
+
 // ========== EXTERNAL DATA INTEGRATION ==========
 
 // Source type enums

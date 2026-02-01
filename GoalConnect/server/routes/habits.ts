@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
 import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
-import { calculateStreak, calculateWeeklyCompletion } from "../pet-utils";
+import { calculateStreak, calculateWeeklyCompletion, getStreakMultiplier } from "../pet-utils";
+import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
 import { getDb } from "../db";
 import { log } from "../lib/logger";
 
@@ -574,25 +575,69 @@ export function registerHabitRoutes(app: Express) {
         }
       }
 
-      // NEW: Update habit score after logging
+      // Update habit score after logging
+      let scoreData: { current: number; change: number; percentage: number } | undefined;
       try {
         const { updateHabitScore } = await import("../services/habitScoring");
         const scoreResult = await updateHabitScore(habitId, date);
-
-        // Return score info with log response
-        return res.json({
-          ...logResult,
-          score: {
-            current: scoreResult.newScore,
-            change: scoreResult.scoreChange,
-            percentage: Math.round(scoreResult.newScore * 100)
-          }
-        });
+        scoreData = {
+          current: scoreResult.newScore,
+          change: scoreResult.scoreChange,
+          percentage: Math.round(scoreResult.newScore * 100)
+        };
       } catch (scoreError: any) {
         log.error('[habits] Score update failed:', scoreError);
-        // Don't fail the whole request if scoring fails (graceful degradation)
-        return res.json(logResult);
       }
+
+      // Award XP for habit completion
+      let pointsEarned = 0;
+      let streakDays = 0;
+
+      if (logResult?.completed) {
+        try {
+          const logId = logResult.id;
+
+          // Idempotency: check if points already awarded for this log
+          const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
+            userId, 'habit_complete', logId
+          );
+
+          if (!existingTx) {
+            // Calculate per-habit streak
+            const habitLogs = await storage.getHabitLogs(habitId);
+            streakDays = calculateStreak(habitLogs);
+            const multiplier = getStreakMultiplier(streakDays);
+
+            // Base XP by difficulty
+            const baseXP: Record<string, number> = { easy: 5, medium: 10, hard: 15 };
+            const base = baseXP[habit.difficulty || 'medium'] || 10;
+            pointsEarned = Math.round(base * multiplier);
+
+            await storage.addPoints(
+              userId,
+              pointsEarned,
+              'habit_complete',
+              logId,
+              `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x)`
+            );
+            log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x)`);
+          }
+
+          // Daily activity bonus (server time, shared helper)
+          const dailyBonus = await awardDailyBonusIfNeeded(userId);
+          pointsEarned += dailyBonus;
+        } catch (pointsError) {
+          log.error('[habits] Points award failed:', pointsError);
+          // Don't fail the request
+        }
+      }
+
+      return res.json({
+        ...logResult,
+        ...(scoreData ? { score: scoreData } : {}),
+        pointsEarned,
+        streakDays,
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to toggle habit log" });
     }
