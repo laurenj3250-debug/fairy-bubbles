@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,11 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format, endOfMonth, endOfWeek, getISOWeek, getYear } from "date-fns";
+import type { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 
 const quickGoalSchema = z.object({
   title: z.string().min(1, "Title required"),
@@ -36,6 +37,22 @@ export function QuickGoalDialog({
   defaultType,
 }: QuickGoalDialogProps) {
   const { toast } = useToast();
+  const [parentYearlyGoalId, setParentYearlyGoalId] = useState<number | null>(null);
+
+  // Fetch yearly goals so user can link new goal to a yearly goal
+  const currentYear = String(new Date().getFullYear());
+  const { data: yearlyGoalsData } = useQuery<{ goals: YearlyGoalWithProgress[] }>({
+    queryKey: ["/api/yearly-goals/with-progress", { year: currentYear }],
+    queryFn: async () => {
+      const res = await fetch(`/api/yearly-goals/with-progress?year=${currentYear}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch yearly goals");
+      return res.json();
+    },
+    enabled: open,
+  });
+  const yearlyGoals = yearlyGoalsData?.goals?.filter(g => !g.isCompleted) ?? [];
 
   const {
     register,
@@ -69,15 +86,16 @@ export function QuickGoalDialog({
         priority: "medium",
         type: defaultType,
       });
+      setParentYearlyGoalId(null);
     }
   }, [open, defaultType, reset]);
 
   const createGoalMutation = useMutation({
     mutationFn: async (values: QuickGoalFormValues) => {
       const now = new Date();
-      const currentYear = getYear(now);
+      const currentYearNum = getYear(now);
       const currentWeekNum = getISOWeek(now);
-      const currentWeek = `${currentYear}-W${String(currentWeekNum).padStart(2, "0")}`;
+      const currentWeek = `${currentYearNum}-W${String(currentWeekNum).padStart(2, "0")}`;
       const currentMonth = format(now, "yyyy-MM");
 
       const isWeek = values.type === "week";
@@ -96,6 +114,7 @@ export function QuickGoalDialog({
         priority: values.priority,
         week: isWeek ? currentWeek : null,
         month: !isWeek ? currentMonth : null,
+        linkedYearlyGoalId: parentYearlyGoalId,
       });
     },
     onSuccess: () => {
@@ -103,10 +122,13 @@ export function QuickGoalDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/goal-calendar"] });
       toast({
         title: "Goal created",
-        description: "Your goal has been added successfully.",
+        description: parentYearlyGoalId
+          ? "Goal created and linked to yearly goal."
+          : "Your goal has been added successfully.",
       });
       onOpenChange(false);
       reset();
+      setParentYearlyGoalId(null);
     },
     onError: (error: Error) => {
       toast({
@@ -234,6 +256,28 @@ export function QuickGoalDialog({
               </select>
             </div>
           </div>
+
+          {/* Link to Yearly Goal */}
+          {yearlyGoals.length > 0 && (
+            <div>
+              <label className={labelClasses}>Link to Yearly Goal</label>
+              <select
+                value={parentYearlyGoalId ?? ""}
+                onChange={(e) => setParentYearlyGoalId(e.target.value ? parseInt(e.target.value) : null)}
+                className={`${inputClasses} appearance-none cursor-pointer`}
+              >
+                <option value="">None (standalone)</option>
+                {yearlyGoals.map((yg) => (
+                  <option key={yg.id} value={yg.id}>
+                    {yg.title} ({yg.computedValue}/{yg.targetValue})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-white/30">
+                Optionally connect this to a yearly goal
+              </p>
+            </div>
+          )}
 
           {/* Submit */}
           <button

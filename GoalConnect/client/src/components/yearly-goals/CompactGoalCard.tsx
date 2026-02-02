@@ -1,11 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Check, Trophy, ChevronDown, ChevronUp, Sparkles, Calendar, Zap, Plus, Minus, Mountain } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { getCategoryStyle } from "./categoryStyles";
@@ -245,52 +239,37 @@ export function CompactGoalCard({
           </div>
         )}
 
-        {/* Action button for outdoor day goals */}
+        {/* Action buttons for outdoor day goals - one-click tick + optional full log */}
         {!goal.isCompleted && onLogOutdoorDay && (goal.sourceLabel === "Adventures" || goal.sourceLabel === "Climbing Log") && (
-          <div className="flex items-center gap-2 mb-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
-                    "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
-                    "hover:bg-amber-500/30 transition-colors"
-                  )}
-                >
-                  <Mountain className="w-3.5 h-3.5" />
-                  Log outdoor day
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLogOutdoorDay("quick");
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Zap className="w-4 h-4 mr-2 text-sky-400" />
-                  <div className="flex flex-col">
-                    <span>Count outdoor day</span>
-                    <span className="text-[10px] text-[var(--text-muted)]">Just tracks the day count</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLogOutdoorDay("full");
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Mountain className="w-4 h-4 mr-2 text-amber-400" />
-                  <div className="flex flex-col">
-                    <span>Log adventure</span>
-                    <span className="text-[10px] text-[var(--text-muted)]">With photos & details</span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex items-center gap-1 mb-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogOutdoorDay("quick");
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium",
+                "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30",
+                "hover:bg-amber-500/30 transition-colors"
+              )}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Outdoor day
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogOutdoorDay("full");
+              }}
+              className={cn(
+                "p-1.5 rounded-lg",
+                "bg-white/5 text-[var(--text-muted)] ring-1 ring-white/10",
+                "hover:bg-white/10 hover:text-amber-400 transition-colors"
+              )}
+              title="Log full adventure with photos"
+            >
+              <Mountain className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 

@@ -437,6 +437,7 @@ export class MemStorage implements IStorage {
       week: (goal as any).week ?? null,
       archived: (goal as any).archived ?? false,
       parentGoalId: (goal as any).parentGoalId ?? null,
+      linkedYearlyGoalId: (goal as any).linkedYearlyGoalId ?? null,
     };
     this.goals.set(id, newGoal);
     return newGoal;

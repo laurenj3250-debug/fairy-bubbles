@@ -13,13 +13,11 @@ import { ForestBackground } from '@/components/ForestBackground';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
-import { QuickClimbingDayDialog } from '@/components/QuickClimbingDayDialog';
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import type { Habit, HabitLog, Goal } from '@shared/schema';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
-import { useClimbingLog } from '@/hooks/useClimbingLog';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
@@ -257,8 +255,7 @@ export default function DashboardV4() {
   const [detailDialogHabit, setDetailDialogHabit] = useState<HabitWithData | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  // Climbing log dialog state
-  const [climbingDialogOpen, setClimbingDialogOpen] = useState(false);
+  // Adventure dialog state
   const [adventureDialogOpen, setAdventureDialogOpen] = useState(false);
 
   // Keyboard shortcuts
@@ -329,13 +326,31 @@ export default function DashboardV4() {
     isLoading: yearlyGoalsLoading,
   } = useYearlyGoals(currentYear);
 
-  // Climbing log hook for quick logging days
-  const { quickLogDay, isQuickLogging } = useClimbingLog();
+  // Adventure hook for full adventure logging
 
-  // Adventure hook for quick logging outdoor adventures
   const { createAdventure, isCreating: isCreatingAdventure } = useAdventures({
     year: currentYear,
     limit: 1
+  });
+
+  // Quick outdoor day mutation — one-click, creates outdoor_adventures entry for today
+  const quickOutdoorDayMutation = useMutation({
+    mutationFn: async () => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      return await apiRequest('/api/adventures/quick', 'POST', {
+        date: today,
+        activity: 'Outdoor day',
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Outdoor day logged!" });
+      queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/adventures'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to log outdoor day", description: error.message, variant: "destructive" });
+    },
   });
 
   // Handler for viewing habit details (click on habit name, not toggle)
@@ -378,6 +393,8 @@ export default function DashboardV4() {
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points/transactions'] });
+      // Yearly goals auto-track from habit_logs — refresh so linked goals update
+      queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
@@ -623,8 +640,11 @@ export default function DashboardV4() {
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}
               onLogOutdoorDay={(type) => {
-                if (type === "quick") setClimbingDialogOpen(true);
-                else setAdventureDialogOpen(true);
+                if (type === "quick") {
+                  if (!quickOutdoorDayMutation.isPending) quickOutdoorDayMutation.mutate();
+                } else {
+                  setAdventureDialogOpen(true);
+                }
               }}
             />
           )}
@@ -646,19 +666,6 @@ export default function DashboardV4() {
         habit={detailDialogHabit}
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
-      />
-
-      {/* Quick Climbing Day Dialog - log outdoor days */}
-      <QuickClimbingDayDialog
-        open={climbingDialogOpen}
-        onOpenChange={setClimbingDialogOpen}
-        onSubmit={async (data) => {
-          await quickLogDay(data);
-          toast({ title: "Climbing day logged!", description: "Your outdoor day has been recorded" });
-          // Invalidate yearly goals to refresh the auto-tracked goal
-          queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
-        }}
-        isSubmitting={isQuickLogging}
       />
 
       {/* Quick Adventure Dialog */}

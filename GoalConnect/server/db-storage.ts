@@ -206,6 +206,7 @@ export class DbStorage implements IStorage {
       week: row.week || null,
       archived: row.archived || false,
       parentGoalId: (row as any).parent_goal_id || null,
+      linkedYearlyGoalId: (row as any).linked_yearly_goal_id || null,
     };
     
     const percentBefore = (row.previous_value / goal.targetValue) * 100;

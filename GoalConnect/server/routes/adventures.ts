@@ -338,6 +338,42 @@ export function registerAdventuresRoutes(app: Express) {
     })
   );
 
+  // POST /api/adventures/quick - Quick log an outdoor day (no photo, minimal data)
+  app.post(
+    "/api/adventures/quick",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = getUserId(req);
+
+      const quickSchema = z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+        activity: z.string().optional().default("Outdoor day"),
+        notes: z.string().optional(),
+      });
+
+      const parsed = quickSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors[0].message });
+      }
+
+      const { date, activity, notes } = parsed.data;
+
+      const [adventure] = await db
+        .insert(outdoorAdventures)
+        .values({
+          userId,
+          date,
+          activity,
+          location: null,
+          photoPath: null,
+          thumbPath: null,
+          notes: notes || null,
+        })
+        .returning();
+
+      res.status(201).json(adventure);
+    })
+  );
+
   // PUT /api/adventures/:id - Update adventure (can replace photo)
   app.put(
     "/api/adventures/:id",

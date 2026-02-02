@@ -108,6 +108,8 @@ export const goals = pgTable("goals", {
   archived: boolean("archived").notNull().default(false),
   // Goal hierarchy - weekly goals link to monthly goals
   parentGoalId: integer("parent_goal_id").references((): any => goals.id, { onDelete: "set null" }),
+  // Link to yearly goal (different table than parentGoalId which is self-referential)
+  linkedYearlyGoalId: integer("linked_yearly_goal_id"),
 });
 
 export const goalUpdates = pgTable("goal_updates", {

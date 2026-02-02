@@ -1105,6 +1105,18 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create point transaction indexes:', error);
       }
 
+      // ========== LINKED YEARLY GOAL ID (Goal → Yearly Goal connection) ==========
+
+      try {
+        await db.execute(sql`
+          ALTER TABLE goals
+          ADD COLUMN IF NOT EXISTS linked_yearly_goal_id INTEGER
+        `);
+        log.info('[migrate] ✅ linked_yearly_goal_id column added/verified in goals table');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to add linked_yearly_goal_id column:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();
