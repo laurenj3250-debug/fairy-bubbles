@@ -1,4 +1,4 @@
-import { eq, and, desc, gte, lte, isNotNull, sql } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import * as schema from "@shared/schema";
 import type {
@@ -57,7 +57,11 @@ export class DbStorage implements IStorage {
 
   // Habits
   async getHabits(userId: number): Promise<Habit[]> {
-    return await this.db.select().from(schema.habits).where(eq(schema.habits.userId, userId));
+    return await this.db
+      .select()
+      .from(schema.habits)
+      .where(eq(schema.habits.userId, userId))
+      .orderBy(asc(schema.habits.id)); // Stable ordering by ID to prevent reordering on refetch
   }
 
   async getHabit(id: number): Promise<Habit | undefined> {

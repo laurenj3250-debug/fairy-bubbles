@@ -33,7 +33,7 @@ import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
 // ============================================================================
 
 interface HabitWithData extends Habit {
-  streak: { streak: number };
+  streak: number; // API returns streak as a plain number
   weeklyCompletion: number;
   history: Array<{ date: string; completed: boolean }>;
 }
@@ -445,7 +445,7 @@ export default function DashboardV4() {
   // Calculate overall day streak (max streak across all habits)
   const dayStreak = useMemo(() => {
     if (habits.length === 0) return 0;
-    return Math.max(...habits.map(h => h.streak?.streak ?? h.streak ?? 0));
+    return Math.max(...habits.map(h => h.streak ?? 0));
   }, [habits]);
 
   const handleToggleHabit = useCallback((habitId: number) => {
@@ -585,7 +585,7 @@ export default function DashboardV4() {
                     habits={todayHabits.map(habit => ({
                       id: habit.id,
                       name: habit.title,
-                      streak: habit.streak?.streak ?? 0,
+                      streak: habit.streak ?? 0,
                       days: week.dates.map(date => ({
                         date,
                         completed: completionMap[habit.id]?.[date] ?? false,
