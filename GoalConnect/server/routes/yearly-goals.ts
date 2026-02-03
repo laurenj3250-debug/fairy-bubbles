@@ -294,6 +294,161 @@ async function computeGoalProgress(
   };
 }
 
+/**
+ * Compute monthly progress for a yearly goal scoped to a single month.
+ * Returns the count of events that occurred within the given month only.
+ * Used by the monthly goal sync endpoint.
+ */
+export async function computeMonthlyProgress(
+  goal: YearlyGoal,
+  month: string, // "2026-02"
+  userId: number,
+  db: ReturnType<typeof getDb>
+): Promise<number> {
+  try {
+  const startDate = `${month}-01`;
+  // Calculate last day of month
+  const [yearStr, monthStr] = month.split("-");
+  const lastDay = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
+  const endDate = `${month}-${String(lastDay).padStart(2, "0")}`;
+
+  // Journey integrations
+  if (goal.linkedJourneyKey) {
+    switch (goal.linkedJourneyKey) {
+      case "lifting_workouts": {
+        const result = await db
+          .select({ count: count() })
+          .from(externalWorkouts)
+          .where(
+            and(
+              eq(externalWorkouts.userId, userId),
+              sql`${externalWorkouts.workoutType} IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')`,
+              gte(externalWorkouts.startTime, new Date(startDate)),
+              lte(externalWorkouts.startTime, new Date(endDate + "T23:59:59"))
+            )
+          );
+        return Number(result[0]?.count ?? 0);
+      }
+
+      case "outdoor_days": {
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT date) as count FROM (
+            SELECT date FROM outdoor_climbing_ticks
+            WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+            UNION
+            SELECT date FROM outdoor_adventures
+            WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+          ) AS all_dates
+        `);
+        return Number(result.rows[0]?.count ?? 0);
+      }
+
+      case "bird_species": {
+        const result = await db
+          .select({ count: count() })
+          .from(birdSightings)
+          .where(
+            and(
+              eq(birdSightings.userId, userId),
+              gte(birdSightings.firstSeenDate, startDate),
+              lte(birdSightings.firstSeenDate, endDate)
+            )
+          );
+        return Number(result[0]?.count ?? 0);
+      }
+
+      case "kilter_climbs": {
+        const result = await db
+          .select({ total: sum(climbingSessions.problemsSent) })
+          .from(climbingSessions)
+          .where(
+            and(
+              eq(climbingSessions.userId, userId),
+              gte(climbingSessions.sessionDate, startDate),
+              lte(climbingSessions.sessionDate, endDate)
+            )
+          );
+        return Number(result[0]?.total ?? 0);
+      }
+
+      case "outdoor_climbing_days": {
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT date) as count
+          FROM outdoor_climbing_ticks
+          WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
+        `);
+        return Number(result.rows[0]?.count ?? 0);
+      }
+
+      case "audiobooks_completed": {
+        const result = await db.execute(sql`
+          SELECT COUNT(*) as count
+          FROM media_items
+          WHERE user_id = ${userId}
+            AND media_type = 'audiobook'
+            AND status = 'done'
+            AND completed_at >= ${startDate}::date
+            AND completed_at < (${endDate}::date + interval '1 day')
+        `);
+        return Number(result.rows[0]?.count ?? 0);
+      }
+
+      case "books_completed": {
+        const result = await db.execute(sql`
+          SELECT COUNT(*) as count
+          FROM media_items
+          WHERE user_id = ${userId}
+            AND media_type = 'book'
+            AND status = 'done'
+            AND completed_at >= ${startDate}::date
+            AND completed_at < (${endDate}::date + interval '1 day')
+        `);
+        return Number(result.rows[0]?.count ?? 0);
+      }
+
+      default:
+        return 0;
+    }
+  }
+
+  // Habit integration
+  if (goal.linkedHabitId) {
+    const result = await db
+      .select({ count: count() })
+      .from(habitLogs)
+      .where(
+        and(
+          eq(habitLogs.habitId, goal.linkedHabitId),
+          eq(habitLogs.completed, true),
+          gte(habitLogs.date, startDate),
+          lte(habitLogs.date, endDate)
+        )
+      );
+    return Number(result[0]?.count ?? 0);
+  }
+
+  // Dream Scroll integration
+  if (goal.linkedDreamScrollCategory) {
+    const result = await db.execute(sql`
+      SELECT COUNT(*) as count
+      FROM dream_scroll_items
+      WHERE user_id = ${userId}
+        AND category = ${goal.linkedDreamScrollCategory}
+        AND completed = true
+        AND completed_at >= ${startDate}::date
+        AND completed_at < (${endDate}::date + interval '1 day')
+    `);
+    return Number(result.rows[0]?.count ?? 0);
+  }
+
+  // Manual count goals: no auto-computation, return 0 (user increments manually)
+  return 0;
+  } catch (error) {
+    log.error(`[yearly-goals] Error computing monthly progress for goal #${goal.id} (${goal.title}):`, error);
+    return 0;
+  }
+}
+
 export function registerYearlyGoalRoutes(app: Express) {
   // ==================== MAIN AGGREGATED ENDPOINT ====================
 

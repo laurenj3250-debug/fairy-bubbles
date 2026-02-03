@@ -4,7 +4,7 @@
  * Replaces GoalsDeadlinesWidget with a cleaner two-section layout.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -172,6 +172,24 @@ export function WeeklyMonthlyGoalsWidget() {
   } = useQuery<Goal[]>({
     queryKey: ["/api/goals"],
   });
+
+  // Auto-generate monthly goals from yearly goals on first mount
+  const hasGeneratedRef = useRef(false);
+  useEffect(() => {
+    if (hasGeneratedRef.current) return;
+    hasGeneratedRef.current = true;
+
+    const sync = async () => {
+      try {
+        await apiRequest("/api/goals/generate-monthly", "POST", { month: currentMonth });
+        await apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth });
+        queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      } catch {
+        // Silent failure — dashboard still works with whatever goals exist
+      }
+    };
+    sync();
+  }, [currentMonth]);
 
   // Increment mutation — fetches latest value to avoid stale-read race on rapid clicks
   const incrementMutation = useMutation({
