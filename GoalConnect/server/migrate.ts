@@ -1105,6 +1105,16 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create point transaction indexes:', error);
       }
 
+      // ========== POINT TRANSACTION TYPE MIGRATION (costume_purchase → reward_redeem) ==========
+
+      try {
+        await db.execute(sql`ALTER TABLE point_transactions DROP CONSTRAINT IF EXISTS point_transactions_type_check`);
+        await db.execute(sql`UPDATE point_transactions SET type = 'reward_redeem' WHERE type = 'costume_purchase'`);
+        log.info('[migrate] ✅ Point transaction type rename complete (costume_purchase → reward_redeem)');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Point transaction type migration failed:', error);
+      }
+
       // ========== LINKED YEARLY GOAL ID (Goal → Yearly Goal connection) ==========
 
       try {

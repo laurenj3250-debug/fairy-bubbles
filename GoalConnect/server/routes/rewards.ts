@@ -117,7 +117,7 @@ export function registerRewardRoutes(app: Express) {
 
       // Atomic spend — returns false if insufficient balance (race-safe)
       const success = await storage.spendPoints(
-        userId, reward.cost, "costume_purchase", `Redeemed: ${reward.title}`
+        userId, reward.cost, "reward_redeem", `Redeemed: ${reward.title}`
       );
       if (!success) {
         return res.status(400).json({ error: `Insufficient XP (need ${reward.cost})` });

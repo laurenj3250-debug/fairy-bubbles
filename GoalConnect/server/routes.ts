@@ -51,6 +51,7 @@ import { registerMediaLibraryRoutes } from "./routes/media-library";
 import { registerAdventuresRoutes } from "./routes/adventures";
 import { registerRecentActivitiesRoutes } from "./routes/recent-activities";
 import { registerRewardRoutes } from "./routes/rewards";
+import { XP_CONFIG } from "@shared/xp-config";
 import {
   DatabaseError,
   ValidationError,
@@ -399,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Purchase costume
-      const success = await storage.spendPoints(userId, costume.price, "costume_purchase", `Purchased ${costume.name}`);
+      const success = await storage.spendPoints(userId, costume.price, "reward_redeem", `Purchased ${costume.name}`);
       if (!success) {
         return res.status(400).json({ error: "Failed to deduct points" });
       }
@@ -633,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing.completed) {
         try {
           // Per-todo XP (5 XP flat)
-          await storage.addPoints(userId, 5, 'todo_complete', id,
+          await storage.addPoints(userId, XP_CONFIG.todo, 'todo_complete', id,
             `Completed task: ${existing.title || 'Untitled'}`
           );
         } catch (xpError) {
@@ -1366,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const FREEZE_COST = 250;
 
       // spendPoints is atomic (WHERE available >= amount) — race-safe
-      const success = await storage.spendPoints(userId, FREEZE_COST, "costume_purchase", "Streak freeze purchase");
+      const success = await storage.spendPoints(userId, FREEZE_COST, "reward_redeem", "Streak freeze purchase");
       if (!success) {
         return res.status(400).json({ error: `Insufficient XP (need ${FREEZE_COST})` });
       }

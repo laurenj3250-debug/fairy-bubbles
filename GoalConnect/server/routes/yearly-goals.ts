@@ -31,6 +31,7 @@ import {
 import { eq, and, sql, count, countDistinct, gte, lte, desc, sum } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import { log } from "../lib/logger";
+import { XP_CONFIG } from "@shared/xp-config";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
@@ -875,7 +876,7 @@ export function registerYearlyGoalRoutes(app: Express) {
         if (subItems[itemIndex].completed) {
           await storage.addPoints(
             userId,
-            25,
+            XP_CONFIG.yearlyGoal.subItem,
             "goal_progress",
             goalId,
             `Sub-item completed: ${subItems[itemIndex].title}`
@@ -971,7 +972,7 @@ export function registerYearlyGoalRoutes(app: Express) {
 
       let categoryBonus = 0;
       if (allCategoryCompleted && !categoryBonusClaimed && categoryGoals.length > 1) {
-        categoryBonus = 500;
+        categoryBonus = XP_CONFIG.yearlyGoal.categoryBonus;
         await storage.addPoints(
           userId,
           categoryBonus,

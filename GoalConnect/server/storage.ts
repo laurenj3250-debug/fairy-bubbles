@@ -660,7 +660,7 @@ export class MemStorage implements IStorage {
     return transaction;
   }
 
-  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "costume_purchase", description: string = ""): Promise<boolean> {
+  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "reward_redeem", description: string = ""): Promise<boolean> {
     const points = await this.getUserPoints(userId);
     if (points.available < amount) return false;
 

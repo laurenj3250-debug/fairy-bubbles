@@ -1,5 +1,6 @@
 import { storage } from "../storage";
 import { log } from "../lib/logger";
+import { XP_CONFIG } from "@shared/xp-config";
 
 /**
  * Award daily activity bonus if not already earned today (server time).
@@ -37,7 +38,8 @@ export async function awardDailyBonusIfNeeded(userId: number): Promise<number> {
     checkDate.setDate(checkDate.getDate() - 1);
   }
 
-  const dailyBonus = activityStreak >= 30 ? 15 : activityStreak >= 7 ? 10 : 5;
+  const { base, week, month } = XP_CONFIG.dailyBonus;
+  const dailyBonus = activityStreak >= 30 ? month : activityStreak >= 7 ? week : base;
 
   await storage.addPoints(userId, dailyBonus, 'daily_login', null,
     `Daily activity bonus (${activityStreak + 1}-day activity streak)`

@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
 import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
 import { calculateStreak, calculateWeeklyCompletion, getStreakMultiplier } from "../pet-utils";
+import { XP_CONFIG, STREAK_MILESTONES } from "@shared/xp-config";
 import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
 import { getDb } from "../db";
 import { log } from "../lib/logger";
@@ -609,8 +610,7 @@ export function registerHabitRoutes(app: Express) {
             const multiplier = getStreakMultiplier(streakDays);
 
             // Base XP by difficulty
-            const baseXP: Record<string, number> = { easy: 5, medium: 10, hard: 15 };
-            const base = baseXP[habit.difficulty || 'medium'] || 10;
+            const base = XP_CONFIG.habit[habit.difficulty || 'medium'] || XP_CONFIG.habit.medium;
             pointsEarned = Math.round(base * multiplier);
 
             await storage.addPoints(
@@ -621,6 +621,37 @@ export function registerHabitRoutes(app: Express) {
               `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x)`
             );
             log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x)`);
+
+            // Check for streak milestones (one-time per habit per milestone)
+            for (const milestone of STREAK_MILESTONES) {
+              if (streakDays === milestone) {
+                try {
+                  const txs = await storage.getPointTransactions(userId);
+                  const alreadyAwarded = txs.some(
+                    tx => tx.type === 'streak_milestone'
+                      && tx.relatedId === habitId
+                      && tx.description.includes(`${milestone}-day`)
+                  );
+                  if (!alreadyAwarded) {
+                    const milestoneXP = XP_CONFIG.streakMilestone[milestone] || 0;
+                    if (milestoneXP > 0) {
+                      await storage.addPoints(
+                        userId,
+                        milestoneXP,
+                        'streak_milestone',
+                        habitId,
+                        `${habit.title} ${milestone}-day streak!`
+                      );
+                      pointsEarned += milestoneXP;
+                      log.info(`[habits] Streak milestone! ${habit.title} hit ${milestone}-day streak, awarded ${milestoneXP} XP`);
+                    }
+                  }
+                } catch (milestoneError) {
+                  log.error('[habits] Streak milestone award failed:', milestoneError);
+                }
+                break;
+              }
+            }
           }
 
           // Daily activity bonus (server time, shared helper)

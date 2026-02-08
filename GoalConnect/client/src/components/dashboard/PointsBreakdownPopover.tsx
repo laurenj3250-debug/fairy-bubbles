@@ -5,6 +5,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { startOfISOWeek, format, subDays, startOfDay, parseISO } from "date-fns";
 
 interface PointTransaction {
@@ -14,9 +15,13 @@ interface PointTransaction {
   type:
     | "habit_complete"
     | "goal_progress"
-    | "costume_purchase"
+    | "goal_complete"
+    | "reward_redeem"
     | "daily_login"
-    | "todo_complete";
+    | "todo_complete"
+    | "adventure_log"
+    | "media_complete"
+    | "streak_milestone";
   relatedId: number | null;
   description: string;
   createdAt: string;
@@ -50,14 +55,22 @@ const TYPE_LABELS: Record<PointTransaction["type"], string> = {
   habit_complete: "Habits",
   todo_complete: "Todos",
   goal_progress: "Goals",
-  costume_purchase: "Rewards",
-  daily_login: "Daily bonus",
+  goal_complete: "Goal Bonus",
+  adventure_log: "Adventures",
+  media_complete: "Media",
+  streak_milestone: "Streaks",
+  daily_login: "Daily",
+  reward_redeem: "Redeemed",
 };
 
 const TYPE_ORDER: PointTransaction["type"][] = [
   "habit_complete",
   "todo_complete",
   "goal_progress",
+  "goal_complete",
+  "adventure_log",
+  "media_complete",
+  "streak_milestone",
   "daily_login",
 ];
 
@@ -249,6 +262,19 @@ export function PointsBreakdownPopover({
                 </div>
               </div>
             )}
+
+            {/* Footer links */}
+            <div className="h-px bg-white/10" />
+            <div className="flex items-center justify-between">
+              <Link href="/rewards" className="text-xs text-peach-400 hover:underline">
+                View Rewards
+              </Link>
+              {nextReward && nextReward.current >= nextReward.cost && (
+                <Link href="/rewards" className="text-xs font-medium text-emerald-400 hover:underline">
+                  Redeem now
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </PopoverContent>

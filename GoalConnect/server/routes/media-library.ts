@@ -3,6 +3,10 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { getDb } from "../db";
 import * as schema from "@shared/schema";
 import { z } from "zod";
+import { storage } from "../storage";
+import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
+import { log } from "../lib/logger";
+import { XP_CONFIG } from "@shared/xp-config";
 
 function getUserId(req: any): number {
   return req.user?.id || 1;
@@ -335,9 +339,30 @@ export function registerMediaLibraryRoutes(app: Express) {
         .where(eq(schema.mediaItems.id, id))
         .returning();
 
+      // Award XP for completing media item (transitioning TO "done")
+      if (newStatus === "done" && currentItem.status !== "done") {
+        try {
+          const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
+            userId, 'media_complete', id
+          );
+          if (!existingTx) {
+            await storage.addPoints(
+              userId,
+              XP_CONFIG.media.complete,
+              'media_complete',
+              id,
+              `Finished: ${currentItem.title}`
+            );
+            await awardDailyBonusIfNeeded(userId);
+          }
+        } catch (xpError) {
+          log.error('[media-library] XP award failed:', xpError);
+        }
+      }
+
       res.json(item);
     } catch (error) {
-      console.error("Error updating media status:", error);
+      log.error("Error updating media status:", error);
       res.status(500).json({ error: "Failed to update status" });
     }
   });

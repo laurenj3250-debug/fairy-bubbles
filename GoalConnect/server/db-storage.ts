@@ -432,7 +432,7 @@ export class DbStorage implements IStorage {
     return transaction;
   }
 
-  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "costume_purchase", description: string): Promise<boolean> {
+  async spendPoints(userId: number, amount: number, type: PointTransaction['type'] = "reward_redeem", description: string): Promise<boolean> {
     // Wrap in DB transaction so balance deduction + audit record are atomic
     return await this.db.transaction(async (tx) => {
       // Atomic spend: UPDATE ... WHERE available >= amount prevents race conditions

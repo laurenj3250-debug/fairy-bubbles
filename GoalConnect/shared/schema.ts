@@ -165,7 +165,7 @@ export const pointTransactions = pgTable("point_transactions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   amount: integer("amount").notNull(),
-  type: varchar("type", { length: 30 }).notNull().$type<"habit_complete" | "goal_progress" | "costume_purchase" | "daily_login" | "todo_complete">(),
+  type: varchar("type", { length: 30 }).notNull().$type<"habit_complete" | "goal_progress" | "goal_complete" | "reward_redeem" | "daily_login" | "todo_complete" | "adventure_log" | "media_complete" | "streak_milestone">(),
   relatedId: integer("related_id"),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

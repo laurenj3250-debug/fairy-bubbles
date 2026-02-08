@@ -342,11 +342,14 @@ export default function DashboardV4() {
         activity: 'Outdoor day',
       });
     },
-    onSuccess: () => {
-      toast({ title: "Outdoor day logged!" });
+    onSuccess: (data: any) => {
+      const xpText = data?.pointsEarned ? ` (+${data.pointsEarned} XP)` : '';
+      toast({ title: `Outdoor day logged!${xpText}` });
       queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
       queryClient.invalidateQueries({ queryKey: ['/api/adventures'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/points/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/recent-outdoor-activities'] });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to log outdoor day", description: error.message, variant: "destructive" });
@@ -608,7 +611,7 @@ export default function DashboardV4() {
               <MediaWidget />
 
               {/* Recent Adventures */}
-              <RecentAdventuresWidget />
+              <RecentAdventuresWidget onLogAdventure={() => setAdventureDialogOpen(true)} />
 
               {/* Monthly Progress */}
               <MilestoneDonutWidget />

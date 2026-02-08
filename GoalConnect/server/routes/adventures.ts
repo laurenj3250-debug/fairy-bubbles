@@ -14,6 +14,34 @@ import { eq, and, desc, asc, sql, ilike } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
 import { asyncHandler } from "../error-handler";
 import { z } from "zod";
+import { storage as appStorage } from "../storage";
+import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
+import { log } from "../lib/logger";
+import { XP_CONFIG } from "@shared/xp-config";
+
+/** Award adventure XP idempotently (checks for existing transaction first) */
+async function awardAdventureXP(
+  userId: number,
+  adventureId: number,
+  activity: string,
+  xpAmount: number,
+): Promise<number> {
+  try {
+    const existing = await appStorage.getPointTransactionByTypeAndRelatedId(
+      userId, 'adventure_log', adventureId,
+    );
+    if (existing) {
+      log.warn(`[adventures] XP already awarded for adventure ${adventureId}, skipping`);
+      return 0;
+    }
+    await appStorage.addPoints(userId, xpAmount, 'adventure_log', adventureId, `Logged adventure: ${activity}`);
+    await awardDailyBonusIfNeeded(userId);
+    return xpAmount;
+  } catch (pointsError) {
+    log.error('[adventures] Points award failed:', pointsError);
+    return 0;
+  }
+}
 
 const getUserId = (req: Request) => requireUser(req).id;
 
@@ -330,7 +358,9 @@ export function registerAdventuresRoutes(app: Express) {
           })
           .returning();
 
-        res.status(201).json(adventure);
+        const pointsEarned = await awardAdventureXP(userId, adventure.id, activity, XP_CONFIG.adventure.full);
+
+        res.status(201).json({ ...adventure, pointsEarned });
       } catch (error) {
         cleanupUploadedFile(req.file);
         throw error;
@@ -370,7 +400,9 @@ export function registerAdventuresRoutes(app: Express) {
         })
         .returning();
 
-      res.status(201).json(adventure);
+      const pointsEarned = await awardAdventureXP(userId, adventure.id, activity, XP_CONFIG.adventure.quick);
+
+      res.status(201).json({ ...adventure, pointsEarned });
     })
   );
 

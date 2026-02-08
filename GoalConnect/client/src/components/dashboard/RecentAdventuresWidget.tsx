@@ -5,7 +5,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Mountain, MapPin, ChevronRight, Snowflake } from "lucide-react";
+import { Mountain, MapPin, ChevronRight, Snowflake, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -20,7 +20,11 @@ interface RecentActivity {
   notes: string | null;
 }
 
-export function RecentAdventuresWidget() {
+interface RecentAdventuresWidgetProps {
+  onLogAdventure?: () => void;
+}
+
+export function RecentAdventuresWidget({ onLogAdventure }: RecentAdventuresWidgetProps) {
   const { data: activities, isLoading, error } = useQuery<RecentActivity[]>({
     queryKey: ["/api/recent-outdoor-activities"],
     queryFn: async () => {
@@ -30,17 +34,37 @@ export function RecentAdventuresWidget() {
     },
   });
 
+  // Shared header used across all states
+  const header = (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <Mountain className="w-4 h-4 text-peach-400" />
+        <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+          Recent Adventures
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        {onLogAdventure && (
+          <button
+            onClick={onLogAdventure}
+            className="text-peach-400 hover:text-peach-300 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center -my-3"
+            aria-label="Log new adventure"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
+        <Link href="/adventures" className="text-xs text-peach-400 hover:underline cursor-pointer flex items-center gap-0.5">
+          View all
+          <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="glass-card frost-accent p-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Mountain className="w-4 h-4 text-peach-400" />
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              Recent Adventures
-            </span>
-          </div>
-        </div>
+        {header}
         <div className="grid grid-cols-2 gap-2">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="aspect-square rounded-lg" />
@@ -53,12 +77,7 @@ export function RecentAdventuresWidget() {
   if (error) {
     return (
       <div className="glass-card frost-accent p-3">
-        <div className="flex items-center gap-2 mb-3">
-          <Mountain className="w-4 h-4 text-red-400" />
-          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-            Recent Adventures
-          </span>
-        </div>
+        {header}
         <div className="text-center py-4 text-sm text-red-400">
           Failed to load adventures
         </div>
@@ -69,36 +88,28 @@ export function RecentAdventuresWidget() {
   if (!activities || activities.length === 0) {
     return (
       <div className="glass-card frost-accent p-3">
-        <div className="flex items-center gap-2 mb-3">
-          <Mountain className="w-4 h-4 text-peach-400" />
-          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-            Recent Adventures
-          </span>
-        </div>
-        <Link href="/adventures">
-          <div className="text-center py-4 text-sm text-[var(--text-muted)] hover:text-peach-400 cursor-pointer transition-colors">
-            Log your first adventure →
-          </div>
-        </Link>
+        {header}
+        {onLogAdventure ? (
+          <button
+            onClick={onLogAdventure}
+            className="w-full text-center py-4 text-sm text-[var(--text-muted)] hover:text-peach-400 cursor-pointer transition-colors"
+          >
+            Log your first adventure
+          </button>
+        ) : (
+          <Link href="/adventures">
+            <div className="text-center py-4 text-sm text-[var(--text-muted)] hover:text-peach-400 cursor-pointer transition-colors">
+              Log your first adventure
+            </div>
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
     <div className="glass-card frost-accent p-3">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Mountain className="w-4 h-4 text-peach-400" />
-          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-            Recent Adventures
-          </span>
-        </div>
-        <Link href="/adventures" className="text-xs text-peach-400 hover:underline cursor-pointer flex items-center gap-0.5">
-          View all
-          <ChevronRight className="w-3 h-3" />
-        </Link>
-      </div>
+      {header}
 
       {/* Activity Grid - 2x2 */}
       <div className="grid grid-cols-2 gap-2">

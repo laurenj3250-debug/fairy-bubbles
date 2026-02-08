@@ -5,6 +5,7 @@ import { insertGoalSchema, insertGoalUpdateSchema, yearlyGoals, goals, YearlyGoa
 import { getDb } from "../db";
 import { eq, and, inArray } from "drizzle-orm";
 import { log } from "../lib/logger";
+import { XP_CONFIG } from "@shared/xp-config";
 import { computeMonthlyProgress } from "./yearly-goals";
 
 const getUserId = (req: any) => requireUser(req).id;
@@ -438,7 +439,7 @@ export function registerGoalRoutes(app: Express) {
       // Check if milestones were crossed and award points
       if (result.milestonesCrossed && result.milestonesCrossed > 0 && result.goal) {
         // Base points per milestone
-        let points = result.milestonesCrossed * 5; // 5 points per 10% milestone
+        let points = result.milestonesCrossed * XP_CONFIG.goal.progressPerMilestone;
 
         // Calculate urgency multiplier based on days until deadline
         const today = new Date();
@@ -455,12 +456,7 @@ export function registerGoalRoutes(app: Express) {
         }
 
         // Calculate priority multiplier
-        const priorityMultipliers = {
-          high: 1.5,
-          medium: 1.0,
-          low: 0.75
-        };
-        const priorityMultiplier = priorityMultipliers[result.goal.priority] || 1.0;
+        const priorityMultiplier = XP_CONFIG.goal.priorityMultiplier[result.goal.priority] || 1.0;
 
         // Apply both multipliers
         points = Math.round(points * urgencyMultiplier * priorityMultiplier);
@@ -481,6 +477,26 @@ export function registerGoalRoutes(app: Express) {
           result.update.id,
           description
         );
+      }
+
+      // Goal completion bonus — one-time award when goal hits 100%
+      if (result.goal && result.goal.currentValue >= result.goal.targetValue) {
+        try {
+          const existingCompletion = await storage.getPointTransactionByTypeAndRelatedId(
+            userId, 'goal_complete', result.goal.id
+          );
+          if (!existingCompletion) {
+            await storage.addPoints(
+              userId,
+              XP_CONFIG.goal.completionBonus,
+              'goal_complete',
+              result.goal.id,
+              `Goal completed: "${result.goal.title}"`
+            );
+          }
+        } catch (completionError) {
+          log.error('[goals] Goal completion bonus failed:', completionError);
+        }
       }
 
       res.status(201).json(result.update);

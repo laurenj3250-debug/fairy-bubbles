@@ -1,13 +1,14 @@
 /**
  * MediaWidget
  * Compact widget showing currently reading/watching items
- * Links to full Media Library page
+ * Links to full Media Library page, with "Done" action on current items
  */
 
 import { Link } from "wouter";
-import { BookOpen, Tv, Film, AudioLines, Podcast, ChevronRight, type LucideIcon } from "lucide-react";
+import { BookOpen, Tv, Film, AudioLines, Podcast, ChevronRight, Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMediaLibrary, type MediaType, type MediaItem } from "@/hooks/useMediaLibrary";
+import { useMediaLibrary, type MediaType } from "@/hooks/useMediaLibrary";
+import { useToast } from "@/hooks/use-toast";
 
 // Icons for each media type
 const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
@@ -16,15 +17,6 @@ const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
   movie: Film,
   audiobook: AudioLines,
   podcast: Podcast,
-};
-
-// Type labels for display
-const TYPE_LABELS: Record<MediaType, string> = {
-  book: "Book",
-  tv_show: "Show",
-  movie: "Movie",
-  audiobook: "Audio",
-  podcast: "Pod",
 };
 
 // Cute genre colors for book covers
@@ -37,7 +29,8 @@ const GENRE_COLORS: Record<string, string> = {
 };
 
 export function MediaWidget() {
-  const { widgetItems, widgetMode, isLoadingWidget } = useMediaLibrary();
+  const { widgetItems, widgetMode, isLoadingWidget, updateStatus } = useMediaLibrary();
+  const { toast } = useToast();
 
   // Dynamic label based on what we're showing
   const headerLabel = widgetMode === "current" ? "Currently" : "Recent";
@@ -84,9 +77,7 @@ export function MediaWidget() {
         <div className="space-y-3 flex-1">
           {widgetItems.slice(0, 5).map((item) => {
             const Icon = MEDIA_ICONS[item.mediaType];
-            const colorClass = item.mediaType === "book"
-              ? GENRE_COLORS.default
-              : GENRE_COLORS.default;
+            const colorClass = GENRE_COLORS.default;
 
             return (
               <div
@@ -113,6 +104,24 @@ export function MediaWidget() {
                     )}
                   </div>
                 </div>
+
+                {/* Done button — only show for "current" items */}
+                {widgetMode === "current" && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await updateStatus({ id: item.id, status: "done" });
+                        toast({ title: `Finished "${item.title}"!` });
+                      } catch {
+                        toast({ title: "Failed to update", variant: "destructive" });
+                      }
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400 hover:text-emerald-300 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 -my-3"
+                    aria-label={`Mark "${item.title}" as done`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             );
           })}
