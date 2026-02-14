@@ -437,6 +437,7 @@ export function registerGoalRoutes(app: Express) {
       const result = await storage.createGoalUpdate(validated);
 
       // Check if milestones were crossed and award points
+      let pointsEarned = 0;
       if (result.milestonesCrossed && result.milestonesCrossed > 0 && result.goal) {
         // Base points per milestone
         let points = result.milestonesCrossed * XP_CONFIG.goal.progressPerMilestone;
@@ -477,6 +478,7 @@ export function registerGoalRoutes(app: Express) {
           result.update.id,
           description
         );
+        pointsEarned += points;
       }
 
       // Goal completion bonus — one-time award when goal hits 100%
@@ -493,13 +495,14 @@ export function registerGoalRoutes(app: Express) {
               result.goal.id,
               `Goal completed: "${result.goal.title}"`
             );
+            pointsEarned += XP_CONFIG.goal.completionBonus;
           }
         } catch (completionError) {
           log.error('[goals] Goal completion bonus failed:', completionError);
         }
       }
 
-      res.status(201).json(result.update);
+      res.status(201).json({ ...result.update, pointsEarned });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid goal update data" });
     }

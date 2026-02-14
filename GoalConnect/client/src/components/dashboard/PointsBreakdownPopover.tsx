@@ -205,7 +205,7 @@ export function PointsBreakdownPopover({
 
             {/* Breakdown rows */}
             <div className="space-y-1.5">
-              {grouped.map((group) => (
+              {grouped.filter(g => g.total > 0).map((group) => (
                 <div
                   key={group.label}
                   className="flex items-baseline justify-between text-sm"

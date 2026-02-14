@@ -15,7 +15,11 @@ interface FloatingNumber {
   amount: number;
 }
 
-export function TokenCounter() {
+interface TokenCounterProps {
+  onClick?: () => void;
+}
+
+export function TokenCounter({ onClick }: TokenCounterProps = {}) {
   const [, navigate] = useLocation();
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>();
   const previousBalance = useRef<number>(0);
@@ -23,7 +27,6 @@ export function TokenCounter() {
 
   const { data: points } = useQuery<UserPoints>({
     queryKey: ["/api/points"],
-    refetchInterval: 2000, // Refetch every 2 seconds to catch updates
   });
 
   const currentBalance = points?.available ?? 0;
@@ -55,11 +58,15 @@ export function TokenCounter() {
   const nearThreshold = currentBalance >= 50 && currentBalance < 100;
 
   const handleClick = () => {
-    navigate("/alpine-shop");
+    if (onClick) {
+      onClick();
+    } else {
+      navigate("/alpine-shop");
+    }
   };
 
   return (
-    <motion.button
+    <motion.div
       onClick={handleClick}
       className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-all cursor-pointer"
       whileHover={{ scale: 1.05 }}
@@ -117,6 +124,6 @@ export function TokenCounter() {
           </motion.div>
         ))}
       </AnimatePresence>
-    </motion.button>
+    </motion.div>
   );
 }

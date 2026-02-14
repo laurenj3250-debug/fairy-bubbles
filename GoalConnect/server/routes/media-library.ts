@@ -340,6 +340,7 @@ export function registerMediaLibraryRoutes(app: Express) {
         .returning();
 
       // Award XP for completing media item (transitioning TO "done")
+      let pointsEarned = 0;
       if (newStatus === "done" && currentItem.status !== "done") {
         try {
           const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
@@ -353,6 +354,7 @@ export function registerMediaLibraryRoutes(app: Express) {
               id,
               `Finished: ${currentItem.title}`
             );
+            pointsEarned = XP_CONFIG.media.complete;
             await awardDailyBonusIfNeeded(userId);
           }
         } catch (xpError) {
@@ -360,7 +362,7 @@ export function registerMediaLibraryRoutes(app: Express) {
         }
       }
 
-      res.json(item);
+      res.json({ ...item, pointsEarned });
     } catch (error) {
       log.error("Error updating media status:", error);
       res.status(500).json({ error: "Failed to update status" });

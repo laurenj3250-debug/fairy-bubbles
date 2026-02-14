@@ -204,6 +204,8 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
     },
   });
 
@@ -221,6 +223,8 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
     },
   });
 

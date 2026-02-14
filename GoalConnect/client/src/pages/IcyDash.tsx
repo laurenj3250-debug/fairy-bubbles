@@ -1,7 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { triggerConfetti, checkAllHabitsComplete } from '@/lib/confetti';
+import { triggerConfetti, checkAllHabitsComplete, shouldCelebrateStreak } from '@/lib/confetti';
+import { playCompleteSound, playStreakSound, triggerHaptic } from '@/lib/sounds';
+import { CriticalHit, rollCritical } from '@/components/CriticalHit';
+import { TokenCounter } from '@/components/TokenCounter';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'wouter';
@@ -36,12 +39,6 @@ interface HabitWithData extends Habit {
   streak: number; // API returns streak as a plain number
   weeklyCompletion: number;
   history: Array<{ date: string; completed: boolean }>;
-}
-
-interface UserPoints {
-  available: number;
-  totalEarned: number;
-  totalSpent: number;
 }
 
 // ============================================================================
@@ -257,6 +254,7 @@ export default function DashboardV4() {
 
   // Adventure dialog state
   const [adventureDialogOpen, setAdventureDialogOpen] = useState(false);
+  const [criticalHit, setCriticalHit] = useState<{ show: boolean; multiplier: number }>({ show: false, multiplier: 1 });
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -283,10 +281,6 @@ export default function DashboardV4() {
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<HabitWithData[]>({
     queryKey: ['/api/habits-with-data'],
-  });
-
-  const { data: points } = useQuery<UserPoints>({
-    queryKey: ['/api/points'],
   });
 
   const { data: goals = [] } = useQuery<Goal[]>({
@@ -378,8 +372,19 @@ export default function DashboardV4() {
       return { wasCompleted };
     },
     onSuccess: (data: any, _, context) => {
-      // Only confetti if completing (not uncompleting) AND all habits now done
+      // Only celebrate if completing (not uncompleting)
       if (!context?.wasCompleted) {
+        // Immediate tactile + audio feedback
+        playCompleteSound();
+        triggerHaptic('light');
+
+        // Roll for critical hit (visual only — does not affect actual XP)
+        const crit = rollCritical();
+        if (crit.isCritical) {
+          setCriticalHit({ show: true, multiplier: crit.multiplier });
+        }
+
+        // All habits done today → confetti
         const newCompletedCount = completedTodayCount + 1;
         if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
           triggerConfetti('all_habits_today');
@@ -389,6 +394,13 @@ export default function DashboardV4() {
         if (data?.pointsEarned > 0) {
           const streakText = data.streakDays > 1 ? ` (${data.streakDays}-day streak!)` : '';
           toast({ title: `+${data.pointsEarned} XP${streakText}` });
+        }
+
+        // Celebrate streak milestones (7, 14, 30, 60, 100, 200, 365)
+        if (data?.streakDays && shouldCelebrateStreak(data.streakDays)) {
+          playStreakSound();
+          triggerHaptic('heavy');
+          triggerConfetti('streak_milestone');
         }
       }
       // Single shared data source - GlowingOrbHabits also uses this
@@ -442,8 +454,6 @@ export default function DashboardV4() {
   const completedTodayCount = useMemo(() => {
     return todayHabits.filter(h => completionMap[h.id]?.[todayStr]).length;
   }, [todayHabits, completionMap, todayStr]);
-
-  const xp = points?.available ?? 0;
 
   // Calculate overall day streak (max streak across all habits)
   const dayStreak = useMemo(() => {
@@ -557,10 +567,9 @@ export default function DashboardV4() {
             {/* Right: Stats + Residency */}
             <div className="flex items-center gap-4 text-xs">
               <PointsBreakdownPopover>
-                <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
-                  <span className="font-heading text-sm text-peach-400">{xp.toLocaleString()}</span>
-                  <span className="ml-1 opacity-70">pts</span>
-                </button>
+                <div>
+                  <TokenCounter onClick={() => {}} />
+                </div>
               </PointsBreakdownPopover>
               <div className="w-px h-3 bg-white/20" />
               <div className="text-[var(--text-muted)]">
@@ -694,6 +703,13 @@ export default function DashboardV4() {
           isSubmitting={isCreatingAdventure}
         />
       )}
+
+      {/* Critical Hit overlay — visual-only dopamine on habit completion (25% chance) */}
+      <CriticalHit
+        show={criticalHit.show}
+        multiplier={criticalHit.multiplier}
+        onComplete={() => setCriticalHit({ show: false, multiplier: 1 })}
+      />
     </div>
   );
 }

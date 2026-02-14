@@ -195,6 +195,8 @@ export function useMediaLibrary(options: UseMediaLibraryOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ["/api/media-library"] });
       queryClient.invalidateQueries({ queryKey: ["/api/media-library/current"] });
       queryClient.invalidateQueries({ queryKey: ["/api/media-library/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
     },
   });
 
