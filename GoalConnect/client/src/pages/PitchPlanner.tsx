@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
 import { getTaskGrade } from "@/lib/climbingRanks";
 
 interface Subtask {
@@ -45,6 +47,7 @@ export default function PitchPlanner() {
     onSuccess: (data: any, id: number) => {
       const pitch = pitches.find(p => p.id === id);
       if (pitch && !pitch.completed) {
+        celebrateXpEarned(XP_CONFIG.todo, "Task completed");
         setFadingOutPitches((prev) => new Set(prev).add(id));
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/todos"] });

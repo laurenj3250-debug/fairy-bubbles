@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Check, Circle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
 
 interface Todo {
   id: number;
@@ -31,6 +33,7 @@ export function TodoPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      celebrateXpEarned(XP_CONFIG.todo, "Task completed");
     },
   });
 

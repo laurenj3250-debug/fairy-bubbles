@@ -4,6 +4,7 @@ import { Gift, Check } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { triggerConfetti } from "@/lib/confetti";
+import { playCompleteSound, triggerHaptic } from "@/lib/sounds";
 import type { CustomReward } from "@shared/schema";
 
 interface PointsSummary {
@@ -43,6 +44,8 @@ export default function NextRewardWidget() {
     },
     onSuccess: (data: { reward: CustomReward; pointsRemaining: number }) => {
       triggerConfetti('reward_claimed');
+      playCompleteSound();
+      triggerHaptic('medium');
       toast({
         title: "Reward redeemed!",
         description: `You earned "${data.reward.title}". ${data.pointsRemaining} XP remaining.`,

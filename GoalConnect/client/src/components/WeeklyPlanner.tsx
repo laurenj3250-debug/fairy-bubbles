@@ -1,4 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
 import type { Todo, Goal } from "@shared/schema";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -91,6 +93,7 @@ export function WeeklyPlanner({ className }: WeeklyPlannerProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      celebrateXpEarned(XP_CONFIG.todo, "Task completed");
     },
   });
 

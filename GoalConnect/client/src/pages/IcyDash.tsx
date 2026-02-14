@@ -20,6 +20,7 @@ import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import type { Habit, HabitLog, Goal } from '@shared/schema';
+import { XP_CONFIG } from '@shared/xp-config';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
@@ -337,6 +338,8 @@ export default function DashboardV4() {
       });
     },
     onSuccess: (data: any) => {
+      playCompleteSound();
+      triggerHaptic('light');
       const xpText = data?.pointsEarned ? ` (+${data.pointsEarned} XP)` : '';
       toast({ title: `Outdoor day logged!${xpText}` });
       queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
@@ -396,8 +399,17 @@ export default function DashboardV4() {
 
         // XP toast on habit completion
         if (data?.pointsEarned > 0) {
-          const streakText = data.streakDays > 1 ? ` (${data.streakDays}-day streak!)` : '';
-          toast({ title: `+${data.pointsEarned} XP${streakText}` });
+          const isMilestone = data.streakDays && shouldCelebrateStreak(data.streakDays);
+          if (isMilestone) {
+            const milestoneBonus = XP_CONFIG.streakMilestone[data.streakDays] || 0;
+            toast({
+              title: `${data.streakDays}-day streak milestone!`,
+              description: `+${data.pointsEarned} XP (includes +${milestoneBonus} bonus)`,
+            });
+          } else {
+            const streakText = data.streakDays > 1 ? ` (${data.streakDays}-day streak!)` : '';
+            toast({ title: `+${data.pointsEarned} XP${streakText}` });
+          }
         }
 
         // Celebrate streak milestones (7, 14, 30, 60, 100, 200, 365)
@@ -694,9 +706,13 @@ export default function DashboardV4() {
           onClose={() => setAdventureDialogOpen(false)}
           onSubmit={async (input) => {
             try {
-              await createAdventure(input);
+              const result = await createAdventure(input);
               setAdventureDialogOpen(false); // Only close on success
-              toast({ title: "Adventure logged!", description: "Your outdoor adventure has been recorded" });
+              playCompleteSound();
+              triggerHaptic('light');
+              const xpText = result?.pointsEarned ? ` +${result.pointsEarned} XP` : '';
+              toast({ title: `Adventure logged!${xpText}`, description: "Your outdoor adventure has been recorded" });
+              queryClient.invalidateQueries({ queryKey: ["/api/points"] });
             } catch (error) {
               toast({
                 title: "Failed to log adventure",

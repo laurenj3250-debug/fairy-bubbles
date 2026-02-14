@@ -11,6 +11,8 @@ import { SortableTaskList } from "@/components/SortableTaskList";
 import { Plus, Trash2, Calendar, CheckCircle, ListTodo, Filter, Circle, CheckCircle2, ChevronLeft, ChevronRight, CalendarDays, Edit, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
 import { getTaskGrade } from "@/lib/climbingRanks";
 import { useFocusManagement, FOCUS_RING_STYLES } from "@/hooks/useFocusManagement";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
@@ -117,8 +119,9 @@ export default function Todos() {
     },
     onSuccess: (data: any, id: number) => {
       const todo = todos.find(t => t.id === id);
-      // If completing a task, trigger fade-out animation
+      // If completing a task, trigger fade-out animation + celebrate
       if (todo && !todo.completed) {
+        celebrateXpEarned(XP_CONFIG.todo, "Task completed");
         setFadingOutTodos((prev) => new Set(prev).add(id));
         // Remove from DOM after animation completes (400ms)
         setTimeout(() => {

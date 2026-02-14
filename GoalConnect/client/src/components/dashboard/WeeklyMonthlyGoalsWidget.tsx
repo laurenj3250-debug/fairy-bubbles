@@ -10,6 +10,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Target, Plus, Calendar, CalendarDays, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { triggerConfetti } from "@/lib/confetti";
+import { playCompleteSound, triggerHaptic } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
 import { format, getISOWeek, getYear } from "date-fns";
 import { QuickGoalDialog } from "@/components/QuickGoalDialog";
@@ -171,10 +174,21 @@ export function WeeklyMonthlyGoalsWidget() {
         currentValue: fresh.currentValue + 1,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/goal-calendar"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      // Sound + haptic for every increment
+      playCompleteSound();
+      triggerHaptic("light");
+      // Celebrate XP if earned
+      if (data?.pointsEarned > 0) {
+        celebrateXpEarned(data.pointsEarned, "Goal progress!");
+        // Extra celebration if goal just completed (100%)
+        if (data?.currentValue >= data?.targetValue) {
+          triggerConfetti("goal_completed");
+        }
+      }
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update goal", description: error.message, variant: "destructive" });

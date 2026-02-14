@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
-import { Flame } from 'lucide-react';
+import { Flame, Plus } from 'lucide-react';
+import { Link } from 'wouter';
 
 interface HabitRow {
   id: number;
@@ -31,8 +32,14 @@ export function LuxuryHabitGrid({
 
   if (habits.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center py-3", className)}>
-        <span className="font-body text-sm text-[var(--text-muted)]">No habits yet</span>
+      <div className={cn("flex flex-col items-center justify-center py-8 gap-3", className)}>
+        <div className="w-10 h-10 rounded-full bg-[var(--peach-400,#f0a67a)]/10 flex items-center justify-center">
+          <Flame className="w-5 h-5 text-[var(--peach-400,#f0a67a)]" />
+        </div>
+        <p className="font-body text-sm text-[var(--text-muted)]">No habits yet</p>
+        <Link href="/habits" className="flex items-center gap-1 text-xs text-[var(--peach-400,#f0a67a)] hover:underline">
+          <Plus className="w-3 h-3" /> Create your first habit
+        </Link>
       </div>
     );
   }

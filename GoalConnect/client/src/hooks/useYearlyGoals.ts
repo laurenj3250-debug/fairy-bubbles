@@ -10,6 +10,10 @@ import {
   YEARLY_GOAL_CATEGORY_LABELS,
   YearlyGoalSubItem,
 } from "@shared/schema";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
+import { triggerConfetti } from "@/lib/confetti";
+import { playCompleteSound, triggerHaptic } from "@/lib/sounds";
 
 // Types matching the API response
 export interface YearlyGoalWithProgress {
@@ -202,10 +206,17 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
+      // Sound + haptic for progress
+      playCompleteSound();
+      triggerHaptic("light");
+      // Extra celebration if goal just completed
+      if (data?.isCompleted) {
+        triggerConfetti("goal_completed");
+      }
     },
   });
 
@@ -221,10 +232,15 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
+      if (data?.isCompleted) {
+        playCompleteSound();
+        triggerHaptic("medium");
+        triggerConfetti("goal_completed");
+      }
     },
   });
 
@@ -240,10 +256,17 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
-      // Also invalidate points since sub-items award XP
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      // Celebrate sub-item completion (not uncomplete)
+      if (data?.subItem?.completed) {
+        celebrateXpEarned(XP_CONFIG.yearlyGoal.subItem, "Sub-item completed");
+      }
+      // Celebrate if this completed the entire goal
+      if (data?.isGoalCompleted) {
+        triggerConfetti("goal_completed");
+      }
     },
   });
 
@@ -259,9 +282,18 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      // Celebrate goal reward claim
+      const total = data?.totalAwarded ?? data?.pointsAwarded ?? 0;
+      if (total > 0) {
+        triggerConfetti("goal_completed");
+        const desc = data?.categoryBonus
+          ? `Goal complete + category bonus!`
+          : "Goal reward claimed!";
+        celebrateXpEarned(total, desc);
+      }
     },
   });
 

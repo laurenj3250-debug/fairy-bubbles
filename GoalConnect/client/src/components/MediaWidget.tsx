@@ -9,6 +9,8 @@ import { BookOpen, Tv, Film, AudioLines, Podcast, ChevronRight, Check, type Luci
 import { cn } from "@/lib/utils";
 import { useMediaLibrary, type MediaType } from "@/hooks/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
+import { playCompleteSound, triggerHaptic } from "@/lib/sounds";
+import { queryClient } from "@/lib/queryClient";
 
 // Icons for each media type
 const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
@@ -111,13 +113,16 @@ export function MediaWidget() {
                     onClick={async () => {
                       try {
                         const result = await updateStatus({ id: item.id, status: "done" });
+                        playCompleteSound();
+                        triggerHaptic("light");
                         const xpText = result?.pointsEarned ? ` (+${result.pointsEarned} XP)` : '';
                         toast({ title: `Finished "${item.title}"!${xpText}` });
+                        queryClient.invalidateQueries({ queryKey: ["/api/points"] });
                       } catch {
                         toast({ title: "Failed to update", variant: "destructive" });
                       }
                     }}
-                    className="opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-emerald-400 hover:text-emerald-300 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 -my-3"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-emerald-400 hover:text-emerald-300 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 -my-3"
                     aria-label={`Mark "${item.title}" as done`}
                   >
                     <Check className="w-3.5 h-3.5" />

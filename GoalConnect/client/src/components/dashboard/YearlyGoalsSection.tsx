@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Target, Plus } from 'lucide-react';
 import { Link } from 'wouter';
 import { CompactGoalGrid } from '@/components/yearly-goals';
 import { useToast } from '@/hooks/use-toast';
@@ -82,7 +82,19 @@ export function YearlyGoalsSection({
     }
   };
 
-  if (goals.length === 0) return null;
+  if (goals.length === 0) {
+    return (
+      <div className="glass-card frost-accent py-6 px-4 flex flex-col items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-[var(--peach-400,#f0a67a)]/10 flex items-center justify-center">
+          <Target className="w-5 h-5 text-[var(--peach-400,#f0a67a)]" />
+        </div>
+        <p className="text-sm text-[var(--text-muted)]">No yearly goals yet</p>
+        <Link href="/yearly-goals" className="flex items-center gap-1 text-xs text-[var(--peach-400,#f0a67a)] hover:underline">
+          <Plus className="w-3 h-3" /> Set your first goal
+        </Link>
+      </div>
+    );
+  }
 
   // STABLE sort: only by completion status and ID (never by progress %)
   // This prevents UI jumping when progress changes during interaction

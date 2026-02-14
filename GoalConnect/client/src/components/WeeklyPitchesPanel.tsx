@@ -1,4 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { celebrateXpEarned } from "@/lib/celebrate";
+import { XP_CONFIG } from "@shared/xp-config";
 import type { Todo } from "@shared/schema";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
@@ -30,6 +32,7 @@ export function WeeklyPitchesPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      celebrateXpEarned(XP_CONFIG.todo, "Task completed");
     },
   });
 
