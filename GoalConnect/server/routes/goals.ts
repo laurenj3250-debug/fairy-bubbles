@@ -308,7 +308,8 @@ export function registerGoalRoutes(app: Express) {
       }
       const isNowCompleted = goal.currentValue >= goal.targetValue;
 
-      // Award XP on progress and completion
+      // Award one-time completion bonus (idempotent — checks for existing transaction)
+      // Progress XP is handled by POST /api/goal-updates with milestone-based calculations
       let pointsEarned = 0;
       if (!wasCompleted && isNowCompleted) {
         try {
@@ -327,20 +328,6 @@ export function registerGoalRoutes(app: Express) {
           }
         } catch (xpError) {
           log.error('[goals] PATCH completion bonus failed:', xpError);
-        }
-      } else if (req.body.currentValue != null && req.body.currentValue > existing.currentValue && !isNowCompleted) {
-        // Award progress XP for increments (1 XP per increment)
-        try {
-          await storage.addPoints(
-            userId,
-            XP_CONFIG.goal.progressPerMilestone,
-            'goal_progress',
-            id,
-            `Goal progress: "${goal.title}" ${goal.currentValue}/${goal.targetValue}`
-          );
-          pointsEarned = XP_CONFIG.goal.progressPerMilestone;
-        } catch (xpError) {
-          log.error('[goals] PATCH progress XP failed:', xpError);
         }
       }
 
