@@ -308,6 +308,42 @@ export function registerGoalRoutes(app: Express) {
       }
       const isNowCompleted = goal.currentValue >= goal.targetValue;
 
+      // Award XP on progress and completion
+      let pointsEarned = 0;
+      if (!wasCompleted && isNowCompleted) {
+        try {
+          const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
+            userId, 'goal_complete', id
+          );
+          if (!existingTx) {
+            await storage.addPoints(
+              userId,
+              XP_CONFIG.goal.completionBonus,
+              'goal_complete',
+              id,
+              `Goal completed: "${goal.title}"`
+            );
+            pointsEarned = XP_CONFIG.goal.completionBonus;
+          }
+        } catch (xpError) {
+          log.error('[goals] PATCH completion bonus failed:', xpError);
+        }
+      } else if (req.body.currentValue != null && req.body.currentValue > existing.currentValue && !isNowCompleted) {
+        // Award progress XP for increments (1 XP per increment)
+        try {
+          await storage.addPoints(
+            userId,
+            XP_CONFIG.goal.progressPerMilestone,
+            'goal_progress',
+            id,
+            `Goal progress: "${goal.title}" ${goal.currentValue}/${goal.targetValue}`
+          );
+          pointsEarned = XP_CONFIG.goal.progressPerMilestone;
+        } catch (xpError) {
+          log.error('[goals] PATCH progress XP failed:', xpError);
+        }
+      }
+
       // Sync with linked yearly goal sub-item if completion status changed
       // Link data is stored in description field after "|||" separator
       if (goal.description && goal.description.includes("|||") && wasCompleted !== isNowCompleted) {
@@ -357,7 +393,7 @@ export function registerGoalRoutes(app: Express) {
         }
       }
 
-      res.json(cleanGoal(goal));
+      res.json({ ...cleanGoal(goal), pointsEarned });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update goal" });
     }

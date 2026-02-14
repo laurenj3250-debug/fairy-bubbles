@@ -116,7 +116,7 @@ function CompactGoalCard({ goal, onIncrement, isIncrementing }: CompactGoalCardP
             onClick={() => onIncrement(goal)}
             disabled={isIncrementing}
             className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0",
+              "w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0",
               "bg-peach-400/10 hover:bg-peach-400/20 border border-peach-400/20",
               "text-peach-400 hover:text-peach-300",
               "disabled:opacity-50 disabled:cursor-not-allowed"
@@ -178,16 +178,21 @@ export function WeeklyMonthlyGoalsWidget() {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/goal-calendar"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
-      // Sound + haptic for every increment
-      playCompleteSound();
-      triggerHaptic("light");
-      // Celebrate XP if earned
-      if (data?.pointsEarned > 0) {
-        celebrateXpEarned(data.pointsEarned, "Goal progress!");
-        // Extra celebration if goal just completed (100%)
-        if (data?.currentValue >= data?.targetValue) {
-          triggerConfetti("goal_completed");
+      // Goal just completed — full celebration
+      if (data?.currentValue >= data?.targetValue) {
+        triggerConfetti("goal_completed");
+        if (data?.pointsEarned > 0) {
+          celebrateXpEarned(data.pointsEarned, "Goal completed!");
+        } else {
+          playCompleteSound();
+          triggerHaptic("medium");
         }
+      } else if (data?.pointsEarned > 0) {
+        // Regular increment with XP — subtle feedback
+        triggerHaptic("light");
+      } else {
+        // Increment with no XP — just haptic
+        triggerHaptic("light");
       }
     },
     onError: (error: Error) => {
@@ -211,7 +216,7 @@ export function WeeklyMonthlyGoalsWidget() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="glass-card frost-accent p-4">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className="w-4 h-4 text-peach-400" />
@@ -258,7 +263,7 @@ export function WeeklyMonthlyGoalsWidget() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* This Week Card */}
         <div className="glass-card frost-accent p-4">
           {/* Header */}
@@ -273,7 +278,7 @@ export function WeeklyMonthlyGoalsWidget() {
               <button
                 onClick={() => setWeekDialogOpen(true)}
                 className={cn(
-                  "w-6 h-6 rounded-md flex items-center justify-center transition-all",
+                  "min-w-[44px] min-h-[44px] rounded-md flex items-center justify-center transition-all",
                   "bg-white/5 hover:bg-peach-400/20",
                   "text-[var(--text-muted)] hover:text-peach-400"
                 )}
@@ -284,7 +289,7 @@ export function WeeklyMonthlyGoalsWidget() {
               <button
                 onClick={navigateToGoals}
                 className={cn(
-                  "w-6 h-6 rounded-md flex items-center justify-center transition-all",
+                  "min-w-[44px] min-h-[44px] rounded-md flex items-center justify-center transition-all",
                   "text-[var(--text-muted)] hover:text-peach-400"
                 )}
                 aria-label="View all goals"
@@ -335,7 +340,7 @@ export function WeeklyMonthlyGoalsWidget() {
               <button
                 onClick={() => setMonthDialogOpen(true)}
                 className={cn(
-                  "w-6 h-6 rounded-md flex items-center justify-center transition-all",
+                  "min-w-[44px] min-h-[44px] rounded-md flex items-center justify-center transition-all",
                   "bg-white/5 hover:bg-peach-400/20",
                   "text-[var(--text-muted)] hover:text-peach-400"
                 )}
@@ -346,7 +351,7 @@ export function WeeklyMonthlyGoalsWidget() {
               <button
                 onClick={navigateToGoals}
                 className={cn(
-                  "w-6 h-6 rounded-md flex items-center justify-center transition-all",
+                  "min-w-[44px] min-h-[44px] rounded-md flex items-center justify-center transition-all",
                   "text-[var(--text-muted)] hover:text-peach-400"
                 )}
                 aria-label="View all goals"

@@ -19,7 +19,7 @@ import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import type { Habit, HabitLog, Goal } from '@shared/schema';
+import type { Habit, HabitLog } from '@shared/schema';
 import { XP_CONFIG } from '@shared/xp-config';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useAdventures } from '@/hooks/useAdventures';
@@ -40,61 +40,6 @@ interface HabitWithData extends Habit {
   streak: number; // API returns streak as a plain number
   weeklyCompletion: number;
   history: Array<{ date: string; completed: boolean }>;
-}
-
-// ============================================================================
-// DESTINATION SPOTLIGHT - Epic crags & mountain destinations
-// ============================================================================
-
-const FUN_FACTS = [
-  {
-    title: "Red River Gorge, Kentucky",
-    content: "The Red has 1,500+ sport routes on bullet sandstone with steep overhangs and pockets. Best seasons: spring & fall. Miguel's Pizza is the legendary climber hangout.",
-    category: "Sport Climbing",
-  },
-  {
-    title: "Bishop, California",
-    content: "World-class high desert bouldering on volcanic tablelands and the Buttermilks. Famous for the Mandala (V12) and perfect fall/winter weather at 4,000ft elevation.",
-    category: "Bouldering",
-  },
-  {
-    title: "Yosemite Valley, California",
-    content: "The birthplace of American big wall climbing. El Capitan's 3,000ft granite face hosts The Nose and Dawn Wall. Best months: April-May and September-October.",
-    category: "Big Wall",
-  },
-  {
-    title: "Kalymnos, Greece",
-    content: "Mediterranean limestone paradise with 3,500+ routes, crystal blue water, and perfect tufa climbing. Spring and fall offer ideal temps with cheap ferries from Athens.",
-    category: "Sport Climbing",
-  },
-  {
-    title: "Fontainebleau, France",
-    content: "The world's most famous bouldering forest with 30,000+ problems on sandstone. Circuit system color-codes difficulty. An hour from Paris by train.",
-    category: "Bouldering",
-  },
-  {
-    title: "Indian Creek, Utah",
-    content: "Desert crack climbing mecca with perfect parallel-sided sandstone splitters. Bring tape and expect to hand-jam. Best in spring/fall, camping at Creek Pasture.",
-    category: "Trad Climbing",
-  },
-  {
-    title: "Chamonix, France",
-    content: "Alpine climbing capital at the base of Mont Blanc. The Aiguilles offer world-class granite from single-pitch to multi-day routes. Summer season June-September.",
-    category: "Alpine",
-  },
-  {
-    title: "Hueco Tanks, Texas",
-    content: "Legendary bouldering on syenite porphyry with unique huecos (pockets). Limited daily permits required. Winter destination with problems from V0 to V15.",
-    category: "Bouldering",
-  },
-];
-
-function getDailyFunFact() {
-  // Use day of year as seed for consistent daily rotation
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  return FUN_FACTS[dayOfYear % FUN_FACTS.length];
 }
 
 // ============================================================================
@@ -121,44 +66,6 @@ function useWeekData() {
       formatRange: `${format(weekStart, 'MMMM d')}–${format(weekEnd, 'd')}`,
     };
   }, []);
-}
-
-// ============================================================================
-// COMPONENTS
-// ============================================================================
-
-function ProgressRing({ progress, color, size = 56 }: { progress: number; color: string; size?: number }) {
-  const radius = (size - 8) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (progress / 100) * circumference;
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="hsl(var(--muted))"
-          strokeWidth="4"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-        />
-      </svg>
-      <span className="absolute text-xs font-semibold">{progress}%</span>
-    </div>
-  );
 }
 
 // ============================================================================
@@ -282,10 +189,6 @@ export default function DashboardV4() {
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery<HabitWithData[]>({
     queryKey: ['/api/habits-with-data'],
-  });
-
-  const { data: goals = [] } = useQuery<Goal[]>({
-    queryKey: ['/api/goals'],
   });
 
   const { data: weekLogs = [] } = useQuery<HabitLog[]>({
@@ -432,23 +335,6 @@ export default function DashboardV4() {
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const incrementGoalMutation = useMutation({
-    mutationFn: async (goalId: number) => {
-      // Use yearly goals increment endpoint
-      return await apiRequest(`/api/yearly-goals/${goalId}/increment`, 'POST', { amount: 1 });
-    },
-    onSuccess: () => {
-      // No confetti for individual increments - save celebration for completion
-      queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/goal-calendar'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/points'] });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Failed to update goal", description: error.message, variant: "destructive" });
     },
   });
 
@@ -603,10 +489,10 @@ export default function DashboardV4() {
           {/* Current Expedition (if active) */}
           <CurrentExpeditionWidget />
 
-          {/* MAIN GRID: 3 columns - Habits (2col) + Right sidebar (1col) */}
-          <div className="grid grid-cols-3 gap-5">
-            {/* LEFT: Habits - spans 2 columns */}
-            <div className="col-span-2 glass-card frost-accent">
+          {/* MAIN GRID: 3 columns on desktop, stacked on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* LEFT: Habits - spans 2 columns on desktop */}
+            <div className="md:col-span-2 glass-card frost-accent">
               <span className="card-title">This Week</span>
               <div>
                 {habitsLoading ? (
