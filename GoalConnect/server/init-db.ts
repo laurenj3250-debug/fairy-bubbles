@@ -1,12 +1,6 @@
 import { getDb } from './db';
 import {
   users,
-  goals,
-  habits,
-  virtualPets,
-  userSettings,
-  userPoints,
-  costumes,
 } from "../shared/schema";
 
 const NOVEMBER_DEADLINE = '2025-11-30';

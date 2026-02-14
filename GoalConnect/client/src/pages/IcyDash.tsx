@@ -379,15 +379,19 @@ export default function DashboardV4() {
         triggerHaptic('light');
 
         // Roll for critical hit (visual only — does not affect actual XP)
+        // CriticalHit has its own confetti (150 particles), so skip other confetti if it fires
         const crit = rollCritical();
-        if (crit.isCritical) {
+        const hasCritical = crit.isCritical;
+        if (hasCritical) {
           setCriticalHit({ show: true, multiplier: crit.multiplier });
         }
 
-        // All habits done today → confetti
-        const newCompletedCount = completedTodayCount + 1;
-        if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
-          triggerConfetti('all_habits_today');
+        // All habits done today → confetti (skip if CriticalHit already firing its own)
+        if (!hasCritical) {
+          const newCompletedCount = completedTodayCount + 1;
+          if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
+            triggerConfetti('all_habits_today');
+          }
         }
 
         // XP toast on habit completion
@@ -397,10 +401,13 @@ export default function DashboardV4() {
         }
 
         // Celebrate streak milestones (7, 14, 30, 60, 100, 200, 365)
+        // Skip confetti if CriticalHit already fired (sound + haptic still play)
         if (data?.streakDays && shouldCelebrateStreak(data.streakDays)) {
           playStreakSound();
           triggerHaptic('heavy');
-          triggerConfetti('streak_milestone');
+          if (!hasCritical) {
+            triggerConfetti('streak_milestone');
+          }
         }
       }
       // Single shared data source - GlowingOrbHabits also uses this

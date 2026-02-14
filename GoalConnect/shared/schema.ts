@@ -127,40 +127,6 @@ export const userSettings = pgTable("user_settings", {
   notifications: boolean("notifications").notNull().default(true),
 });
 
-export const virtualPets = pgTable("virtual_pets", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique().references(() => users.id),
-  name: text("name").notNull().default("Forest Friend"),
-  species: varchar("species", { length: 50 }).notNull().default("Gremlin").$type<"Gremlin">(),
-  happiness: integer("happiness").notNull().default(50),
-  health: integer("health").notNull().default(100),
-  level: integer("level").notNull().default(1),
-  experience: integer("experience").notNull().default(0),
-  evolution: varchar("evolution", { length: 20 }).notNull().default("seed").$type<"seed" | "sprout" | "sapling" | "tree" | "ancient">(),
-  currentCostumeId: integer("current_costume_id").references(() => costumes.id),
-  lastFed: timestamp("last_fed").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const costumes = pgTable("costumes", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull().default(""),
-  category: varchar("category", { length: 20 }).notNull().$type<"hat" | "outfit" | "accessory" | "background">(),
-  price: integer("price").notNull(),
-  imageUrl: text("image_url").notNull(),
-  rarity: varchar("rarity", { length: 20 }).notNull().$type<"common" | "rare" | "epic" | "legendary">(),
-  evolutionRequired: varchar("evolution_required", { length: 20 }).notNull().default("seed").$type<"seed" | "sprout" | "sapling" | "tree" | "ancient">(),
-});
-
-export const userCostumes = pgTable("user_costumes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  costumeId: integer("costume_id").notNull().references(() => costumes.id),
-  purchasedAt: timestamp("purchased_at").defaultNow().notNull(),
-  isEquipped: boolean("is_equipped").notNull().default(false),
-});
-
 export const pointTransactions = pgTable("point_transactions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -283,9 +249,6 @@ export type HabitMetric = typeof habitMetrics.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type GoalUpdate = typeof goalUpdates.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
-export type VirtualPet = typeof virtualPets.$inferSelect;
-export type Costume = typeof costumes.$inferSelect;
-export type UserCostume = typeof userCostumes.$inferSelect;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
 export type UserPoints = typeof userPoints.$inferSelect;
 export type Todo = typeof todos.$inferSelect;
@@ -312,9 +275,6 @@ export type InsertGoalUpdate = z.infer<typeof insertGoalUpdateSchema>;
 
 export const insertUserSettingsSchema = createInsertSchema(userSettings);
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
-
-export const insertVirtualPetSchema = createInsertSchema(virtualPets).omit({ id: true });
-export type InsertVirtualPet = z.infer<typeof insertVirtualPetSchema>;
 
 export const insertPointTransactionSchema = createInsertSchema(pointTransactions).omit({ id: true });
 export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
@@ -722,50 +682,6 @@ export type InsertExpeditionEvent = z.infer<typeof insertExpeditionEventSchema>;
 export type InsertExpeditionGearLoadout = z.infer<typeof insertExpeditionGearLoadoutSchema>;
 export type InsertMountainUnlock = z.infer<typeof insertMountainUnlockSchema>;
 
-// ========== COMBO SYSTEM ==========
-
-export const userComboStats = pgTable("user_combo_stats", {
-  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
-  currentCombo: integer("current_combo").default(0).notNull(),
-  dailyHighScore: integer("daily_high_score").default(0).notNull(),
-  lastCompletionTime: timestamp("last_completion_time"),
-  comboExpiresAt: timestamp("combo_expires_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type UserComboStats = typeof userComboStats.$inferSelect;
-export type InsertUserComboStats = typeof userComboStats.$inferInsert;
-
-// ========== DAILY QUEST SYSTEM ==========
-
-export const dailyQuests = pgTable("daily_quests", {
-  id: serial("id").primaryKey(),
-  questType: varchar("quest_type", { length: 50 }).notNull().unique(),
-  title: text("title").notNull(),
-  description: text("description"),
-  targetValue: integer("target_value").notNull(),
-  rewardTokens: integer("reward_tokens").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const userDailyQuests = pgTable("user_daily_quests", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  questDate: varchar("quest_date", { length: 10 }).notNull(), // YYYY-MM-DD
-  questId: integer("quest_id").notNull().references(() => dailyQuests.id, { onDelete: "cascade" }),
-  progress: integer("progress").default(0).notNull(),
-  completed: boolean("completed").default(false).notNull(),
-  claimed: boolean("claimed").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type DailyQuest = typeof dailyQuests.$inferSelect;
-export type InsertDailyQuest = typeof dailyQuests.$inferInsert;
-export type UserDailyQuest = typeof userDailyQuests.$inferSelect;
-export type InsertUserDailyQuest = typeof userDailyQuests.$inferInsert;
-
 // ========== STREAK FREEZE SYSTEM ==========
 
 export const streakFreezes = pgTable("streak_freezes", {
@@ -810,7 +726,7 @@ export type CustomReward = typeof customRewards.$inferSelect;
 export const insertCustomRewardSchema = createInsertSchema(customRewards)
   .omit({ id: true, redeemed: true, redeemedAt: true, createdAt: true })
   .extend({
-    cost: z.number().int().min(50, "Minimum reward cost is 50 XP"),
+    cost: z.number().int().min(10, "Minimum reward cost is 10 XP"),
     title: z.string().min(1, "Title is required").max(200),
     description: z.string().max(1000).optional().nullable(),
     imageUrl: z.string().url().optional().nullable(),

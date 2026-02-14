@@ -61,7 +61,7 @@ export function TokenCounter({ onClick }: TokenCounterProps = {}) {
     if (onClick) {
       onClick();
     } else {
-      navigate("/alpine-shop");
+      navigate("/rewards");
     }
   };
 

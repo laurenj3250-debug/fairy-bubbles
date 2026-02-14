@@ -58,7 +58,7 @@ const rewardFormSchema = z.object({
   cost: z.coerce
     .number({ invalid_type_error: "Cost must be a number" })
     .int("Cost must be a whole number")
-    .min(50, "Minimum cost is 50 XP"),
+    .min(10, "Minimum cost is 10 XP"),
   description: z.string().max(500).optional().or(z.literal("")),
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });

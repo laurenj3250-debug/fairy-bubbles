@@ -60,8 +60,8 @@ export function registerRewardRoutes(app: Express) {
       if (description !== undefined) updates.description = description;
       if (imageUrl !== undefined) updates.imageUrl = imageUrl;
       if (cost !== undefined) {
-        if (typeof cost !== 'number' || cost < 50) {
-          return res.status(400).json({ error: "Minimum reward cost is 50 XP" });
+        if (typeof cost !== 'number' || cost < 10) {
+          return res.status(400).json({ error: "Minimum reward cost is 10 XP" });
         }
         updates.cost = cost;
       }

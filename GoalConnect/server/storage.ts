@@ -10,10 +10,6 @@ import {
   type InsertGoalUpdate,
   type UserSettings,
   type InsertUserSettings,
-  type VirtualPet,
-  type InsertVirtualPet,
-  type Costume,
-  type UserCostume,
   type PointTransaction,
   type InsertPointTransaction,
   type UserPoints,
@@ -78,21 +74,6 @@ export interface IStorage {
   
   getUserSettings(userId: number): Promise<UserSettings | undefined>;
   updateUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
-  
-  getVirtualPet(userId: number): Promise<VirtualPet | undefined>;
-  createVirtualPet(pet: InsertVirtualPet): Promise<VirtualPet>;
-  updateVirtualPet(id: number, pet: Partial<VirtualPet>): Promise<VirtualPet | undefined>;
-  
-  getAllCostumes(): Promise<Costume[]>;
-  getCostume(id: number): Promise<Costume | undefined>;
-  getCostumeByName(name: string): Promise<Costume | undefined>;
-  createCostume(costume: Omit<Costume, 'id'>): Promise<Costume>;
-  
-  getUserCostumes(userId: number): Promise<UserCostume[]>;
-  purchaseCostume(userId: number, costumeId: number): Promise<UserCostume>;
-  equipCostume(userId: number, costumeId: number): Promise<UserCostume>;
-  unequipCostume(userId: number, costumeId: number): Promise<UserCostume>;
-  getEquippedCostumes(userId: number): Promise<Array<UserCostume & { costume: Costume }>>;
   
   getUserPoints(userId: number): Promise<UserPoints>;
   addPoints(userId: number, amount: number, type: PointTransaction['type'], relatedId: number | null, description: string): Promise<PointTransaction>;
@@ -195,9 +176,6 @@ export class MemStorage implements IStorage {
   private goals: Map<number, Goal> = new Map();
   private goalUpdates: Map<number, GoalUpdate> = new Map();
   private userSettings: Map<number, UserSettings> = new Map();
-  private virtualPets: Map<number, VirtualPet> = new Map();
-  private costumes: Map<number, Costume> = new Map();
-  private userCostumes: Map<number, UserCostume> = new Map();
   private pointTransactions: Map<number, PointTransaction> = new Map();
   private userPoints: Map<number, UserPoints> = new Map();
   private todos: Map<number, Todo> = new Map();
@@ -263,37 +241,6 @@ export class MemStorage implements IStorage {
     goals.forEach(g => this.createGoal(g));
 
     this.updateUserSettings({ userId: 1, darkMode: true, notifications: true });
-
-    // Seed costumes
-    const costumeData: Omit<Costume, 'id'>[] = [
-      { name: "Party Hat", description: "A festive party hat", category: "hat", price: 50, imageUrl: "🎉", rarity: "common", evolutionRequired: "seed" },
-      { name: "Crown", description: "Royal crown fit for a king", category: "hat", price: 200, imageUrl: "👑", rarity: "rare", evolutionRequired: "sprout" },
-      { name: "Wizard Hat", description: "Magical wizard hat", category: "hat", price: 150, imageUrl: "🧙", rarity: "rare", evolutionRequired: "sprout" },
-      { name: "Superhero Cape", description: "Feel like a superhero", category: "outfit", price: 100, imageUrl: "🦸", rarity: "common", evolutionRequired: "seed" },
-      { name: "Ninja Outfit", description: "Stealth mode activated", category: "outfit", price: 250, imageUrl: "🥷", rarity: "epic", evolutionRequired: "sapling" },
-      { name: "Sunglasses", description: "Cool shades", category: "accessory", price: 75, imageUrl: "😎", rarity: "common", evolutionRequired: "seed" },
-      { name: "Gold Medal", description: "Achievement unlocked", category: "accessory", price: 300, imageUrl: "🏅", rarity: "epic", evolutionRequired: "sapling" },
-      { name: "Space Background", description: "Explore the cosmos", category: "background", price: 400, imageUrl: "🌌", rarity: "legendary", evolutionRequired: "ancient" },
-      { name: "Forest Background", description: "Nature vibes", category: "background", price: 150, imageUrl: "🌲", rarity: "rare", evolutionRequired: "sprout" },
-      { name: "Rainbow Background", description: "Bright and cheerful", category: "background", price: 100, imageUrl: "🌈", rarity: "common", evolutionRequired: "seed" },
-    ];
-
-    costumeData.forEach(c => {
-      const id = this.nextId++;
-      this.costumes.set(id, { id, ...c });
-    });
-
-    // Create virtual pet for user 1
-    this.createVirtualPet({
-      userId: 1,
-      name: "Forest Friend",
-      species: "Gremlin",
-      happiness: 85,
-      health: 90,
-      level: 1,
-      experience: 0,
-      currentCostumeId: null,
-    });
 
     // Initialize user points
     this.userPoints.set(1, { userId: 1, totalEarned: 250, totalSpent: 0, available: 250 });
@@ -523,111 +470,6 @@ export class MemStorage implements IStorage {
     };
     this.userSettings.set(settings.userId, stored);
     return stored;
-  }
-
-  async getVirtualPet(userId: number): Promise<VirtualPet | undefined> {
-    return Array.from(this.virtualPets.values()).find(p => p.userId === userId);
-  }
-
-  async createVirtualPet(pet: InsertVirtualPet): Promise<VirtualPet> {
-    const id = this.nextId++;
-    const newPet: VirtualPet = {
-      id,
-      userId: pet.userId,
-      name: pet.name ?? "Forest Friend",
-      species: (pet.species ?? "Gremlin") as VirtualPet['species'],
-      happiness: pet.happiness ?? 50,
-      health: pet.health ?? 100,
-      level: pet.level ?? 1,
-      experience: pet.experience ?? 0,
-      evolution: (pet.evolution ?? "seed") as VirtualPet['evolution'],
-      currentCostumeId: pet.currentCostumeId ?? null,
-      createdAt: pet.createdAt ?? new Date(),
-      lastFed: pet.lastFed ?? null,
-    };
-    this.virtualPets.set(id, newPet);
-    return newPet;
-  }
-
-  async updateVirtualPet(id: number, pet: Partial<VirtualPet>): Promise<VirtualPet | undefined> {
-    const existing = this.virtualPets.get(id);
-    if (!existing) return undefined;
-
-    const updated: VirtualPet = {
-      ...existing,
-      ...pet,
-      currentCostumeId: pet.currentCostumeId ?? existing.currentCostumeId,
-      lastFed: pet.lastFed ?? existing.lastFed,
-    };
-    this.virtualPets.set(id, updated);
-    return updated;
-  }
-
-  async getAllCostumes(): Promise<Costume[]> {
-    return Array.from(this.costumes.values());
-  }
-
-  async getCostume(id: number): Promise<Costume | undefined> {
-    return this.costumes.get(id);
-  }
-
-  async getCostumeByName(name: string): Promise<Costume | undefined> {
-    return Array.from(this.costumes.values()).find(c => c.name === name);
-  }
-
-  async createCostume(costume: Omit<Costume, 'id'>): Promise<Costume> {
-    const id = this.nextId++;
-    const newCostume: Costume = {
-      id,
-      ...costume,
-    };
-    this.costumes.set(id, newCostume);
-    return newCostume;
-  }
-
-  async getUserCostumes(userId: number): Promise<UserCostume[]> {
-    return Array.from(this.userCostumes.values()).filter(uc => uc.userId === userId);
-  }
-
-  async purchaseCostume(userId: number, costumeId: number): Promise<UserCostume> {
-    const id = this.nextId++;
-    const newUserCostume: UserCostume = {
-      id,
-      userId,
-      costumeId,
-      purchasedAt: new Date(),
-      isEquipped: false,
-    };
-    this.userCostumes.set(id, newUserCostume);
-    return newUserCostume;
-  }
-
-  async equipCostume(userId: number, costumeId: number): Promise<UserCostume> {
-    const userCostume = Array.from(this.userCostumes.values()).find(
-      uc => uc.userId === userId && uc.costumeId === costumeId
-    );
-    if (!userCostume) throw new Error("Costume not owned");
-    const updated: UserCostume = { ...userCostume, isEquipped: true };
-    this.userCostumes.set(userCostume.id, updated);
-    return updated;
-  }
-
-  async unequipCostume(userId: number, costumeId: number): Promise<UserCostume> {
-    const userCostume = Array.from(this.userCostumes.values()).find(
-      uc => uc.userId === userId && uc.costumeId === costumeId
-    );
-    if (!userCostume) throw new Error("Costume not owned");
-    const updated: UserCostume = { ...userCostume, isEquipped: false };
-    this.userCostumes.set(userCostume.id, updated);
-    return updated;
-  }
-
-  async getEquippedCostumes(userId: number): Promise<Array<UserCostume & { costume: Costume }>> {
-    const userCostumes = await this.getUserCostumes(userId);
-    return userCostumes.filter(uc => uc.isEquipped).map(uc => {
-      const costume = this.costumes.get(uc.costumeId);
-      return { ...uc, costume: costume! };
-    }).filter(uc => uc.costume);
   }
 
   async getUserPoints(userId: number): Promise<UserPoints> {
