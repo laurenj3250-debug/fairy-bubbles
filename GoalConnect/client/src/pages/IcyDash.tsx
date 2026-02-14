@@ -377,9 +377,16 @@ export default function DashboardV4() {
     onSuccess: (data: any, _, context) => {
       // Only celebrate if completing (not uncompleting)
       if (!context?.wasCompleted) {
-        // Immediate tactile + audio feedback
-        playCompleteSound();
-        triggerHaptic('light');
+        const isMilestone = data?.streakDays && shouldCelebrateStreak(data.streakDays);
+
+        // Milestone gets its own louder sound; regular completion gets the default
+        if (isMilestone) {
+          playStreakSound();
+          triggerHaptic('heavy');
+        } else {
+          playCompleteSound();
+          triggerHaptic('light');
+        }
 
         // Roll for critical hit (visual only — does not affect actual XP)
         // CriticalHit has its own confetti (150 particles), so skip other confetti if it fires
@@ -391,15 +398,18 @@ export default function DashboardV4() {
 
         // All habits done today → confetti (skip if CriticalHit already firing its own)
         if (!hasCritical) {
-          const newCompletedCount = completedTodayCount + 1;
-          if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
-            triggerConfetti('all_habits_today');
+          if (isMilestone) {
+            triggerConfetti('streak_milestone');
+          } else {
+            const newCompletedCount = completedTodayCount + 1;
+            if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
+              triggerConfetti('all_habits_today');
+            }
           }
         }
 
         // XP toast on habit completion
         if (data?.pointsEarned > 0) {
-          const isMilestone = data.streakDays && shouldCelebrateStreak(data.streakDays);
           if (isMilestone) {
             const milestoneBonus = XP_CONFIG.streakMilestone[data.streakDays] || 0;
             toast({
@@ -409,16 +419,6 @@ export default function DashboardV4() {
           } else {
             const streakText = data.streakDays > 1 ? ` (${data.streakDays}-day streak!)` : '';
             toast({ title: `+${data.pointsEarned} XP${streakText}` });
-          }
-        }
-
-        // Celebrate streak milestones (7, 14, 30, 60, 100, 200, 365)
-        // Skip confetti if CriticalHit already fired (sound + haptic still play)
-        if (data?.streakDays && shouldCelebrateStreak(data.streakDays)) {
-          playStreakSound();
-          triggerHaptic('heavy');
-          if (!hasCritical) {
-            triggerConfetti('streak_milestone');
           }
         }
       }

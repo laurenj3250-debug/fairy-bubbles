@@ -210,12 +210,13 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
-      // Sound + haptic for progress
-      playCompleteSound();
-      triggerHaptic("light");
-      // Extra celebration if goal just completed
+      // Subtle haptic for regular increments; full celebration only on completion
       if (data?.isCompleted) {
+        playCompleteSound();
+        triggerHaptic("medium");
         triggerConfetti("goal_completed");
+      } else {
+        triggerHaptic("light");
       }
     },
   });

@@ -1,6 +1,6 @@
 /**
  * Unified feedback utility for XP-earning actions.
- * One function call = sound + haptic + toast. Keeps feedback consistent.
+ * One function call = sound + haptic + toast + points refresh.
  */
 
 import { toast } from "@/hooks/use-toast";
@@ -9,7 +9,7 @@ import { queryClient } from "@/lib/queryClient";
 
 /**
  * Celebrate an XP-earning action with sound + haptic + toast.
- * Also invalidates points queries so the header counter updates.
+ * Invalidates points queries so header XP counter stays fresh.
  */
 export function celebrateXpEarned(
   amount: number,

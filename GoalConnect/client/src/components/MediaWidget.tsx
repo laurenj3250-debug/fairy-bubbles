@@ -113,11 +113,15 @@ export function MediaWidget() {
                     onClick={async () => {
                       try {
                         const result = await updateStatus({ id: item.id, status: "done" });
-                        playCompleteSound();
-                        triggerHaptic("light");
-                        const xpText = result?.pointsEarned ? ` (+${result.pointsEarned} XP)` : '';
-                        toast({ title: `Finished "${item.title}"!${xpText}` });
-                        queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+                        // Only full celebration when XP was actually awarded (not re-marking done)
+                        if (result?.pointsEarned > 0) {
+                          playCompleteSound();
+                          triggerHaptic("light");
+                          toast({ title: `Finished "${item.title}"! (+${result.pointsEarned} XP)` });
+                          queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+                        } else {
+                          toast({ title: `Finished "${item.title}"!` });
+                        }
                       } catch {
                         toast({ title: "Failed to update", variant: "destructive" });
                       }
