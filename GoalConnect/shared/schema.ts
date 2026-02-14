@@ -142,6 +142,7 @@ export const userPoints = pgTable("user_points", {
   totalEarned: integer("total_earned").notNull().default(0),
   totalSpent: integer("total_spent").notNull().default(0),
   available: integer("available").notNull().default(0),
+  targetRewardId: integer("target_reward_id"),
 });
 
 // Projects (organize tasks into projects/areas)

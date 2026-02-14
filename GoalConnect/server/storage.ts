@@ -243,7 +243,7 @@ export class MemStorage implements IStorage {
     this.updateUserSettings({ userId: 1, darkMode: true, notifications: true });
 
     // Initialize user points
-    this.userPoints.set(1, { userId: 1, totalEarned: 250, totalSpent: 0, available: 250 });
+    this.userPoints.set(1, { userId: 1, totalEarned: 250, totalSpent: 0, available: 250, targetRewardId: null });
   }
 
   async getHabits(userId: number): Promise<Habit[]> {
@@ -476,7 +476,7 @@ export class MemStorage implements IStorage {
     const points = this.userPoints.get(userId);
     if (points) return points;
     
-    const newPoints: UserPoints = { userId, totalEarned: 0, totalSpent: 0, available: 0 };
+    const newPoints: UserPoints = { userId, totalEarned: 0, totalSpent: 0, available: 0, targetRewardId: null };
     this.userPoints.set(userId, newPoints);
     return newPoints;
   }

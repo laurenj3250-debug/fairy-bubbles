@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import confetti from "canvas-confetti";
-import { Gift, Plus, Trash2, Check, Sparkles } from "lucide-react";
+import { Gift, Plus, Trash2, Check, Sparkles, Pin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ interface PointsData {
   available: number;
   totalEarned: number;
   totalSpent: number;
+  targetRewardId: number | null;
 }
 
 // ============================================================================
@@ -74,13 +75,17 @@ function RewardCard({
   available,
   onRedeem,
   onDelete,
+  onSetTarget,
   isRedeeming,
+  isTarget,
 }: {
   reward: CustomReward;
   available: number;
   onRedeem: (id: number) => void;
   onDelete: (id: number) => void;
+  onSetTarget: (id: number | null) => void;
   isRedeeming: boolean;
+  isTarget: boolean;
 }) {
   const canAfford = available >= reward.cost;
   const progress = Math.min((available / reward.cost) * 100, 100);
@@ -123,12 +128,22 @@ function RewardCard({
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-4">
+    <div className={cn(
+      "rounded-xl border backdrop-blur-sm p-4 transition-colors",
+      isTarget
+        ? "border-peach-400/40 bg-peach-400/[0.05]"
+        : "border-white/10 bg-white/[0.03]"
+    )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-[var(--text-primary)] truncate">
-            {reward.title}
-          </h3>
+          <div className="flex items-center gap-1.5">
+            {isTarget && (
+              <Pin className="w-3 h-3 text-peach-400 flex-shrink-0" />
+            )}
+            <h3 className="text-sm font-medium text-[var(--text-primary)] truncate">
+              {reward.title}
+            </h3>
+          </div>
           {reward.description && (
             <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2">
               {reward.description}
@@ -199,9 +214,22 @@ function RewardCard({
           </AlertDialogContent>
         </AlertDialog>
 
+        <button
+          onClick={() => onSetTarget(isTarget ? null : reward.id)}
+          className={cn(
+            "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
+            isTarget
+              ? "bg-peach-400/20 text-peach-400 hover:bg-peach-400/30"
+              : "bg-white/5 text-[var(--text-muted)] hover:bg-peach-400/10 hover:text-peach-400"
+          )}
+          title={isTarget ? "Unpin target" : "Set as target"}
+        >
+          <Pin className="w-3.5 h-3.5" />
+        </button>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 text-[var(--text-muted)] hover:text-red-400 transition-colors">
+            <button className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-white/5 hover:bg-red-500/20 text-[var(--text-muted)] hover:text-red-400 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </AlertDialogTrigger>
@@ -435,17 +463,43 @@ export default function RewardsPage() {
   });
 
   const available = points?.available ?? 0;
+  const targetRewardId = points?.targetRewardId ?? null;
 
   // Mutations
   const [redeemingId, setRedeemingId] = useState<number | null>(null);
+
+  const setTargetMutation = useMutation({
+    mutationFn: (rewardId: number | null) =>
+      apiRequest("/api/points/target-reward", "PATCH", { rewardId }),
+    onSuccess: (_data, rewardId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      toast({
+        title: rewardId ? "Target set!" : "Target cleared",
+        description: rewardId
+          ? "Your dashboard will track progress toward this reward."
+          : undefined,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to set target",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const redeemMutation = useMutation({
     mutationFn: (id: number) => {
       setRedeemingId(id);
       return apiRequest(`/api/rewards/${id}/redeem`, "POST");
     },
-    onSuccess: (data: { reward: CustomReward; pointsRemaining: number }) => {
+    onSuccess: (data: { reward: CustomReward; pointsRemaining: number }, redeemedId) => {
       setRedeemingId(null);
+      // Clear target if we just redeemed the targeted reward
+      if (targetRewardId === redeemedId) {
+        setTargetMutation.mutate(null);
+      }
       confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
@@ -466,7 +520,11 @@ export default function RewardsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/rewards/${id}`, "DELETE"),
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
+      // Clear target if we just deleted the targeted reward
+      if (targetRewardId === deletedId) {
+        setTargetMutation.mutate(null);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       toast({ title: "Reward deleted" });
@@ -563,7 +621,9 @@ export default function RewardsPage() {
                 available={available}
                 onRedeem={(id) => redeemMutation.mutate(id)}
                 onDelete={(id) => deleteMutation.mutate(id)}
+                onSetTarget={(id) => setTargetMutation.mutate(id)}
                 isRedeeming={redeemingId === reward.id}
+                isTarget={targetRewardId === reward.id}
               />
             ))}
           </div>
@@ -584,7 +644,9 @@ export default function RewardsPage() {
                 available={available}
                 onRedeem={() => {}}
                 onDelete={() => {}}
+                onSetTarget={() => {}}
                 isRedeeming={false}
+                isTarget={false}
               />
             ))}
           </div>
