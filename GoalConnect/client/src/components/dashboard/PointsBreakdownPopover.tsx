@@ -193,11 +193,18 @@ export function PointsBreakdownPopover({
         ) : (
           <div className="space-y-3">
             {/* Weekly total header */}
-            <div className="text-sm font-medium text-[var(--text-primary)]">
-              This Week:{" "}
-              <span className="tabular-nums text-[var(--peach-400,#f0a67a)]">
-                +{weekTotal} XP
-              </span>
+            <div className="flex items-baseline justify-between">
+              <div className="text-sm font-medium text-[var(--text-primary)]">
+                This Week:{" "}
+                <span className="tabular-nums text-[var(--peach-400,#f0a67a)]">
+                  +{weekTotal} coins
+                </span>
+              </div>
+              {pointsSummary && (
+                <span className="text-xs tabular-nums text-[var(--text-muted)]">
+                  {pointsSummary.available} total
+                </span>
+              )}
             </div>
 
             {/* Divider */}
@@ -215,7 +222,7 @@ export function PointsBreakdownPopover({
                   </span>
                   <span className="flex items-baseline gap-1.5">
                     <span className="tabular-nums text-[var(--text-primary)]">
-                      {group.total} XP
+                      {group.total}
                     </span>
                     {group.count > 0 && (
                       <span className="tabular-nums text-xs text-[var(--text-muted)]">
