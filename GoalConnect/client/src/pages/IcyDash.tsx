@@ -31,7 +31,6 @@ import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
 import { PointsBreakdownPopover } from '@/components/dashboard/PointsBreakdownPopover';
 import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
-import { Home, Flame, Target, CheckSquare, Map } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -603,28 +602,6 @@ export default function DashboardV4() {
         onComplete={() => setCriticalHit({ show: false, multiplier: 1 })}
       />
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-deep)]/95 backdrop-blur-md border-t border-white/10">
-        <div className="flex justify-around items-center h-14 px-2">
-          {[
-            { href: "/", icon: Home, label: "Home" },
-            { href: "/habits", icon: Flame, label: "Habits" },
-            { href: "/goals", icon: Target, label: "Goals" },
-            { href: "/todos", icon: CheckSquare, label: "Todos" },
-            { href: "/journey", icon: Map, label: "Journey" },
-          ].map(({ href, icon: Icon, label }) => {
-            const isActive = href === "/" ? location === "/" : location.startsWith(href);
-            return (
-              <Link key={href} href={href}>
-                <button className={`flex flex-col items-center gap-0.5 min-w-[48px] min-h-[44px] justify-center transition-colors ${isActive ? "text-peach-400" : "text-[var(--text-muted)]"}`}>
-                  <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-heading">{label}</span>
-                </button>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 }

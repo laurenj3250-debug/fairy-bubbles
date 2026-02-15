@@ -105,7 +105,7 @@ async function computeGoalProgress(
             SELECT workout_date FROM lifting_workouts
             WHERE user_id = ${userId} AND workout_date >= ${startDate} AND workout_date <= ${endDate}
             UNION
-            SELECT DATE(start_time) as workout_date FROM external_workouts
+            SELECT TO_CHAR(DATE(start_time), 'YYYY-MM-DD') as workout_date FROM external_workouts
             WHERE user_id = ${userId}
               AND workout_type IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')
               AND start_time >= ${startDate}::timestamp AND start_time <= ${endDate}::timestamp + interval '1 day'
@@ -232,11 +232,8 @@ async function computeGoalProgress(
     }
   }
 
-  // Habit integration
+  // Habit integration — use habit count if higher than journey count (user may track via habit more consistently)
   if (goal.linkedHabitId) {
-    source = "auto";
-    sourceLabel = "Habit";
-
     const result = await db
       .select({ count: count() })
       .from(habitLogs)
@@ -248,7 +245,12 @@ async function computeGoalProgress(
           lte(habitLogs.date, endDate)
         )
       );
-    computedValue = Number(result[0]?.count ?? 0);
+    const habitCount = Number(result[0]?.count ?? 0);
+    if (habitCount > computedValue) {
+      computedValue = habitCount;
+      source = "auto";
+      sourceLabel = sourceLabel || "Habit";
+    }
   }
 
   // Dream Scroll integration
@@ -324,7 +326,7 @@ export async function computeMonthlyProgress(
             SELECT workout_date FROM lifting_workouts
             WHERE user_id = ${userId} AND workout_date >= ${startDate} AND workout_date <= ${endDate}
             UNION
-            SELECT DATE(start_time) as workout_date FROM external_workouts
+            SELECT TO_CHAR(DATE(start_time), 'YYYY-MM-DD') as workout_date FROM external_workouts
             WHERE user_id = ${userId}
               AND workout_type IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')
               AND start_time >= ${startDate}::timestamp AND start_time <= (${endDate}::timestamp + interval '1 day')
