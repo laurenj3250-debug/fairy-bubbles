@@ -49,81 +49,56 @@ function CompactGoalCard({ goal, onIncrement, isIncrementing }: CompactGoalCardP
   return (
     <div
       className={cn(
-        "relative p-3 rounded-xl transition-all",
+        "relative px-3 py-2 rounded-lg transition-all",
         "bg-white/[0.03] border border-white/10",
         "hover:bg-white/[0.05] hover:border-white/15",
         isComplete && "border-emerald-500/30 bg-emerald-500/5"
       )}
     >
-      {/* Progress ring background */}
-      <div className="flex items-start gap-3">
-        {/* Circular progress indicator */}
-        <div className="relative w-10 h-10 flex-shrink-0">
-          <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
-            {/* Background circle */}
-            <circle
-              cx="20"
-              cy="20"
-              r="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              className="text-white/10"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="20"
-              cy="20"
-              r="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
+      <div className="flex items-center gap-2.5">
+        {/* Compact progress indicator */}
+        <div className="relative w-7 h-7 flex-shrink-0">
+          <svg className="w-7 h-7 -rotate-90" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/10" />
+            <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
               strokeDasharray={`${progressPct} 100`}
-              className={cn(
-                "transition-all duration-500",
-                isComplete ? "text-emerald-400" : "text-peach-400"
-              )}
+              className={cn("transition-all duration-500", isComplete ? "text-emerald-400" : "text-peach-400")}
             />
           </svg>
-          {/* Center text */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn(
-              "text-[10px] font-bold tabular-nums",
-              isComplete ? "text-emerald-400" : "text-peach-400"
-            )}>
+            <span className={cn("text-[8px] font-bold tabular-nums", isComplete ? "text-emerald-400" : "text-peach-400")}>
               {progressPct}%
             </span>
           </div>
         </div>
 
-        {/* Goal info */}
+        {/* Goal info - inline */}
         <div className="flex-1 min-w-0">
           <p className={cn(
-            "text-sm font-medium truncate",
+            "text-xs font-medium truncate leading-tight",
             isComplete ? "text-emerald-300" : "text-[var(--text-primary)]"
           )}>
             {shortTitle}
           </p>
-          <p className="text-xs text-[var(--text-muted)] tabular-nums">
+          <p className="text-[10px] text-[var(--text-muted)] tabular-nums leading-tight">
             {goal.currentValue}/{goal.targetValue} {goal.unit}
           </p>
         </div>
 
-        {/* +1 button */}
+        {/* +1 button - compact */}
         {!isComplete && (
           <button
             onClick={() => onIncrement(goal)}
             disabled={isIncrementing}
             className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0",
+              "w-7 h-7 rounded-md flex items-center justify-center transition-all flex-shrink-0",
               "bg-peach-400/10 hover:bg-peach-400/20 border border-peach-400/20",
               "text-peach-400 hover:text-peach-300",
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
             aria-label={`Increment ${goal.title}`}
           >
-            <span className="text-xs font-bold">+1</span>
+            <span className="text-[10px] font-bold">+1</span>
           </button>
         )}
       </div>
@@ -265,9 +240,9 @@ export function WeeklyMonthlyGoalsWidget() {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* This Week Card */}
-        <div className="glass-card frost-accent p-4">
+        <div className="glass-card frost-accent p-3">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-peach-400" />
               <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
@@ -327,9 +302,9 @@ export function WeeklyMonthlyGoalsWidget() {
         </div>
 
         {/* This Month Card */}
-        <div className="glass-card frost-accent p-4">
+        <div className="glass-card frost-accent p-3">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-peach-400" />
               <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">

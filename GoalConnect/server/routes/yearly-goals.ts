@@ -98,19 +98,20 @@ async function computeGoalProgress(
 
     switch (goal.linkedJourneyKey) {
       case "lifting_workouts": {
-        sourceLabel = "Strava/Watch";
-        const result = await db
-          .select({ count: count() })
-          .from(externalWorkouts)
-          .where(
-            and(
-              eq(externalWorkouts.userId, userId),
-              sql`${externalWorkouts.workoutType} IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')`,
-              gte(externalWorkouts.startTime, new Date(startDate)),
-              lte(externalWorkouts.startTime, new Date(endDate))
-            )
-          );
-        computedValue = Number(result[0]?.count ?? 0);
+        sourceLabel = "Lifting Log";
+        // Count distinct dates from both manual lifting_workouts AND external workouts (Strava/Watch)
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT workout_date) as count FROM (
+            SELECT workout_date FROM lifting_workouts
+            WHERE user_id = ${userId} AND workout_date >= ${startDate} AND workout_date <= ${endDate}
+            UNION
+            SELECT DATE(start_time) as workout_date FROM external_workouts
+            WHERE user_id = ${userId}
+              AND workout_type IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')
+              AND start_time >= ${startDate}::timestamp AND start_time <= ${endDate}::timestamp + interval '1 day'
+          ) AS all_lifting_days
+        `);
+        computedValue = Number(result.rows[0]?.count ?? 0);
         break;
       }
 
@@ -317,18 +318,19 @@ export async function computeMonthlyProgress(
   if (goal.linkedJourneyKey) {
     switch (goal.linkedJourneyKey) {
       case "lifting_workouts": {
-        const result = await db
-          .select({ count: count() })
-          .from(externalWorkouts)
-          .where(
-            and(
-              eq(externalWorkouts.userId, userId),
-              sql`${externalWorkouts.workoutType} IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')`,
-              gte(externalWorkouts.startTime, new Date(startDate)),
-              lte(externalWorkouts.startTime, new Date(endDate + "T23:59:59"))
-            )
-          );
-        return Number(result[0]?.count ?? 0);
+        // Count distinct dates from both manual lifting_workouts AND external workouts
+        const result = await db.execute(sql`
+          SELECT COUNT(DISTINCT workout_date) as count FROM (
+            SELECT workout_date FROM lifting_workouts
+            WHERE user_id = ${userId} AND workout_date >= ${startDate} AND workout_date <= ${endDate}
+            UNION
+            SELECT DATE(start_time) as workout_date FROM external_workouts
+            WHERE user_id = ${userId}
+              AND workout_type IN ('HKWorkoutActivityTypeFunctionalStrengthTraining', 'HKWorkoutActivityTypeTraditionalStrengthTraining', 'WeightTraining')
+              AND start_time >= ${startDate}::timestamp AND start_time <= (${endDate}::timestamp + interval '1 day')
+          ) AS all_lifting_days
+        `);
+        return Number(result.rows[0]?.count ?? 0);
       }
 
       case "outdoor_days": {

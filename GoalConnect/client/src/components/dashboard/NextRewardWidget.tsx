@@ -99,7 +99,7 @@ export default function NextRewardWidget() {
   });
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-3">
+    <div className="glass-card frost-accent">
       <div className="flex items-center gap-1.5 mb-2">
         <Gift className="h-3.5 w-3.5 text-[var(--text-muted)]" />
         <span className="text-xs uppercase tracking-wider text-[var(--text-muted)]">

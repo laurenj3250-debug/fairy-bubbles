@@ -25,7 +25,7 @@ import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
-import { MilestoneDonutWidget } from '@/components/MilestoneDonutWidget';
+
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
@@ -464,10 +464,10 @@ export default function DashboardV4() {
               GOAL CONNECT
             </h1>
 
-            {/* Center: Habit Orbs (clickable to habits) */}
-            <Link href="/habits" className="flex-shrink-0 hover:scale-105 transition-transform">
+            {/* Center: Habit Orbs (toggle habits directly) */}
+            <div className="flex-shrink-0">
               {habitsLoading ? <GlowingOrbsSkeleton /> : <GlowingOrbHabits onToggle={handleToggleHabit} />}
-            </Link>
+            </div>
 
             {/* Right: Stats + Residency */}
             <div className="flex items-center gap-4 text-xs">
@@ -526,9 +526,6 @@ export default function DashboardV4() {
 
               {/* Recent Adventures */}
               <RecentAdventuresWidget onLogAdventure={() => setAdventureDialogOpen(true)} />
-
-              {/* Monthly Progress */}
-              <MilestoneDonutWidget />
 
               {/* Next Reward */}
               <NextRewardWidget />
