@@ -61,9 +61,9 @@ export function CriticalHit({ show, multiplier, onComplete }: CriticalHitProps) 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="text-4xl font-bold text-yellow-300 mt-2"
+              className="text-2xl font-bold text-yellow-300/80 mt-2 font-heading italic"
             >
-              {multiplier}x BONUS
+              Perfect form
             </motion.div>
           </motion.div>
         </motion.div>
@@ -72,7 +72,7 @@ export function CriticalHit({ show, multiplier, onComplete }: CriticalHitProps) 
   );
 }
 
-// Random chance for critical hit (10%)
+// Random chance for critical hit (25% total: 3% legendary, 7% epic, 15% normal)
 export function rollCritical(): { isCritical: boolean; multiplier: number } {
   const roll = Math.random();
   if (roll < 0.03) {

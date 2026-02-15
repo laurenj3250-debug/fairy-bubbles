@@ -34,7 +34,7 @@ export function MountainHero() {
     return todayLogs.filter(log => log.completed).length;
   }, [todayLogs]);
 
-  const totalHabits = habits.length || 5;
+  const totalHabits = habits.length;
 
   return (
     <div className="relative z-[2] h-[28vh] min-h-[220px] flex flex-col justify-start pt-6">

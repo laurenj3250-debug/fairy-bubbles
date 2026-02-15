@@ -31,6 +31,7 @@ import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
 import { PointsBreakdownPopover } from '@/components/dashboard/PointsBreakdownPopover';
 import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
+import { Home, Flame, Target, CheckSquare, Map } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -150,7 +151,7 @@ function YearlyGoalsSkeleton() {
 export default function DashboardV4() {
   const { toast } = useToast();
   const week = useWeekData();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // Note dialog state for habits that require notes
   const [noteDialogHabit, setNoteDialogHabit] = useState<HabitWithData | null>(null);
@@ -415,41 +416,24 @@ export default function DashboardV4() {
       {/* Sidebar Navigation */}
       <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
         <div className="space-y-4">
-          <Link href="/">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              dashboard
-            </span>
-          </Link>
-          <Link href="/habits">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              habits
-            </span>
-          </Link>
-          <Link href="/goals">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              goals
-            </span>
-          </Link>
-          <Link href="/todos">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              todos
-            </span>
-          </Link>
-          <Link href="/journey">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              journey
-            </span>
-          </Link>
-          <Link href="/adventures">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              adventures
-            </span>
-          </Link>
-          <Link href="/settings">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              settings
-            </span>
-          </Link>
+          {[
+            { href: "/", label: "dashboard" },
+            { href: "/habits", label: "habits" },
+            { href: "/goals", label: "goals" },
+            { href: "/todos", label: "todos" },
+            { href: "/journey", label: "journey" },
+            { href: "/adventures", label: "adventures" },
+            { href: "/settings", label: "settings" },
+          ].map(({ href, label }) => {
+            const isActive = href === "/" ? location === "/" : location.startsWith(href);
+            return (
+              <Link key={href} href={href}>
+                <span className={`block transition-colors text-sm font-heading cursor-pointer ${isActive ? "text-peach-400" : "text-[var(--text-muted)] hover:text-peach-400"}`}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
@@ -618,6 +602,29 @@ export default function DashboardV4() {
         multiplier={criticalHit.multiplier}
         onComplete={() => setCriticalHit({ show: false, multiplier: 1 })}
       />
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-deep)]/95 backdrop-blur-md border-t border-white/10">
+        <div className="flex justify-around items-center h-14 px-2">
+          {[
+            { href: "/", icon: Home, label: "Home" },
+            { href: "/habits", icon: Flame, label: "Habits" },
+            { href: "/goals", icon: Target, label: "Goals" },
+            { href: "/todos", icon: CheckSquare, label: "Todos" },
+            { href: "/journey", icon: Map, label: "Journey" },
+          ].map(({ href, icon: Icon, label }) => {
+            const isActive = href === "/" ? location === "/" : location.startsWith(href);
+            return (
+              <Link key={href} href={href}>
+                <button className={`flex flex-col items-center gap-0.5 min-w-[48px] min-h-[44px] justify-center transition-colors ${isActive ? "text-peach-400" : "text-[var(--text-muted)]"}`}>
+                  <Icon className="w-5 h-5" />
+                  <span className="text-[10px] font-heading">{label}</span>
+                </button>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

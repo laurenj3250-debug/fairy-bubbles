@@ -192,8 +192,8 @@ export function WeeklyMonthlyGoalsWidget() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="glass-card frost-accent p-4">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="glass-card frost-accent p-3">
+          <div className="flex items-center gap-2 mb-2.5">
             <Calendar className="w-4 h-4 text-peach-400" />
             <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               This Week
@@ -201,12 +201,12 @@ export function WeeklyMonthlyGoalsWidget() {
           </div>
           <div className="space-y-2">
             {[1, 2].map((i) => (
-              <div key={i} className="h-16 bg-white/5 animate-pulse rounded-xl" />
+              <div key={i} className="h-12 bg-white/5 animate-pulse rounded-lg" />
             ))}
           </div>
         </div>
-        <div className="glass-card frost-accent p-4">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="glass-card frost-accent p-3">
+          <div className="flex items-center gap-2 mb-2.5">
             <CalendarDays className="w-4 h-4 text-peach-400" />
             <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               This Month
@@ -214,7 +214,7 @@ export function WeeklyMonthlyGoalsWidget() {
           </div>
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-white/5 animate-pulse rounded-xl" />
+              <div key={i} className="h-12 bg-white/5 animate-pulse rounded-lg" />
             ))}
           </div>
         </div>

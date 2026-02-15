@@ -44,7 +44,7 @@ export function ResidencyCountdownWidget({ compact = false }: ResidencyCountdown
           />
         </div>
         <span className="text-sm font-heading text-peach-400 tabular-nums">
-          {isComplete ? "Done!" : `${yearsRemaining > 0 ? `${yearsRemaining}y` : `${monthsRemainder}m`}`}
+          {isComplete ? "Done!" : `${yearsRemaining > 0 ? `${yearsRemaining}y ${monthsRemainder}m` : `${monthsRemainder}m`}`}
         </span>
       </div>
     );
