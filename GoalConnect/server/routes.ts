@@ -359,12 +359,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Award XP on todo completion (only if transitioning from incomplete → complete)
+      let pointsEarned = 0;
       if (!existing.completed) {
         try {
-          // Per-todo XP (5 XP flat)
           await storage.addPoints(userId, XP_CONFIG.todo, 'todo_complete', id,
             `Completed task: ${existing.title || 'Untitled'}`
           );
+          pointsEarned = XP_CONFIG.todo;
         } catch (xpError) {
           log.error('[todos] Todo XP award failed:', xpError);
         }
@@ -376,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(completed);
+      res.json({ ...completed, pointsEarned });
     } catch (error) {
       res.status(500).json({ error: "Failed to complete todo" });
     }
