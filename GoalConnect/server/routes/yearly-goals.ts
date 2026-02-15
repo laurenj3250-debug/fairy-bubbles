@@ -94,7 +94,11 @@ async function computeGoalProgress(
 
   // Journey integrations (externalWorkouts, outdoor ticks, Kilter)
   if (goal.linkedJourneyKey) {
-    source = "auto";
+    // For count goals, auto-tracking provides a floor but user can always manually
+    // adjust via +/- buttons. Only lock binary goals as fully auto.
+    if (goal.goalType !== "count") {
+      source = "auto";
+    }
 
     switch (goal.linkedJourneyKey) {
       case "lifting_workouts": {
@@ -248,14 +252,21 @@ async function computeGoalProgress(
     const habitCount = Number(result[0]?.count ?? 0);
     if (habitCount > computedValue) {
       computedValue = habitCount;
-      source = "auto";
+      // For count goals, habit provides a floor but the user may track a different
+      // quantity (e.g., binary habit "Study PowerPoint" vs count goal "300 PowerPoints").
+      // Keep source "manual" so +/- buttons remain available for manual adjustment.
+      if (goal.goalType !== "count") {
+        source = "auto";
+      }
       sourceLabel = sourceLabel || "Habit";
     }
   }
 
   // Dream Scroll integration
   if (goal.linkedDreamScrollCategory) {
-    source = "auto";
+    if (goal.goalType !== "count") {
+      source = "auto";
+    }
     sourceLabel = "Bucket List";
 
     const result = await db
@@ -756,13 +767,14 @@ export function registerYearlyGoalRoutes(app: Express) {
         return res.status(400).json({ error: "Only count goals can be incremented" });
       }
 
-      // Check if it's auto-tracked
-      if (goal.linkedHabitId || goal.linkedJourneyKey || goal.linkedDreamScrollCategory) {
-        return res.status(400).json({ error: "Cannot manually increment auto-tracked goals" });
-      }
+      // Auto-tracking provides a floor, not a lock. Compute the effective baseline
+      // (max of currentValue and any auto-tracked value) so +1 always produces a
+      // visible change — no "swallowed" increments when auto count > manual count.
+      const withProgress = await computeGoalProgress(goal, goal.year, userId, db);
+      const effectiveValue = Math.max(goal.currentValue, withProgress.computedValue);
 
-      const previousValue = goal.currentValue;
-      const newValue = Math.max(0, previousValue + amount);
+      const previousValue = effectiveValue;
+      const newValue = Math.max(0, effectiveValue + amount);
 
       // Update goal
       const [updated] = await db
