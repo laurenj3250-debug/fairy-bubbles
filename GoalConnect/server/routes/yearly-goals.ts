@@ -299,28 +299,61 @@ async function computeGoalProgress(
 }
 
 /**
- * Compute monthly progress for a yearly goal scoped to a single month.
- * Returns the count of events that occurred within the given month only.
- * Used by the monthly goal sync endpoint.
+ * Parse an ISO week string ("2026-W07") into Monday and Sunday YYYY-MM-DD dates.
+ * Uses UTC to avoid timezone-related off-by-one errors.
  */
-export async function computeMonthlyProgress(
+export function parseISOWeekRange(week: string): { monday: string; sunday: string } | null {
+  const match = week.match(/^(\d{4})-W(\d{2})$/);
+  if (!match) return null;
+  const [, yearStr, weekStr] = match;
+  const year = parseInt(yearStr);
+  const weekNum = parseInt(weekStr);
+
+  if (weekNum < 1 || weekNum > 53) return null;
+
+  // ISO week: Jan 4 is always in week 1. Find Monday of week 1, then offset.
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dayOfWeek = jan4.getUTCDay() || 7; // Sunday=0 → 7
+  const mondayOfWeek1 = new Date(jan4);
+  mondayOfWeek1.setUTCDate(jan4.getUTCDate() - (dayOfWeek - 1));
+
+  const monday = new Date(mondayOfWeek1);
+  monday.setUTCDate(mondayOfWeek1.getUTCDate() + (weekNum - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+
+  // Week 53 only exists if Dec 31 falls on Thursday (or Wed/Thu in leap years)
+  if (weekNum === 53) {
+    const dec31 = new Date(Date.UTC(year, 11, 31));
+    const dec31Day = dec31.getUTCDay() || 7;
+    // Week 53 exists when Dec 31 is Thursday, or it's a leap year and Dec 31 is Wed or Thu
+    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    if (!(dec31Day === 4 || (isLeap && dec31Day === 3))) {
+      return null;
+    }
+  }
+
+  return {
+    monday: monday.toISOString().slice(0, 10),
+    sunday: sunday.toISOString().slice(0, 10),
+  };
+}
+
+/**
+ * Core progress computation for a date range.
+ * Shared by monthly and weekly progress — add new integrations here once.
+ */
+async function computeProgressForDateRange(
   goal: YearlyGoal,
-  month: string, // "2026-02"
+  startDate: string, // "YYYY-MM-DD"
+  endDate: string,   // "YYYY-MM-DD"
   userId: number,
   db: ReturnType<typeof getDb>
 ): Promise<number> {
-  try {
-  const startDate = `${month}-01`;
-  // Calculate last day of month
-  const [yearStr, monthStr] = month.split("-");
-  const lastDay = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
-  const endDate = `${month}-${String(lastDay).padStart(2, "0")}`;
-
   // Journey integrations
   if (goal.linkedJourneyKey) {
     switch (goal.linkedJourneyKey) {
       case "lifting_workouts": {
-        // Count distinct dates from both manual lifting_workouts AND external workouts
         const result = await db.execute(sql`
           SELECT COUNT(DISTINCT workout_date) as count FROM (
             SELECT workout_date FROM lifting_workouts
@@ -446,10 +479,46 @@ export async function computeMonthlyProgress(
     return Number(result.rows[0]?.count ?? 0);
   }
 
-  // Manual count goals: no auto-computation, return 0 (user increments manually)
+  // Manual count goals: no auto-computation
   return 0;
+}
+
+/**
+ * Compute monthly progress for a yearly goal scoped to a single month.
+ */
+export async function computeMonthlyProgress(
+  goal: YearlyGoal,
+  month: string, // "2026-02"
+  userId: number,
+  db: ReturnType<typeof getDb>
+): Promise<number> {
+  try {
+    const startDate = `${month}-01`;
+    const [yearStr, monthStr] = month.split("-");
+    const lastDay = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
+    const endDate = `${month}-${String(lastDay).padStart(2, "0")}`;
+    return await computeProgressForDateRange(goal, startDate, endDate, userId, db);
   } catch (error) {
     log.error(`[yearly-goals] Error computing monthly progress for goal #${goal.id} (${goal.title}):`, error);
+    return 0;
+  }
+}
+
+/**
+ * Compute weekly progress for a yearly goal scoped to a single ISO week (Mon-Sun).
+ */
+export async function computeWeeklyProgress(
+  goal: YearlyGoal,
+  week: string, // "2026-W07"
+  userId: number,
+  db: ReturnType<typeof getDb>
+): Promise<number> {
+  try {
+    const range = parseISOWeekRange(week);
+    if (!range) return 0;
+    return await computeProgressForDateRange(goal, range.monday, range.sunday, userId, db);
+  } catch (error) {
+    log.error(`[yearly-goals] Error computing weekly progress for goal #${goal.id} (${goal.title}):`, error);
     return 0;
   }
 }

@@ -45,16 +45,16 @@ export function LuxuryHabitGrid({
   }
 
   return (
-    <div role="grid" aria-label="Weekly habit tracker" className={cn("space-y-1.5", className)}>
+    <div role="grid" aria-label="Weekly habit tracker" className={cn("space-y-1", className)}>
       {/* Day headers */}
       <div className="flex items-center" role="row">
-        <div className="w-20 shrink-0" />
+        <div className="w-[72px] shrink-0" />
         <div className="flex-1 flex justify-between px-1">
           {dayLabels.map((day, i) => (
             <span
               key={i}
               className={cn(
-                "w-5 text-center font-heading-sc text-[9px]",
+                "w-4 text-center font-heading-sc text-[9px]",
                 i === todayIndex ? "text-peach-400" : "text-[var(--text-muted)]"
               )}
             >
@@ -67,7 +67,7 @@ export function LuxuryHabitGrid({
       {/* Habit rows */}
       {habits.map((habit) => (
         <div key={habit.id} role="row" className="flex items-center">
-          <div className="w-20 shrink-0 flex items-center gap-1 pr-1">
+          <div className="w-[72px] shrink-0 flex items-center gap-1 pr-1">
             <button
               type="button"
               role="rowheader"
@@ -106,7 +106,7 @@ export function LuxuryHabitGrid({
                 role="gridcell"
                 aria-label={`${habit.name} on ${fullDayNames[j]}: ${day.completed ? 'completed' : 'not completed'}`}
                 className={cn(
-                  "w-5 h-5 rounded-full transition-all flex items-center justify-center",
+                  "w-4 h-4 rounded-full transition-all flex items-center justify-center",
                   day.completed
                     ? "bg-peach-400 shadow-[0_0_8px_rgba(228,168,128,0.5)]"
                     : "bg-white/15",

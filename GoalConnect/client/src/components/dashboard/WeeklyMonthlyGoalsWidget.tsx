@@ -131,15 +131,21 @@ export function WeeklyMonthlyGoalsWidget() {
 
     const sync = async () => {
       try {
-        await apiRequest("/api/goals/generate-monthly", "POST", { month: currentMonth });
-        await apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth });
+        await Promise.all([
+          apiRequest("/api/goals/generate-monthly", "POST", { month: currentMonth }),
+          apiRequest("/api/goals/generate-weekly", "POST", { week: currentWeek }),
+        ]);
+        await Promise.all([
+          apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth }),
+          apiRequest("/api/goals/sync-weekly-progress", "PATCH", { week: currentWeek }),
+        ]);
         queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       } catch {
         // Silent failure — dashboard still works with whatever goals exist
       }
     };
     sync();
-  }, [currentMonth]);
+  }, [currentMonth, currentWeek]);
 
   // Increment mutation — fetches latest value to avoid stale-read race on rapid clicks
   const incrementMutation = useMutation({

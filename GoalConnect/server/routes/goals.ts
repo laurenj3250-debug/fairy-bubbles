@@ -6,7 +6,7 @@ import { getDb } from "../db";
 import { eq, and, inArray } from "drizzle-orm";
 import { log } from "../lib/logger";
 import { XP_CONFIG } from "@shared/xp-config";
-import { computeMonthlyProgress } from "./yearly-goals";
+import { computeMonthlyProgress, computeWeeklyProgress, parseISOWeekRange } from "./yearly-goals";
 
 const getUserId = (req: any) => requireUser(req).id;
 
@@ -23,6 +23,137 @@ const cleanGoal = <T extends { description: string }>(goal: T): T => ({
   description: cleanDescription(goal.description),
 });
 
+// ============ SHARED HELPERS FOR PERIODIC GOAL GENERATION ============
+
+/** Infer a human-readable unit from the yearly goal title */
+function inferUnitFromTitle(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("day")) return "days";
+  if (t.includes("book") || t.includes("audiobook")) return "books";
+  if (t.includes("visit") || t.includes("hangout")) return "times";
+  if (t.includes("item") || t.includes("bucket")) return "items";
+  if (t.includes("climb")) return "climbs";
+  return "times";
+}
+
+interface PeriodConfig {
+  type: "monthly" | "weekly";
+  period: string;     // "2026-02" or "2026-W07"
+  yearStr: string;
+  periodNum: number;  // 1-12 or 1-53
+  divisor: number;    // 12 or 52
+  deadline: string;   // "YYYY-MM-DD"
+}
+
+/**
+ * Generate periodic goals from COUNT yearly goals. Idempotent.
+ * Shared by monthly and weekly generation endpoints.
+ */
+async function generatePeriodicGoals(userId: number, cfg: PeriodConfig, db: ReturnType<typeof getDb>) {
+  const yearlyCountGoals = await db
+    .select()
+    .from(yearlyGoals)
+    .where(and(eq(yearlyGoals.userId, userId), eq(yearlyGoals.year, cfg.yearStr), eq(yearlyGoals.goalType, "count")));
+
+  const existingGoals = await storage.getGoals(userId);
+  const existingLinked = new Map(
+    existingGoals
+      .filter((g) => {
+        const match = cfg.type === "monthly" ? g.month === cfg.period : g.week === cfg.period;
+        return match && g.linkedYearlyGoalId != null;
+      })
+      .map((g) => [g.linkedYearlyGoalId!, g])
+  );
+
+  const generated: any[] = [];
+
+  for (const yGoal of yearlyCountGoals) {
+    if (existingLinked.has(yGoal.id)) {
+      generated.push(existingLinked.get(yGoal.id));
+      continue;
+    }
+
+    const target = Math.ceil(yGoal.targetValue / cfg.divisor);
+
+    // For small targets, only generate for evenly-spread periods
+    if (yGoal.targetValue < cfg.divisor) {
+      const interval = Math.floor(cfg.divisor / yGoal.targetValue);
+      const activePeriods: number[] = [];
+      for (let i = 0; i < yGoal.targetValue; i++) {
+        activePeriods.push(1 + i * interval);
+      }
+      if (!activePeriods.includes(cfg.periodNum)) continue;
+    }
+
+    const newGoal = await storage.createGoal({
+      userId,
+      title: yGoal.title,
+      description: `Auto-generated from yearly goal: ${yGoal.title}`,
+      targetValue: target,
+      currentValue: 0,
+      unit: inferUnitFromTitle(yGoal.title),
+      deadline: cfg.deadline,
+      category: yGoal.category,
+      difficulty: "medium",
+      priority: "medium",
+      month: cfg.type === "monthly" ? cfg.period : null,
+      week: cfg.type === "weekly" ? cfg.period : null,
+      archived: false,
+      parentGoalId: null,
+      linkedYearlyGoalId: yGoal.id,
+    });
+
+    generated.push(newGoal);
+    log.info(`[goals] Generated ${cfg.type} goal "${yGoal.title}" (target: ${target}) for ${cfg.period} from yearly goal #${yGoal.id}`);
+  }
+
+  return generated;
+}
+
+/**
+ * Sync progress for periodic goals linked to yearly goals.
+ * Shared by monthly and weekly sync endpoints.
+ */
+async function syncPeriodicProgress(
+  userId: number,
+  periodType: "monthly" | "weekly",
+  period: string,
+  computeFn: (goal: any, period: string, userId: number, db: ReturnType<typeof getDb>) => Promise<number>,
+  db: ReturnType<typeof getDb>
+) {
+  const allGoals = await storage.getGoals(userId);
+  const linkedGoals = allGoals.filter((g) => {
+    const match = periodType === "monthly" ? g.month === period : g.week === period;
+    return match && g.linkedYearlyGoalId != null;
+  });
+
+  const yearlyGoalIds = linkedGoals.map((g) => g.linkedYearlyGoalId!);
+  const yearlyGoalRows = yearlyGoalIds.length > 0
+    ? await db.select().from(yearlyGoals).where(and(inArray(yearlyGoals.id, yearlyGoalIds), eq(yearlyGoals.userId, userId)))
+    : [];
+  const yearlyGoalMap = new Map(yearlyGoalRows.map((g) => [g.id, g]));
+
+  const updated: any[] = [];
+
+  for (const pGoal of linkedGoals) {
+    const yGoal = yearlyGoalMap.get(pGoal.linkedYearlyGoalId!);
+    if (!yGoal) continue;
+
+    const isAutoTracked = !!(yGoal.linkedJourneyKey || yGoal.linkedHabitId || yGoal.linkedDreamScrollCategory);
+    if (!isAutoTracked) continue;
+
+    const rawValue = await computeFn(yGoal, period, userId, db);
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
+
+    if (value !== pGoal.currentValue) {
+      await storage.updateGoal(pGoal.id, { currentValue: value });
+      updated.push({ id: pGoal.id, title: pGoal.title, previousValue: pGoal.currentValue, newValue: value });
+    }
+  }
+
+  return updated;
+}
+
 export function registerGoalRoutes(app: Express) {
   // GET all goals for user
   app.get("/api/goals", async (req, res) => {
@@ -35,104 +166,26 @@ export function registerGoalRoutes(app: Express) {
     }
   });
 
-  // ============ MONTHLY GOAL GENERATION ============
+  // ============ PERIODIC GOAL GENERATION & SYNC ============
   // IMPORTANT: These must be registered BEFORE /api/goals/:id to avoid
-  // Express matching "generate-monthly" and "sync-monthly-progress" as :id params.
+  // Express matching "generate-monthly" etc. as :id params.
 
-  /**
-   * POST /api/goals/generate-monthly
-   * Auto-generate monthly goals from COUNT yearly goals.
-   * Idempotent: calling twice won't duplicate goals.
-   */
   app.post("/api/goals/generate-monthly", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const { month } = req.body; // e.g. "2026-02"
-
-      if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      const { month } = req.body;
+      if (!month || !/^\d{4}-\d{2}$/.test(month))
         return res.status(400).json({ error: "Invalid month format. Expected YYYY-MM" });
-      }
 
       const db = getDb();
       const [yearStr, monthStr] = month.split("-");
-
-      // Fetch all COUNT yearly goals for this user and year
-      const yearlyCountGoals = await db
-        .select()
-        .from(yearlyGoals)
-        .where(
-          and(
-            eq(yearlyGoals.userId, userId),
-            eq(yearlyGoals.year, yearStr),
-            eq(yearlyGoals.goalType, "count")
-          )
-        );
-
-      // Fetch existing monthly goals for this user and month
-      const existingMonthlyGoals = await storage.getGoals(userId);
-      const existingLinked = new Map(
-        existingMonthlyGoals
-          .filter((g) => g.month === month && g.linkedYearlyGoalId != null)
-          .map((g) => [g.linkedYearlyGoalId!, g])
-      );
-
       const lastDay = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
-      const deadline = `${month}-${String(lastDay).padStart(2, "0")}`;
-      const monthNum = parseInt(monthStr);
 
-      const generated: any[] = [];
-
-      for (const yGoal of yearlyCountGoals) {
-        // Skip if monthly goal already exists for this yearly goal + month
-        if (existingLinked.has(yGoal.id)) {
-          generated.push(existingLinked.get(yGoal.id));
-          continue;
-        }
-
-        const monthlyTarget = Math.ceil(yGoal.targetValue / 12);
-
-        // For goals with small targets (< 12), only generate for spread months
-        if (yGoal.targetValue < 12) {
-          const interval = Math.floor(12 / yGoal.targetValue);
-          const activeMonths: number[] = [];
-          for (let i = 0; i < yGoal.targetValue; i++) {
-            activeMonths.push(1 + i * interval);
-          }
-          if (!activeMonths.includes(monthNum)) {
-            continue;
-          }
-        }
-
-        // Infer unit from yearly goal title
-        let unit = "times";
-        const titleLower = yGoal.title.toLowerCase();
-        if (titleLower.includes("day")) unit = "days";
-        else if (titleLower.includes("book") || titleLower.includes("audiobook")) unit = "books";
-        else if (titleLower.includes("visit") || titleLower.includes("hangout")) unit = "times";
-        else if (titleLower.includes("item") || titleLower.includes("bucket")) unit = "items";
-        else if (titleLower.includes("climb")) unit = "climbs";
-
-        const newGoal = await storage.createGoal({
-          userId,
-          title: yGoal.title,
-          description: `Auto-generated from yearly goal: ${yGoal.title}`,
-          targetValue: monthlyTarget,
-          currentValue: 0,
-          unit,
-          deadline,
-          category: yGoal.category,
-          difficulty: "medium",
-          priority: "medium",
-          month,
-          week: null,
-          archived: false,
-          parentGoalId: null,
-          linkedYearlyGoalId: yGoal.id,
-        });
-
-        generated.push(newGoal);
-        log.info(`[goals] Generated monthly goal "${yGoal.title}" (target: ${monthlyTarget}) for ${month} from yearly goal #${yGoal.id}`);
-      }
+      const generated = await generatePeriodicGoals(userId, {
+        type: "monthly", period: month, yearStr,
+        periodNum: parseInt(monthStr), divisor: 12,
+        deadline: `${month}-${String(lastDay).padStart(2, "0")}`,
+      }, db);
 
       res.json({ generated, count: generated.length });
     } catch (error: any) {
@@ -141,65 +194,56 @@ export function registerGoalRoutes(app: Express) {
     }
   });
 
-  /**
-   * PATCH /api/goals/sync-monthly-progress
-   * Recalculate currentValue for auto-tracked monthly goals using month-scoped date ranges.
-   */
   app.patch("/api/goals/sync-monthly-progress", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const { month } = req.body; // e.g. "2026-02"
-
-      if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      const { month } = req.body;
+      if (!month || !/^\d{4}-\d{2}$/.test(month))
         return res.status(400).json({ error: "Invalid month format. Expected YYYY-MM" });
-      }
 
-      const db = getDb();
-
-      // Find all monthly goals with linkedYearlyGoalId for this month
-      const allGoals = await storage.getGoals(userId);
-      const monthlyLinkedGoals = allGoals.filter(
-        (g) => g.month === month && g.linkedYearlyGoalId != null
-      );
-
-      // Batch-fetch all linked yearly goals in one query (avoid N+1)
-      const yearlyGoalIds = monthlyLinkedGoals.map((g) => g.linkedYearlyGoalId!);
-      const yearlyGoalRows = yearlyGoalIds.length > 0
-        ? await db
-            .select()
-            .from(yearlyGoals)
-            .where(
-              and(
-                inArray(yearlyGoals.id, yearlyGoalIds),
-                eq(yearlyGoals.userId, userId)
-              )
-            )
-        : [];
-      const yearlyGoalMap = new Map(yearlyGoalRows.map((g) => [g.id, g]));
-
-      const updated: any[] = [];
-
-      for (const mGoal of monthlyLinkedGoals) {
-        const yGoal = yearlyGoalMap.get(mGoal.linkedYearlyGoalId!);
-        if (!yGoal) continue;
-
-        // Only sync auto-tracked goals (those with linked integrations)
-        const isAutoTracked = !!(yGoal.linkedJourneyKey || yGoal.linkedHabitId || yGoal.linkedDreamScrollCategory);
-        if (!isAutoTracked) continue;
-
-        const rawValue = await computeMonthlyProgress(yGoal, month, userId, db);
-        const monthlyValue = Number.isFinite(rawValue) ? rawValue : 0;
-
-        if (monthlyValue !== mGoal.currentValue) {
-          await storage.updateGoal(mGoal.id, { currentValue: monthlyValue });
-          updated.push({ id: mGoal.id, title: mGoal.title, previousValue: mGoal.currentValue, newValue: monthlyValue });
-        }
-      }
-
+      const updated = await syncPeriodicProgress(userId, "monthly", month, computeMonthlyProgress, getDb());
       res.json({ updated, count: updated.length });
     } catch (error: any) {
       log.error("[goals] Error syncing monthly progress:", error);
       res.status(500).json({ error: error.message || "Failed to sync monthly progress" });
+    }
+  });
+
+  app.post("/api/goals/generate-weekly", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { week } = req.body;
+      if (!week || !/^\d{4}-W\d{2}$/.test(week))
+        return res.status(400).json({ error: "Invalid week format. Expected YYYY-Wnn" });
+
+      const range = parseISOWeekRange(week);
+      if (!range) return res.status(400).json({ error: "Invalid ISO week" });
+
+      const generated = await generatePeriodicGoals(userId, {
+        type: "weekly", period: week, yearStr: week.split("-")[0],
+        periodNum: parseInt(week.split("-W")[1]), divisor: 52,
+        deadline: range.sunday,
+      }, getDb());
+
+      res.json({ generated, count: generated.length });
+    } catch (error: any) {
+      log.error("[goals] Error generating weekly goals:", error);
+      res.status(500).json({ error: error.message || "Failed to generate weekly goals" });
+    }
+  });
+
+  app.patch("/api/goals/sync-weekly-progress", async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { week } = req.body;
+      if (!week || !/^\d{4}-W\d{2}$/.test(week))
+        return res.status(400).json({ error: "Invalid week format. Expected YYYY-Wnn" });
+
+      const updated = await syncPeriodicProgress(userId, "weekly", week, computeWeeklyProgress, getDb());
+      res.json({ updated, count: updated.length });
+    } catch (error: any) {
+      log.error("[goals] Error syncing weekly progress:", error);
+      res.status(500).json({ error: error.message || "Failed to sync weekly progress" });
     }
   });
 

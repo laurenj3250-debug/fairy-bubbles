@@ -475,8 +475,8 @@ export default function DashboardV4() {
           {/* MAIN GRID: 3 columns on desktop, stacked on mobile */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* LEFT: Habits - spans 2 columns on desktop */}
-            <div className="md:col-span-2 glass-card frost-accent">
-              <span className="card-title">This Week</span>
+            <div className="md:col-span-2 glass-card frost-accent !p-4 !pt-3">
+              <span className="card-title !mb-2 !text-sm">This Week</span>
               <div>
                 {habitsLoading ? (
                   <HabitsGridSkeleton />
