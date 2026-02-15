@@ -147,9 +147,26 @@ export function WeeklyMonthlyGoalsWidget() {
     sync();
   }, [currentMonth, currentWeek]);
 
-  // Increment mutation — fetches latest value to avoid stale-read race on rapid clicks
+  // Increment mutation — routes through yearly goal when linked, so progress
+  // is logged with timestamps and syncs back to weekly/monthly goals correctly.
   const incrementMutation = useMutation({
     mutationFn: async (goal: Goal) => {
+      if (goal.linkedYearlyGoalId) {
+        // Route through yearly goal increment — creates a progress log entry
+        // that the weekly/monthly sync picks up
+        const result = await apiRequest(
+          `/api/yearly-goals/${goal.linkedYearlyGoalId}/increment`,
+          "POST",
+          { amount: 1 }
+        );
+        // Re-sync this period's goals
+        await Promise.all([
+          apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth }),
+          apiRequest("/api/goals/sync-weekly-progress", "PATCH", { week: currentWeek }),
+        ]).catch(() => {});
+        return result;
+      }
+      // Non-linked goals: direct increment
       const fresh = await apiRequest(`/api/goals/${goal.id}`, "GET") as Goal;
       return apiRequest(`/api/goals/${goal.id}`, "PATCH", {
         currentValue: fresh.currentValue + 1,
@@ -159,8 +176,9 @@ export function WeeklyMonthlyGoalsWidget() {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/goal-calendar"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       // Goal just completed — full celebration
-      if (data?.currentValue >= data?.targetValue) {
+      if (data?.currentValue >= data?.targetValue || data?.isCompleted) {
         triggerConfetti("goal_completed");
         if (data?.pointsEarned > 0) {
           celebrateXpEarned(data.pointsEarned, "Goal completed!");
