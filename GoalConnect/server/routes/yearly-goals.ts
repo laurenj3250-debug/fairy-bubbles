@@ -361,6 +361,8 @@ async function computeProgressForDateRange(
   userId: number,
   db: ReturnType<typeof getDb>
 ): Promise<number> {
+  let autoValue = 0;
+
   // Journey integrations
   if (goal.linkedJourneyKey) {
     switch (goal.linkedJourneyKey) {
@@ -376,7 +378,8 @@ async function computeProgressForDateRange(
               AND start_time >= ${startDate}::timestamp AND start_time <= (${endDate}::timestamp + interval '1 day')
           ) AS all_lifting_days
         `);
-        return Number(result.rows[0]?.count ?? 0);
+        autoValue = Number(result.rows[0]?.count ?? 0);
+        break;
       }
 
       case "outdoor_days": {
@@ -389,7 +392,8 @@ async function computeProgressForDateRange(
             WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
           ) AS all_dates
         `);
-        return Number(result.rows[0]?.count ?? 0);
+        autoValue = Number(result.rows[0]?.count ?? 0);
+        break;
       }
 
       case "bird_species": {
@@ -403,7 +407,8 @@ async function computeProgressForDateRange(
               lte(birdSightings.firstSeenDate, endDate)
             )
           );
-        return Number(result[0]?.count ?? 0);
+        autoValue = Number(result[0]?.count ?? 0);
+        break;
       }
 
       case "kilter_climbs": {
@@ -417,7 +422,8 @@ async function computeProgressForDateRange(
               lte(climbingSessions.sessionDate, endDate)
             )
           );
-        return Number(result[0]?.total ?? 0);
+        autoValue = Number(result[0]?.total ?? 0);
+        break;
       }
 
       case "outdoor_climbing_days": {
@@ -426,7 +432,8 @@ async function computeProgressForDateRange(
           FROM outdoor_climbing_ticks
           WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}
         `);
-        return Number(result.rows[0]?.count ?? 0);
+        autoValue = Number(result.rows[0]?.count ?? 0);
+        break;
       }
 
       case "audiobooks_completed": {
@@ -439,7 +446,8 @@ async function computeProgressForDateRange(
             AND completed_at >= ${startDate}::date
             AND completed_at < (${endDate}::date + interval '1 day')
         `);
-        return Number(result.rows[0]?.count ?? 0);
+        autoValue = Number(result.rows[0]?.count ?? 0);
+        break;
       }
 
       case "books_completed": {
@@ -452,15 +460,13 @@ async function computeProgressForDateRange(
             AND completed_at >= ${startDate}::date
             AND completed_at < (${endDate}::date + interval '1 day')
         `);
-        return Number(result.rows[0]?.count ?? 0);
+        autoValue = Number(result.rows[0]?.count ?? 0);
+        break;
       }
-
-      default:
-        return 0;
     }
   }
 
-  // Habit integration
+  // Habit integration — use if higher than journey count
   if (goal.linkedHabitId) {
     const result = await db
       .select({ count: count() })
@@ -473,7 +479,8 @@ async function computeProgressForDateRange(
           lte(habitLogs.date, endDate)
         )
       );
-    return Number(result[0]?.count ?? 0);
+    const habitCount = Number(result[0]?.count ?? 0);
+    autoValue = Math.max(autoValue, habitCount);
   }
 
   // Dream Scroll integration
@@ -487,11 +494,25 @@ async function computeProgressForDateRange(
         AND completed_at >= ${startDate}::date
         AND completed_at < (${endDate}::date + interval '1 day')
     `);
-    return Number(result.rows[0]?.count ?? 0);
+    autoValue = Math.max(autoValue, Number(result.rows[0]?.count ?? 0));
   }
 
-  // Manual count goals: no auto-computation
-  return 0;
+  // Manual increments from progress logs — when user manually +N's the yearly
+  // goal, those increments are timestamped. Sum them for this period so
+  // weekly/monthly goals reflect manual progress too.
+  const manualResult = await db.execute(sql`
+    SELECT COALESCE(SUM(new_value - previous_value), 0) as total
+    FROM yearly_goal_progress_logs
+    WHERE goal_id = ${goal.id}
+      AND user_id = ${userId}
+      AND source = 'manual'
+      AND change_type = 'increment'
+      AND created_at >= ${startDate}::date
+      AND created_at < (${endDate}::date + interval '1 day')
+  `);
+  const manualValue = Math.max(0, Number(manualResult.rows[0]?.total ?? 0));
+
+  return Math.max(autoValue, manualValue);
 }
 
 /**
