@@ -599,6 +599,8 @@ export default function DashboardV4() {
               const xpText = result?.pointsEarned ? ` +${result.pointsEarned} XP` : '';
               toast({ title: `Adventure logged!${xpText}`, description: "Your outdoor adventure has been recorded" });
               queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/recent-outdoor-activities"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
             } catch (error) {
               toast({
                 title: "Failed to log adventure",
