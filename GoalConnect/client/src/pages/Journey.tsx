@@ -7,7 +7,6 @@ import { useStravaClimbingActivities } from "@/hooks/useStravaClimbingActivities
 import { useClimbingLog } from "@/hooks/useClimbingLog";
 import { CyclingTab, LiftingTab, ClimbingTab } from "@/components/journey";
 import { ForestBackground } from "@/components/ForestBackground";
-import { Link } from "wouter";
 
 type ActivityTab = "cycling" | "lifting" | "climbing";
 
@@ -34,47 +33,6 @@ export default function Journey() {
     <div className="min-h-screen relative">
       {/* Forest background */}
       <ForestBackground />
-
-      {/* Sidebar Navigation */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
-        <div className="space-y-4">
-          <Link href="/">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              dashboard
-            </span>
-          </Link>
-          <Link href="/habits">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              habits
-            </span>
-          </Link>
-          <Link href="/goals">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              goals
-            </span>
-          </Link>
-          <Link href="/todos">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              todos
-            </span>
-          </Link>
-          <Link href="/journey">
-            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
-              journey
-            </span>
-          </Link>
-          <Link href="/adventures">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              adventures
-            </span>
-          </Link>
-          <Link href="/settings">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              settings
-            </span>
-          </Link>
-        </div>
-      </nav>
 
       {/* Main content */}
       <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">

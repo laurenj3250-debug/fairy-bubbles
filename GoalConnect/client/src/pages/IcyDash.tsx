@@ -7,7 +7,7 @@ import { CriticalHit, rollCritical } from '@/components/CriticalHit';
 import { TokenCounter } from '@/components/TokenCounter';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
@@ -25,6 +25,7 @@ import { useYearlyGoals } from '@/hooks/useYearlyGoals';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
+import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
@@ -332,6 +333,8 @@ export default function DashboardV4() {
       queryClient.invalidateQueries({ queryKey: ['/api/points/transactions'] });
       // Yearly goals auto-track from habit_logs — refresh so linked goals update
       queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+      // Periodic goals compute on read — refetch to show updated weekly/monthly progress
+      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to update habit", description: error.message, variant: "destructive" });
@@ -411,30 +414,6 @@ export default function DashboardV4() {
 
       {/* Mountain hero section */}
       <MountainHero />
-
-      {/* Sidebar Navigation */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
-        <div className="space-y-4">
-          {[
-            { href: "/", label: "dashboard" },
-            { href: "/habits", label: "habits" },
-            { href: "/goals", label: "goals" },
-            { href: "/todos", label: "todos" },
-            { href: "/journey", label: "journey" },
-            { href: "/adventures", label: "adventures" },
-            { href: "/settings", label: "settings" },
-          ].map(({ href, label }) => {
-            const isActive = href === "/" ? location === "/" : location.startsWith(href);
-            return (
-              <Link key={href} href={href}>
-                <span className={`block transition-colors text-sm font-heading cursor-pointer ${isActive ? "text-peach-400" : "text-[var(--text-muted)] hover:text-peach-400"}`}>
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
 
       {/* Main dashboard content */}
       <div className="relative z-10 px-5 md:px-8 pb-24">
@@ -517,6 +496,9 @@ export default function DashboardV4() {
 
           {/* ROW 2: Weekly & Monthly Goals (full width, compact) */}
           <WeeklyMonthlyGoalsWidget />
+
+          {/* ROW 3: Collapsible Insights (SummitLog + HabitHeatmap + WeeklyRhythm) */}
+          <DashboardInsights />
 
           {/* ROW 4: Yearly Goals (grouped by category) */}
           {yearlyGoalsLoading ? (

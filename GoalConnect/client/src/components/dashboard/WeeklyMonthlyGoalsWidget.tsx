@@ -123,48 +123,37 @@ export function WeeklyMonthlyGoalsWidget() {
     queryKey: ["/api/goals"],
   });
 
-  // Auto-generate monthly goals from yearly goals on first mount
+  // Auto-generate periodic goals from yearly goals on first mount.
+  // No sync needed — GET /api/goals computes fresh values on read.
   const hasGeneratedRef = useRef(false);
   useEffect(() => {
     if (hasGeneratedRef.current) return;
     hasGeneratedRef.current = true;
 
-    const sync = async () => {
+    const generate = async () => {
       try {
         await Promise.all([
           apiRequest("/api/goals/generate-monthly", "POST", { month: currentMonth }),
           apiRequest("/api/goals/generate-weekly", "POST", { week: currentWeek }),
-        ]);
-        await Promise.all([
-          apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth }),
-          apiRequest("/api/goals/sync-weekly-progress", "PATCH", { week: currentWeek }),
         ]);
         queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       } catch {
         // Silent failure — dashboard still works with whatever goals exist
       }
     };
-    sync();
+    generate();
   }, [currentMonth, currentWeek]);
 
-  // Increment mutation — routes through yearly goal when linked, so progress
-  // is logged with timestamps and syncs back to weekly/monthly goals correctly.
+  // Increment mutation — linked goals route through yearly goal to create
+  // a progress log. The refetch of /api/goals computes the fresh value.
   const incrementMutation = useMutation({
     mutationFn: async (goal: Goal) => {
       if (goal.linkedYearlyGoalId) {
-        // Route through yearly goal increment — creates a progress log entry
-        // that the weekly/monthly sync picks up
-        const result = await apiRequest(
+        return apiRequest(
           `/api/yearly-goals/${goal.linkedYearlyGoalId}/increment`,
           "POST",
           { amount: 1 }
         );
-        // Re-sync this period's goals
-        await Promise.all([
-          apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth }),
-          apiRequest("/api/goals/sync-weekly-progress", "PATCH", { week: currentWeek }),
-        ]).catch(() => {});
-        return result;
       }
       // Non-linked goals: direct increment
       const fresh = await apiRequest(`/api/goals/${goal.id}`, "GET") as Goal;
@@ -178,7 +167,7 @@ export function WeeklyMonthlyGoalsWidget() {
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       // Goal just completed — full celebration
-      if (data?.currentValue >= data?.targetValue || data?.isCompleted) {
+      if (data?.isCompleted) {
         triggerConfetti("goal_completed");
         if (data?.pointsEarned > 0) {
           celebrateXpEarned(data.pointsEarned, "Goal completed!");
@@ -186,11 +175,7 @@ export function WeeklyMonthlyGoalsWidget() {
           playCompleteSound();
           triggerHaptic("medium");
         }
-      } else if (data?.pointsEarned > 0) {
-        // Regular increment with XP — subtle feedback
-        triggerHaptic("light");
       } else {
-        // Increment with no XP — just haptic
         triggerHaptic("light");
       }
     },

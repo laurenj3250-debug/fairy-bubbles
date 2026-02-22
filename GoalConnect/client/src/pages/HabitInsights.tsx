@@ -8,6 +8,8 @@ import { TodayCompletionStatus } from "@/components/TodayCompletionStatus";
 import { HabitPatternInsights } from "@/components/HabitPatternInsights";
 import { HabitCompletionCalendar } from "@/components/HabitCompletionCalendar";
 import { HabitDetailedStats } from "@/components/HabitDetailedStats";
+import { WeeklyReport } from "@/components/WeeklyReport";
+import { MonthlyReport } from "@/components/MonthlyReport";
 
 export default function HabitInsights() {
   const [selectedHabitId, setSelectedHabitId] = useState<number | null>(null);
@@ -71,6 +73,12 @@ export default function HabitInsights() {
         {/* Completion Calendar */}
         <div className="mb-8">
           <HabitCompletionCalendar />
+        </div>
+
+        {/* Weekly & Monthly Reports */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <WeeklyReport />
+          <MonthlyReport />
         </div>
 
         {/* Individual Habit Analytics */}

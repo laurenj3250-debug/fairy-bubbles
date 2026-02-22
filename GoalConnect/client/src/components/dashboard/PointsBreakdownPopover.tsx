@@ -118,11 +118,21 @@ export function PointsBreakdownPopover({
   const { data: weekTransactions, isLoading: isLoadingWeek } = useQuery<
     PointTransaction[]
   >({
-    queryKey: [`/api/points/transactions?since=${weekStart}`],
+    queryKey: ["/api/points/transactions", { since: weekStart }],
+    queryFn: async () => {
+      const res = await fetch(`/api/points/transactions?since=${encodeURIComponent(weekStart)}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch transactions");
+      return res.json();
+    },
   });
 
   const { data: streakTransactions } = useQuery<PointTransaction[]>({
-    queryKey: [`/api/points/transactions?since=${streakLookback}`],
+    queryKey: ["/api/points/transactions", { since: streakLookback }],
+    queryFn: async () => {
+      const res = await fetch(`/api/points/transactions?since=${encodeURIComponent(streakLookback)}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch transactions");
+      return res.json();
+    },
   });
 
   const { data: pointsSummary } = useQuery<PointsSummary>({

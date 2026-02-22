@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { HabitCard } from "@/components/HabitCard";
 import { HabitCreateDialog } from "@/components/HabitCreateDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { Plus, Flame, Check, X, Calendar } from "lucide-react";
+import { Plus, Flame, Check, X, Calendar, BarChart3 } from "lucide-react";
 import { getToday, cn } from "@/lib/utils";
 import { HabitContributionGraph } from "@/components/HabitContributionGraph";
 import { ForestBackground } from "@/components/ForestBackground";
@@ -173,47 +173,6 @@ export default function Habits() {
       {/* Forest background */}
       <ForestBackground />
 
-      {/* Sidebar Navigation */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-full w-[160px] z-20 flex-col justify-center pl-6">
-        <div className="space-y-4">
-          <Link href="/">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              dashboard
-            </span>
-          </Link>
-          <Link href="/habits">
-            <span className="block text-peach-400 text-sm font-heading cursor-pointer">
-              habits
-            </span>
-          </Link>
-          <Link href="/goals">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              goals
-            </span>
-          </Link>
-          <Link href="/todos">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              todos
-            </span>
-          </Link>
-          <Link href="/journey">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              journey
-            </span>
-          </Link>
-          <Link href="/adventures">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              adventures
-            </span>
-          </Link>
-          <Link href="/settings">
-            <span className="block text-[var(--text-muted)] hover:text-peach-400 transition-colors text-sm font-heading cursor-pointer">
-              settings
-            </span>
-          </Link>
-        </div>
-      </nav>
-
       {/* Main content */}
       <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
         <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
@@ -233,16 +192,28 @@ export default function Habits() {
               </p>
             </div>
 
-            <Button
-              onClick={() => {
-                setEditingHabit(undefined);
-                setHabitDialogOpen(true);
-              }}
-              className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Habit
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/habit-insights">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full px-3 py-2 text-[var(--text-muted)] hover:text-peach-400 transition-all"
+                >
+                  <BarChart3 className="w-4 h-4 mr-1.5" />
+                  Insights
+                </Button>
+              </Link>
+              <Button
+                onClick={() => {
+                  setEditingHabit(undefined);
+                  setHabitDialogOpen(true);
+                }}
+                className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Habit
+              </Button>
+            </div>
           </header>
 
           {/* Contribution Graph */}

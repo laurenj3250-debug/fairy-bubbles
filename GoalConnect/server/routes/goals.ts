@@ -155,12 +155,51 @@ async function syncPeriodicProgress(
 }
 
 export function registerGoalRoutes(app: Express) {
-  // GET all goals for user
+  // GET all goals for user — linked periodic goals get fresh computed values
+  // from the yearly goal's progress logs + auto-tracking (no sync needed).
   app.get("/api/goals", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const goals = await storage.getGoals(userId);
-      res.json(goals.map(cleanGoal));
+      const allGoals = await storage.getGoals(userId);
+      const db = getDb();
+
+      // Batch-fetch yearly goals for all linked periodic goals
+      const linkedGoals = allGoals.filter((g) => g.linkedYearlyGoalId != null);
+      const yearlyGoalIds = Array.from(new Set(linkedGoals.map((g) => g.linkedYearlyGoalId!)));
+
+      let yearlyGoalMap = new Map<number, any>();
+      if (yearlyGoalIds.length > 0) {
+        const rows = await db
+          .select()
+          .from(yearlyGoals)
+          .where(and(inArray(yearlyGoals.id, yearlyGoalIds), eq(yearlyGoals.userId, userId)));
+        yearlyGoalMap = new Map(rows.map((g) => [g.id, g]));
+      }
+
+      // Compute fresh values for linked goals in parallel
+      const enriched = await Promise.all(
+        allGoals.map(async (g) => {
+          if (g.linkedYearlyGoalId) {
+            const yGoal = yearlyGoalMap.get(g.linkedYearlyGoalId);
+            if (yGoal) {
+              try {
+                let freshValue = g.currentValue; // fallback
+                if (g.week) {
+                  freshValue = await computeWeeklyProgress(yGoal, g.week, userId, db);
+                } else if (g.month) {
+                  freshValue = await computeMonthlyProgress(yGoal, g.month, userId, db);
+                }
+                return cleanGoal({ ...g, currentValue: freshValue });
+              } catch {
+                // Fall back to stored value on error
+              }
+            }
+          }
+          return cleanGoal(g);
+        })
+      );
+
+      res.json(enriched);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch goals" });
     }

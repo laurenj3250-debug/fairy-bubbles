@@ -36,6 +36,7 @@ import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
 import Adventures from "@/pages/Adventures";
 import RewardsPage from "@/pages/Rewards";
+import Analytics from "@/pages/Analytics";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -139,14 +140,14 @@ function AppRoutes() {
       {/* Main Dashboard - IcyDash */}
       <Route path="/">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <IcyDash />
           </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/habits">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <Habits />
           </MainLayout>
         </RequireAuth>
@@ -158,16 +159,23 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
+      <Route path="/analytics">
+        <RequireAuth>
+          <MainLayout variant="sidebar">
+            <Analytics />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
       <Route path="/goals">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <Goals />
           </MainLayout>
         </RequireAuth>
       </Route>
       <Route path="/todos">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <Todos />
           </MainLayout>
         </RequireAuth>
@@ -230,7 +238,7 @@ function AppRoutes() {
       </Route>
       <Route path="/settings">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <Settings />
           </MainLayout>
         </RequireAuth>
@@ -251,7 +259,7 @@ function AppRoutes() {
       </Route>
       <Route path="/journey">
         <RequireAuth>
-          <MainLayout>
+          <MainLayout variant="sidebar">
             <Journey />
           </MainLayout>
         </RequireAuth>

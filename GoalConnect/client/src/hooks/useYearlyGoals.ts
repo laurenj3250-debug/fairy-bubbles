@@ -5,13 +5,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { format, getISOWeek, getYear, startOfISOWeek } from "date-fns";
 import {
   YEARLY_GOAL_CATEGORY_ORDER,
   YEARLY_GOAL_CATEGORY_LABELS,
   YearlyGoalSubItem,
 } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { celebrateXpEarned } from "@/lib/celebrate";
 import { XP_CONFIG } from "@shared/xp-config";
 import { triggerConfetti } from "@/lib/confetti";
@@ -208,20 +206,11 @@ export function useYearlyGoals(year: string = new Date().getFullYear().toString(
       }
       return response.json();
     },
-    onSuccess: async (data: any) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
-      // Re-sync weekly/monthly goals so they reflect the manual increment
-      const now = new Date();
-      const currentMonth = format(now, "yyyy-MM");
-      const currentWeek = `${getYear(now)}-W${String(getISOWeek(now)).padStart(2, "0")}`;
-      try {
-        await Promise.all([
-          apiRequest("/api/goals/sync-monthly-progress", "PATCH", { month: currentMonth }),
-          apiRequest("/api/goals/sync-weekly-progress", "PATCH", { week: currentWeek }),
-        ]);
-      } catch { /* silent — dashboard still works */ }
+      // Refetch periodic goals — GET /api/goals computes fresh values on read
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
       // Subtle haptic for regular increments; full celebration only on completion
       if (data?.isCompleted) {
