@@ -1,4 +1,4 @@
-import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays, HeartPulse, Compass, Sun } from "lucide-react";
+import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays, HeartPulse, Compass, Sun, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const navItems = [
   { path: "/planner", label: "Planner", icon: CalendarDays },
   { path: "/habits", label: "Habits", icon: Mountain },
   { path: "/adventures", label: "Outdoors", icon: Compass },
-  { path: "/wheel", label: "Wheel", icon: Sun },
+  { path: "/dream-scroll", label: "Wishlist", icon: Sparkles },
 ];
 
 export function BottomNav() {

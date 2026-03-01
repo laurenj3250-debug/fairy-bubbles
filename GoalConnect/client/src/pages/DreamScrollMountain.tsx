@@ -1,80 +1,113 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mountain, Plus, Trash2, Edit, Check, X, Tag, Target, TrendingUp } from "lucide-react";
-import type { DreamScrollItem, DreamScrollTag } from "@shared/schema";
+import { Plus, Trash2, Pencil, Check, Sparkles, ChevronDown } from "lucide-react";
+import type { DreamScrollItem } from "@shared/schema";
+import { WELLNESS_CUPS, parseCups, cupScore } from "@shared/wellness-cups";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = [
-  { value: "summits", label: "Peaks to Climb", emoji: "⛰️", bgColor: "bg-slate-600/30", borderColor: "border-slate-500/50" },
-  { value: "gear", label: "Gear Wishlist", emoji: "🎒", bgColor: "bg-blue-600/30", borderColor: "border-blue-500/50" },
-  { value: "skills", label: "Skills to Master", emoji: "🧗", bgColor: "bg-cyan-600/30", borderColor: "border-cyan-500/50" },
-  { value: "locations", label: "Ranges to Explore", emoji: "🗺️", bgColor: "bg-teal-600/30", borderColor: "border-teal-500/50" },
-  { value: "expeditions", label: "Views to Witness", emoji: "🏔️", bgColor: "bg-sky-600/30", borderColor: "border-sky-500/50" },
-  { value: "training", label: "Alpine Adventures", emoji: "⚡", bgColor: "bg-indigo-600/30", borderColor: "border-indigo-500/50" },
-] as const;
+// ─── Cup picker (inline) ─────────────────────────────────────────────
+function CupPicker({ selected, onToggle, size = "sm" }: {
+  selected: number[];
+  onToggle: (idx: number) => void;
+  size?: "sm" | "md";
+}) {
+  const px = size === "sm" ? "w-5 h-5" : "w-6 h-6";
+  return (
+    <div className="flex gap-1.5 items-center">
+      {WELLNESS_CUPS.map((cup) => {
+        const active = selected.includes(cup.index);
+        return (
+          <button
+            key={cup.index}
+            type="button"
+            onClick={() => onToggle(cup.index)}
+            aria-label={cup.name}
+            aria-pressed={active}
+            className={cn(
+              px, "rounded-full border-2 transition-all flex-shrink-0",
+              active ? "scale-110" : "opacity-50 hover:opacity-80"
+            )}
+            style={{
+              backgroundColor: active ? cup.color : "transparent",
+              borderColor: cup.color,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
-const TAG_COLORS = [
-  "bg-slate-500/30 text-slate-300 border-slate-500/50",
-  "bg-blue-500/30 text-blue-300 border-blue-500/50",
-  "bg-cyan-500/30 text-cyan-300 border-cyan-500/50",
-  "bg-teal-500/30 text-teal-300 border-teal-500/50",
-  "bg-sky-500/30 text-sky-300 border-sky-500/50",
-  "bg-indigo-500/30 text-indigo-300 border-indigo-500/50",
-  "bg-stone-500/30 text-stone-300 border-stone-500/50",
-  "bg-gray-500/30 text-gray-300 border-gray-500/50",
-];
+// ─── Cup pills (display only) ────────────────────────────────────────
+function CupPills({ cups }: { cups: number[] }) {
+  if (!cups || cups.length === 0) return null;
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {cups.map((idx) => {
+        const cup = WELLNESS_CUPS[idx];
+        if (!cup) return null;
+        return (
+          <span
+            key={idx}
+            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+            style={{
+              backgroundColor: cup.color + "25",
+              color: cup.color,
+            }}
+          >
+            {cup.short}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low Priority", color: "text-slate-400" },
-  { value: "medium", label: "Medium Priority", color: "text-blue-400" },
-  { value: "high", label: "High Priority", color: "text-cyan-400" },
-] as const;
-
-const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Beginner", emoji: "⛰️" },
-  { value: "moderate", label: "Intermediate", emoji: "🏔️" },
-  { value: "hard", label: "Advanced", emoji: "⛰️" },
-  { value: "extreme", label: "Expert", emoji: "🗻" },
-] as const;
-
+// ─── Main page ───────────────────────────────────────────────────────
 export default function DreamScrollMountain() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("summits");
-  const [editingItem, setEditingItem] = useState<DreamScrollItem | null>(null);
+  const [filterCup, setFilterCup] = useState<number | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [editTags, setEditTags] = useState<number[]>([]);
-  const [editPriority, setEditPriority] = useState<string>("medium");
-  const [editCost, setEditCost] = useState<string | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isCreatingTag, setIsCreatingTag] = useState(false);
-  const [newTagName, setNewTagName] = useState("");
-  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
+  const [editCups, setEditCups] = useState<number[]>([]);
+  const [pendingToggleId, setPendingToggleId] = useState<number | null>(null);
 
-  // Fetch all dream scroll items
-  const { data: allItems = [], isLoading, isError, error } = useQuery<DreamScrollItem[]>({
+  // Add item state
+  const [addTitle, setAddTitle] = useState("");
+  const [addCups, setAddCups] = useState<number[]>([]);
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Data fetching ─────────────────────────────────────────────
+  const { data: allItems = [], isLoading } = useQuery<DreamScrollItem[]>({
     queryKey: ["/api/dream-scroll"],
   });
 
-
-  // Fetch tags for current category
-  const { data: categoryTags = [] } = useQuery<DreamScrollTag[]>({
-    queryKey: [`/api/dream-scroll/tags/${selectedCategory}`],
-    enabled: selectedCategory !== "all",
+  const { data: wheelState } = useQuery<{
+    cupLevels: number[];
+    checkedToday: string;
+  }>({
+    queryKey: ["/api/wellness-wheel/state"],
   });
 
+  const cupLevels = wheelState?.cupLevels || [3, 3, 3, 3, 3, 3];
+
+  // ─── Mutations ─────────────────────────────────────────────────
   const createMutation = useMutation({
-    mutationFn: async (item: { title: string; description?: string; category: string; priority: string; cost?: string; tags?: string }) => {
-      return apiRequest("/api/dream-scroll", "POST", item);
+    mutationFn: async (item: { title: string; cups: number[] }) => {
+      return apiRequest("/api/dream-scroll", "POST", {
+        title: item.title,
+        category: "do",
+        priority: "medium",
+        cups: item.cups,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dream-scroll"] });
-      setIsAdding(false);
-      setEditTitle("");
-      setEditDescription("");
-      setEditPriority("medium");
-      setEditCost(null);
-      setEditTags([]);
+      setAddTitle("");
+      setAddCups([]);
     },
   });
 
@@ -84,7 +117,7 @@ export default function DreamScrollMountain() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dream-scroll"] });
-      setEditingItem(null);
+      setEditingId(null);
     },
   });
 
@@ -92,6 +125,8 @@ export default function DreamScrollMountain() {
     mutationFn: async (id: number) => {
       return apiRequest(`/api/dream-scroll/${id}/toggle`, "POST");
     },
+    onMutate: (id) => setPendingToggleId(id),
+    onSettled: () => setPendingToggleId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dream-scroll"] });
     },
@@ -106,738 +141,551 @@ export default function DreamScrollMountain() {
     },
   });
 
-  const createTagMutation = useMutation({
-    mutationFn: async (tag: { category: string; name: string; color: string }) => {
-      return apiRequest("/api/dream-scroll/tags", "POST", tag);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/dream-scroll/tags/${selectedCategory}`] });
-      setIsCreatingTag(false);
-      setNewTagName("");
-      setNewTagColor(TAG_COLORS[0]);
-    },
-  });
+  // ─── Derived data ──────────────────────────────────────────────
+  const activeItems = useMemo(() => allItems.filter((i) => !i.completed), [allItems]);
+  const completedItems = useMemo(() => allItems.filter((i) => i.completed), [allItems]);
 
-  const deleteTagMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest(`/api/dream-scroll/tags/${id}`, "DELETE");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/dream-scroll/tags/${selectedCategory}`] });
-    },
-  });
+  const { tagged, untagged } = useMemo(() => {
+    const tagged: DreamScrollItem[] = [];
+    const untagged: DreamScrollItem[] = [];
+    for (const item of activeItems) {
+      const cups = parseCups(item.cups);
+      if (cups.length === 0) untagged.push(item);
+      else tagged.push(item);
+    }
+    return { tagged, untagged };
+  }, [activeItems]);
 
-  const handleEdit = (item: DreamScrollItem) => {
-    setEditingItem(item);
-    setEditTitle(item.title);
-    setEditDescription(item.description || "");
-    setEditTags(item.tags ? JSON.parse(item.tags) : []);
-    setEditPriority(item.priority || "medium");
-    setEditCost(item.cost || null);
+  // Sort tagged by composite score (descending), then alphabetical
+  const sortedTagged = useMemo(() => {
+    return [...tagged].sort((a, b) => {
+      const sa = cupScore(parseCups(a.cups), cupLevels);
+      const sb = cupScore(parseCups(b.cups), cupLevels);
+      if (sb !== sa) return sb - sa;
+      return a.title.localeCompare(b.title);
+    });
+  }, [tagged, cupLevels]);
+
+  // Filter by cup if active
+  const displayItems = filterCup !== null
+    ? sortedTagged.filter((item) => parseCups(item.cups).includes(filterCup))
+    : sortedTagged;
+
+  // Cup item counts (for filter strip)
+  const cupItemCounts = useMemo(() => {
+    const counts = new Array(WELLNESS_CUPS.length).fill(0);
+    for (const item of activeItems) {
+      const cups = parseCups(item.cups);
+      for (const idx of cups) {
+        counts[idx]++;
+      }
+    }
+    return counts;
+  }, [activeItems]);
+
+  // ─── Handlers ──────────────────────────────────────────────────
+  const handleAdd = () => {
+    if (addTitle.trim()) {
+      createMutation.mutate({ title: addTitle.trim(), cups: addCups });
+    }
   };
 
-  const toggleTag = (tagId: number) => {
-    setEditTags(prev =>
-      prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]
+  const startEdit = (item: DreamScrollItem) => {
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditDescription(item.description || "");
+    setEditCups(parseCups(item.cups));
+    setExpandedId(item.id);
+  };
+
+  const saveEdit = () => {
+    if (editingId && editTitle.trim()) {
+      updateMutation.mutate({
+        id: editingId,
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined,
+        cups: editCups,
+      });
+    }
+  };
+
+  const toggleEditCup = (idx: number) => {
+    setEditCups((prev) =>
+      prev.includes(idx) ? prev.filter((c) => c !== idx) : [...prev, idx]
     );
   };
 
-  const handleSaveEdit = () => {
-    if (editingItem && editTitle.trim()) {
-      updateMutation.mutate({
-        id: editingItem.id,
-        title: editTitle.trim(),
-        description: editDescription.trim() || undefined,
-        tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
-        priority: editPriority as any,
-        cost: editCost as any,
-      });
-    }
+  const toggleAddCup = (idx: number) => {
+    setAddCups((prev) =>
+      prev.includes(idx) ? prev.filter((c) => c !== idx) : [...prev, idx]
+    );
   };
 
-  const handleAddItem = () => {
-    if (editTitle.trim()) {
-      createMutation.mutate({
-        title: editTitle.trim(),
-        description: editDescription.trim() || undefined,
-        category: selectedCategory as any,
-        priority: editPriority as any,
-        cost: editCost as any,
-        tags: editTags.length > 0 ? JSON.stringify(editTags) : undefined,
-      });
-    }
-  };
-
-  const handleCreateTag = () => {
-    if (newTagName.trim()) {
-      createTagMutation.mutate({
-        category: selectedCategory,
-        name: newTagName.trim(),
-        color: newTagColor,
-      });
-    }
-  };
-
-  // Filter items by category
-  const categoryItems = allItems.filter(item => item.category === selectedCategory);
-  const completedItems = categoryItems.filter(item => item.completed);
-  const activeItems = categoryItems.filter(item => !item.completed);
-
-  const completionRate = categoryItems.length > 0
-    ? Math.round((completedItems.length / categoryItems.length) * 100)
-    : 0;
-
+  // ─── Loading state ─────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center pb-24">
-        <div className="animate-pulse text-lg text-foreground">Loading Notes & Ideas...</div>
+        <div className="animate-pulse text-lg text-foreground/60">Loading wishlist...</div>
       </div>
     );
   }
 
-  if (isError) {
+  // ─── Empty state ───────────────────────────────────────────────
+  if (allItems.length === 0) {
+    const prompts = [
+      { cup: 0, q: "What gets your heart pounding?" },
+      { cup: 1, q: "What scares you in a good way?" },
+      { cup: 2, q: "What have you never tried?" },
+      { cup: 3, q: "What makes time dissolve?" },
+      { cup: 4, q: "Who haven't you called in a while?" },
+      { cup: 5, q: "What are you getting better at?" },
+    ];
     return (
-      <div className="min-h-screen flex items-center justify-center pb-24">
-        <div className="text-center space-y-4">
-          <div className="text-lg text-destructive">Failed to load Notes & Ideas</div>
-          <div className="text-sm text-muted-foreground">{error?.message || "Unknown error"}</div>
-        </div>
-      </div>
-    );
-  }
-
-  const currentCategory = CATEGORIES.find(c => c.value === selectedCategory);
-
-  return (
-    <div className="min-h-screen pb-24">
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-3xl shadow-xl p-8 relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at top left, hsl(var(--primary) / 0.3), transparent 60%)`
-            }}
-          />
-          <div className="flex items-center gap-3 mb-2 relative z-10">
-            <Target className="w-9 h-9" style={{ color: 'hsl(var(--accent))' }} />
-            <h1
-              className="text-4xl font-bold"
+      <div className="min-h-screen pb-24">
+        <div className="max-w-3xl mx-auto p-6 space-y-8">
+          <div className="text-center pt-12 pb-4">
+            <Sparkles className="w-12 h-12 mx-auto mb-4 text-foreground/30" />
+            <h1 className="text-3xl font-bold text-foreground mb-2">What would fill your cups?</h1>
+            <p className="text-foreground/50 text-sm">Tap a prompt to get started</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {prompts.map(({ cup, q }) => {
+              const c = WELLNESS_CUPS[cup];
+              return (
+                <button
+                  key={cup}
+                  onClick={() => {
+                    setAddCups([cup]);
+                    addInputRef.current?.focus();
+                  }}
+                  className="p-4 rounded-xl border text-left transition-all hover:scale-[1.02] group"
+                  style={{
+                    borderColor: c.color + "40",
+                    background: c.color + "08",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
+                    <span className="text-xs font-semibold" style={{ color: c.color }}>{c.name}</span>
+                  </div>
+                  <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">{q}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Add input even in empty state */}
+          <div className="flex items-center gap-3 bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-xl p-3">
+            <Plus className="w-5 h-5 text-foreground/40 flex-shrink-0" />
+            <input
+              ref={addInputRef}
+              type="text"
+              value={addTitle}
+              onChange={(e) => setAddTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              placeholder="Type something you want to try..."
+              className="flex-1 bg-transparent text-foreground placeholder-foreground/30 text-sm focus:outline-none"
+            />
+            <CupPicker selected={addCups} onToggle={toggleAddCup} />
+            <button
+              onClick={handleAdd}
+              disabled={!addTitle.trim() || createMutation.isPending}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
               style={{
-                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
+                background: "hsl(var(--accent))",
+                color: "white",
               }}
             >
-              Notes & Ideas
-            </h1>
+              Add
+            </button>
           </div>
-          <p className="text-foreground/60 relative z-10">
-            Capture your thoughts, dreams, and plans
-          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Main render ───────────────────────────────────────────────
+  return (
+    <div className="min-h-screen pb-24">
+      <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 pt-2 pb-1">
+          <Sparkles className="w-7 h-7 text-foreground/60" />
+          <h1 className="text-2xl font-bold text-foreground">Wishlist</h1>
+          <span className="text-sm text-foreground/40 ml-auto">
+            {activeItems.length} active
+          </span>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap gap-3">
-          {CATEGORIES.map(category => {
-            // TODO: Fix category type mismatch between CATEGORIES and DreamScrollItem
-            const itemCount = allItems.filter((i: any) => i.category === category.value).length;
-            const completedCount = allItems.filter((i: any) => i.category === category.value && i.completed).length;
-            const isSelected = selectedCategory === category.value;
+        {/* Cup filter strip */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {WELLNESS_CUPS.map((cup) => {
+            const level = cupLevels[cup.index] ?? 3;
+            const count = cupItemCounts[cup.index];
+            const isActive = filterCup === cup.index;
+            // Low cups = vivid, high cups = softer
+            const opacity = level <= 2 ? 1 : level <= 3 ? 0.7 : 0.45;
 
             return (
               <button
-                key={category.value}
-                onClick={() => setSelectedCategory(category.value)}
+                key={cup.index}
+                onClick={() => setFilterCup(isActive ? null : cup.index)}
                 className={cn(
-                  "px-5 py-3 rounded-xl font-semibold transition-all duration-300 backdrop-blur-xl border shadow-lg hover:scale-105",
-                  isSelected
-                    ? "text-white"
-                    : "bg-background/30 border-foreground/10 hover:bg-background/40"
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  isActive ? "" : "hover:bg-foreground/5"
                 )}
-                style={isSelected ? {
-                  background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  borderColor: 'hsl(var(--primary) / 0.4)'
-                } : {}}
+                style={{
+                  opacity,
+                  ...(isActive ? { background: cup.color + "15", boxShadow: `0 0 0 2px ${cup.color}` } : {}),
+                }}
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{category.emoji}</span>
-                  <span className={isSelected ? "text-white" : "text-foreground"}>{category.label}</span>
-                  {itemCount > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{
-                      background: isSelected ? 'rgba(255,255,255,0.2)' : 'hsl(var(--foreground) / 0.1)',
-                      color: isSelected ? 'white' : 'hsl(var(--foreground) / 0.7)'
-                    }}>
-                      {completedCount}/{itemCount}
-                    </span>
-                  )}
-                </div>
+                <div
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cup.color }}
+                />
+                <span className="text-foreground/80">{cup.short}</span>
+                <span className="text-foreground/40">{level}</span>
+                {count > 0 && (
+                  <span className="text-foreground/30 ml-auto">({count})</span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Stats Bar */}
-        {categoryItems.length > 0 && (
-          <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border border-foreground/10 shadow-lg relative overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-5 pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at left, hsl(var(--accent) / 0.3), transparent 70%)`
-              }}
-            />
-            <div className="flex items-center justify-between mb-2 relative z-10">
-              <span className="text-sm text-foreground/70">Progress</span>
-              <span className="text-sm font-bold text-foreground">{completionRate}%</span>
-            </div>
-            <div className="w-full h-3 rounded-full overflow-hidden relative z-10" style={{ background: 'hsl(var(--foreground) / 0.08)' }}>
-              <div
-                className="h-full transition-all duration-500 rounded-full"
-                style={{
-                  width: `${completionRate}%`,
-                  background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  boxShadow: '0 0 10px hsl(var(--accent) / 0.4)'
-                }}
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-foreground/60 relative z-10">
-              <span>{completedItems.length} completed</span>
-              <span>{activeItems.length} remaining</span>
-            </div>
-          </div>
-        )}
-
-        {/* Tag Management */}
-        <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border border-foreground/10 shadow-lg relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-5 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at right, hsl(var(--secondary) / 0.3), transparent 70%)`
-            }}
+        {/* Add item bar */}
+        <div className="flex items-center gap-3 bg-background/40 backdrop-blur-xl border border-foreground/10 rounded-xl p-3">
+          <Plus className="w-5 h-5 text-foreground/40 flex-shrink-0" />
+          <input
+            type="text"
+            value={addTitle}
+            onChange={(e) => setAddTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="Type something you want to try..."
+            className="flex-1 bg-transparent text-foreground placeholder-foreground/30 text-sm focus:outline-none min-w-0"
           />
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              Tags for {currentCategory?.label}
-            </h3>
+          <div className="flex-shrink-0">
+            <CupPicker selected={addCups} onToggle={toggleAddCup} />
+          </div>
+          {addTitle.trim() && (
             <button
-              onClick={() => setIsCreatingTag(!isCreatingTag)}
-              className="text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105 border"
+              onClick={handleAdd}
+              disabled={createMutation.isPending}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0"
               style={{
-                background: 'hsl(var(--accent) / 0.15)',
-                color: 'hsl(var(--accent))',
-                borderColor: 'hsl(var(--accent) / 0.3)'
+                background: "hsl(var(--accent))",
+                color: "white",
               }}
             >
-              <Plus className="w-3 h-3 inline mr-1" />
-              New Tag
+              Add
             </button>
-          </div>
-
-          {isCreatingTag && (
-            <div className="flex gap-2 mb-3 relative z-10">
-              <input
-                type="text"
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-                placeholder="Tag name..."
-                className="flex-1 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
-                style={{
-                  background: 'hsl(var(--foreground) / 0.05)',
-                  borderColor: 'hsl(var(--foreground) / 0.1)'
-                }}
-              />
-              <select
-                value={newTagColor}
-                onChange={(e) => setNewTagColor(e.target.value)}
-                className="rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
-                style={{
-                  background: 'hsl(var(--foreground) / 0.05)',
-                  borderColor: 'hsl(var(--foreground) / 0.1)'
-                }}
-              >
-                {TAG_COLORS.map((color, i) => (
-                  <option key={i} value={color}>{`Color ${i + 1}`}</option>
-                ))}
-              </select>
-              <button
-                onClick={handleCreateTag}
-                disabled={!newTagName.trim() || createTagMutation.isPending}
-                className="px-4 py-2 rounded-lg text-sm transition-all hover:scale-105"
-                style={{
-                  background: !newTagName.trim() || createTagMutation.isPending
-                    ? 'hsl(var(--foreground) / 0.1)'
-                    : `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                  color: 'white'
-                }}
-              >
-                Add
-              </button>
-              <button
-                onClick={() => {
-                  setIsCreatingTag(false);
-                  setNewTagName("");
-                }}
-                className="px-4 py-2 rounded-lg text-sm transition-colors"
-                style={{
-                  background: 'hsl(var(--foreground) / 0.05)',
-                  color: 'hsl(var(--foreground))'
-                }}
-              >
-                Cancel
-              </button>
-            </div>
           )}
-
-          <div className="flex flex-wrap gap-2 relative z-10">
-            {categoryTags.length === 0 ? (
-              <p className="text-xs text-foreground/60">No tags yet. Create one to organize your goals!</p>
-            ) : (
-              categoryTags.map(tag => (
-                <div key={tag.id} className="flex items-center gap-1">
-                  <span className={cn("px-3 py-1 rounded-lg text-xs font-medium border", tag.color)}>
-                    {tag.name}
-                  </span>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete tag "${tag.name}"?`)) {
-                        deleteTagMutation.mutate(tag.id);
-                      }
-                    }}
-                    className="transition-colors"
-                    style={{
-                      color: 'hsl(var(--destructive) / 0.6)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'hsl(var(--destructive))';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'hsl(var(--destructive) / 0.6)';
-                    }}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
         </div>
 
-        {/* Add New Item */}
-        {isAdding ? (
-          <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-5 border border-foreground/10 shadow-lg relative overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-5 pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at top, hsl(var(--primary) / 0.3), transparent 70%)`
-              }}
-            />
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2 relative z-10">
-              <Plus className="w-5 h-5" />
-              Add to {currentCategory?.label}
-            </h3>
-            <div className="space-y-3 relative z-10">
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Title..."
-                className="w-full rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 border"
-                style={{
-                  background: 'hsl(var(--foreground) / 0.05)',
-                  borderColor: 'hsl(var(--foreground) / 0.1)'
+        {/* Sorted items */}
+        {displayItems.length > 0 && (
+          <div className="space-y-1">
+            {displayItems.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                cupLevels={cupLevels}
+                expanded={expandedId === item.id}
+                editing={editingId === item.id}
+                editTitle={editTitle}
+                editDescription={editDescription}
+                editCups={editCups}
+                toggleDisabled={pendingToggleId === item.id}
+                onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                onToggleComplete={() => toggleMutation.mutate(item.id)}
+                onDelete={() => {
+                  if (confirm("Delete this item?")) deleteMutation.mutate(item.id);
                 }}
+                onStartEdit={() => startEdit(item)}
+                onSaveEdit={saveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                setEditTitle={setEditTitle}
+                setEditDescription={setEditDescription}
+                toggleEditCup={toggleEditCup}
               />
-              <textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Description (optional)..."
-                rows={2}
-                className="w-full rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 border"
-                style={{
-                  background: 'hsl(var(--foreground) / 0.05)',
-                  borderColor: 'hsl(var(--foreground) / 0.1)'
-                }}
-              />
-              {categoryTags.length > 0 && (
-                <div>
-                  <label className="text-xs text-muted-foreground block mb-2">Tags</label>
-                  <div className="flex flex-wrap gap-2">
-                    {categoryTags.map(tag => (
-                      <button
-                        key={tag.id}
-                        onClick={() => toggleTag(tag.id)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                          editTags.includes(tag.id)
-                            ? tag.color
-                            : "bg-muted/30 text-muted-foreground border-border"
-                        )}
-                      >
-                        {tag.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-foreground/70 block mb-2">Priority</label>
-                  <select
-                    value={editPriority}
-                    onChange={(e) => setEditPriority(e.target.value)}
-                    className="w-full rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
-                    style={{
-                      background: 'hsl(var(--foreground) / 0.05)',
-                      borderColor: 'hsl(var(--foreground) / 0.1)'
-                    }}
-                  >
-                    {PRIORITY_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-foreground/70 block mb-2">Difficulty</label>
-                  <select
-                    value={editCost || "easy"}
-                    onChange={(e) => setEditCost(e.target.value)}
-                    className="w-full rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 border"
-                    style={{
-                      background: 'hsl(var(--foreground) / 0.05)',
-                      borderColor: 'hsl(var(--foreground) / 0.1)'
-                    }}
-                  >
-                    {DIFFICULTY_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.emoji} {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAddItem}
-                  disabled={!editTitle.trim() || createMutation.isPending}
-                  className="flex-1 px-4 py-2.5 rounded-lg font-semibold transition-all hover:scale-105"
-                  style={{
-                    background: !editTitle.trim() || createMutation.isPending
-                      ? 'hsl(var(--foreground) / 0.1)'
-                      : `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                    color: 'white'
-                  }}
-                >
-                  Add Goal
-                </button>
-                <button
-                  onClick={() => {
-                    setIsAdding(false);
-                    setEditTitle("");
-                    setEditDescription("");
-                    setEditTags([]);
-                    setEditPriority("medium");
-                    setEditCost(null);
-                  }}
-                  className="px-4 py-2.5 rounded-lg transition-colors"
-                  style={{
-                    background: 'hsl(var(--foreground) / 0.05)',
-                    color: 'hsl(var(--foreground))'
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
-        ) : (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="w-full py-4 border-2 border-dashed rounded-2xl font-semibold transition-all hover:scale-[1.02]"
-            style={{
-              background: 'hsl(var(--foreground) / 0.03)',
-              borderColor: 'hsl(var(--foreground) / 0.1)',
-              color: 'hsl(var(--accent))'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--foreground) / 0.05)';
-              e.currentTarget.style.borderColor = 'hsl(var(--accent) / 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--foreground) / 0.03)';
-              e.currentTarget.style.borderColor = 'hsl(var(--foreground) / 0.1)';
-            }}
-          >
-            <Plus className="w-5 h-5 inline mr-2" />
-            Add New Goal
-          </button>
         )}
 
-        {/* Items List */}
-        <div className="space-y-3">
-          {activeItems.length === 0 && completedItems.length === 0 ? (
-            <div className="bg-background/40 backdrop-blur-xl rounded-3xl p-12 text-center border border-foreground/10 shadow-xl relative overflow-hidden">
-              <div
-                className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle at center, hsl(var(--accent) / 0.3), transparent 70%)`
-                }}
-              />
-              <div className="relative z-10">
-                <Mountain className="w-16 h-16 mx-auto mb-4" style={{ color: 'hsl(var(--foreground) / 0.4)' }} />
-                <p className="text-foreground/60">No goals yet. Add your first objective!</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Active Items */}
-              {activeItems.map(item => (
-                <DreamItem
-                  key={item.id}
-                  item={item}
-                  tags={categoryTags}
-                  onEdit={() => handleEdit(item)}
-                  onToggle={() => toggleMutation.mutate(item.id)}
-                  onDelete={() => {
-                    if (confirm("Delete this goal?")) {
-                      deleteMutation.mutate(item.id);
-                    }
-                  }}
-                  editingItem={editingItem}
-                  editTitle={editTitle}
-                  editDescription={editDescription}
-                  editTags={editTags}
-                  editPriority={editPriority}
-                  editCost={editCost}
-                  setEditTitle={setEditTitle}
-                  setEditDescription={setEditDescription}
-                  setEditPriority={setEditPriority}
-                  setEditCost={setEditCost}
-                  toggleTag={toggleTag}
-                  handleSaveEdit={handleSaveEdit}
-                  setEditingItem={setEditingItem}
-                />
-              ))}
+        {/* Filter active but no results */}
+        {filterCup !== null && displayItems.length === 0 && (
+          <div className="text-center py-8 text-foreground/40 text-sm">
+            No items tagged with {WELLNESS_CUPS[filterCup]?.name}
+          </div>
+        )}
 
-              {/* Completed Items */}
-              {completedItems.length > 0 && (
-                <details className="bg-background/40 backdrop-blur-xl rounded-2xl border border-foreground/10 overflow-hidden shadow-lg relative">
+        {/* Needs tagging section */}
+        {untagged.length > 0 && filterCup === null && (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 px-1 pt-4 pb-2">
+              <span className="text-xs font-semibold text-foreground/40">Not yet tagged</span>
+              <span className="text-xs text-foreground/25">({untagged.length})</span>
+            </div>
+            {untagged.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                cupLevels={cupLevels}
+                expanded={expandedId === item.id}
+                editing={editingId === item.id}
+                editTitle={editTitle}
+                editDescription={editDescription}
+                editCups={editCups}
+                toggleDisabled={pendingToggleId === item.id}
+                onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                onToggleComplete={() => toggleMutation.mutate(item.id)}
+                onDelete={() => {
+                  if (confirm("Delete this item?")) deleteMutation.mutate(item.id);
+                }}
+                onStartEdit={() => startEdit(item)}
+                onSaveEdit={saveEdit}
+                onCancelEdit={() => setEditingId(null)}
+                setEditTitle={setEditTitle}
+                setEditDescription={setEditDescription}
+                toggleEditCup={toggleEditCup}
+                showTagPrompt
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Completed toggle */}
+        {completedItems.length > 0 && (
+          <div className="pt-2">
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="flex items-center gap-2 text-xs text-foreground/40 hover:text-foreground/60 transition-colors px-1"
+            >
+              <ChevronDown className={cn(
+                "w-3.5 h-3.5 transition-transform",
+                showCompleted && "rotate-180"
+              )} />
+              Show completed ({completedItems.length})
+            </button>
+            {showCompleted && (
+              <div className="space-y-1 mt-2">
+                {completedItems.map((item) => (
                   <div
-                    className="absolute inset-0 opacity-5 pointer-events-none"
-                    style={{
-                      background: `radial-gradient(circle at bottom, hsl(var(--primary) / 0.2), transparent 70%)`
-                    }}
-                  />
-                  <summary className="p-4 cursor-pointer hover:bg-foreground/5 transition-colors flex items-center gap-2 relative z-10" style={{ color: 'hsl(var(--foreground) / 0.7)' }}>
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="font-semibold">Completed ({completedItems.length})</span>
-                  </summary>
-                  <div className="p-4 pt-0 space-y-2">
-                    {completedItems.map(item => (
-                      <DreamItem
-                        key={item.id}
-                        item={item}
-                        tags={categoryTags}
-                        onEdit={() => handleEdit(item)}
-                        onToggle={() => toggleMutation.mutate(item.id)}
-                        onDelete={() => {
-                          if (confirm("Delete this goal?")) {
-                            deleteMutation.mutate(item.id);
-                          }
-                        }}
-                        editingItem={editingItem}
-                        editTitle={editTitle}
-                        editDescription={editDescription}
-                        editTags={editTags}
-                        editPriority={editPriority}
-                        editCost={editCost}
-                        setEditTitle={setEditTitle}
-                        setEditDescription={setEditDescription}
-                        setEditPriority={setEditPriority}
-                        setEditCost={setEditCost}
-                        toggleTag={toggleTag}
-                        handleSaveEdit={handleSaveEdit}
-                        setEditingItem={setEditingItem}
-                      />
-                    ))}
+                    key={item.id}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-foreground/[0.03] transition-colors opacity-50"
+                  >
+                    <button
+                      onClick={() => toggleMutation.mutate(item.id)}
+                      disabled={pendingToggleId === item.id}
+                      className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: "hsl(var(--primary))",
+                        borderColor: "hsl(var(--primary))",
+                      }}
+                    >
+                      <Check className="w-3 h-3 text-white" />
+                    </button>
+                    <span className="text-sm text-foreground/50 line-through flex-1">{item.title}</span>
+                    <CupPills cups={parseCups(item.cups)} />
                   </div>
-                </details>
-              )}
-            </>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// Individual Goal Item Component
-function DreamItem({ item, tags, onEdit, onToggle, onDelete, editingItem, editTitle, editDescription, editTags, editPriority, editCost, setEditTitle, setEditDescription, setEditPriority, setEditCost, toggleTag, handleSaveEdit, setEditingItem }: any) {
-  const isEditing = editingItem?.id === item.id;
-  const itemTags = item.tags ? JSON.parse(item.tags) : [];
-  const itemTagObjects = tags.filter((t: any) => itemTags.includes(t.id));
-
-  if (isEditing) {
-    return (
-      <div className="bg-background/40 backdrop-blur-xl rounded-2xl p-4 border shadow-lg relative overflow-hidden" style={{ borderColor: 'hsl(var(--accent) / 0.5)' }}>
-        <div
-          className="absolute inset-0 opacity-5 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at top, hsl(var(--accent) / 0.3), transparent 70%)`
-          }}
-        />
-        <div className="space-y-3 relative z-10">
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 border"
-            style={{
-              background: 'hsl(var(--foreground) / 0.05)',
-              borderColor: 'hsl(var(--foreground) / 0.1)'
-            }}
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            rows={2}
-            className="w-full rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 border"
-            style={{
-              background: 'hsl(var(--foreground) / 0.05)',
-              borderColor: 'hsl(var(--foreground) / 0.1)'
-            }}
-          />
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag: any) => (
-                <button
-                  key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
-                  className={cn(
-                    "px-3 py-1 rounded-lg text-xs font-medium border",
-                    editTags.includes(tag.id) ? tag.color : "bg-muted/30 text-muted-foreground border-border"
-                  )}
-                >
-                  {tag.name}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <button
-              onClick={handleSaveEdit}
-              className="px-4 py-2 rounded-lg transition-all hover:scale-105"
-              style={{
-                background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`,
-                color: 'white'
-              }}
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setEditingItem(null)}
-              className="px-4 py-2 rounded-lg transition-colors"
-              style={{
-                background: 'hsl(var(--foreground) / 0.05)',
-                color: 'hsl(var(--foreground))'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+// ─── Item Row ────────────────────────────────────────────────────────
+function ItemRow({
+  item,
+  cupLevels,
+  expanded,
+  editing,
+  editTitle,
+  editDescription,
+  editCups,
+  toggleDisabled,
+  onToggleExpand,
+  onToggleComplete,
+  onDelete,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  setEditTitle,
+  setEditDescription,
+  toggleEditCup,
+  showTagPrompt,
+}: {
+  item: DreamScrollItem;
+  cupLevels: number[];
+  expanded: boolean;
+  editing: boolean;
+  editTitle: string;
+  editDescription: string;
+  editCups: number[];
+  toggleDisabled: boolean;
+  onToggleExpand: () => void;
+  onToggleComplete: () => void;
+  onDelete: () => void;
+  onStartEdit: () => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  setEditTitle: (v: string) => void;
+  setEditDescription: (v: string) => void;
+  toggleEditCup: (idx: number) => void;
+  showTagPrompt?: boolean;
+}) {
+  const cups = parseCups(item.cups);
+  const score = cupScore(cups, cupLevels);
 
   return (
-    <div className={cn(
-      "bg-background/40 backdrop-blur-xl rounded-2xl p-4 border transition-all shadow-lg relative overflow-hidden hover:shadow-xl",
-      item.completed ? "" : ""
-    )}
-      style={{
-        borderColor: item.completed ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--foreground) / 0.1)'
-      }}
+    <div
+      className={cn(
+        "rounded-lg border transition-all group",
+        expanded ? "border-foreground/15 bg-foreground/[0.03]" : "border-transparent hover:bg-foreground/[0.03]"
+      )}
     >
-      <div
-        className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          background: item.completed
-            ? `radial-gradient(circle at top right, hsl(var(--primary) / 0.3), transparent 70%)`
-            : `radial-gradient(circle at top right, hsl(var(--accent) / 0.2), transparent 70%)`
-        }}
-      />
-      <div className="flex items-start gap-3 relative z-10">
+      {/* Main row */}
+      <div className="flex items-center gap-3 px-3 py-2">
+        {/* Checkbox */}
         <button
-          onClick={onToggle}
-          className={cn(
-            "w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all mt-0.5"
-          )}
-          style={{
-            background: item.completed ? 'hsl(var(--primary))' : 'transparent',
-            borderColor: item.completed ? 'hsl(var(--primary))' : 'hsl(var(--foreground) / 0.2)'
-          }}
+          onClick={onToggleComplete}
+          disabled={toggleDisabled}
+          className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50"
+          style={{ borderColor: "hsl(var(--foreground) / 0.2)" }}
+          aria-label={`Mark "${item.title}" complete`}
         >
-          {item.completed && <Check className="w-4 h-4 text-white" />}
+          {/* empty */}
         </button>
-        <div className="flex-1">
-          <h4 className={cn(
-            "font-semibold mb-1",
-            item.completed ? "line-through" : "text-foreground"
+
+        {/* Title + description preview (clickable to expand) */}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={onToggleExpand}
+        >
+          <div className="text-sm font-semibold text-foreground truncate">{item.title}</div>
+          {item.description && !expanded && (
+            <div className="text-xs text-foreground/40 truncate">{item.description}</div>
           )}
-            style={item.completed ? { color: 'hsl(var(--foreground) / 0.5)' } : {}}
-          >
-            {item.title}
-          </h4>
-          {item.description && (
-            <p className="text-sm mb-2" style={{ color: 'hsl(var(--foreground) / 0.6)' }}>{item.description}</p>
-          )}
-          {itemTagObjects.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {itemTagObjects.map((tag: any) => (
-                <span key={tag.id} className={cn("px-2 py-0.5 rounded text-xs font-medium border", tag.color)}>
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-3 text-xs" style={{ color: 'hsl(var(--foreground) / 0.6)' }}>
-            {item.priority && (
-              <span className={PRIORITY_OPTIONS.find(p => p.value === item.priority)?.color}>
-                {PRIORITY_OPTIONS.find(p => p.value === item.priority)?.label}
-              </span>
-            )}
-            {item.cost && (
-              <span>
-                {DIFFICULTY_OPTIONS.find(d => d.value === item.cost)?.emoji} {DIFFICULTY_OPTIONS.find(d => d.value === item.cost)?.label}
-              </span>
-            )}
-          </div>
         </div>
-        <div className="flex gap-1">
+
+        {/* Cup pills or tag prompt */}
+        <div className="flex-shrink-0">
+          {cups.length > 0 ? (
+            <CupPills cups={cups} />
+          ) : showTagPrompt ? (
+            <button
+              onClick={onStartEdit}
+              className="flex gap-0.5"
+              title="Tag this item"
+              aria-label="Tag this item with cups"
+            >
+              {WELLNESS_CUPS.map((cup) => (
+                <div
+                  key={cup.index}
+                  className="w-3 h-3 rounded-full border opacity-30"
+                  style={{ borderColor: cup.color }}
+                />
+              ))}
+            </button>
+          ) : null}
+        </div>
+
+        {/* Actions (desktop: visible on hover via group) */}
+        <div className="hidden sm:flex gap-0.5 opacity-0 group-hover:opacity-100 flex-shrink-0 transition-opacity">
           <button
-            onClick={onEdit}
-            className="p-2 transition-colors hover:bg-foreground/5 rounded-lg"
-            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
+            onClick={onStartEdit}
+            className="p-1.5 rounded text-foreground/30 hover:text-foreground/60 transition-colors"
+            aria-label="Edit"
           >
-            <Edit className="w-4 h-4" />
+            <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 transition-colors hover:bg-foreground/5 rounded-lg"
-            style={{ color: 'hsl(var(--foreground) / 0.5)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'hsl(var(--destructive))';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'hsl(var(--foreground) / 0.5)';
-            }}
+            className="p-1.5 rounded text-foreground/30 hover:text-red-400 transition-colors"
+            aria-label="Delete"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
+
+      {/* Expanded view */}
+      {expanded && (
+        <div className="px-3 pb-3 space-y-3">
+          {editing ? (
+            <>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Notes..."
+                rows={3}
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))] resize-none"
+              />
+              <div>
+                <label className="text-xs text-foreground/40 block mb-1.5">Cups</label>
+                <CupPicker selected={editCups} onToggle={toggleEditCup} size="md" />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={onSaveEdit}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{ background: "hsl(var(--accent))", color: "white" }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={onCancelEdit}
+                  className="px-4 py-1.5 rounded-lg text-xs font-medium text-foreground/60 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="px-4 py-1.5 rounded-lg text-xs font-medium text-red-400/70 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-colors ml-auto"
+                >
+                  Delete
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {item.description && (
+                <p className="text-sm text-foreground/60">{item.description}</p>
+              )}
+              {score >= 0 && (
+                <div className="text-[10px] text-foreground/25">
+                  score {score}
+                </div>
+              )}
+              {/* Mobile actions */}
+              <div className="flex gap-2 sm:hidden">
+                <button
+                  onClick={onStartEdit}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-foreground/50 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" /> Edit
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-red-400/60 bg-red-500/5 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" /> Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

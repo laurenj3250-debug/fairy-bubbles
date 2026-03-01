@@ -127,9 +127,9 @@ export interface IStorage {
   createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem>;
   getDreamScrollItems(userId: number): Promise<DreamScrollItem[]>;
   getDreamScrollItemsByCategory(userId: number, category: string): Promise<DreamScrollItem[]>;
-  updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined>;
-  deleteDreamScrollItem(id: number): Promise<void>;
-  toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined>;
+  updateDreamScrollItem(id: number, userId: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined>;
+  deleteDreamScrollItem(id: number, userId: number): Promise<void>;
+  toggleDreamScrollItemComplete(id: number, userId: number): Promise<DreamScrollItem | undefined>;
 
   // Dream Scroll Tag Management
   createDreamScrollTag(tag: { userId: number; category: string; name: string; color: string }): Promise<DreamScrollTag>;
@@ -699,15 +699,15 @@ export class MemStorage implements IStorage {
     return [];
   }
 
-  async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
+  async updateDreamScrollItem(id: number, userId: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
     return undefined;
   }
 
-  async deleteDreamScrollItem(id: number): Promise<void> {
+  async deleteDreamScrollItem(id: number, userId: number): Promise<void> {
     // noop
   }
 
-  async toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined> {
+  async toggleDreamScrollItemComplete(id: number, userId: number): Promise<DreamScrollItem | undefined> {
     return undefined;
   }
 

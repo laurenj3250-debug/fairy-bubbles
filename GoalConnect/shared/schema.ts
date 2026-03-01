@@ -340,7 +340,7 @@ export const dreamScrollItems = pgTable("dream_scroll_items", {
   category: varchar("category", { length: 20 }).notNull().$type<"do" | "buy" | "see" | "visit" | "learn" | "experience" | "music">(),
   priority: varchar("priority", { length: 10 }).notNull().default("medium").$type<"low" | "medium" | "high">(),
   cost: varchar("cost", { length: 10 }).$type<"free" | "$" | "$$" | "$$$">(),
-  tags: text("tags"), // JSON array of tag IDs
+  cups: jsonb("cups").$type<number[]>().default([]),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -356,7 +356,7 @@ export const insertSpriteSchema = createInsertSchema(sprites).omit({ id: true, c
 export const insertDreamScrollItemSchema = createInsertSchema(dreamScrollItems).omit({ id: true, createdAt: true, completedAt: true });
 
 export type InsertSprite = z.infer<typeof insertSpriteSchema>;
-export type InsertDreamScrollItem = z.infer<typeof insertDreamScrollItemSchema>;
+export type InsertDreamScrollItem = Omit<typeof dreamScrollItems.$inferInsert, 'id' | 'createdAt' | 'completedAt'>;
 
 // ========== MOUNTAINEERING EXPEDITION GAME ==========
 

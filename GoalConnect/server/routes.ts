@@ -781,13 +781,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      if (!req.body.title || typeof req.body.title !== 'string') {
+        return res.status(400).json({ error: "title is required" });
+      }
+      const cups = req.body.cups || [];
+      if (!Array.isArray(cups) || !cups.every((c: unknown) => typeof c === 'number' && c >= 0 && c < 6)) {
+        return res.status(400).json({ error: "cups must be an array of integers 0-5" });
+      }
+
       const item = await storage.createDreamScrollItem({
         userId: req.user!.id,
         title: req.body.title,
         description: req.body.description,
-        category: req.body.category,
+        category: req.body.category || 'do',
         priority: req.body.priority || 'medium',
         cost: req.body.cost,
+        cups,
       });
       res.json(item);
     } catch (error) {
@@ -803,8 +812,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const id = parseInt(req.params.id);
-      const item = await storage.updateDreamScrollItem(id, req.body);
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+      // Validate cups if provided
+      if (req.body.cups !== undefined) {
+        if (!Array.isArray(req.body.cups) || !req.body.cups.every((c: unknown) => typeof c === 'number' && c >= 0 && c < 6)) {
+          return res.status(400).json({ error: "cups must be an array of integers 0-5" });
+        }
+      }
+
+      const item = await storage.updateDreamScrollItem(id, req.user!.id, req.body);
 
       if (!item) {
         return res.status(404).json({ error: "Dream scroll item not found" });
@@ -824,8 +842,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const id = parseInt(req.params.id);
-      const item = await storage.toggleDreamScrollItemComplete(id);
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+      const item = await storage.toggleDreamScrollItemComplete(id, req.user!.id);
 
       if (!item) {
         return res.status(404).json({ error: "Dream scroll item not found" });
@@ -845,8 +865,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const id = parseInt(req.params.id);
-      await storage.deleteDreamScrollItem(id);
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+      await storage.deleteDreamScrollItem(id, req.user!.id);
       res.json({ success: true });
     } catch (error) {
       log.error('[dream-scroll] Delete error:', error);

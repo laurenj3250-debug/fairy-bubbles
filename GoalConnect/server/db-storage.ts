@@ -647,7 +647,7 @@ export class DbStorage implements IStorage {
 
   // Dream Scroll Management
   async createDreamScrollItem(item: InsertDreamScrollItem): Promise<DreamScrollItem> {
-    const [created] = await this.db.insert(schema.dreamScrollItems).values(item as any).returning();
+    const [created] = await this.db.insert(schema.dreamScrollItems).values(item).returning();
     return created;
   }
 
@@ -666,32 +666,28 @@ export class DbStorage implements IStorage {
       .orderBy(desc(schema.dreamScrollItems.createdAt));
   }
 
-  async updateDreamScrollItem(id: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
+  async updateDreamScrollItem(id: number, userId: number, updates: Partial<InsertDreamScrollItem>): Promise<DreamScrollItem | undefined> {
     const [updated] = await this.db
       .update(schema.dreamScrollItems)
-      .set(updates as any)
-      .where(eq(schema.dreamScrollItems.id, id))
+      .set(updates)
+      .where(and(eq(schema.dreamScrollItems.id, id), eq(schema.dreamScrollItems.userId, userId)))
       .returning();
     return updated;
   }
 
-  async deleteDreamScrollItem(id: number): Promise<void> {
-    await this.db.delete(schema.dreamScrollItems).where(eq(schema.dreamScrollItems.id, id));
+  async deleteDreamScrollItem(id: number, userId: number): Promise<void> {
+    await this.db.delete(schema.dreamScrollItems)
+      .where(and(eq(schema.dreamScrollItems.id, id), eq(schema.dreamScrollItems.userId, userId)));
   }
 
-  async toggleDreamScrollItemComplete(id: number): Promise<DreamScrollItem | undefined> {
-    const [item] = await this.db.select().from(schema.dreamScrollItems)
-      .where(eq(schema.dreamScrollItems.id, id));
-
-    if (!item) return undefined;
-
+  async toggleDreamScrollItemComplete(id: number, userId: number): Promise<DreamScrollItem | undefined> {
     const [updated] = await this.db
       .update(schema.dreamScrollItems)
       .set({
-        completed: !item.completed,
-        completedAt: !item.completed ? new Date() : null,
+        completed: sql`NOT ${schema.dreamScrollItems.completed}`,
+        completedAt: sql`CASE WHEN ${schema.dreamScrollItems.completed} THEN NULL ELSE NOW() END`,
       })
-      .where(eq(schema.dreamScrollItems.id, id))
+      .where(and(eq(schema.dreamScrollItems.id, id), eq(schema.dreamScrollItems.userId, userId)))
       .returning();
     return updated;
   }

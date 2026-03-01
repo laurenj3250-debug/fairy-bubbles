@@ -8,6 +8,7 @@ const navItems = [
   { href: "/analytics", label: "analytics" },
   { href: "/journey", label: "journey" },
   { href: "/adventures", label: "adventures" },
+  { href: "/dream-scroll", label: "wishlist" },
   { href: "/wheel", label: "wellness wheel" },
   { href: "/settings", label: "settings" },
 ];
