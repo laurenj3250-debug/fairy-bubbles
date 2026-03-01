@@ -1127,6 +1127,59 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to add linked_yearly_goal_id column:', error);
       }
 
+      // ========== WONDERLAND WELLNESS WHEEL TABLES ==========
+
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS wellness_wheel_state (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            cup_levels JSONB NOT NULL DEFAULT '[3,3,3,3,3,3]',
+            cup_timestamps JSONB NOT NULL DEFAULT '{}',
+            checked_today VARCHAR(10) NOT NULL DEFAULT '',
+            settings JSONB NOT NULL DEFAULT '{}',
+            custom_presets JSONB NOT NULL DEFAULT '[]',
+            activity_freq JSONB NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        log.info('[migrate] ✅ Wellness wheel state table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create wellness_wheel_state table:', error);
+      }
+
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS wellness_wheel_history (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            date VARCHAR(10) NOT NULL,
+            cup_levels JSONB NOT NULL
+          )
+        `);
+        await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS ww_history_user_date ON wellness_wheel_history(user_id, date)`);
+        log.info('[migrate] ✅ Wellness wheel history table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create wellness_wheel_history table:', error);
+      }
+
+      try {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS wellness_wheel_activities (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            date VARCHAR(10) NOT NULL,
+            time VARCHAR(30) NOT NULL,
+            activity VARCHAR(100) NOT NULL,
+            cups JSONB NOT NULL DEFAULT '[]',
+            notes TEXT DEFAULT ''
+          )
+        `);
+        await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_ww_activities_user_date ON wellness_wheel_activities(user_id, date)`);
+        log.info('[migrate] ✅ Wellness wheel activities table created/verified');
+      } catch (error) {
+        log.error('[migrate] ⚠️  Failed to create wellness_wheel_activities table:', error);
+      }
+
       // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
       try {
         await seedMountaineeringData();

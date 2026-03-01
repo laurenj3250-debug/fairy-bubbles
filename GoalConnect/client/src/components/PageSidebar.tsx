@@ -8,6 +8,7 @@ const navItems = [
   { href: "/analytics", label: "analytics" },
   { href: "/journey", label: "journey" },
   { href: "/adventures", label: "adventures" },
+  { href: "/wheel", label: "wellness wheel" },
   { href: "/settings", label: "settings" },
 ];
 
@@ -19,17 +20,14 @@ export function PageSidebar() {
       <div className="space-y-4">
         {navItems.map(({ href, label }) => {
           const isActive = href === "/" ? location === "/" : location.startsWith(href);
+          const className = `block transition-colors text-sm font-heading cursor-pointer ${
+            isActive
+              ? "text-peach-400"
+              : "text-[var(--text-muted)] hover:text-peach-400"
+          }`;
           return (
             <Link key={href} href={href}>
-              <span
-                className={`block transition-colors text-sm font-heading cursor-pointer ${
-                  isActive
-                    ? "text-peach-400"
-                    : "text-[var(--text-muted)] hover:text-peach-400"
-                }`}
-              >
-                {label}
-              </span>
+              <span className={className}>{label}</span>
             </Link>
           );
         })}

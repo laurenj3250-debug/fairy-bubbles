@@ -50,7 +50,7 @@ function getSessionSecret(): string {
   if (!secret) {
     log.warn('[auth] WARNING: Using default SESSION_SECRET in development mode');
     log.warn('[auth] For production, set SESSION_SECRET environment variable');
-    return "dev-secret-change-in-production-" + Math.random().toString(36);
+    return "dev-secret-do-not-use-in-production-abc123";
   }
 
   return secret;

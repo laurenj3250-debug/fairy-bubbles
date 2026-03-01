@@ -32,6 +32,7 @@ import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
 import { PointsBreakdownPopover } from '@/components/dashboard/PointsBreakdownPopover';
 import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
+import { WellnessWheelWidget } from '@/components/dashboard/WellnessWheelWidget';
 
 // ============================================================================
 // TYPES
@@ -488,6 +489,9 @@ export default function DashboardV4() {
 
               {/* Recent Adventures */}
               <RecentAdventuresWidget onLogAdventure={() => setAdventureDialogOpen(true)} />
+
+              {/* Wellness Wheel */}
+              <WellnessWheelWidget />
 
               {/* Next Reward */}
               <NextRewardWidget />

@@ -1,4 +1,4 @@
-import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays, HeartPulse, Compass } from "lucide-react";
+import { Home, TrendingUp, CheckSquare, Target, Mountain, CalendarDays, HeartPulse, Compass, Sun } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const navItems = [
   { path: "/planner", label: "Planner", icon: CalendarDays },
   { path: "/habits", label: "Habits", icon: Mountain },
   { path: "/adventures", label: "Outdoors", icon: Compass },
-  { path: "/todos", label: "Tasks", icon: CheckSquare },
+  { path: "/wheel", label: "Wheel", icon: Sun },
 ];
 
 export function BottomNav() {
@@ -22,7 +22,6 @@ export function BottomNav() {
     >
       {navItems.map(({ path, label, icon: Icon }) => {
         const isActive = location === path;
-
         return (
           <Link key={path} href={path} asChild>
             <button

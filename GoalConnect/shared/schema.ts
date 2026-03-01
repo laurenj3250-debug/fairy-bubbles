@@ -1517,3 +1517,39 @@ export const insertBirdSightingSchema = createInsertSchema(birdSightings).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// ========== WONDERLAND WELLNESS WHEEL ==========
+// Stained glass wellness tracker with 6 cups
+
+export const wellnessWheelState = pgTable("wellness_wheel_state", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  cupLevels: jsonb("cup_levels").$type<number[]>().default([3,3,3,3,3,3]).notNull(),
+  cupTimestamps: jsonb("cup_timestamps").$type<Record<string, string>>().default({}).notNull(),
+  checkedToday: varchar("checked_today", { length: 10 }).default("").notNull(),
+  settings: jsonb("settings").$type<{onboardingComplete?: boolean; soundEnabled?: boolean}>().default({}).notNull(),
+  customPresets: jsonb("custom_presets").$type<string[]>().default([]).notNull(),
+  activityFreq: jsonb("activity_freq").$type<Record<string, number>>().default({}).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const wellnessWheelHistory = pgTable("wellness_wheel_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: varchar("date", { length: 10 }).notNull(),
+  cupLevels: jsonb("cup_levels").$type<number[]>().notNull(),
+}, (t) => [uniqueIndex("ww_history_user_date").on(t.userId, t.date)]);
+
+export const wellnessWheelActivities = pgTable("wellness_wheel_activities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: varchar("date", { length: 10 }).notNull(),
+  time: varchar("time", { length: 30 }).notNull(),
+  activity: varchar("activity", { length: 100 }).notNull(),
+  cups: jsonb("cups").$type<number[]>().default([]).notNull(),
+  notes: text("notes").default(""),
+});
+
+// TypeScript types
+export type WellnessWheelState = typeof wellnessWheelState.$inferSelect;
+export type WellnessWheelHistory = typeof wellnessWheelHistory.$inferSelect;
+export type WellnessWheelActivity = typeof wellnessWheelActivities.$inferSelect;

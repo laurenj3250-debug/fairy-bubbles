@@ -37,6 +37,7 @@ import MediaLibrary from "@/pages/MediaLibrary";
 import Adventures from "@/pages/Adventures";
 import RewardsPage from "@/pages/Rewards";
 import Analytics from "@/pages/Analytics";
+import WellnessWheel from "@/pages/WellnessWheel";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -303,6 +304,11 @@ function AppRoutes() {
           <MainLayout>
             <RewardsPage />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      <Route path="/wheel">
+        <RequireAuth>
+          <WellnessWheel />
         </RequireAuth>
       </Route>
       <Route component={NotFound} />

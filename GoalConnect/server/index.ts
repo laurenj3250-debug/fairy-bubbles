@@ -49,6 +49,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { configureSimpleAuth } from "./simple-auth";
 import { configureGitHubAuth } from "./github-auth";
 import { runMigrations } from "./migrate";
+import path from "path";
 import { setupSwagger } from "./lib/swagger";
 import cron from "node-cron";
 import { processRecurringTasks } from "./lib/recurrenceScheduler";
@@ -167,6 +168,10 @@ app.use((req, res, next) => {
   }
 
   const server = await registerRoutes(app);
+
+  // Serve wheel static assets (images, sounds) — the page itself is now a React route
+  const wheelDir = path.resolve(import.meta.dirname, "..", "wheel");
+  app.use("/wheel", express.static(wheelDir));
 
   // CRITICAL: Serve static files BEFORE error handler
   // In production, all static assets are in dist/public

@@ -47,6 +47,7 @@ import { registerMediaLibraryRoutes } from "./routes/media-library";
 import { registerAdventuresRoutes } from "./routes/adventures";
 import { registerRecentActivitiesRoutes } from "./routes/recent-activities";
 import { registerRewardRoutes } from "./routes/rewards";
+import { registerWellnessWheelRoutes } from "./routes/wellness-wheel";
 import { XP_CONFIG } from "@shared/xp-config";
 import {
   DatabaseError,
@@ -2598,6 +2599,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register reward shop routes
   registerRewardRoutes(app);
+
+  // Register wellness wheel routes
+  registerWellnessWheelRoutes(app);
 
   // Seed de Lahunta reading schedule (one-time use)
   app.post("/api/seed/reading-schedule", async (req, res) => {
