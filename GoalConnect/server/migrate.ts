@@ -623,6 +623,43 @@ export async function runMigrations() {
           )
         `);
         await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_streak_freezes_user_id ON streak_freezes(user_id)`);
+        // Fix column names to match schema.ts (freeze_count, last_earned_date, created_at)
+        await db.execute(sql`
+          ALTER TABLE streak_freezes
+          ADD COLUMN IF NOT EXISTS freeze_count INTEGER NOT NULL DEFAULT 0
+        `);
+        await db.execute(sql`
+          ALTER TABLE streak_freezes
+          ADD COLUMN IF NOT EXISTS last_earned_date VARCHAR(10)
+        `);
+        await db.execute(sql`
+          ALTER TABLE streak_freezes
+          ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        `);
+        // Copy data from old 'count' column if it exists, then drop it
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='streak_freezes' AND column_name='count') THEN
+              UPDATE streak_freezes SET freeze_count = count WHERE freeze_count = 0 AND count > 0;
+              ALTER TABLE streak_freezes DROP COLUMN count;
+            END IF;
+          END $$
+        `);
+        // Ensure updated_at exists
+        await db.execute(sql`
+          ALTER TABLE streak_freezes
+          ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        `);
+        // Drop old 'id' column if it exists (schema uses user_id as PK)
+        await db.execute(sql`
+          DO $$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='streak_freezes' AND column_name='id') THEN
+              ALTER TABLE streak_freezes DROP COLUMN id;
+            END IF;
+          END $$
+        `);
         log.info('[migrate] ✅ Streak freezes table created/verified');
       } catch (error) {
         log.error('[migrate] ⚠️  Failed to create streak_freezes table:', error);
