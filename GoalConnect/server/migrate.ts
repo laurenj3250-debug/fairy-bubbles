@@ -228,7 +228,7 @@ export async function runMigrations() {
             category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
             priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
             cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
-            tags TEXT,
+            cups JSONB DEFAULT '[]',
             completed BOOLEAN NOT NULL DEFAULT FALSE,
             completed_at TIMESTAMP,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -243,14 +243,19 @@ export async function runMigrations() {
       }
 
       try {
-        // Add tags column to dream_scroll_items if it doesn't exist
+        // Add cups column to dream_scroll_items (replaces old tags column)
         await db.execute(sql`
           ALTER TABLE dream_scroll_items
-          ADD COLUMN IF NOT EXISTS tags TEXT
+          ADD COLUMN IF NOT EXISTS cups JSONB DEFAULT '[]'
         `);
-        log.info('[migrate] ✅ Tags column added/verified in dream_scroll_items table');
+        // Clean up old tags column if it exists
+        await db.execute(sql`
+          ALTER TABLE dream_scroll_items
+          DROP COLUMN IF EXISTS tags
+        `);
+        log.info('[migrate] ✅ Cups column added/verified in dream_scroll_items table');
       } catch (error) {
-        log.error('[migrate] ⚠️  Failed to add tags column to dream_scroll_items:', error);
+        log.error('[migrate] ⚠️  Failed to migrate cups column in dream_scroll_items:', error);
       }
 
 
