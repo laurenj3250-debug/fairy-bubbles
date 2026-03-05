@@ -18,10 +18,11 @@ import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
 import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProgressRing } from '@/components/ProgressRing';
 
 import type { Habit, HabitLog } from '@shared/schema';
 import { XP_CONFIG } from '@shared/xp-config';
-import { useYearlyGoals } from '@/hooks/useYearlyGoals';
+import { useYearlyGoals, type YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
@@ -446,11 +447,19 @@ export default function DashboardV4() {
   // Nearest-to-completion yearly goals for spotlight
   const spotlightGoals = useMemo(() =>
     yearlyGoals
-      .filter((g: any) => !g.completed && g.progressPercent > 0)
-      .sort((a: any, b: any) => b.progressPercent - a.progressPercent)
+      .filter((g: YearlyGoalWithProgress) => !g.completed && g.progressPercent > 0)
+      .sort((a: YearlyGoalWithProgress, b: YearlyGoalWithProgress) => b.progressPercent - a.progressPercent)
       .slice(0, 2),
     [yearlyGoals]
   );
+
+  // Time-of-day greeting (computed once per render, not 3x)
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const time = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const streak = dayStreak >= 14 ? ` \u2014 ${dayStreak} days strong` : dayStreak >= 7 ? ` \u2014 week ${Math.floor(dayStreak / 7)} rolling` : '';
+    return `${time}${streak}`;
+  }, [dayStreak]);
 
   // ============================================================================
   // RENDER
@@ -476,8 +485,7 @@ export default function DashboardV4() {
                 GOAL CONNECT
               </h1>
               <p className="text-[10px] font-body text-[var(--text-muted)] mt-0.5">
-                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}
-                {dayStreak >= 14 ? ` \u2014 ${dayStreak} days strong` : dayStreak >= 7 ? ` \u2014 week ${Math.floor(dayStreak / 7)} rolling` : ''}
+                {greeting}
               </p>
             </div>
 
@@ -519,22 +527,17 @@ export default function DashboardV4() {
                 <span className="card-title !mb-0 !text-sm">This Week</span>
                 {habits.length > 0 && (
                   <div className="flex items-center gap-2">
-                    <div className="relative w-7 h-7">
-                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--glass-border, rgba(255,255,255,0.1))" strokeWidth="2" />
-                        <circle
-                          cx="18" cy="18" r="15" fill="none"
-                          stroke="var(--peach-400, #f0a67a)"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeDasharray={`${(completedTodayCount / habits.length) * 94.2} 94.2`}
-                          className="transition-all duration-500"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[8px] font-heading text-peach-400">
+                    <ProgressRing
+                      progress={(completedTodayCount / habits.length) * 100}
+                      size={28}
+                      strokeWidth={2}
+                      color="var(--peach-400, #f0a67a)"
+                      trackColor="var(--glass-border, rgba(255,255,255,0.1))"
+                    >
+                      <span className="text-[8px] font-heading text-peach-400">
                         {completedTodayCount}/{habits.length}
                       </span>
-                    </div>
+                    </ProgressRing>
                     <span className="text-[10px] font-body text-[var(--text-muted)]">
                       {completedTodayCount === habits.length ? 'All done!' : `${habits.length - completedTodayCount} left`}
                     </span>
@@ -575,19 +578,20 @@ export default function DashboardV4() {
           {/* Goal Spotlight — nearest-to-completion yearly goals */}
           {spotlightGoals.length > 0 && (
             <div className="flex gap-3">
-              {spotlightGoals.map((goal: any) => (
+              {spotlightGoals.map((goal) => (
                 <div key={goal.id} className="flex-1 glass-card frost-accent !p-3 flex items-center gap-3">
-                  <div className="relative w-8 h-8 shrink-0">
-                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                      <circle cx="18" cy="18" r="15" fill="none" stroke="var(--glass-border, rgba(255,255,255,0.1))" strokeWidth="2.5" />
-                      <circle cx="18" cy="18" r="15" fill="none" stroke="var(--peach-400, #f0a67a)" strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeDasharray={`${goal.progressPercent * 0.942} 94.2`} />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[8px] font-heading text-peach-400">
+                  <ProgressRing
+                    progress={goal.progressPercent}
+                    size={32}
+                    strokeWidth={2.5}
+                    color="var(--peach-400, #f0a67a)"
+                    trackColor="var(--glass-border, rgba(255,255,255,0.1))"
+                    className="shrink-0"
+                  >
+                    <span className="text-[8px] font-heading text-peach-400">
                       {goal.progressPercent}%
                     </span>
-                  </div>
+                  </ProgressRing>
                   <div className="min-w-0">
                     <p className="text-[11px] font-body text-[var(--text-secondary)] truncate">{goal.title}</p>
                     <p className="text-[10px] text-[var(--text-muted)]">

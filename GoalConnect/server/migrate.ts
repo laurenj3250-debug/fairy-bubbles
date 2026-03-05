@@ -616,9 +616,10 @@ export async function runMigrations() {
         // Create streak_freezes table if it doesn't exist
         await db.execute(sql`
           CREATE TABLE IF NOT EXISTS streak_freezes (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            count INTEGER NOT NULL DEFAULT 0,
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            freeze_count INTEGER NOT NULL DEFAULT 0,
+            last_earned_date VARCHAR(10),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMP NOT NULL DEFAULT NOW()
           )
         `);
@@ -1438,7 +1439,7 @@ export async function runMigrations() {
         category VARCHAR(20) NOT NULL CHECK (category IN ('do', 'buy', 'see', 'visit', 'learn', 'experience', 'music')),
         priority VARCHAR(10) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
         cost VARCHAR(10) CHECK (cost IN ('free', '$', '$$', '$$$')),
-        tags TEXT,
+        cups JSONB DEFAULT '[]',
         completed BOOLEAN NOT NULL DEFAULT FALSE,
         completed_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -1448,9 +1449,10 @@ export async function runMigrations() {
     // Streak Freezes table (gamification)
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS streak_freezes (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        count INTEGER NOT NULL DEFAULT 0,
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        freeze_count INTEGER NOT NULL DEFAULT 0,
+        last_earned_date VARCHAR(10),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
