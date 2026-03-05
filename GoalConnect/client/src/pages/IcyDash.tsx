@@ -226,8 +226,12 @@ export default function DashboardV4() {
     isLoading: yearlyGoalsLoading,
   } = useYearlyGoals(currentYear);
 
-  // Adventure hook for full adventure logging
+  // Streak freezes for shield display
+  const { data: freezeData } = useQuery<{ freezeCount: number; maxFreezes: number }>({
+    queryKey: ['/api/streak-freezes'],
+  });
 
+  // Adventure hook for full adventure logging
   const { createAdventure, isCreating: isCreatingAdventure } = useAdventures({
     year: currentYear,
     limit: 1
@@ -306,8 +310,10 @@ export default function DashboardV4() {
           if (isMilestone) {
             triggerConfetti('streak_milestone');
           } else {
-            const newCompletedCount = completedTodayCount + 1;
-            if (checkAllHabitsComplete(newCompletedCount, todayHabits.length)) {
+            const newCompletedCount = context?.wasCompleted
+              ? completedTodayCount - 1
+              : completedTodayCount + 1;
+            if (checkAllHabitsComplete(newCompletedCount, habits.length)) {
               triggerConfetti('all_habits_today');
             }
           }
@@ -357,12 +363,24 @@ export default function DashboardV4() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  // All habits shown on dashboard
-  const todayHabits = habits;
-
   const completedTodayCount = useMemo(() => {
-    return todayHabits.filter(h => completionMap[h.id]?.[todayStr]).length;
-  }, [todayHabits, completionMap, todayStr]);
+    return habits.filter(h => completionMap[h.id]?.[todayStr]).length;
+  }, [habits, completionMap, todayStr]);
+
+  const luxuryHabits = useMemo(() =>
+    habits.map(habit => ({
+      id: habit.id,
+      name: habit.title,
+      streak: habit.streak ?? 0,
+      days: week.dates.map(date => ({
+        date,
+        completed: completionMap[habit.id]?.[date] ?? false,
+      })),
+      completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
+      total: 7,
+    })),
+    [habits, completionMap, week.dates]
+  );
 
   // Calculate overall day streak (max streak across all habits)
   const dayStreak = useMemo(() => {
@@ -404,6 +422,36 @@ export default function DashboardV4() {
     toggleHabitMutation.mutate({ habitId, date });
   }, [toggleHabitMutation, todayStr, habits, completionMap]);
 
+  const handleAdventureSubmit = useCallback(async (input: any) => {
+    try {
+      const result = await createAdventure(input);
+      setAdventureDialogOpen(false);
+      playCompleteSound();
+      triggerHaptic('light');
+      const xpText = result?.pointsEarned ? ` +${result.pointsEarned} XP` : '';
+      toast({ title: `Adventure logged!${xpText}`, description: "Your outdoor adventure has been recorded" });
+      queryClient.invalidateQueries({ queryKey: ["/api/points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recent-outdoor-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
+    } catch (error) {
+      toast({
+        title: "Failed to log adventure",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  }, [createAdventure, toast]);
+
+  // Nearest-to-completion yearly goals for spotlight
+  const spotlightGoals = useMemo(() =>
+    yearlyGoals
+      .filter((g: any) => !g.completed && g.progressPercent > 0)
+      .sort((a: any, b: any) => b.progressPercent - a.progressPercent)
+      .slice(0, 2),
+    [yearlyGoals]
+  );
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -422,10 +470,16 @@ export default function DashboardV4() {
 
           {/* HEADER: Simplified - Logo + Stats */}
           <header className="flex items-center justify-between mb-6">
-            {/* Left: Logo */}
-            <h1 className="logo-text tracking-wider">
-              GOAL CONNECT
-            </h1>
+            {/* Left: Logo + greeting */}
+            <div>
+              <h1 className="logo-text tracking-wider">
+                GOAL CONNECT
+              </h1>
+              <p className="text-[10px] font-body text-[var(--text-muted)] mt-0.5">
+                {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}
+                {dayStreak >= 14 ? ` \u2014 ${dayStreak} days strong` : dayStreak >= 7 ? ` \u2014 week ${Math.floor(dayStreak / 7)} rolling` : ''}
+              </p>
+            </div>
 
             {/* Center: Habit Orbs (toggle habits directly) */}
             <div className="flex-shrink-0">
@@ -443,6 +497,11 @@ export default function DashboardV4() {
               <div className="text-[var(--text-muted)]">
                 <span className="font-heading text-sm text-peach-400">{dayStreak}</span>
                 <span className="ml-1 opacity-70">streak</span>
+                {freezeData && freezeData.freezeCount > 0 && (
+                  <span className="ml-1.5 text-[10px] text-blue-300/70" title={`${freezeData.freezeCount} streak freeze${freezeData.freezeCount > 1 ? 's' : ''} available`}>
+                    +{freezeData.freezeCount} shield{freezeData.freezeCount > 1 ? 's' : ''}
+                  </span>
+                )}
               </div>
               <div className="w-px h-3 bg-white/20" />
               <ResidencyCountdownWidget compact />
@@ -456,23 +515,38 @@ export default function DashboardV4() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* LEFT: Habits - spans 2 columns on desktop */}
             <div className="md:col-span-2 glass-card frost-accent !p-4 !pt-3">
-              <span className="card-title !mb-2 !text-sm">This Week</span>
+              <div className="flex items-center justify-between !mb-2">
+                <span className="card-title !mb-0 !text-sm">This Week</span>
+                {habits.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-7 h-7">
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--glass-border, rgba(255,255,255,0.1))" strokeWidth="2" />
+                        <circle
+                          cx="18" cy="18" r="15" fill="none"
+                          stroke="var(--peach-400, #f0a67a)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeDasharray={`${(completedTodayCount / habits.length) * 94.2} 94.2`}
+                          className="transition-all duration-500"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[8px] font-heading text-peach-400">
+                        {completedTodayCount}/{habits.length}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-body text-[var(--text-muted)]">
+                      {completedTodayCount === habits.length ? 'All done!' : `${habits.length - completedTodayCount} left`}
+                    </span>
+                  </div>
+                )}
+              </div>
               <div>
                 {habitsLoading ? (
                   <HabitsGridSkeleton />
                 ) : (
                   <LuxuryHabitGrid
-                    habits={todayHabits.map(habit => ({
-                      id: habit.id,
-                      name: habit.title,
-                      streak: habit.streak ?? 0,
-                      days: week.dates.map(date => ({
-                        date,
-                        completed: completionMap[habit.id]?.[date] ?? false,
-                      })),
-                      completed: week.dates.filter(date => completionMap[habit.id]?.[date]).length,
-                      total: 7,
-                    }))}
+                    habits={luxuryHabits}
                     todayIndex={week.todayIndex}
                     onToggle={handleToggleHabitForDate}
                     onHabitClick={handleViewHabitDetail}
@@ -497,6 +571,33 @@ export default function DashboardV4() {
               <NextRewardWidget />
             </div>
           </div>
+
+          {/* Goal Spotlight — nearest-to-completion yearly goals */}
+          {spotlightGoals.length > 0 && (
+            <div className="flex gap-3">
+              {spotlightGoals.map((goal: any) => (
+                <div key={goal.id} className="flex-1 glass-card frost-accent !p-3 flex items-center gap-3">
+                  <div className="relative w-8 h-8 shrink-0">
+                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                      <circle cx="18" cy="18" r="15" fill="none" stroke="var(--glass-border, rgba(255,255,255,0.1))" strokeWidth="2.5" />
+                      <circle cx="18" cy="18" r="15" fill="none" stroke="var(--peach-400, #f0a67a)" strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${goal.progressPercent * 0.942} 94.2`} />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[8px] font-heading text-peach-400">
+                      {goal.progressPercent}%
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-body text-[var(--text-secondary)] truncate">{goal.title}</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {goal.computedValue}/{goal.targetValue}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* ROW 2: Weekly & Monthly Goals (full width, compact) */}
           <WeeklyMonthlyGoalsWidget />
@@ -556,27 +657,7 @@ export default function DashboardV4() {
         <AdventureModal
           adventure={null}
           onClose={() => setAdventureDialogOpen(false)}
-          onSubmit={async (input) => {
-            try {
-              const result = await createAdventure(input);
-              setAdventureDialogOpen(false); // Only close on success
-              playCompleteSound();
-              triggerHaptic('light');
-              const xpText = result?.pointsEarned ? ` +${result.pointsEarned} XP` : '';
-              toast({ title: `Adventure logged!${xpText}`, description: "Your outdoor adventure has been recorded" });
-              queryClient.invalidateQueries({ queryKey: ["/api/points"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/recent-outdoor-activities"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/yearly-goals/with-progress"] });
-            } catch (error) {
-              toast({
-                title: "Failed to log adventure",
-                description: error instanceof Error ? error.message : "Please try again",
-                variant: "destructive"
-              });
-              // Don't close - let user retry
-              throw error; // Re-throw so AdventureModal's catch block also knows it failed
-            }
-          }}
+          onSubmit={handleAdventureSubmit}
           isSubmitting={isCreatingAdventure}
         />
       )}
