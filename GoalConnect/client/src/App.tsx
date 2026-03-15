@@ -7,32 +7,19 @@ import { MainLayout } from "@/components/MainLayout";
 import { ProgressBackground } from "@/components/ProgressBackground";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import BaseCamp from "@/pages/BaseCamp";
+
 import Habits from "@/pages/Habits";
 import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
-import Todos from "@/pages/Todos";
-// DEPRECATED: Alpine Shop replaced by personal Rewards system
-// import AlpineShop from "@/pages/AlpineShop";
-import WorldMap from "@/pages/WorldMap";
-// ARCHIVED: Alpine Expeditions (System A)
-// import ExpeditionPlanning from "@/pages/ExpeditionPlanning";
-// import ExpeditionLogbook from "@/pages/ExpeditionLogbook";
-import ExpeditionMissions from "@/pages/ExpeditionMissions";
 import DreamScroll from "@/pages/DreamScrollMountain";
 import Settings from "@/pages/Settings";
 import ImportSettings from "@/pages/ImportSettings";
-import SummitJournal from "@/pages/SummitJournal";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
-import V2Dashboard from "@/pages/V2Dashboard";
 import IcyDash from "@/pages/IcyDash";
-import WeeklyPlannerPage from "@/pages/WeeklyPlannerPage";
 import Journey from "@/pages/Journey";
-// REMOVED: Study Planner (board exam prep feature - no longer needed)
 import YearlyGoals from "@/pages/YearlyGoals";
-import ResidencyTracker from "@/pages/ResidencyTracker";
 import MediaLibrary from "@/pages/MediaLibrary";
 import Adventures from "@/pages/Adventures";
 import RewardsPage from "@/pages/Rewards";
@@ -131,13 +118,6 @@ function AppRoutes() {
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
 
-      {/* V2 Layout Experiment - no BottomNav (has own nav rail) */}
-      <Route path="/v2">
-        <RequireAuth>
-          <V2Dashboard />
-        </RequireAuth>
-      </Route>
-
       {/* Main Dashboard - IcyDash */}
       <Route path="/">
         <RequireAuth>
@@ -174,62 +154,6 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
-      <Route path="/todos">
-        <RequireAuth>
-          <MainLayout variant="sidebar">
-            <Todos />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      {/* Redirect /weekly to / */}
-      <Route path="/weekly">
-        <RequireAuth>
-          <Redirect to="/" />
-        </RequireAuth>
-      </Route>
-      <Route path="/weekly-hub">
-        <RequireAuth>
-          <Redirect to="/" />
-        </RequireAuth>
-      </Route>
-      {/* Alpine Shop deprecated — redirect to personal Rewards */}
-      <Route path="/alpine-shop">
-        <RequireAuth>
-          <Redirect to="/rewards" />
-        </RequireAuth>
-      </Route>
-      <Route path="/world-map">
-        <RequireAuth>
-          <MainLayout>
-            <WorldMap />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      {/* ARCHIVED: Alpine Expeditions (System A) - Kept for reference
-      <Route path="/expedition/plan/:mountainId">
-        <RequireAuth>
-          <MainLayout>
-            <ExpeditionPlanning />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      */}
-      <Route path="/expedition-missions">
-        <RequireAuth>
-          <MainLayout>
-            <ExpeditionMissions />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      {/* ARCHIVED: Logbook merged into main Expedition Missions page
-      <Route path="/expedition-logbook">
-        <RequireAuth>
-          <MainLayout>
-            <ExpeditionLogbook />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      */}
       <Route path="/dream-scroll">
         <RequireAuth>
           <MainLayout>
@@ -251,13 +175,6 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
-      <Route path="/summit-journal">
-        <RequireAuth>
-          <MainLayout>
-            <SummitJournal />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
       <Route path="/journey">
         <RequireAuth>
           <MainLayout variant="sidebar">
@@ -265,24 +182,11 @@ function AppRoutes() {
           </MainLayout>
         </RequireAuth>
       </Route>
-      <Route path="/planner">
-        <RequireAuth>
-          <MainLayout>
-            <WeeklyPlannerPage />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      {/* REMOVED: /study route (Study Planner board exam prep feature - no longer needed) */}
       <Route path="/yearly-goals">
         <RequireAuth>
           <MainLayout>
             <YearlyGoals />
           </MainLayout>
-        </RequireAuth>
-      </Route>
-      <Route path="/residency">
-        <RequireAuth>
-          <ResidencyTracker />
         </RequireAuth>
       </Route>
       <Route path="/media">

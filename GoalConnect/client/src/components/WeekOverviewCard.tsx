@@ -3,11 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
-import type { HabitLog, Todo, Goal, GoalUpdate } from "@shared/schema";
+import type { HabitLog, Goal, GoalUpdate } from "@shared/schema";
 
 interface WeekOverviewCardProps {
   habitLogs: HabitLog[];
-  todos: Todo[];
   goals: Goal[];
   goalUpdates?: GoalUpdate[];
 }
@@ -24,7 +23,6 @@ const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
  */
 export function WeekOverviewCard({
   habitLogs,
-  todos,
   goals,
   goalUpdates
 }: WeekOverviewCardProps) {
@@ -45,17 +43,12 @@ export function WeekOverviewCard({
       log => log.date === dateStr && log.completed
     ).length;
 
-    // Count completed todos for this day
-    const completedTodos = todos.filter(
-      todo => todo.completedAt && format(new Date(todo.completedAt), "yyyy-MM-dd") === dateStr
-    ).length;
-
     // Count goal updates for this day
     const dayGoalUpdates = goalUpdates?.filter(
       update => update.date === dateStr
     ).length || 0;
 
-    const totalActivity = completedHabits + completedTodos + dayGoalUpdates;
+    const totalActivity = completedHabits + dayGoalUpdates;
 
     return {
       date,
@@ -63,7 +56,6 @@ export function WeekOverviewCard({
       dayLabel: DAYS[i],
       isToday,
       completedHabits,
-      completedTodos,
       dayGoalUpdates,
       totalActivity,
       completionPercentage: Math.min(100, (totalActivity / 5) * 100) // Rough estimate
@@ -159,11 +151,6 @@ export function WeekOverviewCard({
                 <div>
                   <h4 className="font-semibold text-sm mb-2">Habits Completed</h4>
                   <p className="text-2xl font-bold text-primary">{selectedDay.completedHabits}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">Tasks Completed</h4>
-                  <p className="text-2xl font-bold text-primary">{selectedDay.completedTodos}</p>
                 </div>
 
                 <div>

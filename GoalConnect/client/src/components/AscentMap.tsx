@@ -4,7 +4,7 @@ import { getClimbingRank } from "@/lib/climbingRanks";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Goal, Todo } from "@shared/schema";
+import type { Goal } from "@shared/schema";
 
 // Milestone definitions for the climbing journey
 const MILESTONES = [
@@ -32,7 +32,7 @@ interface AbandonedGoal extends Goal {
 
 interface AbandonedGear {
   id: number;
-  type: 'goal' | 'todo' | 'habit';
+  type: 'goal' | 'habit';
   title: string;
   level: number;
   abandonedDate: string;
@@ -55,25 +55,16 @@ export function AscentMap() {
     queryKey: ["/api/goals/abandoned"],
   });
 
-  // Fetch abandoned todos
-  const { data: abandonedTodos = [] } = useQuery<Todo[]>({
-    queryKey: ["/api/todos/abandoned"],
-  });
-
   const reactivateMutation = useMutation({
     mutationFn: async (gear: AbandonedGear) => {
       if (gear.type === 'goal') {
         return apiRequest(`/api/goals/${gear.id}/reactivate`, "POST");
-      } else if (gear.type === 'todo') {
-        return apiRequest(`/api/todos/${gear.id}`, "PATCH", { completed: false });
       }
       return Promise.resolve();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals/abandoned"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/todos/abandoned"] });
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setReactivateDialogOpen(false);
       setSelectedGear(null);
     },
@@ -108,17 +99,7 @@ export function AscentMap() {
       abandonedDate: goal.lastUpdateDate || 'Unknown',
       icon: '🎒',
       difficulty: goal.difficulty,
-      position: calculateGearPosition(index, abandonedGoals.length + abandonedTodos.length, getLevelFromDifficulty(goal.difficulty || 'medium')),
-    })),
-    ...abandonedTodos.map((todo, index) => ({
-      id: todo.id,
-      type: 'todo' as const,
-      title: todo.title,
-      level: getLevelFromDifficulty(todo.difficulty || 'medium'),
-      abandonedDate: todo.createdAt?.toString() || 'Unknown',
-      icon: '⛏️',
-      difficulty: todo.difficulty,
-      position: calculateGearPosition(index + abandonedGoals.length, abandonedGoals.length + abandonedTodos.length, getLevelFromDifficulty(todo.difficulty || 'medium')),
+      position: calculateGearPosition(index, abandonedGoals.length, getLevelFromDifficulty(goal.difficulty || 'medium')),
     })),
   ];
 
@@ -445,10 +426,6 @@ export function AscentMap() {
                 <span className="text-lg">🎒</span>
                 <span className="text-white/70">{abandonedGoals.length} goals</span>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-lg">⛏️</span>
-                <span className="text-white/70">{abandonedTodos.length} tasks</span>
-              </div>
             </div>
           </div>
         )}
@@ -470,7 +447,7 @@ export function AscentMap() {
               <div>
                 <div className="font-bold text-xl mb-2">{selectedGear.title}</div>
                 <div className="text-sm text-slate-400 space-y-1">
-                  <div>Type: {selectedGear.type === 'goal' ? 'Goal' : 'Task'}</div>
+                  <div>Type: {selectedGear.type === 'goal' ? 'Goal' : 'Habit'}</div>
                   {selectedGear.difficulty && (
                     <div className="capitalize">Difficulty: {selectedGear.difficulty}</div>
                   )}

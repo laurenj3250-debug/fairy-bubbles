@@ -1,6 +1,6 @@
 import { getDb } from './db';
 import { sql } from 'drizzle-orm';
-import { seedMountaineeringData } from './seed-mountaineering-data';
+
 import { log } from './lib/logger';
 
 /**
@@ -1223,14 +1223,6 @@ export async function runMigrations() {
         log.error('[migrate] ⚠️  Failed to create wellness_wheel_activities table:', error);
       }
 
-      // Seed mountaineering data (regions, mountains, routes, gear) - runs even when tables exist
-      try {
-        await seedMountaineeringData();
-      } catch (error) {
-        log.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
-        // Continue anyway - seeding is optional
-      }
-
       log.info('[migrate] ℹ️  User data preserved');
       return { success: true, skipped: true };
     }
@@ -1503,13 +1495,6 @@ export async function runMigrations() {
     log.info('[migrate] ✅ Ready for new user signups');
 
     // Seed mountaineering data (regions, mountains, routes, gear)
-    try {
-      await seedMountaineeringData();
-    } catch (error) {
-      log.error('[migrate] ⚠️  Failed to seed mountaineering data:', error);
-      // Continue anyway - seeding is optional
-    }
-
     return { success: true, skipped: false };
   } catch (error) {
     log.error('[migrate] ❌ Migration failed:', error);

@@ -9,7 +9,6 @@ import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import CurrentExpeditionWidget from '@/components/CurrentExpeditionWidget';
 import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
 import { MountainHero } from '@/components/MountainHero';
 import { ForestBackground } from '@/components/ForestBackground';
@@ -178,11 +177,6 @@ export default function DashboardV4() {
       key: 'g',
       description: 'Go to Goals',
       action: () => setLocation('/goals'),
-    },
-    {
-      key: 't',
-      description: 'Go to Todos',
-      action: () => setLocation('/todos'),
     },
   ]);
 
@@ -515,9 +509,6 @@ export default function DashboardV4() {
               <ResidencyCountdownWidget compact />
             </div>
           </header>
-
-          {/* Current Expedition (if active) */}
-          <CurrentExpeditionWidget />
 
           {/* MAIN GRID: 3 columns on desktop, stacked on mobile */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

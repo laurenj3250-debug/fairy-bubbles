@@ -23,14 +23,13 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ["g", "h"], description: "Go to Habits" },
       { keys: ["g", "d"], description: "Go to Dashboard" },
       { keys: ["g", "g"], description: "Go to Goals" },
-      { keys: ["g", "t"], description: "Go to Todos" },
       { keys: ["g", "s"], description: "Go to Settings" },
     ],
   },
   {
     title: "Actions",
     shortcuts: [
-      { keys: ["n"], description: "New habit/todo (context-aware)" },
+      { keys: ["n"], description: "New habit (context-aware)" },
       { keys: ["c"], description: "Quick complete today's habit" },
       { keys: ["/"], description: "Focus search" },
       { keys: ["?"], description: "Show this help" },

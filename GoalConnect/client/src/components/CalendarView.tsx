@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, CheckCircle2, Target, ListTodo } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Habit, HabitLog, Goal, Todo } from "@shared/schema";
+import type { Habit, HabitLog, Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
 
@@ -32,10 +32,6 @@ export function CalendarView() {
     queryKey: ["/api/goals"],
   });
 
-  const { data: todos = [] } = useQuery<Todo[]>({
-    queryKey: ["/api/todos"],
-  });
-
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -55,17 +51,12 @@ export function CalendarView() {
       log.completed && log.date === dateString
     );
 
-    const todosForDate = todos.filter(todo =>
-      todo.dueDate === dateString
-    );
-
-    const goalsForDate = goals.filter(goal => 
+    const goalsForDate = goals.filter(goal =>
       format(new Date(goal.deadline), "yyyy-MM-dd") === dateString
     );
 
     return {
       habits: completedHabits,
-      todos: todosForDate,
       goals: goalsForDate,
     };
   };
@@ -116,7 +107,7 @@ export function CalendarView() {
 
           {days.map(day => {
             const items = getItemsForDate(day);
-            const hasItems = items.habits.length > 0 || items.todos.length > 0 || items.goals.length > 0;
+            const hasItems = items.habits.length > 0 || items.goals.length > 0;
             const isCurrentDay = isToday(day);
 
             return (
@@ -149,14 +140,6 @@ export function CalendarView() {
                           </span>
                         </div>
                       )}
-                      {items.todos.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <ListTodo className="w-3 h-3 text-blue-600" />
-                          <span className="text-xs text-muted-foreground">
-                            {items.todos.length}
-                          </span>
-                        </div>
-                      )}
                       {items.goals.length > 0 && (
                         <div className="flex items-center gap-1">
                           <Target className="w-3 h-3 text-orange-600" />
@@ -177,10 +160,6 @@ export function CalendarView() {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
             <span className="text-muted-foreground">Habits completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ListTodo className="w-4 h-4 text-blue-600" />
-            <span className="text-muted-foreground">Todos due</span>
           </div>
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-orange-600" />
