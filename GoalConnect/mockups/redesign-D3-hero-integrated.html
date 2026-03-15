@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>GoalConnect — Layout D3: Hero Integrated into Column Header</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burnt-orange: #c2410c;
+    --sandstone: #d4a574;
+    --coral: #f4845f;
+    --twilight: #581c87;
+    --indigo: #1e1b4b;
+    --cream: #fef3c7;
+    --glass-bg: rgba(15, 10, 30, 0.75);
+    --glass-border: rgba(212, 165, 116, 0.25);
+    --glass-glow: rgba(212, 165, 116, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1440px;
+    height: 900px;
+    overflow: hidden;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--cream);
+  }
+
+  body {
+    background: var(--indigo);
+  }
+
+  /* ── App shell ── */
+  .app {
+    width: 1440px;
+    height: 900px;
+    display: flex;
+    flex-direction: column;
+    background: var(--indigo);
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    background: rgba(15, 10, 30, 0.85);
+    border-bottom: 1px solid rgba(212, 165, 116, 0.12);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--sandstone);
+    text-transform: uppercase;
+  }
+
+  .nav-pills {
+    display: flex;
+    gap: 2px;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .nav-pill {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(254, 243, 199, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-pill.active {
+    background: rgba(194, 65, 12, 0.4);
+    color: var(--cream);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+  }
+
+  .stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 6px;
+    color: rgba(254, 243, 199, 0.7);
+    font-weight: 500;
+  }
+
+  .stat-badge .val {
+    color: var(--sandstone);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ── Main two-column area ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 55% 45%;
+    gap: 0;
+    min-height: 0;
+  }
+
+  /* ── LEFT COLUMN: Habits + Hero ── */
+  .col-left {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Desert scene background for left column */
+  .desert-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .desert-scene::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Stars */
+      radial-gradient(1px 1px at 80px 40px, rgba(254,243,199,0.5), transparent),
+      radial-gradient(1px 1px at 220px 25px, rgba(254,243,199,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 480px 18px, rgba(254,243,199,0.6), transparent),
+      radial-gradient(1px 1px at 650px 50px, rgba(254,243,199,0.3), transparent),
+      radial-gradient(1px 1px at 350px 60px, rgba(254,243,199,0.3), transparent),
+      /* Sky gradient */
+      linear-gradient(180deg,
+        #1e1b4b 0%,
+        #2e1065 12%,
+        #581c87 24%,
+        #7c2d8e 34%,
+        #9a3c5c 44%,
+        #c2410c 55%,
+        #d4a574 65%,
+        #f4845f 74%,
+        #c2410c 83%,
+        #8b3a1a 92%,
+        #4a1a0a 100%
+      );
+  }
+
+  /* Tower silhouette */
+  .tower {
+    position: absolute;
+    z-index: 1;
+  }
+
+  .tower-main {
+    right: 60px;
+    bottom: 0;
+    width: 90px;
+    height: 520px;
+    clip-path: polygon(
+      20% 100%, 15% 85%, 12% 60%, 10% 40%, 15% 20%, 20% 10%, 30% 4%, 45% 1%, 55% 0%, 65% 1%, 75% 5%, 82% 12%, 88% 25%, 90% 40%, 88% 60%, 85% 85%, 80% 100%
+    );
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 40%, #2d1208 100%);
+    opacity: 0.85;
+  }
+
+  /* Climber figure on tower */
+  .climber {
+    position: absolute;
+    right: 95px;
+    bottom: 340px;
+    z-index: 2;
+  }
+
+  .climber-body {
+    width: 6px;
+    height: 14px;
+    background: var(--coral);
+    border-radius: 3px;
+    position: relative;
+    box-shadow: 0 0 8px rgba(244, 132, 95, 0.6);
+  }
+
+  .climber-body::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 1px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--coral);
+    box-shadow: 0 0 6px rgba(244, 132, 95, 0.5);
+  }
+
+  /* Arm reaching up */
+  .climber-body::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -5px;
+    width: 2px;
+    height: 10px;
+    background: var(--coral);
+    border-radius: 1px;
+    transform: rotate(-30deg);
+    transform-origin: bottom;
+  }
+
+  /* Mesa silhouettes */
+  .mesa {
+    position: absolute;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  .mesa-left {
+    left: 0;
+    width: 140px;
+    height: 200px;
+    clip-path: polygon(0% 100%, 0% 35%, 10% 12%, 25% 5%, 45% 3%, 65% 5%, 80% 15%, 95% 40%, 100% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 50%, #2d1208 100%);
+    opacity: 0.7;
+  }
+
+  .mesa-mid {
+    left: 200px;
+    width: 100px;
+    height: 160px;
+    clip-path: polygon(5% 100%, 10% 40%, 25% 10%, 50% 3%, 75% 8%, 90% 35%, 95% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 45%, #2d1208 100%);
+    opacity: 0.55;
+  }
+
+  .mesa-far {
+    left: 380px;
+    width: 80px;
+    height: 130px;
+    clip-path: polygon(10% 100%, 15% 45%, 30% 12%, 55% 4%, 75% 10%, 88% 40%, 92% 100%);
+    background: linear-gradient(180deg, #1a0a04 0%, #2d1208 100%);
+    opacity: 0.45;
+  }
+
+  /* Ground */
+  .desert-ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(180deg, #3d1a0a 0%, #2d1208 40%, #1a0a04 100%);
+    z-index: 2;
+  }
+
+  .desert-ground::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,165,116,0.12), transparent);
+  }
+
+  /* Haze layer */
+  .desert-haze {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, transparent, rgba(194,65,12,0.06), rgba(212,165,116,0.04));
+    z-index: 3;
+  }
+
+  /* Content overlay on left column */
+  .col-left-content {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px 24px 12px;
+    gap: 12px;
+  }
+
+  /* ── Hero section (top of left column) ── */
+  .hero-section {
+    background: rgba(15, 10, 30, 0.35);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    border: 1px solid rgba(212, 165, 116, 0.15);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-shrink: 0;
+  }
+
+  .hero-text {
+    flex: 1;
+  }
+
+  .hero-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.15;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+
+  .hero-greeting {
+    font-size: 14px;
+    color: rgba(254, 243, 199, 0.65);
+    font-weight: 300;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+
+  .hero-subtext {
+    font-size: 13px;
+    color: rgba(254, 243, 199, 0.5);
+    margin-top: 4px;
+  }
+
+  /* Large hero progress ring */
+  .hero-ring {
+    width: 88px;
+    height: 88px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .hero-ring svg {
+    width: 88px;
+    height: 88px;
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 12px rgba(244, 132, 95, 0.3));
+  }
+
+  .hero-ring-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-ring-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .hero-ring-label {
+    font-size: 10px;
+    color: rgba(254, 243, 199, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  /* ── Habits grid (glass card) ── */
+  .habits-card {
+    background: rgba(15, 10, 30, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 165, 116, 0.18);
+    border-radius: 16px;
+    padding: 18px 22px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 30px rgba(212, 165, 116, 0.05),
+      inset 0 1px 0 rgba(254, 243, 199, 0.04);
+  }
+
+  .habits-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .habits-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+
+  .habits-week-label {
+    font-size: 11px;
+    color: rgba(254, 243, 199, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+  }
+
+  /* Habit grid */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 110px repeat(7, 1fr);
+    gap: 5px;
+    flex: 1;
+    align-content: start;
+  }
+
+  .grid-header {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(254, 243, 199, 0.35);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+
+  .grid-header.today {
+    color: var(--coral);
+  }
+
+  .habit-label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(254, 243, 199, 0.75);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 0;
+  }
+
+  .habit-icon {
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .habit-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 36px;
+    border-radius: 7px;
+    background: rgba(30, 27, 75, 0.35);
+    border: 1px solid rgba(212, 165, 116, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .habit-cell.done {
+    background: linear-gradient(135deg, rgba(194, 65, 12, 0.5), rgba(244, 132, 95, 0.3));
+    border-color: rgba(194, 65, 12, 0.35);
+    box-shadow: 0 0 10px rgba(194, 65, 12, 0.12);
+  }
+
+  .habit-cell.today-col {
+    border-color: rgba(244, 132, 95, 0.25);
+    background: rgba(244, 132, 95, 0.06);
+  }
+
+  .habit-cell.today-col.done {
+    background: linear-gradient(135deg, rgba(194, 65, 12, 0.6), rgba(244, 132, 95, 0.4));
+    border-color: rgba(244, 132, 95, 0.45);
+    box-shadow: 0 0 14px rgba(194, 65, 12, 0.2);
+  }
+
+  .habit-cell.future {
+    opacity: 0.25;
+    border-style: dashed;
+  }
+
+  /* ── Streak milestone strip ── */
+  .streak-strip {
+    background: rgba(15, 10, 30, 0.45);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 165, 116, 0.12);
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .streak-text {
+    font-size: 12px;
+    color: rgba(254, 243, 199, 0.6);
+    font-weight: 400;
+  }
+
+  .streak-text strong {
+    color: var(--coral);
+    font-weight: 600;
+  }
+
+  .streak-milestone {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .milestone-item {
+    text-align: center;
+  }
+
+  .milestone-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sandstone);
+    opacity: 0.25;
+    margin: 0 auto 3px;
+  }
+
+  .milestone-dot.reached {
+    opacity: 1;
+    background: var(--coral);
+    box-shadow: 0 0 6px rgba(244, 132, 95, 0.4);
+  }
+
+  .milestone-label {
+    font-size: 9px;
+    color: rgba(254, 243, 199, 0.35);
+  }
+
+  .milestone-label.next {
+    color: var(--sandstone);
+  }
+
+  /* ── RIGHT COLUMN: Goals (darker, data-dense) ── */
+  .col-right {
+    display: flex;
+    flex-direction: column;
+    background: rgba(10, 7, 22, 0.92);
+    border-left: 1px solid rgba(212, 165, 116, 0.1);
+    padding: 20px 24px 12px;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  /* Section headers for right column */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+
+  .section-year {
+    font-size: 11px;
+    color: rgba(254, 243, 199, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+  }
+
+  /* Yearly goals */
+  .goals-yearly {
+    background: rgba(15, 10, 30, 0.6);
+    border: 1px solid rgba(212, 165, 116, 0.15);
+    border-radius: 16px;
+    padding: 20px 22px 18px;
+    flex: 1;
+    box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.03);
+  }
+
+  .yearly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .goal-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(30, 27, 75, 0.35);
+    border: 1px solid rgba(212, 165, 116, 0.08);
+    transition: all 0.3s;
+  }
+
+  .goal-card:hover {
+    border-color: rgba(212, 165, 116, 0.18);
+    box-shadow: 0 0 16px rgba(212, 165, 116, 0.04);
+  }
+
+  .goal-ring {
+    width: 68px;
+    height: 68px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .goal-ring svg {
+    width: 68px;
+    height: 68px;
+    transform: rotate(-90deg);
+  }
+
+  .goal-ring .pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .goal-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .goal-sub {
+    font-size: 10.5px;
+    color: rgba(254, 243, 199, 0.35);
+    font-weight: 400;
+  }
+
+  /* Short-term goals */
+  .goals-shortterm {
+    background: rgba(15, 10, 30, 0.6);
+    border: 1px solid rgba(212, 165, 116, 0.15);
+    border-radius: 16px;
+    padding: 18px 22px;
+    flex: 1;
+    box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.03);
+  }
+
+  .shortterm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .shortterm-section h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sandstone);
+    margin-bottom: 10px;
+  }
+
+  .goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .goal-check {
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(212, 165, 116, 0.25);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  .goal-check.partial {
+    border-color: var(--coral);
+    background: rgba(244, 132, 95, 0.12);
+  }
+
+  .goal-check.on-track {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+  }
+
+  .goal-item-text {
+    color: rgba(254, 243, 199, 0.7);
+  }
+
+  .goal-item-status {
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .status-progress { color: var(--coral); }
+  .status-not-started { color: rgba(254, 243, 199, 0.25); }
+  .status-on-track { color: #22c55e; }
+
+  /* ── Bottom strip ── */
+  .bottom-strip {
+    height: 80px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 0 28px 14px;
+    flex-shrink: 0;
+    background: rgba(10, 7, 22, 0.5);
+    border-top: 1px solid rgba(212, 165, 116, 0.06);
+  }
+
+  .mini-card {
+    background: rgba(15, 10, 30, 0.7);
+    border: 1px solid rgba(212, 165, 116, 0.12);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+  }
+
+  .mini-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .mini-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mini-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(254, 243, 199, 0.35);
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+
+  .mini-value {
+    font-size: 12px;
+    color: rgba(254, 243, 199, 0.8);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-sub {
+    font-size: 9px;
+    color: rgba(254, 243, 199, 0.3);
+    margin-top: 1px;
+  }
+
+  /* Wellness dots */
+  .wellness-dots {
+    width: 36px;
+    height: 36px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .w-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    position: absolute;
+  }
+
+  .w-dot:nth-child(1) { top: 1px; left: 14px; background: #f87171; }
+  .w-dot:nth-child(2) { top: 8px; left: 26px; background: #fb923c; }
+  .w-dot:nth-child(3) { top: 22px; left: 26px; background: #a78bfa; }
+  .w-dot:nth-child(4) { top: 29px; left: 14px; background: #34d399; }
+  .w-dot:nth-child(5) { top: 22px; left: 2px; background: #60a5fa; }
+  .w-dot:nth-child(6) { top: 8px; left: 2px; background: #fbbf24; }
+
+  .mini-progress-bar {
+    width: 100%;
+    height: 2px;
+    background: rgba(254, 243, 199, 0.08);
+    border-radius: 2px;
+    margin-top: 3px;
+    overflow: hidden;
+  }
+
+  .mini-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--coral));
+  }
+
+  /* SVG gradient defs */
+  .svg-defs { position: absolute; width: 0; height: 0; }
+</style>
+</head>
+<body>
+
+<!-- Hidden SVG gradient defs -->
+<svg class="svg-defs"><defs>
+  <linearGradient id="heroRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#f4845f"/>
+    <stop offset="100%" stop-color="#c2410c"/>
+  </linearGradient>
+  <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#f4845f"/>
+    <stop offset="100%" stop-color="#fb7185"/>
+  </linearGradient>
+  <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#d4a574"/>
+    <stop offset="100%" stop-color="#fbbf24"/>
+  </linearGradient>
+  <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#c2410c"/>
+    <stop offset="100%" stop-color="#f4845f"/>
+  </linearGradient>
+  <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#581c87"/>
+    <stop offset="100%" stop-color="#a78bfa"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">Goal Connect</div>
+    </div>
+    <nav class="nav-pills">
+      <div class="nav-pill active">Dashboard</div>
+      <div class="nav-pill">Habits</div>
+      <div class="nav-pill">Goals</div>
+      <div class="nav-pill">Analytics</div>
+      <div class="nav-pill">Adventures</div>
+      <div class="nav-pill">Wishlist</div>
+      <div class="nav-pill">Wellness</div>
+      <div class="nav-pill">Settings</div>
+    </nav>
+    <div class="topbar-right">
+      <div class="stat-badge"><span class="val">1,240</span> XP</div>
+      <div class="stat-badge">&#128293; <span class="val">14</span> days</div>
+      <div class="stat-badge">Residency <span class="val">2y 3m</span></div>
+    </div>
+  </div>
+
+  <!-- Main two-column area -->
+  <div class="main">
+
+    <!-- LEFT COLUMN: Habits + Hero -->
+    <div class="col-left">
+      <!-- Desert scene background -->
+      <div class="desert-scene">
+        <div class="mesa mesa-left"></div>
+        <div class="mesa mesa-mid"></div>
+        <div class="mesa mesa-far"></div>
+        <div class="tower tower-main"></div>
+        <div class="climber"><div class="climber-body"></div></div>
+        <div class="desert-haze"></div>
+        <div class="desert-ground"></div>
+      </div>
+
+      <!-- Content overlay -->
+      <div class="col-left-content">
+
+        <!-- Hero section -->
+        <div class="hero-section">
+          <div class="hero-text">
+            <div class="hero-headline">Your Summit Awaits</div>
+            <div class="hero-greeting">Good afternoon, Lauren</div>
+            <div class="hero-subtext">3 of 5 habits complete today &middot; Keep climbing</div>
+          </div>
+          <div class="hero-ring">
+            <svg viewBox="0 0 88 88">
+              <circle cx="44" cy="44" r="36" fill="none" stroke="rgba(254,243,199,0.06)" stroke-width="5"/>
+              <circle cx="44" cy="44" r="36" fill="none" stroke="url(#heroRingGrad)" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="226.19" stroke-dashoffset="90.48"/>
+            </svg>
+            <div class="hero-ring-inner">
+              <div class="hero-ring-num">3/5</div>
+              <div class="hero-ring-label">today</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly habits card -->
+        <div class="habits-card">
+          <div class="habits-header">
+            <div class="habits-title">Weekly Habits</div>
+            <div class="habits-week-label">Mar 10 &ndash; 16</div>
+          </div>
+
+          <div class="habit-grid">
+            <!-- Header row -->
+            <div class="grid-header" style="text-align:left;">Habit</div>
+            <div class="grid-header">Mon</div>
+            <div class="grid-header">Tue</div>
+            <div class="grid-header">Wed</div>
+            <div class="grid-header">Thu</div>
+            <div class="grid-header">Fri</div>
+            <div class="grid-header today">Sat</div>
+            <div class="grid-header">Sun</div>
+
+            <!-- German -->
+            <div class="habit-label"><span class="habit-icon">&#127465;&#127466;</span> German</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell today-col done">&#10003;</div>
+            <div class="habit-cell future"></div>
+
+            <!-- Climb -->
+            <div class="habit-label"><span class="habit-icon">&#129495;</span> Climb</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell today-col"></div>
+            <div class="habit-cell future"></div>
+
+            <!-- Board Study -->
+            <div class="habit-label"><span class="habit-icon">&#128218;</span> Board Study</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell today-col done">&#10003;</div>
+            <div class="habit-cell future"></div>
+
+            <!-- Piano -->
+            <div class="habit-label"><span class="habit-icon">&#127929;</span> Piano</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell today-col"></div>
+            <div class="habit-cell future"></div>
+
+            <!-- Journal -->
+            <div class="habit-label"><span class="habit-icon">&#128221;</span> Journal</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell"></div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell done">&#10003;</div>
+            <div class="habit-cell today-col done">&#10003;</div>
+            <div class="habit-cell future"></div>
+          </div>
+        </div>
+
+        <!-- Streak strip -->
+        <div class="streak-strip">
+          <div class="streak-text"><strong>14 days strong</strong> &mdash; next milestone: 30 days</div>
+          <div class="streak-milestone">
+            <div class="milestone-item"><div class="milestone-dot reached"></div><div class="milestone-label">7</div></div>
+            <div class="milestone-item"><div class="milestone-dot reached"></div><div class="milestone-label">14</div></div>
+            <div class="milestone-item"><div class="milestone-dot"></div><div class="milestone-label next">30</div></div>
+            <div class="milestone-item"><div class="milestone-dot"></div><div class="milestone-label">60</div></div>
+            <div class="milestone-item"><div class="milestone-dot"></div><div class="milestone-label">90</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Goals (darker, data-dense) -->
+    <div class="col-right">
+
+      <!-- Yearly Goals -->
+      <div class="goals-yearly">
+        <div class="section-header">
+          <div class="section-title">Goals</div>
+          <span class="section-year">2026</span>
+        </div>
+
+        <div class="yearly-grid">
+          <!-- Pass ACVIM Boards -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.05)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#coralGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="66.95"/>
+              </svg>
+              <div class="pct">62%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Pass ACVIM Boards</div>
+              <div class="goal-sub">186 objectives &middot; 706 cards</div>
+            </div>
+          </div>
+
+          <!-- German to B2 -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.05)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#amberGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="96.76"/>
+              </svg>
+              <div class="pct">45%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">German to B2</div>
+              <div class="goal-sub">Pimsleur L3 &middot; Anki deck</div>
+            </div>
+          </div>
+
+          <!-- Climb 5.11a -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.05)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#orangeGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="38.7"/>
+              </svg>
+              <div class="pct">78%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Climb 5.11a</div>
+              <div class="goal-sub">Projecting at 5.10d outdoor</div>
+            </div>
+          </div>
+
+          <!-- Move to Glasgow -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.05)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#purpleGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="123.15"/>
+              </svg>
+              <div class="pct">30%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Move to Glasgow</div>
+              <div class="goal-sub">Residency ends &middot; visa research</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly / Weekly Goals -->
+      <div class="goals-shortterm">
+        <div class="shortterm-grid">
+          <div class="shortterm-section">
+            <h4>March Goals</h4>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Complete De Lahunta Ch. 11-13</div>
+                <div class="goal-item-status status-progress">In progress &middot; Ch. 11 done</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check"></div>
+              <div>
+                <div class="goal-item-text">Send 3 outdoor V4s</div>
+                <div class="goal-item-status status-not-started">Not started</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Finish Pimsleur L3</div>
+                <div class="goal-item-status status-progress">60% complete</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shortterm-section">
+            <h4>This Week</h4>
+            <div class="goal-item">
+              <div class="goal-check on-track">&#10003;</div>
+              <div>
+                <div class="goal-item-text">Review 50 Anki cards/day</div>
+                <div class="goal-item-status status-on-track">On track</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Log 3 climbing sessions</div>
+                <div class="goal-item-status status-progress">1/3 complete</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Practice piano 4x</div>
+                <div class="goal-item-status status-progress">2/4 complete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom strip -->
+  <div class="bottom-strip">
+    <div class="mini-card">
+      <div class="wellness-dots">
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+      </div>
+      <div class="mini-info">
+        <div class="mini-label">Wellness</div>
+        <div class="mini-value">Balanced</div>
+        <div class="mini-sub">Updated today</div>
+      </div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon" style="background:rgba(194,65,12,0.2); color:#f4845f;">&#128214;</div>
+      <div class="mini-info">
+        <div class="mini-label">Reading</div>
+        <div class="mini-value">The Living Mountain</div>
+        <div class="mini-sub">Nan Shepherd</div>
+        <div class="mini-progress-bar"><div class="mini-progress-fill" style="width:67%"></div></div>
+      </div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon" style="background:rgba(88,28,135,0.25); color:#a78bfa;">&#9968;</div>
+      <div class="mini-info">
+        <div class="mini-label">Adventures</div>
+        <div class="mini-value">Gunks</div>
+        <div class="mini-sub">3 days ago</div>
+      </div>
+    </div>
+
+    <div class="mini-card">
+      <div class="mini-icon" style="background:rgba(212,165,116,0.15); color:#d4a574;">&#127911;</div>
+      <div class="mini-info">
+        <div class="mini-label">Media</div>
+        <div class="mini-value">The Huberman Lab</div>
+        <div class="mini-sub">Currently listening</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

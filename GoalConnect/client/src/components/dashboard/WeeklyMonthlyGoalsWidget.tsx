@@ -52,7 +52,7 @@ function CompactGoalCard({ goal, onIncrement, isIncrementing }: CompactGoalCardP
         "relative px-3 py-2 rounded-lg transition-all",
         "bg-white/[0.03] border border-white/10",
         "hover:bg-white/[0.05] hover:border-white/15",
-        isComplete && "border-emerald-500/30 bg-emerald-500/5"
+        isComplete && "border-[#d4854a]/30 bg-[#d4854a]/5"
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -62,11 +62,11 @@ function CompactGoalCard({ goal, onIncrement, isIncrementing }: CompactGoalCardP
             <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/10" />
             <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
               strokeDasharray={`${progressPct} 100`}
-              className={cn("transition-all duration-500", isComplete ? "text-emerald-400" : "text-peach-400")}
+              className={cn("transition-all duration-500", isComplete ? "text-[#d4854a]" : "text-peach-400")}
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn("text-[8px] font-bold tabular-nums", isComplete ? "text-emerald-400" : "text-peach-400")}>
+            <span className={cn("text-[8px] font-bold tabular-nums", isComplete ? "text-[#d4854a]" : "text-peach-400")}>
               {progressPct}%
             </span>
           </div>
@@ -76,7 +76,7 @@ function CompactGoalCard({ goal, onIncrement, isIncrementing }: CompactGoalCardP
         <div className="flex-1 min-w-0">
           <p className={cn(
             "text-xs font-medium truncate leading-tight",
-            isComplete ? "text-emerald-300" : "text-[var(--text-primary)]"
+            isComplete ? "text-[#d4854a]" : "text-[var(--text-primary)]"
           )}>
             {shortTitle}
           </p>

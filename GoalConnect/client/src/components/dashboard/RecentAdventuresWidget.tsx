@@ -125,7 +125,7 @@ export function RecentAdventuresWidget({ onLogAdventure }: RecentAdventuresWidge
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-peach-500/10 to-orange-500/10">
                   {activity.type === "climbing_day" ? (
-                    <Snowflake className="w-6 h-6 text-sky-400/50" />
+                    <Snowflake className="w-6 h-6 text-[#d4854a]/50" />
                   ) : (
                     <Mountain className="w-6 h-6 text-peach-400/50" />
                   )}

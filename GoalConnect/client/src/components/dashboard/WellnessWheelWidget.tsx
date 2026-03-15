@@ -28,7 +28,7 @@ export function WellnessWheelWidget() {
           </div>
           <div className="flex items-center gap-1">
             {checkedIn ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">checked in</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#d4854a]/20 text-[#d4854a]">checked in</span>
             ) : (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">check in</span>
             )}

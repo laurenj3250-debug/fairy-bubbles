@@ -134,7 +134,7 @@ export default function NextRewardWidget() {
               <button
                 onClick={() => redeemMutation.mutate(nextReward.id)}
                 disabled={redeemMutation.isPending}
-                className="text-xs font-medium text-emerald-400 hover:text-emerald-300 disabled:opacity-50 flex items-center gap-1 min-h-[44px] px-2"
+                className="text-xs font-medium text-[#d4854a] hover:text-[#e0995e] disabled:opacity-50 flex items-center gap-1 min-h-[44px] px-2"
               >
                 <Check className="w-3 h-3" />
                 {redeemMutation.isPending ? "..." : "Redeem"}

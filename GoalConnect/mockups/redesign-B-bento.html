@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>GoalConnect — Desert Bento Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --burnt-orange: #c2410c;
+    --sandstone: #d4a574;
+    --coral: #f4845f;
+    --twilight: #581c87;
+    --indigo: #1e1b4b;
+    --cream: #fef3c7;
+    --card-bg: rgba(15, 10, 30, 0.7);
+    --card-border: rgba(212, 165, 116, 0.2);
+    --card-border-hover: rgba(212, 165, 116, 0.35);
+    --gap: 8px;
+    --radius: 12px;
+    --text-dim: rgba(254, 243, 199, 0.5);
+    --text-mid: rgba(254, 243, 199, 0.7);
+    --text-bright: #fef3c7;
+  }
+
+  html, body {
+    width: 1440px;
+    height: 900px;
+    overflow: hidden;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--cream);
+  }
+
+  body {
+    background: linear-gradient(
+      180deg,
+      #0c0a1a 0%,
+      #1e1b4b 15%,
+      #312e81 25%,
+      #581c87 35%,
+      #7c3aed 42%,
+      #a855f7 48%,
+      #f4845f 55%,
+      #fb923c 60%,
+      #c2410c 68%,
+      #9a3412 75%,
+      #7c2d12 82%,
+      #6b2710 90%,
+      #451a0a 100%
+    );
+    position: relative;
+  }
+
+  /* Stars in the sky */
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background-image:
+      radial-gradient(1px 1px at 120px 60px, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 350px 30px, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 580px 80px, rgba(255,255,255,0.9), transparent),
+      radial-gradient(1px 1px at 780px 45px, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 950px 90px, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1.5px 1.5px at 1100px 35px, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 1280px 70px, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 200px 120px, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 680px 130px, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 1350px 100px, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 450px 150px, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 850px 20px, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 1050px 140px, rgba(255,255,255,0.4), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Desert tower silhouettes */
+  body::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 55%;
+    background:
+      /* Tall tower left */
+      linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(69,26,10,0.6) 20%, rgba(69,26,10,0.8) 100%) no-repeat 180px bottom / 60px 300px,
+      /* Mesa center-left */
+      linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(80,30,12,0.5) 40%, rgba(80,30,12,0.7) 100%) no-repeat 400px bottom / 200px 200px,
+      /* Spire center */
+      linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(60,22,8,0.4) 10%, rgba(60,22,8,0.6) 100%) no-repeat 750px bottom / 40px 350px,
+      /* Butte right */
+      linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(75,28,10,0.5) 30%, rgba(75,28,10,0.7) 100%) no-repeat 1050px bottom / 180px 250px,
+      /* Small tower far right */
+      linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(65,24,9,0.4) 25%, rgba(65,24,9,0.6) 100%) no-repeat 1320px bottom / 50px 280px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dashboard {
+    position: relative;
+    z-index: 1;
+    width: 1440px;
+    height: 900px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 160px 1fr 1fr;
+    gap: var(--gap);
+  }
+
+  .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.3s ease;
+  }
+
+  .card:hover {
+    border-color: var(--card-border-hover);
+  }
+
+  .card-header {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--sandstone);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-header .icon {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  /* ─── Card 1: Header / Greeting ─── */
+  .card-greeting {
+    grid-column: 1 / 4;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 28px;
+  }
+
+  .logo-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--coral), var(--burnt-orange));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--cream);
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(244, 132, 95, 0.3);
+  }
+
+  .greeting-text h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 28px;
+    color: var(--cream);
+    line-height: 1.2;
+  }
+
+  .greeting-text p {
+    font-size: 14px;
+    color: var(--text-mid);
+    margin-top: 4px;
+  }
+
+  .quick-stats {
+    display: flex;
+    gap: 32px;
+    margin-left: auto;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--coral);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ─── Card 2: Countdown ─── */
+  .card-countdown {
+    grid-column: 4;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .countdown-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 54px;
+    background: linear-gradient(135deg, var(--coral), var(--sandstone));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+
+  .countdown-label {
+    font-size: 12px;
+    color: var(--text-mid);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .countdown-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ─── Card 3: Habits Grid ─── */
+  .card-habits {
+    grid-column: 1 / 3;
+    grid-row: 2 / 4;
+  }
+
+  .habits-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 0;
+    font-size: 12px;
+  }
+
+  .habits-grid .day-header {
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    padding-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .habits-grid .day-header.today {
+    color: var(--coral);
+    font-weight: 600;
+  }
+
+  .habits-grid .corner { /* empty top-left cell */ }
+
+  .habit-name {
+    font-size: 12px;
+    color: var(--text-mid);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(212, 165, 116, 0.08);
+  }
+
+  .habit-name .habit-icon {
+    font-size: 14px;
+  }
+
+  .habit-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    border-top: 1px solid rgba(212, 165, 116, 0.08);
+  }
+
+  .dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(212, 165, 116, 0.2);
+    position: relative;
+  }
+
+  .dot.filled {
+    background: linear-gradient(135deg, var(--coral), var(--burnt-orange));
+    border-color: transparent;
+    box-shadow: 0 0 8px rgba(244, 132, 95, 0.3);
+  }
+
+  .dot.filled::after {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .dot.partial {
+    background: rgba(244, 132, 95, 0.3);
+    border-color: rgba(244, 132, 95, 0.5);
+  }
+
+  .dot.future {
+    border-color: rgba(212, 165, 116, 0.1);
+  }
+
+  .habit-streak {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212, 165, 116, 0.1);
+    display: flex;
+    gap: 16px;
+  }
+
+  .streak-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .streak-item .flame {
+    font-size: 14px;
+  }
+
+  .streak-count {
+    font-weight: 600;
+    color: var(--coral);
+  }
+
+  /* ─── Card 4: Goals Spotlight ─── */
+  .card-goals {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .goal-item {
+    margin-bottom: 14px;
+  }
+
+  .goal-item:last-child { margin-bottom: 0; }
+
+  .goal-title {
+    font-size: 13px;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .goal-bar-bg {
+    height: 6px;
+    background: rgba(212, 165, 116, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--coral));
+    transition: width 0.6s ease;
+  }
+
+  .goal-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ─── Card 5: Wellness Wheel ─── */
+  .card-wellness {
+    grid-column: 4;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wheel-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+  }
+
+  .wheel-segment {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 70px; height: 70px;
+    transform-origin: 0 0;
+  }
+
+  .wheel-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* SVG wheel */
+  .wheel-svg {
+    width: 160px;
+    height: 160px;
+  }
+
+  /* ─── Card 6: Recent Adventures ─── */
+  .card-adventures {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .adventure-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(212, 165, 116, 0.08);
+  }
+
+  .adventure-item:last-child { border-bottom: none; }
+
+  .adventure-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .adventure-text {
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.4;
+  }
+
+  .adventure-text strong {
+    color: var(--text-bright);
+    font-weight: 500;
+  }
+
+  .adventure-date {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ─── Card 7: Currently Reading ─── */
+  .card-reading {
+    grid-column: 4;
+    grid-row: 3;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .book-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .book-item:last-child { margin-bottom: 0; }
+
+  .book-cover {
+    width: 36px;
+    height: 50px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .book-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .book-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-bright);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .book-author {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .book-progress {
+    height: 4px;
+    background: rgba(212, 165, 116, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .book-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--twilight), #a855f7);
+  }
+
+  /* ─── Yearly Goals Card ─── */
+  /* Removed — folded into row 3 via adventures + reading */
+
+  /* ─── Glow accents ─── */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(244, 132, 95, 0.3), transparent);
+    pointer-events: none;
+  }
+
+  /* ─── Scrollbar kill ─── */
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ═══ GREETING + STATS ═══ -->
+  <div class="card card-greeting">
+    <div class="logo-mark">GC</div>
+    <div class="greeting-text">
+      <h1>Good evening, Lauren</h1>
+      <p>Sunday, March 15 &mdash; Week 11 of 2026</p>
+    </div>
+    <div class="quick-stats">
+      <div class="stat">
+        <div class="stat-value">87<span style="font-size:18px">%</span></div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">14</div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4.2</div>
+        <div class="stat-label">Avg Score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RESIDENCY COUNTDOWN ═══ -->
+  <div class="card card-countdown">
+    <div class="card-header"><span class="icon">&#9201;</span> Countdown</div>
+    <div class="countdown-number">127</div>
+    <div class="countdown-label">Days Remaining</div>
+    <div class="countdown-sub">Residency ends Jul 20, 2026</div>
+  </div>
+
+  <!-- ═══ HABITS GRID ═══ -->
+  <div class="card card-habits">
+    <div class="card-header"><span class="icon">&#9632;</span> Weekly Habits</div>
+    <div class="habits-grid">
+      <!-- Day headers -->
+      <div class="corner"></div>
+      <div class="day-header">Mon</div>
+      <div class="day-header">Tue</div>
+      <div class="day-header">Wed</div>
+      <div class="day-header">Thu</div>
+      <div class="day-header">Fri</div>
+      <div class="day-header today">Sat</div>
+      <div class="day-header">Sun</div>
+
+      <!-- Habit 1: German -->
+      <div class="habit-name"><span class="habit-icon">&#127758;</span> German Study</div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot future"></div></div>
+
+      <!-- Habit 2: Exercise -->
+      <div class="habit-name"><span class="habit-icon">&#127947;</span> Exercise</div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot future"></div></div>
+
+      <!-- Habit 3: Board Study -->
+      <div class="habit-name"><span class="habit-icon">&#128218;</span> Board Study</div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot partial"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot future"></div></div>
+
+      <!-- Habit 4: Piano -->
+      <div class="habit-name"><span class="habit-icon">&#127929;</span> Piano</div>
+      <div class="habit-cell"><div class="dot"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot future"></div></div>
+
+      <!-- Habit 5: Meditation -->
+      <div class="habit-name"><span class="habit-icon">&#128993;</span> Meditation</div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot filled"></div></div>
+      <div class="habit-cell"><div class="dot partial"></div></div>
+      <div class="habit-cell"><div class="dot future"></div></div>
+    </div>
+
+    <div class="habit-streak">
+      <div class="streak-item">
+        <span class="flame">&#128293;</span>
+        German: <span class="streak-count">14 days</span>
+      </div>
+      <div class="streak-item">
+        <span class="flame">&#128293;</span>
+        Meditation: <span class="streak-count">9 days</span>
+      </div>
+      <div class="streak-item">
+        <span class="flame">&#128293;</span>
+        Board Study: <span class="streak-count">6 days</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ GOALS SPOTLIGHT ═══ -->
+  <div class="card card-goals">
+    <div class="card-header"><span class="icon">&#9733;</span> Goals Spotlight</div>
+
+    <div class="goal-item">
+      <div class="goal-title">Pass ACVIM Boards</div>
+      <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 62%"></div></div>
+      <div class="goal-meta"><span>62% study plan</span><span>Jul 2026</span></div>
+    </div>
+
+    <div class="goal-item">
+      <div class="goal-title">German B2</div>
+      <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 45%"></div></div>
+      <div class="goal-meta"><span>A2+ current</span><span>Dec 2026</span></div>
+    </div>
+
+    <div class="goal-item">
+      <div class="goal-title">Climb 5.11a Outdoors</div>
+      <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 78%"></div></div>
+      <div class="goal-meta"><span>Sent 5.10d</span><span>Oct 2026</span></div>
+    </div>
+
+    <div class="goal-item">
+      <div class="goal-title">Move to Glasgow</div>
+      <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 30%"></div></div>
+      <div class="goal-meta"><span>Planning phase</span><span>Aug 2026</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ WELLNESS WHEEL ═══ -->
+  <div class="card card-wellness">
+    <div class="card-header"><span class="icon">&#9775;</span> Wellness Wheel</div>
+    <svg class="wheel-svg" viewBox="0 0 160 160">
+      <defs>
+        <radialGradient id="glow">
+          <stop offset="0%" stop-color="rgba(244,132,95,0.15)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+      </defs>
+      <circle cx="80" cy="80" r="70" fill="url(#glow)" stroke="rgba(212,165,116,0.1)" stroke-width="0.5"/>
+      <circle cx="80" cy="80" r="50" fill="none" stroke="rgba(212,165,116,0.06)" stroke-width="0.5"/>
+      <circle cx="80" cy="80" r="30" fill="none" stroke="rgba(212,165,116,0.06)" stroke-width="0.5"/>
+
+      <!-- 6 segments: Body, Adventure, Novelty, Soul, People, Mastery -->
+      <!-- Body -->
+      <line x1="80" y1="80" x2="80" y2="15" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="80" cy="28" r="5" fill="rgba(244,132,95,0.8)"/>
+      <text x="80" y="8" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">Body</text>
+
+      <!-- Adventure -->
+      <line x1="80" y1="80" x2="136" y2="47" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="127" cy="52" r="5" fill="rgba(194,65,12,0.8)"/>
+      <text x="148" y="44" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">Adventure</text>
+
+      <!-- Novelty -->
+      <line x1="80" y1="80" x2="136" y2="113" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="118" cy="100" r="5" fill="rgba(168,85,247,0.8)"/>
+      <text x="148" y="122" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">Novelty</text>
+
+      <!-- Soul -->
+      <line x1="80" y1="80" x2="80" y2="145" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="80" cy="120" r="5" fill="rgba(88,28,135,0.8)"/>
+      <text x="80" y="155" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">Soul</text>
+
+      <!-- People -->
+      <line x1="80" y1="80" x2="24" y2="113" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="38" cy="103" r="5" fill="rgba(212,165,116,0.8)"/>
+      <text x="14" y="122" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">People</text>
+
+      <!-- Mastery -->
+      <line x1="80" y1="80" x2="24" y2="47" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>
+      <circle cx="32" cy="50" r="5" fill="rgba(244,132,95,0.6)"/>
+      <text x="10" y="40" text-anchor="middle" fill="rgba(254,243,199,0.5)" font-size="8" font-family="Source Sans 3">Mastery</text>
+
+      <!-- Center dot -->
+      <circle cx="80" cy="80" r="3" fill="rgba(254,243,199,0.3)"/>
+    </svg>
+    <div style="display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; justify-content: center;">
+      <div class="wheel-label" style="color: rgba(244,132,95,0.8);">4.5 Body</div>
+      <div class="wheel-label" style="color: rgba(194,65,12,0.8);">3.8 Adv</div>
+      <div class="wheel-label" style="color: rgba(168,85,247,0.8);">3.2 Nov</div>
+      <div class="wheel-label" style="color: rgba(88,28,135,0.9);">4.0 Soul</div>
+      <div class="wheel-label" style="color: rgba(212,165,116,0.9);">3.5 Ppl</div>
+      <div class="wheel-label" style="color: rgba(244,132,95,0.7);">4.2 Mstr</div>
+    </div>
+  </div>
+
+  <!-- ═══ RECENT ADVENTURES ═══ -->
+  <div class="card card-adventures">
+    <div class="card-header"><span class="icon">&#9978;</span> Recent Adventures</div>
+
+    <div class="adventure-item">
+      <div class="adventure-icon">&#129495;</div>
+      <div>
+        <div class="adventure-text"><strong>Red Rock Bouldering</strong> &mdash; V3 send on Monkey Bar</div>
+        <div class="adventure-date">Mar 12, 2026</div>
+      </div>
+    </div>
+
+    <div class="adventure-item">
+      <div class="adventure-icon">&#127956;</div>
+      <div>
+        <div class="adventure-text"><strong>Hartshorne Woods</strong> &mdash; 6mi trail run, sunrise</div>
+        <div class="adventure-date">Mar 9, 2026</div>
+      </div>
+    </div>
+
+    <div class="adventure-item">
+      <div class="adventure-icon">&#127929;</div>
+      <div>
+        <div class="adventure-text"><strong>Open mic night</strong> &mdash; Played Comptine d'un autre ete</div>
+        <div class="adventure-date">Mar 5, 2026</div>
+      </div>
+    </div>
+
+    <div class="adventure-item">
+      <div class="adventure-icon">&#9992;</div>
+      <div>
+        <div class="adventure-text"><strong>Glasgow trip booked</strong> &mdash; Apr 18-25</div>
+        <div class="adventure-date">Mar 1, 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CURRENTLY READING ═══ -->
+  <div class="card card-reading">
+    <div class="card-header"><span class="icon">&#128214;</span> Currently Reading</div>
+
+    <div class="book-item">
+      <div class="book-cover" style="background: linear-gradient(135deg, #4c1d95, #7c3aed);">&#128218;</div>
+      <div class="book-info">
+        <div class="book-title">de Lahunta's Vet Neuroanatomy</div>
+        <div class="book-author">Glass & Kent</div>
+        <div class="book-progress"><div class="book-progress-fill" style="width: 72%"></div></div>
+      </div>
+    </div>
+
+    <div class="book-item">
+      <div class="book-cover" style="background: linear-gradient(135deg, #9a3412, #c2410c);">&#128213;</div>
+      <div class="book-info">
+        <div class="book-title">Kafka am Strand</div>
+        <div class="book-author">Murakami (German ed.)</div>
+        <div class="book-progress"><div class="book-progress-fill" style="width: 35%"></div></div>
+      </div>
+    </div>
+
+    <div class="book-item">
+      <div class="book-cover" style="background: linear-gradient(135deg, #1e3a5f, #2563eb);">&#128216;</div>
+      <div class="book-info">
+        <div class="book-title">The Comfort Crisis</div>
+        <div class="book-author">Michael Easter</div>
+        <div class="book-progress"><div class="book-progress-fill" style="width: 58%"></div></div>
+      </div>
+    </div>
+
+    <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(212,165,116,0.08);">
+      <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">2026 Reading Goal</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="goal-bar-bg" style="flex:1;"><div class="goal-bar-fill" style="width: 29%; background: linear-gradient(90deg, var(--twilight), #a855f7);"></div></div>
+        <span style="font-size: 11px; color: var(--text-mid);">7 / 24</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

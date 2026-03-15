@@ -118,12 +118,10 @@ function AppRoutes() {
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
 
-      {/* Main Dashboard - IcyDash */}
+      {/* Main Dashboard - IcyDash (no MainLayout — has its own nav) */}
       <Route path="/">
         <RequireAuth>
-          <MainLayout variant="sidebar">
-            <IcyDash />
-          </MainLayout>
+          <IcyDash />
         </RequireAuth>
       </Route>
       <Route path="/habits">

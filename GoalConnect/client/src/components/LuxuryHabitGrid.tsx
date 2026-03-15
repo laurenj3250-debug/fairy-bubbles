@@ -33,11 +33,11 @@ export function LuxuryHabitGrid({
   if (habits.length === 0) {
     return (
       <div className={cn("flex flex-col items-center justify-center py-8 gap-3", className)}>
-        <div className="w-10 h-10 rounded-full bg-[var(--peach-400,#f0a67a)]/10 flex items-center justify-center">
-          <Flame className="w-5 h-5 text-[var(--peach-400,#f0a67a)]" />
+        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(212,133,74,0.1)' }}>
+          <Flame className="w-5 h-5" style={{ color: '#d4854a' }} />
         </div>
-        <p className="font-body text-sm text-[var(--text-muted)]">No habits yet</p>
-        <Link href="/habits" className="flex items-center gap-1 text-xs text-[var(--peach-400,#f0a67a)] hover:underline">
+        <p className="font-body text-sm" style={{ color: 'rgba(245,230,208,0.5)' }}>No habits yet</p>
+        <Link href="/habits" className="flex items-center gap-1 text-xs hover:underline" style={{ color: '#d4854a' }}>
           <Plus className="w-3 h-3" /> Create your first habit
         </Link>
       </div>
@@ -53,10 +53,11 @@ export function LuxuryHabitGrid({
           {dayLabels.map((day, i) => (
             <span
               key={i}
-              className={cn(
-                "w-4 text-center font-heading-sc text-[9px]",
-                i === todayIndex ? "text-peach-400" : "text-[var(--text-muted)]"
-              )}
+              className="w-4 text-center text-[9px]"
+              style={{
+                fontFamily: 'var(--font-heading-sc, var(--font-heading, system-ui))',
+                color: i === todayIndex ? '#d4854a' : 'rgba(245,230,208,0.4)',
+              }}
             >
               {day}
             </span>
@@ -73,21 +74,28 @@ export function LuxuryHabitGrid({
               role="rowheader"
               onClick={() => onHabitClick?.(habit.id)}
               className={cn(
-                "font-body text-[11px] text-[var(--text-secondary)] truncate text-left flex-1 min-w-0",
-                onHabitClick && "cursor-pointer hover:text-peach-400 transition-colors"
+                "text-[11px] truncate text-left flex-1 min-w-0 transition-colors",
+                onHabitClick && "cursor-pointer"
               )}
+              style={{
+                fontFamily: 'var(--font-body, system-ui)',
+                color: '#f5e6d0',
+              }}
+              onMouseEnter={(e) => { if (onHabitClick) (e.target as HTMLElement).style.color = '#d4854a'; }}
+              onMouseLeave={(e) => { if (onHabitClick) (e.target as HTMLElement).style.color = '#f5e6d0'; }}
               title={habit.name}
             >
               {habit.name}
             </button>
             {habit.streak && habit.streak > 0 && (
               <span
-                className={cn(
-                  "flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0",
-                  habit.streak >= 30 ? "bg-orange-500/20 text-orange-400" :
-                  habit.streak >= 7 ? "bg-amber-500/20 text-amber-400" :
-                  "bg-white/10 text-[var(--text-muted)]"
-                )}
+                className="flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0"
+                style={{
+                  background: habit.streak >= 30 ? 'rgba(212,133,74,0.25)' :
+                    habit.streak >= 7 ? 'rgba(212,133,74,0.2)' :
+                    'rgba(245,230,208,0.1)',
+                  color: habit.streak >= 7 ? '#d4854a' : 'rgba(245,230,208,0.5)',
+                }}
                 title={`${habit.streak} day streak`}
               >
                 <Flame className="w-2.5 h-2.5" />
@@ -107,12 +115,14 @@ export function LuxuryHabitGrid({
                 aria-label={`${habit.name} on ${fullDayNames[j]}: ${day.completed ? 'completed' : 'not completed'}`}
                 className={cn(
                   "w-4 h-4 rounded-full transition-all flex items-center justify-center",
-                  day.completed
-                    ? "bg-peach-400 shadow-[0_0_8px_rgba(228,168,128,0.5)]"
-                    : "bg-white/15",
-                  j === todayIndex && !day.completed && "ring-1 ring-peach-400/50",
                   onToggle && "cursor-pointer hover:scale-110"
                 )}
+                style={{
+                  background: day.completed ? '#d4854a' : 'rgba(245,230,208,0.15)',
+                  boxShadow: day.completed ? '0 0 8px rgba(212,133,74,0.5)' : 'none',
+                  outline: j === todayIndex && !day.completed ? '1px solid rgba(212,133,74,0.5)' : 'none',
+                  outlineOffset: '1px',
+                }}
               />
             ))}
           </div>

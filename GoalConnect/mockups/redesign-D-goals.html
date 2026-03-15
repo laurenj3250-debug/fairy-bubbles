@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>GoalConnect — Layout D: Goals-Prominent Hybrid</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burnt-orange: #c2410c;
+    --sandstone: #d4a574;
+    --coral: #f4845f;
+    --twilight: #581c87;
+    --indigo: #1e1b4b;
+    --cream: #fef3c7;
+    --glass-bg: rgba(15, 10, 30, 0.75);
+    --glass-border: rgba(212, 165, 116, 0.25);
+    --glass-glow: rgba(212, 165, 116, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1440px;
+    height: 900px;
+    overflow: hidden;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--cream);
+  }
+
+  body {
+    background: var(--indigo);
+    position: relative;
+  }
+
+  /* ── Desert landscape background ── */
+  .desert-bg {
+    position: fixed;
+    inset: 0;
+    width: 1440px;
+    height: 900px;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  /* Sky layers */
+  .desert-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Stars */
+      radial-gradient(1px 1px at 120px 80px, rgba(254,243,199,0.5), transparent),
+      radial-gradient(1px 1px at 350px 45px, rgba(254,243,199,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 780px 30px, rgba(254,243,199,0.6), transparent),
+      radial-gradient(1px 1px at 1100px 60px, rgba(254,243,199,0.3), transparent),
+      radial-gradient(1px 1px at 1300px 90px, rgba(254,243,199,0.5), transparent),
+      radial-gradient(1px 1px at 500px 110px, rgba(254,243,199,0.3), transparent),
+      radial-gradient(1px 1px at 950px 75px, rgba(254,243,199,0.4), transparent),
+      /* Sky gradient */
+      linear-gradient(180deg,
+        #1e1b4b 0%,
+        #2e1065 15%,
+        #581c87 28%,
+        #7c2d8e 38%,
+        #9a3c5c 48%,
+        #c2410c 58%,
+        #d4a574 68%,
+        #f4845f 76%,
+        #c2410c 85%,
+        #8b3a1a 92%,
+        #4a1a0a 100%
+      );
+  }
+
+  /* Mesa/tower silhouettes */
+  .mesa {
+    position: absolute;
+    bottom: 0;
+    background: #1a0a04;
+    z-index: 1;
+  }
+
+  .mesa-1 {
+    left: 50px; width: 180px; height: 320px;
+    clip-path: polygon(10% 100%, 5% 30%, 15% 8%, 25% 5%, 35% 3%, 50% 2%, 65% 4%, 75% 6%, 85% 10%, 90% 25%, 95% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 40%, #2d1208 100%);
+    opacity: 0.9;
+  }
+
+  .mesa-2 {
+    left: 280px; width: 140px; height: 250px;
+    clip-path: polygon(5% 100%, 8% 40%, 20% 10%, 40% 4%, 60% 3%, 80% 8%, 92% 35%, 95% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1f0d06 50%, #2d1208 100%);
+    opacity: 0.7;
+  }
+
+  .mesa-3 {
+    right: 100px; width: 220px; height: 380px;
+    clip-path: polygon(8% 100%, 5% 35%, 12% 12%, 30% 4%, 45% 2%, 55% 1.5%, 70% 3%, 82% 10%, 92% 30%, 95% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 35%, #2d1208 100%);
+    opacity: 0.85;
+  }
+
+  .mesa-4 {
+    right: 380px; width: 160px; height: 200px;
+    clip-path: polygon(0% 100%, 3% 50%, 15% 15%, 40% 5%, 65% 4%, 85% 12%, 97% 45%, 100% 100%);
+    background: linear-gradient(180deg, #1a0a04 0%, #2d1208 100%);
+    opacity: 0.6;
+  }
+
+  .mesa-5 {
+    left: 550px; width: 100px; height: 280px;
+    clip-path: polygon(15% 100%, 18% 25%, 30% 6%, 50% 2%, 70% 5%, 82% 20%, 85% 100%);
+    background: linear-gradient(180deg, #0d0604 0%, #1a0a04 45%, #2d1208 100%);
+    opacity: 0.75;
+  }
+
+  /* Ground plane */
+  .ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(180deg, #3d1a0a 0%, #2d1208 40%, #1a0a04 100%);
+    z-index: 2;
+  }
+
+  .ground::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(212,165,116,0.15), transparent);
+  }
+
+  /* Atmospheric haze */
+  .haze {
+    position: absolute;
+    bottom: 100px;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(180deg, transparent, rgba(194,65,12,0.08), rgba(212,165,116,0.05));
+    z-index: 3;
+  }
+
+  /* ── App shell ── */
+  .app {
+    position: relative;
+    z-index: 10;
+    width: 1440px;
+    height: 900px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    background: rgba(15, 10, 30, 0.6);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(212, 165, 116, 0.12);
+    flex-shrink: 0;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--sandstone);
+    text-transform: uppercase;
+  }
+
+  .greeting {
+    font-size: 13px;
+    color: rgba(254, 243, 199, 0.5);
+    font-weight: 300;
+  }
+
+  .nav-pills {
+    display: flex;
+    gap: 2px;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .nav-pill {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(254, 243, 199, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-pill.active {
+    background: rgba(194, 65, 12, 0.4);
+    color: var(--cream);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 12px;
+  }
+
+  .stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 6px;
+    color: rgba(254, 243, 199, 0.7);
+    font-weight: 500;
+  }
+
+  .stat-badge .val {
+    color: var(--sandstone);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ── Main two-column area ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px 28px 12px;
+    min-height: 0;
+  }
+
+  /* Glass card base */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow:
+      0 0 30px var(--glass-glow),
+      inset 0 1px 0 rgba(254, 243, 199, 0.05);
+  }
+
+  /* ── LEFT COLUMN: This Week ── */
+  .col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .col-left .glass {
+    padding: 22px 24px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+
+  /* Mini progress ring in header */
+  .header-ring {
+    width: 44px;
+    height: 44px;
+    position: relative;
+  }
+
+  .header-ring svg {
+    width: 44px;
+    height: 44px;
+    transform: rotate(-90deg);
+  }
+
+  .header-ring .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  /* Weekly habit grid */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 6px;
+    flex: 1;
+  }
+
+  .grid-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(254, 243, 199, 0.4);
+    text-align: center;
+    padding-bottom: 6px;
+  }
+
+  .grid-header.today {
+    color: var(--coral);
+  }
+
+  .habit-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(254, 243, 199, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .habit-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .habit-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 42px;
+    border-radius: 8px;
+    background: rgba(30, 27, 75, 0.4);
+    border: 1px solid rgba(212, 165, 116, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .habit-cell.done {
+    background: linear-gradient(135deg, rgba(194, 65, 12, 0.5), rgba(244, 132, 95, 0.3));
+    border-color: rgba(194, 65, 12, 0.4);
+    box-shadow: 0 0 12px rgba(194, 65, 12, 0.15);
+  }
+
+  .habit-cell.today-col {
+    border-color: rgba(244, 132, 95, 0.3);
+    background: rgba(244, 132, 95, 0.08);
+  }
+
+  .habit-cell.today-col.done {
+    background: linear-gradient(135deg, rgba(194, 65, 12, 0.6), rgba(244, 132, 95, 0.4));
+    border-color: rgba(244, 132, 95, 0.5);
+    box-shadow: 0 0 16px rgba(194, 65, 12, 0.25);
+  }
+
+  .habit-cell.future {
+    opacity: 0.3;
+    border-style: dashed;
+  }
+
+  /* Streak strip */
+  .streak-strip {
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .streak-text {
+    font-size: 13px;
+    color: rgba(254, 243, 199, 0.7);
+    font-weight: 400;
+  }
+
+  .streak-text strong {
+    color: var(--coral);
+    font-weight: 600;
+  }
+
+  .streak-milestone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .milestone-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sandstone);
+    opacity: 0.3;
+  }
+
+  .milestone-dot.reached {
+    opacity: 1;
+    background: var(--coral);
+    box-shadow: 0 0 8px rgba(244, 132, 95, 0.4);
+  }
+
+  .milestone-label {
+    font-size: 10px;
+    color: rgba(254, 243, 199, 0.4);
+    text-align: center;
+  }
+
+  .milestone-label.next {
+    color: var(--sandstone);
+  }
+
+  /* ── RIGHT COLUMN: Goals ── */
+  .col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .goals-yearly {
+    padding: 22px 24px 18px;
+    flex: 1;
+  }
+
+  .yearly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 2px;
+  }
+
+  .goal-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(30, 27, 75, 0.4);
+    border: 1px solid rgba(212, 165, 116, 0.1);
+    transition: all 0.3s;
+  }
+
+  .goal-card:hover {
+    border-color: rgba(212, 165, 116, 0.2);
+    box-shadow: 0 0 20px rgba(212, 165, 116, 0.05);
+  }
+
+  /* Large progress ring */
+  .goal-ring {
+    width: 68px;
+    height: 68px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .goal-ring svg {
+    width: 68px;
+    height: 68px;
+    transform: rotate(-90deg);
+  }
+
+  .goal-ring .pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .goal-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .goal-sub {
+    font-size: 11px;
+    color: rgba(254, 243, 199, 0.4);
+    font-weight: 400;
+  }
+
+  /* Monthly/weekly goals */
+  .goals-shortterm {
+    padding: 18px 24px;
+  }
+
+  .shortterm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .shortterm-section h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sandstone);
+    margin-bottom: 10px;
+  }
+
+  .goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 9px;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  .goal-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(212, 165, 116, 0.3);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .goal-check.partial {
+    border-color: var(--coral);
+    background: rgba(244, 132, 95, 0.15);
+  }
+
+  .goal-check.on-track {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  .goal-item-text {
+    color: rgba(254, 243, 199, 0.75);
+  }
+
+  .goal-item-status {
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .status-progress {
+    color: var(--coral);
+  }
+
+  .status-not-started {
+    color: rgba(254, 243, 199, 0.3);
+  }
+
+  .status-on-track {
+    color: #22c55e;
+  }
+
+  /* ── Bottom strip ── */
+  .bottom-strip {
+    height: 96px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 0 28px 16px;
+    flex-shrink: 0;
+  }
+
+  .mini-card {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 12px;
+  }
+
+  .mini-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .mini-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mini-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(254, 243, 199, 0.4);
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+
+  .mini-value {
+    font-size: 13px;
+    color: rgba(254, 243, 199, 0.85);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-sub {
+    font-size: 10px;
+    color: rgba(254, 243, 199, 0.35);
+    margin-top: 1px;
+  }
+
+  /* Wellness wheel mini */
+  .wellness-dots {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .w-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: absolute;
+  }
+
+  .w-dot:nth-child(1) { top: 2px; left: 16px; background: #f87171; }
+  .w-dot:nth-child(2) { top: 10px; left: 30px; background: #fb923c; }
+  .w-dot:nth-child(3) { top: 26px; left: 30px; background: #a78bfa; }
+  .w-dot:nth-child(4) { top: 34px; left: 16px; background: #34d399; }
+  .w-dot:nth-child(5) { top: 26px; left: 2px; background: #60a5fa; }
+  .w-dot:nth-child(6) { top: 10px; left: 2px; background: #fbbf24; }
+
+  /* Progress bar for reading */
+  .mini-progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(254, 243, 199, 0.1);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  .mini-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--coral));
+  }
+</style>
+</head>
+<body>
+
+<!-- Desert background -->
+<div class="desert-bg">
+  <div class="mesa mesa-1"></div>
+  <div class="mesa mesa-2"></div>
+  <div class="mesa mesa-5"></div>
+  <div class="mesa mesa-4"></div>
+  <div class="mesa mesa-3"></div>
+  <div class="haze"></div>
+  <div class="ground"></div>
+</div>
+
+<!-- App shell -->
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">Goal Connect</div>
+      <span class="greeting">Good afternoon, Lauren</span>
+    </div>
+    <nav class="nav-pills">
+      <div class="nav-pill active">Dashboard</div>
+      <div class="nav-pill">Habits</div>
+      <div class="nav-pill">Goals</div>
+      <div class="nav-pill">Analytics</div>
+      <div class="nav-pill">Adventures</div>
+      <div class="nav-pill">Wishlist</div>
+      <div class="nav-pill">Wellness</div>
+      <div class="nav-pill">Settings</div>
+    </nav>
+    <div class="topbar-right">
+      <div class="stat-badge"><span class="val">1,240</span> XP</div>
+      <div class="stat-badge">&#128293; <span class="val">14</span> days</div>
+      <div class="stat-badge">Residency <span class="val">2y 3m</span></div>
+    </div>
+  </div>
+
+  <!-- Main two-column area -->
+  <div class="main">
+
+    <!-- LEFT: This Week -->
+    <div class="col-left">
+      <div class="glass" style="flex:1; display:flex; flex-direction:column;">
+        <div class="section-header">
+          <div class="section-title">This Week</div>
+          <div class="header-ring">
+            <svg viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(254,243,199,0.08)" stroke-width="3"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="url(#headerGrad)" stroke-width="3" stroke-linecap="round"
+                stroke-dasharray="113.1" stroke-dashoffset="45.24"/>
+            </svg>
+            <svg width="0" height="0"><defs>
+              <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f4845f"/>
+                <stop offset="100%" stop-color="#c2410c"/>
+              </linearGradient>
+            </defs></svg>
+            <div class="ring-text">3/5</div>
+          </div>
+        </div>
+
+        <div class="habit-grid">
+          <!-- Header row -->
+          <div class="grid-header" style="text-align:left;">Habit</div>
+          <div class="grid-header">Mon</div>
+          <div class="grid-header">Tue</div>
+          <div class="grid-header">Wed</div>
+          <div class="grid-header">Thu</div>
+          <div class="grid-header today">Fri</div>
+          <div class="grid-header">Sat</div>
+          <div class="grid-header">Sun</div>
+
+          <!-- German -->
+          <div class="habit-label"><span class="habit-icon">&#127465;&#127466;</span> German</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell today-col done">&#10003;</div>
+          <div class="habit-cell future"></div>
+          <div class="habit-cell future"></div>
+
+          <!-- Climb -->
+          <div class="habit-label"><span class="habit-icon">&#129495;</span> Climb</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell today-col"></div>
+          <div class="habit-cell future"></div>
+          <div class="habit-cell future"></div>
+
+          <!-- Board Study -->
+          <div class="habit-label"><span class="habit-icon">&#128218;</span> Board Study</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell today-col done">&#10003;</div>
+          <div class="habit-cell future"></div>
+          <div class="habit-cell future"></div>
+
+          <!-- Piano -->
+          <div class="habit-label"><span class="habit-icon">&#127929;</span> Piano</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell today-col"></div>
+          <div class="habit-cell future"></div>
+          <div class="habit-cell future"></div>
+
+          <!-- Journal -->
+          <div class="habit-label"><span class="habit-icon">&#128221;</span> Journal</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell"></div>
+          <div class="habit-cell done">&#10003;</div>
+          <div class="habit-cell today-col done">&#10003;</div>
+          <div class="habit-cell future"></div>
+          <div class="habit-cell future"></div>
+        </div>
+      </div>
+
+      <!-- Streak strip -->
+      <div class="glass streak-strip">
+        <div class="streak-text"><strong>14 days strong</strong> &mdash; next milestone: 30 days</div>
+        <div class="streak-milestone">
+          <div style="text-align:center"><div class="milestone-dot reached"></div><div class="milestone-label">7</div></div>
+          <div style="text-align:center"><div class="milestone-dot reached"></div><div class="milestone-label">14</div></div>
+          <div style="text-align:center"><div class="milestone-dot"></div><div class="milestone-label next">30</div></div>
+          <div style="text-align:center"><div class="milestone-dot"></div><div class="milestone-label">60</div></div>
+          <div style="text-align:center"><div class="milestone-dot"></div><div class="milestone-label">90</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Goals -->
+    <div class="col-right">
+      <!-- Yearly Goals -->
+      <div class="glass goals-yearly">
+        <div class="section-header">
+          <div class="section-title">Goals</div>
+          <span style="font-size:11px; color:rgba(254,243,199,0.35); text-transform:uppercase; letter-spacing:1.5px; font-weight:600;">2026</span>
+        </div>
+
+        <div class="yearly-grid">
+          <!-- Pass ACVIM Boards -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.06)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#coralGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="66.95"/>
+              </svg>
+              <div class="pct">62%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Pass ACVIM Boards</div>
+              <div class="goal-sub">186 objectives &middot; 706 cards</div>
+            </div>
+          </div>
+
+          <!-- German to B2 -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.06)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#amberGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="96.76"/>
+              </svg>
+              <div class="pct">45%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">German to B2</div>
+              <div class="goal-sub">Pimsleur L3 &middot; Anki deck</div>
+            </div>
+          </div>
+
+          <!-- Climb 5.11a -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.06)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#orangeGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="38.7"/>
+              </svg>
+              <div class="pct">78%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Climb 5.11a</div>
+              <div class="goal-sub">Projecting at 5.10d outdoor</div>
+            </div>
+          </div>
+
+          <!-- Move to Glasgow -->
+          <div class="goal-card">
+            <div class="goal-ring">
+              <svg viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(254,243,199,0.06)" stroke-width="5"/>
+                <circle cx="34" cy="34" r="28" fill="none" stroke="url(#purpleGrad)" stroke-width="5" stroke-linecap="round"
+                  stroke-dasharray="175.93" stroke-dashoffset="123.15"/>
+              </svg>
+              <div class="pct">30%</div>
+            </div>
+            <div class="goal-info">
+              <div class="goal-name">Move to Glasgow</div>
+              <div class="goal-sub">Residency ends &middot; visa research</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gradient defs for rings -->
+        <svg width="0" height="0"><defs>
+          <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f4845f"/>
+            <stop offset="100%" stop-color="#fb7185"/>
+          </linearGradient>
+          <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#d4a574"/>
+            <stop offset="100%" stop-color="#fbbf24"/>
+          </linearGradient>
+          <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#c2410c"/>
+            <stop offset="100%" stop-color="#f4845f"/>
+          </linearGradient>
+          <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#581c87"/>
+            <stop offset="100%" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs></svg>
+      </div>
+
+      <!-- Short-term goals -->
+      <div class="glass goals-shortterm">
+        <div class="shortterm-grid">
+          <div class="shortterm-section">
+            <h4>March Goals</h4>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Complete De Lahunta Ch. 11-13</div>
+                <div class="goal-item-status status-progress">In progress &middot; Ch. 11 done</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check"></div>
+              <div>
+                <div class="goal-item-text">Send 3 outdoor V4s</div>
+                <div class="goal-item-status status-not-started">Not started</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Finish Pimsleur L3</div>
+                <div class="goal-item-status status-progress">60% complete</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shortterm-section">
+            <h4>This Week</h4>
+            <div class="goal-item">
+              <div class="goal-check on-track">&#10003;</div>
+              <div>
+                <div class="goal-item-text">Review 50 Anki cards/day</div>
+                <div class="goal-item-status status-on-track">On track</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Log 3 climbing sessions</div>
+                <div class="goal-item-status status-progress">1/3 complete</div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-check partial"></div>
+              <div>
+                <div class="goal-item-text">Practice piano 4x</div>
+                <div class="goal-item-status status-progress">2/4 complete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom strip -->
+  <div class="bottom-strip">
+    <div class="glass mini-card">
+      <div class="wellness-dots">
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+        <div class="w-dot"></div>
+      </div>
+      <div class="mini-info">
+        <div class="mini-label">Wellness</div>
+        <div class="mini-value">Balanced</div>
+        <div class="mini-sub">Updated today</div>
+      </div>
+    </div>
+
+    <div class="glass mini-card">
+      <div class="mini-icon" style="background:rgba(194,65,12,0.2); color:#f4845f;">&#128214;</div>
+      <div class="mini-info">
+        <div class="mini-label">Reading</div>
+        <div class="mini-value">The Living Mountain</div>
+        <div class="mini-sub">Nan Shepherd</div>
+        <div class="mini-progress-bar"><div class="mini-progress-fill" style="width:67%"></div></div>
+      </div>
+    </div>
+
+    <div class="glass mini-card">
+      <div class="mini-icon" style="background:rgba(88,28,135,0.25); color:#a78bfa;">&#9968;</div>
+      <div class="mini-info">
+        <div class="mini-label">Adventures</div>
+        <div class="mini-value">Gunks</div>
+        <div class="mini-sub">3 days ago</div>
+      </div>
+    </div>
+
+    <div class="glass mini-card">
+      <div class="mini-icon" style="background:rgba(212,165,116,0.15); color:#d4a574;">&#127911;</div>
+      <div class="mini-info">
+        <div class="mini-label">Media</div>
+        <div class="mini-value">The Huberman Lab</div>
+        <div class="mini-sub">Currently listening</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

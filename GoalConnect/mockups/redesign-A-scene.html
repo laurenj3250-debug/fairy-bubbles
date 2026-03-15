@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>GoalConnect — Layout A: Desert Tower Scene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --burnt-orange:#c2410c;
+    --sandstone:#d4a574;
+    --coral:#f4845f;
+    --twilight:#581c87;
+    --indigo:#1e1b4b;
+    --cream:#fef3c7;
+    --glass-bg:rgba(30,27,75,0.35);
+    --glass-border:rgba(254,243,199,0.18);
+    --glass-highlight:rgba(254,243,199,0.06);
+  }
+
+  html,body{
+    width:100%;height:100%;overflow:hidden;
+    font-family:'Source Sans 3',sans-serif;
+    color:var(--cream);
+  }
+
+  h1,h2,h3,h4,.heading{font-family:'Cormorant Garamond',serif}
+
+  /* ════════════════════════════════════════
+     DESERT SCENE — full viewport background
+     ════════════════════════════════════════ */
+  .scene{
+    position:fixed;inset:0;
+    width:100%;height:100%;
+    overflow:hidden;
+    background:
+      /* sky gradient — coral horizon fading to deep purple/indigo */
+      linear-gradient(
+        180deg,
+        #1e1b4b 0%,
+        #2e1065 12%,
+        #581c87 24%,
+        #7c3aed33 35%,
+        #a855f722 42%,
+        #f4845f 58%,
+        #fb923c 68%,
+        #f97316 76%,
+        #ea580c 85%,
+        #c2410c 100%
+      );
+  }
+
+  /* atmospheric haze / warm glow near horizon */
+  .scene::before{
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 120% 40% at 60% 62%, rgba(251,191,36,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 25% at 30% 70%, rgba(244,132,95,0.22) 0%, transparent 60%);
+    pointer-events:none;
+  }
+
+  /* subtle star specks in upper sky */
+  .scene::after{
+    content:'';position:absolute;top:0;left:0;right:0;height:35%;
+    background-image:
+      radial-gradient(1px 1px at 10% 8%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 42% 5%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 18%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 68% 9%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 78% 22%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 6%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 15% 20%, rgba(255,255,255,0.45) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 12%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 14%, rgba(255,255,255,0.55) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 25%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 60% 3%, rgba(255,255,255,0.5) 0%, transparent 100%);
+    pointer-events:none;
+  }
+
+  /* ════════════════════════════════════════
+     TOWER SVG SILHOUETTE
+     ════════════════════════════════════════ */
+  .tower-container{
+    position:absolute;
+    bottom:0;right:8%;
+    width:320px;height:100%;
+    pointer-events:none;
+    z-index:1;
+  }
+
+  /* distant mesa silhouettes */
+  .mesa-far{
+    position:absolute;bottom:0;left:0;right:0;height:28%;
+    z-index:0;
+    background:
+      /* far mesa left */
+      linear-gradient(175deg, transparent 48%, #7c2d12cc 48.5%, #7c2d12cc 52%, transparent 52.5%),
+      /* far mesa center-right */
+      linear-gradient(182deg, transparent 38%, #92400eaa 38.5%, #92400eaa 100%);
+    clip-path:polygon(
+      0% 100%,
+      0% 72%,
+      5% 68%,
+      12% 55%,
+      14% 55%,
+      18% 62%,
+      25% 60%,
+      30% 65%,
+      38% 58%,
+      42% 50%,
+      45% 50%,
+      48% 55%,
+      55% 70%,
+      62% 72%,
+      68% 68%,
+      72% 62%,
+      75% 60%,
+      78% 60%,
+      82% 65%,
+      88% 70%,
+      92% 72%,
+      95% 68%,
+      100% 72%,
+      100% 100%
+    );
+    opacity:0.5;
+  }
+
+  .mesa-near{
+    position:absolute;bottom:0;left:0;right:0;height:22%;
+    z-index:1;
+    background:linear-gradient(0deg, #431407 0%, #7c2d12 40%, #9a3412 80%, #b45309 100%);
+    clip-path:polygon(
+      0% 100%,
+      0% 55%,
+      3% 50%,
+      8% 48%,
+      15% 52%,
+      20% 45%,
+      28% 40%,
+      32% 42%,
+      40% 50%,
+      48% 55%,
+      55% 48%,
+      60% 42%,
+      65% 45%,
+      70% 50%,
+      78% 55%,
+      85% 48%,
+      90% 45%,
+      95% 50%,
+      100% 55%,
+      100% 100%
+    );
+  }
+
+  /* foreground ground */
+  .ground{
+    position:absolute;bottom:0;left:0;right:0;height:8%;
+    z-index:2;
+    background:linear-gradient(0deg, #1c0a00 0%, #431407 60%, #6b1f0a 100%);
+  }
+
+  /* ════════════════════════════════════════
+     GLASS CARD MIXIN
+     ════════════════════════════════════════ */
+  .glass{
+    background:var(--glass-bg);
+    backdrop-filter:blur(18px) saturate(1.4);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.3),
+      inset 0 1px 0 var(--glass-highlight);
+  }
+
+  .glass-sm{
+    background:rgba(30,27,75,0.3);
+    backdrop-filter:blur(14px) saturate(1.3);
+    -webkit-backdrop-filter:blur(14px) saturate(1.3);
+    border:1px solid rgba(254,243,199,0.12);
+    border-radius:12px;
+    box-shadow:
+      0 4px 20px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(254,243,199,0.04);
+  }
+
+  /* ════════════════════════════════════════
+     HUD LAYER — all data on top
+     ════════════════════════════════════════ */
+  .hud{
+    position:fixed;inset:0;
+    z-index:10;
+    padding:28px 36px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto 1fr auto;
+    gap:0;
+    pointer-events:none;
+  }
+  .hud > *{pointer-events:auto}
+
+  /* ── TOP LEFT: Logo + Greeting ── */
+  .top-left{
+    align-self:start;justify-self:start;
+  }
+  .logo{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:4.5px;
+    text-transform:uppercase;
+    color:var(--sandstone);
+    opacity:0.85;
+    margin-bottom:4px;
+  }
+  .greeting{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:300;
+    font-size:28px;
+    color:var(--cream);
+    line-height:1.2;
+  }
+  .greeting span{
+    color:var(--coral);
+    font-weight:400;
+  }
+
+  /* ── TOP RIGHT: Stats Bar ── */
+  .top-right{
+    align-self:start;justify-self:end;
+    display:flex;gap:12px;
+    align-items:center;
+  }
+  .stat-pill{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 16px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.5px;
+  }
+  .stat-pill .icon{
+    font-size:16px;
+    opacity:0.9;
+  }
+  .stat-pill .label{
+    opacity:0.6;
+    font-weight:400;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-right:2px;
+  }
+  .stat-pill .value{
+    color:var(--cream);
+  }
+  .stat-pill.xp .value{color:#fbbf24}
+  .stat-pill.streak .value{color:#f4845f}
+  .stat-pill.countdown .value{color:#c4b5fd}
+
+  /* ── CENTER LEFT: Today's Habits ── */
+  .habits-card{
+    grid-column:1;
+    grid-row:2;
+    align-self:center;
+    justify-self:start;
+    width:300px;
+    padding:28px;
+    margin-top:-20px;
+  }
+  .habits-card h3{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:3px;
+    color:var(--sandstone);
+    opacity:0.8;
+    margin-bottom:18px;
+    font-family:'Source Sans 3',sans-serif;
+    font-weight:600;
+  }
+  .habit-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px solid rgba(254,243,199,0.06);
+    font-size:15px;
+  }
+  .habit-row:last-of-type{border-bottom:none}
+
+  .checkbox{
+    width:20px;height:20px;
+    border-radius:6px;
+    border:1.5px solid rgba(254,243,199,0.25);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    transition:all 0.2s;
+  }
+  .checkbox.checked{
+    background:linear-gradient(135deg, #c2410c, #f4845f);
+    border-color:transparent;
+  }
+  .checkbox.checked::after{
+    content:'';
+    width:10px;height:6px;
+    border-left:2px solid var(--cream);
+    border-bottom:2px solid var(--cream);
+    transform:rotate(-45deg) translateY(-1px);
+  }
+  .habit-name{
+    flex:1;
+    color:var(--cream);
+    opacity:0.9;
+  }
+  .habit-name.done{
+    opacity:0.5;
+    text-decoration:line-through;
+    text-decoration-color:rgba(254,243,199,0.2);
+  }
+  .habit-time{
+    font-size:11px;
+    opacity:0.35;
+    font-weight:300;
+  }
+
+  /* Progress ring section */
+  .progress-section{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-top:20px;
+    padding-top:16px;
+    border-top:1px solid rgba(254,243,199,0.08);
+  }
+  .progress-ring-wrap{
+    position:relative;
+    width:52px;height:52px;
+    flex-shrink:0;
+  }
+  .progress-ring{
+    transform:rotate(-90deg);
+  }
+  .progress-ring circle{
+    fill:none;
+    stroke-width:4;
+    stroke-linecap:round;
+  }
+  .progress-ring .track{
+    stroke:rgba(254,243,199,0.08);
+  }
+  .progress-ring .fill{
+    stroke:var(--coral);
+    stroke-dasharray:138.23;
+    stroke-dashoffset:52.83; /* 60% filled => 138.23 * 0.4 */
+    filter:drop-shadow(0 0 4px rgba(244,132,95,0.4));
+  }
+  .progress-text{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;
+    color:var(--cream);
+  }
+  .progress-label{
+    font-size:13px;
+    opacity:0.7;
+    line-height:1.4;
+  }
+  .progress-label strong{
+    display:block;
+    font-size:15px;
+    opacity:1;
+    color:var(--cream);
+    font-weight:600;
+  }
+
+  /* ── BOTTOM RIGHT: Mini Cards ── */
+  .bottom-right{
+    grid-column:2;
+    grid-row:3;
+    align-self:end;
+    justify-self:end;
+    display:flex;
+    gap:14px;
+    align-items:flex-end;
+  }
+
+  .mini-card{
+    padding:18px 20px;
+    width:200px;
+  }
+  .mini-card h4{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:2.5px;
+    color:var(--sandstone);
+    opacity:0.7;
+    margin-bottom:12px;
+    font-family:'Source Sans 3',sans-serif;
+    font-weight:600;
+  }
+
+  /* Wellness dots */
+  .wellness-dots{
+    display:flex;gap:10px;
+    margin-bottom:6px;
+  }
+  .dot{
+    width:14px;height:14px;
+    border-radius:50%;
+    box-shadow:0 0 8px rgba(0,0,0,0.3);
+  }
+  .dot.body{background:#ef4444}
+  .dot.adventure{background:#f59e0b}
+  .dot.novelty{background:#8b5cf6}
+  .dot.soul{background:#06b6d4}
+  .dot.people{background:#ec4899}
+  .dot.mastery{background:#22c55e}
+  .wellness-sub{
+    font-size:11px;opacity:0.4;margin-top:6px;
+  }
+
+  /* Currently reading */
+  .book-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:16px;
+    font-style:italic;
+    color:var(--cream);
+    opacity:0.85;
+    line-height:1.35;
+    margin-bottom:4px;
+  }
+  .book-author{
+    font-size:12px;
+    opacity:0.4;
+  }
+  .book-progress{
+    margin-top:8px;
+    height:3px;
+    background:rgba(254,243,199,0.1);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .book-progress-fill{
+    height:100%;width:62%;
+    background:linear-gradient(90deg,var(--coral),#fbbf24);
+    border-radius:2px;
+  }
+
+  /* Adventures */
+  .adventure-item{
+    display:flex;align-items:center;gap:8px;
+    padding:4px 0;
+    font-size:13px;
+    opacity:0.75;
+  }
+  .adventure-icon{
+    font-size:14px;
+    opacity:0.6;
+  }
+
+  /* ── BOTTOM LEFT: Subtle date ── */
+  .bottom-left{
+    grid-column:1;
+    grid-row:3;
+    align-self:end;
+    justify-self:start;
+    opacity:0.3;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-weight:300;
+  }
+
+  /* ════════════════════════════════════════
+     TOWER SVG
+     ════════════════════════════════════════ */
+  .tower-svg{
+    position:absolute;
+    bottom:8%;
+    right:10%;
+    width:200px;
+    height:520px;
+    z-index:3;
+    filter:drop-shadow(4px 0 30px rgba(0,0,0,0.3));
+  }
+
+  /* Climber figure on tower */
+  .climber-svg{
+    position:absolute;
+    bottom:calc(8% + 340px);
+    right:calc(10% + 155px);
+    width:30px;height:50px;
+    z-index:4;
+  }
+
+  /* moon */
+  .moon{
+    position:absolute;
+    top:8%;left:18%;
+    width:60px;height:60px;
+    border-radius:50%;
+    background:radial-gradient(circle at 40% 40%, #fef3c7 0%, #fde68a 40%, #fbbf2488 80%, transparent 100%);
+    box-shadow:0 0 40px rgba(251,191,36,0.2), 0 0 80px rgba(251,191,36,0.1);
+    z-index:1;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ DESERT SCENE ════════════ -->
+<div class="scene">
+  <div class="moon"></div>
+  <div class="mesa-far"></div>
+  <div class="mesa-near"></div>
+  <div class="ground"></div>
+
+  <!-- Desert Tower — CSS/SVG sandstone spire -->
+  <svg class="tower-svg" viewBox="0 0 200 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rock-face" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#9a3412"/>
+        <stop offset="35%" stop-color="#b45309"/>
+        <stop offset="60%" stop-color="#d4a574"/>
+        <stop offset="85%" stop-color="#b45309"/>
+        <stop offset="100%" stop-color="#7c2d12"/>
+      </linearGradient>
+      <linearGradient id="rock-shadow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#431407" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </linearGradient>
+      <linearGradient id="rock-top" x1="0.5" y1="0" x2="0.5" y2="1">
+        <stop offset="0%" stop-color="#d4a574"/>
+        <stop offset="100%" stop-color="#b45309"/>
+      </linearGradient>
+    </defs>
+    <!-- main tower body -->
+    <path d="M65 520 L58 480 L52 400 L48 300 L50 200 L55 120 L60 60 L70 20 L85 5 L100 0 L115 5 L130 20 L140 60 L145 120 L148 200 L150 300 L148 400 L142 480 L135 520 Z"
+          fill="url(#rock-face)"/>
+    <!-- shadow side -->
+    <path d="M65 520 L58 480 L52 400 L48 300 L50 200 L55 120 L60 60 L70 20 L85 5 L100 0 L100 520 Z"
+          fill="url(#rock-shadow)"/>
+    <!-- horizontal crack lines -->
+    <line x1="55" y1="150" x2="145" y2="148" stroke="#7c2d12" stroke-width="0.8" opacity="0.4"/>
+    <line x1="50" y1="220" x2="148" y2="222" stroke="#7c2d12" stroke-width="0.6" opacity="0.3"/>
+    <line x1="52" y1="310" x2="148" y2="308" stroke="#7c2d12" stroke-width="0.7" opacity="0.35"/>
+    <line x1="56" y1="380" x2="144" y2="382" stroke="#7c2d12" stroke-width="0.5" opacity="0.3"/>
+    <line x1="58" y1="440" x2="142" y2="438" stroke="#7c2d12" stroke-width="0.6" opacity="0.25"/>
+    <!-- vertical cracks -->
+    <line x1="90" y1="30" x2="88" y2="200" stroke="#7c2d12" stroke-width="0.5" opacity="0.2"/>
+    <line x1="120" y1="50" x2="122" y2="350" stroke="#7c2d12" stroke-width="0.4" opacity="0.15"/>
+    <!-- highlight edge -->
+    <path d="M115 5 L130 20 L140 60 L145 120 L148 200 L150 300 L148 400 L142 480 L135 520"
+          stroke="#d4a574" stroke-width="1" opacity="0.3" fill="none"/>
+    <!-- cap highlight -->
+    <ellipse cx="100" cy="4" rx="18" ry="3" fill="#d4a574" opacity="0.25"/>
+  </svg>
+
+  <!-- Tiny climber silhouette on the tower -->
+  <svg class="climber-svg" viewBox="0 0 30 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- body -->
+    <circle cx="15" cy="8" r="4" fill="#1e1b4b" opacity="0.85"/>
+    <line x1="15" y1="12" x2="15" y2="30" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+    <!-- arms reaching up -->
+    <line x1="15" y1="18" x2="8" y2="10" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+    <line x1="15" y1="18" x2="24" y2="14" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+    <!-- legs -->
+    <line x1="15" y1="30" x2="10" y2="42" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+    <line x1="15" y1="30" x2="20" y2="40" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+  </svg>
+</div>
+
+<!-- ════════════ HUD DATA LAYER ════════════ -->
+<div class="hud">
+
+  <!-- TOP LEFT -->
+  <div class="top-left">
+    <div class="logo">Goal Connect</div>
+    <div class="greeting">Good afternoon, <span>Lauren</span></div>
+  </div>
+
+  <!-- TOP RIGHT -->
+  <div class="top-right">
+    <div class="stat-pill glass-sm xp">
+      <span class="icon">&#9733;</span>
+      <span class="label">XP</span>
+      <span class="value">1,240</span>
+    </div>
+    <div class="stat-pill glass-sm streak">
+      <span class="icon">&#9832;</span>
+      <span class="label">Streak</span>
+      <span class="value">14 days</span>
+    </div>
+    <div class="stat-pill glass-sm countdown">
+      <span class="icon">&#9202;</span>
+      <span class="label">Residency</span>
+      <span class="value">2y 3m</span>
+    </div>
+  </div>
+
+  <!-- CENTER LEFT: Habits Card -->
+  <div class="habits-card glass">
+    <h3>Today's Habits</h3>
+
+    <div class="habit-row">
+      <div class="checkbox checked"></div>
+      <span class="habit-name done">German (Pimsleur)</span>
+      <span class="habit-time">7:12 am</span>
+    </div>
+    <div class="habit-row">
+      <div class="checkbox checked"></div>
+      <span class="habit-name done">Climb</span>
+      <span class="habit-time">12:30 pm</span>
+    </div>
+    <div class="habit-row">
+      <div class="checkbox checked"></div>
+      <span class="habit-name done">Anki Reviews</span>
+      <span class="habit-time">1:45 pm</span>
+    </div>
+    <div class="habit-row">
+      <div class="checkbox"></div>
+      <span class="habit-name">Piano</span>
+      <span class="habit-time"></span>
+    </div>
+    <div class="habit-row">
+      <div class="checkbox"></div>
+      <span class="habit-name">Journal</span>
+      <span class="habit-time"></span>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-ring-wrap">
+        <svg class="progress-ring" width="52" height="52" viewBox="0 0 52 52">
+          <circle class="track" cx="26" cy="26" r="22"/>
+          <circle class="fill" cx="26" cy="26" r="22"/>
+        </svg>
+        <div class="progress-text">3/5</div>
+      </div>
+      <div class="progress-label">
+        <strong>60% Complete</strong>
+        2 remaining today
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM LEFT -->
+  <div class="bottom-left">
+    Sunday, March 15 2026
+  </div>
+
+  <!-- BOTTOM RIGHT: Mini Cards -->
+  <div class="bottom-right">
+    <div class="mini-card glass-sm">
+      <h4>Wellness Wheel</h4>
+      <div class="wellness-dots">
+        <div class="dot body" title="Body"></div>
+        <div class="dot adventure" title="Adventure"></div>
+        <div class="dot novelty" title="Novelty"></div>
+        <div class="dot soul" title="Soul"></div>
+        <div class="dot people" title="People"></div>
+        <div class="dot mastery" title="Mastery"></div>
+      </div>
+      <div class="wellness-sub">All cups tended this week</div>
+    </div>
+
+    <div class="mini-card glass-sm">
+      <h4>Currently Reading</h4>
+      <div class="book-title">The Living Mountain</div>
+      <div class="book-author">Nan Shepherd</div>
+      <div class="book-progress"><div class="book-progress-fill"></div></div>
+    </div>
+
+    <div class="mini-card glass-sm">
+      <h4>Recent Adventures</h4>
+      <div class="adventure-item">
+        <span class="adventure-icon">&#9650;</span>
+        <span>Red Rock lead climb</span>
+      </div>
+      <div class="adventure-item">
+        <span class="adventure-icon">&#9788;</span>
+        <span>Sunrise hike, Watchung</span>
+      </div>
+      <div class="adventure-item">
+        <span class="adventure-icon">&#9834;</span>
+        <span>Debussy - Clair de Lune</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -4,19 +4,13 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { triggerConfetti, checkAllHabitsComplete, shouldCelebrateStreak } from '@/lib/confetti';
 import { playCompleteSound, playStreakSound, triggerHaptic } from '@/lib/sounds';
 import { CriticalHit, rollCritical } from '@/components/CriticalHit';
-import { TokenCounter } from '@/components/TokenCounter';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { GlowingOrbHabits } from '@/components/GlowingOrbHabits';
-import { MountainHero } from '@/components/MountainHero';
-import { ForestBackground } from '@/components/ForestBackground';
 import { LuxuryHabitGrid } from '@/components/LuxuryHabitGrid';
 import { HabitNoteDialog } from '@/components/HabitNoteDialog';
 import { HabitDetailDialog } from '@/components/HabitDetailDialog';
-import { YearlyGoalsSection } from '@/components/dashboard/YearlyGoalsSection';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ProgressRing } from '@/components/ProgressRing';
 
 import type { Habit, HabitLog } from '@shared/schema';
@@ -25,24 +19,44 @@ import { useYearlyGoals, type YearlyGoalWithProgress } from '@/hooks/useYearlyGo
 import { useAdventures } from '@/hooks/useAdventures';
 import { AdventureModal } from '@/components/adventures/AdventureModal';
 import { WeeklyMonthlyGoalsWidget } from '@/components/dashboard/WeeklyMonthlyGoalsWidget';
-import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 
 import { ResidencyCountdownWidget } from '@/components/ResidencyCountdownWidget';
 import { MediaWidget } from '@/components/MediaWidget';
 import { RecentAdventuresWidget } from '@/components/dashboard/RecentAdventuresWidget';
-import { PointsBreakdownPopover } from '@/components/dashboard/PointsBreakdownPopover';
 import NextRewardWidget from '@/components/dashboard/NextRewardWidget';
 import { WellnessWheelWidget } from '@/components/dashboard/WellnessWheelWidget';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface HabitWithData extends Habit {
-  streak: number; // API returns streak as a plain number
+  streak: number;
   weeklyCompletion: number;
   history: Array<{ date: string; completed: boolean }>;
 }
+
+interface UserPoints {
+  available: number;
+  total: number;
+  spent: number;
+}
+
+// ============================================================================
+// NAV ITEMS
+// ============================================================================
+
+const navItems = [
+  { path: '/', label: 'Dashboard' },
+  { path: '/habits', label: 'Habits' },
+  { path: '/goals', label: 'Goals' },
+  { path: '/analytics', label: 'Analytics' },
+  { path: '/adventures', label: 'Adventures' },
+  { path: '/dream-scroll', label: 'Wishlist' },
+  { path: '/wheel', label: 'Wellness' },
+  { path: '/settings', label: 'Settings' },
+];
 
 // ============================================================================
 // DATE UTILITIES
@@ -51,7 +65,7 @@ interface HabitWithData extends Habit {
 function useWeekData() {
   return useMemo(() => {
     const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Sunday start to match grid labels
+    const weekStart = startOfWeek(now, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
     const dates = days.map(d => format(d, 'yyyy-MM-dd'));
@@ -71,78 +85,22 @@ function useWeekData() {
 }
 
 // ============================================================================
-// LOADING SKELETONS
+// TIME-OF-DAY HELPER
 // ============================================================================
 
-/** Skeleton for the GlowingOrbHabits - 5 circular orbs */
-function GlowingOrbsSkeleton() {
-  return (
-    <div className="flex gap-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} className="w-10 h-10 rounded-full" />
-      ))}
-    </div>
-  );
+function getTimeOfDay(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
 }
 
-/** Skeleton for LuxuryHabitGrid - habit rows with day cells */
-function HabitsGridSkeleton() {
-  return (
-    <div className="space-y-1.5">
-      {/* Day headers skeleton */}
-      <div className="flex items-center">
-        <div className="w-20 shrink-0" />
-        <div className="flex-1 flex justify-between px-1">
-          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <Skeleton key={i} className="w-5 h-3 rounded" />
-          ))}
-        </div>
-      </div>
-      {/* Habit row skeletons (4 habits) */}
-      {[1, 2, 3, 4].map((row) => (
-        <div key={row} className="flex items-center">
-          <div className="w-20 shrink-0 pr-1">
-            <Skeleton className="h-4 w-16 rounded" />
-          </div>
-          <div className="flex-1 flex justify-between px-1">
-            {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-              <Skeleton key={day} className="w-5 h-5 rounded-full" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Skeleton for YearlyGoalsSection - goal cards with progress */
-function YearlyGoalsSkeleton() {
-  return (
-    <div className="glass-card frost-accent py-3 px-4">
-      {/* Header skeleton */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Skeleton className="w-3.5 h-3.5 rounded" />
-          <Skeleton className="w-20 h-3 rounded" />
-        </div>
-        <Skeleton className="w-8 h-3 rounded" />
-      </div>
-      {/* Goal cards skeleton (3 cards in a grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-white/5">
-            <div className="flex items-center gap-2 mb-2">
-              <Skeleton className="w-6 h-6 rounded" />
-              <Skeleton className="h-4 flex-1 rounded" />
-            </div>
-            {/* Progress bar skeleton */}
-            <Skeleton className="h-1.5 w-full rounded-full mb-2" />
-            <Skeleton className="h-3 w-16 rounded" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function getNextMilestone(streak: number): string {
+  const milestones = [7, 14, 21, 30, 50, 75, 100, 150, 200, 365];
+  for (const m of milestones) {
+    if (streak < m) return `${m} days`;
+  }
+  return 'legend status';
 }
 
 // ============================================================================
@@ -152,7 +110,8 @@ function YearlyGoalsSkeleton() {
 export default function DashboardV4() {
   const { toast } = useToast();
   const week = useWeekData();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
+  const [, setLocation] = useLocation();
 
   // Note dialog state for habits that require notes
   const [noteDialogHabit, setNoteDialogHabit] = useState<HabitWithData | null>(null);
@@ -197,7 +156,11 @@ export default function DashboardV4() {
     },
   });
 
-  // Yearly goals - show current year, or next year if in December (planning mode)
+  const { data: points } = useQuery<UserPoints>({
+    queryKey: ['/api/points'],
+  });
+
+  // Yearly goals
   const currentYear = useMemo(() => {
     const now = new Date();
     const month = now.getMonth();
@@ -207,17 +170,6 @@ export default function DashboardV4() {
   }, []);
   const {
     goals: yearlyGoals,
-    goalsByCategory,
-    categories: yearlyCategories,
-    stats: yearlyStats,
-    categoryLabels,
-    toggleGoal,
-    incrementGoal,
-    toggleSubItem,
-    claimReward,
-    isToggling,
-    isIncrementing,
-    isClaimingReward,
     isLoading: yearlyGoalsLoading,
   } = useYearlyGoals(currentYear);
 
@@ -232,7 +184,7 @@ export default function DashboardV4() {
     limit: 1
   });
 
-  // Quick outdoor day mutation — one-click, creates outdoor_adventures entry for today
+  // Quick outdoor day mutation
   const quickOutdoorDayMutation = useMutation({
     mutationFn: async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -257,7 +209,7 @@ export default function DashboardV4() {
     },
   });
 
-  // Handler for viewing habit details (click on habit name, not toggle)
+  // Handler for viewing habit details
   const handleViewHabitDetail = useCallback((habitId: number) => {
     const habit = habits.find(h => h.id === habitId);
     if (habit) {
@@ -279,11 +231,9 @@ export default function DashboardV4() {
       return { wasCompleted };
     },
     onSuccess: (data: any, _, context) => {
-      // Only celebrate if completing (not uncompleting)
       if (!context?.wasCompleted) {
         const isMilestone = data?.streakDays && shouldCelebrateStreak(data.streakDays);
 
-        // Milestone gets its own louder sound; regular completion gets the default
         if (isMilestone) {
           playStreakSound();
           triggerHaptic('heavy');
@@ -292,15 +242,12 @@ export default function DashboardV4() {
           triggerHaptic('light');
         }
 
-        // Roll for critical hit (visual only — does not affect actual XP)
-        // CriticalHit has its own confetti (150 particles), so skip other confetti if it fires
         const crit = rollCritical();
         const hasCritical = crit.isCritical;
         if (hasCritical) {
           setCriticalHit({ show: true, multiplier: crit.multiplier });
         }
 
-        // All habits done today → confetti (skip if CriticalHit already firing its own)
         if (!hasCritical) {
           if (isMilestone) {
             triggerConfetti('streak_milestone');
@@ -314,7 +261,6 @@ export default function DashboardV4() {
           }
         }
 
-        // XP toast on habit completion
         if (data?.pointsEarned > 0) {
           if (isMilestone) {
             const milestoneBonus = XP_CONFIG.streakMilestone[data.streakDays] || 0;
@@ -328,14 +274,11 @@ export default function DashboardV4() {
           }
         }
       }
-      // Single shared data source - GlowingOrbHabits also uses this
       queryClient.invalidateQueries({ queryKey: ['/api/habits-with-data'] });
       queryClient.invalidateQueries({ queryKey: ['/api/habit-logs/range'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points'] });
       queryClient.invalidateQueries({ queryKey: ['/api/points/transactions'] });
-      // Yearly goals auto-track from habit_logs — refresh so linked goals update
       queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
-      // Periodic goals compute on read — refetch to show updated weekly/monthly progress
       queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
     },
     onError: (error: Error) => {
@@ -377,7 +320,7 @@ export default function DashboardV4() {
     [habits, completionMap, week.dates]
   );
 
-  // Calculate overall day streak (max streak across all habits)
+  // Max streak across all habits
   const dayStreak = useMemo(() => {
     if (habits.length === 0) return 0;
     return Math.max(...habits.map(h => h.streak ?? 0));
@@ -387,7 +330,6 @@ export default function DashboardV4() {
     const habit = habits.find(h => h.id === habitId);
     const isCompleted = completionMap[habitId]?.[todayStr] ?? false;
 
-    // If habit requires note and is not already completed, show the note dialog
     if (habit?.requiresNote && !isCompleted) {
       setNoteDialogHabit(habit);
       setNoteDialogOpen(true);
@@ -397,17 +339,14 @@ export default function DashboardV4() {
     toggleHabitMutation.mutate({ habitId, date: todayStr });
   }, [toggleHabitMutation, todayStr, habits, completionMap]);
 
-  // Handle note dialog submission
   const handleNoteDialogSubmit = useCallback((habitId: number, date: string, note: string) => {
     toggleHabitMutation.mutate({ habitId, date, note });
   }, [toggleHabitMutation]);
 
-  // Date-aware toggle handler for LuxuryHabitGrid (checks requiresNote for today only)
   const handleToggleHabitForDate = useCallback((habitId: number, date: string) => {
     const habit = habits.find(h => h.id === habitId);
     const isCompleted = completionMap[habitId]?.[date] ?? false;
 
-    // Only show note dialog for today and if habit requires note
     if (date === todayStr && habit?.requiresNote && !isCompleted) {
       setNoteDialogHabit(habit);
       setNoteDialogOpen(true);
@@ -438,200 +377,360 @@ export default function DashboardV4() {
     }
   }, [createAdventure, toast]);
 
-  // Nearest-to-completion yearly goals for spotlight
-  const spotlightGoals = useMemo(() =>
-    yearlyGoals
-      .filter((g: YearlyGoalWithProgress) => !g.completed && g.progressPercent > 0)
-      .sort((a: YearlyGoalWithProgress, b: YearlyGoalWithProgress) => b.progressPercent - a.progressPercent)
-      .slice(0, 2),
-    [yearlyGoals]
-  );
+  // Top 4 yearly goals by progress (incomplete, non-zero progress first, then any)
+  const topGoals = useMemo(() => {
+    if (!yearlyGoals || yearlyGoals.length === 0) return [];
+    const incomplete = yearlyGoals
+      .filter((g: YearlyGoalWithProgress) => !g.completed)
+      .sort((a: YearlyGoalWithProgress, b: YearlyGoalWithProgress) => b.progressPercent - a.progressPercent);
+    return incomplete.slice(0, 4);
+  }, [yearlyGoals]);
 
-  // Time-of-day greeting (computed once per render, not 3x)
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const time = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    const streak = dayStreak >= 14 ? ` \u2014 ${dayStreak} days strong` : dayStreak >= 7 ? ` \u2014 week ${Math.floor(dayStreak / 7)} rolling` : '';
-    return `${time}${streak}`;
-  }, [dayStreak]);
+  const timeOfDay = useMemo(() => getTimeOfDay(), []);
+  const completionPercentage = habits.length > 0 ? Math.round((completedTodayCount / habits.length) * 100) : 0;
+  const xpTotal = points?.available ?? 0;
+  const nextMilestone = getNextMilestone(dayStreak);
 
   // ============================================================================
   // RENDER
   // ============================================================================
 
   return (
-    <div className="min-h-screen relative">
-      {/* Forest background layers */}
-      <ForestBackground />
+    <div className="h-screen overflow-hidden flex flex-col" style={{ background: '#1a1210' }}>
 
-      {/* Mountain hero section */}
-      <MountainHero />
-
-      {/* Main dashboard content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
-
-          {/* HEADER: Simplified - Logo + Stats */}
-          <header className="flex items-center justify-between mb-6">
-            {/* Left: Logo + greeting */}
-            <div>
-              <h1 className="logo-text tracking-wider">
-                GOAL CONNECT
-              </h1>
-              <p className="text-[10px] font-body text-[var(--text-muted)] mt-0.5">
-                {greeting}
-              </p>
-            </div>
-
-            {/* Center: Habit Orbs (toggle habits directly) */}
-            <div className="flex-shrink-0">
-              {habitsLoading ? <GlowingOrbsSkeleton /> : <GlowingOrbHabits onToggle={handleToggleHabit} />}
-            </div>
-
-            {/* Right: Stats + Residency */}
-            <div className="flex items-center gap-4 text-xs">
-              <PointsBreakdownPopover>
-                <div>
-                  <TokenCounter onClick={() => {}} />
-                </div>
-              </PointsBreakdownPopover>
-              <div className="w-px h-3 bg-white/20" />
-              <div className="text-[var(--text-muted)]">
-                <span className="font-heading text-sm text-peach-400">{dayStreak}</span>
-                <span className="ml-1 opacity-70">streak</span>
-                {freezeData && freezeData.freezeCount > 0 && (
-                  <span className="ml-1.5 text-[10px] text-blue-300/70" title={`${freezeData.freezeCount} streak freeze${freezeData.freezeCount > 1 ? 's' : ''} available`}>
-                    +{freezeData.freezeCount} shield{freezeData.freezeCount > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              <div className="w-px h-3 bg-white/20" />
-              <ResidencyCountdownWidget compact />
-            </div>
-          </header>
-
-          {/* MAIN GRID: 3 columns on desktop, stacked on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* LEFT: Habits - spans 2 columns on desktop */}
-            <div className="md:col-span-2 glass-card frost-accent !p-4 !pt-3">
-              <div className="flex items-center justify-between !mb-2">
-                <span className="card-title !mb-0 !text-sm">This Week</span>
-                {habits.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <ProgressRing
-                      progress={(completedTodayCount / habits.length) * 100}
-                      size={28}
-                      strokeWidth={2}
-                      color="var(--peach-400, #f0a67a)"
-                      trackColor="var(--glass-border, rgba(255,255,255,0.1))"
-                    >
-                      <span className="text-[8px] font-heading text-peach-400">
-                        {completedTodayCount}/{habits.length}
-                      </span>
-                    </ProgressRing>
-                    <span className="text-[10px] font-body text-[var(--text-muted)]">
-                      {completedTodayCount === habits.length ? 'All done!' : `${habits.length - completedTodayCount} left`}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                {habitsLoading ? (
-                  <HabitsGridSkeleton />
-                ) : (
-                  <LuxuryHabitGrid
-                    habits={luxuryHabits}
-                    todayIndex={week.todayIndex}
-                    onToggle={handleToggleHabitForDate}
-                    onHabitClick={handleViewHabitDetail}
-                    className="w-full"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT SIDEBAR: Stacked widgets */}
-            <div className="space-y-4">
-              {/* Currently Reading/Watching */}
-              <MediaWidget />
-
-              {/* Recent Adventures */}
-              <RecentAdventuresWidget onLogAdventure={() => setAdventureDialogOpen(true)} />
-
-              {/* Wellness Wheel */}
-              <WellnessWheelWidget />
-
-              {/* Next Reward */}
-              <NextRewardWidget />
-            </div>
+      {/* HERO BANNER - 150px */}
+      <div className="relative h-[150px] flex-shrink-0 overflow-hidden">
+        {/* Dark warm base */}
+        <div className="absolute inset-0" style={{
+          background: '#1a1210',
+        }} />
+        {/* Desert hero image — object-position bottom to show the landscape, not the white sky */}
+        <img
+          src="/backgrounds/desert-hero.png"
+          alt=""
+          className="absolute inset-0 w-full h-full"
+          style={{
+            zIndex: 1,
+            objectFit: 'cover',
+            objectPosition: 'center 75%',
+          }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+        {/* Gradient overlays to blend image edges into dark base */}
+        <div className="absolute inset-0" style={{
+          zIndex: 2,
+          background: `
+            linear-gradient(to bottom, #1a1210 0%, transparent 30%, transparent 70%, #1a1210 100%),
+            linear-gradient(to right, #1a1210 0%, transparent 15%, transparent 85%, #1a1210 100%)
+          `,
+        }} />
+        {/* Content overlay */}
+        <div className="relative h-full flex items-center justify-between px-8" style={{ zIndex: 10 }}>
+          <div>
+            <h1 className="text-lg tracking-[3px] uppercase" style={{ color: '#d4854a', fontFamily: 'var(--font-heading, system-ui)', fontWeight: 700, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+              Goal Connect
+            </h1>
+            <p className="text-sm" style={{ color: 'rgba(245,230,208,0.6)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+              Good {timeOfDay}, Lauren
+            </p>
           </div>
-
-          {/* Goal Spotlight — nearest-to-completion yearly goals */}
-          {spotlightGoals.length > 0 && (
-            <div className="flex gap-3">
-              {spotlightGoals.map((goal) => (
-                <div key={goal.id} className="flex-1 glass-card frost-accent !p-3 flex items-center gap-3">
-                  <ProgressRing
-                    progress={goal.progressPercent}
-                    size={32}
-                    strokeWidth={2.5}
-                    color="var(--peach-400, #f0a67a)"
-                    trackColor="var(--glass-border, rgba(255,255,255,0.1))"
-                    className="shrink-0"
-                  >
-                    <span className="text-[8px] font-heading text-peach-400">
-                      {goal.progressPercent}%
-                    </span>
-                  </ProgressRing>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-body text-[var(--text-secondary)] truncate">{goal.title}</p>
-                    <p className="text-[10px] text-[var(--text-muted)]">
-                      {goal.computedValue}/{goal.targetValue}
-                    </p>
-                  </div>
-                </div>
-              ))}
+          <div className="text-center">
+            <h2 className="text-3xl" style={{
+              color: '#f5e6d0',
+              fontFamily: 'var(--font-heading, system-ui)',
+              fontWeight: 700,
+              textShadow: '0 2px 24px rgba(0,0,0,0.8), 0 0 60px rgba(26,18,16,0.6)',
+            }}>
+              Your Summit Awaits
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'rgba(245,230,208,0.7)', textShadow: '0 1px 12px rgba(0,0,0,0.7)' }}>
+              {completedTodayCount} of {habits.length} habits complete today
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* XP pill */}
+            <div className="px-3 py-1.5 rounded-full text-xs" style={{
+              background: 'rgba(26,18,16,0.5)',
+              backdropFilter: 'blur(8px)',
+              color: 'rgba(245,230,208,0.7)',
+            }}>
+              <span className="font-bold text-sm" style={{ color: '#d4854a' }}>{xpTotal}</span> XP
             </div>
-          )}
-
-          {/* ROW 2: Weekly & Monthly Goals (full width, compact) */}
-          <WeeklyMonthlyGoalsWidget />
-
-          {/* ROW 3: Collapsible Insights (SummitLog + HabitHeatmap + WeeklyRhythm) */}
-          <DashboardInsights />
-
-          {/* ROW 4: Yearly Goals (grouped by category) */}
-          {yearlyGoalsLoading ? (
-            <YearlyGoalsSkeleton />
-          ) : (
-            <YearlyGoalsSection
-              year={currentYear}
-              goals={yearlyGoals}
-              goalsByCategory={goalsByCategory}
-              categories={yearlyCategories}
-              categoryLabels={categoryLabels}
-              stats={yearlyStats}
-              toggleGoal={toggleGoal}
-              incrementGoal={incrementGoal}
-              toggleSubItem={toggleSubItem}
-              claimReward={claimReward}
-              isToggling={isToggling}
-              isIncrementing={isIncrementing}
-              isClaimingReward={isClaimingReward}
-              onLogOutdoorDay={(type) => {
-                if (type === "quick") {
-                  if (!quickOutdoorDayMutation.isPending) quickOutdoorDayMutation.mutate();
-                } else {
-                  setAdventureDialogOpen(true);
-                }
-              }}
-            />
-          )}
-
+            {/* Streak pill */}
+            <div className="px-3 py-1.5 rounded-full text-xs" style={{
+              background: 'rgba(26,18,16,0.5)',
+              backdropFilter: 'blur(8px)',
+              color: 'rgba(245,230,208,0.7)',
+            }}>
+              <span className="font-bold text-sm" style={{ color: '#d4854a' }}>{dayStreak}</span> days
+              {freezeData && freezeData.freezeCount > 0 && (
+                <span className="ml-1 text-[10px]" style={{ color: 'rgba(147,197,253,0.7)' }}>
+                  +{freezeData.freezeCount} shield{freezeData.freezeCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            {/* Residency */}
+            <ResidencyCountdownWidget compact />
+          </div>
         </div>
       </div>
 
-      {/* Habit Note Dialog */}
+      {/* NAV BAR - 36px */}
+      <nav className="h-9 flex-shrink-0 flex items-center justify-center" style={{
+        background: 'rgba(26,18,16,0.6)',
+        backdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(212,133,74,0.1)',
+      }}>
+        <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(26,18,16,0.5)' }}>
+          {navItems.map(item => {
+            const isActive = location === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={cn(
+                  "px-3.5 py-1 rounded-md text-xs font-medium transition-all",
+                )}
+                style={{
+                  background: isActive ? 'rgba(212,133,74,0.3)' : 'transparent',
+                  color: isActive ? '#f5e6d0' : 'rgba(245,230,208,0.4)',
+                }}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* MAIN TWO COLUMNS */}
+      <div className="flex-1 min-h-0 grid gap-3 p-3 pb-2" style={{ gridTemplateColumns: '55fr 45fr' }}>
+
+        {/* LEFT: Habits */}
+        <div className="flex flex-col gap-2 min-h-0">
+          {/* Habits card */}
+          <div className="flex-1 min-h-0 rounded-2xl p-3 flex flex-col" style={{
+            background: 'rgba(30,20,14,0.6)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(200,140,70,0.12)',
+          }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl" style={{ color: '#f5e6d0', fontFamily: 'var(--font-heading, system-ui)', fontWeight: 700 }}>
+                This Week
+              </h3>
+              {habits.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <ProgressRing
+                    progress={completionPercentage}
+                    size={36}
+                    strokeWidth={2.5}
+                    color="#d4854a"
+                    trackColor="rgba(200,140,70,0.12)"
+                  >
+                    <span className="text-[9px] font-bold" style={{ color: '#d4854a' }}>
+                      {completedTodayCount}/{habits.length}
+                    </span>
+                  </ProgressRing>
+                  <span className="text-[10px]" style={{ color: 'rgba(245,230,208,0.4)' }}>
+                    {completedTodayCount === habits.length ? 'All done!' : `${habits.length - completedTodayCount} left`}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* The habit grid */}
+            <div className="flex-1 min-h-0">
+              {habitsLoading ? (
+                <div className="space-y-2 animate-pulse">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-6 rounded" style={{ background: 'rgba(200,140,70,0.08)' }} />
+                  ))}
+                </div>
+              ) : (
+                <LuxuryHabitGrid
+                  habits={luxuryHabits}
+                  todayIndex={week.todayIndex}
+                  onToggle={handleToggleHabitForDate}
+                  onHabitClick={handleViewHabitDetail}
+                  className="w-full"
+                />
+              )}
+            </div>
+          </div>
+          {/* Streak strip */}
+          <div className="rounded-xl px-4 py-2 flex items-center justify-between" style={{
+            background: 'rgba(30,20,14,0.6)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(200,140,70,0.12)',
+          }}>
+            <span className="text-xs" style={{ color: 'rgba(245,230,208,0.6)' }}>
+              <strong style={{ color: '#d4854a' }}>{dayStreak} days strong</strong> — next milestone: {nextMilestone}
+            </span>
+            {/* Milestone dots */}
+            <div className="flex gap-1">
+              {[7, 14, 21, 30].map(m => (
+                <div
+                  key={m}
+                  className="w-2 h-2 rounded-full"
+                  title={`${m}-day milestone`}
+                  style={{
+                    background: dayStreak >= m ? '#d4854a' : 'rgba(200,140,70,0.15)',
+                    boxShadow: dayStreak >= m ? '0 0 6px rgba(212,133,74,0.4)' : 'none',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Goals */}
+        <div className="flex flex-col gap-2 min-h-0">
+          {/* Yearly goals */}
+          <div className="flex-1 min-h-0 rounded-2xl p-3 flex flex-col" style={{
+            background: 'rgba(30,20,14,0.6)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(200,140,70,0.12)',
+          }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl" style={{ color: '#f5e6d0', fontFamily: 'var(--font-heading, system-ui)', fontWeight: 700 }}>
+                Goals
+              </h3>
+              <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgba(245,230,208,0.3)' }}>
+                {currentYear}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+              {yearlyGoalsLoading ? (
+                [1, 2, 3, 4].map(i => (
+                  <div key={i} className="rounded-xl p-3 animate-pulse" style={{ background: 'rgba(200,140,70,0.06)' }}>
+                    <div className="h-[52px] w-[52px] rounded-full mx-auto mb-2" style={{ background: 'rgba(200,140,70,0.1)' }} />
+                    <div className="h-3 rounded" style={{ background: 'rgba(200,140,70,0.08)' }} />
+                  </div>
+                ))
+              ) : topGoals.length > 0 ? (
+                topGoals.map((goal) => (
+                  <div key={goal.id} className="rounded-xl p-3 flex flex-col items-center justify-center" style={{
+                    background: 'rgba(200,140,70,0.06)',
+                    border: '1px solid rgba(200,140,70,0.08)',
+                  }}>
+                    <ProgressRing
+                      progress={goal.progressPercent}
+                      size={52}
+                      strokeWidth={3}
+                      color="#d4854a"
+                      trackColor="rgba(200,140,70,0.12)"
+                    >
+                      <span className="text-[10px] font-bold" style={{ color: '#d4854a' }}>
+                        {goal.progressPercent}%
+                      </span>
+                    </ProgressRing>
+                    <p className="text-xs mt-2 text-center truncate w-full" style={{ color: '#f5e6d0' }}>
+                      {goal.title}
+                    </p>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(245,230,208,0.4)' }}>
+                      {goal.computedValue}/{goal.targetValue}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 flex items-center justify-center">
+                  <p className="text-sm" style={{ color: 'rgba(245,230,208,0.3)' }}>No goals yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Monthly/Weekly goals */}
+          <div className="rounded-2xl overflow-hidden max-h-[200px]" style={{
+            background: 'rgba(30,20,14,0.6)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(200,140,70,0.12)',
+          }}>
+            <div className="overflow-auto max-h-[200px] p-3">
+              <WeeklyMonthlyGoalsWidget />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM STRIP - 64px */}
+      <div className="h-16 flex-shrink-0 grid grid-cols-4 gap-2 px-3 pb-2">
+        {/* Wellness mini */}
+        <div className="rounded-xl overflow-hidden flex items-center justify-center px-3" style={{
+          background: 'rgba(30,20,14,0.6)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(200,140,70,0.12)',
+        }}>
+          <Link href="/wheel" className="flex items-center gap-2 w-full">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{
+              background: 'rgba(212,133,74,0.15)',
+            }}>
+              <span role="img" aria-label="wellness">&#x2728;</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold truncate" style={{ color: '#f5e6d0' }}>Wellness</p>
+              <p className="text-[9px]" style={{ color: 'rgba(245,230,208,0.4)' }}>Check in</p>
+            </div>
+          </Link>
+        </div>
+        {/* Media mini */}
+        <div className="rounded-xl overflow-hidden flex items-center justify-center px-3" style={{
+          background: 'rgba(30,20,14,0.6)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(200,140,70,0.12)',
+        }}>
+          <Link href="/media" className="flex items-center gap-2 w-full">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{
+              background: 'rgba(212,133,74,0.15)',
+            }}>
+              <span role="img" aria-label="media">&#x1F4DA;</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold truncate" style={{ color: '#f5e6d0' }}>Reading</p>
+              <p className="text-[9px]" style={{ color: 'rgba(245,230,208,0.4)' }}>Current media</p>
+            </div>
+          </Link>
+        </div>
+        {/* Adventures mini */}
+        <div className="rounded-xl overflow-hidden flex items-center justify-center px-3" style={{
+          background: 'rgba(30,20,14,0.6)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(200,140,70,0.12)',
+        }}>
+          <button
+            onClick={() => setAdventureDialogOpen(true)}
+            className="flex items-center gap-2 w-full text-left"
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{
+              background: 'rgba(212,133,74,0.15)',
+            }}>
+              <span role="img" aria-label="adventures">&#x26F0;&#xFE0F;</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold truncate" style={{ color: '#f5e6d0' }}>Adventures</p>
+              <p className="text-[9px]" style={{ color: 'rgba(245,230,208,0.4)' }}>Log outdoor day</p>
+            </div>
+          </button>
+        </div>
+        {/* Next Reward mini */}
+        <div className="rounded-xl overflow-hidden flex items-center justify-center px-3" style={{
+          background: 'rgba(30,20,14,0.6)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(200,140,70,0.12)',
+        }}>
+          <Link href="/rewards" className="flex items-center gap-2 w-full">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{
+              background: 'rgba(212,133,74,0.15)',
+            }}>
+              <span role="img" aria-label="reward">&#x1F381;</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold truncate" style={{ color: '#f5e6d0' }}>Rewards</p>
+              <p className="text-[9px]" style={{ color: 'rgba(245,230,208,0.4)' }}>{xpTotal} XP available</p>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* Modals - rendered but hidden */}
       <HabitNoteDialog
         habit={noteDialogHabit}
         date={todayStr}
@@ -640,14 +739,12 @@ export default function DashboardV4() {
         onSubmit={handleNoteDialogSubmit}
       />
 
-      {/* Habit Detail Dialog - view history and edit notes */}
       <HabitDetailDialog
         habit={detailDialogHabit}
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
       />
 
-      {/* Quick Adventure Dialog */}
       {adventureDialogOpen && (
         <AdventureModal
           adventure={null}
@@ -657,13 +754,11 @@ export default function DashboardV4() {
         />
       )}
 
-      {/* Critical Hit overlay — visual-only dopamine on habit completion (25% chance) */}
       <CriticalHit
         show={criticalHit.show}
         multiplier={criticalHit.multiplier}
         onComplete={() => setCriticalHit({ show: false, multiplier: 1 })}
       />
-
     </div>
   );
 }

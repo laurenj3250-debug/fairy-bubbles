@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>GoalConnect — Layout C: Habits Hero</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burnt-orange: #c2410c;
+    --sandstone: #d4a574;
+    --coral: #f4845f;
+    --twilight: #581c87;
+    --indigo: #1e1b4b;
+    --cream: #fef3c7;
+    --sidebar-bg: rgba(30, 27, 75, 0.92);
+    --card-bg: rgba(30, 27, 75, 0.55);
+    --cell-empty: rgba(212, 165, 116, 0.12);
+    --cell-complete: #c2410c;
+    --cell-today-ring: #f4845f;
+    --text-primary: #fef3c7;
+    --text-secondary: rgba(254, 243, 199, 0.6);
+    --text-muted: rgba(254, 243, 199, 0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+  }
+
+  body {
+    background: var(--indigo);
+    /* Desert scene: dark edges, warm glow center */
+    background:
+      radial-gradient(ellipse 70% 60% at 55% 45%, rgba(194, 65, 12, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 90% 80% at 50% 50%, rgba(244, 132, 95, 0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 55% 40%, rgba(212, 165, 116, 0.12) 0%, transparent 50%),
+      linear-gradient(180deg,
+        #1e1b4b 0%,
+        #2d1a4e 15%,
+        #4a1942 28%,
+        #6b2a3a 38%,
+        #8b3a2a 46%,
+        #c2610c 52%,
+        #d4855a 56%,
+        #e8a87c 60%,
+        #d4a574 65%,
+        #b8845a 72%,
+        #8b5e3c 80%,
+        #4a2c1e 90%,
+        #1e1b4b 100%
+      );
+  }
+
+  /* ========== LAYOUT SHELL ========== */
+  .shell {
+    display: flex;
+    width: 1440px;
+    height: 100vh;
+    margin: 0 auto;
+  }
+
+  /* ========== LEFT SIDEBAR ========== */
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    height: 100vh;
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(212, 165, 116, 0.1);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px 20px;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--sandstone);
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(212, 165, 116, 0.15);
+  }
+
+  .nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-item:hover { background: rgba(212, 165, 116, 0.08); color: var(--text-primary); }
+  .nav-item.active {
+    background: rgba(194, 65, 12, 0.2);
+    color: var(--coral);
+    font-weight: 600;
+  }
+  .nav-item .icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    opacity: 0.8;
+  }
+  .nav-item.active .icon { opacity: 1; }
+
+  .sidebar-stats {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(212, 165, 116, 0.12);
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: rgba(212, 165, 116, 0.06);
+    border-radius: 8px;
+  }
+  .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--sandstone);
+  }
+  .stat-value.streak { color: var(--coral); }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ========== MAIN AREA ========== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 36px 18px;
+    overflow: hidden;
+  }
+
+  /* --- TOP BAR --- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 18px;
+    flex-shrink: 0;
+  }
+
+  .progress-ring-wrap {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .progress-ring-wrap svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: rgba(212, 165, 116, 0.12); stroke-width: 7; }
+  .ring-fg {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-dasharray: 264;
+    stroke-dashoffset: 105.6; /* 264 * (1 - 0.6) */
+    transition: stroke-dashoffset 1s ease;
+  }
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+  }
+  .ring-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .top-copy { flex: 1; }
+  .top-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.1;
+  }
+  .top-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .top-sub strong { color: var(--coral); font-weight: 600; }
+
+  .top-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+  }
+  .today-pill {
+    background: rgba(212, 165, 116, 0.1);
+    border: 1px solid rgba(212, 165, 116, 0.15);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--sandstone);
+    font-weight: 500;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--coral), var(--twilight));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+  }
+
+  /* --- HABIT GRID (THE HERO) --- */
+  .habit-grid-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .grid-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .grid-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--sandstone);
+  }
+  .grid-week {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .habit-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 180px repeat(7, 1fr);
+    grid-template-rows: 36px repeat(5, 1fr);
+    gap: 5px;
+    background: rgba(30, 27, 75, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 165, 116, 0.1);
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .day-header.today { color: var(--coral); }
+  .day-header .day-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .day-header.today .day-num { color: var(--coral); }
+
+  .habit-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .habit-emoji { font-size: 18px; }
+  .corner-spacer { /* top-left empty cell */ }
+
+  .habit-cell {
+    border-radius: 10px;
+    background: var(--cell-empty);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    min-height: 56px;
+  }
+  .habit-cell:hover {
+    background: rgba(212, 165, 116, 0.2);
+    transform: scale(1.03);
+  }
+  .habit-cell.complete {
+    background: linear-gradient(135deg, rgba(194, 65, 12, 0.7), rgba(194, 65, 12, 0.45));
+    box-shadow: 0 0 16px rgba(194, 65, 12, 0.2);
+  }
+  .habit-cell.complete .cell-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--cream);
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--burnt-orange);
+  }
+  .habit-cell.today-col {
+    outline: 2px solid rgba(244, 132, 95, 0.3);
+    outline-offset: -2px;
+  }
+  .habit-cell.today-col.complete {
+    outline-color: rgba(244, 132, 95, 0.5);
+    background: linear-gradient(135deg, rgba(244, 132, 95, 0.65), rgba(194, 65, 12, 0.55));
+  }
+  .habit-cell:not(.complete) .cell-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(212, 165, 116, 0.2);
+  }
+
+  /* --- BOTTOM STRIP --- */
+  .bottom-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+    flex-shrink: 0;
+  }
+
+  .mini-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 165, 116, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .mini-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .mini-card-icon { font-size: 14px; }
+  .mini-card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .goal-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .goal-bar-track {
+    flex: 1;
+    height: 5px;
+    background: rgba(212, 165, 116, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .goal-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--coral));
+  }
+  .goal-name { font-size: 12px; color: var(--text-secondary); min-width: 80px; }
+  .goal-pct { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; }
+
+  /* Mini wellness wheel */
+  .wellness-mini {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .wellness-hex {
+    width: 60px;
+    height: 60px;
+    position: relative;
+  }
+  .wellness-hex svg { width: 60px; height: 60px; }
+  .wellness-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .wellness-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .wellness-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .reading-card-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .book-spine {
+    width: 8px;
+    height: 42px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--coral), var(--twilight));
+    flex-shrink: 0;
+  }
+  .book-info {}
+  .book-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+  }
+  .book-author { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .book-progress { font-size: 11px; color: var(--sandstone); margin-top: 3px; }
+
+  .adventure-content {}
+  .adventure-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+  }
+  .adventure-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .adventure-tag {
+    display: inline-block;
+    background: rgba(194, 65, 12, 0.2);
+    color: var(--coral);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="logo">GOAL CONNECT</div>
+    <nav class="nav">
+      <div class="nav-item">
+        <span class="icon">&#9638;</span> Dashboard
+      </div>
+      <div class="nav-item active">
+        <span class="icon">&#10003;</span> Habits
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9873;</span> Goals
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9670;</span> Analytics
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9728;</span> Adventures
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9733;</span> Wishlist
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9829;</span> Wellness
+      </div>
+      <div class="nav-item">
+        <span class="icon">&#9881;</span> Settings
+      </div>
+    </nav>
+    <div class="sidebar-stats">
+      <div class="stat-row">
+        <span class="stat-label">XP</span>
+        <span class="stat-value">1,240</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value streak">14 &#128293;</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Residency</span>
+        <span class="stat-value" style="font-size:15px;">2y 3m</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="progress-ring-wrap">
+        <svg viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f4845f"/>
+              <stop offset="100%" stop-color="#c2410c"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="ring-fg" cx="50" cy="50" r="42"/>
+        </svg>
+        <div class="ring-text">
+          <span class="ring-pct">60%</span>
+          <span class="ring-label">Today</span>
+        </div>
+      </div>
+
+      <div class="top-copy">
+        <h1 class="top-headline">Your Summit Awaits</h1>
+        <p class="top-sub"><strong>3 of 5</strong> habits complete today</p>
+      </div>
+
+      <div class="top-right">
+        <div class="today-pill">Sun, Mar 15</div>
+        <div class="avatar">LJ</div>
+      </div>
+    </div>
+
+    <!-- HABIT GRID -->
+    <div class="habit-grid-section">
+      <div class="grid-header">
+        <span class="grid-title">Weekly Tracker</span>
+        <span class="grid-week">Mar 9 &ndash; Mar 15, 2026</span>
+      </div>
+      <div class="habit-grid">
+        <!-- Header row -->
+        <div class="corner-spacer"></div>
+        <div class="day-header"><span>Mon</span><span class="day-num">9</span></div>
+        <div class="day-header"><span>Tue</span><span class="day-num">10</span></div>
+        <div class="day-header"><span>Wed</span><span class="day-num">11</span></div>
+        <div class="day-header"><span>Thu</span><span class="day-num">12</span></div>
+        <div class="day-header"><span>Fri</span><span class="day-num">13</span></div>
+        <div class="day-header"><span>Sat</span><span class="day-num">14</span></div>
+        <div class="day-header today"><span>Sun</span><span class="day-num">15</span></div>
+
+        <!-- Habit 1: German -->
+        <div class="habit-label"><span class="habit-emoji">&#127465;&#127466;</span> German Practice</div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell today-col complete"><div class="cell-dot">&#10003;</div></div>
+
+        <!-- Habit 2: Climb -->
+        <div class="habit-label"><span class="habit-emoji">&#129495;</span> Climb / Train</div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell today-col complete"><div class="cell-dot">&#10003;</div></div>
+
+        <!-- Habit 3: Study -->
+        <div class="habit-label"><span class="habit-emoji">&#128218;</span> Board Study</div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell today-col"><div class="cell-dot"></div></div>
+
+        <!-- Habit 4: Piano -->
+        <div class="habit-label"><span class="habit-emoji">&#127929;</span> Piano</div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell today-col complete"><div class="cell-dot">&#10003;</div></div>
+
+        <!-- Habit 5: Wellness -->
+        <div class="habit-label"><span class="habit-emoji">&#129526;</span> Wellness Check</div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell"><div class="cell-dot"></div></div>
+        <div class="habit-cell complete"><div class="cell-dot">&#10003;</div></div>
+        <div class="habit-cell today-col"><div class="cell-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM STRIP -->
+    <div class="bottom-strip">
+
+      <!-- Goals Spotlight -->
+      <div class="mini-card">
+        <div class="mini-card-header">
+          <span class="mini-card-icon">&#9873;</span>
+          <span class="mini-card-title">Goals Spotlight</span>
+        </div>
+        <div class="goal-item">
+          <span class="goal-name">ACVIM Boards</span>
+          <div class="goal-bar-track"><div class="goal-bar-fill" style="width:42%"></div></div>
+          <span class="goal-pct">42%</span>
+        </div>
+        <div class="goal-item">
+          <span class="goal-name">German B2</span>
+          <div class="goal-bar-track"><div class="goal-bar-fill" style="width:28%"></div></div>
+          <span class="goal-pct">28%</span>
+        </div>
+        <div class="goal-item">
+          <span class="goal-name">5.12a Send</span>
+          <div class="goal-bar-track"><div class="goal-bar-fill" style="width:65%"></div></div>
+          <span class="goal-pct">65%</span>
+        </div>
+      </div>
+
+      <!-- Wellness Wheel Mini -->
+      <div class="mini-card">
+        <div class="mini-card-header">
+          <span class="mini-card-icon">&#9829;</span>
+          <span class="mini-card-title">Wellness Wheel</span>
+        </div>
+        <div class="wellness-mini">
+          <div class="wellness-hex">
+            <svg viewBox="0 0 60 60">
+              <!-- Simplified radar/hex shape -->
+              <polygon points="30,5 55,20 55,42 30,57 5,42 5,20"
+                fill="none" stroke="rgba(212,165,116,0.15)" stroke-width="1"/>
+              <polygon points="30,15 45,24 45,38 30,47 15,38 15,24"
+                fill="none" stroke="rgba(212,165,116,0.1)" stroke-width="1"/>
+              <!-- Fill shape (wellness state) -->
+              <polygon points="30,10 50,22 48,40 30,50 12,36 10,22"
+                fill="rgba(194,65,12,0.2)" stroke="rgba(244,132,95,0.5)" stroke-width="1.5"/>
+              <!-- Dots at vertices -->
+              <circle cx="30" cy="10" r="2.5" fill="#f4845f"/>
+              <circle cx="50" cy="22" r="2.5" fill="#c2410c"/>
+              <circle cx="48" cy="40" r="2.5" fill="#d4a574"/>
+              <circle cx="30" cy="50" r="2.5" fill="#581c87"/>
+              <circle cx="12" cy="36" r="2.5" fill="#f4845f"/>
+              <circle cx="10" cy="22" r="2.5" fill="#c2410c"/>
+            </svg>
+          </div>
+          <div class="wellness-labels">
+            <span class="wellness-tag"><span class="wellness-dot" style="background:#f4845f"></span> Body</span>
+            <span class="wellness-tag"><span class="wellness-dot" style="background:#c2410c"></span> Adventure</span>
+            <span class="wellness-tag"><span class="wellness-dot" style="background:#d4a574"></span> Soul</span>
+            <span class="wellness-tag"><span class="wellness-dot" style="background:#581c87"></span> People</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Currently Reading -->
+      <div class="mini-card">
+        <div class="mini-card-header">
+          <span class="mini-card-icon">&#128214;</span>
+          <span class="mini-card-title">Currently Reading</span>
+        </div>
+        <div class="reading-card-content">
+          <div class="book-spine"></div>
+          <div class="book-info">
+            <div class="book-title">The Shining</div>
+            <div class="book-author">Stephen King</div>
+            <div class="book-progress">&#9679; Page 218 of 447</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Adventure -->
+      <div class="mini-card">
+        <div class="mini-card-header">
+          <span class="mini-card-icon">&#9728;</span>
+          <span class="mini-card-title">Recent Adventure</span>
+        </div>
+        <div class="adventure-content">
+          <div class="adventure-name">Red River Gorge</div>
+          <div class="adventure-meta">Mar 8 &ndash; Climbing trip</div>
+          <span class="adventure-tag">Outdoor</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

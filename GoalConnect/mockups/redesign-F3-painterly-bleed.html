@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoalConnect — Painterly Bleed</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garabold:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --teal-shadow: #1a6b5e;
+    --burnt-amber: #c47a20;
+    --coral-sky: #d4604a;
+    --warm-gold: #daa520;
+    --charcoal-rock: #2a1f1a;
+    --misty-lavender: #7a6b8a;
+    --glass: rgba(10,8,6,0.55);
+    --glass-light: rgba(10,8,6,0.35);
+    --glass-heavy: rgba(10,8,6,0.7);
+    --text: #ffffff;
+    --teal-accent: #2dd4bf;
+  }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text);
+    position: relative;
+  }
+
+  /* ========== PAINTERLY BACKGROUND ========== */
+  .painting {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* Sky layer */
+  .painting::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Sun glow */
+      radial-gradient(ellipse 35% 40% at 30% 35%, rgba(212,96,74,0.7) 0%, transparent 70%),
+      /* Warm light spill */
+      radial-gradient(ellipse 50% 50% at 20% 25%, rgba(218,165,32,0.3) 0%, transparent 60%),
+      /* Cloud wisps */
+      radial-gradient(ellipse 80% 15% at 55% 18%, rgba(255,220,180,0.15) 0%, transparent 80%),
+      radial-gradient(ellipse 60% 12% at 35% 28%, rgba(255,200,160,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 8% at 70% 22%, rgba(212,96,74,0.08) 0%, transparent 70%),
+      /* Cool sky right */
+      radial-gradient(ellipse 60% 80% at 85% 20%, rgba(26,107,94,0.4) 0%, transparent 70%),
+      /* Lavender mist */
+      radial-gradient(ellipse 40% 60% at 60% 40%, rgba(122,107,138,0.2) 0%, transparent 70%),
+      /* Base sky gradient */
+      linear-gradient(135deg, #d4604a 0%, #c9785a 15%, #b8886a 25%, #8a7a6a 40%, #5a6a6a 55%, #3a5a5a 70%, #2a4a4a 85%, #1a3a3a 100%);
+    z-index: 1;
+  }
+
+  /* Mountain and terrain layer */
+  .mountains {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+
+  /* Far mountain range — misty lavender */
+  .mountain-far {
+    position: absolute;
+    bottom: 25%;
+    left: -5%;
+    width: 110%;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(122,107,138,0.6) 0%, rgba(80,70,90,0.7) 60%, rgba(42,31,26,0.8) 100%);
+    clip-path: path('M0,300 C80,180 150,120 250,160 C350,200 400,80 520,100 C640,120 700,60 820,90 C940,120 1000,50 1100,80 C1200,110 1300,40 1400,70 L1400,600 L0,600 Z');
+    transform: scaleX(1.2);
+  }
+
+  /* Mid mountain — deep teal */
+  .mountain-mid {
+    position: absolute;
+    bottom: 18%;
+    left: -5%;
+    width: 115%;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(26,107,94,0.85) 0%, rgba(20,80,70,0.9) 40%, rgba(15,50,45,0.95) 100%);
+    clip-path: path('M0,350 C100,200 180,280 300,180 C420,80 480,220 600,140 C720,60 800,180 920,120 C1040,60 1100,160 1200,100 C1300,40 1350,120 1500,80 L1500,600 L0,600 Z');
+  }
+
+  /* Near mountain — charcoal amber */
+  .mountain-near {
+    position: absolute;
+    bottom: 12%;
+    left: -8%;
+    width: 120%;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(42,31,26,0.9) 0%, rgba(60,40,25,0.85) 30%, rgba(196,122,32,0.15) 60%, rgba(42,31,26,0.95) 100%);
+    clip-path: path('M0,300 C120,250 200,150 350,200 C500,250 550,120 700,180 C850,240 900,100 1050,160 C1200,220 1280,140 1400,180 C1520,220 1560,160 1600,200 L1600,500 L0,500 Z');
+  }
+
+  /* Golden light on mountain edges */
+  .mountain-light {
+    position: absolute;
+    bottom: 20%;
+    left: 15%;
+    width: 30%;
+    height: 25%;
+    background: radial-gradient(ellipse at 50% 30%, rgba(218,165,32,0.2) 0%, transparent 70%);
+    z-index: 3;
+  }
+
+  /* Water / ground reflection */
+  .water {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 18%;
+    background:
+      linear-gradient(180deg,
+        rgba(15,50,45,0.6) 0%,
+        rgba(10,40,35,0.8) 30%,
+        rgba(8,30,28,0.9) 60%,
+        rgba(5,20,18,0.95) 100%
+      );
+    z-index: 4;
+  }
+
+  /* Water shimmer */
+  .water::before {
+    content: '';
+    position: absolute;
+    top: 5%;
+    left: 10%;
+    width: 80%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(218,165,32,0.15) 30%, rgba(218,165,32,0.25) 50%, rgba(218,165,32,0.15) 70%, transparent 100%);
+    border-radius: 50%;
+    box-shadow:
+      0 12px 0 rgba(218,165,32,0.08),
+      0 28px 0 rgba(218,165,32,0.05);
+  }
+
+  /* Misty tree silhouettes — left */
+  .tree-left {
+    position: absolute;
+    bottom: 8%;
+    left: -2%;
+    width: 18%;
+    height: 35%;
+    z-index: 5;
+    opacity: 0.7;
+  }
+  .tree-left::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    width: 60%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse 35% 25% at 40% 20%, rgba(10,25,20,0.8) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 55% 35%, rgba(10,25,20,0.75) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 20% at 35% 50%, rgba(10,25,20,0.7) 0%, transparent 70%),
+      radial-gradient(ellipse 25% 18% at 50% 65%, rgba(10,25,20,0.65) 0%, transparent 70%);
+  }
+  .tree-left::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 45%;
+    width: 4px;
+    height: 40%;
+    background: rgba(10,25,20,0.6);
+    border-radius: 2px;
+  }
+
+  /* Misty tree silhouettes — right */
+  .tree-right {
+    position: absolute;
+    bottom: 6%;
+    right: -3%;
+    width: 22%;
+    height: 40%;
+    z-index: 5;
+    opacity: 0.6;
+  }
+  .tree-right::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 15%;
+    width: 70%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse 30% 22% at 60% 15%, rgba(10,25,20,0.75) 0%, transparent 70%),
+      radial-gradient(ellipse 45% 28% at 50% 30%, rgba(10,25,20,0.7) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 22% at 55% 48%, rgba(10,25,20,0.65) 0%, transparent 70%),
+      radial-gradient(ellipse 28% 18% at 48% 62%, rgba(10,25,20,0.6) 0%, transparent 70%),
+      radial-gradient(ellipse 20% 15% at 52% 75%, rgba(10,25,20,0.5) 0%, transparent 70%);
+  }
+
+  /* Birds */
+  .birds {
+    position: absolute;
+    top: 12%;
+    left: 25%;
+    width: 50%;
+    height: 20%;
+    z-index: 3;
+  }
+
+  .bird {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+
+  .bird-1 { top: 20%; left: 15%; border-width: 0 4px 3px 4px; border-color: transparent transparent rgba(42,31,26,0.5) transparent; transform: rotate(-5deg); }
+  .bird-2 { top: 10%; left: 35%; border-width: 0 5px 3px 5px; border-color: transparent transparent rgba(42,31,26,0.4) transparent; transform: rotate(3deg); }
+  .bird-3 { top: 30%; left: 45%; border-width: 0 3px 2px 3px; border-color: transparent transparent rgba(42,31,26,0.35) transparent; transform: rotate(-8deg); }
+  .bird-4 { top: 15%; left: 60%; border-width: 0 4px 3px 4px; border-color: transparent transparent rgba(42,31,26,0.45) transparent; transform: rotate(5deg); }
+  .bird-5 { top: 40%; left: 55%; border-width: 0 3px 2px 3px; border-color: transparent transparent rgba(42,31,26,0.3) transparent; transform: rotate(-3deg); }
+  .bird-6 { top: 25%; left: 75%; border-width: 0 4px 2px 4px; border-color: transparent transparent rgba(42,31,26,0.38) transparent; transform: rotate(7deg); }
+
+  /* ========== UI LAYER ========== */
+  .ui-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+  }
+
+  /* Glass mixin */
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .glass-light {
+    background: var(--glass-light);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ---- TOP BAR ---- */
+  .top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    z-index: 100;
+    background: rgba(10,8,6,0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .top-bar .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .top-bar nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  .top-bar nav a {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .top-bar nav a.active {
+    color: var(--warm-gold);
+  }
+
+  .top-bar nav a:hover {
+    color: rgba(255,255,255,0.8);
+  }
+
+  .top-bar .right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--warm-gold), var(--coral-sky));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* ---- HERO AREA ---- */
+  .hero {
+    position: absolute;
+    top: 60px;
+    left: 5%;
+    z-index: 20;
+  }
+
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px;
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: rgba(255,255,255,0.92);
+    transform: rotate(-1deg);
+    text-shadow: 0 2px 30px rgba(0,0,0,0.3);
+    margin-bottom: 6px;
+  }
+
+  .hero .subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
+
+  /* ---- PROGRESS RING (BLEEDS) ---- */
+  .progress-ring-container {
+    position: absolute;
+    top: 140px;
+    left: calc(5% + 320px);
+    z-index: 30;
+    width: 110px;
+    height: 110px;
+    /* This element BLEEDS — it overlaps the habits card below */
+  }
+
+  .progress-ring-container svg {
+    width: 110px;
+    height: 110px;
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 20px rgba(218,165,32,0.3));
+  }
+
+  .progress-ring-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 5;
+  }
+
+  .progress-ring-fill {
+    fill: none;
+    stroke: var(--warm-gold);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 113; /* 60% complete = 283 * 0.4 */
+    transition: stroke-dashoffset 1s ease;
+  }
+
+  .progress-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress-ring-text .number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--warm-gold);
+    line-height: 1;
+  }
+
+  .progress-ring-text .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+
+  /* Floating stats near the ring */
+  .floating-stats {
+    position: absolute;
+    top: 165px;
+    left: calc(5% + 440px);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(10,8,6,0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .stat-pill .val {
+    color: var(--warm-gold);
+    font-weight: 600;
+  }
+
+  .stat-pill .lbl {
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Streak flame that BREAKS OUT */
+  .streak-flame {
+    position: relative;
+  }
+
+  .streak-flame::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 6px;
+    width: 10px;
+    height: 14px;
+    background: radial-gradient(ellipse at 50% 80%, rgba(218,165,32,0.8) 0%, rgba(212,96,74,0.5) 50%, transparent 70%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.7; transform: scale(1) translateY(0); }
+    50% { opacity: 1; transform: scale(1.1) translateY(-2px); }
+    100% { opacity: 0.8; transform: scale(0.95) translateY(1px); }
+  }
+
+  /* ---- HABITS CARD ---- */
+  .habits-card {
+    position: absolute;
+    top: 220px;
+    left: 4.5%;
+    width: 54%;
+    min-height: 280px;
+    border-radius: 20px;
+    padding: 28px 30px 24px;
+    z-index: 15;
+    transform: rotate(0.3deg);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.5px;
+  }
+
+  /* Weekly habit grid */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 140px repeat(7, 1fr);
+    gap: 6px 4px;
+    align-items: center;
+  }
+
+  .habit-name {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .day-header {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+
+  .habit-cell {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin: 0 auto;
+    transition: all 0.3s;
+  }
+
+  .habit-cell.done {
+    background: rgba(218,165,32,0.35);
+    border-color: rgba(218,165,32,0.3);
+    box-shadow: 0 0 8px rgba(218,165,32,0.1);
+  }
+
+  .habit-cell.today {
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .habit-cell.today.done {
+    border-color: var(--warm-gold);
+    background: rgba(218,165,32,0.5);
+  }
+
+  /* ---- GOALS CARD ---- */
+  .goals-card {
+    position: absolute;
+    top: 200px;
+    right: 3.5%;
+    width: 36%;
+    min-height: 340px;
+    border-radius: 20px;
+    padding: 26px 26px 22px;
+    z-index: 15;
+    transform: rotate(-0.4deg);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .goals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .goal-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .goal-ring {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .goal-ring svg {
+    width: 44px;
+    height: 44px;
+    transform: rotate(-90deg);
+  }
+
+  .goal-ring-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 3;
+  }
+
+  .goal-ring-fill {
+    fill: none;
+    stroke: var(--warm-gold);
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(218,165,32,0.3));
+  }
+
+  .goal-ring .pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .goal-info {
+    flex: 1;
+  }
+
+  .goal-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 2px;
+  }
+
+  .goal-detail {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* Goals card decorative bleed element */
+  .goals-card::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--warm-gold), transparent);
+    border-radius: 1px;
+    transform: rotate(-12deg);
+    box-shadow: 0 6px 0 rgba(218,165,32,0.15), 0 12px 0 rgba(218,165,32,0.08);
+  }
+
+  /* Monthly checklist in goals card */
+  .checklist-section {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .checklist-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 10px;
+  }
+
+  .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .check-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  .check-box.checked {
+    background: rgba(218,165,32,0.4);
+    border-color: rgba(218,165,32,0.5);
+    position: relative;
+  }
+
+  .check-box.checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    width: 4px;
+    height: 7px;
+    border: solid rgba(255,255,255,0.8);
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+
+  .check-item.done-item {
+    color: rgba(255,255,255,0.3);
+    text-decoration: line-through;
+  }
+
+  /* ---- BOTTOM FLOATING PILLS ---- */
+  .bottom-pills {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 130px;
+    z-index: 18;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .pill-card {
+    position: absolute;
+    width: 200px;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+
+  .pill-card:nth-child(1) {
+    left: 6%;
+    bottom: 22px;
+  }
+
+  .pill-card:nth-child(2) {
+    left: 24%;
+    bottom: 30px;
+  }
+
+  .pill-card:nth-child(3) {
+    right: 26%;
+    bottom: 26px;
+  }
+
+  .pill-card:nth-child(4) {
+    right: 5%;
+    bottom: 18px;
+  }
+
+  .pill-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .pill-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .pill-icon.teal { background: rgba(45,212,191,0.2); color: var(--teal-accent); }
+  .pill-icon.gold { background: rgba(218,165,32,0.2); color: var(--warm-gold); }
+  .pill-icon.coral { background: rgba(212,96,74,0.2); color: var(--coral-sky); }
+  .pill-icon.lavender { background: rgba(122,107,138,0.2); color: var(--misty-lavender); }
+
+  .pill-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.3px;
+  }
+
+  .pill-value {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 400;
+    line-height: 1.35;
+  }
+
+  .pill-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 2px;
+  }
+
+  /* Mini wellness wheel in pill */
+  .mini-wheel {
+    width: 32px;
+    height: 32px;
+    position: relative;
+    margin-top: 4px;
+  }
+
+  .mini-wheel svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Book cover placeholder */
+  .book-cover {
+    width: 28px;
+    height: 40px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, rgba(196,122,32,0.4), rgba(212,96,74,0.3));
+    border: 1px solid rgba(255,255,255,0.1);
+    float: right;
+    margin-left: 8px;
+    margin-top: 2px;
+  }
+
+  /* Tree silhouettes bleed OVER bottom pills */
+  .tree-overlay-left {
+    position: absolute;
+    bottom: 0;
+    left: -2%;
+    width: 15%;
+    height: 120px;
+    z-index: 22;
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  .tree-overlay-left::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse 50% 30% at 45% 25%, rgba(5,18,15,0.9) 0%, transparent 70%),
+      radial-gradient(ellipse 55% 35% at 50% 45%, rgba(5,18,15,0.8) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 25% at 42% 65%, rgba(5,18,15,0.7) 0%, transparent 70%);
+  }
+
+  .tree-overlay-right {
+    position: absolute;
+    bottom: 0;
+    right: -3%;
+    width: 18%;
+    height: 140px;
+    z-index: 22;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+
+  .tree-overlay-right::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 5%;
+    width: 85%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse 45% 28% at 55% 20%, rgba(5,18,15,0.85) 0%, transparent 70%),
+      radial-gradient(ellipse 55% 32% at 50% 40%, rgba(5,18,15,0.75) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 22% at 52% 60%, rgba(5,18,15,0.65) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 18% at 48% 78%, rgba(5,18,15,0.5) 0%, transparent 70%);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== PAINTERLY BACKGROUND ========== -->
+<div class="painting">
+  <div class="mountains">
+    <div class="mountain-far"></div>
+    <div class="mountain-mid"></div>
+    <div class="mountain-near"></div>
+    <div class="mountain-light"></div>
+  </div>
+  <div class="water"></div>
+  <div class="tree-left"></div>
+  <div class="tree-right"></div>
+  <div class="birds">
+    <div class="bird bird-1"></div>
+    <div class="bird bird-2"></div>
+    <div class="bird bird-3"></div>
+    <div class="bird bird-4"></div>
+    <div class="bird bird-5"></div>
+    <div class="bird bird-6"></div>
+  </div>
+</div>
+
+<!-- ========== UI LAYER ========== -->
+<div class="ui-layer">
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="logo">Goal Connect</div>
+    <nav>
+      <a href="#" class="active">Dashboard</a>
+      <a href="#">Habits</a>
+      <a href="#">Goals</a>
+      <a href="#">Journey</a>
+      <a href="#">Planner</a>
+    </nav>
+    <div class="right">
+      <span>Mar 15, 2026</span>
+      <div class="avatar">L</div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Your Summit<br>Awaits</h1>
+    <p class="subtitle">3 of 5 habits complete today</p>
+  </div>
+
+  <!-- PROGRESS RING (BLEEDS over habits card) -->
+  <div class="progress-ring-container">
+    <svg viewBox="0 0 100 100">
+      <circle class="progress-ring-bg" cx="50" cy="50" r="45"/>
+      <circle class="progress-ring-fill" cx="50" cy="50" r="45"/>
+    </svg>
+    <div class="progress-ring-text">
+      <span class="number">60%</span>
+      <span class="label">Today</span>
+    </div>
+  </div>
+
+  <!-- FLOATING STATS -->
+  <div class="floating-stats">
+    <div class="stat-pill streak-flame">
+      <span class="val">12</span>
+      <span class="lbl">day streak</span>
+    </div>
+    <div class="stat-pill">
+      <span class="val">2,480</span>
+      <span class="lbl">XP</span>
+    </div>
+  </div>
+
+  <!-- HABITS CARD -->
+  <div class="habits-card glass">
+    <div class="card-header">
+      <span class="card-title">Weekly Habits</span>
+      <span class="card-meta">Week 11 &middot; Mar 9 &ndash; 15</span>
+    </div>
+    <div class="habit-grid">
+      <!-- Header row -->
+      <div></div>
+      <div class="day-header">Mon</div>
+      <div class="day-header">Tue</div>
+      <div class="day-header">Wed</div>
+      <div class="day-header">Thu</div>
+      <div class="day-header">Fri</div>
+      <div class="day-header">Sat</div>
+      <div class="day-header">Sun</div>
+
+      <!-- Habit 1: Climbing -->
+      <div class="habit-name">Climbing</div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell today done"></div>
+      <div class="habit-cell"></div>
+
+      <!-- Habit 2: German -->
+      <div class="habit-name">German Practice</div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell today done"></div>
+      <div class="habit-cell"></div>
+
+      <!-- Habit 3: Piano -->
+      <div class="habit-name">Piano</div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell today"></div>
+      <div class="habit-cell"></div>
+
+      <!-- Habit 4: Reading -->
+      <div class="habit-name">Reading</div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell today done"></div>
+      <div class="habit-cell"></div>
+
+      <!-- Habit 5: Study -->
+      <div class="habit-name">Board Prep</div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell done"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell today"></div>
+      <div class="habit-cell"></div>
+    </div>
+  </div>
+
+  <!-- GOALS CARD -->
+  <div class="goals-card glass">
+    <div class="card-header">
+      <span class="card-title">2026 Goals</span>
+      <span class="card-meta">4 active</span>
+    </div>
+    <div class="goals-list">
+      <!-- Goal 1 -->
+      <div class="goal-item">
+        <div class="goal-ring">
+          <svg viewBox="0 0 44 44">
+            <circle class="goal-ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="goal-ring-fill" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="34"/>
+          </svg>
+          <span class="pct">70%</span>
+        </div>
+        <div class="goal-info">
+          <div class="goal-name">Pass ACVIM Boards</div>
+          <div class="goal-detail">41 / 164 objectives complete</div>
+        </div>
+      </div>
+      <!-- Goal 2 -->
+      <div class="goal-item">
+        <div class="goal-ring">
+          <svg viewBox="0 0 44 44">
+            <circle class="goal-ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="goal-ring-fill" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="68"/>
+          </svg>
+          <span class="pct">40%</span>
+        </div>
+        <div class="goal-info">
+          <div class="goal-name">German B1 Certificate</div>
+          <div class="goal-detail">Pimsleur L42 &middot; Akte 47 Week 1</div>
+        </div>
+      </div>
+      <!-- Goal 3 -->
+      <div class="goal-item">
+        <div class="goal-ring">
+          <svg viewBox="0 0 44 44">
+            <circle class="goal-ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="goal-ring-fill" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="85"/>
+          </svg>
+          <span class="pct">25%</span>
+        </div>
+        <div class="goal-info">
+          <div class="goal-name">Lead 5.11 Outdoors</div>
+          <div class="goal-detail">Projecting at 5.10c</div>
+        </div>
+      </div>
+      <!-- Goal 4 -->
+      <div class="goal-item">
+        <div class="goal-ring">
+          <svg viewBox="0 0 44 44">
+            <circle class="goal-ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="goal-ring-fill" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="90"/>
+          </svg>
+          <span class="pct">20%</span>
+        </div>
+        <div class="goal-info">
+          <div class="goal-name">Learn Chopin Ballade No. 1</div>
+          <div class="goal-detail">Exposition mostly memorized</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="checklist-section">
+      <div class="checklist-title">This Month</div>
+      <div class="checklist">
+        <div class="check-item done-item"><div class="check-box checked"></div> Complete I.D. Hemolymphatic domain</div>
+        <div class="check-item"><div class="check-box"></div> Start I.E. Nephrology/Urology</div>
+        <div class="check-item"><div class="check-box checked"></div> Finish Pimsleur L1 gold standard</div>
+        <div class="check-item"><div class="check-box"></div> Outdoor climb 3x this month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM FLOATING PILLS -->
+  <div class="bottom-pills">
+    <!-- Wellness -->
+    <div class="pill-card glass-light">
+      <div class="pill-header">
+        <div class="pill-icon teal">&#9673;</div>
+        <span class="pill-label">Wellness Wheel</span>
+      </div>
+      <div class="pill-value" style="display:flex; align-items:center; gap:10px;">
+        <svg class="mini-wheel" viewBox="0 0 36 36" width="32" height="32">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(45,212,191,0.5)" stroke-width="4" stroke-dasharray="22 66" stroke-dashoffset="0" stroke-linecap="round"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(218,165,32,0.5)" stroke-width="4" stroke-dasharray="18 70" stroke-dashoffset="-22" stroke-linecap="round"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(212,96,74,0.5)" stroke-width="4" stroke-dasharray="14 74" stroke-dashoffset="-40" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div style="font-size:12px;">4.2 avg</div>
+          <div class="pill-sub">Body leading</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reading -->
+    <div class="pill-card glass-light">
+      <div class="pill-header">
+        <div class="pill-icon gold">&#9830;</div>
+        <span class="pill-label">Currently Reading</span>
+      </div>
+      <div class="pill-value">
+        <div class="book-cover"></div>
+        <div style="font-size:12px;">de Lahunta 5e</div>
+        <div class="pill-sub">Ch. 10 Audit done</div>
+      </div>
+    </div>
+
+    <!-- Adventure -->
+    <div class="pill-card glass-light">
+      <div class="pill-header">
+        <div class="pill-icon coral">&#9650;</div>
+        <span class="pill-label">Recent Adventure</span>
+      </div>
+      <div class="pill-value" style="font-size:12px;">Red River Gorge</div>
+      <div class="pill-sub">Mar 8 &middot; 4 routes sent</div>
+    </div>
+
+    <!-- Listening -->
+    <div class="pill-card glass-light">
+      <div class="pill-header">
+        <div class="pill-icon lavender">&#9835;</div>
+        <span class="pill-label">Listening</span>
+      </div>
+      <div class="pill-value" style="font-size:12px;">Pimsleur German L42</div>
+      <div class="pill-sub">Bike commute &middot; 28 min</div>
+    </div>
+  </div>
+
+  <!-- Tree overlays that bleed OVER bottom pills -->
+  <div class="tree-overlay-left"></div>
+  <div class="tree-overlay-right"></div>
+
+</div>
+
+</body>
+</html>

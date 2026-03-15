@@ -23,11 +23,11 @@ const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
 
 // Cute genre colors for book covers
 const GENRE_COLORS: Record<string, string> = {
-  fiction: "from-blue-400/60 to-indigo-500/60",
-  nonfiction: "from-emerald-400/60 to-teal-500/60",
+  fiction: "from-amber-400/60 to-orange-500/60",
+  nonfiction: "from-[#d4854a]/60 to-[#c07040]/60",
   biography: "from-amber-400/60 to-orange-500/60",
   selfhelp: "from-rose-400/60 to-pink-500/60",
-  default: "from-slate-400/60 to-slate-500/60",
+  default: "from-amber-400/40 to-orange-400/40",
 };
 
 export function MediaWidget() {
@@ -63,7 +63,7 @@ export function MediaWidget() {
         <div className="flex flex-col items-center justify-center py-6">
           <div className="flex gap-1 mb-3">
             {/* Cute stacked books illustration */}
-            <div className="w-3 h-10 rounded-sm bg-gradient-to-b from-blue-400/40 to-blue-500/40 transform -rotate-3" />
+            <div className="w-3 h-10 rounded-sm bg-gradient-to-b from-amber-400/40 to-orange-500/40 transform -rotate-3" />
             <div className="w-3 h-12 rounded-sm bg-gradient-to-b from-rose-400/40 to-rose-500/40" />
             <div className="w-3 h-9 rounded-sm bg-gradient-to-b from-amber-400/40 to-amber-500/40 transform rotate-2" />
           </div>
@@ -126,7 +126,7 @@ export function MediaWidget() {
                         toast({ title: "Failed to update", variant: "destructive" });
                       }
                     }}
-                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-emerald-400 hover:text-emerald-300 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 -my-3"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-[#d4854a] hover:text-[#e0995e] min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 -my-3"
                     aria-label={`Mark "${item.title}" as done`}
                   >
                     <Check className="w-3.5 h-3.5" />
