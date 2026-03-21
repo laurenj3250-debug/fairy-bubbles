@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown — Layout Arrangements with Monthly Goals</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 90vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    /* Fade ALL edges — left, right, top, and center vignette */
+    background:
+      /* Left fade */
+      linear-gradient(to right, rgba(12,5,8,1) 0%, rgba(12,5,8,0.6) 8%, transparent 25%),
+      /* Right fade */
+      linear-gradient(to left, rgba(12,5,8,1) 0%, rgba(12,5,8,0.6) 8%, transparent 25%),
+      /* Top fade */
+      linear-gradient(to bottom, rgba(12,5,8,0.8) 0%, rgba(12,5,8,0.3) 10%, transparent 30%),
+      /* Warm vignette */
+      radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(28,14,18,0.6) 100%),
+      /* Warm sun haze center */
+      radial-gradient(ellipse 40% 35% at 50% 38%, rgba(255,248,231,0.1) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.95) 0%, rgba(12,5,8,0.7) 15%, rgba(12,5,8,0.2) 35%, transparent 50%);
+  }
+
+  /* PARTICLES */
+  .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; animation-delay: 0s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 400px; height: 250px; left: 50%; top: 18%; transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.15) 0%, rgba(255,180,100,0.06) 40%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+  /* Lens flare effect */
+  .lens-flare {
+    position: fixed; z-index: 2; pointer-events: none;
+    width: 120px; height: 3px; left: 50%; top: 28%; transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, rgba(255,220,160,0.4) 30%, rgba(255,240,200,0.6) 50%, rgba(255,220,160,0.4) 70%, transparent);
+    border-radius: 2px;
+    box-shadow: 0 0 20px rgba(255,200,120,0.15), 0 0 40px rgba(255,180,100,0.08);
+    animation: flare-pulse 8s ease-in-out infinite;
+  }
+  .lens-flare-wide {
+    position: fixed; z-index: 2; pointer-events: none;
+    width: 80vw; height: 1px; left: 50%; top: 28.5%; transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent 10%, rgba(255,200,140,0.08) 30%, rgba(255,220,160,0.15) 50%, rgba(255,200,140,0.08) 70%, transparent 90%);
+    animation: flare-pulse 8s ease-in-out infinite 1s;
+  }
+  @keyframes flare-pulse {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+    50% { opacity: 1; transform: translateX(-50%) scaleX(1.1); }
+  }
+
+  /* ANIMATIONS */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; } 90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; } 85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 0.3; } 50% { opacity: 1; }
+  }
+  @keyframes softPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  @keyframes mistDrift {
+    0% { transform: translateX(-5px); opacity: 0.04; }
+    50% { opacity: 0.08; }
+    100% { transform: translateX(5px); opacity: 0.04; }
+  }
+  @keyframes sd-breathe {
+    0%, 100% { box-shadow: 0 0 20px rgba(225,164,92,0.08); }
+    50% { box-shadow: 0 0 35px rgba(225,164,92,0.15); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes aurora-breathe {
+    0%, 100% { opacity: 0.7; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.02); }
+  }
+  @keyframes aurora-shimmer {
+    0% { background-position: 0% 100%; }
+    50% { background-position: 100% 0%; }
+    100% { background-position: 0% 100%; }
+  }
+
+  .content { position: relative; z-index: 10; }
+
+  /* HERO — title at top, landscape visible in middle, cards below */
+  .hero {
+    height: auto;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+    padding-top: 20px;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  /* Spacer to let the landscape breathe between title and cards */
+  .landscape-spacer {
+    height: 38vh; min-height: 250px;
+  }
+  .hero-pills {
+    display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center;
+  }
+  .pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+    box-shadow: 0 4px 8px rgba(40,20,10,0.3);
+  }
+  .pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 18px; padding: 5px 12px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-secondary);
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  .pill-face .val { color: var(--text-accent); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 15px; }
+
+  /* RESIDENCY STRIP */
+  .residency-strip {
+    max-width: 1200px; margin: 0 auto; padding: 0 40px 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .residency-strip .icon { font-size: 18px; }
+  .residency-strip .bar-wrap {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: hidden;
+  }
+  .residency-strip .bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #c47a20, #E1A45C);
+    box-shadow: 0 0 6px rgba(218,165,32,0.3);
+  }
+  .residency-strip .bar-wrap .marker {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: rgba(255,200,140,0.2);
+  }
+  .residency-strip .days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 700; color: var(--text-accent);
+    white-space: nowrap;
+  }
+  .residency-strip .time-left { font-size: 11px; color: var(--text-muted); }
+
+  /* TAB DOCK */
+  .tab-wrap { display: flex; justify-content: center; padding: 0 40px 20px; }
+  .tab-dock {
+    background: var(--shell-bg); border-radius: 30px; padding: 3px;
+    box-shadow: var(--card-shadow); height: 40px;
+  }
+  .tab-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 27px; height: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  .tab {
+    padding: 6px 16px; border-radius: 18px; font-size: 12px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; border: none; background: none;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .tab.active { background: var(--shell-bg); color: var(--text-primary); font-weight: 600; }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+    animation: sd-breathe 8s ease-in-out infinite;
+  }
+  .shell:hover { transform: translateY(-3px); }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 16px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  /* Light ray on face */
+  .face::before {
+    content: ''; position: absolute; top: 0; left: 10%; right: 60%;
+    height: 1px; background: linear-gradient(90deg, transparent, rgba(255,200,140,0.15), transparent);
+    pointer-events: none;
+  }
+  .tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 14px;
+    box-shadow: var(--tray-inset); border: 1px solid rgba(0,0,0,0.15);
+  }
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .badge {
+    font-size: 10px; font-weight: 600; color: var(--text-accent);
+    background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ROW */
+  .row { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
+  /* HABIT GRID — Stardust Trail */
+  .habit-grid {
+    display: grid; grid-template-columns: 120px repeat(7, 42px);
+    column-gap: 4px; row-gap: 6px; align-items: center;
+  }
+  .day-hdr {
+    text-align: center; font-size: 9px; font-weight: 600;
+    color: rgba(169,130,106,0.5); text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1.5px;
+  }
+  .day-hdr.today { color: rgba(225,164,92,0.7); }
+  .habit-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: rgba(240,222,199,0.7); white-space: nowrap; overflow: hidden;
+  }
+  .habit-label svg { width: 14px; height: 14px; stroke: var(--text-muted); fill: none; stroke-width: 1.5; flex-shrink: 0; }
+  .star-dot {
+    width: 28px; height: 28px; border-radius: 50%; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .star-dot.empty {
+    background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .star-dot.done {
+    background: radial-gradient(circle, rgba(225,164,92,0.5) 0%, rgba(200,131,73,0.25) 100%);
+    box-shadow: 0 0 8px rgba(225,164,92,0.2), 0 0 2px rgba(225,164,92,0.4);
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  .star-dot.done::after {
+    content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,220,160,0.8);
+    box-shadow: 0 0 4px rgba(255,220,160,0.6);
+  }
+  .star-dot.today-ring { box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4); }
+  .star-dot.done.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4), 0 0 8px rgba(225,164,92,0.2), 0 0 2px rgba(225,164,92,0.4);
+  }
+  .star-dot.future { opacity: 0.25; }
+
+  /* Constellation lines between done dots — CSS approach */
+  .habit-row-wrap {
+    display: contents;
+  }
+
+  /* AURORA GRADIENT LEVEL/REWARD */
+  .aurora-card .face {
+    padding: 0; overflow: hidden; display: flex; flex-direction: column;
+    min-height: 180px;
+  }
+  .aurora-zone {
+    position: relative; flex: 1; display: flex; flex-direction: column;
+    justify-content: flex-end;
+  }
+  .aurora-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(200,131,73,0.35) 0%,
+      rgba(200,131,73,0.25) 30%,
+      rgba(200,131,73,0.12) 55%,
+      rgba(200,131,73,0.04) 75%,
+      transparent 79%,
+      transparent 100%
+    );
+    background-size: 200% 200%;
+    animation: aurora-breathe 6s ease-in-out infinite, aurora-shimmer 12s ease-in-out infinite;
+  }
+  .aurora-cool {
+    position: relative; z-index: 2;
+    padding: 14px 16px 6px;
+    text-align: center;
+  }
+  .aurora-cool-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    color: rgba(169,130,106,0.35); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .aurora-warm {
+    position: relative; z-index: 2;
+    padding: 8px 16px 16px; text-align: center;
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+  }
+  .aurora-level-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .aurora-level-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600;
+    color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.4), 0 0 40px rgba(225,164,92,0.15);
+  }
+  .aurora-streak {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+  .aurora-divider {
+    width: 60%; height: 1px; margin: 10px auto;
+    background: linear-gradient(90deg, transparent, rgba(255,200,140,0.12), transparent);
+  }
+  .aurora-reward {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .aurora-xp {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 400;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 3px;
+  }
+  /* Aurora shimmer overlay */
+  .aurora-zone::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,220,160,0.04) 50%, transparent 60%);
+    background-size: 200% 100%;
+    animation: shimmer 8s ease-in-out infinite;
+  }
+
+  /* STARDUST RING PROGRESS */
+  .ring-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 0;
+  }
+  .ring-container {
+    position: relative; width: 120px; height: 120px;
+  }
+  .ring-container canvas { width: 100%; height: 100%; }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ring-pct {
+    font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600;
+    color: var(--text-accent); text-shadow: 0 0 15px rgba(225,164,92,0.3);
+  }
+  .ring-label {
+    font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* MONTHLY GOALS GRID */
+  .month-tabs {
+    display: flex; gap: 3px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .month-tab {
+    padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border: none;
+    background: rgba(15,10,8,0.4); letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif;
+    transition: all 0.2s;
+  }
+  .month-tab.active { background: rgba(200,131,73,0.25); color: var(--text-accent); }
+  .month-tab.past { color: rgba(169,130,106,0.5); }
+  .month-tab.future { color: rgba(169,130,106,0.25); }
+  .month-tab:hover { color: var(--text-secondary); }
+
+  .goals-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .goal-tile {
+    background: rgba(52,28,32,0.6); border-radius: 14px; padding: 2px;
+    position: relative; transition: all 0.3s;
+  }
+  .goal-tile-inner {
+    background: rgba(85,48,50,0.4); border-radius: 12px; padding: 14px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    position: relative; overflow: hidden;
+  }
+  .goal-tile-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 600;
+    color: var(--text-primary); line-height: 1.3; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .goal-tile-fraction {
+    font-size: 10px; color: var(--text-muted); margin-bottom: 8px;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1px;
+  }
+  .goal-tile-bar {
+    height: 3px; border-radius: 2px;
+    background: rgba(15,10,8,0.5); box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .goal-tile-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #c47a20, #E1A45C);
+  }
+
+  /* Glow proportional to progress */
+  .goal-tile.glow-high { box-shadow: 0 0 20px rgba(225,164,92,0.15), 0 0 4px rgba(225,164,92,0.1); }
+  .goal-tile.glow-moderate { box-shadow: 0 0 12px rgba(225,164,92,0.1), 0 0 2px rgba(225,164,92,0.08); }
+  .goal-tile.glow-dim { box-shadow: 0 0 6px rgba(225,164,92,0.05); }
+
+  /* Completed tile */
+  .goal-tile.completed {
+    opacity: 0.5;
+  }
+  .goal-tile.completed .goal-tile-name {
+    text-decoration: line-through;
+    text-decoration-color: rgba(225,164,92,0.4);
+    color: var(--text-muted);
+  }
+  .goal-tile.completed .goal-tile-fraction { color: rgba(169,130,106,0.4); }
+  .goal-tile.completed::after {
+    content: '';
+    position: absolute; top: 10px; right: 10px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.25) 0%, transparent 70%);
+    box-shadow: 0 0 10px rgba(225,164,92,0.15);
+  }
+  .completed-check {
+    position: absolute; top: 8px; right: 8px;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .completed-check svg {
+    width: 14px; height: 14px;
+    stroke: rgba(225,164,92,0.5); fill: none; stroke-width: 2;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.3));
+  }
+
+  .show-all-btn {
+    display: block; margin: 14px auto 0; padding: 6px 20px;
+    border: none; background: none; cursor: pointer;
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 600;
+    color: var(--text-accent); text-transform: uppercase; letter-spacing: 1.5px;
+    transition: all 0.2s;
+  }
+  .show-all-btn:hover { color: var(--text-primary); text-shadow: 0 0 8px rgba(225,164,92,0.3); }
+
+  /* NAV LINKS */
+  .nav-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 12px 0 32px; }
+  .nav-link {
+    padding: 6px 16px; border-radius: 14px; font-size: 11px; font-weight: 500;
+    color: var(--text-muted); background: rgba(40,22,18,0.4); cursor: pointer;
+    text-decoration: none; border: 1px solid rgba(255,200,140,0.06);
+    transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .nav-link:hover { color: var(--text-primary); background: rgba(80,50,35,0.3); }
+
+  /* SECTION DIVIDER */
+  .arrangement-divider {
+    max-width: 1200px; margin: 0 auto; padding: 60px 40px 30px;
+    text-align: center;
+  }
+  .arrangement-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400;
+    color: rgba(225,164,92,0.6); letter-spacing: 6px; text-transform: uppercase;
+  }
+  .arrangement-desc {
+    font-size: 12px; color: var(--text-muted); margin-top: 6px; letter-spacing: 1px;
+  }
+  .arrangement-divider::after {
+    content: ''; display: block; width: 120px; height: 1px; margin: 16px auto 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.3), transparent);
+  }
+
+  /* LAYOUT VARIANTS */
+  .layout-2col { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .layout-2col .col-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  .layout-3col-a { display: grid; grid-template-columns: 1.3fr 1fr 0.7fr; gap: 14px; margin-bottom: 14px; }
+  .layout-3col-b { display: grid; grid-template-columns: 1.3fr 0.7fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .full-width { margin-bottom: 14px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .layout-2col, .layout-3col-a, .layout-3col-b { grid-template-columns: 1fr; }
+    .goals-grid { grid-template-columns: 1fr 1fr; }
+    .hero { height: auto; min-height: 120px; padding: 20px 16px; }
+    .row { padding: 0 16px; }
+    .hero-pills { gap: 6px; }
+    .arrangement-divider { padding: 40px 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+<div class="particles" id="particles"></div>
+<script>
+// Generate 60 fireflies with random properties
+const container = document.getElementById('particles');
+for (let i = 0; i < 60; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 1.5 + Math.random() * 2.5;
+  const left = Math.random() * 100;
+  const bottom = 10 + Math.random() * 55;
+  const dur = 8 + Math.random() * 18;
+  const delay = Math.random() * 12;
+  const opacity = 0.25 + Math.random() * 0.45;
+  const anim = Math.random() > 0.4 ? 'float-up' : 'float-up-2';
+  p.style.cssText = `left:${left}%;bottom:${bottom}%;width:${size}px;height:${size}px;opacity:${opacity};animation:${anim} ${dur}s linear ${delay}s infinite;background:rgba(225,${160+Math.floor(Math.random()*40)},${100+Math.floor(Math.random()*40)},${0.4+Math.random()*0.3});`;
+  container.appendChild(p);
+}
+</script>
+<div class="sun-glow"></div>
+<div class="lens-flare"></div>
+<div class="lens-flare-wide"></div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ARRANGEMENT A: 2-Column                        -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="arrangement-divider" style="padding-top: 20px;">
+  <div class="arrangement-label">Arrangement A</div>
+  <div class="arrangement-desc">2-Column: Habits (1.5fr) | Aurora + Ring stacked (1fr) &mdash; Monthly Goals full width below</div>
+</div>
+
+<!-- TITLE AT TOP -->
+<section class="hero">
+  <h1>Sundown</h1>
+  <div class="hero-pills">
+    <div class="pill"><div class="pill-face"><span class="val">72&deg;</span> Clear</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">22</span> Streak</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">5/6</span> Today</div></div>
+  </div>
+</section>
+
+<!-- LANDSCAPE BREATHING ROOM -->
+<div class="landscape-spacer"></div>
+
+<!-- RESIDENCY STRIP -->
+<div class="residency-strip">
+  <span class="icon">🎓</span>
+  <div class="bar-wrap">
+    <div class="bar-fill" style="width: 25%;"></div>
+    <div class="marker" style="left: 33.33%;"></div>
+    <div class="marker" style="left: 66.66%;"></div>
+  </div>
+  <div>
+    <div class="days">846</div>
+    <div class="time-left">2y 3m left</div>
+  </div>
+</div>
+
+<!-- TAB DOCK -->
+<div class="tab-wrap">
+  <div class="tab-dock"><div class="tab-face">
+    <div class="tab active">Overview</div>
+    <div class="tab">Goals</div>
+    <div class="tab">Habits</div>
+    <div class="tab">Journal</div>
+  </div></div>
+</div>
+
+<div class="row">
+  <!-- 2-COLUMN LAYOUT -->
+  <div class="layout-2col">
+    <!-- Col 1: Stardust Trail Habits -->
+    <div class="shell" style="animation-delay: 0.5s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">5/6 Today</span>
+      </div>
+      <div class="tray">
+        <div class="habit-grid">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div>
+          <div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>RemNote</div>
+          <div class="star-dot done" style="animation-delay:0.1s"></div><div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot done" style="animation-delay:0.7s"></div><div class="star-dot done" style="animation-delay:0.9s"></div><div class="star-dot done today-ring" style="animation-delay:1.1s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M6 6h4v4H6zM14 6h4v4h-4zM6 14h4v4H6zM14 17a3 3 0 100-6 3 3 0 000 6z"/></svg>Gym</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div>
+          <div class="star-dot done" style="animation-delay:0.6s"></div><div class="star-dot empty"></div><div class="star-dot done today-ring" style="animation-delay:1.0s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Pimsleur</div>
+          <div class="star-dot done" style="animation-delay:0.15s"></div><div class="star-dot done" style="animation-delay:0.35s"></div><div class="star-dot done" style="animation-delay:0.55s"></div>
+          <div class="star-dot done" style="animation-delay:0.75s"></div><div class="star-dot done" style="animation-delay:0.95s"></div><div class="star-dot done today-ring" style="animation-delay:1.15s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>Bed by 11</div>
+          <div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot empty today-ring"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Read Paper</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.25s"></div><div class="star-dot empty"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.85s"></div><div class="star-dot done today-ring" style="animation-delay:1.2s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Boards</div>
+          <div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.4s"></div><div class="star-dot done" style="animation-delay:0.6s"></div>
+          <div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot done" style="animation-delay:1.0s"></div><div class="star-dot done today-ring" style="animation-delay:1.25s"></div>
+          <div class="star-dot empty future"></div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- Col 2: Aurora + Ring stacked -->
+    <div class="col-stack">
+      <!-- Aurora Gradient -->
+      <div class="shell aurora-card" style="animation-delay: 1s;"><div class="face">
+        <div class="aurora-zone">
+          <div class="aurora-bg"></div>
+          <div class="aurora-cool">
+            <div class="aurora-cool-text">6 Days to Level 4</div>
+          </div>
+          <div class="aurora-warm">
+            <div class="aurora-level-label">Level</div>
+            <div class="aurora-level-num">3</div>
+            <div class="aurora-streak">22 Day Streak</div>
+            <div class="aurora-divider"></div>
+            <div class="aurora-reward">Custom Scrub Cap</div>
+            <div class="aurora-xp">341 of 500 XP</div>
+          </div>
+        </div>
+      </div></div>
+
+      <!-- Stardust Ring -->
+      <div class="shell" style="animation-delay: 1.5s;"><div class="face">
+        <div class="card-hdr">
+          <span class="card-title">Progress</span>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container">
+            <canvas id="ring-a" width="240" height="240"></canvas>
+            <div class="ring-center">
+              <div class="ring-pct">78%</div>
+              <div class="ring-label">This Week</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Monthly Goals Grid — Full Width -->
+  <div class="full-width">
+    <div class="shell" style="animation-delay: 2s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Goals</span>
+        <span class="badge">3/30 Complete</span>
+      </div>
+      <div class="month-tabs">
+        <button class="month-tab past">Jan</button>
+        <button class="month-tab past">Feb</button>
+        <button class="month-tab active">Mar</button>
+        <button class="month-tab future">Apr</button>
+        <button class="month-tab future">May</button>
+        <button class="month-tab future">Jun</button>
+        <button class="month-tab future">Jul</button>
+        <button class="month-tab future">Aug</button>
+        <button class="month-tab future">Sep</button>
+        <button class="month-tab future">Oct</button>
+        <button class="month-tab future">Nov</button>
+        <button class="month-tab future">Dec</button>
+      </div>
+      <div class="goals-grid">
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Complete de Lahunta ch 10-12</div>
+            <div class="goal-tile-fraction">35% &mdash; in progress</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 35%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">300 PowerPoints This Month</div>
+            <div class="goal-tile-fraction">14 / 50 (28%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 28%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">20 Lifting Days This Month</div>
+            <div class="goal-tile-fraction">8 / 20 (40%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 40%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Read 2 Papers</div>
+            <div class="goal-tile-fraction">0 / 2 (0%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 0%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile completed">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Submit ACVIM Application</div>
+            <div class="goal-tile-fraction">Complete</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 100%; opacity: 0.4;"></div></div>
+            <div class="completed-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <button class="show-all-btn">Show All Months</button>
+    </div></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-row">
+    <a class="nav-link" href="#">Habits</a>
+    <a class="nav-link" href="#">Goals</a>
+    <a class="nav-link" href="#">Analytics</a>
+    <a class="nav-link" href="#">Adventures</a>
+    <a class="nav-link" href="#">Wellness</a>
+    <a class="nav-link" href="#">Settings</a>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ARRANGEMENT B: 3-Column (Aurora middle)        -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="arrangement-divider">
+  <div class="arrangement-label">Arrangement B</div>
+  <div class="arrangement-desc">3-Column: Habits (1.3fr) | Aurora center (1fr, taller) | Ring (0.7fr) &mdash; Monthly Goals full width below</div>
+</div>
+
+<section class="hero">
+  <h1>Sundown</h1>
+  <div class="hero-pills">
+    <div class="pill"><div class="pill-face"><span class="val">72&deg;</span> Clear</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">22</span> Streak</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">5/6</span> Today</div></div>
+  </div>
+</section>
+
+<div class="residency-strip">
+  <span class="icon">🎓</span>
+  <div class="bar-wrap">
+    <div class="bar-fill" style="width: 25%;"></div>
+    <div class="marker" style="left: 33.33%;"></div>
+    <div class="marker" style="left: 66.66%;"></div>
+  </div>
+  <div>
+    <div class="days">846</div>
+    <div class="time-left">2y 3m left</div>
+  </div>
+</div>
+
+<div class="tab-wrap">
+  <div class="tab-dock"><div class="tab-face">
+    <div class="tab active">Overview</div>
+    <div class="tab">Goals</div>
+    <div class="tab">Habits</div>
+    <div class="tab">Journal</div>
+  </div></div>
+</div>
+
+<div class="row">
+  <!-- 3-COLUMN: Habits | Aurora (middle) | Ring -->
+  <div class="layout-3col-a">
+    <!-- Col 1: Habits -->
+    <div class="shell" style="animation-delay: 0.5s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">5/6 Today</span>
+      </div>
+      <div class="tray">
+        <div class="habit-grid">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div>
+          <div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>RemNote</div>
+          <div class="star-dot done" style="animation-delay:0.1s"></div><div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot done" style="animation-delay:0.7s"></div><div class="star-dot done" style="animation-delay:0.9s"></div><div class="star-dot done today-ring" style="animation-delay:1.1s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M6 6h4v4H6zM14 6h4v4h-4zM6 14h4v4H6zM14 17a3 3 0 100-6 3 3 0 000 6z"/></svg>Gym</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div>
+          <div class="star-dot done" style="animation-delay:0.6s"></div><div class="star-dot empty"></div><div class="star-dot done today-ring" style="animation-delay:1.0s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Pimsleur</div>
+          <div class="star-dot done" style="animation-delay:0.15s"></div><div class="star-dot done" style="animation-delay:0.35s"></div><div class="star-dot done" style="animation-delay:0.55s"></div>
+          <div class="star-dot done" style="animation-delay:0.75s"></div><div class="star-dot done" style="animation-delay:0.95s"></div><div class="star-dot done today-ring" style="animation-delay:1.15s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>Bed by 11</div>
+          <div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot empty today-ring"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Read Paper</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.25s"></div><div class="star-dot empty"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.85s"></div><div class="star-dot done today-ring" style="animation-delay:1.2s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Boards</div>
+          <div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.4s"></div><div class="star-dot done" style="animation-delay:0.6s"></div>
+          <div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot done" style="animation-delay:1.0s"></div><div class="star-dot done today-ring" style="animation-delay:1.25s"></div>
+          <div class="star-dot empty future"></div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- Col 2: Aurora (taller, more breathing room) -->
+    <div class="shell aurora-card" style="animation-delay: 1s;"><div class="face" style="min-height: 280px;">
+      <div class="aurora-zone">
+        <div class="aurora-bg"></div>
+        <div class="aurora-cool" style="padding-top: 24px;">
+          <div class="aurora-cool-text">6 Days to Level 4</div>
+        </div>
+        <div class="aurora-warm" style="padding-bottom: 24px;">
+          <div class="aurora-level-label">Level</div>
+          <div class="aurora-level-num" style="font-size: 38px;">3</div>
+          <div class="aurora-streak">22 Day Streak</div>
+          <div class="aurora-divider"></div>
+          <div class="aurora-reward">Custom Scrub Cap</div>
+          <div class="aurora-xp">341 of 500 XP</div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- Col 3: Ring -->
+    <div class="shell" style="animation-delay: 1.5s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Progress</span>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <canvas id="ring-b" width="240" height="240"></canvas>
+          <div class="ring-center">
+            <div class="ring-pct">78%</div>
+            <div class="ring-label">This Week</div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Monthly Goals Grid -->
+  <div class="full-width">
+    <div class="shell" style="animation-delay: 2s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Goals</span>
+        <span class="badge">3/30 Complete</span>
+      </div>
+      <div class="month-tabs">
+        <button class="month-tab past">Jan</button>
+        <button class="month-tab past">Feb</button>
+        <button class="month-tab active">Mar</button>
+        <button class="month-tab future">Apr</button>
+        <button class="month-tab future">May</button>
+        <button class="month-tab future">Jun</button>
+        <button class="month-tab future">Jul</button>
+        <button class="month-tab future">Aug</button>
+        <button class="month-tab future">Sep</button>
+        <button class="month-tab future">Oct</button>
+        <button class="month-tab future">Nov</button>
+        <button class="month-tab future">Dec</button>
+      </div>
+      <div class="goals-grid">
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Complete de Lahunta ch 10-12</div>
+            <div class="goal-tile-fraction">35% &mdash; in progress</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 35%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">300 PowerPoints This Month</div>
+            <div class="goal-tile-fraction">14 / 50 (28%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 28%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">20 Lifting Days This Month</div>
+            <div class="goal-tile-fraction">8 / 20 (40%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 40%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Read 2 Papers</div>
+            <div class="goal-tile-fraction">0 / 2 (0%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 0%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile completed">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Submit ACVIM Application</div>
+            <div class="goal-tile-fraction">Complete</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 100%; opacity: 0.4;"></div></div>
+            <div class="completed-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <button class="show-all-btn">Show All Months</button>
+    </div></div>
+  </div>
+
+  <div class="nav-row">
+    <a class="nav-link" href="#">Habits</a>
+    <a class="nav-link" href="#">Goals</a>
+    <a class="nav-link" href="#">Analytics</a>
+    <a class="nav-link" href="#">Adventures</a>
+    <a class="nav-link" href="#">Wellness</a>
+    <a class="nav-link" href="#">Settings</a>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ARRANGEMENT C: 3-Column (Ring middle)          -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="arrangement-divider">
+  <div class="arrangement-label">Arrangement C</div>
+  <div class="arrangement-desc">3-Column: Habits (1.3fr) | Ring center (0.7fr) | Aurora (1fr) &mdash; Monthly Goals full width below</div>
+</div>
+
+<section class="hero">
+  <h1>Sundown</h1>
+  <div class="hero-pills">
+    <div class="pill"><div class="pill-face"><span class="val">72&deg;</span> Clear</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">22</span> Streak</div></div>
+    <div class="pill"><div class="pill-face"><span class="val">5/6</span> Today</div></div>
+  </div>
+</section>
+
+<div class="residency-strip">
+  <span class="icon">🎓</span>
+  <div class="bar-wrap">
+    <div class="bar-fill" style="width: 25%;"></div>
+    <div class="marker" style="left: 33.33%;"></div>
+    <div class="marker" style="left: 66.66%;"></div>
+  </div>
+  <div>
+    <div class="days">846</div>
+    <div class="time-left">2y 3m left</div>
+  </div>
+</div>
+
+<div class="tab-wrap">
+  <div class="tab-dock"><div class="tab-face">
+    <div class="tab active">Overview</div>
+    <div class="tab">Goals</div>
+    <div class="tab">Habits</div>
+    <div class="tab">Journal</div>
+  </div></div>
+</div>
+
+<div class="row">
+  <!-- 3-COLUMN: Habits | Ring (middle) | Aurora -->
+  <div class="layout-3col-b">
+    <!-- Col 1: Habits -->
+    <div class="shell" style="animation-delay: 0.5s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">5/6 Today</span>
+      </div>
+      <div class="tray">
+        <div class="habit-grid">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div>
+          <div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>RemNote</div>
+          <div class="star-dot done" style="animation-delay:0.1s"></div><div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot done" style="animation-delay:0.7s"></div><div class="star-dot done" style="animation-delay:0.9s"></div><div class="star-dot done today-ring" style="animation-delay:1.1s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M6 6h4v4H6zM14 6h4v4h-4zM6 14h4v4H6zM14 17a3 3 0 100-6 3 3 0 000 6z"/></svg>Gym</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div>
+          <div class="star-dot done" style="animation-delay:0.6s"></div><div class="star-dot empty"></div><div class="star-dot done today-ring" style="animation-delay:1.0s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Pimsleur</div>
+          <div class="star-dot done" style="animation-delay:0.15s"></div><div class="star-dot done" style="animation-delay:0.35s"></div><div class="star-dot done" style="animation-delay:0.55s"></div>
+          <div class="star-dot done" style="animation-delay:0.75s"></div><div class="star-dot done" style="animation-delay:0.95s"></div><div class="star-dot done today-ring" style="animation-delay:1.15s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>Bed by 11</div>
+          <div class="star-dot done" style="animation-delay:0.2s"></div><div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.5s"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot empty today-ring"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Read Paper</div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.25s"></div><div class="star-dot empty"></div>
+          <div class="star-dot empty"></div><div class="star-dot done" style="animation-delay:0.85s"></div><div class="star-dot done today-ring" style="animation-delay:1.2s"></div>
+          <div class="star-dot empty future"></div>
+
+          <div class="habit-label"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Boards</div>
+          <div class="star-dot done" style="animation-delay:0.3s"></div><div class="star-dot done" style="animation-delay:0.4s"></div><div class="star-dot done" style="animation-delay:0.6s"></div>
+          <div class="star-dot done" style="animation-delay:0.8s"></div><div class="star-dot done" style="animation-delay:1.0s"></div><div class="star-dot done today-ring" style="animation-delay:1.25s"></div>
+          <div class="star-dot empty future"></div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- Col 2: Ring (middle) -->
+    <div class="shell" style="animation-delay: 1s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Progress</span>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <canvas id="ring-c" width="240" height="240"></canvas>
+          <div class="ring-center">
+            <div class="ring-pct">78%</div>
+            <div class="ring-label">This Week</div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- Col 3: Aurora -->
+    <div class="shell aurora-card" style="animation-delay: 1.5s;"><div class="face">
+      <div class="aurora-zone">
+        <div class="aurora-bg"></div>
+        <div class="aurora-cool">
+          <div class="aurora-cool-text">6 Days to Level 4</div>
+        </div>
+        <div class="aurora-warm">
+          <div class="aurora-level-label">Level</div>
+          <div class="aurora-level-num">3</div>
+          <div class="aurora-streak">22 Day Streak</div>
+          <div class="aurora-divider"></div>
+          <div class="aurora-reward">Custom Scrub Cap</div>
+          <div class="aurora-xp">341 of 500 XP</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Monthly Goals Grid -->
+  <div class="full-width">
+    <div class="shell" style="animation-delay: 2s;"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Goals</span>
+        <span class="badge">3/30 Complete</span>
+      </div>
+      <div class="month-tabs">
+        <button class="month-tab past">Jan</button>
+        <button class="month-tab past">Feb</button>
+        <button class="month-tab active">Mar</button>
+        <button class="month-tab future">Apr</button>
+        <button class="month-tab future">May</button>
+        <button class="month-tab future">Jun</button>
+        <button class="month-tab future">Jul</button>
+        <button class="month-tab future">Aug</button>
+        <button class="month-tab future">Sep</button>
+        <button class="month-tab future">Oct</button>
+        <button class="month-tab future">Nov</button>
+        <button class="month-tab future">Dec</button>
+      </div>
+      <div class="goals-grid">
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Complete de Lahunta ch 10-12</div>
+            <div class="goal-tile-fraction">35% &mdash; in progress</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 35%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">300 PowerPoints This Month</div>
+            <div class="goal-tile-fraction">14 / 50 (28%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 28%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-moderate">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">20 Lifting Days This Month</div>
+            <div class="goal-tile-fraction">8 / 20 (40%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 40%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile glow-dim">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Read 2 Papers</div>
+            <div class="goal-tile-fraction">0 / 2 (0%)</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 0%;"></div></div>
+          </div>
+        </div>
+        <div class="goal-tile completed">
+          <div class="goal-tile-inner">
+            <div class="goal-tile-name">Submit ACVIM Application</div>
+            <div class="goal-tile-fraction">Complete</div>
+            <div class="goal-tile-bar"><div class="goal-tile-fill" style="width: 100%; opacity: 0.4;"></div></div>
+            <div class="completed-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <button class="show-all-btn">Show All Months</button>
+    </div></div>
+  </div>
+
+  <div class="nav-row">
+    <a class="nav-link" href="#">Habits</a>
+    <a class="nav-link" href="#">Goals</a>
+    <a class="nav-link" href="#">Analytics</a>
+    <a class="nav-link" href="#">Adventures</a>
+    <a class="nav-link" href="#">Wellness</a>
+    <a class="nav-link" href="#">Settings</a>
+  </div>
+</div>
+
+<div style="height: 60px;"></div>
+
+</div><!-- end .content -->
+
+<script>
+// Stardust Ring — JS-generated dots with constellation lines
+function drawStardustRing(canvasId, litCount, totalCount, radius) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const r = radius * 2; // account for 2x canvas
+
+  ctx.clearRect(0, 0, w, h);
+
+  const dots = [];
+  for (let i = 0; i < totalCount; i++) {
+    const angle = (i / totalCount) * Math.PI * 2 - Math.PI / 2;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    const lit = i < litCount;
+    dots.push({ x, y, lit, angle });
+  }
+
+  // Constellation lines between adjacent lit dots
+  ctx.strokeStyle = 'rgba(225,164,92,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < dots.length; i++) {
+    const next = (i + 1) % dots.length;
+    if (dots[i].lit && dots[next].lit) {
+      ctx.beginPath();
+      ctx.moveTo(dots[i].x, dots[i].y);
+      ctx.lineTo(dots[next].x, dots[next].y);
+      ctx.stroke();
+    }
+  }
+
+  // Draw dots
+  dots.forEach((d, i) => {
+    if (d.lit) {
+      // Outer glow
+      const grad = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, 8);
+      grad.addColorStop(0, 'rgba(225,164,92,0.5)');
+      grad.addColorStop(0.5, 'rgba(225,164,92,0.15)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core
+      ctx.fillStyle = 'rgba(255,220,160,0.9)';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(169,130,106,0.2)';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+// Draw all three rings
+drawStardustRing('ring-a', 19, 24, 48);
+drawStardustRing('ring-b', 19, 24, 48);
+drawStardustRing('ring-c', 19, 24, 48);
+</script>
+
+</body>
+</html>
