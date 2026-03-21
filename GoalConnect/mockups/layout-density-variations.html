@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown — Layout Density Variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --glow-warm: rgba(225,164,92,0.35);
+    --glow-hot: rgba(225,164,92,0.6);
+  }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    background: #0a0507;
+  }
+
+  /* ===== LANDSCAPE (shared, fixed) ===== */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* Particles */
+  .particle {
+    position: fixed; z-index: 3; pointer-events: none;
+    width: 3px; height: 3px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.8), rgba(225,164,92,0) 70%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 12px rgba(225,164,92,0.2);
+    animation: float-up linear infinite;
+  }
+  .particle:nth-child(2) { left: 12%; animation-duration: 14s; animation-delay: 0s; width: 2px; height: 2px; }
+  .particle:nth-child(3) { left: 28%; animation-duration: 18s; animation-delay: -3s; width: 4px; height: 4px; }
+  .particle:nth-child(4) { left: 55%; animation-duration: 20s; animation-delay: -2s; width: 2px; height: 2px; }
+  .particle:nth-child(5) { left: 68%; animation-duration: 15s; animation-delay: -10s; width: 4px; height: 4px; }
+  .particle:nth-child(6) { left: 78%; animation-duration: 17s; animation-delay: -5s; }
+  .particle:nth-child(7) { left: 88%; animation-duration: 19s; animation-delay: -8s; width: 2px; height: 2px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 600px; height: 300px;
+    left: 50%; top: 45%; transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at 50% 80%, rgba(255,200,100,0.08) 0%, transparent 70%);
+    animation: sd-breathe 6s ease-in-out infinite;
+  }
+
+  /* ===== SHARED CARD STYLES ===== */
+  .sd-card {
+    background: var(--shell-bg);
+    border-radius: 16px;
+    padding: 2px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .sd-card::before {
+    content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 80%;
+    background: linear-gradient(135deg, rgba(255,200,140,0.06) 0%, transparent 50%);
+    pointer-events: none; z-index: 1;
+  }
+  .sd-card-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 14px;
+    padding: 16px;
+    position: relative; z-index: 2;
+    box-shadow: var(--face-inset);
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  .sd-card::after {
+    content: ''; position: absolute; inset: 0; border-radius: 16px; pointer-events: none; z-index: 3;
+    box-shadow: inset 0 0 30px rgba(225,164,92,0.04), inset 0 1px 0 rgba(255,200,140,0.08);
+  }
+
+  /* ===== TYPOGRAPHY ===== */
+  .sd-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+  }
+  .sd-title {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-primary); font-weight: 600;
+  }
+  .sd-badge {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-accent);
+    background: rgba(225,164,92,0.1);
+    border: 1px solid rgba(225,164,92,0.15);
+    border-radius: 12px; padding: 2px 10px;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 13px; }
+
+  /* ===== PILL ===== */
+  .pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+    box-shadow: 0 4px 8px rgba(40,20,10,0.3);
+  }
+  .pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 18px; padding: 5px 12px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: var(--text-muted);
+    border-top: 1px solid rgba(255,200,140,0.08);
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .pill-face .val {
+    color: var(--text-accent);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 14px;
+  }
+
+  /* ===== HABIT GRID (simplified) ===== */
+  .habit-grid-compact {
+    display: grid;
+    grid-template-columns: 100px repeat(7, 1fr);
+    gap: 0; align-items: center;
+  }
+  .habit-day-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 9px; color: var(--text-muted);
+    text-align: center; padding-bottom: 8px;
+  }
+  .habit-day-label.today { color: var(--text-accent); font-weight: 700; }
+  .habit-label {
+    display: flex; align-items: center; gap: 6px; padding: 7px 0;
+  }
+  .habit-label span {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-secondary);
+  }
+  .habit-cell {
+    display: flex; align-items: center; justify-content: center;
+    padding: 7px 0; position: relative;
+  }
+  .star-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(30,18,22,0.6);
+    border: 1px solid rgba(100,60,50,0.2);
+  }
+  .star-dot.done {
+    width: 9px; height: 9px; border: none;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6), 0 0 8px rgba(225,164,92,0.4), 0 0 16px rgba(225,164,92,0.25);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .star-dot.today-dot {
+    width: 12px; height: 12px; border: none;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #ffd89b 30%, #E1A45C 60%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.8), 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.4);
+    animation: starTwinkle 2.5s ease-in-out infinite;
+  }
+
+  /* ===== GOAL ITEMS ===== */
+  .goal-item { margin-bottom: 16px; }
+  .goal-item:last-child { margin-bottom: 0; }
+  .goal-label-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; color: var(--text-secondary);
+  }
+  .goal-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1px;
+  }
+  .goal-track {
+    height: 3px; border-radius: 2px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: visible;
+  }
+  .goal-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), var(--text-accent));
+    box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 12px rgba(225,164,92,0.2);
+    position: relative;
+  }
+  .goal-orb {
+    position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #E1A45C);
+    box-shadow: 0 0 6px rgba(225,164,92,0.7), 0 0 14px rgba(225,164,92,0.4);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+
+  /* ===== STARDUST RING ===== */
+  .ring-container {
+    position: relative; margin: 0 auto;
+  }
+  .ring-dot {
+    position: absolute; width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(30,18,22,0.6);
+    border: 1px solid rgba(100,60,50,0.2);
+  }
+  .ring-dot.lit {
+    border: none;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6), 0 0 8px rgba(225,164,92,0.4), 0 0 14px rgba(225,164,92,0.2);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .ring-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .ring-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.4), 0 0 40px rgba(225,164,92,0.2);
+    letter-spacing: 1px;
+  }
+  .ring-sub {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 9px; color: var(--text-muted); margin-top: 2px;
+  }
+  .ring-lines { position: absolute; inset: 0; pointer-events: none; }
+  .ring-lines line {
+    stroke: rgba(225,164,92,0.25); stroke-width: 1;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
+  }
+
+  /* ===== CONSTELLATION CROWN ===== */
+  .crown-container { width: 100%; height: 50px; position: relative; margin: 0 auto 6px; }
+  .crown-dot {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6), 0 0 8px rgba(225,164,92,0.4);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .crown-dot.jewel {
+    width: 10px; height: 10px;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #ffd89b 30%, #E1A45C 60%, #c47a20 100%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.8), 0 0 12px rgba(225,164,92,0.5), 0 0 24px rgba(225,164,92,0.3);
+  }
+  .crown-lines { position: absolute; inset: 0; pointer-events: none; }
+  .crown-lines line {
+    stroke: rgba(225,164,92,0.3); stroke-width: 1;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
+  }
+  .crown-level {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 700; color: var(--text-accent);
+    text-transform: uppercase; letter-spacing: 2px;
+    text-align: center;
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+  }
+  .crown-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    text-align: center; margin-top: 2px;
+  }
+  .crown-divider {
+    height: 1px; margin: 10px 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.25), transparent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.15);
+  }
+  .reward-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 12px; color: var(--text-secondary);
+    text-align: center; margin-bottom: 8px;
+  }
+  .reward-xp {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    text-align: center; margin-top: 4px;
+  }
+
+  /* ===== YEARLY TILES ===== */
+  .yearly-tabs {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px;
+  }
+  .yearly-tab {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 9px; color: var(--text-muted);
+    padding: 4px 10px; border-radius: 14px;
+    border: 1px solid rgba(100,60,50,0.15);
+    background: transparent; cursor: pointer;
+  }
+  .yearly-tab.active {
+    background: rgba(225,164,92,0.15);
+    border-color: rgba(225,164,92,0.25);
+    color: var(--text-accent);
+  }
+  .yearly-tile {
+    background: var(--shell-bg); border-radius: 12px; padding: 2px;
+    box-shadow: 0 2px 8px rgba(40,20,10,0.2);
+    overflow: hidden;
+  }
+  .yearly-tile-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(16px) saturate(1.2);
+    border-radius: 10px; padding: 14px 12px 10px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+  }
+  .yearly-tile-name {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-secondary);
+    margin-bottom: 4px; line-height: 1.4;
+  }
+  .yearly-tile-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px; color: var(--text-muted);
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .yearly-tile-bar {
+    height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.4); position: relative;
+  }
+  .yearly-tile-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), var(--text-accent));
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 12px rgba(225,164,92,0.15);
+  }
+  .yearly-tile.glow-high { box-shadow: 0 2px 8px rgba(40,20,10,0.2), 0 0 20px rgba(225,164,92,0.12); }
+  .yearly-tile.glow-med { box-shadow: 0 2px 8px rgba(40,20,10,0.2), 0 0 12px rgba(225,164,92,0.08); }
+
+  /* ===== RESIDENCY STRIP ===== */
+  .residency-strip {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .residency-strip .icon { font-size: 14px; filter: grayscale(0.3); }
+  .residency-strip .bar-wrap {
+    flex: 1; height: 3px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: hidden;
+  }
+  .residency-strip .bar-fill {
+    height: 100%; border-radius: 3px; width: 23%;
+    background: linear-gradient(90deg, #c47a20, #E1A45C);
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2);
+    position: relative;
+  }
+  .residency-strip .bar-fill::after {
+    content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-accent);
+    box-shadow: 0 0 6px var(--glow-warm), 0 0 12px rgba(225,164,92,0.3);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  .residency-strip .days {
+    font-family: 'Cormorant Garamond', serif; font-weight: 700;
+    font-size: 16px; color: var(--text-accent); letter-spacing: 1px;
+  }
+  .residency-strip .meta {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+
+  /* ===== TAB DOCK ===== */
+  .tab-dock {
+    background: var(--shell-bg); border-radius: 22px; padding: 2px;
+    box-shadow: 0 4px 12px rgba(40,20,10,0.3);
+    display: inline-flex;
+  }
+  .tab-dock-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 3px 5px;
+    display: flex; gap: 2px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+  }
+  .tab-btn {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted);
+    padding: 6px 16px; border-radius: 18px;
+    border: none; background: none; cursor: pointer;
+  }
+  .tab-btn.active {
+    background: var(--shell-bg);
+    color: var(--text-accent);
+    box-shadow: 0 2px 8px rgba(40,20,10,0.3);
+  }
+
+  /* ===== NAV LINKS ===== */
+  .nav-links {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .nav-pill {
+    background: var(--shell-bg); border-radius: 16px; padding: 2px;
+    cursor: pointer;
+  }
+  .nav-pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(16px);
+    border-radius: 14px; padding: 6px 14px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .nav-pill:hover .nav-pill-face { color: var(--text-accent); }
+
+  /* ===== KEYFRAMES ===== */
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.85); }
+  }
+  @keyframes softPulse {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.7; transform: translateY(-50%) scale(0.9); }
+  }
+  @keyframes float-up {
+    0% { bottom: -10px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.6; }
+    100% { bottom: 110vh; opacity: 0; }
+  }
+  @keyframes sd-breathe {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  }
+  @keyframes mistDrift {
+    0%, 100% { opacity: 0.4; transform: translateX(0); }
+    50% { opacity: 0.7; transform: translateX(8px); }
+  }
+
+  /* ===== SECTION SEPARATOR ===== */
+  .variation-section {
+    position: relative; z-index: 10;
+    max-width: 1440px; margin: 0 auto;
+    padding: 40px 0;
+  }
+  .variation-section + .variation-section {
+    border-top: 1px solid rgba(225,164,92,0.12);
+  }
+  .variation-label {
+    position: relative; z-index: 10;
+    text-align: center; padding: 40px 0 24px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .variation-label h2 {
+    font-size: 28px; font-weight: 400; letter-spacing: 4px;
+    text-transform: uppercase; color: var(--text-accent);
+    text-shadow: 0 0 40px rgba(225,164,92,0.3);
+  }
+  .variation-label p {
+    font-size: 13px; color: var(--text-muted);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .variation-label:first-child { padding-top: 20px; }
+
+  /* ================================================================
+     V1 — BENTO DENSE
+     ================================================================ */
+  .v1-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+    background: var(--shell-bg);
+    border-radius: 14px;
+    margin: 0 24px 12px;
+  }
+  .v1-header-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 12px;
+    padding: 8px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+    border-top: 1px solid rgba(255,200,140,0.08);
+  }
+  .v1-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 400; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 20px rgba(200,130,70,0.3);
+  }
+  .v1-header-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .v1-residency {
+    padding: 0 24px; margin-bottom: 12px;
+  }
+  .v1-bento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 0 24px;
+  }
+  .v1-bento .habits-cell { grid-column: span 2; grid-row: span 2; }
+  .v1-bento .goals-cell { grid-column: span 1; grid-row: span 2; }
+  .v1-bento .ring-cell { grid-column: span 1; grid-row: span 1; }
+  .v1-bento .crown-cell { grid-column: span 1; grid-row: span 1; }
+  .v1-bento .yearly-cell { grid-column: span 4; }
+  .v1-nav { padding: 12px 24px 0; display: flex; justify-content: center; }
+
+  /* ================================================================
+     V2 — 3-COLUMN TIGHT
+     ================================================================ */
+  .v2-hero {
+    height: 20vh; min-height: 140px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .v2-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 40px; font-weight: 400; letter-spacing: 7px;
+    text-transform: uppercase; color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .v2-pills {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .v2-residency {
+    max-width: 1100px; margin: 0 auto; padding: 8px 28px 12px;
+  }
+  .v2-tabs {
+    display: flex; justify-content: center; padding: 0 28px 14px;
+  }
+  .v2-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 0.7fr;
+    gap: 14px;
+    max-width: 1100px; margin: 0 auto; padding: 0 28px;
+  }
+  .v2-right-stack { display: flex; flex-direction: column; gap: 14px; }
+  .v2-yearly { max-width: 1100px; margin: 14px auto 0; padding: 0 28px; }
+  .v2-nav { max-width: 1100px; margin: 14px auto 0; padding: 0 28px; display: flex; justify-content: center; }
+
+  /* ================================================================
+     V3 — MAGAZINE TIGHT
+     ================================================================ */
+  .v3-hero {
+    height: 22vh; min-height: 150px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .v3-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 400; letter-spacing: 7px;
+    text-transform: uppercase; color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .v3-hero-meta {
+    display: flex; align-items: center; gap: 16px; margin-top: 10px;
+  }
+  .v3-tabs {
+    display: flex; justify-content: center; padding: 0 28px 12px;
+  }
+  .v3-tab-dock .tab-dock-face { padding: 2px 4px; }
+  .v3-tab-dock .tab-btn { padding: 5px 14px; font-size: 10px; }
+  .v3-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 12px;
+    max-width: 1100px; margin: 0 auto; padding: 0 28px;
+  }
+  .v3-right-stack { display: flex; flex-direction: column; gap: 12px; }
+  .v3-yearly { max-width: 1100px; margin: 12px auto 0; padding: 0 28px; }
+  .v3-nav { max-width: 1100px; margin: 12px auto 0; padding: 0 28px; display: flex; justify-content: center; }
+
+  /* ================================================================
+     V4 — SINGLE COLUMN + SIDEBAR
+     ================================================================ */
+  .v4-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 0;
+    max-width: 1200px; margin: 0 auto;
+    min-height: 700px;
+  }
+  .v4-sidebar {
+    padding: 20px 16px;
+    border-right: 1px solid rgba(225,164,92,0.08);
+    display: flex; flex-direction: column; gap: 14px;
+    align-items: center;
+  }
+  .v4-sidebar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400; letter-spacing: 5px;
+    text-transform: uppercase; color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 20px rgba(200,130,70,0.3);
+    margin-bottom: 4px;
+  }
+  .v4-main {
+    padding: 16px 24px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .v4-stat-strip {
+    display: flex; gap: 8px;
+  }
+  .v4-yearly-grid-2col {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
+  .v4-nav-vertical {
+    display: flex; flex-direction: column; gap: 6px; width: 100%;
+  }
+  .v4-nav-vertical .nav-pill { width: 100%; }
+  .v4-nav-vertical .nav-pill-face { text-align: center; display: block; }
+
+  /* Goal card mist */
+  .goal-card-face { position: relative; overflow: hidden; }
+  .goal-card-face::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+    background: linear-gradient(to top, rgba(45,22,28,0.3), transparent);
+    pointer-events: none; z-index: 0;
+    animation: mistDrift 8s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- LANDSCAPE + PARTICLES (shared) -->
+<div class="landscape"></div>
+<div class="sun-glow"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+
+<!-- ================================================================
+     V1 — BENTO DENSE
+     ================================================================ -->
+<div class="variation-label">
+  <h2>V1 — Bento Dense</h2>
+  <p>No hero. Header bar + 4-column bento grid. Minimal scrolling.</p>
+</div>
+
+<div class="variation-section" id="v1">
+  <!-- Header bar: title left, pills + tabs right -->
+  <div class="v1-header">
+    <div class="v1-header-face">
+      <span class="v1-title">Sundown</span>
+      <div class="v1-header-right">
+        <div class="pill"><div class="pill-face"><span class="val">72°</span> Clear</div></div>
+        <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+        <div class="pill"><div class="pill-face"><span class="val">4/7</span> Tasks</div></div>
+        <div class="tab-dock">
+          <div class="tab-dock-face">
+            <button class="tab-btn active">Overview</button>
+            <button class="tab-btn">Goals</button>
+            <button class="tab-btn">Habits</button>
+            <button class="tab-btn">Journal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Residency strip -->
+  <div class="v1-residency">
+    <div class="residency-strip">
+      <span class="icon">🎓</span>
+      <div class="bar-wrap"><div class="bar-fill"></div></div>
+      <span class="days">846</span>
+      <span class="meta">2y 3m left</span>
+    </div>
+  </div>
+
+  <!-- Bento Grid -->
+  <div class="v1-bento">
+    <!-- Habits: span 2 cols, 2 rows -->
+    <div class="habits-cell">
+      <div class="sd-card" style="height:100%;">
+        <div class="sd-card-face" style="height:100%;">
+          <div class="card-header">
+            <span class="sd-title card-title">This Week</span>
+            <span class="sd-badge">5/6 Today</span>
+          </div>
+          <div class="habit-grid-compact" id="v1HabitGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goals: span 1 col, 2 rows -->
+    <div class="goals-cell">
+      <div class="sd-card" style="height:100%;">
+        <div class="sd-card-face goal-card-face" style="height:100%;">
+          <div class="card-header">
+            <span class="sd-title card-title">Goals</span>
+            <span class="sd-badge">2026</span>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">2 Physical Books</span><span class="goal-frac">1/2</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:50%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">Complete de Lahunta</span><span class="goal-frac">7/20</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:35%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">200 Lifting Days</span><span class="goal-frac">50/200</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">12 Outdoor Climbing</span><span class="goal-frac">3/12</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ring: span 1 col, 1 row -->
+    <div class="ring-cell">
+      <div class="sd-card">
+        <div class="sd-card-face" style="text-align:center; padding: 12px;">
+          <div class="card-header" style="justify-content:center; margin-bottom: 8px;">
+            <span class="sd-title card-title">Progress</span>
+          </div>
+          <div class="ring-container" id="v1Ring" style="width:110px; height:110px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crown: span 1 col, 1 row -->
+    <div class="crown-cell">
+      <div class="sd-card">
+        <div class="sd-card-face" style="padding: 12px;">
+          <div class="crown-container" id="v1Crown" style="height: 40px;"></div>
+          <div class="crown-level" style="font-size: 16px;">Lvl 3</div>
+          <div class="crown-streak">22 Day Streak</div>
+          <div class="crown-divider"></div>
+          <div class="reward-label" style="font-size: 11px;">Custom Scrub Cap</div>
+          <div class="goal-track"><div class="goal-fill" style="width:68%"><div class="goal-orb"></div></div></div>
+          <div class="reward-xp">341 / 500 XP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yearly: span 4 cols -->
+    <div class="yearly-cell">
+      <div class="sd-card">
+        <div class="sd-card-face">
+          <div class="card-header">
+            <span class="sd-title card-title">Yearly Goals</span>
+            <span class="sd-badge">3/30 Complete</span>
+          </div>
+          <div class="yearly-tabs">
+            <button class="yearly-tab active">All</button>
+            <button class="yearly-tab">Fitness</button>
+            <button class="yearly-tab">Learning</button>
+            <button class="yearly-tab">Adventure</button>
+            <button class="yearly-tab">Climbing</button>
+            <button class="yearly-tab">German</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Solo Hemilaminectomy</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">300 PowerPoints</div><div class="yearly-tile-frac">15/300</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:5%"></div></div></div></div>
+            <div class="yearly-tile glow-high"><div class="yearly-tile-face"><div class="yearly-tile-name">de Lahunta</div><div class="yearly-tile-frac">7/20</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:35%"></div></div></div></div>
+            <div class="yearly-tile glow-med"><div class="yearly-tile-face"><div class="yearly-tile-name">200 Lifting Days</div><div class="yearly-tile-frac">52/200</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:26%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">10 Pull-Ups</div><div class="yearly-tile-frac">0/10</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Finish Year One</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="v1-nav">
+    <div class="nav-links">
+      <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     V2 — 3-COLUMN TIGHT
+     ================================================================ -->
+<div class="variation-label">
+  <h2>V2 — 3-Column Tight</h2>
+  <p>Compact hero (20vh) + tight 3-column grid. Cards with reduced padding.</p>
+</div>
+
+<div class="variation-section" id="v2">
+  <!-- Compact hero -->
+  <div class="v2-hero">
+    <h1>Sundown</h1>
+    <div class="v2-pills">
+      <div class="pill"><div class="pill-face"><span class="val">72°</span> Clear</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">4/7</span> Tasks</div></div>
+    </div>
+  </div>
+
+  <!-- Residency -->
+  <div class="v2-residency">
+    <div class="residency-strip">
+      <span class="icon">🎓</span>
+      <div class="bar-wrap"><div class="bar-fill"></div></div>
+      <span class="days">846</span>
+      <span class="meta">2y 3m left</span>
+    </div>
+  </div>
+
+  <!-- Tab Dock -->
+  <div class="v2-tabs">
+    <div class="tab-dock">
+      <div class="tab-dock-face">
+        <button class="tab-btn active">Overview</button>
+        <button class="tab-btn">Goals</button>
+        <button class="tab-btn">Habits</button>
+        <button class="tab-btn">Journal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-Column Grid -->
+  <div class="v2-grid">
+    <!-- Col 1: Habits -->
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title card-title">This Week</span>
+          <span class="sd-badge">5/6 Today</span>
+        </div>
+        <div class="habit-grid-compact" id="v2HabitGrid"></div>
+      </div>
+    </div>
+
+    <!-- Col 2: Goals -->
+    <div class="sd-card">
+      <div class="sd-card-face goal-card-face">
+        <div class="card-header">
+          <span class="sd-title card-title">Goals</span>
+          <span class="sd-badge">2026</span>
+        </div>
+        <div class="goal-item">
+          <div class="goal-label-row"><span class="goal-name">2 Physical Books</span><span class="goal-frac">1/2</span></div>
+          <div class="goal-track"><div class="goal-fill" style="width:50%"><div class="goal-orb"></div></div></div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-label-row"><span class="goal-name">Complete de Lahunta</span><span class="goal-frac">7/20</span></div>
+          <div class="goal-track"><div class="goal-fill" style="width:35%"><div class="goal-orb"></div></div></div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-label-row"><span class="goal-name">200 Lifting Days</span><span class="goal-frac">50/200</span></div>
+          <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-label-row"><span class="goal-name">12 Outdoor Climbing</span><span class="goal-frac">3/12</span></div>
+          <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 3: Ring + Crown stacked -->
+    <div class="v2-right-stack">
+      <div class="sd-card">
+        <div class="sd-card-face" style="text-align:center; padding: 12px;">
+          <span class="sd-title card-title" style="display:block; margin-bottom: 6px;">Progress</span>
+          <div class="ring-container" id="v2Ring" style="width:100px; height:100px;"></div>
+        </div>
+      </div>
+      <div class="sd-card">
+        <div class="sd-card-face" style="padding: 12px;">
+          <div class="crown-container" id="v2Crown" style="height: 36px;"></div>
+          <div class="crown-level" style="font-size: 15px;">Lvl 3</div>
+          <div class="crown-streak">22 Day Streak</div>
+          <div class="crown-divider"></div>
+          <div class="reward-label" style="font-size: 11px;">Custom Scrub Cap</div>
+          <div class="goal-track"><div class="goal-fill" style="width:68%"><div class="goal-orb"></div></div></div>
+          <div class="reward-xp">341 / 500 XP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yearly Goals -->
+  <div class="v2-yearly">
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title card-title">Yearly Goals</span>
+          <span class="sd-badge">3/30 Complete</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Solo Hemilaminectomy</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">300 PowerPoints</div><div class="yearly-tile-frac">15/300</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:5%"></div></div></div></div>
+          <div class="yearly-tile glow-high"><div class="yearly-tile-face"><div class="yearly-tile-name">Complete de Lahunta</div><div class="yearly-tile-frac">7/20</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:35%"></div></div></div></div>
+          <div class="yearly-tile glow-med"><div class="yearly-tile-face"><div class="yearly-tile-name">200 Lifting Days</div><div class="yearly-tile-frac">52/200</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:26%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">10 Pull-Ups</div><div class="yearly-tile-frac">0/10</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Finish Year One</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="v2-nav">
+    <div class="nav-links">
+      <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     V3 — MAGAZINE TIGHT
+     ================================================================ -->
+<div class="variation-label">
+  <h2>V3 — Magazine Tight</h2>
+  <p>Compressed 2-column magazine. Countdown in hero. Tighter gaps everywhere.</p>
+</div>
+
+<div class="variation-section" id="v3">
+  <!-- Compact hero with integrated residency -->
+  <div class="v3-hero">
+    <h1>Sundown</h1>
+    <div class="v3-hero-meta">
+      <div class="pill"><div class="pill-face"><span class="val">72°</span> Clear</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">4/7</span> Tasks</div></div>
+      <div style="display: flex; align-items: center; gap: 6px; margin-left: 8px;">
+        <span style="font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--text-accent); font-weight: 700; letter-spacing: 1px;">🎓 846</span>
+        <span style="font-family: 'Cormorant Garamond', serif; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;">days left</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smaller tab dock -->
+  <div class="v3-tabs">
+    <div class="tab-dock v3-tab-dock">
+      <div class="tab-dock-face">
+        <button class="tab-btn active">Overview</button>
+        <button class="tab-btn">Goals</button>
+        <button class="tab-btn">Habits</button>
+        <button class="tab-btn">Journal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2-Column Magazine -->
+  <div class="v3-grid">
+    <!-- Left: Habits -->
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title card-title">This Week</span>
+          <span class="sd-badge">5/6 Today</span>
+        </div>
+        <div class="habit-grid-compact" id="v3HabitGrid"></div>
+      </div>
+    </div>
+
+    <!-- Right: Goals + Ring + Crown stacked tight -->
+    <div class="v3-right-stack">
+      <div class="sd-card">
+        <div class="sd-card-face goal-card-face">
+          <div class="card-header">
+            <span class="sd-title card-title">Goals</span>
+            <span class="sd-badge">2026</span>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">2 Physical Books</span><span class="goal-frac">1/2</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:50%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">Complete de Lahunta</span><span class="goal-frac">7/20</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:35%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">200 Lifting Days</span><span class="goal-frac">50/200</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">12 Outdoor Climbing</span><span class="goal-frac">3/12</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ring + Crown side by side in a mini-grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="sd-card">
+          <div class="sd-card-face" style="text-align:center; padding: 12px;">
+            <span class="sd-title card-title" style="display:block; margin-bottom: 4px;">Progress</span>
+            <div class="ring-container" id="v3Ring" style="width:90px; height:90px;"></div>
+          </div>
+        </div>
+        <div class="sd-card">
+          <div class="sd-card-face" style="padding: 10px;">
+            <div class="crown-container" id="v3Crown" style="height: 32px;"></div>
+            <div class="crown-level" style="font-size: 14px;">Lvl 3</div>
+            <div class="crown-streak">22 Day Streak</div>
+            <div class="crown-divider"></div>
+            <div class="reward-label" style="font-size: 10px;">Custom Scrub Cap</div>
+            <div class="goal-track"><div class="goal-fill" style="width:68%"><div class="goal-orb"></div></div></div>
+            <div class="reward-xp">341 / 500 XP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yearly Goals -->
+  <div class="v3-yearly">
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title card-title">Yearly Goals</span>
+          <span class="sd-badge">3/30 Complete</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Solo Hemilaminectomy</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">300 PowerPoints</div><div class="yearly-tile-frac">15/300</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:5%"></div></div></div></div>
+          <div class="yearly-tile glow-high"><div class="yearly-tile-face"><div class="yearly-tile-name">Complete de Lahunta</div><div class="yearly-tile-frac">7/20</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:35%"></div></div></div></div>
+          <div class="yearly-tile glow-med"><div class="yearly-tile-face"><div class="yearly-tile-name">200 Lifting Days</div><div class="yearly-tile-frac">52/200</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:26%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">10 Pull-Ups</div><div class="yearly-tile-frac">0/10</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Finish Year One</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="v3-nav">
+    <div class="nav-links">
+      <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+      <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     V4 — SINGLE COLUMN + SIDEBAR
+     ================================================================ -->
+<div class="variation-label">
+  <h2>V4 — Sidebar + Feed</h2>
+  <p>Persistent sidebar (ring, crown, nav) + scrollable main feed. Uses horizontal space.</p>
+</div>
+
+<div class="variation-section" id="v4">
+  <div class="v4-layout">
+    <!-- LEFT SIDEBAR -->
+    <div class="v4-sidebar">
+      <div class="v4-sidebar-title">Sundown</div>
+
+      <!-- Ring (smaller) -->
+      <div class="sd-card" style="width: 100%;">
+        <div class="sd-card-face" style="text-align:center; padding: 12px;">
+          <span class="sd-title card-title" style="display:block; margin-bottom: 4px;">Progress</span>
+          <div class="ring-container" id="v4Ring" style="width:100px; height:100px;"></div>
+        </div>
+      </div>
+
+      <!-- Crown -->
+      <div class="sd-card" style="width: 100%;">
+        <div class="sd-card-face" style="padding: 12px;">
+          <div class="crown-container" id="v4Crown" style="height: 36px;"></div>
+          <div class="crown-level" style="font-size: 15px;">Lvl 3</div>
+          <div class="crown-streak">22 Day Streak</div>
+          <div class="crown-divider"></div>
+          <div class="reward-label" style="font-size: 11px;">Custom Scrub Cap</div>
+          <div class="goal-track"><div class="goal-fill" style="width:68%"><div class="goal-orb"></div></div></div>
+          <div class="reward-xp">341 / 500 XP</div>
+        </div>
+      </div>
+
+      <!-- Nav (vertical) -->
+      <div class="v4-nav-vertical">
+        <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+        <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+        <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+        <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+        <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+        <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+      </div>
+    </div>
+
+    <!-- MAIN FEED -->
+    <div class="v4-main">
+      <!-- Stat pills strip -->
+      <div class="v4-stat-strip">
+        <div class="pill"><div class="pill-face"><span class="val">72°</span> Clear</div></div>
+        <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+        <div class="pill"><div class="pill-face"><span class="val">4/7</span> Tasks</div></div>
+        <div style="flex:1;"></div>
+        <div class="residency-strip" style="flex:1; min-width: 200px;">
+          <span class="icon">🎓</span>
+          <div class="bar-wrap"><div class="bar-fill"></div></div>
+          <span class="days">846</span>
+          <span class="meta">2y 3m left</span>
+        </div>
+      </div>
+
+      <!-- Tab dock -->
+      <div style="display: flex;">
+        <div class="tab-dock">
+          <div class="tab-dock-face">
+            <button class="tab-btn active">Overview</button>
+            <button class="tab-btn">Goals</button>
+            <button class="tab-btn">Habits</button>
+            <button class="tab-btn">Journal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Habits -->
+      <div class="sd-card">
+        <div class="sd-card-face">
+          <div class="card-header">
+            <span class="sd-title card-title">This Week</span>
+            <span class="sd-badge">5/6 Today</span>
+          </div>
+          <div class="habit-grid-compact" id="v4HabitGrid"></div>
+        </div>
+      </div>
+
+      <!-- Goals -->
+      <div class="sd-card">
+        <div class="sd-card-face goal-card-face">
+          <div class="card-header">
+            <span class="sd-title card-title">Goals</span>
+            <span class="sd-badge">2026</span>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">2 Physical Books</span><span class="goal-frac">1/2</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:50%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">Complete de Lahunta</span><span class="goal-frac">7/20</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:35%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">200 Lifting Days</span><span class="goal-frac">50/200</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row"><span class="goal-name">12 Outdoor Climbing</span><span class="goal-frac">3/12</span></div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yearly Goals (2-col) -->
+      <div class="sd-card">
+        <div class="sd-card-face">
+          <div class="card-header">
+            <span class="sd-title card-title">Yearly Goals</span>
+            <span class="sd-badge">3/30 Complete</span>
+          </div>
+          <div class="v4-yearly-grid-2col">
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Solo Hemilaminectomy</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">300 PowerPoints</div><div class="yearly-tile-frac">15/300</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:5%"></div></div></div></div>
+            <div class="yearly-tile glow-high"><div class="yearly-tile-face"><div class="yearly-tile-name">Complete de Lahunta</div><div class="yearly-tile-frac">7/20</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:35%"></div></div></div></div>
+            <div class="yearly-tile glow-med"><div class="yearly-tile-face"><div class="yearly-tile-name">200 Lifting Days</div><div class="yearly-tile-frac">52/200</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:26%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">10 Pull-Ups</div><div class="yearly-tile-frac">0/10</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+            <div class="yearly-tile glow-dim"><div class="yearly-tile-face"><div class="yearly-tile-name">Finish Year One</div><div class="yearly-tile-frac">0%</div><div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== SHARED DATA =====
+const habits = [
+  { name: 'RemNote', days: [1,1,1,1,1,0,0] },
+  { name: 'Gym', days: [0,1,0,1,1,0,0] },
+  { name: 'Pimsleur', days: [1,1,1,1,1,0,0] },
+  { name: 'Bed by 11', days: [1,0,1,0,0,0,0] },
+  { name: 'German', days: [1,1,1,1,0,0,0] },
+  { name: 'Read Paper', days: [0,1,0,0,1,0,0] },
+];
+const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const todayIdx = 4;
+
+function buildHabitGrid(containerId) {
+  const grid = document.getElementById(containerId);
+  if (!grid) return;
+
+  // Day labels
+  const spacer = document.createElement('div');
+  grid.appendChild(spacer);
+  dayLabels.forEach((d, i) => {
+    const lbl = document.createElement('div');
+    lbl.className = 'habit-day-label' + (i === todayIdx ? ' today' : '');
+    lbl.textContent = d;
+    grid.appendChild(lbl);
+  });
+
+  habits.forEach((habit, hIdx) => {
+    const label = document.createElement('div');
+    label.className = 'habit-label';
+    label.innerHTML = `<span>${habit.name}</span>`;
+    grid.appendChild(label);
+
+    habit.days.forEach((done, dIdx) => {
+      const cell = document.createElement('div');
+      cell.className = 'habit-cell';
+      const dot = document.createElement('div');
+      const isToday = dIdx === todayIdx;
+      if (isToday && done) dot.className = 'star-dot today-dot';
+      else if (done) dot.className = 'star-dot done';
+      else dot.className = 'star-dot';
+      if (done) dot.style.animationDelay = `${(hIdx * 7 + dIdx) * 0.3}s`;
+      cell.appendChild(dot);
+      grid.appendChild(cell);
+    });
+  });
+}
+
+function buildRing(containerId, size, dotSize) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const totalDots = 24;
+  const litCount = 19;
+  const radius = (size / 2) - 12;
+  const cx = size / 2, cy = size / 2;
+
+  // SVG for lines
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'ring-lines');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.style.position = 'absolute';
+  svg.style.inset = '0';
+  container.appendChild(svg);
+
+  const positions = [];
+  for (let i = 0; i < totalDots; i++) {
+    const angle = (i / totalDots) * Math.PI * 2 - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    positions.push({ x, y });
+
+    const dot = document.createElement('div');
+    dot.className = 'ring-dot' + (i < litCount ? ' lit' : '');
+    dot.style.width = dotSize + 'px';
+    dot.style.height = dotSize + 'px';
+    dot.style.left = (x - dotSize/2) + 'px';
+    dot.style.top = (y - dotSize/2) + 'px';
+    if (i < litCount) dot.style.animationDelay = `${i * 0.2}s`;
+    container.appendChild(dot);
+  }
+
+  for (let i = 0; i < litCount - 1; i++) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', positions[i].x);
+    line.setAttribute('y1', positions[i].y);
+    line.setAttribute('x2', positions[i + 1].x);
+    line.setAttribute('y2', positions[i + 1].y);
+    svg.appendChild(line);
+  }
+
+  // Center text
+  const center = document.createElement('div');
+  center.className = 'ring-center';
+  center.innerHTML = `<div class="ring-pct" style="font-size:${size < 110 ? 22 : 26}px;">78%</div><div class="ring-sub">This Week</div>`;
+  container.appendChild(center);
+}
+
+function buildCrown(containerId, height) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Wait a tick for layout
+  requestAnimationFrame(() => {
+    const width = container.offsetWidth || 200;
+    const count = 18;
+    const spacing = width / (count + 1);
+    const centerI = Math.floor(count / 2);
+    const positions = [];
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'crown-lines');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', height);
+    svg.style.position = 'absolute';
+    svg.style.inset = '0';
+    container.appendChild(svg);
+
+    for (let i = 0; i < count; i++) {
+      const x = spacing * (i + 1);
+      const y = (height - 5) - (1 - Math.pow((i - centerI) / centerI, 2)) * (height - 12);
+      positions.push({ x, y });
+
+      const dot = document.createElement('div');
+      const isJewel = i === centerI;
+      dot.className = 'crown-dot' + (isJewel ? ' jewel' : '');
+      const s = isJewel ? 10 : 5;
+      dot.style.left = (x - s/2) + 'px';
+      dot.style.top = (y - s/2) + 'px';
+      dot.style.animationDelay = `${i * 0.15}s`;
+      container.appendChild(dot);
+    }
+
+    for (let i = 0; i < count - 1; i++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', positions[i].x);
+      line.setAttribute('y1', positions[i].y);
+      line.setAttribute('x2', positions[i + 1].x);
+      line.setAttribute('y2', positions[i + 1].y);
+      svg.appendChild(line);
+    }
+  });
+}
+
+// ===== BUILD ALL VARIATIONS =====
+// V1
+buildHabitGrid('v1HabitGrid');
+buildRing('v1Ring', 110, 6);
+buildCrown('v1Crown', 40);
+
+// V2
+buildHabitGrid('v2HabitGrid');
+buildRing('v2Ring', 100, 6);
+buildCrown('v2Crown', 36);
+
+// V3
+buildHabitGrid('v3HabitGrid');
+buildRing('v3Ring', 90, 5);
+buildCrown('v3Crown', 32);
+
+// V4
+buildHabitGrid('v4HabitGrid');
+buildRing('v4Ring', 100, 6);
+buildCrown('v4Crown', 36);
+</script>
+
+</body>
+</html>

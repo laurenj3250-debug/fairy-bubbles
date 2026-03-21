@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown Card v3 — Claymorphic</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    /* Cool dusky base — NOT orange. Dusty mauve/charcoal */
+    background:
+      radial-gradient(ellipse at 40% 20%, rgba(80, 45, 35, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(60, 35, 30, 0.08) 0%, transparent 50%),
+      #1a1416;
+    font-family: 'Source Sans 3', sans-serif;
+    color: #ede0d0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    padding: 40px;
+    align-items: start;
+    justify-content: center;
+  }
+
+  h2 {
+    width: 100%;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: rgba(237,224,208,0.3);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: -12px;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     CLAYMORPHIC CARD — sculpted ceramic slab
+
+     Material model:
+     - Solid molded object, not transparent glass
+     - Beveled top edge (coppery highlight)
+     - Darker underside (occlusion)
+     - Tight contact shadow + broad ambient shadow
+     - Cool dusty base with warm light on top surfaces
+     - Layered: outer slab → inset panel → raised elements
+     ══════════════════════════════════════════════════════ */
+
+  .clay-card {
+    /* Solid warm-over-cool surface — NOT transparent glass */
+    background: linear-gradient(
+      180deg,
+      hsl(22, 30%, 22%) 0%,      /* warmer top — catching light */
+      hsl(20, 25%, 18%) 40%,      /* mid body */
+      hsl(18, 22%, 15%) 100%      /* darker bottom — underside */
+    );
+
+    /* NO backdrop-filter — this is solid, not glass */
+
+    /* Thick molded border — lighter on top (bevel), darker on bottom */
+    border-top: 2px solid rgba(210, 160, 110, 0.3);
+    border-left: 1.5px solid rgba(210, 160, 110, 0.15);
+    border-right: 1.5px solid rgba(140, 90, 50, 0.15);
+    border-bottom: 2px solid rgba(60, 35, 20, 0.4);
+
+    /* Squircle-ish chunky radius */
+    border-radius: 24px;
+
+    /* MASS shadows — tight contact + broad ambient. NO glow. */
+    box-shadow:
+      /* Tight contact shadow directly under the slab */
+      0 2px 3px rgba(0, 0, 0, 0.5),
+      /* Medium shadow */
+      0 6px 12px rgba(0, 0, 0, 0.35),
+      /* Broad ambient shadow */
+      0 16px 32px rgba(0, 0, 0, 0.2),
+      /* Subtle inner top highlight — coppery light on rim */
+      inset 0 1px 0 rgba(220, 170, 120, 0.18),
+      /* Very subtle inner warmth on top half only */
+      inset 0 8px 16px rgba(180, 120, 60, 0.04);
+
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── INSET PANEL — recessed area inside a card ── */
+  .clay-inset {
+    background: linear-gradient(
+      180deg,
+      hsl(20, 20%, 13%) 0%,       /* darker top — recessed */
+      hsl(22, 22%, 15%) 100%      /* slightly warmer bottom */
+    );
+    border-top: 1px solid rgba(30, 20, 15, 0.5);
+    border-bottom: 1px solid rgba(210, 160, 110, 0.08);
+    border-left: 1px solid rgba(60, 40, 25, 0.2);
+    border-right: 1px solid rgba(60, 40, 25, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.3),
+      inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* ── RAISED ELEMENT — button/chip on top of card ── */
+  .clay-raised {
+    background: linear-gradient(
+      180deg,
+      hsl(25, 35%, 25%) 0%,
+      hsl(22, 28%, 20%) 100%
+    );
+    border-top: 1.5px solid rgba(220, 170, 120, 0.25);
+    border-bottom: 1.5px solid rgba(40, 25, 15, 0.4);
+    border-left: 1px solid rgba(160, 110, 60, 0.12);
+    border-right: 1px solid rgba(160, 110, 60, 0.12);
+    border-radius: 14px;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 4px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(220, 170, 120, 0.12);
+  }
+
+  /* ── NAV CAPSULE DOCK ── */
+  .clay-nav {
+    display: flex;
+    gap: 2px;
+    padding: 6px 8px;
+    background: linear-gradient(
+      180deg,
+      hsl(22, 28%, 20%) 0%,
+      hsl(20, 24%, 16%) 100%
+    );
+    border-top: 2px solid rgba(210, 160, 110, 0.2);
+    border-bottom: 2px solid rgba(40, 25, 15, 0.4);
+    border-left: 1.5px solid rgba(140, 90, 50, 0.12);
+    border-right: 1.5px solid rgba(140, 90, 50, 0.12);
+    border-radius: 22px;
+    box-shadow:
+      0 3px 6px rgba(0, 0, 0, 0.4),
+      0 8px 20px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(220, 170, 120, 0.1);
+  }
+
+  .clay-nav .pill {
+    padding: 9px 20px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(237, 224, 208, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .clay-nav .pill.active {
+    background: linear-gradient(180deg, hsl(25, 40%, 28%) 0%, hsl(22, 32%, 22%) 100%);
+    color: #ede0d0;
+    border-top: 1px solid rgba(220, 170, 120, 0.2);
+    border-bottom: 1px solid rgba(40, 25, 15, 0.3);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(220, 170, 120, 0.1);
+  }
+
+  .clay-nav .pill:hover:not(.active) {
+    color: rgba(237, 224, 208, 0.65);
+  }
+
+  /* ── STAT CAPSULES ── */
+  .clay-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: rgba(237, 224, 208, 0.7);
+    background: linear-gradient(180deg, hsl(24, 32%, 23%) 0%, hsl(20, 26%, 18%) 100%);
+    border-top: 1.5px solid rgba(210, 160, 110, 0.22);
+    border-bottom: 1.5px solid rgba(40, 25, 15, 0.35);
+    border-left: 1px solid rgba(140, 90, 50, 0.1);
+    border-right: 1px solid rgba(140, 90, 50, 0.1);
+    border-radius: 18px;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 6px 12px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(220, 170, 120, 0.1);
+  }
+
+  .clay-chip .val {
+    color: #d4944a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 17px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: #ede0d0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title .badge {
+    font-size: 11px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600;
+    padding: 5px 14px;
+    background: linear-gradient(180deg, hsl(25, 38%, 26%) 0%, hsl(22, 30%, 20%) 100%);
+    border-top: 1px solid rgba(220, 170, 120, 0.2);
+    border-bottom: 1px solid rgba(40, 25, 15, 0.3);
+    border-radius: 12px;
+    color: #d4944a;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(220,170,120,0.08);
+  }
+
+  /* ── HABIT GRID ── */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 130px repeat(7, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+
+  .day-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(237, 224, 208, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding-bottom: 6px;
+  }
+
+  .day-header.today { color: #d4944a; }
+
+  .habit-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(237, 224, 208, 0.75);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .habit-label .icon { font-size: 15px; }
+
+  /* Habit cell — inset sculpted square */
+  .habit-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 42px;
+    max-height: 42px;
+    margin: 0 auto;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    /* Empty cell = inset/recessed */
+    background: linear-gradient(180deg, hsl(20, 18%, 12%) 0%, hsl(22, 20%, 14%) 100%);
+    border-top: 1px solid rgba(30, 20, 15, 0.5);
+    border-bottom: 1px solid rgba(180, 130, 80, 0.06);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    color: transparent;
+  }
+
+  /* Done cell = raised warm capsule */
+  .habit-cell.done {
+    background: linear-gradient(180deg, hsl(28, 50%, 32%) 0%, hsl(24, 40%, 24%) 100%);
+    border-top: 1.5px solid rgba(230, 180, 110, 0.3);
+    border-bottom: 1.5px solid rgba(50, 30, 15, 0.4);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.35),
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(240, 200, 140, 0.12);
+    color: rgba(255, 240, 210, 0.9);
+  }
+
+  .habit-cell.today {
+    outline: 2px solid rgba(212, 148, 74, 0.35);
+    outline-offset: 1px;
+  }
+
+  .habit-cell.future {
+    opacity: 0.35;
+  }
+
+  /* ── PROGRESS RING ── */
+  .progress-ring-wrapper {
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+
+  .progress-ring-wrapper svg {
+    width: 64px;
+    height: 64px;
+    transform: rotate(-90deg);
+    /* Minimal glow — warm light, not neon */
+    filter: drop-shadow(0 0 4px rgba(212, 148, 74, 0.25));
+  }
+
+  .progress-ring-wrapper .pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #d4944a;
+  }
+
+  /* ── GOAL CARD — inset panel with raised ring ── */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .goal-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .goal-card h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ede0d0;
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .goal-card p {
+    font-size: 11px;
+    color: rgba(237, 224, 208, 0.4);
+  }
+
+  /* ── STREAK STRIP — thin slab ── */
+  .streak-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+  }
+
+  .streak-strip .text {
+    font-size: 13px;
+    color: rgba(237, 224, 208, 0.5);
+  }
+
+  .streak-strip .text strong { color: #d4944a; }
+
+  .streak-dots {
+    display: flex;
+    gap: 8px;
+  }
+
+  .streak-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, hsl(20, 18%, 14%) 0%, hsl(22, 20%, 12%) 100%);
+    border-top: 1px solid rgba(30, 20, 15, 0.5);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .streak-dot.reached {
+    background: linear-gradient(180deg, hsl(28, 50%, 30%) 0%, hsl(24, 40%, 22%) 100%);
+    border-top: 1px solid rgba(230, 180, 110, 0.25);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(240, 200, 140, 0.1);
+  }
+
+  /* ── MINI CARDS — smaller capsules ── */
+  .mini-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+  }
+
+  .mini-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    /* Raised icon capsule */
+    background: linear-gradient(180deg, hsl(25, 35%, 24%) 0%, hsl(22, 28%, 18%) 100%);
+    border-top: 1px solid rgba(220, 170, 120, 0.15);
+    border-bottom: 1px solid rgba(40, 25, 15, 0.3);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(220, 170, 120, 0.08);
+  }
+
+  .mini-text h5 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ede0d0;
+  }
+
+  .mini-text p {
+    font-size: 11px;
+    color: rgba(237, 224, 208, 0.4);
+  }
+
+  /* ── LAYOUT ── */
+  .demo-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .w-half { width: calc(50% - 10px); min-width: 420px; }
+  .w-full { width: 100%; max-width: 880px; }
+  .w-quarter { width: calc(25% - 15px); min-width: 200px; }
+</style>
+</head>
+<body>
+
+<h2>Sundown v3 — Claymorphic</h2>
+
+<!-- Nav capsule dock -->
+<div class="w-full" style="max-width: 680px;">
+  <nav class="clay-nav">
+    <div class="pill active">Dashboard</div>
+    <div class="pill">Habits</div>
+    <div class="pill">Goals</div>
+    <div class="pill">Analytics</div>
+    <div class="pill">Adventures</div>
+    <div class="pill">Wellness</div>
+    <div class="pill">Settings</div>
+  </nav>
+</div>
+
+<!-- Stat capsules -->
+<div style="display:flex; gap:14px; width:100%; justify-content:center;">
+  <div class="clay-chip"><span class="val">329</span> XP</div>
+  <div class="clay-chip">&#128293; <span class="val">22</span> days</div>
+  <div class="clay-chip">Residency <span class="val">2y 3m</span></div>
+</div>
+
+<!-- Main cards -->
+<div class="demo-row">
+
+  <!-- Habits slab -->
+  <div class="clay-card w-half">
+    <div class="card-title">
+      This Week
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="progress-ring-wrapper" style="width:42px; height:42px;">
+          <svg viewBox="0 0 42 42" style="width:42px; height:42px;">
+            <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(180,130,80,0.12)" stroke-width="3.5"/>
+            <circle cx="21" cy="21" r="17" fill="none" stroke="#d4944a" stroke-width="3.5" stroke-linecap="round"
+              stroke-dasharray="106.81" stroke-dashoffset="45.78"/>
+          </svg>
+          <div class="pct" style="font-size:12px;">4/7</div>
+        </div>
+        <span style="font-size:11px; color:rgba(237,224,208,0.35);">3 left</span>
+      </div>
+    </div>
+
+    <!-- Habit grid inside an inset panel -->
+    <div class="clay-inset">
+      <div class="habit-grid">
+        <div></div>
+        <div class="day-header">S</div>
+        <div class="day-header">M</div>
+        <div class="day-header">T</div>
+        <div class="day-header">W</div>
+        <div class="day-header">T</div>
+        <div class="day-header today">F</div>
+        <div class="day-header">S</div>
+
+        <div class="habit-label"><span class="icon">&#128209;</span> RemNote</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell today done">&#10003;</div>
+        <div class="habit-cell future"></div>
+
+        <div class="habit-label"><span class="icon">&#127947;</span> Gym</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell today done">&#10003;</div>
+        <div class="habit-cell future"></div>
+
+        <div class="habit-label"><span class="icon">&#127911;</span> Pimsleur</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell today done">&#10003;</div>
+        <div class="habit-cell future"></div>
+
+        <div class="habit-label"><span class="icon">&#128716;</span> Bed by 11</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell today"></div>
+        <div class="habit-cell future"></div>
+
+        <div class="habit-label"><span class="icon">&#127465;&#127466;</span> German</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell today"></div>
+        <div class="habit-cell future"></div>
+
+        <div class="habit-label"><span class="icon">&#128218;</span> Read a Paper</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell"></div>
+        <div class="habit-cell done">&#10003;</div>
+        <div class="habit-cell today"></div>
+        <div class="habit-cell future"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goals slab -->
+  <div class="clay-card w-half">
+    <div class="card-title">
+      Goals
+      <div class="badge">2026</div>
+    </div>
+    <div class="goals-grid">
+      <div class="clay-inset goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(180,130,80,0.1)" stroke-width="4.5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#d4944a" stroke-width="4.5" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="81.68"/>
+          </svg>
+          <div class="pct">50%</div>
+        </div>
+        <div>
+          <h4>2 physical books</h4>
+          <p>1/2 complete</p>
+        </div>
+      </div>
+      <div class="clay-inset goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(180,130,80,0.1)" stroke-width="4.5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#c07848" stroke-width="4.5" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="106.18"/>
+          </svg>
+          <div class="pct">35%</div>
+        </div>
+        <div>
+          <h4>Complete de Lahunta</h4>
+          <p>9/26 chapters</p>
+        </div>
+      </div>
+      <div class="clay-inset goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(180,130,80,0.1)" stroke-width="4.5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#a06838" stroke-width="4.5" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="120.89"/>
+          </svg>
+          <div class="pct">26%</div>
+        </div>
+        <div>
+          <h4>200 lifting days</h4>
+          <p>51/200</p>
+        </div>
+      </div>
+      <div class="clay-inset goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(180,130,80,0.1)" stroke-width="4.5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#8a5830" stroke-width="4.5" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="122.52"/>
+          </svg>
+          <div class="pct">25%</div>
+        </div>
+        <div>
+          <h4>12 outdoor climbing</h4>
+          <p>3/12 days</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Streak slab -->
+<div class="clay-card w-full" style="padding: 0;">
+  <div class="streak-strip">
+    <div class="text"><strong>22 days strong</strong> &mdash; next milestone: 30 days</div>
+    <div class="streak-dots">
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom mini capsules -->
+<div class="demo-row">
+  <div class="clay-card w-quarter mini-card">
+    <div class="mini-icon">&#10024;</div>
+    <div class="mini-text">
+      <h5>Wellness</h5>
+      <p>Check in</p>
+    </div>
+  </div>
+  <div class="clay-card w-quarter mini-card">
+    <div class="mini-icon">&#128218;</div>
+    <div class="mini-text">
+      <h5>Reading</h5>
+      <p>The Living Mountain</p>
+    </div>
+  </div>
+  <div class="clay-card w-quarter mini-card">
+    <div class="mini-icon">&#9968;&#65039;</div>
+    <div class="mini-text">
+      <h5>Adventures</h5>
+      <p>Log outdoor day</p>
+    </div>
+  </div>
+  <div class="clay-card w-quarter mini-card">
+    <div class="mini-icon">&#127873;</div>
+    <div class="mini-text">
+      <h5>Rewards</h5>
+      <p>329 XP available</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

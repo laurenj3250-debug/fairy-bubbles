@@ -105,7 +105,7 @@ setup('authenticate', async ({ page, context }) => {
 
   // Wait for dashboard content
   console.log('⏳ Waiting for dashboard content...');
-  await page.waitForSelector('text=/EL CAPITAN|Base Camp|Today/i', { timeout: 15000 });
+  await page.waitForSelector('text=/SUNDOWN|Sundown|This Week|EL CAPITAN|Base Camp|Today/i', { timeout: 15000 });
   console.log('✓ Dashboard loaded');
 
   // Save the authentication state

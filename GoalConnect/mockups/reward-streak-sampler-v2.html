@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reward + Streak Sampler v2 — 6 Structurally Different Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* PARTICLES */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px; left: 50%; top: 15%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* CONTENT */
+  .content { position: relative; z-index: 10; padding: 40px 40px 60px; }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+    text-align: center; margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center; font-size: 14px; color: var(--text-muted); letter-spacing: 2px;
+    margin-bottom: 40px;
+  }
+
+  /* GRID */
+  .sampler-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* CONCEPT WRAPPER */
+  .concept { display: flex; flex-direction: column; gap: 12px; }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600; color: var(--text-accent);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .concept-desc {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; top: -40%; left: 20%; width: 60%; height: 80%;
+    background: radial-gradient(ellipse at center, rgba(255,210,140,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; z-index: 1;
+  }
+  .shell::after {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    box-shadow: inset 0 0 30px rgba(225,164,92,0.04), inset 0 1px 0 rgba(255,200,140,0.08);
+  }
+
+  /* SHARED */
+  .label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+  }
+  .label-accent {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 600; color: var(--text-accent);
+  }
+  .serif-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .serif-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; color: var(--text-accent);
+  }
+  .xp-frac {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* ============================
+     SHARED ANIMATIONS
+     ============================ */
+  @keyframes glow-breathe {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(225,164,92,0.3)); }
+    50% { filter: drop-shadow(0 0 16px rgba(225,164,92,0.5)); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+  @keyframes halo-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(225,164,92,0.15), 0 0 40px rgba(225,164,92,0.05); }
+    50% { box-shadow: 0 0 30px rgba(225,164,92,0.25), 0 0 60px rgba(225,164,92,0.1); }
+  }
+
+  /* ============================
+     CONCEPT 1: GROWING DESERT FLOWER
+     ============================ */
+  .c1-garden {
+    display: flex; align-items: flex-end; justify-content: center;
+    height: 260px; position: relative; overflow: hidden;
+  }
+  .c1-ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+    background: linear-gradient(to top, rgba(80,40,25,0.6) 0%, rgba(60,30,20,0.3) 60%, transparent 100%);
+    border-radius: 0 0 16px 16px;
+  }
+  /* Glowing pool (reward progress) */
+  .c1-pool {
+    position: absolute; bottom: 8px; left: 15%; right: 15%; height: 28px;
+    border-radius: 50%; overflow: hidden;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .c1-pool-fill {
+    height: 100%; border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 80%, rgba(225,164,92,0.7) 0%, rgba(200,120,50,0.4) 50%, rgba(180,100,40,0.15) 100%);
+    box-shadow: 0 0 20px rgba(225,164,92,0.4), 0 -4px 12px rgba(225,164,92,0.2);
+    animation: pool-shimmer 4s ease-in-out infinite;
+  }
+  @keyframes pool-shimmer {
+    0%, 100% { box-shadow: 0 0 20px rgba(225,164,92,0.4), 0 -4px 12px rgba(225,164,92,0.2); }
+    50% { box-shadow: 0 0 30px rgba(225,164,92,0.6), 0 -6px 18px rgba(225,164,92,0.3); }
+  }
+  .c1-pool-label {
+    position: absolute; bottom: 42px; left: 0; right: 0; text-align: center;
+  }
+  /* Stem */
+  .c1-stem {
+    position: absolute; bottom: 54px; left: 50%; width: 3px;
+    transform: translateX(-50%);
+    background: linear-gradient(to top, rgba(120,90,50,0.8), rgba(160,130,70,0.6));
+    box-shadow: 0 0 6px rgba(160,130,70,0.3);
+    height: 130px;
+    border-radius: 2px;
+  }
+  /* Leaves at milestones */
+  .c1-leaf {
+    position: absolute; width: 18px; height: 10px; border-radius: 50% 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(140,120,60,0.7), rgba(100,80,40,0.4));
+    box-shadow: 0 0 6px rgba(160,140,60,0.3);
+  }
+  .c1-leaf.left { left: 50%; margin-left: -20px; transform: rotate(-20deg); }
+  .c1-leaf.right { left: 50%; margin-left: 4px; transform: rotate(20deg) scaleX(-1); }
+  .c1-leaf-7 { bottom: 94px; }
+  .c1-leaf-14 { bottom: 134px; }
+  .c1-leaf-21 { bottom: 168px; }
+  /* Flower */
+  .c1-flower {
+    position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%);
+    width: 50px; height: 50px;
+  }
+  .c1-petal {
+    position: absolute; width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,200,120,0.9) 20%, rgba(225,164,92,0.6) 70%, transparent);
+    box-shadow: 0 0 10px rgba(225,164,92,0.5), 0 0 20px rgba(225,164,92,0.2);
+  }
+  .c1-petal:nth-child(1) { top: 0; left: 16px; }
+  .c1-petal:nth-child(2) { top: 6px; left: 30px; }
+  .c1-petal:nth-child(3) { top: 18px; left: 32px; }
+  .c1-petal:nth-child(4) { top: 28px; left: 22px; }
+  .c1-petal:nth-child(5) { top: 28px; left: 10px; }
+  .c1-petal:nth-child(6) { top: 18px; left: 0; }
+  .c1-petal:nth-child(7) { top: 6px; left: 2px; }
+  .c1-center {
+    position: absolute; top: 12px; left: 13px; width: 24px; height: 24px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 30%, rgba(200,130,60,0.8) 70%);
+    box-shadow: 0 0 15px rgba(240,200,120,0.6), 0 0 30px rgba(225,164,92,0.3);
+    display: flex; align-items: center; justify-content: center;
+    animation: flower-glow 3s ease-in-out infinite;
+  }
+  @keyframes flower-glow {
+    0%, 100% { box-shadow: 0 0 15px rgba(240,200,120,0.6), 0 0 30px rgba(225,164,92,0.3); }
+    50% { box-shadow: 0 0 25px rgba(240,200,120,0.8), 0 0 50px rgba(225,164,92,0.4); }
+  }
+  .c1-streak-badge {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 700;
+    color: #2d161c;
+  }
+  .c1-milestone-labels {
+    position: absolute; right: 15%; top: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .c1-milestone {
+    font-family: 'Cormorant Garamond', serif; font-size: 9px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;
+    position: absolute; right: 0;
+  }
+
+  /* ============================
+     CONCEPT 2: STAR COLLECTION
+     ============================ */
+  .c2-starfield {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    padding: 16px 0 12px;
+  }
+  .c2-star-slot {
+    width: 44px; height: 44px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .c2-star {
+    width: 36px; height: 36px; position: relative;
+  }
+  /* CSS star using clip-path */
+  .c2-star-shape {
+    width: 100%; height: 100%;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  .c2-star-slot.collected .c2-star-shape {
+    background: linear-gradient(135deg, #F0C878 0%, #E1A45C 50%, #D4923A 100%);
+    box-shadow: none;
+  }
+  .c2-star-slot.collected::after {
+    content: ''; position: absolute; inset: -4px;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    background: rgba(225,164,92,0.15);
+    filter: blur(4px);
+  }
+  .c2-star-slot.collected .c2-star-glow {
+    position: absolute; inset: -8px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.3) 0%, transparent 70%);
+    animation: star-pulse 3s ease-in-out infinite;
+  }
+  .c2-star-slot.empty .c2-star-shape {
+    background: rgba(80,45,35,0.3);
+    border: 1px solid rgba(120,70,50,0.2);
+  }
+  .c2-star-slot.empty {
+    opacity: 0.4;
+  }
+  @keyframes star-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .c2-star-slot.collected:nth-child(1) .c2-star-glow { animation-delay: 0s; }
+  .c2-star-slot.collected:nth-child(2) .c2-star-glow { animation-delay: 0.4s; }
+  .c2-star-slot.collected:nth-child(3) .c2-star-glow { animation-delay: 0.8s; }
+  .c2-star-slot.collected:nth-child(4) .c2-star-glow { animation-delay: 1.2s; }
+  .c2-star-slot.collected:nth-child(5) .c2-star-glow { animation-delay: 0.2s; }
+  .c2-star-slot.collected:nth-child(6) .c2-star-glow { animation-delay: 0.6s; }
+  .c2-star-slot.collected:nth-child(7) .c2-star-glow { animation-delay: 1.0s; }
+  .c2-info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px; border-top: 1px solid rgba(225,164,92,0.06);
+    margin-top: 8px;
+  }
+  .c2-streak-halo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.15) 0%, transparent 70%);
+    animation: halo-breathe 3s ease-in-out infinite;
+  }
+  @keyframes halo-breathe {
+    0%, 100% { box-shadow: 0 0 15px rgba(225,164,92,0.2), 0 0 30px rgba(225,164,92,0.08); }
+    50% { box-shadow: 0 0 25px rgba(225,164,92,0.35), 0 0 50px rgba(225,164,92,0.12); }
+  }
+  .c2-streak-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700;
+    color: var(--text-accent); text-shadow: 0 0 15px rgba(225,164,92,0.4);
+  }
+
+  /* ============================
+     CONCEPT 3: LEVEL SYSTEM
+     ============================ */
+  .c3-level-row {
+    display: flex; gap: 20px; align-items: center;
+  }
+  .c3-badge {
+    width: 100px; height: 120px; position: relative; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  /* Shield shape via CSS */
+  .c3-shield {
+    width: 80px; height: 96px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .c3-shield-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(120,70,40,0.5) 0%, rgba(80,40,25,0.6) 100%);
+    clip-path: polygon(50% 0%, 100% 10%, 100% 65%, 50% 100%, 0% 65%, 0% 10%);
+    box-shadow: 0 0 20px rgba(225,164,92,0.2);
+  }
+  .c3-shield-border {
+    position: absolute; inset: -2px;
+    background: linear-gradient(180deg, rgba(240,200,120,0.4) 0%, rgba(225,164,92,0.2) 100%);
+    clip-path: polygon(50% 0%, 100% 10%, 100% 65%, 50% 100%, 0% 65%, 0% 10%);
+    animation: shield-glow 4s ease-in-out infinite;
+  }
+  @keyframes shield-glow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(225,164,92,0.2)); }
+    50% { filter: drop-shadow(0 0 16px rgba(225,164,92,0.4)); }
+  }
+  .c3-shield-inner {
+    position: absolute; inset: 3px;
+    background: linear-gradient(180deg, rgba(100,55,35,0.7) 0%, rgba(60,30,20,0.8) 100%);
+    clip-path: polygon(50% 0%, 100% 10%, 100% 65%, 50% 100%, 0% 65%, 0% 10%);
+  }
+  .c3-lvl-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    position: relative; z-index: 2;
+  }
+  .c3-lvl-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 700;
+    color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(225,164,92,0.4);
+    position: relative; z-index: 2;
+  }
+  .c3-level-info { flex: 1; }
+  .c3-next-level {
+    margin-bottom: 16px;
+  }
+  .c3-level-bar-wrap {
+    height: 6px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    margin-top: 6px; overflow: hidden;
+  }
+  .c3-level-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(180,100,40,0.3), rgba(225,164,92,0.6) 60%, rgba(240,200,120,0.7) 100%);
+    box-shadow: 0 0 8px rgba(225,164,92,0.3);
+  }
+  .c3-level-labels {
+    display: flex; justify-content: space-between; margin-top: 4px;
+  }
+  .c3-reward-section {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid rgba(225,164,92,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .c3-reward-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: radial-gradient(circle, rgba(225,164,92,0.25) 0%, rgba(80,40,25,0.5) 100%);
+    border: 1px solid rgba(225,164,92,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .c3-lock {
+    width: 12px; height: 14px; position: relative;
+  }
+  .c3-lock-body {
+    width: 12px; height: 9px; border-radius: 2px;
+    background: rgba(225,164,92,0.5); position: absolute; bottom: 0;
+  }
+  .c3-lock-shackle {
+    width: 8px; height: 7px; border: 2px solid rgba(225,164,92,0.5);
+    border-radius: 4px 4px 0 0; border-bottom: none;
+    position: absolute; top: 0; left: 2px;
+  }
+
+  /* ============================
+     CONCEPT 4: TREASURE MAP
+     ============================ */
+  .c4-map {
+    position: relative; padding: 20px 0 16px; min-height: 140px;
+  }
+  .c4-trail {
+    position: absolute; top: 50%; left: 24px; right: 24px; height: 3px;
+    transform: translateY(-50%);
+  }
+  .c4-trail-bg {
+    position: absolute; inset: 0;
+    border-top: 3px dashed rgba(120,70,50,0.3);
+  }
+  .c4-trail-glow {
+    position: absolute; top: 0; left: 0; height: 3px;
+    border-top: 3px dashed rgba(225,164,92,0.5);
+    box-shadow: 0 0 8px rgba(225,164,92,0.3);
+  }
+  /* Footprints along the trail */
+  .c4-footprint {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.6) 30%, transparent 70%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.3);
+  }
+  .c4-footprint:nth-child(1) { left: 10%; animation: fp-glow 2s ease-in-out 0s infinite; }
+  .c4-footprint:nth-child(2) { left: 25%; animation: fp-glow 2s ease-in-out 0.3s infinite; }
+  .c4-footprint:nth-child(3) { left: 40%; animation: fp-glow 2s ease-in-out 0.6s infinite; }
+  .c4-footprint:nth-child(4) { left: 55%; animation: fp-glow 2s ease-in-out 0.9s infinite; }
+  @keyframes fp-glow {
+    0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+  }
+  /* Current position marker */
+  .c4-marker {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 20px; height: 20px;
+  }
+  .c4-marker-dot {
+    width: 14px; height: 14px; border-radius: 50%; margin: 3px;
+    background: radial-gradient(circle, #F0C878 30%, rgba(225,164,92,0.7) 70%);
+    box-shadow: 0 0 12px rgba(225,164,92,0.6), 0 0 24px rgba(225,164,92,0.3);
+    animation: marker-pulse 2s ease-in-out infinite;
+  }
+  @keyframes marker-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(225,164,92,0.6), 0 0 24px rgba(225,164,92,0.3); }
+    50% { transform: scale(1.15); box-shadow: 0 0 18px rgba(225,164,92,0.8), 0 0 36px rgba(225,164,92,0.4); }
+  }
+  .c4-marker-ring {
+    position: absolute; inset: -4px; border-radius: 50%;
+    border: 1px solid rgba(225,164,92,0.3);
+    animation: marker-ring-pulse 2s ease-in-out infinite;
+  }
+  @keyframes marker-ring-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.4); opacity: 0; }
+  }
+  /* Start marker */
+  .c4-start {
+    position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(100,60,40,0.5);
+    border: 1px solid rgba(120,70,50,0.3);
+  }
+  /* Destination */
+  .c4-destination {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    text-align: center;
+  }
+  .c4-treasure {
+    width: 32px; height: 26px; margin: 0 auto 4px;
+    position: relative;
+  }
+  .c4-treasure-box {
+    width: 32px; height: 18px; border-radius: 4px;
+    background: linear-gradient(180deg, rgba(180,120,50,0.6) 0%, rgba(120,70,35,0.7) 100%);
+    border: 1px solid rgba(225,164,92,0.3);
+    position: absolute; bottom: 0;
+    box-shadow: 0 0 10px rgba(225,164,92,0.2);
+  }
+  .c4-treasure-lid {
+    width: 36px; height: 10px; border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, rgba(200,140,60,0.7) 0%, rgba(160,100,45,0.6) 100%);
+    border: 1px solid rgba(225,164,92,0.3); border-bottom: none;
+    position: absolute; top: 0; left: -2px;
+  }
+  .c4-treasure-glow {
+    position: absolute; inset: -10px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.15) 0%, transparent 70%);
+    animation: treasure-glow 3s ease-in-out infinite;
+  }
+  @keyframes treasure-glow {
+    0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+  }
+  .c4-dest-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 9px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;
+    max-width: 60px; line-height: 1.3;
+  }
+  /* Compass (streak) */
+  .c4-compass {
+    position: absolute; left: 24px; bottom: -4px;
+  }
+  .c4-compass-body {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(80,45,30,0.7) 0%, rgba(50,25,18,0.8) 100%);
+    border: 1.5px solid rgba(225,164,92,0.25);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    box-shadow: 0 0 10px rgba(225,164,92,0.15);
+  }
+  .c4-compass-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 700;
+    color: var(--text-accent); line-height: 1;
+  }
+  .c4-compass-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 7px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+  /* XP label below map */
+  .c4-info-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 20px; padding-top: 10px;
+    border-top: 1px solid rgba(225,164,92,0.06);
+  }
+
+  /* ============================
+     CONCEPT 5: CAMPFIRE
+     ============================ */
+  .c5-scene {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 0;
+  }
+  .c5-fire-container {
+    position: relative; width: 120px; height: 120px;
+    margin-bottom: 8px;
+  }
+  /* Flames */
+  .c5-flame {
+    position: absolute; bottom: 30px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    filter: blur(1px);
+  }
+  .c5-flame.outer {
+    width: 50px; height: 70px; left: 35px;
+    background: radial-gradient(ellipse at 50% 80%, rgba(200,100,30,0.8) 0%, rgba(180,70,20,0.5) 40%, rgba(160,50,15,0.2) 70%, transparent 100%);
+    animation: flame-dance 0.8s ease-in-out infinite alternate;
+  }
+  .c5-flame.mid {
+    width: 36px; height: 56px; left: 42px; bottom: 32px;
+    background: radial-gradient(ellipse at 50% 80%, rgba(225,164,92,0.9) 0%, rgba(220,140,50,0.6) 40%, rgba(200,100,30,0.3) 70%, transparent 100%);
+    animation: flame-dance 0.6s ease-in-out 0.1s infinite alternate;
+  }
+  .c5-flame.inner {
+    width: 22px; height: 42px; left: 49px; bottom: 34px;
+    background: radial-gradient(ellipse at 50% 80%, rgba(255,230,160,0.95) 0%, rgba(240,200,120,0.7) 40%, rgba(225,164,92,0.3) 70%, transparent 100%);
+    animation: flame-dance 0.5s ease-in-out 0.2s infinite alternate;
+  }
+  .c5-flame.tip {
+    width: 10px; height: 24px; left: 55px; bottom: 52px;
+    background: radial-gradient(ellipse at 50% 90%, rgba(255,240,200,0.9) 0%, rgba(255,220,140,0.4) 50%, transparent 100%);
+    animation: flame-dance 0.4s ease-in-out 0.15s infinite alternate;
+    border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+  }
+  @keyframes flame-dance {
+    0% { transform: scaleX(1) scaleY(1) translateY(0); }
+    100% { transform: scaleX(0.9) scaleY(1.06) translateY(-3px); }
+  }
+  /* Glow under fire */
+  .c5-fire-glow {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 40px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(225,164,92,0.25) 0%, transparent 70%);
+    animation: fire-glow-pulse 1.5s ease-in-out infinite alternate;
+  }
+  @keyframes fire-glow-pulse {
+    0% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+    100% { opacity: 1; transform: translateX(-50%) scaleX(1.1); }
+  }
+  /* Logs (XP collected) */
+  .c5-logs {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 2px; align-items: flex-end;
+  }
+  .c5-log {
+    width: 28px; height: 8px; border-radius: 4px;
+    position: relative;
+  }
+  .c5-log.filled {
+    background: linear-gradient(180deg, rgba(140,80,35,0.8) 0%, rgba(100,55,25,0.9) 100%);
+    border: 1px solid rgba(180,110,50,0.3);
+    box-shadow: 0 0 4px rgba(225,164,92,0.15);
+  }
+  .c5-log.filled.glowing {
+    box-shadow: 0 0 8px rgba(225,164,92,0.3), 0 0 2px rgba(200,100,30,0.4);
+  }
+  .c5-log.empty {
+    background: rgba(60,30,20,0.4);
+    border: 1px dashed rgba(100,55,30,0.2);
+  }
+  .c5-log:nth-child(odd) { transform: rotate(-8deg); }
+  .c5-log:nth-child(even) { transform: rotate(8deg); margin-bottom: 2px; }
+  /* Streak in flame */
+  .c5-streak-in-flame {
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700;
+    color: rgba(255,240,200,0.9); text-shadow: 0 0 15px rgba(255,200,100,0.6);
+    z-index: 5;
+  }
+  /* Cooking label */
+  .c5-cooking {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 6px; padding: 6px 14px;
+    background: rgba(80,40,25,0.3);
+    border-radius: 12px;
+    border: 1px solid rgba(120,70,40,0.2);
+  }
+  .c5-cooking-icon {
+    font-size: 14px; opacity: 0.7;
+  }
+  .c5-cooking-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); letter-spacing: 0.5px;
+  }
+  .c5-xp-label {
+    margin-top: 8px; text-align: center;
+  }
+  /* Sparks */
+  .c5-spark {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(255,200,100,0.8);
+  }
+  @keyframes spark-rise {
+    0% { opacity: 1; transform: translateY(0) translateX(0); }
+    100% { opacity: 0; transform: translateY(-40px) translateX(var(--sx)); }
+  }
+  .c5-spark:nth-child(1) { left: 52px; bottom: 85px; --sx: -8px; animation: spark-rise 1.2s ease-out 0s infinite; }
+  .c5-spark:nth-child(2) { left: 60px; bottom: 80px; --sx: 12px; animation: spark-rise 1.5s ease-out 0.3s infinite; }
+  .c5-spark:nth-child(3) { left: 56px; bottom: 78px; --sx: -5px; animation: spark-rise 1s ease-out 0.7s infinite; }
+  .c5-spark:nth-child(4) { left: 64px; bottom: 82px; --sx: 6px; animation: spark-rise 1.3s ease-out 1s infinite; }
+
+  /* ============================
+     CONCEPT 6: HOURGLASS
+     ============================ */
+  .c6-layout {
+    display: flex; align-items: center; gap: 24px; justify-content: center;
+  }
+  .c6-hourglass {
+    width: 80px; height: 160px; position: relative;
+    flex-shrink: 0;
+  }
+  /* Top half (remaining XP) */
+  .c6-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 75px;
+    clip-path: polygon(5% 0%, 95% 0%, 55% 100%, 45% 100%);
+    background: rgba(40,20,15,0.5);
+    border: 1px solid rgba(120,70,50,0.2);
+    overflow: hidden;
+  }
+  .c6-top-sand {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    /* 159/500 = ~32% of remaining */
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(120,70,40,0.2) 0%, rgba(100,60,35,0.3) 100%);
+  }
+  /* Neck */
+  .c6-neck {
+    position: absolute; top: 73px; left: 50%; transform: translateX(-50%);
+    width: 6px; height: 14px;
+    background: rgba(225,164,92,0.2);
+    border-radius: 2px;
+  }
+  /* Stream of sand */
+  .c6-stream {
+    position: absolute; top: 75px; left: 50%; transform: translateX(-50%);
+    width: 2px; height: 30px;
+    background: linear-gradient(to bottom, rgba(225,164,92,0.5), rgba(225,164,92,0.1));
+    animation: stream-flow 1.5s ease-in-out infinite;
+  }
+  @keyframes stream-flow {
+    0%, 100% { opacity: 0.3; height: 30px; } 50% { opacity: 0.7; height: 35px; }
+  }
+  /* Bottom half (collected XP) */
+  .c6-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 75px;
+    clip-path: polygon(45% 0%, 55% 0%, 95% 100%, 5% 100%);
+    background: rgba(40,20,15,0.5);
+    border: 1px solid rgba(120,70,50,0.2);
+    overflow: hidden;
+  }
+  .c6-bottom-sand {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    /* 341/500 = 68% */
+    height: 68%;
+    background: linear-gradient(to top, rgba(225,164,92,0.6) 0%, rgba(200,130,60,0.4) 60%, rgba(180,100,40,0.2) 100%);
+    box-shadow: 0 0 15px rgba(225,164,92,0.2);
+    animation: sand-glow 4s ease-in-out infinite;
+  }
+  @keyframes sand-glow {
+    0%, 100% { box-shadow: 0 0 15px rgba(225,164,92,0.2); }
+    50% { box-shadow: 0 0 25px rgba(225,164,92,0.35); }
+  }
+  /* Hourglass frame */
+  .c6-frame-top, .c6-frame-bottom {
+    position: absolute; left: -2px; right: -2px; height: 6px;
+    background: linear-gradient(180deg, rgba(180,120,60,0.5) 0%, rgba(140,80,40,0.6) 100%);
+    border-radius: 3px;
+    border: 1px solid rgba(225,164,92,0.2);
+  }
+  .c6-frame-top { top: -2px; }
+  .c6-frame-bottom { bottom: -2px; }
+  /* Sand particles (animated) */
+  .c6-sand-particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,164,92,0.7);
+  }
+  @keyframes sand-fall {
+    0% { top: 60px; opacity: 0.8; }
+    100% { top: 120px; opacity: 0; }
+  }
+  .c6-sand-particle:nth-child(1) { left: 38px; animation: sand-fall 2s linear 0s infinite; }
+  .c6-sand-particle:nth-child(2) { left: 40px; animation: sand-fall 2s linear 0.5s infinite; }
+  .c6-sand-particle:nth-child(3) { left: 42px; animation: sand-fall 2s linear 1s infinite; }
+  .c6-sand-particle:nth-child(4) { left: 39px; animation: sand-fall 2s linear 1.5s infinite; }
+  /* Info side */
+  .c6-info {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .c6-streak-counter {
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .c6-streak-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 700;
+    color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+  }
+  .c6-xp-breakdown {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-top: 10px; border-top: 1px solid rgba(225,164,92,0.06);
+  }
+  .c6-xp-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .c6-xp-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .c6-xp-dot.collected {
+    background: radial-gradient(circle, rgba(225,164,92,0.8) 30%, rgba(200,130,60,0.4) 70%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.3);
+  }
+  .c6-xp-dot.remaining {
+    background: rgba(80,45,30,0.4);
+    border: 1px solid rgba(100,55,35,0.3);
+  }
+
+  @media (max-width: 900px) {
+    .sampler-grid { grid-template-columns: 1fr; }
+    .content { padding: 24px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+</div>
+<div class="sun-glow"></div>
+
+<div class="content">
+  <h1 class="page-title">Reward + Streak v2</h1>
+  <p class="page-sub">6 structurally different concepts</p>
+
+  <div class="sampler-grid">
+
+    <!-- ========== CONCEPT 1: GROWING DESERT FLOWER ========== -->
+    <div class="concept">
+      <div class="concept-label">1. Growing Desert Flower</div>
+      <div class="concept-desc">Streak = a growing flower. Each milestone (7, 14, 21 days) sprouts a leaf pair. 22 days = full bloom. Reward progress = a glowing pool of water at the base, filling to 68%. When the pool hits 100%, the flower bears fruit.</div>
+      <div class="shell"><div class="face">
+        <div class="c1-garden">
+          <!-- Ground -->
+          <div class="c1-ground"></div>
+          <!-- Pool (reward progress) -->
+          <div class="c1-pool">
+            <div class="c1-pool-fill" style="width: 68%;"></div>
+          </div>
+          <div class="c1-pool-label">
+            <span class="xp-frac">341 / 500 XP</span>
+            <span style="display: block; font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.5px; margin-top: 2px;">Custom Scrub Cap</span>
+          </div>
+          <!-- Stem -->
+          <div class="c1-stem"></div>
+          <!-- Leaves at milestones -->
+          <div class="c1-leaf left c1-leaf-7"></div>
+          <div class="c1-leaf right c1-leaf-7" style="bottom: 98px;"></div>
+          <div class="c1-leaf right c1-leaf-14"></div>
+          <div class="c1-leaf left c1-leaf-14" style="bottom: 138px;"></div>
+          <div class="c1-leaf left c1-leaf-21"></div>
+          <div class="c1-leaf right c1-leaf-21" style="bottom: 172px;"></div>
+          <!-- Flower at top -->
+          <div class="c1-flower">
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-petal"></div>
+            <div class="c1-center">
+              <span class="c1-streak-badge">22</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 2: STAR COLLECTION ========== -->
+    <div class="concept">
+      <div class="concept-label">2. Star Collection</div>
+      <div class="concept-desc">Reward = 10 star slots (50 XP each). 7 collected and glowing, 3 dim outlines waiting. Stars ARE the currency. Streak as a warm-haloed counter below.</div>
+      <div class="shell"><div class="face">
+        <div class="label" style="margin-bottom: 6px;">Stars Collected</div>
+        <div class="c2-starfield">
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot collected"><div class="c2-star"><div class="c2-star-shape"></div></div><div class="c2-star-glow"></div></div>
+          <div class="c2-star-slot empty"><div class="c2-star"><div class="c2-star-shape"></div></div></div>
+          <div class="c2-star-slot empty"><div class="c2-star"><div class="c2-star-shape"></div></div></div>
+          <div class="c2-star-slot empty"><div class="c2-star"><div class="c2-star-shape"></div></div></div>
+        </div>
+        <div class="c2-info-row">
+          <div>
+            <div class="serif-name" style="font-size: 14px;">Custom Scrub Cap</div>
+            <div class="xp-frac" style="margin-top: 2px;">341 / 500 XP</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="c2-streak-halo">
+              <span class="c2-streak-num">22</span>
+            </div>
+            <div class="label" style="margin-top: 4px;">Streak</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 3: LEVEL SYSTEM ========== -->
+    <div class="concept">
+      <div class="concept-label">3. Level System</div>
+      <div class="concept-desc">Streak defines your level (7/14/21/28...). 22 days = Level 3. Shield badge with XP bar to Level 4 (22/28 = 79%). Reward separate: "Custom Scrub Cap" with lock icon and its own XP counter.</div>
+      <div class="shell"><div class="face">
+        <div class="c3-level-row">
+          <div class="c3-badge">
+            <div class="c3-shield">
+              <div class="c3-shield-border"></div>
+              <div class="c3-shield-bg"></div>
+              <div class="c3-shield-inner"></div>
+              <span class="c3-lvl-text">LVL</span>
+              <span class="c3-lvl-num">3</span>
+            </div>
+          </div>
+          <div class="c3-level-info">
+            <div class="c3-next-level">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span class="label-accent">Next Level</span>
+                <span class="xp-frac">Day 22 / 28</span>
+              </div>
+              <div class="c3-level-bar-wrap">
+                <div class="c3-level-bar-fill" style="width: 79%;"></div>
+              </div>
+              <div class="c3-level-labels">
+                <span style="font-family: 'Cormorant Garamond', serif; font-size: 10px; color: var(--text-muted);">Lvl 3</span>
+                <span style="font-family: 'Cormorant Garamond', serif; font-size: 10px; color: var(--text-muted);">Lvl 4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="c3-reward-section">
+          <div class="c3-reward-icon">
+            <div class="c3-lock">
+              <div class="c3-lock-shackle"></div>
+              <div class="c3-lock-body"></div>
+            </div>
+          </div>
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span class="serif-name" style="font-size: 13px;">Custom Scrub Cap</span>
+              <span class="xp-frac">341 / 500 XP</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 4: TREASURE MAP ========== -->
+    <div class="concept">
+      <div class="concept-label">4. Treasure Map</div>
+      <div class="concept-desc">Reward = the destination on a dotted trail. Glowing marker at 68% of the path. Treasure chest at the end. Compass waypoint shows the streak (22). A journey toward the reward.</div>
+      <div class="shell"><div class="face">
+        <div class="c4-map">
+          <!-- Trail -->
+          <div class="c4-trail">
+            <div class="c4-trail-bg"></div>
+            <div class="c4-trail-glow" style="width: 68%;"></div>
+            <!-- Footprints -->
+            <div class="c4-footprint"></div>
+            <div class="c4-footprint"></div>
+            <div class="c4-footprint"></div>
+            <div class="c4-footprint"></div>
+          </div>
+          <!-- Start -->
+          <div class="c4-start"></div>
+          <!-- Current position marker at 68% -->
+          <div class="c4-marker" style="left: calc(24px + 68% * (100% - 48px) / 100);" id="c4-marker">
+            <div class="c4-marker-dot"></div>
+            <div class="c4-marker-ring"></div>
+          </div>
+          <!-- Destination -->
+          <div class="c4-destination">
+            <div class="c4-treasure">
+              <div class="c4-treasure-glow"></div>
+              <div class="c4-treasure-lid"></div>
+              <div class="c4-treasure-box"></div>
+            </div>
+            <div class="c4-dest-label">Custom Scrub Cap</div>
+          </div>
+          <!-- Compass (streak) -->
+          <div class="c4-compass">
+            <div class="c4-compass-body">
+              <span class="c4-compass-num">22</span>
+              <span class="c4-compass-label">Days</span>
+            </div>
+          </div>
+        </div>
+        <div class="c4-info-row">
+          <span class="serif-name" style="font-size: 13px;">Custom Scrub Cap</span>
+          <span class="xp-frac">341 / 500 XP (68%)</span>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 5: CAMPFIRE ========== -->
+    <div class="concept">
+      <div class="concept-label">5. Campfire</div>
+      <div class="concept-desc">Desert night campfire. Flame height/brightness = streak (22 days = tall, bright). Logs below = XP collected (stacked, glowing). You're "cooking" the reward over the fire. Sparks rise. Atmospheric.</div>
+      <div class="shell"><div class="face">
+        <div class="c5-scene">
+          <div class="c5-fire-container">
+            <!-- Sparks -->
+            <div class="c5-spark"></div>
+            <div class="c5-spark"></div>
+            <div class="c5-spark"></div>
+            <div class="c5-spark"></div>
+            <!-- Flames -->
+            <div class="c5-flame outer"></div>
+            <div class="c5-flame mid"></div>
+            <div class="c5-flame inner"></div>
+            <div class="c5-flame tip"></div>
+            <!-- Streak number inside flame -->
+            <div class="c5-streak-in-flame">22</div>
+            <!-- Glow -->
+            <div class="c5-fire-glow"></div>
+            <!-- Logs (7 filled = 341 XP ~= 7/10, 3 empty) -->
+            <div class="c5-logs">
+              <div class="c5-log filled glowing"></div>
+              <div class="c5-log filled glowing"></div>
+              <div class="c5-log filled glowing"></div>
+              <div class="c5-log filled"></div>
+              <div class="c5-log filled"></div>
+              <div class="c5-log filled"></div>
+              <div class="c5-log filled"></div>
+              <div class="c5-log empty"></div>
+              <div class="c5-log empty"></div>
+              <div class="c5-log empty"></div>
+            </div>
+          </div>
+          <div class="label" style="margin-bottom: 4px;">Day Streak</div>
+          <div class="c5-cooking">
+            <span class="c5-cooking-text">Cooking: Custom Scrub Cap</span>
+          </div>
+          <div class="c5-xp-label">
+            <span class="xp-frac">341 / 500 XP</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 6: HOURGLASS ========== -->
+    <div class="concept">
+      <div class="concept-label">6. Hourglass</div>
+      <div class="concept-desc">Two-triangle hourglass. Top = remaining XP (dim). Bottom = collected XP (glowing amber, 68% full). Sand particles animate downward. Streak counter beside. The visual IS the progress.</div>
+      <div class="shell"><div class="face">
+        <div class="c6-layout">
+          <div class="c6-hourglass">
+            <div class="c6-frame-top"></div>
+            <div class="c6-top">
+              <div class="c6-top-sand"></div>
+            </div>
+            <div class="c6-neck"></div>
+            <div class="c6-stream"></div>
+            <div class="c6-bottom">
+              <div class="c6-bottom-sand"></div>
+            </div>
+            <div class="c6-frame-bottom"></div>
+            <!-- Falling particles -->
+            <div class="c6-sand-particle"></div>
+            <div class="c6-sand-particle"></div>
+            <div class="c6-sand-particle"></div>
+            <div class="c6-sand-particle"></div>
+          </div>
+          <div class="c6-info">
+            <div>
+              <div class="serif-name">Custom Scrub Cap</div>
+            </div>
+            <div class="c6-streak-counter">
+              <span class="c6-streak-num">22</span>
+              <span class="label" style="margin-top: 8px;">Day<br>Streak</span>
+            </div>
+            <div class="c6-xp-breakdown">
+              <div class="c6-xp-row">
+                <div class="c6-xp-dot collected"></div>
+                <span class="xp-frac">341 XP collected</span>
+              </div>
+              <div class="c6-xp-row">
+                <div class="c6-xp-dot remaining"></div>
+                <span class="xp-frac">159 XP remaining</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div><!-- /sampler-grid -->
+</div><!-- /content -->
+
+<script>
+  // Position the treasure map marker more precisely
+  const marker = document.getElementById('c4-marker');
+  if (marker) {
+    const parent = marker.parentElement;
+    // 68% along the trail, offset for padding
+    const totalWidth = parent.offsetWidth - 48; // minus left+right padding
+    const pos = 24 + totalWidth * 0.68;
+    marker.style.left = pos + 'px';
+  }
+</script>
+
+</body>
+</html>

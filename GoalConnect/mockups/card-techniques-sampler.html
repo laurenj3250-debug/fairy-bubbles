@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Technique Sampler — Pick Your Favourite</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    background: #0a0507;
+    color: #F0DEC7;
+    padding: 40px;
+  }
+
+  /* Desert landscape background */
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .bg::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 30%, rgba(12,5,8,0.15) 50%, transparent 65%);
+  }
+
+  .content { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 4px;
+    text-align: center; margin-bottom: 8px;
+    color: rgba(240,222,199,0.85);
+  }
+  .subtitle { text-align: center; color: rgba(169,130,106,0.6); font-size: 14px; margin-bottom: 40px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 30px;
+  }
+
+  .sample { position: relative; }
+  .sample-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: #E1A45C;
+    margin-bottom: 6px;
+  }
+  .sample-desc {
+    font-size: 12px; color: rgba(169,130,106,0.7); margin-bottom: 12px; line-height: 1.4;
+  }
+
+  /* Shared card content styling */
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; margin-bottom: 14px;
+  }
+  .card-content { font-size: 13px; color: rgba(217,183,154,0.7); line-height: 1.5; }
+  .card-content .stat { color: #E1A45C; font-weight: 600; font-size: 15px; }
+  .badge {
+    font-size: 11px; font-weight: 600; color: #E1A45C;
+    background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px;
+  }
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 1. CURRENT — Basic glassmorphism (what we have) */
+  /* ═══════════════════════════════════════════════ */
+  .card-current {
+    background: rgba(45, 22, 28, 0.75);
+    border-radius: 24px; padding: 4px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+  }
+  .card-current .face {
+    background: rgba(85, 48, 52, 0.35);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 2. GAME UI — Light ray reflection overlay       */
+  /* ═══════════════════════════════════════════════ */
+  .card-gameui {
+    background: rgba(45, 22, 28, 0.75);
+    border-radius: 24px; padding: 4px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+  }
+  .card-gameui .face {
+    position: relative; overflow: hidden;
+    background: rgba(85, 48, 52, 0.35);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.15);
+    /* Subsurface scattering - light penetrating glass edges */
+    box-shadow:
+      inset 0 1px 0 rgba(255,200,140,0.2),
+      inset 0 -8px 16px rgba(0,0,0,0.2),
+      inset 6px 0 20px rgba(255,180,100,0.06),
+      inset -6px 0 20px rgba(255,180,100,0.03);
+  }
+  /* Light ray reflection overlay */
+  .card-gameui .face::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 20px;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255,200,140,0.12) 0%,
+        rgba(255,180,100,0.06) 15%,
+        transparent 40%,
+        transparent 60%,
+        rgba(255,200,140,0.03) 80%,
+        rgba(255,180,100,0.08) 100%
+      );
+    mix-blend-mode: screen;
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* Secondary light streak */
+  .card-gameui .face::after {
+    content: '';
+    position: absolute;
+    top: -20%; left: -10%;
+    width: 60%; height: 140%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255,220,160,0.06) 0%, transparent 70%);
+    transform: rotate(-25deg);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .card-gameui:hover .face::before {
+    background:
+      linear-gradient(
+        140deg,
+        rgba(255,200,140,0.18) 0%,
+        rgba(255,180,100,0.1) 20%,
+        transparent 45%,
+        transparent 55%,
+        rgba(255,200,140,0.05) 75%,
+        rgba(255,180,100,0.12) 100%
+      );
+    transition: background 0.4s;
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 3. CLAYMORPHISM — Puffy soft clay               */
+  /* ═══════════════════════════════════════════════ */
+  .card-clay {
+    background: rgba(75, 42, 48, 0.85);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow:
+      /* Outer shadow - depth */
+      12px 12px 28px rgba(10, 5, 7, 0.6),
+      -4px -4px 16px rgba(120, 70, 60, 0.08),
+      /* Inner highlight - top left glow */
+      inset 2px 2px 6px rgba(255, 200, 160, 0.12),
+      /* Inner shadow - bottom right depth */
+      inset -3px -3px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 4. GLASS + CLAY HYBRID                          */
+  /* ═══════════════════════════════════════════════ */
+  .card-hybrid {
+    background: rgba(65, 35, 42, 0.7);
+    border-radius: 26px; padding: 4px;
+    box-shadow:
+      10px 10px 24px rgba(10, 5, 7, 0.5),
+      -3px -3px 12px rgba(120, 70, 60, 0.06);
+  }
+  .card-hybrid .face {
+    background: rgba(85, 48, 52, 0.4);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border-radius: 22px; padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.1);
+    box-shadow:
+      inset 2px 2px 6px rgba(255, 200, 160, 0.1),
+      inset -3px -3px 8px rgba(0, 0, 0, 0.2),
+      inset 0 -8px 16px rgba(0,0,0,0.15);
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 5. ADVANCED GLASS (Forza technique + gradients)  */
+  /* ═══════════════════════════════════════════════ */
+  .card-forza {
+    background: rgba(45, 22, 28, 0.8);
+    border-radius: 24px; padding: 4px;
+    box-shadow:
+      0 4px 8px rgba(60,30,15,0.3),
+      0 20px 40px rgba(40,20,10,0.5),
+      0 40px 80px rgba(20,10,5,0.25);
+  }
+  .card-forza .face {
+    position: relative; overflow: hidden;
+    /* Gradient fill — top lighter than bottom */
+    background: linear-gradient(180deg, rgba(95, 55, 58, 0.45) 0%, rgba(75, 40, 45, 0.35) 100%);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 20px; padding: 20px;
+    border-top: 2px solid rgba(255,200,140,0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255,200,140,0.2),
+      inset 0 -10px 20px rgba(0,0,0,0.25),
+      /* Subsurface scattering edges */
+      inset 4px 0 16px rgba(255,180,100,0.05),
+      inset -4px 0 16px rgba(255,180,100,0.03);
+  }
+  /* Reflection overlay */
+  .card-forza .face::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: 20px;
+    background:
+      linear-gradient(
+        125deg,
+        rgba(255,220,170,0.14) 0%,
+        rgba(255,200,140,0.06) 20%,
+        transparent 45%,
+        transparent 70%,
+        rgba(255,200,140,0.04) 90%,
+        rgba(255,220,170,0.08) 100%
+      );
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 6. SVG DISPLACEMENT GLASS                       */
+  /* ═══════════════════════════════════════════════ */
+  .card-svg {
+    background: rgba(45, 22, 28, 0.75);
+    border-radius: 24px; padding: 4px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+  }
+  .card-svg .face {
+    position: relative; overflow: hidden;
+    background: rgba(85, 48, 52, 0.35);
+    backdrop-filter: blur(20px) saturate(1.3) url(#glass-distortion);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.15);
+    box-shadow:
+      inset 0 1px 0 rgba(255,200,140,0.15),
+      inset 0 -8px 16px rgba(0,0,0,0.2);
+    /* Extra: surface noise texture */
+    background-image:
+      radial-gradient(ellipse at 30% 20%, rgba(255,200,140,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(200,100,60,0.04) 0%, transparent 50%);
+    background-blend-mode: screen;
+  }
+  /* Specular highlight spot */
+  .card-svg .face::before {
+    content: '';
+    position: absolute;
+    top: -10px; left: 20%;
+    width: 60%; height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255,220,170,0.15) 0%, transparent 80%);
+    pointer-events: none;
+    filter: blur(8px);
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* 7. DARK LUXURY — Deep shadows + gold accents     */
+  /* ═══════════════════════════════════════════════ */
+  .card-luxury {
+    background: linear-gradient(145deg, rgba(55, 30, 35, 0.9) 0%, rgba(35, 18, 22, 0.95) 100%);
+    border-radius: 24px; padding: 1px;
+    box-shadow:
+      0 8px 16px rgba(10,5,7,0.5),
+      0 30px 60px rgba(10,5,7,0.4),
+      0 0 0 1px rgba(255,200,140,0.08);
+    /* Gold accent border via gradient border trick */
+    background-clip: padding-box;
+    border: 1px solid transparent;
+    background-origin: border-box;
+  }
+  .card-luxury .face {
+    background: linear-gradient(160deg, rgba(50, 28, 32, 0.95) 0%, rgba(30, 16, 20, 0.98) 100%);
+    border-radius: 23px; padding: 22px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,200,140,0.1),
+      inset 0 -1px 0 rgba(0,0,0,0.3);
+    position: relative; overflow: hidden;
+  }
+  /* Subtle gold edge light */
+  .card-luxury .face::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 10%, rgba(225,164,92,0.3) 50%, transparent 90%);
+    pointer-events: none;
+  }
+
+  /* Shared hover for all cards */
+  .card-current, .card-gameui, .card-clay, .card-hybrid, .card-forza, .card-svg, .card-luxury {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+  .card-current:hover, .card-gameui:hover, .card-clay:hover, .card-hybrid:hover,
+  .card-forza:hover, .card-svg:hover, .card-luxury:hover {
+    transform: translateY(-4px);
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<!-- SVG Filter for displacement (technique 6) -->
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <filter id="glass-distortion">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="content">
+  <h1>Card Technique Sampler</h1>
+  <p class="subtitle">Same content, 7 different rendering techniques. Pick the one that feels right.</p>
+
+  <div class="grid">
+
+    <!-- 1. CURRENT -->
+    <div class="sample">
+      <div class="sample-label">1. Current (Basic Glass)</div>
+      <div class="sample-desc">What we have now. Backdrop-filter blur + semi-transparent bg. Flat.</div>
+      <div class="card-current"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 2. GAME UI -->
+    <div class="sample">
+      <div class="sample-label">2. Game UI (Light Ray Overlay)</div>
+      <div class="sample-desc">Forza Horizon technique. Light ray PNG blended with mix-blend-mode: screen. Subsurface scattering via inset shadows. Hover to see light shift.</div>
+      <div class="card-gameui"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 3. CLAYMORPHISM -->
+    <div class="sample">
+      <div class="sample-label">3. Claymorphism (Puffy Clay)</div>
+      <div class="sample-desc">Dual inner shadows create soft 3D clay feel. No transparency — solid, warm, tactile. Like holding a warm ceramic tile.</div>
+      <div class="card-clay">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. GLASS + CLAY HYBRID -->
+    <div class="sample">
+      <div class="sample-label">4. Glass + Clay Hybrid</div>
+      <div class="sample-desc">Glassmorphism transparency + claymorphism's soft inner shadows. Apple Liquid Glass adjacent. Has the depth of clay with the transparency of glass.</div>
+      <div class="card-hybrid"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 5. ADVANCED GLASS (Forza full technique) -->
+    <div class="sample">
+      <div class="sample-label">5. Advanced Glass (Full Forza)</div>
+      <div class="sample-desc">Gradient fill (top lighter), heavier blur, thicker border-top, subsurface scattering on edges, reflection overlay. The works.</div>
+      <div class="card-forza"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 6. SVG DISPLACEMENT GLASS -->
+    <div class="sample">
+      <div class="sample-label">6. SVG Displacement Glass</div>
+      <div class="sample-desc">SVG feTurbulence + feDisplacementMap for subtle surface distortion. Specular highlight spot at top. Surface noise texture via radial gradients.</div>
+      <div class="card-svg"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 7. DARK LUXURY -->
+    <div class="sample">
+      <div class="sample-label">7. Dark Luxury (Gold Accent)</div>
+      <div class="sample-desc">Near-opaque dark surface with gold edge lighting. Deep layered shadows. Minimal transparency — relies on material depth + accent light. Think premium watch UI.</div>
+      <div class="card-luxury"><div class="face">
+        <div class="card-hdr"><span class="card-title">Weekly Goals</span><span class="badge">This Week</span></div>
+        <div class="card-content">
+          <p><span class="stat">200</span> lifting days — 1/4 complete</p>
+          <p style="margin-top:8px"><span class="stat">52</span> outdoor days — 0/1 complete</p>
+          <p style="margin-top:8px"><span class="stat">300</span> PowerPoints studied — 0/6 complete</p>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

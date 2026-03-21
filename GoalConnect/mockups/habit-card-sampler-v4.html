@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Card Sampler v4 — Full Week Visualizations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* PAGE HEADER */
+  .page-header {
+    text-align: center; margin-bottom: 48px; padding-top: 20px;
+  }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 6px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 40px;
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, rgba(255,220,160,0.08) 0%, transparent 40%, transparent 60%, rgba(255,200,140,0.04) 100%);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; z-index: 1;
+  }
+
+  /* CONCEPT LABEL */
+  .concept-label {
+    margin-bottom: 16px;
+  }
+  .concept-label h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .concept-label .concept-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 700; color: var(--text-accent);
+    text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;
+  }
+  .concept-label p {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5;
+  }
+
+  /* SHARED */
+  .day-labels { display: flex; gap: 0; margin-bottom: 8px; padding-left: 130px; }
+  .day-label {
+    flex: 1; text-align: center;
+    font-size: 9px; font-weight: 600; text-transform: uppercase;
+    color: var(--text-muted); letter-spacing: 1px;
+  }
+  .day-label.today { color: var(--text-accent); }
+
+  /* ============================================ */
+  /* CONCEPT 1: CONNECTED NODES                   */
+  /* ============================================ */
+  .nodes-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .nodes-row:last-child { border-bottom: none; }
+  .nodes-habit-info {
+    width: 120px; min-width: 120px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nodes-habit-info svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+  .nodes-habit-info span { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .nodes-track {
+    flex: 1; display: flex; align-items: center; position: relative; height: 28px;
+  }
+  .nodes-line {
+    position: absolute; top: 50%; left: 0; right: 0; height: 2px;
+    transform: translateY(-1px);
+  }
+  .nodes-line-seg {
+    position: absolute; top: 0; height: 100%;
+  }
+  .nodes-line-seg.bright { background: var(--text-accent); opacity: 0.5; }
+  .nodes-line-seg.dim { background: var(--text-muted); opacity: 0.15; stroke-dasharray: 4 3; }
+  .nodes-line-seg.dashed {
+    background: repeating-linear-gradient(90deg, rgba(169,130,106,0.2) 0px, rgba(169,130,106,0.2) 4px, transparent 4px, transparent 8px);
+  }
+  .nodes-dots { position: relative; display: flex; justify-content: space-between; width: 100%; z-index: 1; }
+  .node-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .node-dot.done {
+    background: var(--text-accent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.4);
+  }
+  .node-dot.done.today {
+    box-shadow: 0 0 12px rgba(225,164,92,0.6), 0 0 24px rgba(225,164,92,0.2);
+    width: 16px; height: 16px;
+  }
+  .node-dot.empty {
+    background: rgba(15,10,8,0.8);
+    border: 1.5px solid rgba(169,130,106,0.25);
+  }
+  .node-dot.future {
+    background: rgba(15,10,8,0.5);
+    border: 1px solid rgba(169,130,106,0.1);
+    opacity: 0.4;
+  }
+
+  /* ============================================ */
+  /* CONCEPT 2: SUNRISE HORIZON + WEEK STRIP     */
+  /* ============================================ */
+  .sunrise-container { position: relative; }
+  .sunrise-horizon {
+    height: 160px; border-radius: 16px; overflow: hidden; position: relative;
+    background: linear-gradient(180deg, #1a0a0e 0%, #2d1420 30%, #5a2a20 60%, #c47a20 85%, #E1A45C 100%);
+    margin-bottom: 20px;
+  }
+  .sunrise-horizon::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.6), transparent);
+  }
+  .sun-glow {
+    position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,140,0.5) 0%, rgba(225,164,92,0.2) 40%, transparent 70%);
+    filter: blur(20px);
+  }
+  .sunrise-icons {
+    position: absolute; bottom: 28px; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 28px;
+  }
+  .sunrise-icon-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .sunrise-icon-wrap svg { width: 22px; height: 22px; }
+  .sunrise-icon-wrap.lit svg { color: #F0DEC7; filter: drop-shadow(0 0 8px rgba(255,220,160,0.6)); }
+  .sunrise-icon-wrap.dim svg { color: rgba(169,130,106,0.35); }
+  .sunrise-icon-wrap .s-label { font-size: 8px; color: rgba(240,222,199,0.4); text-transform: uppercase; letter-spacing: 1px; }
+  .sunrise-icon-wrap.lit .s-label { color: rgba(240,222,199,0.7); }
+
+  .week-strip-section { padding: 0 4px; }
+  .week-strip-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,200,140,0.03);
+  }
+  .week-strip-row:last-child { border-bottom: none; }
+  .ws-name { width: 90px; min-width: 90px; font-size: 11px; color: var(--text-muted); }
+  .ws-dots { display: flex; gap: 0; flex: 1; }
+  .ws-dot-wrap { flex: 1; display: flex; justify-content: center; }
+  .ws-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .ws-dot.done { background: var(--text-accent); box-shadow: 0 0 4px rgba(225,164,92,0.3); }
+  .ws-dot.empty { background: rgba(15,10,8,0.7); border: 1px solid rgba(169,130,106,0.15); }
+  .ws-dot.future { background: rgba(15,10,8,0.4); opacity: 0.3; }
+  .ws-dot.today { box-shadow: 0 0 0 2px rgba(225,164,92,0.4), 0 0 8px rgba(225,164,92,0.2); }
+  .ws-day-headers { display: flex; gap: 0; flex: 1; }
+  .ws-day-hdr { flex: 1; text-align: center; font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .ws-day-hdr.today { color: var(--text-accent); }
+
+  /* ============================================ */
+  /* CONCEPT 3: INTENSITY BLOCKS                  */
+  /* ============================================ */
+  .intensity-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .intensity-row:last-child { border-bottom: none; }
+  .int-info {
+    width: 120px; min-width: 120px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .int-info svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+  .int-info span { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .int-blocks { display: flex; gap: 6px; flex: 1; }
+  .int-block {
+    flex: 1; aspect-ratio: 1; border-radius: 6px;
+    max-width: 42px;
+    transition: all 0.3s;
+  }
+  .int-block.empty { background: rgba(15,10,8,0.7); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  .int-block.future { background: rgba(15,10,8,0.4); opacity: 0.3; }
+  .int-block.done-1 { background: rgba(200,131,73,0.25); }
+  .int-block.done-2 { background: rgba(200,131,73,0.40); }
+  .int-block.done-3 { background: rgba(200,131,73,0.55); }
+  .int-block.done-4 { background: rgba(225,164,92,0.65); }
+  .int-block.done-5 { background: rgba(225,164,92,0.80); box-shadow: 0 0 6px rgba(225,164,92,0.2); }
+  .int-block.today {
+    outline: 2px solid rgba(225,164,92,0.5);
+    outline-offset: 1px;
+    box-shadow: 0 0 12px rgba(225,164,92,0.25);
+  }
+
+  /* ============================================ */
+  /* CONCEPT 4: RADIAL WEEK                       */
+  /* ============================================ */
+  .radial-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+  }
+  .radial-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 16px 8px;
+    background: rgba(15,10,8,0.3);
+    border-radius: 16px;
+    border: 1px solid rgba(255,200,140,0.04);
+  }
+  .radial-ring {
+    width: 90px; height: 90px; position: relative;
+  }
+  .radial-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  .radial-center svg { width: 20px; height: 20px; color: var(--text-secondary); }
+  .radial-dot-pos {
+    position: absolute; width: 12px; height: 12px;
+    transform: translate(-50%, -50%);
+  }
+  .radial-dot {
+    width: 100%; height: 100%; border-radius: 50%;
+  }
+  .radial-dot.done { background: var(--text-accent); box-shadow: 0 0 6px rgba(225,164,92,0.4); }
+  .radial-dot.empty { background: rgba(15,10,8,0.8); border: 1.5px solid rgba(169,130,106,0.2); }
+  .radial-dot.future { background: rgba(15,10,8,0.5); border: 1px solid rgba(169,130,106,0.1); opacity: 0.35; }
+  .radial-dot.today { box-shadow: 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.2); width: 14px; height: 14px; margin: -1px; }
+  .radial-day-label {
+    position: absolute; font-size: 7px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    transform: translate(-50%, -50%);
+  }
+  .radial-name {
+    font-size: 12px; color: var(--text-secondary); font-weight: 500; text-align: center;
+  }
+
+  /* ============================================ */
+  /* CONCEPT 5: TIMELINE RIBBON                   */
+  /* ============================================ */
+  .ribbon-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .ribbon-row:last-child { border-bottom: none; }
+  .rib-info {
+    width: 120px; min-width: 120px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rib-info svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+  .rib-info span { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .ribbon-track {
+    flex: 1; height: 28px; position: relative;
+    display: flex; align-items: center;
+  }
+  .ribbon-base {
+    position: absolute; top: 50%; left: 0; right: 0;
+    height: 4px; transform: translateY(-50%);
+    border-radius: 2px; overflow: hidden;
+  }
+  .ribbon-seg {
+    position: absolute; top: 0; height: 100%;
+  }
+  .ribbon-seg.streak { background: linear-gradient(90deg, rgba(200,131,73,0.3), rgba(225,164,92,0.5)); }
+  .ribbon-seg.dim { background: rgba(15,10,8,0.5); }
+  .ribbon-seg.future-seg { background: rgba(15,10,8,0.3); opacity: 0.3; }
+  .ribbon-markers {
+    position: relative; display: flex; justify-content: space-between; width: 100%; z-index: 1;
+  }
+  .ribbon-marker {
+    width: 10px; height: 10px; border-radius: 50%; position: relative;
+  }
+  .ribbon-marker.done {
+    background: var(--text-accent);
+    box-shadow: 0 -3px 6px rgba(225,164,92,0.3);
+    transform: translateY(-2px);
+  }
+  .ribbon-marker.empty {
+    background: rgba(30,15,20,0.8);
+    border: 1px solid rgba(169,130,106,0.2);
+  }
+  .ribbon-marker.future {
+    background: rgba(15,10,8,0.4);
+    opacity: 0.3;
+  }
+  .ribbon-marker.today {
+    box-shadow: 0 0 10px rgba(225,164,92,0.5), 0 -3px 6px rgba(225,164,92,0.3);
+    width: 12px; height: 12px; margin: -1px;
+  }
+  .ribbon-marker.today::after {
+    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 2px; height: 4px; background: var(--text-accent); border-radius: 1px;
+  }
+
+  /* ============================================ */
+  /* CONCEPT 6: FLAME TRAIL                       */
+  /* ============================================ */
+  .flame-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .flame-row:last-child { border-bottom: none; }
+  .fl-info {
+    width: 120px; min-width: 120px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fl-info svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+  .fl-info span { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .flame-track { display: flex; justify-content: space-between; flex: 1; align-items: flex-end; height: 36px; }
+  .flame-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    height: 100%;
+  }
+  .flame-ember {
+    width: 10px; height: 10px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: relative;
+  }
+  .flame-ember.cold {
+    background: rgba(30,15,20,0.7);
+    border: 1px solid rgba(169,130,106,0.15);
+    width: 8px; height: 8px;
+  }
+  .flame-ember.future {
+    background: rgba(15,10,8,0.4);
+    opacity: 0.3;
+    width: 6px; height: 6px;
+  }
+  .flame-ember.lit {
+    background: radial-gradient(ellipse at 50% 80%, #E1A45C, #c47a20 60%, rgba(180,80,30,0.6));
+    box-shadow: 0 -2px 8px rgba(225,164,92,0.4), 0 0 4px rgba(225,164,92,0.3);
+    animation: flicker 1.5s ease-in-out infinite alternate;
+  }
+  .flame-ember.lit.sz-1 { width: 10px; height: 14px; }
+  .flame-ember.lit.sz-2 { width: 11px; height: 16px; box-shadow: 0 -3px 10px rgba(225,164,92,0.45), 0 0 5px rgba(225,164,92,0.3); }
+  .flame-ember.lit.sz-3 { width: 12px; height: 18px; box-shadow: 0 -4px 12px rgba(225,164,92,0.5), 0 0 6px rgba(225,164,92,0.35); }
+  .flame-ember.lit.sz-4 { width: 13px; height: 20px; box-shadow: 0 -5px 14px rgba(225,164,92,0.55), 0 0 7px rgba(225,164,92,0.4); }
+  .flame-ember.lit.sz-5 { width: 14px; height: 22px; box-shadow: 0 -6px 16px rgba(225,164,92,0.6), 0 0 8px rgba(225,164,92,0.45); }
+  .flame-ember.lit.today {
+    animation: flicker-big 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes flicker {
+    0% { transform: scaleX(1) scaleY(1); opacity: 0.85; }
+    50% { transform: scaleX(0.95) scaleY(1.05); opacity: 1; }
+    100% { transform: scaleX(1.02) scaleY(0.97); opacity: 0.9; }
+  }
+  @keyframes flicker-big {
+    0% { transform: scaleX(1) scaleY(1); opacity: 0.9; }
+    33% { transform: scaleX(1.05) scaleY(1.08); opacity: 1; }
+    66% { transform: scaleX(0.95) scaleY(1.03); opacity: 0.95; }
+    100% { transform: scaleX(1.02) scaleY(0.96); opacity: 1; }
+  }
+  .flame-ember.lit::before {
+    content: ''; position: absolute; top: 15%; left: 25%; width: 50%; height: 40%;
+    border-radius: 50%; background: rgba(255,240,200,0.4);
+    filter: blur(2px);
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="content">
+  <div class="page-header">
+    <h1>Habit Cards v4</h1>
+    <div class="sub">6 Full-Week Visualizations &mdash; Game UI Card Style</div>
+  </div>
+
+  <!-- ==================== CONCEPT 1: CONNECTED NODES ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 1</div>
+    <h2>Connected Nodes</h2>
+    <p>Circles joined by lines. Bright amber = done, dark = missed. Streak continuity visible through connected bright segments. Broken streaks = dashed lines.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="day-labels">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label today">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+      </div>
+      <div id="nodes-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CONCEPT 2: SUNRISE HORIZON ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 2</div>
+    <h2>Sunrise Horizon + Week Strip</h2>
+    <p>Warm horizon with today's habits as glowing icons. Below: compact 7-day dot strip per habit. Beautiful hero + full week data.</p>
+  </div>
+  <div class="shell">
+    <div class="face" style="padding: 0; overflow: hidden; border-radius: 20px;">
+      <div class="sunrise-horizon">
+        <div class="sun-glow"></div>
+        <div class="sunrise-icons" id="sunrise-icons"></div>
+      </div>
+      <div style="padding: 16px 20px 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; padding-left: 90px; margin-bottom: 6px;">
+          <div class="ws-day-headers">
+            <div class="ws-day-hdr">S</div>
+            <div class="ws-day-hdr">M</div>
+            <div class="ws-day-hdr">T</div>
+            <div class="ws-day-hdr">W</div>
+            <div class="ws-day-hdr today">T</div>
+            <div class="ws-day-hdr">F</div>
+            <div class="ws-day-hdr">S</div>
+          </div>
+        </div>
+        <div id="sunrise-strips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONCEPT 3: INTENSITY BLOCKS ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 3</div>
+    <h2>Intensity Blocks</h2>
+    <p>Rounded squares per day. Consecutive done-days get progressively brighter, building visual momentum. Today has a glowing outline.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="day-labels">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label today">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+      </div>
+      <div id="intensity-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CONCEPT 4: RADIAL WEEK ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 4</div>
+    <h2>Radial Week</h2>
+    <p>7 dots arranged in a circle around a center icon. Each position = a day. Done = bright amber, missed = dim. Compact, unique layout in a 3x2 grid.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="radial-grid" id="radial-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CONCEPT 5: TIMELINE RIBBON ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 5</div>
+    <h2>Timeline Ribbon</h2>
+    <p>A warm gradient ribbon per habit. Done days = raised amber bumps. Ribbon brightens where streaks are longer. Today has a glowing tall marker.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="day-labels">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label today">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+      </div>
+      <div id="ribbon-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CONCEPT 6: FLAME TRAIL ==================== -->
+  <div class="concept-label">
+    <div class="concept-num">Concept 6</div>
+    <h2>Flame Trail</h2>
+    <p>Each day = a flame or cold ember. Done = lit with flickering animation. Consecutive days = growing flames. Today's flame is largest. Keep the fire burning.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="day-labels">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label today">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+      </div>
+      <div id="flame-container"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// DATA
+const habits = [
+  { name: 'RemNote',    icon: 'clipboard',  data: [1,1,1,1,1,0,0] },
+  { name: 'Gym',        icon: 'dumbbell',   data: [0,1,0,1,1,0,0] },
+  { name: 'Pimsleur',   icon: 'headphones', data: [1,1,1,1,1,0,0] },
+  { name: 'Bed by 11',  icon: 'moon',       data: [1,0,1,0,0,0,0] },
+  { name: 'German',     icon: 'book',       data: [1,1,1,1,0,0,0] },
+  { name: 'Read Paper', icon: 'document',   data: [0,1,0,0,1,0,0] },
+];
+
+const todayIdx = 4; // Thursday
+
+function iconSVG(type) {
+  const attrs = 'xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"';
+  const icons = {
+    clipboard: `<svg ${attrs}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>`,
+    dumbbell: `<svg ${attrs}><path d="M6.5 6.5h11M6 12h12"/><path d="M3 9v6M6 7v10M18 7v10M21 9v6"/></svg>`,
+    headphones: `<svg ${attrs}><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5z"/></svg>`,
+    moon: `<svg ${attrs}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`,
+    book: `<svg ${attrs}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
+    document: `<svg ${attrs}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  };
+  return icons[type] || '';
+}
+
+function dayClass(dayIdx, done) {
+  if (dayIdx > todayIdx) return 'future';
+  if (done) return dayIdx === todayIdx ? 'done today' : 'done';
+  return 'empty';
+}
+
+// CONCEPT 1: CONNECTED NODES
+(function() {
+  const container = document.getElementById('nodes-container');
+  habits.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'nodes-row';
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'nodes-habit-info';
+    info.innerHTML = `${iconSVG(h.icon)}<span>${h.name}</span>`;
+    row.appendChild(info);
+
+    // Track
+    const track = document.createElement('div');
+    track.className = 'nodes-track';
+
+    // Line segments
+    const lineContainer = document.createElement('div');
+    lineContainer.className = 'nodes-line';
+    const segW = 100 / 6; // percentage per segment
+    for (let i = 0; i < 6; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'nodes-line-seg';
+      seg.style.left = (i * segW) + '%';
+      seg.style.width = segW + '%';
+      if (i >= todayIdx) {
+        seg.className += ' dim';
+        seg.style.background = 'rgba(15,10,8,0.3)';
+      } else if (h.data[i] && h.data[i+1]) {
+        seg.className += ' bright';
+      } else {
+        seg.className += ' dashed';
+      }
+      lineContainer.appendChild(seg);
+    }
+    track.appendChild(lineContainer);
+
+    // Dots
+    const dots = document.createElement('div');
+    dots.className = 'nodes-dots';
+    h.data.forEach((d, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'node-dot ' + dayClass(i, d);
+      dots.appendChild(dot);
+    });
+    track.appendChild(dots);
+
+    row.appendChild(track);
+    container.appendChild(row);
+  });
+})();
+
+// CONCEPT 2: SUNRISE HORIZON + WEEK STRIP
+(function() {
+  const iconsContainer = document.getElementById('sunrise-icons');
+  habits.forEach(h => {
+    const wrap = document.createElement('div');
+    const todayDone = h.data[todayIdx];
+    wrap.className = 'sunrise-icon-wrap ' + (todayDone ? 'lit' : 'dim');
+    wrap.innerHTML = `${iconSVG(h.icon)}<div class="s-label">${h.name.split(' ')[0]}</div>`;
+    iconsContainer.appendChild(wrap);
+  });
+
+  const strips = document.getElementById('sunrise-strips');
+  habits.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'week-strip-row';
+    row.innerHTML = `<div class="ws-name">${h.name}</div>`;
+    const dotsWrap = document.createElement('div');
+    dotsWrap.className = 'ws-dots';
+    h.data.forEach((d, i) => {
+      const w = document.createElement('div');
+      w.className = 'ws-dot-wrap';
+      const dot = document.createElement('div');
+      let cls = 'ws-dot';
+      if (i > todayIdx) cls += ' future';
+      else if (d) cls += ' done';
+      else cls += ' empty';
+      if (i === todayIdx) cls += ' today';
+      dot.className = cls;
+      w.appendChild(dot);
+      dotsWrap.appendChild(w);
+    });
+    row.appendChild(dotsWrap);
+    strips.appendChild(row);
+  });
+})();
+
+// CONCEPT 3: INTENSITY BLOCKS
+(function() {
+  const container = document.getElementById('intensity-container');
+  habits.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'intensity-row';
+
+    const info = document.createElement('div');
+    info.className = 'int-info';
+    info.innerHTML = `${iconSVG(h.icon)}<span>${h.name}</span>`;
+    row.appendChild(info);
+
+    const blocks = document.createElement('div');
+    blocks.className = 'int-blocks';
+
+    // Calculate streak momentum
+    let streak = 0;
+    h.data.forEach((d, i) => {
+      if (i > todayIdx) {
+        const block = document.createElement('div');
+        block.className = 'int-block future';
+        blocks.appendChild(block);
+        return;
+      }
+      if (d) { streak++; } else { streak = 0; }
+      const block = document.createElement('div');
+      let cls = 'int-block';
+      if (d) {
+        const level = Math.min(streak, 5);
+        cls += ` done-${level}`;
+      } else {
+        cls += ' empty';
+      }
+      if (i === todayIdx) cls += ' today';
+      block.className = cls;
+      blocks.appendChild(block);
+    });
+
+    row.appendChild(blocks);
+    container.appendChild(row);
+  });
+})();
+
+// CONCEPT 4: RADIAL WEEK
+(function() {
+  const container = document.getElementById('radial-container');
+  const dayNames = ['S','M','T','W','T','F','S'];
+  const radius = 34;
+  const center = 45;
+
+  habits.forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'radial-item';
+
+    const ring = document.createElement('div');
+    ring.className = 'radial-ring';
+
+    // Center icon
+    const ctr = document.createElement('div');
+    ctr.className = 'radial-center';
+    ctr.innerHTML = iconSVG(h.icon);
+    ring.appendChild(ctr);
+
+    // 7 dots around
+    h.data.forEach((d, i) => {
+      const angle = (i / 7) * 2 * Math.PI - Math.PI / 2;
+      const x = center + radius * Math.cos(angle);
+      const y = center + radius * Math.sin(angle);
+
+      const pos = document.createElement('div');
+      pos.className = 'radial-dot-pos';
+      pos.style.left = x + 'px';
+      pos.style.top = y + 'px';
+
+      const dot = document.createElement('div');
+      dot.className = 'radial-dot ' + dayClass(i, d);
+      pos.appendChild(dot);
+      ring.appendChild(pos);
+
+      // Day label further out
+      const labelR = radius + 14;
+      const lx = center + labelR * Math.cos(angle);
+      const ly = center + labelR * Math.sin(angle);
+      const label = document.createElement('div');
+      label.className = 'radial-day-label';
+      label.style.left = lx + 'px';
+      label.style.top = ly + 'px';
+      if (i === todayIdx) label.style.color = 'var(--text-accent)';
+      label.textContent = dayNames[i];
+      ring.appendChild(label);
+    });
+
+    item.appendChild(ring);
+
+    const name = document.createElement('div');
+    name.className = 'radial-name';
+    name.textContent = h.name;
+    item.appendChild(name);
+
+    container.appendChild(item);
+  });
+})();
+
+// CONCEPT 5: TIMELINE RIBBON
+(function() {
+  const container = document.getElementById('ribbon-container');
+  habits.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'ribbon-row';
+
+    const info = document.createElement('div');
+    info.className = 'rib-info';
+    info.innerHTML = `${iconSVG(h.icon)}<span>${h.name}</span>`;
+    row.appendChild(info);
+
+    const track = document.createElement('div');
+    track.className = 'ribbon-track';
+
+    // Ribbon base with colored segments
+    const base = document.createElement('div');
+    base.className = 'ribbon-base';
+    const segW = 100 / 6;
+    for (let i = 0; i < 7; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'ribbon-seg';
+      seg.style.left = Math.max(0, (i - 0.5)) * segW + '%';
+      seg.style.width = segW + '%';
+      if (i > todayIdx) {
+        seg.className += ' future-seg';
+      } else if (h.data[i]) {
+        seg.className += ' streak';
+      } else {
+        seg.className += ' dim';
+      }
+      base.appendChild(seg);
+    }
+    track.appendChild(base);
+
+    // Markers
+    const markers = document.createElement('div');
+    markers.className = 'ribbon-markers';
+    h.data.forEach((d, i) => {
+      const m = document.createElement('div');
+      let cls = 'ribbon-marker';
+      if (i > todayIdx) cls += ' future';
+      else if (d) cls += ' done';
+      else cls += ' empty';
+      if (i === todayIdx) cls += ' today';
+      m.className = cls;
+      markers.appendChild(m);
+    });
+    track.appendChild(markers);
+
+    row.appendChild(track);
+    container.appendChild(row);
+  });
+})();
+
+// CONCEPT 6: FLAME TRAIL
+(function() {
+  const container = document.getElementById('flame-container');
+  habits.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'flame-row';
+
+    const info = document.createElement('div');
+    info.className = 'fl-info';
+    info.innerHTML = `${iconSVG(h.icon)}<span>${h.name}</span>`;
+    row.appendChild(info);
+
+    const track = document.createElement('div');
+    track.className = 'flame-track';
+
+    // Calculate streak size for growing flames
+    let streak = 0;
+    h.data.forEach((d, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'flame-wrap';
+
+      const ember = document.createElement('div');
+      if (i > todayIdx) {
+        ember.className = 'flame-ember future';
+        streak = 0;
+      } else if (d) {
+        streak++;
+        const sz = Math.min(streak, 5);
+        ember.className = `flame-ember lit sz-${sz}`;
+        if (i === todayIdx) ember.className += ' today';
+      } else {
+        streak = 0;
+        ember.className = 'flame-ember cold';
+      }
+
+      wrap.appendChild(ember);
+      track.appendChild(wrap);
+    });
+
+    row.appendChild(track);
+    container.appendChild(row);
+  });
+})();
+</script>
+
+</body>
+</html>

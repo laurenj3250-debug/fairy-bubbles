@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reward + Streak Sampler — 6 Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* PARTICLES */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px; left: 50%; top: 15%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* CONTENT */
+  .content { position: relative; z-index: 10; padding: 40px 40px 60px; }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+    text-align: center; margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center; font-size: 14px; color: var(--text-muted); letter-spacing: 2px;
+    margin-bottom: 40px;
+  }
+
+  /* GRID */
+  .sampler-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* CONCEPT WRAPPER */
+  .concept { display: flex; flex-direction: column; gap: 12px; }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600; color: var(--text-accent);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .concept-desc {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    position: relative; overflow: hidden;
+  }
+  /* Light ray */
+  .shell::before {
+    content: ''; position: absolute; top: -40%; left: 20%; width: 60%; height: 80%;
+    background: radial-gradient(ellipse at center, rgba(255,210,140,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; z-index: 1;
+  }
+  /* Subsurface scattering edge glow */
+  .shell::after {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    box-shadow: inset 0 0 30px rgba(225,164,92,0.04), inset 0 1px 0 rgba(255,200,140,0.08);
+  }
+
+  /* SHARED LABEL STYLE */
+  .label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+  }
+  .label-accent {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; font-weight: 600; color: var(--text-accent);
+  }
+  .serif-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .serif-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; color: var(--text-accent);
+  }
+  .xp-frac {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* ============================
+     ANIMATIONS
+     ============================ */
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+  @keyframes glow-breathe {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(225,164,92,0.3)); }
+    50% { filter: drop-shadow(0 0 16px rgba(225,164,92,0.5)); }
+  }
+  @keyframes halo-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(225,164,92,0.15), 0 0 40px rgba(225,164,92,0.05); }
+    50% { box-shadow: 0 0 30px rgba(225,164,92,0.25), 0 0 60px rgba(225,164,92,0.1); }
+  }
+  @keyframes ember-glow {
+    0%, 100% { box-shadow: 0 0 40px rgba(225,164,92,0.2), 0 0 80px rgba(200,100,40,0.1); }
+    50% { box-shadow: 0 0 60px rgba(225,164,92,0.35), 0 0 100px rgba(200,100,40,0.15); }
+  }
+  @keyframes star-twinkle {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  /* ============================
+     CONCEPT 1: HORIZON LINE
+     ============================ */
+  .c1-reward { margin-bottom: 20px; }
+  .c1-reward-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .c1-horizon-wrap {
+    position: relative; height: 6px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    overflow: visible;
+  }
+  .c1-horizon-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(180,100,40,0.3) 0%, #E1A45C 60%, #F0C878 100%);
+    box-shadow: 0 0 12px rgba(225,164,92,0.4), 0 0 24px rgba(225,164,92,0.15);
+    position: relative;
+  }
+  .c1-horizon-fill::after {
+    content: ''; position: absolute; right: -3px; top: -3px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 30%, rgba(225,164,92,0.5) 70%, transparent);
+    box-shadow: 0 0 10px rgba(240,200,120,0.6), 0 0 20px rgba(225,164,92,0.3);
+  }
+  .c1-streak { text-align: center; padding-top: 8px; }
+  .c1-streak-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px; font-weight: 700; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 30px rgba(225,164,92,0.3), 0 0 60px rgba(225,164,92,0.1);
+    animation: halo-pulse 4s ease-in-out infinite;
+    border-radius: 50%;
+    display: inline-block; padding: 10px 20px;
+  }
+  .c1-streak-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;
+  }
+
+  /* ============================
+     CONCEPT 2: DUAL ORBS
+     ============================ */
+  .c2-orbs { display: flex; gap: 24px; justify-content: center; align-items: center; }
+  .c2-orb {
+    width: 140px; height: 140px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+    animation: orb-pulse 5s ease-in-out infinite;
+  }
+  .c2-orb::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(225,164,92,0.15), rgba(225,164,92,0.05), rgba(225,164,92,0.15));
+    animation: glow-breathe 4s ease-in-out infinite;
+  }
+  .c2-orb-inner {
+    position: relative; z-index: 1;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(120,70,45,0.5) 0%, rgba(45,22,28,0.85) 70%);
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.3), inset 0 -2px 6px rgba(225,164,92,0.08),
+                0 0 30px rgba(225,164,92,0.12);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+  }
+  .c2-orb.reward .c2-orb-inner {
+    background: radial-gradient(circle at 40% 35%, rgba(120,70,45,0.35) 0%, rgba(45,22,28,0.85) 70%);
+  }
+  .c2-orb.streak .c2-orb-inner {
+    background: radial-gradient(circle at 40% 35%, rgba(140,80,40,0.45) 0%, rgba(45,22,28,0.85) 70%);
+  }
+  .c2-orb.streak { animation-delay: 0.5s; }
+  .c2-orb-val { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--text-accent); }
+  .c2-orb-sub { font-size: 10px; color: var(--text-muted); }
+  .c2-orb-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    margin-bottom: 6px; text-align: center;
+  }
+  .c2-orb-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); text-align: center; margin-top: 8px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* ============================
+     CONCEPT 3: STARDUST TRAIL
+     ============================ */
+  .c3-trail { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .c3-star-point {
+    width: 14px; height: 14px; border-radius: 50%; position: relative;
+  }
+  .c3-star-point.lit {
+    background: radial-gradient(circle, #F0C878 20%, rgba(225,164,92,0.6) 60%, transparent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.5), 0 0 16px rgba(225,164,92,0.2);
+  }
+  .c3-star-point.lit:nth-child(odd) { animation: star-twinkle 3s ease-in-out infinite; }
+  .c3-star-point.lit:nth-child(even) { animation: star-twinkle 3s ease-in-out infinite 1.5s; }
+  .c3-star-point.dim {
+    background: radial-gradient(circle, rgba(100,60,40,0.3) 30%, rgba(45,22,28,0.5) 70%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .c3-info { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+
+  .c3-blazing-star {
+    width: 100px; height: 100px; position: relative;
+    margin: 0 auto;
+  }
+  .c3-blazing-core {
+    position: absolute; inset: 20px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 10%, rgba(225,164,92,0.7) 50%, transparent 80%);
+    box-shadow: 0 0 30px rgba(225,164,92,0.5), 0 0 60px rgba(225,164,92,0.2);
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+  .c3-blazing-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700;
+    color: #2d161c; text-shadow: 0 1px 2px rgba(255,220,150,0.3);
+  }
+  .c3-constellation {
+    position: absolute; inset: 0;
+  }
+  .c3-constellation line {
+    stroke: rgba(225,164,92,0.15); stroke-width: 1;
+  }
+  .c3-constellation circle {
+    fill: rgba(225,164,92,0.3);
+  }
+  .c3-streak-label { text-align: center; margin-top: 6px; }
+
+  /* ============================
+     CONCEPT 4: EMBER HEARTH
+     ============================ */
+  .c4-hearth {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 0;
+  }
+  .c4-glow-wrap {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,120,50,0.2) 0%, rgba(160,80,30,0.1) 40%, transparent 70%);
+    display: flex; align-items: center; justify-content: center;
+    animation: ember-glow 5s ease-in-out infinite;
+    position: relative;
+  }
+  .c4-glow-wrap::before {
+    content: ''; position: absolute; inset: -20px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,120,50,0.06) 0%, transparent 70%);
+  }
+  .c4-hearth-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px; font-weight: 700; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 30px rgba(225,164,92,0.4), 0 0 60px rgba(200,100,40,0.2);
+  }
+  .c4-hearth-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;
+  }
+  .c4-horizon-section { width: 100%; margin-top: 16px; }
+  .c4-horizon-info {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+  }
+  .c4-horizon-bar {
+    height: 4px; border-radius: 2px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: visible;
+  }
+  .c4-horizon-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(180,100,40,0.2) 0%, rgba(225,164,92,0.5) 100%);
+    box-shadow: 0 0 8px rgba(225,164,92,0.3);
+    position: relative;
+  }
+  .c4-horizon-fill::after {
+    content: ''; position: absolute; right: -4px; top: -4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 30%, rgba(225,164,92,0.4) 70%, transparent);
+    box-shadow: 0 0 8px rgba(240,200,120,0.5);
+  }
+
+  /* ============================
+     CONCEPT 5: COMPACT STRIP
+     ============================ */
+  .c5-strip {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .c5-reward-side { flex: 1; }
+  .c5-divider {
+    width: 1px; height: 50px;
+    background: linear-gradient(to bottom, transparent, rgba(225,164,92,0.2), rgba(225,164,92,0.3), rgba(225,164,92,0.2), transparent);
+    box-shadow: 0 0 6px rgba(225,164,92,0.1);
+  }
+  .c5-streak-side { text-align: center; min-width: 70px; }
+  .c5-streak-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px; font-weight: 700; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+    animation: halo-pulse 4s ease-in-out infinite;
+    display: inline-block;
+  }
+  .c5-bar-wrap {
+    height: 5px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    margin: 6px 0 4px; overflow: visible; position: relative;
+  }
+  .c5-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(180,100,40,0.3), #E1A45C 70%, #F0C878 100%);
+    box-shadow: 0 0 10px rgba(225,164,92,0.35);
+    position: relative;
+  }
+  .c5-bar-fill::after {
+    content: ''; position: absolute; right: -3px; top: -3px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 30%, rgba(225,164,92,0.4) 70%, transparent);
+    box-shadow: 0 0 8px rgba(240,200,120,0.5);
+  }
+
+  /* ============================
+     CONCEPT 6: RING + NUMBER
+     ============================ */
+  .c6-ring-section { text-align: center; margin-bottom: 16px; }
+  .c6-ring-wrap {
+    width: 120px; height: 120px; position: relative; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .c6-dot {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 30%, rgba(225,164,92,0.6) 70%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.5), 0 0 12px rgba(225,164,92,0.2);
+  }
+  .c6-center-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 700; color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+    position: relative; z-index: 1;
+  }
+  .c6-horizon-section { margin-top: 8px; }
+  .c6-horizon-info { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .c6-horizon-bar {
+    height: 5px; border-radius: 3px;
+    background: rgba(15,10,8,0.5); box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    overflow: visible; position: relative;
+  }
+  .c6-horizon-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(180,100,40,0.3), #E1A45C 60%, #F0C878 100%);
+    box-shadow: 0 0 10px rgba(225,164,92,0.35);
+    position: relative;
+  }
+  .c6-horizon-fill::after {
+    content: ''; position: absolute; right: -4px; top: -4px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle, #F0C878 25%, rgba(225,164,92,0.5) 60%, transparent);
+    box-shadow: 0 0 10px rgba(240,200,120,0.6), 0 0 20px rgba(225,164,92,0.2);
+  }
+
+  @media (max-width: 900px) {
+    .sampler-grid { grid-template-columns: 1fr; }
+    .content { padding: 24px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+</div>
+<div class="sun-glow"></div>
+
+<div class="content">
+  <h1 class="page-title">Reward + Streak</h1>
+  <p class="page-sub">6 combined display concepts</p>
+
+  <div class="sampler-grid">
+
+    <!-- ========== CONCEPT 1: HORIZON LINE ========== -->
+    <div class="concept">
+      <div class="concept-label">1. Horizon Line + Streak Number</div>
+      <div class="concept-desc">Reward as glowing horizon line with orb endpoint. Streak as a large warm-haloed number below. Clean vertical split.</div>
+      <div class="shell"><div class="face">
+        <div class="c1-reward">
+          <div class="label" style="margin-bottom: 6px;">Next Reward</div>
+          <div class="c1-reward-name">
+            <span class="serif-name">Custom Scrub Cap</span>
+            <span class="xp-frac">341 / 500 XP</span>
+          </div>
+          <div class="c1-horizon-wrap">
+            <div class="c1-horizon-fill" style="width: 68%;"></div>
+          </div>
+        </div>
+        <div style="border-top: 1px solid rgba(225,164,92,0.06); padding-top: 16px;">
+          <div class="c1-streak">
+            <div class="c1-streak-num">22</div>
+            <div class="c1-streak-label">Day Streak</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 2: DUAL ORBS ========== -->
+    <div class="concept">
+      <div class="concept-label">2. Dual Orbs</div>
+      <div class="concept-desc">Two glowing orbs side by side like twin moons. Left for reward progress, right for streak. Both pulse gently.</div>
+      <div class="shell"><div class="face">
+        <div class="c2-orbs">
+          <div style="text-align: center;">
+            <div class="c2-orb-label">Next Reward</div>
+            <div class="c2-orb reward">
+              <div class="c2-orb-inner">
+                <div class="c2-orb-val">341/500</div>
+                <div class="c2-orb-sub">XP</div>
+              </div>
+            </div>
+            <div class="c2-orb-name">Custom Scrub Cap</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="c2-orb-label">Streak</div>
+            <div class="c2-orb streak">
+              <div class="c2-orb-inner">
+                <div class="c2-orb-val" style="font-size: 40px;">22</div>
+              </div>
+            </div>
+            <div class="c2-orb-name">Day Streak</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 3: STARDUST TRAIL ========== -->
+    <div class="concept">
+      <div class="concept-label">3. Stardust Reward Trail</div>
+      <div class="concept-desc">Reward as 10 star points (7 lit = 68%). Streak as a blazing star with constellation lines radiating outward.</div>
+      <div class="shell"><div class="face">
+        <div class="label" style="margin-bottom: 8px;">Next Reward</div>
+        <div class="c3-trail">
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point lit"></div>
+          <div class="c3-star-point dim"></div>
+          <div class="c3-star-point dim"></div>
+          <div class="c3-star-point dim"></div>
+        </div>
+        <div class="c3-info">
+          <span class="serif-name">Custom Scrub Cap</span>
+          <span class="xp-frac">341 / 500 XP</span>
+        </div>
+        <div style="border-top: 1px solid rgba(225,164,92,0.06); padding-top: 12px;">
+          <div class="c3-blazing-star">
+            <svg class="c3-constellation" viewBox="0 0 100 100">
+              <line x1="50" y1="50" x2="10" y2="20"/>
+              <line x1="50" y1="50" x2="90" y2="15"/>
+              <line x1="50" y1="50" x2="95" y2="55"/>
+              <line x1="50" y1="50" x2="85" y2="90"/>
+              <line x1="50" y1="50" x2="15" y2="85"/>
+              <line x1="50" y1="50" x2="5" y2="50"/>
+              <line x1="50" y1="50" x2="50" y2="5"/>
+              <line x1="50" y1="50" x2="50" y2="95"/>
+              <circle cx="10" cy="20" r="2"/>
+              <circle cx="90" cy="15" r="2"/>
+              <circle cx="95" cy="55" r="1.5"/>
+              <circle cx="85" cy="90" r="2"/>
+              <circle cx="15" cy="85" r="1.5"/>
+              <circle cx="5" cy="50" r="2"/>
+              <circle cx="50" cy="5" r="1.5"/>
+              <circle cx="50" cy="95" r="2"/>
+            </svg>
+            <div class="c3-blazing-core">
+              <span class="c3-blazing-num">22</span>
+            </div>
+          </div>
+          <div class="c3-streak-label">
+            <span class="label">Day Streak</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 4: EMBER HEARTH ========== -->
+    <div class="concept">
+      <div class="concept-label">4. Ember Hearth</div>
+      <div class="concept-desc">A single warm hearth glow with the streak number floating inside. Reward as a subtle horizon line below. Pure warmth.</div>
+      <div class="shell"><div class="face">
+        <div class="c4-hearth">
+          <div class="c4-glow-wrap">
+            <div class="c4-hearth-num">22</div>
+          </div>
+          <div class="c4-hearth-label">Day Streak</div>
+        </div>
+        <div class="c4-horizon-section">
+          <div class="c4-horizon-info">
+            <span class="serif-name" style="font-size: 13px;">Custom Scrub Cap</span>
+            <span class="xp-frac">341 / 500 XP</span>
+          </div>
+          <div class="c4-horizon-bar">
+            <div class="c4-horizon-fill" style="width: 68%;"></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 5: COMPACT STRIP ========== -->
+    <div class="concept">
+      <div class="concept-label">5. Compact Strip</div>
+      <div class="concept-desc">Both on one horizontal line. Reward fill bar on the left, streak number on the right, separated by a glowing divider.</div>
+      <div class="shell"><div class="face">
+        <div class="c5-strip">
+          <div class="c5-reward-side">
+            <div class="label" style="margin-bottom: 4px;">Next Reward</div>
+            <div class="c5-bar-wrap">
+              <div class="c5-bar-fill" style="width: 68%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span class="serif-name" style="font-size: 13px;">Custom Scrub Cap</span>
+              <span class="xp-frac">341/500</span>
+            </div>
+          </div>
+          <div class="c5-divider"></div>
+          <div class="c5-streak-side">
+            <div class="c5-streak-num">22</div>
+            <div class="label" style="margin-top: 2px;">Streak</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ========== CONCEPT 6: RING + NUMBER ========== -->
+    <div class="concept">
+      <div class="concept-label">6. Ring + Number</div>
+      <div class="concept-desc">22 glowing dots in a circle (Stardust Ring). "22" in center. Reward as a horizon line with orb below.</div>
+      <div class="shell"><div class="face">
+        <div class="c6-ring-section">
+          <div class="label" style="margin-bottom: 8px;">Day Streak</div>
+          <div class="c6-ring-wrap" id="c6-ring">
+            <span class="c6-center-num">22</span>
+          </div>
+        </div>
+        <div style="border-top: 1px solid rgba(225,164,92,0.06); padding-top: 14px;">
+          <div class="label" style="margin-bottom: 6px;">Next Reward</div>
+          <div class="c6-horizon-info">
+            <span class="serif-name" style="font-size: 14px;">Custom Scrub Cap</span>
+            <span class="xp-frac">341 / 500 XP</span>
+          </div>
+          <div class="c6-horizon-bar">
+            <div class="c6-horizon-fill" style="width: 68%;"></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div><!-- /sampler-grid -->
+</div><!-- /content -->
+
+<script>
+  // Generate the 22 dots in a circle for Concept 6
+  const ring = document.getElementById('c6-ring');
+  const totalDots = 22;
+  const radius = 52;
+  for (let i = 0; i < totalDots; i++) {
+    const angle = (i / totalDots) * Math.PI * 2 - Math.PI / 2;
+    const x = 60 + radius * Math.cos(angle);
+    const y = 60 + radius * Math.sin(angle);
+    const dot = document.createElement('div');
+    dot.className = 'c6-dot';
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+    // stagger twinkle
+    dot.style.animation = `star-twinkle ${2.5 + Math.random() * 2}s ease-in-out ${Math.random() * 2}s infinite`;
+    ring.appendChild(dot);
+  }
+</script>
+
+</body>
+</html>

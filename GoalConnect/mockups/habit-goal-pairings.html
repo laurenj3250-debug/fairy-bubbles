@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit + Goal Pairings — Stardust Trail Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --glow-amber: rgba(225,164,92,0.6);
+    --glow-amber-soft: rgba(225,164,92,0.3);
+    --glow-amber-faint: rgba(225,164,92,0.1);
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 40px 24px 100px; }
+
+  /* PAGE HEADER */
+  .page-header { text-align: center; margin-bottom: 56px; padding-top: 20px; }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 8px;
+  }
+
+  /* PAIRING SECTION */
+  .pairing-section { margin-bottom: 72px; }
+  .pairing-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 500; letter-spacing: 2px;
+    color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+    margin-bottom: 16px;
+  }
+  .pairing-label span {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; color: var(--text-muted); letter-spacing: 0.5px;
+    display: block; margin-top: 4px; font-weight: 400;
+  }
+
+  .pairing-row {
+    display: grid;
+    grid-template-columns: 60% 40%;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, rgba(255,220,160,0.08) 0%, transparent 40%, transparent 60%, rgba(255,200,140,0.04) 100%);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px;
+    padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.15);
+    box-shadow: var(--face-inset), inset 0 0 40px rgba(120,60,40,0.06);
+    position: relative;
+  }
+  .face::before {
+    content: ''; position: absolute; inset: 0; border-radius: 20px; pointer-events: none;
+    background: radial-gradient(ellipse 80% 60% at 30% 20%, rgba(255,200,140,0.06) 0%, transparent 70%);
+    mix-blend-mode: screen;
+  }
+
+  /* STARDUST TRAIL */
+  .stardust-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .stardust-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 500; color: var(--text-primary);
+    letter-spacing: 1px;
+  }
+  .stardust-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    color: var(--text-accent);
+    background: rgba(225,164,92,0.12);
+    border: 1px solid rgba(225,164,92,0.2);
+    border-radius: 20px; padding: 4px 12px;
+  }
+
+  .stardust-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 0;
+    row-gap: 10px;
+  }
+
+  .day-labels {
+    display: contents;
+  }
+  .day-labels .spacer { grid-column: 1; }
+  .day-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    color: var(--text-muted); text-align: center;
+    padding-bottom: 8px;
+  }
+  .day-label.today {
+    color: var(--text-accent);
+    text-shadow: 0 0 12px rgba(225,164,92,0.4);
+  }
+
+  .habit-row {
+    display: contents;
+  }
+  .habit-info {
+    display: flex; align-items: center; gap: 8px;
+    padding-right: 8px;
+  }
+  .habit-icon {
+    width: 20px; height: 20px; flex-shrink: 0;
+    color: var(--text-muted);
+  }
+  .habit-icon svg {
+    width: 20px; height: 20px;
+  }
+  .habit-name {
+    font-size: 12px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .dot-cell {
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    height: 28px;
+  }
+
+  .star-dot {
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+  }
+  .star-dot.done {
+    width: 10px; height: 10px;
+    background: radial-gradient(circle at 40% 40%, rgba(255,255,255,0.95), rgba(255,220,160,0.9) 40%, rgba(225,164,92,0.7));
+    box-shadow: 0 0 3px rgba(255,255,255,0.8), 0 0 8px rgba(225,164,92,0.6), 0 0 18px rgba(225,164,92,0.3), 0 0 30px rgba(225,164,92,0.1);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .star-dot.not-done {
+    width: 8px; height: 8px;
+    background: rgba(85,48,52,0.4);
+    border: 1px solid rgba(169,130,106,0.2);
+  }
+  .star-dot.future {
+    width: 8px; height: 8px;
+    background: rgba(60,30,38,0.3);
+    border: 1px solid rgba(169,130,106,0.1);
+  }
+
+  /* Today column enlargement */
+  .dot-cell.today .star-dot.done {
+    width: 14px; height: 14px;
+    box-shadow: 0 0 4px rgba(255,255,255,0.9), 0 0 10px rgba(225,164,92,0.7), 0 0 22px rgba(225,164,92,0.4), 0 0 36px rgba(225,164,92,0.15);
+  }
+  .dot-cell.today .star-dot.not-done {
+    width: 12px; height: 12px;
+    border-color: rgba(225,164,92,0.35);
+    background: rgba(85,48,52,0.5);
+  }
+
+  /* Constellation lines */
+  .constellation-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.4), rgba(225,164,92,0.25));
+    box-shadow: 0 0 4px rgba(225,164,92,0.2), 0 0 8px rgba(225,164,92,0.1);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Stagger twinkle */
+  .habit-row:nth-child(2) .star-dot.done { animation-delay: 0.3s; }
+  .habit-row:nth-child(3) .star-dot.done { animation-delay: 0.7s; }
+  .habit-row:nth-child(4) .star-dot.done { animation-delay: 1.1s; }
+  .habit-row:nth-child(5) .star-dot.done { animation-delay: 0.5s; }
+  .habit-row:nth-child(6) .star-dot.done { animation-delay: 0.9s; }
+  .habit-row:nth-child(7) .star-dot.done { animation-delay: 1.3s; }
+
+  /* ============ GOAL CARDS ============ */
+
+  .goal-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 500; color: var(--text-primary);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  /* H1 — Minimal Horizon Lines */
+  .h1-goals { display: flex; flex-direction: column; gap: 28px; padding-top: 4px; }
+  .h1-goal { position: relative; }
+  .h1-goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .h1-track {
+    position: relative; height: 2px; width: 100%;
+    background: rgba(169,130,106,0.12);
+    border-radius: 1px;
+  }
+  .h1-fill {
+    position: absolute; left: 0; top: -1px; height: 4px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(225,164,92,0.7));
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 14px rgba(225,164,92,0.15), 0 0 24px rgba(225,164,92,0.08);
+  }
+  .h1-orb {
+    position: absolute; top: 50%; transform: translate(50%, -50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, white, rgba(225,164,92,0.9));
+    box-shadow: 0 0 4px white, 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  .h1-fraction {
+    position: absolute; right: 0; top: -18px;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
+  }
+  .h1-goal:nth-child(2) .h1-orb { animation-delay: 0.6s; }
+  .h1-goal:nth-child(3) .h1-orb { animation-delay: 1.2s; }
+  .h1-goal:nth-child(4) .h1-orb { animation-delay: 0.9s; }
+
+  /* H2 — Horizon Lines + Ambient Backdrop */
+  .h2-face { position: relative; overflow: hidden; }
+  .h2-ambient {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+    background: radial-gradient(ellipse 120% 100% at 50% 100%, rgba(225,164,92,0.1) 0%, transparent 70%);
+    animation: breathe 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .h2-mist {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+    background: linear-gradient(to top, rgba(225,164,92,0.06), transparent);
+    filter: blur(8px);
+    pointer-events: none;
+  }
+  .h2-goals { display: flex; flex-direction: column; gap: 28px; padding-top: 4px; position: relative; z-index: 2; }
+  .h2-goal { position: relative; }
+  .h2-goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 8px;
+  }
+  .h2-track { position: relative; height: 2px; width: 100%; background: rgba(169,130,106,0.12); border-radius: 1px; }
+  .h2-fill {
+    position: absolute; left: 0; top: -1px; height: 4px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(225,164,92,0.7));
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 14px rgba(225,164,92,0.15), 0 0 24px rgba(225,164,92,0.08);
+  }
+  .h2-orb {
+    position: absolute; top: 50%; transform: translate(50%, -50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, white, rgba(225,164,92,0.9));
+    box-shadow: 0 0 4px white, 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  .h2-fraction { position: absolute; right: 0; top: -18px; font-size: 10px; color: var(--text-muted); }
+  .h2-goal:nth-child(2) .h2-orb { animation-delay: 0.7s; }
+  .h2-goal:nth-child(3) .h2-orb { animation-delay: 1.4s; }
+  .h2-goal:nth-child(4) .h2-orb { animation-delay: 0.4s; }
+
+  /* H3 — Horizon Lines as Landscape */
+  .h3-face { position: relative; overflow: hidden; padding-bottom: 30px; }
+  .h3-mountain {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100%; pointer-events: none; z-index: 0;
+    opacity: 0.15;
+  }
+  .h3-goals { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 24px; padding-top: 4px; }
+  .h3-goal {
+    display: flex; align-items: center; gap: 0; position: relative;
+  }
+  .h3-goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary); width: 90px; flex-shrink: 0;
+  }
+  .h3-track-wrap { flex: 1; position: relative; height: 3px; }
+  .h3-track { position: absolute; inset: 0; background: rgba(169,130,106,0.1); border-radius: 1.5px; }
+  .h3-fill {
+    position: absolute; left: 0; top: -0.5px; height: 4px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.2), rgba(225,164,92,0.65));
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(225,164,92,0.25), 0 0 16px rgba(225,164,92,0.1);
+  }
+  .h3-fraction {
+    font-size: 10px; color: var(--text-muted); width: 36px; text-align: right; flex-shrink: 0; margin-left: 8px;
+  }
+
+  /* C1 — Abstract Light Phases */
+  .c1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .c1-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .c1-orb-wrap {
+    width: 60px; height: 60px; position: relative;
+  }
+  .c1-orb-bg {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(60,30,38,0.5);
+    border: 1px solid rgba(169,130,106,0.1);
+    backdrop-filter: blur(6px);
+  }
+  .c1-arc {
+    position: absolute; inset: 0;
+  }
+  .c1-arc circle {
+    fill: none;
+    stroke-linecap: round;
+  }
+  .c1-arc .track { stroke: rgba(169,130,106,0.1); stroke-width: 3; }
+  .c1-arc .fill {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.4)) drop-shadow(0 0 8px rgba(225,164,92,0.2));
+    transition: stroke-dashoffset 1s ease;
+  }
+  .c1-pct {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+  .c1-name {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted); text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  }
+
+  /* C2 — Eclipsed Orbs */
+  .c2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .c2-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .c2-orb-wrap {
+    width: 60px; height: 60px; position: relative;
+  }
+  .c2-dark {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(40,20,25,0.8);
+    border: 1px solid rgba(169,130,106,0.08);
+    z-index: 2;
+  }
+  .c2-crescent {
+    position: absolute; border-radius: 50%;
+    z-index: 1;
+    animation: halo 4s ease-in-out infinite;
+  }
+  .c2-crescent-glow {
+    position: absolute; border-radius: 50%; z-index: 0;
+    filter: blur(8px);
+    animation: halo 4s ease-in-out infinite;
+  }
+  .c2-pct {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    z-index: 3; letter-spacing: 0.5px;
+  }
+  .c2-name {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted); text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  }
+  .c2-item:nth-child(2) .c2-crescent, .c2-item:nth-child(2) .c2-crescent-glow { animation-delay: 0.8s; }
+  .c2-item:nth-child(3) .c2-crescent, .c2-item:nth-child(3) .c2-crescent-glow { animation-delay: 1.6s; }
+  .c2-item:nth-child(4) .c2-crescent, .c2-item:nth-child(4) .c2-crescent-glow { animation-delay: 0.4s; }
+
+  /* C3 — Waxing Glow */
+  .c3-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .c3-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .c3-orb {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(169,130,106,0.1);
+    position: relative;
+    animation: breathe 4s ease-in-out infinite;
+  }
+  .c3-orb::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    pointer-events: none;
+  }
+  .c3-pct {
+    font-size: 13px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: 0.5px; position: relative; z-index: 2;
+  }
+  .c3-bar-wrap {
+    width: 40px; height: 2px; background: rgba(169,130,106,0.15); border-radius: 1px;
+    overflow: hidden;
+  }
+  .c3-bar-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.4), rgba(225,164,92,0.8));
+    box-shadow: 0 0 4px rgba(225,164,92,0.3);
+  }
+  .c3-name {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted); text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  }
+  .c3-item:nth-child(1) .c3-orb { animation-delay: 0s; }
+  .c3-item:nth-child(2) .c3-orb { animation-delay: 1s; }
+  .c3-item:nth-child(3) .c3-orb { animation-delay: 2s; }
+  .c3-item:nth-child(4) .c3-orb { animation-delay: 0.5s; }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 1; box-shadow: 0 0 3px rgba(255,255,255,0.8), 0 0 8px rgba(225,164,92,0.6), 0 0 18px rgba(225,164,92,0.3), 0 0 30px rgba(225,164,92,0.1); }
+    50% { opacity: 0.7; box-shadow: 0 0 2px rgba(255,255,255,0.5), 0 0 5px rgba(225,164,92,0.3), 0 0 12px rgba(225,164,92,0.15), 0 0 20px rgba(225,164,92,0.05); }
+  }
+
+  @keyframes softPulse {
+    0%, 100% { box-shadow: 0 0 4px white, 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3); transform: translate(50%, -50%) scale(1); }
+    50% { box-shadow: 0 0 6px white, 0 0 14px rgba(225,164,92,0.7), 0 0 28px rgba(225,164,92,0.4); transform: translate(50%, -50%) scale(1.2); }
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes halo {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  /* Separator between sections */
+  .pairing-divider {
+    border: none; height: 1px; margin: 0 0 72px;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.15) 30%, rgba(225,164,92,0.15) 70%, transparent);
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="content">
+
+  <div class="page-header">
+    <h1>Dashboard Pairings</h1>
+    <div class="sub">Stardust Trail + Goal Card Variations</div>
+  </div>
+
+  <!-- ====================== PAIRING 1: H1 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 1: Stardust Trail + Minimal Horizon Lines
+      <span>Clean glowing progress lines with endpoint orbs</span>
+    </div>
+    <div class="pairing-row">
+      <!-- HABIT CARD -->
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-1"></div>
+        </div>
+      </div>
+      <!-- GOAL CARD H1 -->
+      <div class="shell">
+        <div class="face">
+          <div class="goal-card-title">Goals</div>
+          <div class="h1-goals">
+            <div class="h1-goal">
+              <div class="h1-goal-name">200 Lifting</div>
+              <div class="h1-track">
+                <div class="h1-fill" style="width:25%"></div>
+                <div class="h1-orb" style="left:25%"></div>
+              </div>
+              <div class="h1-fraction">50/200</div>
+            </div>
+            <div class="h1-goal">
+              <div class="h1-goal-name">de Lahunta</div>
+              <div class="h1-track">
+                <div class="h1-fill" style="width:35%"></div>
+                <div class="h1-orb" style="left:35%"></div>
+              </div>
+              <div class="h1-fraction">7/20</div>
+            </div>
+            <div class="h1-goal">
+              <div class="h1-goal-name">2 Books</div>
+              <div class="h1-track">
+                <div class="h1-fill" style="width:50%"></div>
+                <div class="h1-orb" style="left:50%"></div>
+              </div>
+              <div class="h1-fraction">1/2</div>
+            </div>
+            <div class="h1-goal">
+              <div class="h1-goal-name">12 Outdoor</div>
+              <div class="h1-track">
+                <div class="h1-fill" style="width:25%"></div>
+                <div class="h1-orb" style="left:25%"></div>
+              </div>
+              <div class="h1-fraction">3/12</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="pairing-divider">
+
+  <!-- ====================== PAIRING 2: H2 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 2: Stardust Trail + Horizon Lines with Ambient Backdrop
+      <span>Same horizon lines but with warm radial mist at the bottom</span>
+    </div>
+    <div class="pairing-row">
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-2"></div>
+        </div>
+      </div>
+      <div class="shell">
+        <div class="face h2-face">
+          <div class="goal-card-title" style="position:relative;z-index:2;">Goals</div>
+          <div class="h2-goals">
+            <div class="h2-goal">
+              <div class="h2-goal-name">200 Lifting</div>
+              <div class="h2-track">
+                <div class="h2-fill" style="width:25%"></div>
+                <div class="h2-orb" style="left:25%"></div>
+              </div>
+              <div class="h2-fraction">50/200</div>
+            </div>
+            <div class="h2-goal">
+              <div class="h2-goal-name">de Lahunta</div>
+              <div class="h2-track">
+                <div class="h2-fill" style="width:35%"></div>
+                <div class="h2-orb" style="left:35%"></div>
+              </div>
+              <div class="h2-fraction">7/20</div>
+            </div>
+            <div class="h2-goal">
+              <div class="h2-goal-name">2 Books</div>
+              <div class="h2-track">
+                <div class="h2-fill" style="width:50%"></div>
+                <div class="h2-orb" style="left:50%"></div>
+              </div>
+              <div class="h2-fraction">1/2</div>
+            </div>
+            <div class="h2-goal">
+              <div class="h2-goal-name">12 Outdoor</div>
+              <div class="h2-track">
+                <div class="h2-fill" style="width:25%"></div>
+                <div class="h2-orb" style="left:25%"></div>
+              </div>
+              <div class="h2-fraction">3/12</div>
+            </div>
+          </div>
+          <div class="h2-ambient"></div>
+          <div class="h2-mist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="pairing-divider">
+
+  <!-- ====================== PAIRING 3: H3 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 3: Stardust Trail + Horizon Lines as Landscape
+      <span>Lines sorted by progress with mountain silhouette — reads like layered terrain</span>
+    </div>
+    <div class="pairing-row">
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-3"></div>
+        </div>
+      </div>
+      <div class="shell">
+        <div class="face h3-face">
+          <div class="goal-card-title" style="position:relative;z-index:2;">Goals</div>
+          <svg class="h3-mountain" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <path d="M0,200 L0,140 Q50,100 100,120 Q140,90 180,105 Q220,70 260,95 Q300,60 340,80 Q370,70 400,90 L400,200 Z" fill="rgba(225,164,92,0.15)"/>
+            <path d="M0,200 L0,160 Q60,130 120,145 Q170,115 220,130 Q270,100 320,120 Q360,105 400,115 L400,200 Z" fill="rgba(225,164,92,0.08)"/>
+          </svg>
+          <!-- Sorted: 50% highest, then 35%, then 25%, 25% -->
+          <div class="h3-goals">
+            <div class="h3-goal">
+              <div class="h3-goal-name">2 Books</div>
+              <div class="h3-track-wrap"><div class="h3-track"></div><div class="h3-fill" style="width:50%"></div></div>
+              <div class="h3-fraction">1/2</div>
+            </div>
+            <div class="h3-goal">
+              <div class="h3-goal-name">de Lahunta</div>
+              <div class="h3-track-wrap"><div class="h3-track"></div><div class="h3-fill" style="width:35%"></div></div>
+              <div class="h3-fraction">7/20</div>
+            </div>
+            <div class="h3-goal">
+              <div class="h3-goal-name">200 Lifting</div>
+              <div class="h3-track-wrap"><div class="h3-track"></div><div class="h3-fill" style="width:25%"></div></div>
+              <div class="h3-fraction">50/200</div>
+            </div>
+            <div class="h3-goal">
+              <div class="h3-goal-name">12 Outdoor</div>
+              <div class="h3-track-wrap"><div class="h3-track"></div><div class="h3-fill" style="width:25%"></div></div>
+              <div class="h3-fraction">3/12</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="pairing-divider">
+
+  <!-- ====================== PAIRING 4: C1 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 4: Stardust Trail + Abstract Light Phases
+      <span>60px circles with gradient arc strokes in a 2x2 grid</span>
+    </div>
+    <div class="pairing-row">
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-4"></div>
+        </div>
+      </div>
+      <div class="shell">
+        <div class="face">
+          <div class="goal-card-title">Goals</div>
+          <div class="c1-grid">
+            <div class="c1-item">
+              <div class="c1-orb-wrap">
+                <div class="c1-orb-bg"></div>
+                <svg class="c1-arc" viewBox="0 0 60 60">
+                  <circle class="track" cx="30" cy="30" r="25" />
+                  <circle class="fill" cx="30" cy="30" r="25"
+                    stroke="url(#c1grad)" stroke-dasharray="157" stroke-dashoffset="117.75"
+                    transform="rotate(-90 30 30)" />
+                </svg>
+                <div class="c1-pct">25%</div>
+              </div>
+              <div class="c1-name">200 Lifting</div>
+            </div>
+            <div class="c1-item">
+              <div class="c1-orb-wrap">
+                <div class="c1-orb-bg"></div>
+                <svg class="c1-arc" viewBox="0 0 60 60">
+                  <circle class="track" cx="30" cy="30" r="25" />
+                  <circle class="fill" cx="30" cy="30" r="25"
+                    stroke="url(#c1grad)" stroke-dasharray="157" stroke-dashoffset="102.05"
+                    transform="rotate(-90 30 30)" />
+                </svg>
+                <div class="c1-pct">35%</div>
+              </div>
+              <div class="c1-name">de Lahunta</div>
+            </div>
+            <div class="c1-item">
+              <div class="c1-orb-wrap">
+                <div class="c1-orb-bg"></div>
+                <svg class="c1-arc" viewBox="0 0 60 60">
+                  <circle class="track" cx="30" cy="30" r="25" />
+                  <circle class="fill" cx="30" cy="30" r="25"
+                    stroke="url(#c1grad)" stroke-dasharray="157" stroke-dashoffset="78.5"
+                    transform="rotate(-90 30 30)" />
+                </svg>
+                <div class="c1-pct">50%</div>
+              </div>
+              <div class="c1-name">2 Books</div>
+            </div>
+            <div class="c1-item">
+              <div class="c1-orb-wrap">
+                <div class="c1-orb-bg"></div>
+                <svg class="c1-arc" viewBox="0 0 60 60">
+                  <circle class="track" cx="30" cy="30" r="25" />
+                  <circle class="fill" cx="30" cy="30" r="25"
+                    stroke="url(#c1grad)" stroke-dasharray="157" stroke-dashoffset="117.75"
+                    transform="rotate(-90 30 30)" />
+                </svg>
+                <div class="c1-pct">25%</div>
+              </div>
+              <div class="c1-name">12 Outdoor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="pairing-divider">
+
+  <!-- ====================== PAIRING 5: C2 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 5: Stardust Trail + Eclipsed Orbs
+      <span>Dark glass circles with warm crescents peeking from behind, sized by progress</span>
+    </div>
+    <div class="pairing-row">
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-5"></div>
+        </div>
+      </div>
+      <div class="shell">
+        <div class="face">
+          <div class="goal-card-title">Goals</div>
+          <div class="c2-grid">
+            <!-- 25% — small crescent -->
+            <div class="c2-item">
+              <div class="c2-orb-wrap">
+                <div class="c2-dark"></div>
+                <div class="c2-crescent" style="width:60px;height:60px;top:0;left:6px;
+                  background:radial-gradient(circle at 75% 40%, rgba(225,164,92,0.6), transparent 60%);"></div>
+                <div class="c2-crescent-glow" style="width:70px;height:70px;top:-5px;left:1px;
+                  background:radial-gradient(circle at 75% 40%, rgba(225,164,92,0.3), transparent 50%);"></div>
+                <div class="c2-pct">25%</div>
+              </div>
+              <div class="c2-name">200 Lifting</div>
+            </div>
+            <!-- 35% -->
+            <div class="c2-item">
+              <div class="c2-orb-wrap">
+                <div class="c2-dark"></div>
+                <div class="c2-crescent" style="width:60px;height:60px;top:0;left:4px;
+                  background:radial-gradient(circle at 72% 40%, rgba(225,164,92,0.65), transparent 55%);"></div>
+                <div class="c2-crescent-glow" style="width:72px;height:72px;top:-6px;left:-2px;
+                  background:radial-gradient(circle at 72% 40%, rgba(225,164,92,0.35), transparent 50%);"></div>
+                <div class="c2-pct">35%</div>
+              </div>
+              <div class="c2-name">de Lahunta</div>
+            </div>
+            <!-- 50% -->
+            <div class="c2-item">
+              <div class="c2-orb-wrap">
+                <div class="c2-dark"></div>
+                <div class="c2-crescent" style="width:60px;height:60px;top:0;left:0px;
+                  background:radial-gradient(circle at 68% 40%, rgba(225,164,92,0.75), transparent 50%);"></div>
+                <div class="c2-crescent-glow" style="width:76px;height:76px;top:-8px;left:-8px;
+                  background:radial-gradient(circle at 68% 40%, rgba(225,164,92,0.4), transparent 45%);"></div>
+                <div class="c2-pct">50%</div>
+              </div>
+              <div class="c2-name">2 Books</div>
+            </div>
+            <!-- 25% -->
+            <div class="c2-item">
+              <div class="c2-orb-wrap">
+                <div class="c2-dark"></div>
+                <div class="c2-crescent" style="width:60px;height:60px;top:0;left:6px;
+                  background:radial-gradient(circle at 75% 40%, rgba(225,164,92,0.6), transparent 60%);"></div>
+                <div class="c2-crescent-glow" style="width:70px;height:70px;top:-5px;left:1px;
+                  background:radial-gradient(circle at 75% 40%, rgba(225,164,92,0.3), transparent 50%);"></div>
+                <div class="c2-pct">25%</div>
+              </div>
+              <div class="c2-name">12 Outdoor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="pairing-divider">
+
+  <!-- ====================== PAIRING 6: C3 ====================== -->
+  <div class="pairing-section">
+    <div class="pairing-label">Pairing 6: Stardust Trail + Waxing Glow
+      <span>Same-size orbs where only brightness varies, with thin progress bars below</span>
+    </div>
+    <div class="pairing-row">
+      <div class="shell">
+        <div class="face">
+          <div class="stardust-header">
+            <div class="stardust-title">This Week</div>
+            <div class="stardust-badge">5/6 today</div>
+          </div>
+          <div class="stardust-grid" id="stardust-6"></div>
+        </div>
+      </div>
+      <div class="shell">
+        <div class="face">
+          <div class="goal-card-title">Goals</div>
+          <div class="c3-grid">
+            <div class="c3-item">
+              <div class="c3-orb" style="background:radial-gradient(circle at 45% 45%, rgba(225,164,92,0.2), rgba(60,30,38,0.6));
+                box-shadow: 0 0 12px rgba(225,164,92,0.1), inset 0 0 12px rgba(225,164,92,0.05);">
+                <span class="c3-pct">25%</span>
+              </div>
+              <div class="c3-bar-wrap"><div class="c3-bar-fill" style="width:25%"></div></div>
+              <div class="c3-name">200 Lifting</div>
+            </div>
+            <div class="c3-item">
+              <div class="c3-orb" style="background:radial-gradient(circle at 45% 45%, rgba(225,164,92,0.3), rgba(60,30,38,0.5));
+                box-shadow: 0 0 16px rgba(225,164,92,0.15), inset 0 0 14px rgba(225,164,92,0.08);">
+                <span class="c3-pct">35%</span>
+              </div>
+              <div class="c3-bar-wrap"><div class="c3-bar-fill" style="width:35%"></div></div>
+              <div class="c3-name">de Lahunta</div>
+            </div>
+            <div class="c3-item">
+              <div class="c3-orb" style="background:radial-gradient(circle at 45% 45%, rgba(225,164,92,0.45), rgba(60,30,38,0.4));
+                box-shadow: 0 0 22px rgba(225,164,92,0.25), inset 0 0 16px rgba(225,164,92,0.12);">
+                <span class="c3-pct">50%</span>
+              </div>
+              <div class="c3-bar-wrap"><div class="c3-bar-fill" style="width:50%"></div></div>
+              <div class="c3-name">2 Books</div>
+            </div>
+            <div class="c3-item">
+              <div class="c3-orb" style="background:radial-gradient(circle at 45% 45%, rgba(225,164,92,0.2), rgba(60,30,38,0.6));
+                box-shadow: 0 0 12px rgba(225,164,92,0.1), inset 0 0 12px rgba(225,164,92,0.05);">
+                <span class="c3-pct">25%</span>
+              </div>
+              <div class="c3-bar-wrap"><div class="c3-bar-fill" style="width:25%"></div></div>
+              <div class="c3-name">12 Outdoor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SVG gradient defs -->
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="c1grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(225,164,92,0.4)" />
+      <stop offset="100%" style="stop-color:rgba(225,164,92,0.9)" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<script>
+// Habit data: [name, iconSVG, Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+// Thu = today (index 4). Fri/Sat = future
+const habits = [
+  {
+    name: 'RemNote',
+    icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>',
+    days: [1,1,1,1,1,0,0]
+  },
+  {
+    name: 'Gym',
+    icon: '<path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/>',
+    days: [0,1,0,1,1,0,0]
+  },
+  {
+    name: 'Pimsleur',
+    icon: '<path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>',
+    days: [1,1,1,1,1,0,0]
+  },
+  {
+    name: 'Bed by 11',
+    icon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>',
+    days: [1,0,1,0,0,0,0]
+  },
+  {
+    name: 'German',
+    icon: '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>',
+    days: [1,1,1,1,0,0,0]
+  },
+  {
+    name: 'Read Paper',
+    icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    days: [0,1,0,0,1,0,0]
+  }
+];
+
+const dayLabels = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+const todayIdx = 4; // Thursday
+
+function buildStardustGrid(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Day labels row
+  const spacer = document.createElement('div');
+  spacer.className = 'day-labels spacer';
+  container.appendChild(spacer);
+
+  dayLabels.forEach((label, i) => {
+    const el = document.createElement('div');
+    el.className = 'day-label' + (i === todayIdx ? ' today' : '');
+    el.textContent = label;
+    container.appendChild(el);
+  });
+
+  // Habit rows
+  habits.forEach((habit) => {
+    // Info cell
+    const info = document.createElement('div');
+    info.className = 'habit-info';
+    info.innerHTML = `
+      <div class="habit-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          ${habit.icon}
+        </svg>
+      </div>
+      <div class="habit-name">${habit.name}</div>
+    `;
+    container.appendChild(info);
+
+    // Dot cells
+    habit.days.forEach((done, dayIdx) => {
+      const cell = document.createElement('div');
+      cell.className = 'dot-cell' + (dayIdx === todayIdx ? ' today' : '');
+
+      const isFuture = dayIdx > todayIdx;
+      const dot = document.createElement('div');
+
+      if (isFuture) {
+        dot.className = 'star-dot future';
+      } else if (done) {
+        dot.className = 'star-dot done';
+      } else {
+        dot.className = 'star-dot not-done';
+      }
+
+      cell.appendChild(dot);
+
+      // Constellation line: connect to next done day
+      if (done && dayIdx < todayIdx) {
+        // Look ahead for next done
+        let nextDone = -1;
+        for (let j = dayIdx + 1; j <= todayIdx; j++) {
+          if (habit.days[j]) { nextDone = j; break; }
+        }
+        if (nextDone !== -1) {
+          const line = document.createElement('div');
+          line.className = 'constellation-line';
+          // Calculate width: spans from center of this cell to center of next done cell
+          // Each cell is 1fr in a 7-col grid portion; we use percentage of cell width
+          const cellSpan = nextDone - dayIdx;
+          line.style.left = '50%';
+          line.style.width = `calc(${cellSpan * 100}% + ${(cellSpan - 1) * 0}px)`;
+          cell.appendChild(line);
+        }
+      }
+
+      container.appendChild(cell);
+    });
+  });
+}
+
+// Build all 6 stardust grids
+for (let i = 1; i <= 6; i++) {
+  buildStardustGrid('stardust-' + i);
+}
+</script>
+
+</body>
+</html>

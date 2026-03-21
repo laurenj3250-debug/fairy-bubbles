@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown Card v6 — Containment Pass</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════════════════════════
+     SUNDOWN v6 — Containment pass: every child inside parent
+     ══════════════════════════════════════════════════════════ */
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* #11 PAGE */
+  body {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #11080B 0%, #1A0E12 100%);
+    font-family: 'Source Sans 3', sans-serif;
+    color: #D9B79A;
+    padding: 48px 40px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+
+  /* #11 Subtle warm haze */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, rgba(80,40,25,0.05) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Page title */
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: rgba(242, 223, 200, 0.25);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     A. NAV DOCK
+     ══════════════════════════════════════════════════════════ */
+  .nav-dock {
+    background: linear-gradient(180deg, #5A3629 0%, #45281F 100%);
+    border: none;
+    border-radius: 36px;
+    box-shadow: inset 0 1px 0 rgba(255,220,180,0.14), inset 0 -8px 14px rgba(0,0,0,0.20), 0 8px 18px rgba(0,0,0,0.28), 0 18px 40px rgba(0,0,0,0.16);
+    padding: 10px 20px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    height: 72px;
+    max-width: 1152px;
+    width: 100%;
+    justify-content: center;
+    /* #11 Nav to main cards: 28px */
+    margin-bottom: 28px;
+  }
+
+  .nav-pill {
+    padding: 10px 16px;
+    border-radius: 26px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #D6B292;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    position: relative;
+    background: none;
+  }
+
+  .nav-pill:hover:not(.active) {
+    color: #F2DFC8;
+  }
+
+  .nav-pill.active {
+    background: linear-gradient(180deg, #8A5A3B 0%, #6C422E 100%);
+    color: #F2DFC8;
+    font-weight: 600;
+    border: none;
+    box-shadow: inset 0 1px 0 rgba(255,225,190,0.18), inset 0 -6px 10px rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.24);
+    height: 52px;
+    padding: 10px 28px;
+    border-radius: 26px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     B. STAT CHIPS
+     ══════════════════════════════════════════════════════════ */
+  .stat-row {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .stat-chip {
+    background: linear-gradient(180deg, #7A4C34 0%, #5A3528 100%);
+    border: none;
+    border-radius: 28px;
+    box-shadow: inset 0 1px 0 rgba(255,220,185,0.14), inset 0 -6px 10px rgba(0,0,0,0.18), 0 8px 18px rgba(0,0,0,0.26);
+    height: 64px;
+    padding: 0 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14.5px;
+    color: #EEDBC5;
+    font-weight: 500;
+  }
+
+  .stat-chip .val {
+    color: #E3A95E;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 21px;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     #1 MAIN CARDS ROW — explicit 560×540, centered
+     ══════════════════════════════════════════════════════════ */
+  .main-row {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    align-items: stretch;
+    /* #11 Main cards to streak bar: 24px (applied as margin-bottom) */
+    margin-bottom: 24px;
+  }
+
+  /* #1 Both cards: 560×540 explicit */
+  .main-row > .outer-slab {
+    width: 560px;
+    min-width: 560px;
+    max-width: 560px;
+    height: 540px;
+    min-height: 540px;
+    max-height: 540px;
+    overflow: hidden;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     SHARED: Outer slab — #4 LEFT CARD SHELL
+     ══════════════════════════════════════════════════════════ */
+  .outer-slab {
+    /* #4 Outer card gradient */
+    background: linear-gradient(180deg, #6A4030 0%, #523126 100%);
+    border: none;
+    border-radius: 34px;
+    /* #4 Outer card shadow */
+    box-shadow: inset 0 1px 0 rgba(255,220,185,0.08), inset 0 -10px 18px rgba(0,0,0,0.16), 0 12px 26px rgba(0,0,0,0.24);
+    padding: 28px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     SHARED: Inset tray — #2 / #4
+     ══════════════════════════════════════════════════════════ */
+  .inset-tray {
+    /* #4 Inner tray gradient */
+    background: linear-gradient(180deg, #35201C 0%, #291816 100%);
+    border: none;
+    /* #2 border-radius: 26px */
+    border-radius: 26px;
+    padding: 20px;
+    /* #4 Inner tray shadow */
+    box-shadow: inset 0 2px 3px rgba(255,220,180,0.04), inset 0 -6px 12px rgba(0,0,0,0.22);
+    /* #2 overflow: hidden CRITICAL */
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Card header */
+  .slab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .slab-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 29px;
+    font-weight: 600;
+    /* #11 Headings color */
+    color: #F0DEC7;
+  }
+
+  /* #8 "2026" CHIP */
+  .slab-badge {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    height: 42px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    color: #C98A52;
+    background: linear-gradient(180deg, #7A4B34 0%, #5B3628 100%);
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     C-1. "THIS WEEK" CARD — Habit grid
+     ══════════════════════════════════════════════════════════ */
+
+  /* #7 Progress ring in header — 46px */
+  .header-ring {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: 46px;
+    height: 46px;
+  }
+
+  .ring-wrap svg {
+    width: 46px;
+    height: 46px;
+    transform: rotate(-90deg);
+  }
+
+  .ring-wrap .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #C98A52;
+  }
+
+  .ring-subtext {
+    font-size: 11px;
+    color: #A9826A;
+  }
+
+  /* #2 Habit grid — CSS grid with explicit column widths */
+  .habit-grid {
+    display: grid;
+    /* #2 Label: 160px, then 7×40px day cells */
+    grid-template-columns: 160px repeat(7, 40px);
+    /* #2 column-gap: 10px between day cells, 24px after label */
+    column-gap: 10px;
+    /* #2 row-gap: 12px */
+    row-gap: 12px;
+    align-items: center;
+  }
+
+  /* 24px gap after label column (label is 160px, first day cell starts 24px later) */
+  .habit-grid > :nth-child(8n+1) {
+    margin-right: 14px; /* 24px - 10px column-gap = 14px extra */
+  }
+
+  .day-hdr {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(184, 148, 118, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding-bottom: 4px;
+  }
+
+  .day-hdr.today-hdr {
+    color: rgba(201, 138, 82, 0.70);
+  }
+
+  .habit-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(242, 223, 200, 0.72);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .habit-name .hi { font-size: 15px; }
+
+  /* ── Habit cells ── */
+  /* #3 HABIT CELLS: 40×40, radius 14px */
+  .hcell {
+    width: 40px;
+    height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* #3 Checkmark size */
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  /* #3 Empty cells */
+  .hcell.empty {
+    background: linear-gradient(180deg, #2E1B18 0%, #241412 100%);
+    border: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,220,180,0.03);
+    color: transparent;
+  }
+
+  /* #3 Checked cells */
+  .hcell.done {
+    background: linear-gradient(180deg, #8A5A3B 0%, #6B422E 100%);
+    border: none;
+    box-shadow: inset 0 1px 0 rgba(255,228,195,0.14), inset 0 -4px 8px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.18);
+    /* #3 Checkmark color */
+    color: #F3E2CF;
+    font-weight: 600;
+  }
+
+  /* #3 Today cells — ring INSIDE 40px boundary via box-shadow */
+  .hcell.today-cell {
+    outline: none;
+    box-shadow: inset 0 0 0 3px #9C6744, inset 0 2px 4px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,220,180,0.03);
+  }
+
+  .hcell.today-cell.done {
+    box-shadow: inset 0 0 0 3px #9C6744, inset 0 1px 0 rgba(255,228,195,0.14), inset 0 -4px 8px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.18);
+  }
+
+  .hcell.today-cell.empty {
+    background: linear-gradient(180deg, #2E1B18 0%, #241412 100%);
+  }
+
+  .hcell.future {
+    opacity: 0.30;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     C-2. "GOALS" CARD — #5
+     ══════════════════════════════════════════════════════════ */
+
+  /* #5 Goals tray */
+  .goals-tray {
+    background: linear-gradient(180deg, #35201C 0%, #291816 100%);
+    border: none;
+    border-radius: 26px;
+    /* #5 Padding: 28px all sides */
+    padding: 28px;
+    box-shadow: inset 0 2px 3px rgba(255,220,180,0.04), inset 0 -6px 12px rgba(0,0,0,0.22);
+    overflow: hidden;
+  }
+
+  /* #5 Goals grid: strict 2×2 */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 18px;
+    row-gap: 18px;
+  }
+
+  /* #5 Goal cards */
+  .goal-module {
+    background: linear-gradient(180deg, #7A4B38 0%, #60392C 100%);
+    border: none;
+    border-radius: 24px;
+    box-shadow: inset 0 1px 0 rgba(255,220,185,0.10), inset 0 -5px 9px rgba(0,0,0,0.14), 0 5px 10px rgba(0,0,0,0.16);
+    /* #6 Padding: 20px top/bottom, 22px left/right */
+    padding: 20px 22px;
+    display: flex;
+    /* #6 Vertically center */
+    align-items: center;
+    /* #6 Gap between ring and text: 20px */
+    gap: 20px;
+    /* #5 Height: 154px */
+    height: 154px;
+    overflow: hidden;
+  }
+
+  /* #6 Progress ring well */
+  .goal-ring-well {
+    /* #6 Well: 74px */
+    width: 74px;
+    height: 74px;
+    min-width: 74px;
+    border-radius: 50%;
+    /* #6 Well bg and shadow */
+    background: #2D1A17;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .goal-ring-well svg {
+    /* #6 Ring: 62px diameter */
+    width: 62px;
+    height: 62px;
+    transform: rotate(-90deg);
+  }
+
+  .goal-ring-well .goal-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #C98A52;
+  }
+
+  .goal-info h4 {
+    font-family: 'Cormorant Garamond', serif;
+    /* #6 Title: 18px, line-height 1.2 */
+    font-size: 18px;
+    font-weight: 600;
+    color: #F0DEC7;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .goal-info p {
+    /* #6 Body: 14px, left-aligned */
+    font-size: 14px;
+    color: #A9826A;
+    text-align: left;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     D. STREAK STRIP — #9
+     ══════════════════════════════════════════════════════════ */
+  .streak-slab {
+    /* #9 reduced brightness 8% */
+    background: linear-gradient(180deg, #674030 0%, #50302A 100%);
+    border: none;
+    /* #9 radius: 34px */
+    border-radius: 34px;
+    /* #9 shadow */
+    box-shadow: inset 0 1px 0 rgba(255,220,185,0.08), inset 0 -8px 14px rgba(0,0,0,0.14), 0 7px 15px rgba(0,0,0,0.19);
+    /* #9 Height: 68px */
+    height: 68px;
+    padding: 0 32px 0 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 1152px;
+    max-width: 1152px;
+    /* #11 Streak to bottom pills: 18px */
+    margin-bottom: 18px;
+  }
+
+  .streak-text {
+    font-size: 14px;
+    /* #9 Normal text */
+    color: #D9B79A;
+  }
+
+  .streak-text strong {
+    /* #9 Highlight text */
+    color: #E3A95E;
+    font-weight: 600;
+  }
+
+  .streak-dots {
+    display: flex;
+    /* #9 Dots gap: 12px */
+    gap: 12px;
+  }
+
+  /* #9 Streak dots: 13px */
+  .sdot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+  }
+
+  .sdot.reached {
+    background: linear-gradient(180deg, #9B6040 0%, #7A4A30 100%);
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 220, 180, 0.20),
+      0 2px 5px rgba(0,0,0,0.30),
+      0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  .sdot.unreached {
+    background: linear-gradient(180deg, #2B1917 0%, #201310 100%);
+    border: none;
+    box-shadow:
+      inset 0 2px 3px rgba(0,0,0,0.35),
+      inset 0 -1px 2px rgba(255, 220, 180, 0.03);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     E. BOTTOM MINI CAPSULES — #10
+     ══════════════════════════════════════════════════════════ */
+  .mini-row {
+    display: flex;
+    gap: 16px;
+    width: 1152px;
+    max-width: 1152px;
+    justify-content: center;
+  }
+
+  .mini-capsule {
+    flex: 1;
+    min-width: 180px;
+    background: linear-gradient(180deg, #7A4C34 0%, #5A3528 100%);
+    border: none;
+    border-radius: 24px;
+    /* #10 Shadow opacity reduced 20% */
+    box-shadow: inset 0 1px 0 rgba(255,220,185,0.11), inset 0 -6px 10px rgba(0,0,0,0.14), 0 8px 18px rgba(0,0,0,0.21);
+    /* #10 Height: 50px */
+    height: 50px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .mini-badge {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* #10 Icon size: 16px */
+    font-size: 16px;
+    background: linear-gradient(180deg, #8A5A3B 0%, #6C422E 100%);
+    border: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255,225,190,0.18),
+      inset 0 -4px 8px rgba(0,0,0,0.18),
+      0 3px 8px rgba(0,0,0,0.22);
+  }
+
+  .mini-label h5 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    /* #10 Title font-weight: 500 */
+    font-weight: 500;
+    color: #F0DEC7;
+    margin-bottom: 2px;
+  }
+
+  .mini-label p {
+    font-size: 11.5px;
+    color: #A9826A;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     RESPONSIVE
+     ══════════════════════════════════════════════════════════ */
+  @media (max-width: 1200px) {
+    .main-row { flex-direction: column; align-items: center; }
+    .main-row > .outer-slab { height: auto; min-height: auto; max-height: none; }
+    .goals-grid { grid-template-columns: 1fr; }
+    .mini-row { flex-wrap: wrap; width: 100%; max-width: 100%; }
+    .mini-capsule { min-width: 160px; }
+    .streak-slab { width: 100%; max-width: 100%; }
+    .habit-grid { grid-template-columns: 124px repeat(7, 1fr); column-gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Sundown v6 &mdash; Containment Pass</div>
+
+<!-- ═══════════════════════════════════════════════════
+     A. NAV DOCK
+     ═══════════════════════════════════════════════════ -->
+<nav class="nav-dock">
+  <div class="nav-pill active">Dashboard</div>
+  <div class="nav-pill">Habits</div>
+  <div class="nav-pill">Goals</div>
+  <div class="nav-pill">Analytics</div>
+  <div class="nav-pill">Adventures</div>
+  <div class="nav-pill">Wellness</div>
+  <div class="nav-pill">Settings</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     B. STAT CHIPS
+     ═══════════════════════════════════════════════════ -->
+<div class="stat-row">
+  <div class="stat-chip"><span class="val">329</span> XP</div>
+  <div class="stat-chip">&#128293; <span class="val">22</span> days</div>
+  <div class="stat-chip">Residency <span class="val">2y 3m</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     C. MAIN CONTENT CARDS — 560×540 each, 32px gap
+     ═══════════════════════════════════════════════════ -->
+<div class="main-row">
+
+  <!-- ── C-1: THIS WEEK slab ── -->
+  <div class="outer-slab">
+    <div class="slab-header">
+      <span class="slab-title">This Week</span>
+      <div class="header-ring">
+        <div class="ring-wrap">
+          <!-- #7 Ring: 46px, stroke 6px, color #D08A4F -->
+          <svg viewBox="0 0 46 46">
+            <circle cx="23" cy="23" r="17" fill="none" stroke="rgba(201,138,82,0.12)" stroke-width="6"/>
+            <circle cx="23" cy="23" r="17" fill="none" stroke="#D08A4F" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="106.81" stroke-dashoffset="45.78"/>
+          </svg>
+          <div class="ring-label">4/7</div>
+        </div>
+        <span class="ring-subtext">3 left</span>
+      </div>
+    </div>
+
+    <!-- #2 Inset tray: calc(100% - 56px) handled by parent padding 28px each side -->
+    <div class="inset-tray">
+      <div class="habit-grid">
+        <!-- Header row -->
+        <div></div>
+        <div class="day-hdr">S</div>
+        <div class="day-hdr">M</div>
+        <div class="day-hdr">T</div>
+        <div class="day-hdr">W</div>
+        <div class="day-hdr">T</div>
+        <div class="day-hdr today-hdr">F</div>
+        <div class="day-hdr">S</div>
+
+        <!-- RemNote -->
+        <div class="habit-name"><span class="hi">&#128209;</span> RemNote</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Gym -->
+        <div class="habit-name"><span class="hi">&#127947;</span> Gym</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Pimsleur -->
+        <div class="habit-name"><span class="hi">&#127911;</span> Pimsleur</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Bed by 11 -->
+        <div class="habit-name"><span class="hi">&#128716;</span> Bed by 11</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+
+        <!-- German -->
+        <div class="habit-name"><span class="hi">&#127465;&#127466;</span> German</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+
+        <!-- Read a Paper -->
+        <div class="habit-name"><span class="hi">&#128218;</span> Read a Paper</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── C-2: GOALS slab ── -->
+  <div class="outer-slab">
+    <div class="slab-header">
+      <span class="slab-title">Goals</span>
+      <div class="slab-badge">2026</div>
+    </div>
+
+    <!-- #5 Goals tray -->
+    <div class="inset-tray goals-tray">
+      <div class="goals-grid">
+
+        <!-- Goal 1: 2 physical books — 50% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <!-- #6 Ring: 62px, stroke 6px, track #3A2420, progress #D08A4F -->
+            <svg viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#3A2420" stroke-width="6"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#D08A4F" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="157.08" stroke-dashoffset="78.54"/>
+            </svg>
+            <div class="goal-pct">50%</div>
+          </div>
+          <div class="goal-info">
+            <h4>2 physical books</h4>
+            <p>1/2 complete</p>
+          </div>
+        </div>
+
+        <!-- Goal 2: Complete de Lahunta — 35% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#3A2420" stroke-width="6"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#D08A4F" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="157.08" stroke-dashoffset="102.10"/>
+            </svg>
+            <div class="goal-pct">35%</div>
+          </div>
+          <div class="goal-info">
+            <h4>Complete de Lahunta</h4>
+            <p>9/26 chapters</p>
+          </div>
+        </div>
+
+        <!-- Goal 3: 200 lifting days — 26% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#3A2420" stroke-width="6"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#D08A4F" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="157.08" stroke-dashoffset="116.24"/>
+            </svg>
+            <div class="goal-pct">26%</div>
+          </div>
+          <div class="goal-info">
+            <h4>200 lifting days</h4>
+            <p>51/200</p>
+          </div>
+        </div>
+
+        <!-- Goal 4: 12 outdoor climbing — 25% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#3A2420" stroke-width="6"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#D08A4F" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="157.08" stroke-dashoffset="117.81"/>
+            </svg>
+            <div class="goal-pct">25%</div>
+          </div>
+          <div class="goal-info">
+            <h4>12 outdoor climbing</h4>
+            <p>3/12 days</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     D. STREAK STRIP
+     ═══════════════════════════════════════════════════ -->
+<div class="streak-slab">
+  <div class="streak-text"><strong>22 days strong</strong> &mdash; next milestone: 30 days</div>
+  <div class="streak-dots">
+    <div class="sdot reached"></div>
+    <div class="sdot reached"></div>
+    <div class="sdot reached"></div>
+    <div class="sdot unreached"></div>
+    <div class="sdot unreached"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     E. BOTTOM MINI CAPSULES
+     ═══════════════════════════════════════════════════ -->
+<div class="mini-row">
+  <div class="mini-capsule">
+    <div class="mini-badge">&#10024;</div>
+    <div class="mini-label">
+      <h5>Wellness</h5>
+      <p>Check in</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#128218;</div>
+    <div class="mini-label">
+      <h5>Reading</h5>
+      <p>The Living Mountain</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#9968;&#65039;</div>
+    <div class="mini-label">
+      <h5>Adventures</h5>
+      <p>Log outdoor day</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#127873;</div>
+    <div class="mini-label">
+      <h5>Rewards</h5>
+      <p>329 XP available</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

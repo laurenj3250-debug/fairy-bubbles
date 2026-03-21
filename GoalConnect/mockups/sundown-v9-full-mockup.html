@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown v9 — Full Dashboard Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --glow-warm: rgba(225,164,92,0.35);
+    --glow-hot: rgba(225,164,92,0.6);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* ===== LANDSCAPE ===== */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* ===== FLOATING PARTICLES ===== */
+  .particle {
+    position: fixed; z-index: 3; pointer-events: none;
+    width: 3px; height: 3px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.8), rgba(225,164,92,0) 70%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 12px rgba(225,164,92,0.2);
+    animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 12%; animation-duration: 14s; animation-delay: 0s; width: 2px; height: 2px; }
+  .particle:nth-child(2) { left: 28%; animation-duration: 18s; animation-delay: -3s; width: 4px; height: 4px; }
+  .particle:nth-child(3) { left: 42%; animation-duration: 16s; animation-delay: -7s; }
+  .particle:nth-child(4) { left: 55%; animation-duration: 20s; animation-delay: -2s; width: 2px; height: 2px; }
+  .particle:nth-child(5) { left: 68%; animation-duration: 15s; animation-delay: -10s; width: 4px; height: 4px; }
+  .particle:nth-child(6) { left: 78%; animation-duration: 17s; animation-delay: -5s; }
+  .particle:nth-child(7) { left: 88%; animation-duration: 19s; animation-delay: -8s; width: 2px; height: 2px; }
+  .particle:nth-child(8) { left: 35%; animation-duration: 22s; animation-delay: -12s; width: 3px; height: 3px; }
+
+  /* ===== SUN GLOW ===== */
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 600px; height: 300px;
+    left: 50%; top: 45%; transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at 50% 80%, rgba(255,200,100,0.08) 0%, transparent 70%);
+    animation: sd-breathe 6s ease-in-out infinite;
+  }
+
+  /* ===== CONTENT ===== */
+  .content { position: relative; z-index: 10; }
+
+  /* ===== SHARED CARD: SHELL + FACE + LIGHT RAY ===== */
+  .sd-card {
+    background: var(--shell-bg);
+    border-radius: 20px;
+    padding: 2px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .sd-card::before {
+    content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 80%;
+    background: linear-gradient(135deg, rgba(255,200,140,0.06) 0%, transparent 50%);
+    pointer-events: none; z-index: 1;
+  }
+  .sd-card-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 18px;
+    padding: 28px;
+    position: relative; z-index: 2;
+    box-shadow: var(--face-inset);
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  /* Subsurface scattering edge glow */
+  .sd-card::after {
+    content: ''; position: absolute; inset: 0; border-radius: 20px; pointer-events: none; z-index: 3;
+    box-shadow: inset 0 0 30px rgba(225,164,92,0.04), inset 0 1px 0 rgba(255,200,140,0.08);
+  }
+
+  /* ===== TYPOGRAPHY ===== */
+  .sd-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+  }
+  .sd-title {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .sd-badge {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 11px;
+    color: var(--text-accent);
+    background: rgba(225,164,92,0.1);
+    border: 1px solid rgba(225,164,92,0.15);
+    border-radius: 12px;
+    padding: 3px 12px;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    height: 36vh; min-height: 260px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; padding-top: 24px;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px; font-weight: 400; letter-spacing: 8px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3), 0 0 80px rgba(200,130,70,0.15);
+  }
+  .hero .sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; color: rgba(217,183,154,0.45); letter-spacing: 2px; margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Stat Pills */
+  .hero-pills { position: absolute; top: 20px; right: 32px; display: flex; gap: 10px; }
+  .pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+    box-shadow: 0 4px 8px rgba(40,20,10,0.3);
+  }
+  .pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 18px; padding: 6px 14px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-muted);
+    border-top: 1px solid rgba(255,200,140,0.08);
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .pill-face .val {
+    color: var(--text-accent);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 15px;
+  }
+
+  /* ===== RESIDENCY STRIP ===== */
+  .residency-strip {
+    max-width: 1200px; margin: 0 auto; padding: 0 40px 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .residency-strip .icon { font-size: 16px; filter: grayscale(0.3); }
+  .residency-strip .bar-wrap {
+    flex: 1; height: 4px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: hidden;
+  }
+  .residency-strip .bar-fill {
+    height: 100%; border-radius: 3px; width: 23%;
+    background: linear-gradient(90deg, #c47a20, #E1A45C);
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2);
+    position: relative;
+  }
+  .residency-strip .bar-fill::after {
+    content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-accent);
+    box-shadow: 0 0 6px var(--glow-warm), 0 0 12px rgba(225,164,92,0.3);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  .residency-strip .days {
+    font-family: 'Cormorant Garamond', serif; font-weight: 700;
+    font-size: 18px; color: var(--text-accent); letter-spacing: 1px;
+  }
+  .residency-strip .meta {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+
+  /* ===== TAB DOCK ===== */
+  .tab-dock-wrap {
+    display: flex; justify-content: center; padding: 0 40px 28px;
+  }
+  .tab-dock {
+    background: var(--shell-bg); border-radius: 28px; padding: 2px;
+    box-shadow: 0 4px 12px rgba(40,20,10,0.3);
+    display: inline-flex;
+  }
+  .tab-dock-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 26px; padding: 4px 6px;
+    display: flex; gap: 2px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+  }
+  .tab-btn {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-muted);
+    padding: 8px 24px; border-radius: 22px;
+    border: none; background: none; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .tab-btn.active {
+    background: var(--shell-bg);
+    color: var(--text-accent);
+    box-shadow: 0 2px 8px rgba(40,20,10,0.3);
+  }
+  .tab-btn:hover:not(.active) { color: var(--text-secondary); }
+
+  /* ===== MAIN CONTENT — MAGAZINE LAYOUT ===== */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .right-stack { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ===== A. STARDUST TRAIL HABIT CARD ===== */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 130px repeat(7, 46px);
+    gap: 0;
+    align-items: center;
+  }
+  .habit-day-labels {
+    display: contents;
+  }
+  .habit-day-labels .spacer { grid-column: 1; }
+  .habit-day-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-muted);
+    text-align: center; padding-bottom: 12px;
+  }
+  .habit-day-label.today {
+    color: var(--text-accent);
+    font-weight: 700;
+  }
+
+  .habit-row { display: contents; }
+  .habit-label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 0;
+  }
+  .habit-label svg {
+    width: 18px; height: 18px;
+    stroke: var(--text-muted); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.15));
+    flex-shrink: 0;
+  }
+  .habit-label span {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; color: var(--text-secondary);
+  }
+
+  .habit-cell {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 0;
+    position: relative;
+  }
+
+  /* Star dots */
+  .star-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(30,18,22,0.6);
+    border: 1px solid rgba(100,60,50,0.2);
+    position: relative; z-index: 2;
+  }
+  .star-dot.done {
+    width: 10px; height: 10px; border: none;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6),
+                0 0 8px rgba(225,164,92,0.4),
+                0 0 16px rgba(225,164,92,0.25),
+                0 0 24px rgba(225,164,92,0.1);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .star-dot.today-dot {
+    width: 14px; height: 14px; border: none;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #ffd89b 30%, #E1A45C 60%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.8),
+                0 0 10px rgba(225,164,92,0.6),
+                0 0 20px rgba(225,164,92,0.4),
+                0 0 30px rgba(225,164,92,0.2),
+                0 0 40px rgba(225,164,92,0.1);
+    animation: starTwinkle 2.5s ease-in-out infinite;
+  }
+
+  /* Constellation lines */
+  .constellation-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.5), rgba(225,164,92,0.3));
+    box-shadow: 0 0 4px rgba(225,164,92,0.3);
+    top: 50%; z-index: 1;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  /* ===== B. HORIZON LINES GOAL CARD ===== */
+  .goal-item { margin-bottom: 26px; position: relative; }
+  .goal-item:last-child { margin-bottom: 0; }
+  .goal-label-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .goal-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  .goal-track {
+    height: 3px; border-radius: 2px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: visible;
+  }
+  .goal-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), var(--text-accent));
+    box-shadow: 0 0 6px rgba(225,164,92,0.4),
+                0 0 12px rgba(225,164,92,0.2),
+                0 0 24px rgba(225,164,92,0.1),
+                0 0 40px rgba(225,164,92,0.05);
+    position: relative;
+  }
+  .goal-orb {
+    position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #E1A45C);
+    box-shadow: 0 0 6px rgba(225,164,92,0.7),
+                0 0 14px rgba(225,164,92,0.4),
+                0 0 24px rgba(225,164,92,0.2);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  /* Ambient mist at bottom */
+  .goal-card-face { position: relative; overflow: hidden; }
+  .goal-card-face::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+    background: linear-gradient(to top, rgba(45,22,28,0.3), transparent);
+    pointer-events: none; z-index: 0;
+    animation: mistDrift 8s ease-in-out infinite;
+  }
+
+  /* ===== C. STARDUST RING ===== */
+  .ring-container {
+    width: 140px; height: 140px;
+    margin: 10px auto 16px;
+    position: relative;
+  }
+  .ring-dot {
+    position: absolute; width: 8px; height: 8px; border-radius: 50;
+    border-radius: 50%;
+    background: rgba(30,18,22,0.6);
+    border: 1px solid rgba(100,60,50,0.2);
+  }
+  .ring-dot.lit {
+    border: none;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6),
+                0 0 8px rgba(225,164,92,0.4),
+                0 0 14px rgba(225,164,92,0.2);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .ring-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .ring-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 700; color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.4), 0 0 40px rgba(225,164,92,0.2);
+    letter-spacing: 1px;
+  }
+  .ring-sub {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-muted); margin-top: 2px;
+  }
+  /* Ring constellation lines rendered via SVG overlay */
+  .ring-lines {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .ring-lines line {
+    stroke: rgba(225,164,92,0.25);
+    stroke-width: 1;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
+  }
+
+  /* ===== D. CONSTELLATION CROWN ===== */
+  .crown-container {
+    width: 100%; height: 70px;
+    position: relative; margin: 0 auto 8px;
+  }
+  .crown-dot {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #ffd89b, #E1A45C 50%, #c47a20 100%);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6),
+                0 0 8px rgba(225,164,92,0.4),
+                0 0 14px rgba(225,164,92,0.2);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .crown-dot.jewel {
+    width: 12px; height: 12px;
+    background: radial-gradient(circle at 40% 35%, #fff5e0, #ffd89b 30%, #E1A45C 60%, #c47a20 100%);
+    box-shadow: 0 0 6px rgba(225,164,92,0.8),
+                0 0 12px rgba(225,164,92,0.5),
+                0 0 24px rgba(225,164,92,0.3),
+                0 0 36px rgba(225,164,92,0.15);
+  }
+  .crown-lines {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .crown-lines line {
+    stroke: rgba(225,164,92,0.3);
+    stroke-width: 1;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
+  }
+  .crown-level {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 700; color: var(--text-accent);
+    text-transform: uppercase; letter-spacing: 2px;
+    text-align: center;
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+  }
+  .crown-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    text-align: center; margin-top: 4px;
+  }
+  .crown-divider {
+    height: 1px; margin: 16px 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.25), transparent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.15);
+  }
+  .reward-label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 13px; color: var(--text-secondary);
+    text-align: center; margin-bottom: 10px;
+  }
+  .reward-xp {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    text-align: center; margin-top: 6px;
+  }
+
+  /* ===== 5. YEARLY GOALS ===== */
+  .yearly-section {
+    max-width: 1200px; margin: 20px auto 0; padding: 0 40px;
+  }
+  .yearly-tabs {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+  }
+  .yearly-tab {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 10px; color: var(--text-muted);
+    padding: 5px 12px; border-radius: 14px;
+    border: 1px solid rgba(100,60,50,0.15);
+    background: transparent; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .yearly-tab.active {
+    background: rgba(225,164,92,0.15);
+    border-color: rgba(225,164,92,0.25);
+    color: var(--text-accent);
+  }
+  .yearly-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  .yearly-tile {
+    background: var(--shell-bg); border-radius: 14px; padding: 2px;
+    box-shadow: 0 2px 8px rgba(40,20,10,0.2);
+    position: relative; overflow: hidden;
+  }
+  .yearly-tile-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border-radius: 12px; padding: 18px 16px 14px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+    position: relative;
+  }
+  .yearly-tile-name {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 11px; color: var(--text-secondary);
+    margin-bottom: 6px; line-height: 1.4;
+  }
+  .yearly-tile-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; color: var(--text-muted);
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .yearly-tile-bar {
+    height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.4);
+    position: relative; overflow: visible;
+  }
+  .yearly-tile-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), var(--text-accent));
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 12px rgba(225,164,92,0.15);
+  }
+  /* Glow proportional to progress — applied via inline style */
+  .yearly-tile.glow-high { box-shadow: 0 2px 8px rgba(40,20,10,0.2), 0 0 20px rgba(225,164,92,0.12); }
+  .yearly-tile.glow-med { box-shadow: 0 2px 8px rgba(40,20,10,0.2), 0 0 12px rgba(225,164,92,0.08); }
+  .yearly-tile.glow-dim { box-shadow: 0 2px 8px rgba(40,20,10,0.2); }
+
+  .show-all-btn {
+    display: block; margin: 20px auto 0;
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 12px; color: var(--text-muted);
+    background: none; border: 1px solid rgba(100,60,50,0.2);
+    padding: 10px 28px; border-radius: 20px; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .show-all-btn:hover {
+    color: var(--text-accent); border-color: rgba(225,164,92,0.3);
+  }
+
+  /* ===== 6. NAV LINKS ===== */
+  .nav-links {
+    display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+    max-width: 1200px; margin: 36px auto 48px; padding: 0 40px;
+  }
+  .nav-pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+    transition: all 0.3s; cursor: pointer;
+  }
+  .nav-pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px; padding: 8px 20px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: 12px; color: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .nav-pill:hover {
+    box-shadow: 0 0 12px rgba(225,164,92,0.15);
+  }
+  .nav-pill:hover .nav-pill-face { color: var(--text-accent); }
+
+  /* ===== KEYFRAMES ===== */
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.85); }
+  }
+  @keyframes softPulse {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.7; transform: translateY(-50%) scale(0.9); }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes mistDrift {
+    0%, 100% { opacity: 0.4; transform: translateX(0); }
+    50% { opacity: 0.7; transform: translateX(8px); }
+  }
+  @keyframes float-up {
+    0% { bottom: -10px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.6; }
+    100% { bottom: 110vh; opacity: 0; }
+  }
+  @keyframes sd-breathe {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1024px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+      padding: 0 20px;
+    }
+    .hero h1 { font-size: 36px; letter-spacing: 5px; }
+    .hero-pills { position: relative; top: auto; right: auto; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .hero { padding-top: 16px; }
+    .residency-strip, .yearly-section { padding: 0 20px 16px; }
+    .yearly-grid { grid-template-columns: repeat(2, 1fr); }
+    .habit-grid { grid-template-columns: 100px repeat(7, 38px); }
+    .nav-links { padding: 0 20px; }
+  }
+  @media (max-width: 640px) {
+    .yearly-grid { grid-template-columns: 1fr; }
+    .habit-grid { grid-template-columns: 90px repeat(7, 32px); }
+    .habit-label span { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LANDSCAPE -->
+<div class="landscape"></div>
+<div class="sun-glow"></div>
+
+<!-- FLOATING PARTICLES -->
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- 1. HERO -->
+  <div class="hero">
+    <div class="hero-pills">
+      <div class="pill"><div class="pill-face"><span class="val">72°</span> Clear</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">7,300</span> Steps</div></div>
+      <div class="pill"><div class="pill-face"><span class="val">4/7</span> Tasks</div></div>
+    </div>
+    <h1>Sundown</h1>
+    <div class="sub">Personal Dashboard</div>
+  </div>
+
+  <!-- 2. RESIDENCY STRIP -->
+  <div class="residency-strip">
+    <span class="icon">🎓</span>
+    <div class="bar-wrap"><div class="bar-fill"></div></div>
+    <span class="days">846</span>
+    <span class="meta">2y 3m left</span>
+  </div>
+
+  <!-- 3. TAB DOCK -->
+  <div class="tab-dock-wrap">
+    <div class="tab-dock">
+      <div class="tab-dock-face">
+        <button class="tab-btn active">Overview</button>
+        <button class="tab-btn">Goals</button>
+        <button class="tab-btn">Habits</button>
+        <button class="tab-btn">Journal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. MAIN CONTENT -->
+  <div class="main-grid">
+
+    <!-- LEFT: HABIT CARD -->
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title" style="font-size: 14px;">This Week</span>
+          <span class="sd-badge">5/6 Today</span>
+        </div>
+        <div class="habit-grid" id="habitGrid">
+          <!-- Day labels row -->
+          <div class="habit-day-labels">
+            <div class="spacer"></div>
+            <div class="habit-day-label">Sun</div>
+            <div class="habit-day-label">Mon</div>
+            <div class="habit-day-label">Tue</div>
+            <div class="habit-day-label">Wed</div>
+            <div class="habit-day-label today">Thu</div>
+            <div class="habit-day-label">Fri</div>
+            <div class="habit-day-label">Sat</div>
+          </div>
+          <!-- Rows built by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT STACK -->
+    <div class="right-stack">
+
+      <!-- B. GOAL CARD -->
+      <div class="sd-card">
+        <div class="sd-card-face goal-card-face">
+          <div class="card-header">
+            <span class="sd-title" style="font-size: 14px;">Goals</span>
+            <span class="sd-badge">2026</span>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row">
+              <span class="goal-name">2 Physical Books</span>
+              <span class="goal-frac">1/2</span>
+            </div>
+            <div class="goal-track"><div class="goal-fill" style="width:50%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row">
+              <span class="goal-name">Complete de Lahunta</span>
+              <span class="goal-frac">7/20</span>
+            </div>
+            <div class="goal-track"><div class="goal-fill" style="width:35%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row">
+              <span class="goal-name">200 Lifting Days</span>
+              <span class="goal-frac">50/200</span>
+            </div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-label-row">
+              <span class="goal-name">12 Outdoor Climbing</span>
+              <span class="goal-frac">3/12</span>
+            </div>
+            <div class="goal-track"><div class="goal-fill" style="width:25%"><div class="goal-orb"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. PROGRESS RING -->
+      <div class="sd-card">
+        <div class="sd-card-face" style="text-align:center;">
+          <div class="card-header" style="justify-content:center;">
+            <span class="sd-title" style="font-size: 14px;">Progress</span>
+          </div>
+          <div class="ring-container" id="ringContainer">
+            <svg class="ring-lines" id="ringLines" width="140" height="140"></svg>
+            <div class="ring-center">
+              <div class="ring-pct">78%</div>
+              <div class="ring-sub">This Week</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. CONSTELLATION CROWN -->
+      <div class="sd-card">
+        <div class="sd-card-face">
+          <div class="crown-container" id="crownContainer">
+            <svg class="crown-lines" id="crownLines" width="100%" height="70"></svg>
+          </div>
+          <div class="crown-level">Lvl 3</div>
+          <div class="crown-streak">22 Day Streak</div>
+          <div class="crown-divider"></div>
+          <div class="reward-label">Custom Scrub Cap</div>
+          <div class="goal-track"><div class="goal-fill" style="width:68%"><div class="goal-orb"></div></div></div>
+          <div class="reward-xp">341 / 500 XP</div>
+        </div>
+      </div>
+
+    </div><!-- /right-stack -->
+  </div><!-- /main-grid -->
+
+  <!-- 5. YEARLY GOALS -->
+  <div class="yearly-section" style="margin-top: 20px;">
+    <div class="sd-card">
+      <div class="sd-card-face">
+        <div class="card-header">
+          <span class="sd-title" style="font-size: 14px;">Yearly Goals</span>
+          <span class="sd-badge">3/30 Complete</span>
+        </div>
+        <div class="yearly-tabs">
+          <button class="yearly-tab active">All</button>
+          <button class="yearly-tab">Fitness</button>
+          <button class="yearly-tab">Learning</button>
+          <button class="yearly-tab">Adventure</button>
+          <button class="yearly-tab">Outdoor</button>
+          <button class="yearly-tab">Climbing</button>
+          <button class="yearly-tab">German</button>
+          <button class="yearly-tab">Books</button>
+          <button class="yearly-tab">Piano</button>
+          <button class="yearly-tab">Travel</button>
+        </div>
+        <div class="yearly-grid">
+          <div class="yearly-tile glow-dim">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">Complete a Solo Hemilaminectomy</div>
+              <div class="yearly-tile-frac">0%</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="yearly-tile glow-dim">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">300 PowerPoints Studied</div>
+              <div class="yearly-tile-frac">15/300</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:5%"></div></div>
+            </div>
+          </div>
+          <div class="yearly-tile glow-high">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">Complete de Lahunta</div>
+              <div class="yearly-tile-frac">7/20</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:35%"></div></div>
+            </div>
+          </div>
+          <div class="yearly-tile glow-med">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">200 Lifting Days</div>
+              <div class="yearly-tile-frac">52/200</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:26%"></div></div>
+            </div>
+          </div>
+          <div class="yearly-tile glow-dim">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">10 Pull-Ups in a Row</div>
+              <div class="yearly-tile-frac">0/10</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="yearly-tile glow-dim">
+            <div class="yearly-tile-face">
+              <div class="yearly-tile-name">Finish Year One of Residency</div>
+              <div class="yearly-tile-frac">0%</div>
+              <div class="yearly-tile-bar"><div class="yearly-tile-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+        <button class="show-all-btn">Show All 30 Goals</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. NAV LINKS -->
+  <div class="nav-links">
+    <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ===== HABIT GRID: Build rows with star dots + constellation lines =====
+const habits = [
+  { name: 'RemNote', icon: 'clipboard', days: [1,1,1,1,1,0,0] },
+  { name: 'Gym', icon: 'dumbbell', days: [0,1,0,1,1,0,0] },
+  { name: 'Pimsleur', icon: 'headphones', days: [1,1,1,1,1,0,0] },
+  { name: 'Bed by 11', icon: 'moon', days: [1,0,1,0,0,0,0] },
+  { name: 'German', icon: 'book', days: [1,1,1,1,0,0,0] },
+  { name: 'Read Paper', icon: 'document', days: [0,1,0,0,1,0,0] },
+];
+
+const svgIcons = {
+  clipboard: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>',
+  dumbbell: '<path d="M6.5 6.5h11M4 4v5h3V4zM17 4v5h3V4zM4 15v5h3v-5zM17 15v5h3v-5zM6.5 17.5h11"/>',
+  headphones: '<path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>',
+  moon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>',
+  document: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+};
+
+const grid = document.getElementById('habitGrid');
+const todayIdx = 4; // Thursday
+
+habits.forEach((habit, hIdx) => {
+  // Label cell
+  const label = document.createElement('div');
+  label.className = 'habit-label';
+  label.innerHTML = `<svg viewBox="0 0 24 24">${svgIcons[habit.icon]}</svg><span>${habit.name}</span>`;
+  grid.appendChild(label);
+
+  // Day cells
+  habit.days.forEach((done, dIdx) => {
+    const cell = document.createElement('div');
+    cell.className = 'habit-cell';
+    cell.id = `cell-${hIdx}-${dIdx}`;
+
+    const dot = document.createElement('div');
+    const isToday = dIdx === todayIdx;
+    if (isToday && done) {
+      dot.className = 'star-dot today-dot';
+    } else if (done) {
+      dot.className = 'star-dot done';
+    } else {
+      dot.className = 'star-dot';
+    }
+
+    // Stagger twinkle
+    if (done) {
+      dot.style.animationDelay = `${(hIdx * 7 + dIdx) * 0.3}s`;
+    }
+
+    cell.appendChild(dot);
+
+    // Constellation line to previous done day
+    if (done && dIdx > 0 && habit.days[dIdx - 1]) {
+      const line = document.createElement('div');
+      line.className = 'constellation-line';
+      line.style.width = '46px';
+      line.style.right = '50%';
+      cell.appendChild(line);
+    }
+
+    grid.appendChild(cell);
+  });
+});
+
+// ===== STARDUST RING =====
+const ringContainer = document.getElementById('ringContainer');
+const ringLinesSvg = document.getElementById('ringLines');
+const totalDots = 24;
+const litCount = 19; // 78%
+const radius = 58;
+const cx = 70, cy = 70;
+const dotPositions = [];
+
+for (let i = 0; i < totalDots; i++) {
+  const angle = (i / totalDots) * Math.PI * 2 - Math.PI / 2;
+  const x = cx + radius * Math.cos(angle);
+  const y = cy + radius * Math.sin(angle);
+  dotPositions.push({ x, y });
+
+  const dot = document.createElement('div');
+  dot.className = 'ring-dot' + (i < litCount ? ' lit' : '');
+  dot.style.left = (x - 4) + 'px';
+  dot.style.top = (y - 4) + 'px';
+  if (i < litCount) {
+    dot.style.animationDelay = `${i * 0.2}s`;
+  }
+  ringContainer.appendChild(dot);
+}
+
+// Ring constellation lines between adjacent lit dots
+for (let i = 0; i < litCount - 1; i++) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', dotPositions[i].x);
+  line.setAttribute('y1', dotPositions[i].y);
+  line.setAttribute('x2', dotPositions[i + 1].x);
+  line.setAttribute('y2', dotPositions[i + 1].y);
+  ringLinesSvg.appendChild(line);
+}
+
+// ===== CONSTELLATION CROWN =====
+const crownContainer = document.getElementById('crownContainer');
+const crownLinesSvg = document.getElementById('crownLines');
+const crownCount = 22;
+const crownWidth = crownContainer.offsetWidth || 300;
+const spacing = crownWidth / (crownCount + 1);
+const centerIdx = Math.floor(crownCount / 2);
+const curveStrength = 0.12;
+const crownPositions = [];
+
+for (let i = 0; i < crownCount; i++) {
+  const x = spacing * (i + 1);
+  const y = 55 - (1 - Math.pow((i - centerIdx) / centerIdx, 2)) * 40;
+  crownPositions.push({ x, y });
+
+  const dot = document.createElement('div');
+  const isJewel = i === centerIdx;
+  dot.className = 'crown-dot' + (isJewel ? ' jewel' : '');
+  const size = isJewel ? 12 : 6;
+  dot.style.left = (x - size / 2) + 'px';
+  dot.style.top = (y - size / 2) + 'px';
+  dot.style.animationDelay = `${i * 0.15}s`;
+  crownContainer.appendChild(dot);
+}
+
+// Crown constellation lines
+for (let i = 0; i < crownCount - 1; i++) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', crownPositions[i].x);
+  line.setAttribute('y1', crownPositions[i].y);
+  line.setAttribute('x2', crownPositions[i + 1].x);
+  line.setAttribute('y2', crownPositions[i + 1].y);
+  crownLinesSvg.appendChild(line);
+}
+</script>
+
+</body>
+</html>

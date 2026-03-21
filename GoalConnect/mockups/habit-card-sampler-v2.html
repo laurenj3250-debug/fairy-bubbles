@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker v2 — Research-Inspired</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+  body { font-family: 'Source Sans 3', sans-serif; color: var(--text-primary); background: #0a0507; }
+  .landscape { position: fixed; inset: 0; z-index: 0; background-color: #1a0e10; background-image: url('../client/public/backgrounds/desert-hero.png'); background-size: 120vw auto; background-position: center bottom; background-repeat: no-repeat; }
+  .landscape::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%), radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%); }
+  .landscape::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%); }
+
+  .shell { background: var(--shell-bg); border-radius: 24px; padding: 4px; box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4); }
+  .face { position: relative; overflow: hidden; background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); border-radius: 20px; padding: 20px; border-top: 1px solid rgba(255,200,140,0.15); box-shadow: inset 0 1px 0 rgba(255,200,140,0.2), inset 0 -8px 16px rgba(0,0,0,0.2), inset 6px 0 20px rgba(255,180,100,0.06); }
+  .face::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,200,140,0.12) 0%, rgba(255,180,100,0.06) 15%, transparent 40%, transparent 60%, rgba(255,200,140,0.03) 80%, rgba(255,180,100,0.08) 100%); mix-blend-mode: screen; pointer-events: none; z-index: 1; }
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; }
+
+  .content { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; letter-spacing: 4px; text-align: center; color: rgba(240,222,199,0.85); margin-bottom: 8px; }
+  .subtitle { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 40px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+  .sample-label { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--text-accent); margin-bottom: 4px; }
+  .sample-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+
+  /* Ring animation */
+  @keyframes ring-fill { from { stroke-dashoffset: 226.2; } }
+  @keyframes glow-pulse { 0%, 100% { filter: drop-shadow(0 0 4px rgba(225,164,92,0.2)); } 50% { filter: drop-shadow(0 0 12px rgba(225,164,92,0.4)); } }
+  @keyframes ember-float { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: translateY(-8px) scale(1.2); opacity: 1; } 100% { transform: translateY(-16px) scale(0.8); opacity: 0; } }
+  @keyframes bloom { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+<div class="content">
+  <h1>Habit Tracker v2</h1>
+  <p class="subtitle">Inspired by Streaks, Cuberto, Vessel, Habits Garden. Visual metaphors, not spreadsheets.</p>
+
+  <div class="grid">
+
+    <!-- ═══ 1. STREAKS-STYLE RINGS (big, filling, glowing) ═══ -->
+    <div>
+      <div class="sample-label">1. Streaks Rings</div>
+      <div class="sample-desc">Inspired by the Apple Design Award winner. Each habit is a large ring that fills with your streak. Glowing amber when complete. Simple. Powerful. The ring IS the data.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Today</span><span class="badge">5 of 6 done</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 10px 0;">
+          <!-- Complete habit -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg); animation: glow-pulse 3s ease-in-out infinite;">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--text-accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="0" style="filter: drop-shadow(0 0 8px rgba(225,164,92,0.4));"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px;">📋</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600;">RemNote</div>
+            <div style="font-size: 10px; color: var(--text-accent);">5 day streak 🔥</div>
+          </div>
+          <!-- Partial habit -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg);">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--text-accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="113.1" style="filter: drop-shadow(0 0 4px rgba(225,164,92,0.2));"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px;">🏋</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600;">Gym</div>
+            <div style="font-size: 10px; color: var(--text-muted);">3 days</div>
+          </div>
+          <!-- Complete -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg); animation: glow-pulse 3s ease-in-out infinite 0.5s;">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--text-accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="0" style="filter: drop-shadow(0 0 8px rgba(225,164,92,0.4));"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎧</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600;">Pimsleur</div>
+            <div style="font-size: 10px; color: var(--text-accent);">5 day streak 🔥</div>
+          </div>
+          <!-- Incomplete -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg);">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(200,131,73,0.3)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="180.96"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: 0.5;">🛌</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600; opacity: 0.5;">Bed by 11</div>
+            <div style="font-size: 10px; color: var(--text-muted);">not yet</div>
+          </div>
+          <!-- Complete -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg); animation: glow-pulse 3s ease-in-out infinite 1s;">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--text-accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="0" style="filter: drop-shadow(0 0 8px rgba(225,164,92,0.4));"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px;">🇩🇪</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600;">German</div>
+            <div style="font-size: 10px; color: var(--text-accent);">4 day streak 🔥</div>
+          </div>
+          <!-- Incomplete -->
+          <div style="text-align: center;">
+            <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 8px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" style="transform: rotate(-90deg);">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="7"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(200,131,73,0.3)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="180.96"/>
+              </svg>
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: 0.5;">📚</div>
+            </div>
+            <div style="font-size: 12px; font-weight: 600; opacity: 0.5;">Read Paper</div>
+            <div style="font-size: 10px; color: var(--text-muted);">not yet</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 2. CUBERTO FLUID CIRCLES ═══ -->
+    <div>
+      <div class="sample-label">2. Cuberto Fluid Circles</div>
+      <div class="sample-desc">Inspired by Cuberto's Dribbble shot. Large colorful circles per habit that fill up as you complete days. Bold, playful, no text clutter. The color circle IS the habit.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">5/6 today</span></div>
+        <div style="display: flex; gap: 12px; justify-content: center; align-items: flex-end; padding: 20px 0 10px;">
+          <!-- Each circle's height represents weekly completion -->
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,200,140,0.6), rgba(200,131,73,0.8)); box-shadow: 0 4px 16px rgba(200,131,73,0.4), inset 0 -4px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">📋</div>
+            <div style="font-size: 10px; font-weight: 600;">5/6</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,200,140,0.4), rgba(200,131,73,0.5)); box-shadow: 0 4px 12px rgba(200,131,73,0.2); display: flex; align-items: center; justify-content: center; font-size: 17px;">🏋</div>
+            <div style="font-size: 10px; font-weight: 600; color: var(--text-muted);">3/6</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,200,140,0.6), rgba(200,131,73,0.8)); box-shadow: 0 4px 16px rgba(200,131,73,0.4), inset 0 -4px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">🎧</div>
+            <div style="font-size: 10px; font-weight: 600;">5/6</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(60,35,30,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.5;">🛌</div>
+            <div style="font-size: 10px; color: var(--text-muted);">1/6</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,200,140,0.5), rgba(200,131,73,0.65)); box-shadow: 0 4px 12px rgba(200,131,73,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px;">🇩🇪</div>
+            <div style="font-size: 10px; font-weight: 600;">4/6</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(60,35,30,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 15px; opacity: 0.6;">📚</div>
+            <div style="font-size: 10px; color: var(--text-muted);">2/6</div>
+          </div>
+        </div>
+        <!-- Mini week grid below -->
+        <div style="display: flex; gap: 3px; justify-content: center; padding: 8px 0 0; border-top: 1px solid rgba(255,200,140,0.05); margin-top: 10px;">
+          <div style="font-size: 9px; color: var(--text-muted); padding: 2px 0;">This week:</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-primary);">S</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(200,131,73,0.65); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-primary);">M</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-primary);">T</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-primary);">W</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(200,131,73,0.7); box-shadow: 0 0 4px rgba(225,164,92,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-primary); font-weight: 700;">T</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(15,10,8,0.4); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-muted);">F</div>
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: rgba(15,10,8,0.3); opacity: 0.4; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-muted);">S</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 3. DESERT EMBERS (thematic — habits as campfire embers) ═══ -->
+    <div>
+      <div class="sample-label">3. Desert Embers</div>
+      <div class="sample-desc">Thematic to Sundown. Each habit is an ember in a campfire. Complete = glowing bright. Missed = dim coal. Your streak keeps the fire alive. The whole card feels like a warm hearth.</div>
+      <div class="shell"><div class="face" style="background: radial-gradient(ellipse at 50% 80%, rgba(120,60,30,0.15), var(--face-bg) 70%);">
+        <div class="card-hdr"><span class="card-title">Tonight's Fire</span><span class="badge">5 burning</span></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 16px 0;">
+          <!-- Glowing ember (complete) -->
+          <div style="text-align: center; position: relative;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,180,80,0.7) 0%, rgba(200,100,30,0.5) 50%, rgba(80,30,15,0.3) 100%); box-shadow: 0 0 20px rgba(255,160,60,0.4), 0 0 40px rgba(200,100,30,0.15), inset 0 -4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; animation: glow-pulse 4s ease-in-out infinite;">📋</div>
+            <div style="position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: rgba(255,200,100,0.8); animation: ember-float 2s ease-out infinite;"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 600;">RemNote</div>
+            <div style="font-size: 9px; color: var(--text-accent);">🔥 5 days</div>
+          </div>
+          <!-- Warm ember -->
+          <div style="text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(220,140,60,0.5) 0%, rgba(150,70,30,0.35) 50%, rgba(60,25,15,0.2) 100%); box-shadow: 0 0 12px rgba(200,120,40,0.25), inset 0 -4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px;">🏋</div>
+            <div style="font-size: 11px; margin-top: 6px;">Gym</div>
+            <div style="font-size: 9px; color: var(--text-muted);">3 days</div>
+          </div>
+          <!-- Bright ember -->
+          <div style="text-align: center; position: relative;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,180,80,0.7) 0%, rgba(200,100,30,0.5) 50%, rgba(80,30,15,0.3) 100%); box-shadow: 0 0 20px rgba(255,160,60,0.4), 0 0 40px rgba(200,100,30,0.15), inset 0 -4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; animation: glow-pulse 4s ease-in-out infinite 1s;">🎧</div>
+            <div style="position: absolute; top: -2px; right: 12px; width: 3px; height: 3px; border-radius: 50%; background: rgba(255,200,100,0.7); animation: ember-float 2.5s ease-out infinite 0.5s;"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 600;">Pimsleur</div>
+            <div style="font-size: 9px; color: var(--text-accent);">🔥 5 days</div>
+          </div>
+          <!-- Cold coal (incomplete) -->
+          <div style="text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, rgba(50,25,20,0.6) 0%, rgba(30,15,12,0.4) 100%); box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: 0.4;">🛌</div>
+            <div style="font-size: 11px; margin-top: 6px; opacity: 0.4;">Bed by 11</div>
+            <div style="font-size: 9px; color: var(--text-muted);">cold</div>
+          </div>
+          <!-- Warm -->
+          <div style="text-align: center; position: relative;">
+            <div style="width: 68px; height: 68px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(240,160,70,0.6) 0%, rgba(180,90,30,0.4) 50%, rgba(70,30,15,0.25) 100%); box-shadow: 0 0 16px rgba(230,140,50,0.3), inset 0 -4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 22px; animation: glow-pulse 4s ease-in-out infinite 2s;">🇩🇪</div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 600;">German</div>
+            <div style="font-size: 9px; color: var(--text-accent);">🔥 4 days</div>
+          </div>
+          <!-- Cool coal -->
+          <div style="text-align: center;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, rgba(50,25,20,0.6) 0%, rgba(30,15,12,0.4) 100%); box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: 0.4;">📚</div>
+            <div style="font-size: 11px; margin-top: 6px; opacity: 0.4;">Read Paper</div>
+            <div style="font-size: 9px; color: var(--text-muted);">cold</div>
+          </div>
+        </div>
+        <!-- Firelight line at bottom -->
+        <div style="height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent 5%, rgba(255,160,60,0.3) 30%, rgba(255,180,80,0.5) 50%, rgba(255,160,60,0.3) 70%, transparent 95%); margin-top: 8px;"></div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 4. VESSEL-STYLE FLOWING CARDS ═══ -->
+    <div>
+      <div class="sample-label">4. Vessel Flowing Cards</div>
+      <div class="sample-desc">Inspired by RonDesignLab's Vessel. Each habit gets its own mini card with warm typography and a subtle progress indicator. Elegant, editorial, no clutter. Typography-driven.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Today's Practice</span><span class="badge">Thursday</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Complete habit card -->
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(200,131,73,0.12) 0%, rgba(200,131,73,0.04) 100%); border-radius: 16px; border: 1px solid rgba(200,131,73,0.1);">
+            <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(200,131,73,0.25); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(200,131,73,0.15);">📋</div>
+            <div style="flex: 1;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;">RemNote</div>
+              <div style="font-size: 11px; color: var(--text-muted);">5 day streak</div>
+            </div>
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(200,131,73,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--text-accent); box-shadow: 0 0 8px rgba(225,164,92,0.2);">✓</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(200,131,73,0.12) 0%, rgba(200,131,73,0.04) 100%); border-radius: 16px; border: 1px solid rgba(200,131,73,0.1);">
+            <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(200,131,73,0.25); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(200,131,73,0.15);">🏋</div>
+            <div style="flex: 1;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;">Gym</div>
+              <div style="font-size: 11px; color: var(--text-muted);">3 day streak</div>
+            </div>
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(200,131,73,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--text-accent); box-shadow: 0 0 8px rgba(225,164,92,0.2);">✓</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(200,131,73,0.12) 0%, rgba(200,131,73,0.04) 100%); border-radius: 16px; border: 1px solid rgba(200,131,73,0.1);">
+            <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(200,131,73,0.25); display: flex; align-items: center; justify-content: center; font-size: 20px;">🎧</div>
+            <div style="flex: 1;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;">Pimsleur</div>
+              <div style="font-size: 11px; color: var(--text-muted);">5 day streak</div>
+            </div>
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(200,131,73,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--text-accent);">✓</div>
+          </div>
+          <!-- Incomplete -->
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255,200,140,0.04);">
+            <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(30,18,14,0.5); display: flex; align-items: center; justify-content: center; font-size: 20px; opacity: 0.5;">🛌</div>
+            <div style="flex: 1; opacity: 0.5;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;">Bed by 11</div>
+              <div style="font-size: 11px; color: var(--text-muted);">broken</div>
+            </div>
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 5. CONSTELLATION (habits as stars connecting) ═══ -->
+    <div>
+      <div class="sample-label">5. Night Sky Constellation</div>
+      <div class="sample-desc">Thematic to Sundown. Each habit is a star. Complete ones glow bright and connect with golden lines forming a constellation. Your week's constellation grows as you complete habits.</div>
+      <div class="shell"><div class="face" style="min-height: 320px; padding: 20px;">
+        <div class="card-hdr"><span class="card-title">Tonight's Stars</span><span class="badge">5 of 6 lit</span></div>
+        <div style="position: relative; height: 240px;">
+          <!-- Connecting lines (SVG) -->
+          <svg style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;">
+            <line x1="18%" y1="25%" x2="45%" y2="15%" stroke="rgba(225,164,92,0.2)" stroke-width="1"/>
+            <line x1="45%" y1="15%" x2="75%" y2="30%" stroke="rgba(225,164,92,0.2)" stroke-width="1"/>
+            <line x1="75%" y1="30%" x2="85%" y2="65%" stroke="rgba(225,164,92,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="18%" y1="25%" x2="35%" y2="60%" stroke="rgba(225,164,92,0.2)" stroke-width="1"/>
+            <line x1="35%" y1="60%" x2="60%" y2="75%" stroke="rgba(225,164,92,0.2)" stroke-width="1"/>
+          </svg>
+          <!-- Stars -->
+          <div style="position: absolute; left: 14%; top: 18%; text-align: center;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle, rgba(255,200,120,0.5) 0%, rgba(200,131,73,0.2) 70%, transparent 100%); box-shadow: 0 0 16px rgba(255,200,120,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; animation: glow-pulse 5s ease-in-out infinite;">📋</div>
+            <div style="font-size: 10px; margin-top: 4px; font-weight: 600;">RemNote</div>
+          </div>
+          <div style="position: absolute; left: 40%; top: 8%; text-align: center;">
+            <div style="width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle, rgba(255,200,120,0.35) 0%, rgba(200,131,73,0.15) 70%, transparent 100%); box-shadow: 0 0 10px rgba(255,200,120,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏋</div>
+            <div style="font-size: 10px; margin-top: 4px;">Gym</div>
+          </div>
+          <div style="position: absolute; left: 70%; top: 22%; text-align: center;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle, rgba(255,200,120,0.5) 0%, rgba(200,131,73,0.2) 70%, transparent 100%); box-shadow: 0 0 16px rgba(255,200,120,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; animation: glow-pulse 5s ease-in-out infinite 1.5s;">🎧</div>
+            <div style="font-size: 10px; margin-top: 4px; font-weight: 600;">Pimsleur</div>
+          </div>
+          <div style="position: absolute; left: 80%; top: 58%; text-align: center;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(40,20,15,0.4); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; opacity: 0.35;">🛌</div>
+            <div style="font-size: 9px; margin-top: 3px; opacity: 0.35;">Bed</div>
+          </div>
+          <div style="position: absolute; left: 30%; top: 52%; text-align: center;">
+            <div style="width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle, rgba(255,200,120,0.45) 0%, rgba(200,131,73,0.18) 70%, transparent 100%); box-shadow: 0 0 14px rgba(255,200,120,0.25); display: flex; align-items: center; justify-content: center; font-size: 17px; animation: glow-pulse 5s ease-in-out infinite 3s;">🇩🇪</div>
+            <div style="font-size: 10px; margin-top: 4px;">German</div>
+          </div>
+          <div style="position: absolute; left: 55%; top: 68%; text-align: center;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle, rgba(255,200,120,0.4) 0%, rgba(200,131,73,0.15) 70%, transparent 100%); box-shadow: 0 0 12px rgba(255,200,120,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; animation: glow-pulse 5s ease-in-out infinite 2s;">📚</div>
+            <div style="font-size: 10px; margin-top: 4px;">Read</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 6. SUNRISE HORIZON (habits as sun rising) ═══ -->
+    <div>
+      <div class="sample-label">6. Sunrise Horizon</div>
+      <div class="sample-desc">The more habits you complete, the higher the sun rises. 0 done = dark night. All done = full sunrise flooding the card with golden light. Your progress literally brings the dawn.</div>
+      <div class="shell"><div class="face" style="min-height: 300px; padding: 0; overflow: hidden; position: relative;">
+        <!-- Sky gradient (changes with completion) — 5/6 done = nearly sunrise -->
+        <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(200,100,40,0.25) 0%, rgba(120,50,30,0.15) 30%, rgba(40,20,25,0.3) 60%, rgba(20,10,15,0.4) 100%); z-index: 0;"></div>
+        <!-- Sun (positioned based on completion — 83% = near top) -->
+        <div style="position: absolute; bottom: 60%; left: 50%; transform: translateX(-50%); width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(255,220,150,0.6) 0%, rgba(255,180,80,0.3) 40%, transparent 70%); box-shadow: 0 0 40px rgba(255,180,80,0.3), 0 0 80px rgba(255,160,60,0.15); z-index: 1;"></div>
+        <!-- Horizon line -->
+        <div style="position: absolute; bottom: 25%; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,180,100,0.2), transparent); z-index: 2;"></div>
+        <!-- Content -->
+        <div style="position: relative; z-index: 3; padding: 20px;">
+          <div class="card-hdr"><span class="card-title" style="text-shadow: 0 0 20px rgba(255,180,80,0.3);">Sundown</span><span class="badge">5/6</span></div>
+          <div style="display: flex; gap: 8px; justify-content: center; margin-top: 120px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,200,120,0.4); box-shadow: 0 0 10px rgba(255,200,120,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,200,120,0.3); box-shadow: 0 0 8px rgba(255,200,120,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏋</div>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,200,120,0.4); box-shadow: 0 0 10px rgba(255,200,120,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px;">🎧</div>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(30,15,12,0.5); display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0.3;">🛌</div>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,200,120,0.35); box-shadow: 0 0 8px rgba(255,200,120,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px;">🇩🇪</div>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,200,120,0.35); box-shadow: 0 0 8px rgba(255,200,120,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px;">📚</div>
+          </div>
+          <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-secondary);">Almost sunrise — 1 habit to go</div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

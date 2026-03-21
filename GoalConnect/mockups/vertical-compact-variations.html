@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vertical Compact — 6 Variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* PARTICLES */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 78%; bottom: 38%; animation-duration: 16s; animation-delay: 3s; width: 2.5px; height: 2.5px; }
+  .particle:nth-child(7) { left: 42%; bottom: 34%; animation-duration: 11s; animation-delay: 7s; animation-name: float-up-2; }
+  .particle:nth-child(8) { left: 88%; bottom: 30%; animation-duration: 13s; animation-delay: 5s; }
+
+  /* PAGE LAYOUT */
+  .page-content {
+    position: relative; z-index: 5;
+    max-width: 820px; margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .page-subtitle {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px; color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 48px;
+    letter-spacing: 0.5px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 32px;
+  }
+
+  .variation-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .variation-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--text-accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .variation-desc {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 16px;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  /* BASE CARD (game UI shell) */
+  .card {
+    width: 100%; max-width: 320px;
+    background: var(--shell-bg);
+    border-radius: 16px;
+    border: 1px solid rgba(225,180,120,0.12);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  /* Light ray */
+  .card::before {
+    content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+    width: 180px; height: 120px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(225,180,120,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  /* Subsurface scattering edge */
+  .card::after {
+    content: ''; position: absolute; inset: 0; border-radius: 16px; pointer-events: none; z-index: 0;
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.1), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+
+  .card-face {
+    position: relative; z-index: 1;
+    margin: 10px;
+    border-radius: 10px;
+    background: var(--face-bg);
+    box-shadow: var(--face-inset);
+    padding: 20px 18px;
+  }
+
+  /* SHARED TYPOGRAPHY */
+  .label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  /* HORIZON LINE — shared progress bar */
+  .horizon-line {
+    position: relative;
+    height: 3px;
+    background: rgba(225,180,120,0.1);
+    border-radius: 2px;
+    overflow: visible;
+    margin: 8px 0;
+  }
+  .horizon-fill {
+    position: absolute; top: 0; left: 0; height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.5), rgba(225,164,92,0.9));
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 16px rgba(225,164,92,0.2);
+  }
+  .horizon-orb {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-accent);
+    box-shadow: 0 0 6px rgba(225,164,92,0.6), 0 0 12px rgba(225,164,92,0.3);
+  }
+  .horizon-label-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .horizon-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+  }
+  .horizon-stat {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* DIVIDER */
+  .glow-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.3), transparent);
+    margin: 14px 0;
+  }
+
+  /* ANIMATIONS */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(225,164,92,0.3), 0 0 24px rgba(225,164,92,0.15); }
+    50% { box-shadow: 0 0 18px rgba(225,164,92,0.5), 0 0 36px rgba(225,164,92,0.25); }
+  }
+  @keyframes breathe-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes pulse-ember {
+    0%, 100% { box-shadow: 0 0 10px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2), 0 0 30px rgba(225,164,92,0.1); transform: scale(1); }
+    50% { box-shadow: 0 0 14px rgba(225,164,92,0.6), 0 0 28px rgba(225,164,92,0.3), 0 0 40px rgba(225,164,92,0.15); transform: scale(1.04); }
+  }
+  @keyframes halo-breathe {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.08); }
+  }
+
+  /* =========================================
+     VARIATION 1 — NUMBER-LED
+     ========================================= */
+  .v1-level-tiny {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .v1-big-number {
+    position: relative;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 60px; font-weight: 700; line-height: 1;
+    color: var(--text-primary);
+    text-align: center;
+    text-shadow: 0 0 20px rgba(225,164,92,0.4), 0 0 40px rgba(225,164,92,0.2);
+  }
+  .v1-big-number::after {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px; height: 90px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: halo-breathe 4s ease-in-out infinite;
+  }
+  .v1-streak-line {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 6px;
+  }
+  .v1-reward-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .v1-xp {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* =========================================
+     VARIATION 2 — CIRCLE BADGE TOP
+     ========================================= */
+  .v2-badge-wrapper {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 10px;
+  }
+  .v2-badge {
+    position: relative;
+    width: 70px; height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(120,70,50,0.6), rgba(55,28,35,0.9));
+    border: 1.5px solid rgba(225,164,92,0.35);
+    box-shadow: 0 0 16px rgba(225,164,92,0.2), 0 0 32px rgba(225,164,92,0.1);
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+  .v2-badge-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-primary);
+    text-shadow: 0 0 8px rgba(225,164,92,0.3);
+    position: relative; z-index: 2;
+  }
+  /* Stardust ring: 28 dots around the circle */
+  .v2-stardust {
+    position: absolute; inset: -10px;
+  }
+  .v2-dot {
+    position: absolute;
+    width: 4px; height: 4px; border-radius: 50%;
+    top: 50%; left: 50%;
+    transform-origin: center center;
+  }
+  .v2-dot.lit {
+    background: var(--text-accent);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6);
+  }
+  .v2-dot.dim {
+    background: rgba(225,180,120,0.15);
+  }
+  .v2-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* =========================================
+     VARIATION 3 — STACKED HORIZON LINES
+     ========================================= */
+  .v3-section { margin-bottom: 18px; }
+  .v3-section:last-child { margin-bottom: 0; }
+
+  /* =========================================
+     VARIATION 4 — CENTERED GLOW COLUMN
+     ========================================= */
+  .v4-face {
+    position: relative; z-index: 1;
+    margin: 10px;
+    border-radius: 10px;
+    background: var(--face-bg);
+    box-shadow: var(--face-inset);
+    padding: 28px 18px;
+    overflow: hidden;
+  }
+  .v4-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.12) 0%, rgba(225,164,92,0.05) 40%, transparent 70%);
+    pointer-events: none;
+    animation: halo-breathe 5s ease-in-out infinite;
+  }
+  .v4-level {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-primary);
+    text-align: center;
+    text-shadow: 0 0 16px rgba(225,164,92,0.3);
+    position: relative; z-index: 1;
+  }
+  .v4-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 4px;
+    position: relative; z-index: 1;
+  }
+  .v4-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.25), transparent);
+    margin: 16px 20px;
+    position: relative; z-index: 1;
+  }
+  .v4-reward-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    position: relative; z-index: 1;
+  }
+  .v4-reward-stat {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; color: var(--text-muted);
+    text-align: center;
+    margin-top: 4px;
+    position: relative; z-index: 1;
+  }
+  .v4-progress-wrapper {
+    position: relative; z-index: 1;
+    margin-top: 10px; padding: 0 8px;
+  }
+
+  /* =========================================
+     VARIATION 5 — PILL BADGES STACKED
+     ========================================= */
+  .v5-pill {
+    position: relative;
+    border-radius: 50px;
+    padding: 10px 20px;
+    text-align: center;
+    border: 1px solid rgba(225,164,92,0.2);
+    margin-bottom: 8px;
+  }
+  .v5-pill-primary {
+    background: linear-gradient(135deg, rgba(120,65,45,0.5), rgba(85,48,52,0.5));
+    box-shadow: 0 0 12px rgba(225,164,92,0.15), inset 0 1px 0 rgba(255,200,140,0.1);
+  }
+  .v5-pill-secondary {
+    background: rgba(65,35,40,0.4);
+    border-color: rgba(225,180,120,0.1);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.05);
+  }
+  .v5-pill-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-primary);
+  }
+  .v5-pill-text-dim {
+    color: var(--text-secondary);
+  }
+  .v5-progress {
+    margin: 6px 20px 0;
+  }
+
+  /* =========================================
+     VARIATION 6 — EMBER + LINE
+     ========================================= */
+  .v6-ember-wrapper {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 12px;
+  }
+  .v6-ember-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .v6-ember {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 40% 35%, rgba(180,100,50,0.7), rgba(100,45,35,0.8));
+    border: 1px solid rgba(225,164,92,0.3);
+    animation: pulse-ember 3s ease-in-out infinite;
+  }
+  .v6-ember-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: 0 0 8px rgba(225,164,92,0.4);
+  }
+  .v6-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+  .v6-lines {
+    margin-top: 6px;
+  }
+  .v6-line-section {
+    margin-bottom: 12px;
+  }
+  .v6-line-section:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+</div>
+
+<div class="page-content">
+  <div class="page-title">Vertical Compact</div>
+  <div class="page-subtitle">6 layout variations — narrow stacked reward + streak cards</div>
+
+  <div class="grid">
+
+    <!-- ============ V1: NUMBER-LED ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">1. Number-Led</div>
+      <div class="variation-desc">Giant level number with warm halo glow dominates the card. Clean sectioned data below.</div>
+      <div class="card">
+        <div class="card-face">
+          <div class="v1-level-tiny label">Level</div>
+          <div class="v1-big-number">3</div>
+          <div class="v1-streak-line">22 Day Streak</div>
+
+          <div class="glow-divider"></div>
+
+          <div class="horizon-label-row">
+            <span class="horizon-name">Level 4</span>
+            <span class="horizon-stat">79%</span>
+          </div>
+          <div class="horizon-line">
+            <div class="horizon-fill" style="width: 79%;"></div>
+            <div class="horizon-orb" style="left: 79%;"></div>
+          </div>
+
+          <div class="glow-divider"></div>
+
+          <div class="v1-reward-label">Custom Scrub Cap</div>
+          <div class="horizon-line">
+            <div class="horizon-fill" style="width: 68%;"></div>
+            <div class="horizon-orb" style="left: 68%;"></div>
+          </div>
+          <div class="v1-xp">341 / 500 XP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V2: CIRCLE BADGE TOP ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">2. Circle Badge Top</div>
+      <div class="variation-desc">Glowing circle badge with stardust ring of 28 dots. 22 lit, 6 dim.</div>
+      <div class="card">
+        <div class="card-face">
+          <div class="v2-badge-wrapper">
+            <div class="v2-badge">
+              <div class="v2-stardust" id="stardust-ring"></div>
+              <span class="v2-badge-text">Lvl 3</span>
+            </div>
+            <div class="v2-days">22 Days</div>
+          </div>
+
+          <div class="glow-divider"></div>
+
+          <div class="horizon-label-row">
+            <span class="horizon-name">Level 4</span>
+            <span class="horizon-stat">22 / 28 days</span>
+          </div>
+          <div class="horizon-line">
+            <div class="horizon-fill" style="width: 79%;"></div>
+            <div class="horizon-orb" style="left: 79%;"></div>
+          </div>
+
+          <div class="glow-divider"></div>
+
+          <div class="horizon-label-row">
+            <span class="horizon-name">Custom Scrub Cap</span>
+            <span class="horizon-stat">341 / 500 XP</span>
+          </div>
+          <div class="horizon-line">
+            <div class="horizon-fill" style="width: 68%;"></div>
+            <div class="horizon-orb" style="left: 68%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V3: STACKED HORIZON LINES ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">3. Stacked Horizon Lines</div>
+      <div class="variation-desc">Pure minimalism. Two beautiful glowing horizon lines. No badges, no shapes.</div>
+      <div class="card">
+        <div class="card-face">
+          <div class="v3-section">
+            <div class="horizon-label-row">
+              <span class="horizon-name">Level 4</span>
+              <span class="horizon-stat">22 / 28 Days</span>
+            </div>
+            <div class="horizon-line" style="height: 4px;">
+              <div class="horizon-fill" style="width: 79%; height: 100%;"></div>
+              <div class="horizon-orb" style="left: 79%; width: 10px; height: 10px;"></div>
+            </div>
+            <div style="text-align: right; margin-top: 4px;">
+              <span class="horizon-stat" style="font-size: 10px; color: var(--text-muted);">79% to next level</span>
+            </div>
+          </div>
+
+          <div class="glow-divider"></div>
+
+          <div class="v3-section">
+            <div class="horizon-label-row">
+              <span class="horizon-name">Custom Scrub Cap</span>
+              <span class="horizon-stat">341 / 500 XP</span>
+            </div>
+            <div class="horizon-line" style="height: 4px;">
+              <div class="horizon-fill" style="width: 68%; height: 100%;"></div>
+              <div class="horizon-orb" style="left: 68%; width: 10px; height: 10px;"></div>
+            </div>
+            <div style="text-align: right; margin-top: 4px;">
+              <span class="horizon-stat" style="font-size: 10px; color: var(--text-muted);">68% earned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V4: CENTERED GLOW COLUMN ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">4. Centered Glow Column</div>
+      <div class="variation-desc">Typography floating in a warm ambient glow pool. No shapes. The glow IS the design.</div>
+      <div class="card">
+        <div class="v4-face">
+          <div class="v4-glow"></div>
+          <div class="v4-level">Level 3</div>
+          <div class="v4-streak">22 Day Streak</div>
+          <div class="v4-divider"></div>
+          <div class="v4-reward-name">Custom Scrub Cap</div>
+          <div class="v4-reward-stat">341 / 500 XP</div>
+          <div class="v4-progress-wrapper">
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V5: PILL BADGES STACKED ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">5. Pill Badges Stacked</div>
+      <div class="variation-desc">Two horizontal pills with warm border glow. Compact, scannable, data-rich.</div>
+      <div class="card">
+        <div class="card-face">
+          <div class="v5-pill v5-pill-primary">
+            <span class="v5-pill-text">Lvl 3 &mdash; 22 Days</span>
+          </div>
+          <div class="v5-progress">
+            <div class="horizon-label-row">
+              <span class="horizon-stat" style="font-size: 10px;">Level 4</span>
+              <span class="horizon-stat" style="font-size: 10px;">79%</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 79%;"></div>
+              <div class="horizon-orb" style="left: 79%;"></div>
+            </div>
+          </div>
+
+          <div style="height: 12px;"></div>
+
+          <div class="v5-pill v5-pill-secondary">
+            <span class="v5-pill-text v5-pill-text-dim">Scrub Cap &mdash; 341/500 XP</span>
+          </div>
+          <div class="v5-progress">
+            <div class="horizon-label-row">
+              <span class="horizon-stat" style="font-size: 10px;">Custom Scrub Cap</span>
+              <span class="horizon-stat" style="font-size: 10px;">68%</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V6: EMBER + LINE ============ -->
+    <div class="variation-slot">
+      <div class="variation-label">6. Ember + Line</div>
+      <div class="variation-desc">Warm pulsing ember orb with level number. Horizon lines deliver the data below.</div>
+      <div class="card">
+        <div class="card-face">
+          <div class="v6-ember-wrapper">
+            <div class="v6-ember-label">Level</div>
+            <div class="v6-ember">
+              <span class="v6-ember-num">3</span>
+            </div>
+            <div class="v6-days">22 Days</div>
+          </div>
+
+          <div class="v6-lines">
+            <div class="v6-line-section">
+              <div class="horizon-label-row">
+                <span class="horizon-name">Level 4</span>
+                <span class="horizon-stat">22 / 28</span>
+              </div>
+              <div class="horizon-line">
+                <div class="horizon-fill" style="width: 79%;"></div>
+                <div class="horizon-orb" style="left: 79%;"></div>
+              </div>
+            </div>
+
+            <div class="v6-line-section">
+              <div class="horizon-label-row">
+                <span class="horizon-name">Custom Scrub Cap</span>
+                <span class="horizon-stat">341 / 500 XP</span>
+              </div>
+              <div class="horizon-line">
+                <div class="horizon-fill" style="width: 68%;"></div>
+                <div class="horizon-orb" style="left: 68%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /page-content -->
+
+<script>
+  // Generate stardust ring for V2 (28 dots, 22 lit)
+  const ring = document.getElementById('stardust-ring');
+  const radius = 45; // px from center
+  for (let i = 0; i < 28; i++) {
+    const angle = (i / 28) * Math.PI * 2 - Math.PI / 2; // start from top
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    const dot = document.createElement('div');
+    dot.className = 'v2-dot ' + (i < 22 ? 'lit' : 'dim');
+    dot.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    ring.appendChild(dot);
+  }
+</script>
+
+</body>
+</html>

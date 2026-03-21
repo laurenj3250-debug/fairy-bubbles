@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Card Sampler v3 — Extremely Glowy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --glow-amber: rgba(225,164,92,0.5);
+    --glow-amber-soft: rgba(225,164,92,0.25);
+    --glow-amber-faint: rgba(225,164,92,0.08);
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* PAGE HEADER */
+  .page-header { text-align: center; margin-bottom: 48px; padding-top: 20px; }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 6px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 48px;
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, rgba(255,220,160,0.08) 0%, transparent 40%, transparent 60%, rgba(255,200,140,0.04) 100%);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 28px 24px 24px;
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  .face::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: linear-gradient(170deg, rgba(255,220,160,0.06) 0%, transparent 30%),
+                linear-gradient(190deg, rgba(255,200,140,0.03) 0%, transparent 25%);
+    mix-blend-mode: screen;
+  }
+  .face::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(225,164,92,0.06) 0%, transparent 70%);
+  }
+  .face > * { position: relative; z-index: 2; }
+
+  /* CARD TITLES */
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 500; color: var(--text-primary);
+    margin-bottom: 4px; letter-spacing: 1px;
+    text-shadow: 0 0 30px rgba(225,164,92,0.2);
+  }
+  .card-subtitle {
+    font-size: 12px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  /* ============================================================
+     ANIMATIONS
+     ============================================================ */
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.04); }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes slow-drift {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  @keyframes star-twinkle {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  @keyframes ember-rise {
+    0%, 100% { opacity: 0.7; filter: brightness(0.9); }
+    50% { opacity: 1; filter: brightness(1.15); }
+  }
+  @keyframes nebula-shift {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  @keyframes number-glow {
+    0%, 100% { text-shadow: 0 0 20px rgba(225,164,92,0.3), 0 0 60px rgba(225,164,92,0.15); }
+    50% { text-shadow: 0 0 30px rgba(225,164,92,0.5), 0 0 80px rgba(225,164,92,0.25), 0 0 120px rgba(225,164,92,0.1); }
+  }
+
+  /* ============================================================
+     1. GLOWING POOLS
+     ============================================================ */
+  .pools-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px 24px;
+    padding: 8px 0;
+  }
+  .pool-item {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .pool-orb {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pool-glow {
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.6) 0%, rgba(225,164,92,0.2) 35%, rgba(225,164,92,0.05) 60%, transparent 80%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+  .pool-glow-inner {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,160,0.8) 0%, rgba(255,200,140,0.3) 30%, transparent 65%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+  .pool-fraction {
+    position: absolute;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px rgba(225,164,92,0.5);
+  }
+  .pool-label {
+    text-align: center;
+  }
+  .pool-label .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 500; color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+  .pool-label .pct {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* Pool sizes based on completion */
+  .pool-25 .pool-glow { width: 80px; height: 80px; opacity: 0.65; }
+  .pool-25 .pool-glow-inner { width: 36px; height: 36px; top: 22px; left: 22px; }
+  .pool-35 .pool-glow { width: 92px; height: 92px; opacity: 0.75; }
+  .pool-35 .pool-glow-inner { width: 44px; height: 44px; top: 24px; left: 24px; }
+  .pool-50 .pool-glow { width: 110px; height: 110px; opacity: 0.9; }
+  .pool-50 .pool-glow-inner { width: 54px; height: 54px; top: 28px; left: 28px; }
+
+  .pool-item:nth-child(1) .pool-glow { animation-delay: 0s; }
+  .pool-item:nth-child(1) .pool-glow-inner { animation-delay: 0.2s; }
+  .pool-item:nth-child(2) .pool-glow { animation-delay: 0.8s; }
+  .pool-item:nth-child(2) .pool-glow-inner { animation-delay: 1s; }
+  .pool-item:nth-child(3) .pool-glow { animation-delay: 1.6s; }
+  .pool-item:nth-child(3) .pool-glow-inner { animation-delay: 1.8s; }
+  .pool-item:nth-child(4) .pool-glow { animation-delay: 2.4s; }
+  .pool-item:nth-child(4) .pool-glow-inner { animation-delay: 2.6s; }
+
+  /* ============================================================
+     2. HORIZON LINES
+     ============================================================ */
+  .horizon-stack {
+    display: flex; flex-direction: column; gap: 28px;
+    padding: 8px 0;
+  }
+  .horizon-item {}
+  .horizon-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .horizon-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 500; color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+  .horizon-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; color: var(--text-muted);
+  }
+  .horizon-track {
+    position: relative; height: 3px; border-radius: 2px;
+    background: rgba(169,130,106,0.12);
+  }
+  .horizon-fill {
+    position: absolute; top: -1px; left: 0; height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.9), rgba(255,200,140,0.7));
+    box-shadow:
+      0 0 4px rgba(225,164,92,0.6),
+      0 0 12px rgba(225,164,92,0.4),
+      0 0 24px rgba(225,164,92,0.2),
+      0 0 48px rgba(225,164,92,0.1);
+    filter: drop-shadow(0 0 6px rgba(225,164,92,0.5));
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  .horizon-fill::after {
+    content: '';
+    position: absolute; right: -3px; top: -4px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,230,180,0.9) 0%, rgba(225,164,92,0.4) 50%, transparent 70%);
+    box-shadow:
+      0 0 6px rgba(255,220,160,0.8),
+      0 0 16px rgba(225,164,92,0.5),
+      0 0 32px rgba(225,164,92,0.2);
+  }
+  .horizon-item:nth-child(1) .horizon-fill { animation-delay: 0s; }
+  .horizon-item:nth-child(2) .horizon-fill { animation-delay: 0.7s; }
+  .horizon-item:nth-child(3) .horizon-fill { animation-delay: 1.4s; }
+  .horizon-item:nth-child(4) .horizon-fill { animation-delay: 2.1s; }
+
+  /* Ghost line */
+  .horizon-track::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(169,130,106,0.06), rgba(169,130,106,0.12), rgba(169,130,106,0.06));
+  }
+
+  /* ============================================================
+     3. CELESTIAL BODIES
+     ============================================================ */
+  .celestial-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px 24px;
+    padding: 8px 0;
+  }
+  .celestial-item {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .celestial-body {
+    position: relative; width: 80px; height: 80px;
+    animation: slow-drift 6s ease-in-out infinite;
+  }
+  .celestial-item:nth-child(2) .celestial-body { animation-delay: 1.5s; }
+  .celestial-item:nth-child(3) .celestial-body { animation-delay: 3s; }
+  .celestial-item:nth-child(4) .celestial-body { animation-delay: 4.5s; }
+
+  .celestial-halo {
+    position: absolute; inset: -20px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.12) 0%, rgba(225,164,92,0.04) 50%, transparent 70%);
+    animation: breathe 5s ease-in-out infinite;
+  }
+  .celestial-item:nth-child(1) .celestial-halo { animation-delay: 0.3s; }
+  .celestial-item:nth-child(2) .celestial-halo { animation-delay: 1.2s; }
+  .celestial-item:nth-child(3) .celestial-halo { animation-delay: 2.1s; }
+  .celestial-item:nth-child(4) .celestial-halo { animation-delay: 3s; }
+
+  .celestial-disc {
+    position: absolute; inset: 0; border-radius: 50%;
+    overflow: hidden;
+  }
+  /* The illuminated portion */
+  .celestial-lit {
+    position: absolute; top: 0; bottom: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(255,230,180,0.95) 0%, rgba(225,164,92,0.7) 50%, rgba(200,140,60,0.5) 100%);
+    box-shadow:
+      inset 0 0 15px rgba(255,220,160,0.4),
+      0 0 8px rgba(225,164,92,0.4),
+      0 0 20px rgba(225,164,92,0.2),
+      0 0 40px rgba(225,164,92,0.1);
+  }
+  /* Shadow mask for crescent/half */
+  .celestial-shadow {
+    position: absolute; top: -2px; bottom: -2px;
+    background: radial-gradient(circle at 50% 50%, rgba(30,15,20,0.95) 0%, rgba(30,15,20,0.9) 70%, rgba(30,15,20,0.7) 100%);
+  }
+  /* 25% = crescent */
+  .phase-25 .celestial-lit { left: 0; right: 0; }
+  .phase-25 .celestial-shadow { left: 20%; right: -5%; border-radius: 0 50% 50% 0; }
+  /* 35% = fat crescent */
+  .phase-35 .celestial-lit { left: 0; right: 0; }
+  .phase-35 .celestial-shadow { left: 35%; right: -5%; border-radius: 0 50% 50% 0; }
+  /* 50% = half moon */
+  .phase-50 .celestial-lit { left: 0; right: 0; }
+  .phase-50 .celestial-shadow { left: 50%; right: -5%; border-radius: 0 50% 50% 0; }
+
+  .celestial-label {
+    text-align: center;
+  }
+  .celestial-label .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 500; color: var(--text-secondary);
+  }
+  .celestial-label .pct {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* ============================================================
+     4. EMBER VESSELS
+     ============================================================ */
+  .vessel-row {
+    display: flex; justify-content: space-around; align-items: flex-end;
+    padding: 16px 0 8px;
+    gap: 8px;
+  }
+  .vessel-item {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    flex: 1;
+  }
+  .vessel-wrap {
+    position: relative; width: 64px; height: 90px;
+  }
+  .vessel-svg {
+    position: absolute; inset: 0; z-index: 3;
+  }
+  .vessel-svg path {
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.6;
+  }
+  .vessel-fill-wrap {
+    position: absolute; bottom: 8px; left: 10px; right: 10px;
+    overflow: hidden; z-index: 2;
+    border-radius: 0 0 10px 10px;
+  }
+  .vessel-liquid {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(225,164,92,0.8) 0%, rgba(255,200,140,0.5) 60%, rgba(255,220,160,0.2) 100%);
+    box-shadow:
+      0 0 6px rgba(225,164,92,0.5),
+      0 0 16px rgba(225,164,92,0.3),
+      0 0 32px rgba(225,164,92,0.15),
+      inset 0 4px 12px rgba(255,220,160,0.3);
+    animation: ember-rise 3.5s ease-in-out infinite;
+    border-radius: 0 0 10px 10px;
+  }
+  .vessel-liquid::before {
+    content: '';
+    position: absolute; top: -2px; left: 10%; right: 10%; height: 4px;
+    background: radial-gradient(ellipse, rgba(255,230,180,0.9) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(1px);
+  }
+  .vessel-item:nth-child(1) .vessel-liquid { animation-delay: 0s; }
+  .vessel-item:nth-child(2) .vessel-liquid { animation-delay: 0.9s; }
+  .vessel-item:nth-child(3) .vessel-liquid { animation-delay: 1.8s; }
+  .vessel-item:nth-child(4) .vessel-liquid { animation-delay: 2.7s; }
+
+  .vessel-label {
+    text-align: center;
+  }
+  .vessel-label .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    line-height: 1.3;
+  }
+  .vessel-label .frac {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* ============================================================
+     5. CONSTELLATION MAP
+     ============================================================ */
+  .constellation-wrap {
+    position: relative;
+    height: 280px;
+    margin: 8px 0;
+  }
+  /* Nebula background */
+  .constellation-nebula {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 55% 45%, rgba(225,164,92,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 40% 55%, rgba(200,100,60,0.06) 0%, transparent 60%);
+    animation: nebula-shift 8s ease-in-out infinite;
+  }
+  .constellation-canvas {
+    position: absolute; inset: 0;
+  }
+  .constellation-canvas svg {
+    width: 100%; height: 100%;
+  }
+  .constellation-line {
+    stroke: rgba(225,164,92,0.15);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+  }
+  .star-group { cursor: default; }
+  .star-core {
+    fill: rgba(255,230,180,0.9);
+  }
+  .star-glow-1 {
+    fill: rgba(225,164,92,0.3);
+  }
+  .star-glow-2 {
+    fill: rgba(225,164,92,0.1);
+  }
+  .star-label {
+    fill: var(--text-muted);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+  .star-pct {
+    fill: var(--text-secondary);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Star animations */
+  .star-25 .star-core { r: 4; animation: star-twinkle 3s ease-in-out infinite; }
+  .star-25 .star-glow-1 { r: 10; animation: star-twinkle 3s ease-in-out infinite; }
+  .star-25 .star-glow-2 { r: 18; animation: star-twinkle 3s ease-in-out infinite; }
+
+  .star-35 .star-core { r: 5; animation: star-twinkle 3.5s ease-in-out infinite; }
+  .star-35 .star-glow-1 { r: 13; animation: star-twinkle 3.5s ease-in-out infinite; }
+  .star-35 .star-glow-2 { r: 22; animation: star-twinkle 3.5s ease-in-out infinite; }
+
+  .star-50 .star-core { r: 6; animation: star-twinkle 4s ease-in-out infinite; }
+  .star-50 .star-glow-1 { r: 16; animation: star-twinkle 4s ease-in-out infinite; }
+  .star-50 .star-glow-2 { r: 28; animation: star-twinkle 4s ease-in-out infinite; }
+
+  .star-group:nth-child(5) * { animation-delay: 0s !important; }
+  .star-group:nth-child(6) * { animation-delay: 0.8s !important; }
+  .star-group:nth-child(7) * { animation-delay: 1.6s !important; }
+  .star-group:nth-child(8) * { animation-delay: 2.4s !important; }
+
+  /* ============================================================
+     6. WARM READINESS SCORE
+     ============================================================ */
+  .readiness-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0 8px;
+  }
+  .readiness-number-wrap {
+    position: relative;
+    margin-bottom: 32px;
+  }
+  .readiness-ambient {
+    position: absolute;
+    width: 200px; height: 200px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.15) 0%, rgba(225,164,92,0.05) 40%, transparent 70%);
+    animation: breathe 5s ease-in-out infinite;
+  }
+  .readiness-number {
+    position: relative;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 96px; font-weight: 400; line-height: 1;
+    color: var(--text-primary);
+    animation: number-glow 4s ease-in-out infinite;
+  }
+  .readiness-number .pct-sign {
+    font-size: 36px; font-weight: 300;
+    color: var(--text-secondary);
+    margin-left: 2px;
+  }
+  .readiness-label {
+    font-size: 12px; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase;
+    margin-top: 8px; position: relative;
+  }
+
+  .readiness-pills {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    width: 100%;
+  }
+  .readiness-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(45,22,28,0.5);
+    border: 1px solid rgba(169,130,106,0.1);
+    border-radius: 20px;
+    padding: 8px 14px;
+  }
+  .readiness-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(225,164,92,0.5);
+    flex-shrink: 0;
+  }
+  .readiness-dot.bright-25 {
+    background: rgba(225,164,92,0.45);
+    box-shadow: 0 0 4px rgba(225,164,92,0.3), 0 0 10px rgba(225,164,92,0.15);
+  }
+  .readiness-dot.bright-35 {
+    background: rgba(225,164,92,0.55);
+    box-shadow: 0 0 4px rgba(225,164,92,0.4), 0 0 12px rgba(225,164,92,0.2);
+  }
+  .readiness-dot.bright-50 {
+    background: rgba(255,210,140,0.75);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6), 0 0 12px rgba(225,164,92,0.35), 0 0 20px rgba(225,164,92,0.15);
+  }
+  .readiness-dot { animation: pulse-glow 3s ease-in-out infinite; }
+  .readiness-pill:nth-child(1) .readiness-dot { animation-delay: 0s; }
+  .readiness-pill:nth-child(2) .readiness-dot { animation-delay: 0.7s; }
+  .readiness-pill:nth-child(3) .readiness-dot { animation-delay: 1.4s; }
+  .readiness-pill:nth-child(4) .readiness-dot { animation-delay: 2.1s; }
+
+  .readiness-pill-name {
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .readiness-pill-frac {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; color: var(--text-muted); font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+
+<div class="content">
+  <div class="page-header">
+    <h1>Goal Concepts</h1>
+    <div class="sub">Ambient progress indicators &middot; 6 variations</div>
+  </div>
+
+  <!-- ============================================================
+       1. GLOWING POOLS
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Glowing Pools</div>
+      <div class="card-subtitle">Warm light, brighter when closer</div>
+
+      <div class="pools-grid">
+        <!-- Lifting: 25% -->
+        <div class="pool-item">
+          <div class="pool-orb pool-25">
+            <div class="pool-glow"></div>
+            <div class="pool-glow-inner"></div>
+            <div class="pool-fraction">51</div>
+          </div>
+          <div class="pool-label">
+            <div class="name">200 Lifting Days</div>
+            <div class="pct">25%</div>
+          </div>
+        </div>
+
+        <!-- de Lahunta: 35% -->
+        <div class="pool-item">
+          <div class="pool-orb pool-35">
+            <div class="pool-glow"></div>
+            <div class="pool-glow-inner"></div>
+            <div class="pool-fraction">9</div>
+          </div>
+          <div class="pool-label">
+            <div class="name">Complete de Lahunta</div>
+            <div class="pct">35%</div>
+          </div>
+        </div>
+
+        <!-- Books: 50% -->
+        <div class="pool-item">
+          <div class="pool-orb pool-50">
+            <div class="pool-glow"></div>
+            <div class="pool-glow-inner"></div>
+            <div class="pool-fraction">1</div>
+          </div>
+          <div class="pool-label">
+            <div class="name">2 Physical Books</div>
+            <div class="pct">50%</div>
+          </div>
+        </div>
+
+        <!-- Climbing: 25% -->
+        <div class="pool-item">
+          <div class="pool-orb pool-25">
+            <div class="pool-glow"></div>
+            <div class="pool-glow-inner"></div>
+            <div class="pool-fraction">3</div>
+          </div>
+          <div class="pool-label">
+            <div class="name">12 Outdoor Climbing</div>
+            <div class="pct">25%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. HORIZON LINES
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Horizon Lines</div>
+      <div class="card-subtitle">Lines of light across the desert</div>
+
+      <div class="horizon-stack">
+        <div class="horizon-item">
+          <div class="horizon-header">
+            <div class="horizon-name">200 Lifting Days</div>
+            <div class="horizon-frac">51 / 200</div>
+          </div>
+          <div class="horizon-track">
+            <div class="horizon-fill" style="width: 25.5%;"></div>
+          </div>
+        </div>
+
+        <div class="horizon-item">
+          <div class="horizon-header">
+            <div class="horizon-name">Complete de Lahunta</div>
+            <div class="horizon-frac">9 / 26</div>
+          </div>
+          <div class="horizon-track">
+            <div class="horizon-fill" style="width: 34.6%;"></div>
+          </div>
+        </div>
+
+        <div class="horizon-item">
+          <div class="horizon-header">
+            <div class="horizon-name">2 Physical Books</div>
+            <div class="horizon-frac">1 / 2</div>
+          </div>
+          <div class="horizon-track">
+            <div class="horizon-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <div class="horizon-item">
+          <div class="horizon-header">
+            <div class="horizon-name">12 Outdoor Climbing</div>
+            <div class="horizon-frac">3 / 12</div>
+          </div>
+          <div class="horizon-track">
+            <div class="horizon-fill" style="width: 25%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       3. CELESTIAL BODIES
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Celestial Bodies</div>
+      <div class="card-subtitle">Moon phases of progress</div>
+
+      <div class="celestial-grid">
+        <!-- Lifting: 25% = crescent -->
+        <div class="celestial-item">
+          <div class="celestial-body">
+            <div class="celestial-halo"></div>
+            <div class="celestial-disc phase-25">
+              <div class="celestial-lit"></div>
+              <div class="celestial-shadow"></div>
+            </div>
+          </div>
+          <div class="celestial-label">
+            <div class="name">200 Lifting Days</div>
+            <div class="pct">51 / 200</div>
+          </div>
+        </div>
+
+        <!-- de Lahunta: 35% -->
+        <div class="celestial-item">
+          <div class="celestial-body">
+            <div class="celestial-halo"></div>
+            <div class="celestial-disc phase-35">
+              <div class="celestial-lit"></div>
+              <div class="celestial-shadow"></div>
+            </div>
+          </div>
+          <div class="celestial-label">
+            <div class="name">Complete de Lahunta</div>
+            <div class="pct">9 / 26</div>
+          </div>
+        </div>
+
+        <!-- Books: 50% = half moon -->
+        <div class="celestial-item">
+          <div class="celestial-body">
+            <div class="celestial-halo"></div>
+            <div class="celestial-disc phase-50">
+              <div class="celestial-lit"></div>
+              <div class="celestial-shadow"></div>
+            </div>
+          </div>
+          <div class="celestial-label">
+            <div class="name">2 Physical Books</div>
+            <div class="pct">1 / 2</div>
+          </div>
+        </div>
+
+        <!-- Climbing: 25% = crescent -->
+        <div class="celestial-item">
+          <div class="celestial-body">
+            <div class="celestial-halo"></div>
+            <div class="celestial-disc phase-25">
+              <div class="celestial-lit"></div>
+              <div class="celestial-shadow"></div>
+            </div>
+          </div>
+          <div class="celestial-label">
+            <div class="name">12 Outdoor Climbing</div>
+            <div class="pct">3 / 12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       4. EMBER VESSELS
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Ember Vessels</div>
+      <div class="card-subtitle">Chalices filling with golden light</div>
+
+      <div class="vessel-row">
+        <!-- Lifting: 25% -->
+        <div class="vessel-item">
+          <div class="vessel-wrap">
+            <svg class="vessel-svg" viewBox="0 0 64 90">
+              <path d="M16 8 L12 10 L10 20 L14 65 C14 75 22 82 32 82 C42 82 50 75 50 65 L54 20 L52 10 L48 8" />
+              <path d="M16 8 L48 8" />
+              <path d="M22 4 L42 4 L48 8 L16 8 Z" />
+            </svg>
+            <div class="vessel-fill-wrap" style="height: 62px; bottom: 8px;">
+              <div class="vessel-liquid" style="height: 25%;"></div>
+            </div>
+          </div>
+          <div class="vessel-label">
+            <div class="name">Lifting</div>
+            <div class="frac">51 / 200</div>
+          </div>
+        </div>
+
+        <!-- de Lahunta: 35% -->
+        <div class="vessel-item">
+          <div class="vessel-wrap">
+            <svg class="vessel-svg" viewBox="0 0 64 90">
+              <path d="M16 8 L12 10 L10 20 L14 65 C14 75 22 82 32 82 C42 82 50 75 50 65 L54 20 L52 10 L48 8" />
+              <path d="M16 8 L48 8" />
+              <path d="M22 4 L42 4 L48 8 L16 8 Z" />
+            </svg>
+            <div class="vessel-fill-wrap" style="height: 62px; bottom: 8px;">
+              <div class="vessel-liquid" style="height: 35%;"></div>
+            </div>
+          </div>
+          <div class="vessel-label">
+            <div class="name">de Lahunta</div>
+            <div class="frac">9 / 26</div>
+          </div>
+        </div>
+
+        <!-- Books: 50% -->
+        <div class="vessel-item">
+          <div class="vessel-wrap">
+            <svg class="vessel-svg" viewBox="0 0 64 90">
+              <path d="M16 8 L12 10 L10 20 L14 65 C14 75 22 82 32 82 C42 82 50 75 50 65 L54 20 L52 10 L48 8" />
+              <path d="M16 8 L48 8" />
+              <path d="M22 4 L42 4 L48 8 L16 8 Z" />
+            </svg>
+            <div class="vessel-fill-wrap" style="height: 62px; bottom: 8px;">
+              <div class="vessel-liquid" style="height: 50%;"></div>
+            </div>
+          </div>
+          <div class="vessel-label">
+            <div class="name">Books</div>
+            <div class="frac">1 / 2</div>
+          </div>
+        </div>
+
+        <!-- Climbing: 25% -->
+        <div class="vessel-item">
+          <div class="vessel-wrap">
+            <svg class="vessel-svg" viewBox="0 0 64 90">
+              <path d="M16 8 L12 10 L10 20 L14 65 C14 75 22 82 32 82 C42 82 50 75 50 65 L54 20 L52 10 L48 8" />
+              <path d="M16 8 L48 8" />
+              <path d="M22 4 L42 4 L48 8 L16 8 Z" />
+            </svg>
+            <div class="vessel-fill-wrap" style="height: 62px; bottom: 8px;">
+              <div class="vessel-liquid" style="height: 25%;"></div>
+            </div>
+          </div>
+          <div class="vessel-label">
+            <div class="name">Climbing</div>
+            <div class="frac">3 / 12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       5. CONSTELLATION MAP
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Constellation Map</div>
+      <div class="card-subtitle">Stars in the desert sky</div>
+
+      <div class="constellation-wrap">
+        <div class="constellation-nebula"></div>
+        <div class="constellation-canvas">
+          <svg viewBox="0 0 700 280">
+            <!-- Constellation lines -->
+            <line class="constellation-line" x1="160" y1="90" x2="420" y2="60" />
+            <line class="constellation-line" x1="420" y1="60" x2="520" y2="150" />
+            <line class="constellation-line" x1="520" y1="150" x2="240" y2="200" />
+            <line class="constellation-line" x1="240" y1="200" x2="160" y2="90" />
+
+            <!-- Star: Lifting (25%) — top left -->
+            <g class="star-group star-25">
+              <circle class="star-glow-2" cx="160" cy="90" r="18" />
+              <circle class="star-glow-1" cx="160" cy="90" r="10" />
+              <circle class="star-core" cx="160" cy="90" r="4" />
+              <text class="star-label" x="160" y="126" text-anchor="middle">Lifting Days</text>
+              <text class="star-pct" x="160" y="75" text-anchor="middle">25%</text>
+            </g>
+
+            <!-- Star: de Lahunta (35%) — top right -->
+            <g class="star-group star-35">
+              <circle class="star-glow-2" cx="420" cy="60" r="22" />
+              <circle class="star-glow-1" cx="420" cy="60" r="13" />
+              <circle class="star-core" cx="420" cy="60" r="5" />
+              <text class="star-label" x="420" y="96" text-anchor="middle">de Lahunta</text>
+              <text class="star-pct" x="420" y="42" text-anchor="middle">35%</text>
+            </g>
+
+            <!-- Star: Books (50%) — brightest, right -->
+            <g class="star-group star-50">
+              <circle class="star-glow-2" cx="520" cy="150" r="28" />
+              <circle class="star-glow-1" cx="520" cy="150" r="16" />
+              <circle class="star-core" cx="520" cy="150" r="6" />
+              <text class="star-label" x="520" y="190" text-anchor="middle">Physical Books</text>
+              <text class="star-pct" x="520" y="136" text-anchor="middle">50%</text>
+            </g>
+
+            <!-- Star: Climbing (25%) — bottom left -->
+            <g class="star-group star-25">
+              <circle class="star-glow-2" cx="240" cy="200" r="18" />
+              <circle class="star-glow-1" cx="240" cy="200" r="10" />
+              <circle class="star-core" cx="240" cy="200" r="4" />
+              <text class="star-label" x="240" y="230" text-anchor="middle">Outdoor Climbing</text>
+              <text class="star-pct" x="240" y="185" text-anchor="middle">25%</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       6. WARM READINESS SCORE
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Warm Readiness</div>
+      <div class="card-subtitle">Overall goal progress</div>
+
+      <div class="readiness-wrap">
+        <div class="readiness-number-wrap">
+          <div class="readiness-ambient"></div>
+          <div class="readiness-number">
+            34<span class="pct-sign">%</span>
+          </div>
+          <div class="readiness-label">overall progress</div>
+        </div>
+
+        <div class="readiness-pills">
+          <div class="readiness-pill">
+            <div class="readiness-dot bright-25"></div>
+            <span class="readiness-pill-name">Lifting</span>
+            <span class="readiness-pill-frac">51/200</span>
+          </div>
+          <div class="readiness-pill">
+            <div class="readiness-dot bright-35"></div>
+            <span class="readiness-pill-name">de Lahunta</span>
+            <span class="readiness-pill-frac">9/26</span>
+          </div>
+          <div class="readiness-pill">
+            <div class="readiness-dot bright-50"></div>
+            <span class="readiness-pill-name">Books</span>
+            <span class="readiness-pill-frac">1/2</span>
+          </div>
+          <div class="readiness-pill">
+            <div class="readiness-dot bright-25"></div>
+            <span class="readiness-pill-name">Climbing</span>
+            <span class="readiness-pill-frac">3/12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

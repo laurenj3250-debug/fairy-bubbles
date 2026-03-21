@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Card Sampler v5 — Extremely Glowy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --glow-amber: rgba(225,164,92,0.5);
+    --glow-amber-soft: rgba(225,164,92,0.2);
+    --glow-amber-faint: rgba(225,164,92,0.08);
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* PAGE HEADER */
+  .page-header { text-align: center; margin-bottom: 48px; padding-top: 20px; }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 6px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 48px;
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, rgba(255,220,160,0.08) 0%, transparent 40%, transparent 60%, rgba(255,200,140,0.04) 100%);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 28px 24px 24px;
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  /* Light ray overlay */
+  .face::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: linear-gradient(170deg, rgba(255,220,160,0.06) 0%, transparent 30%),
+                linear-gradient(190deg, rgba(255,200,140,0.03) 0%, transparent 25%);
+  }
+  /* Ambient warmth at bottom */
+  .face::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(225,164,92,0.06) 0%, transparent 70%);
+  }
+  .face > * { position: relative; z-index: 2; }
+
+  /* CARD TITLES */
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 500; color: var(--text-primary);
+    margin-bottom: 4px; letter-spacing: 1px;
+    text-shadow: 0 0 30px rgba(225,164,92,0.2);
+  }
+  .card-subtitle {
+    font-size: 12px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  /* SHARED HABIT ICON */
+  .habit-icon svg {
+    width: 20px; height: 20px;
+    stroke: var(--text-accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; fill: none;
+  }
+
+  /* DAY LABELS */
+  .day-labels {
+    display: flex; gap: 0; justify-content: flex-end;
+    margin-bottom: 8px; padding-right: 0;
+  }
+  .day-label {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .day-label.today { color: var(--text-accent); font-weight: 600; }
+
+  /* ============================================================
+     1. GLOWING ORB GRID
+     ============================================================ */
+  .orb-grid .day-labels { padding-left: 140px; }
+  .orb-grid .day-label { width: 36px; }
+  .orb-row {
+    display: flex; align-items: center; margin-bottom: 12px;
+  }
+  .orb-row-label {
+    display: flex; align-items: center; gap: 8px; width: 140px; flex-shrink: 0;
+  }
+  .orb-row-label span {
+    font-size: 13px; color: var(--text-secondary); font-weight: 400;
+  }
+  .orb-days { display: flex; gap: 0; }
+  .orb-cell { width: 36px; display: flex; align-items: center; justify-content: center; }
+  .orb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(85,48,52,0.3);
+    border: 1px solid rgba(169,130,106,0.15);
+    transition: all 0.3s ease;
+  }
+  .orb.done {
+    background: radial-gradient(circle at 40% 35%, rgba(255,210,140,0.9), rgba(225,164,92,0.7));
+    border: 1px solid rgba(225,164,92,0.4);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6),
+                0 0 12px rgba(225,164,92,0.4),
+                0 0 24px rgba(225,164,92,0.15);
+    animation: orbPulse 3s ease-in-out infinite;
+  }
+  .orb.today-orb { width: 22px; height: 22px; }
+  .orb.today-orb.done {
+    box-shadow: 0 0 6px rgba(225,164,92,0.7),
+                0 0 16px rgba(225,164,92,0.5),
+                0 0 32px rgba(225,164,92,0.2),
+                0 0 48px rgba(225,164,92,0.08);
+  }
+  @keyframes orbPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+  }
+  .orb.done:nth-child(1) .orb { animation-delay: 0s; }
+  /* stagger via inline styles */
+
+  /* ============================================================
+     2. AURORA WAVES
+     ============================================================ */
+  .aurora-card svg { width: 100%; overflow: visible; }
+  .aurora-card .aurora-container { position: relative; height: 200px; margin-top: 12px; }
+  .aurora-card .aurora-svg { position: absolute; inset: 0; }
+  .aurora-legend {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;
+  }
+  .aurora-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .aurora-legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ============================================================
+     3. LANTERN ROW
+     ============================================================ */
+  .lantern-grid .day-labels { padding-left: 140px; }
+  .lantern-grid .day-label { width: 42px; }
+  .lantern-row {
+    display: flex; align-items: center; margin-bottom: 14px;
+  }
+  .lantern-row-label {
+    display: flex; align-items: center; gap: 8px; width: 140px; flex-shrink: 0;
+  }
+  .lantern-row-label span { font-size: 13px; color: var(--text-secondary); }
+  .lantern-days { display: flex; gap: 0; }
+  .lantern-cell { width: 42px; display: flex; align-items: center; justify-content: center; }
+  .lantern {
+    width: 24px; height: 32px; border-radius: 6px;
+    background: rgba(60,30,38,0.5);
+    border: 1px solid rgba(169,130,106,0.1);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .lantern.lit {
+    background: radial-gradient(ellipse at 50% 40%, rgba(255,220,160,0.85) 0%, rgba(225,164,92,0.5) 50%, rgba(180,100,40,0.3) 100%);
+    border: 1px solid rgba(225,164,92,0.3);
+    box-shadow: 0 0 8px rgba(225,164,92,0.5),
+                0 0 20px rgba(225,164,92,0.25),
+                0 0 40px rgba(225,164,92,0.1);
+    animation: lanternFlicker 4s ease-in-out infinite;
+  }
+  .lantern.lit::after {
+    content: ''; position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 6px; border-radius: 50%;
+    background: rgba(255,240,200,0.9);
+    box-shadow: 0 0 4px rgba(255,220,160,0.8), 0 0 8px rgba(225,164,92,0.5);
+  }
+  .lantern.today-lantern { width: 28px; height: 36px; }
+  .lantern.today-lantern.lit {
+    box-shadow: 0 0 10px rgba(225,164,92,0.6),
+                0 0 24px rgba(225,164,92,0.35),
+                0 0 48px rgba(225,164,92,0.15);
+  }
+  /* Hanging string */
+  .lantern::before {
+    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 1px; height: 6px; background: rgba(169,130,106,0.3);
+  }
+  @keyframes lanternFlicker {
+    0%, 100% { opacity: 1; }
+    25% { opacity: 0.92; }
+    50% { opacity: 0.85; }
+    75% { opacity: 0.95; }
+  }
+
+  /* ============================================================
+     4. HALO RINGS
+     ============================================================ */
+  .halo-grid .day-labels { padding-left: 140px; }
+  .halo-grid .day-label { width: 36px; }
+  .halo-row {
+    display: flex; align-items: center; margin-bottom: 14px;
+  }
+  .halo-row-label {
+    display: flex; align-items: center; gap: 8px; width: 140px; flex-shrink: 0;
+  }
+  .halo-row-label span { font-size: 13px; color: var(--text-secondary); }
+  .halo-days { display: flex; gap: 0; }
+  .halo-cell { width: 36px; display: flex; align-items: center; justify-content: center; }
+  .halo-ring {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid rgba(169,130,106,0.15);
+    transition: all 0.3s ease;
+  }
+  .halo-ring.done {
+    border-color: rgba(225,164,92,0.7);
+    box-shadow: 0 0 4px rgba(225,164,92,0.6),
+                0 0 10px rgba(225,164,92,0.4),
+                0 0 20px rgba(225,164,92,0.2),
+                0 0 30px rgba(225,164,92,0.08);
+    animation: haloPulse 3.5s ease-in-out infinite;
+  }
+  .halo-ring.today-halo { width: 20px; height: 20px; }
+  .halo-ring.today-halo.done {
+    border-width: 2px;
+    box-shadow: 0 0 6px rgba(225,164,92,0.7),
+                0 0 14px rgba(225,164,92,0.5),
+                0 0 28px rgba(225,164,92,0.25),
+                0 0 42px rgba(225,164,92,0.1);
+  }
+  /* Streak glow band — done rings overlap via negative margin visually */
+  @keyframes haloPulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(225,164,92,0.6), 0 0 10px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2); }
+    50% { box-shadow: 0 0 6px rgba(225,164,92,0.7), 0 0 14px rgba(225,164,92,0.5), 0 0 26px rgba(225,164,92,0.25); }
+  }
+
+  /* ============================================================
+     5. EMBER FIELD
+     ============================================================ */
+  .ember-field-container { position: relative; }
+  .ember-day-labels {
+    display: flex; gap: 0; padding-left: 48px; margin-bottom: 8px;
+  }
+  .ember-day-label { width: 40px; text-align: center; font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
+  .ember-day-label.today { color: var(--text-accent); font-weight: 600; }
+  .ember-row { display: flex; align-items: center; margin-bottom: 10px; }
+  .ember-label {
+    width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .ember-label svg {
+    width: 18px; height: 18px;
+    stroke: var(--text-muted); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; fill: none;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.15));
+  }
+  .ember-dots { display: flex; gap: 0; }
+  .ember-cell { width: 40px; display: flex; align-items: center; justify-content: center; }
+  .ember {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(60,30,38,0.4);
+    transition: all 0.3s ease;
+  }
+  .ember.lit {
+    background: radial-gradient(circle at 45% 40%, rgba(255,220,160,0.95), rgba(225,164,92,0.6));
+    box-shadow: 0 0 3px rgba(225,164,92,0.7),
+                0 0 8px rgba(225,164,92,0.4),
+                0 0 16px rgba(225,164,92,0.15);
+    animation: emberGlow 4s ease-in-out infinite;
+  }
+  .ember.lit.bright {
+    width: 12px; height: 12px;
+    box-shadow: 0 0 4px rgba(225,164,92,0.8),
+                0 0 12px rgba(225,164,92,0.5),
+                0 0 24px rgba(225,164,92,0.2);
+  }
+  .ember-heat {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 80px; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 100%, rgba(225,164,92,0.08) 0%, transparent 70%);
+  }
+  @keyframes emberGlow {
+    0%, 100% { opacity: 1; }
+    30% { opacity: 0.8; }
+    60% { opacity: 0.95; }
+  }
+
+  /* ============================================================
+     6. STARDUST TRAIL
+     ============================================================ */
+  .stardust-grid .day-labels { padding-left: 140px; display: flex; margin-bottom: 10px; }
+  .stardust-grid .day-label { width: 44px; text-align: center; font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 500; }
+  .stardust-grid .day-label.today { color: var(--text-accent); font-weight: 700; }
+  .stardust-row {
+    display: flex; align-items: center; margin-bottom: 16px; position: relative;
+  }
+  .stardust-row-label {
+    display: flex; align-items: center; gap: 8px; width: 140px; flex-shrink: 0;
+  }
+  .stardust-row-label span { font-size: 13px; color: var(--text-secondary); }
+  .stardust-days { display: flex; gap: 0; position: relative; }
+  .stardust-cell { width: 44px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; }
+  .star-point {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(85,48,52,0.4);
+    border: 1px solid rgba(169,130,106,0.12);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .star-point.done {
+    width: 10px; height: 10px;
+    background: radial-gradient(circle at 40% 35%, #FFF5E0, #E1A45C);
+    border: none;
+    box-shadow: 0 0 3px rgba(255,240,200,0.9),
+                0 0 8px rgba(225,164,92,0.7),
+                0 0 18px rgba(225,164,92,0.35),
+                0 0 30px rgba(225,164,92,0.12);
+    animation: starTwinkle 3s ease-in-out infinite;
+  }
+  .star-point.today-star { width: 12px; height: 12px; }
+  .star-point.today-star.done {
+    width: 14px; height: 14px;
+    box-shadow: 0 0 4px rgba(255,240,200,1),
+                0 0 10px rgba(225,164,92,0.8),
+                0 0 24px rgba(225,164,92,0.45),
+                0 0 40px rgba(225,164,92,0.2),
+                0 0 60px rgba(225,164,92,0.08);
+  }
+  /* Constellation line between done stars */
+  .stardust-line {
+    position: absolute; top: 50%; height: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(225,164,92,0.15));
+    box-shadow: 0 0 4px rgba(225,164,92,0.2);
+    z-index: 1; transform: translateY(-50%);
+  }
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(0.92); }
+  }
+
+  /* ============================================================
+     FLOATING PARTICLES (ambient)
+     ============================================================ */
+  .particles {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.3), transparent);
+    animation: particleFloat linear infinite;
+  }
+  @keyframes particleFloat {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<!-- Floating particles -->
+<div class="particles">
+  <div class="particle" style="width:3px;height:3px;left:12%;bottom:-10px;animation-duration:18s;animation-delay:0s;"></div>
+  <div class="particle" style="width:4px;height:4px;left:28%;bottom:-10px;animation-duration:22s;animation-delay:3s;"></div>
+  <div class="particle" style="width:2px;height:2px;left:45%;bottom:-10px;animation-duration:16s;animation-delay:7s;"></div>
+  <div class="particle" style="width:3px;height:3px;left:62%;bottom:-10px;animation-duration:20s;animation-delay:2s;"></div>
+  <div class="particle" style="width:2px;height:2px;left:78%;bottom:-10px;animation-duration:24s;animation-delay:5s;"></div>
+  <div class="particle" style="width:4px;height:4px;left:88%;bottom:-10px;animation-duration:19s;animation-delay:9s;"></div>
+  <div class="particle" style="width:2px;height:2px;left:35%;bottom:-10px;animation-duration:21s;animation-delay:11s;"></div>
+  <div class="particle" style="width:3px;height:3px;left:55%;bottom:-10px;animation-duration:17s;animation-delay:4s;"></div>
+</div>
+
+<div class="content">
+
+  <div class="page-header">
+    <h1>Habit Cards v5</h1>
+    <div class="sub">Extremely Glowy &mdash; 6 Concepts</div>
+  </div>
+
+  <!-- ============================================================
+       1. GLOWING ORB GRID
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Glowing Orb Grid</div>
+      <div class="card-subtitle">Constellation of warm lights</div>
+      <div class="orb-grid">
+        <div class="day-labels" style="padding-left:140px;">
+          <div class="day-label" style="width:36px;">Sun</div>
+          <div class="day-label" style="width:36px;">Mon</div>
+          <div class="day-label" style="width:36px;">Tue</div>
+          <div class="day-label" style="width:36px;">Wed</div>
+          <div class="day-label today" style="width:36px;">Thu</div>
+          <div class="day-label" style="width:36px;">Fri</div>
+          <div class="day-label" style="width:36px;">Sat</div>
+        </div>
+
+        <!-- RemNote: ✓✓✓✓✓-- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+            <span>RemNote</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.4s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.8s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.2s"></div></div>
+            <div class="orb-cell"><div class="orb done today-orb" style="animation-delay:1.6s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.0s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.4s"></div></div>
+          </div>
+        </div>
+        <!-- Gym: -✓-✓✓-- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg></div>
+            <span>Gym</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb" style="animation-delay:0.2s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.6s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:1.0s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.4s"></div></div>
+            <div class="orb-cell"><div class="orb done today-orb" style="animation-delay:1.8s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.2s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.6s"></div></div>
+          </div>
+        </div>
+        <!-- Pimsleur: ✓✓✓✓✓-- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+            <span>Pimsleur</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.3s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.7s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.1s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.5s"></div></div>
+            <div class="orb-cell"><div class="orb done today-orb" style="animation-delay:1.9s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.3s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.7s"></div></div>
+          </div>
+        </div>
+        <!-- Bed by 11: ✓-✓-✓-- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+            <span>Bed by 11</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.1s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:0.5s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.9s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:1.3s"></div></div>
+            <div class="orb-cell"><div class="orb today-orb" style="animation-delay:1.7s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.1s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.5s"></div></div>
+          </div>
+        </div>
+        <!-- German: ✓✓✓✓--- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+            <span>German</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.35s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.75s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.15s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:1.55s"></div></div>
+            <div class="orb-cell"><div class="orb today-orb" style="animation-delay:1.95s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.35s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.75s"></div></div>
+          </div>
+        </div>
+        <!-- Read Paper: -✓--✓-- -->
+        <div class="orb-row">
+          <div class="orb-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <span>Read Paper</span>
+          </div>
+          <div class="orb-days">
+            <div class="orb-cell"><div class="orb" style="animation-delay:0.15s"></div></div>
+            <div class="orb-cell"><div class="orb done" style="animation-delay:0.55s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:0.95s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:1.35s"></div></div>
+            <div class="orb-cell"><div class="orb done today-orb" style="animation-delay:1.75s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.15s"></div></div>
+            <div class="orb-cell"><div class="orb" style="animation-delay:2.55s"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. AURORA WAVES
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Aurora Waves</div>
+      <div class="card-subtitle">Warm northern lights</div>
+      <div class="aurora-card">
+        <div class="aurora-container">
+          <svg class="aurora-svg" viewBox="0 0 700 200" preserveAspectRatio="none" style="width:100%;height:200px;">
+            <defs>
+              <filter id="auroraGlow">
+                <feGaussianBlur stdDeviation="6" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="auroraGlow2">
+                <feGaussianBlur stdDeviation="10" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(225,164,92,0.5)"/>
+                <stop offset="100%" stop-color="rgba(225,164,92,0)"/>
+              </linearGradient>
+              <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(255,180,100,0.35)"/>
+                <stop offset="100%" stop-color="rgba(255,180,100,0)"/>
+              </linearGradient>
+              <linearGradient id="grad3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(200,140,70,0.4)"/>
+                <stop offset="100%" stop-color="rgba(200,140,70,0)"/>
+              </linearGradient>
+              <linearGradient id="grad4" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(240,190,120,0.3)"/>
+                <stop offset="100%" stop-color="rgba(240,190,120,0)"/>
+              </linearGradient>
+              <linearGradient id="grad5" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(180,120,60,0.35)"/>
+                <stop offset="100%" stop-color="rgba(180,120,60,0)"/>
+              </linearGradient>
+              <linearGradient id="grad6" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(255,200,130,0.25)"/>
+                <stop offset="100%" stop-color="rgba(255,200,130,0)"/>
+              </linearGradient>
+            </defs>
+            <!-- Day markers -->
+            <text x="50" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Sun</text>
+            <text x="150" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Mon</text>
+            <text x="250" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Tue</text>
+            <text x="350" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Wed</text>
+            <text x="450" y="195" fill="rgba(225,164,92,0.7)" font-size="10" text-anchor="middle" font-family="Source Sans 3" font-weight="600">Thu</text>
+            <text x="550" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Fri</text>
+            <text x="650" y="195" fill="rgba(169,130,106,0.5)" font-size="10" text-anchor="middle" font-family="Source Sans 3">Sat</text>
+            <!-- Today line -->
+            <line x1="450" y1="0" x2="450" y2="180" stroke="rgba(225,164,92,0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+
+            <!-- RemNote: ✓✓✓✓✓-- (highest wave) -->
+            <path d="M0,180 Q25,180 50,50 Q75,40 100,45 Q125,35 150,40 Q200,30 250,35 Q300,25 350,30 Q400,20 450,25 Q500,160 550,170 Q600,175 650,178 L700,180 L700,180 L0,180 Z"
+                  fill="url(#grad1)" filter="url(#auroraGlow)" opacity="0.7">
+              <animate attributeName="opacity" values="0.7;0.55;0.7" dur="5s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- Pimsleur: ✓✓✓✓✓-- -->
+            <path d="M0,180 Q25,180 50,60 Q100,50 150,55 Q200,45 250,48 Q300,38 350,42 Q400,32 450,38 Q500,160 550,172 Q600,178 650,180 L700,180 L0,180 Z"
+                  fill="url(#grad2)" filter="url(#auroraGlow)" opacity="0.6">
+              <animate attributeName="opacity" values="0.6;0.45;0.6" dur="6s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- German: ✓✓✓✓--- -->
+            <path d="M0,180 Q25,180 50,70 Q100,60 150,65 Q200,55 250,58 Q300,48 350,52 Q400,150 450,165 Q500,172 550,175 Q600,178 650,180 L700,180 L0,180 Z"
+                  fill="url(#grad3)" filter="url(#auroraGlow2)" opacity="0.65">
+              <animate attributeName="opacity" values="0.65;0.5;0.65" dur="7s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- Gym: -✓-✓✓-- -->
+            <path d="M0,180 Q25,180 50,170 Q100,160 150,80 Q200,165 250,168 Q300,155 350,85 Q400,75 450,80 Q500,165 550,175 Q600,178 650,180 L700,180 L0,180 Z"
+                  fill="url(#grad4)" filter="url(#auroraGlow)" opacity="0.5">
+              <animate attributeName="opacity" values="0.5;0.38;0.5" dur="5.5s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- Bed by 11: ✓-✓-✓-- -->
+            <path d="M0,180 Q25,180 50,100 Q100,170 150,170 Q200,160 250,105 Q300,170 350,172 Q400,165 450,175 Q500,175 550,178 Q600,180 650,180 L700,180 L0,180 Z"
+                  fill="url(#grad5)" filter="url(#auroraGlow2)" opacity="0.55">
+              <animate attributeName="opacity" values="0.55;0.4;0.55" dur="6.5s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- Read Paper: -✓--✓-- -->
+            <path d="M0,180 Q25,180 50,170 Q100,160 150,110 Q200,165 250,170 Q300,172 350,174 Q400,160 450,115 Q500,170 550,175 Q600,178 650,180 L700,180 L0,180 Z"
+                  fill="url(#grad6)" filter="url(#auroraGlow)" opacity="0.45">
+              <animate attributeName="opacity" values="0.45;0.32;0.45" dur="7.5s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+        </div>
+        <div class="aurora-legend">
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(225,164,92,0.7);box-shadow:0 0 6px rgba(225,164,92,0.4);"></div> RemNote
+          </div>
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(255,180,100,0.6);box-shadow:0 0 6px rgba(255,180,100,0.3);"></div> Pimsleur
+          </div>
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(200,140,70,0.65);box-shadow:0 0 6px rgba(200,140,70,0.3);"></div> German
+          </div>
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(240,190,120,0.5);box-shadow:0 0 6px rgba(240,190,120,0.3);"></div> Gym
+          </div>
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(180,120,60,0.55);box-shadow:0 0 6px rgba(180,120,60,0.3);"></div> Bed by 11
+          </div>
+          <div class="aurora-legend-item">
+            <div class="aurora-legend-swatch" style="background:rgba(255,200,130,0.45);box-shadow:0 0 6px rgba(255,200,130,0.3);"></div> Read Paper
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       3. LANTERN ROW
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Lantern Row</div>
+      <div class="card-subtitle">Desert night festival</div>
+      <div class="lantern-grid">
+        <div class="day-labels" style="padding-left:140px;">
+          <div class="day-label" style="width:42px;">Sun</div>
+          <div class="day-label" style="width:42px;">Mon</div>
+          <div class="day-label" style="width:42px;">Tue</div>
+          <div class="day-label" style="width:42px;">Wed</div>
+          <div class="day-label today" style="width:42px;">Thu</div>
+          <div class="day-label" style="width:42px;">Fri</div>
+          <div class="day-label" style="width:42px;">Sat</div>
+        </div>
+
+        <!-- RemNote: ✓✓✓✓✓-- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+            <span>RemNote</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.5s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.5s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit today-lantern" style="animation-delay:2s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+        <!-- Gym: -✓-✓✓-- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg></div>
+            <span>Gym</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.3s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.3s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit today-lantern" style="animation-delay:1.8s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+        <!-- Pimsleur: ✓✓✓✓✓-- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+            <span>Pimsleur</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.2s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.7s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.2s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.7s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit today-lantern" style="animation-delay:2.2s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+        <!-- Bed by 11: ✓-✓-✓-- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+            <span>Bed by 11</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.4s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.4s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern today-lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+        <!-- German: ✓✓✓✓--- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+            <span>German</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.1s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.6s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.1s"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:1.6s"></div></div>
+            <div class="lantern-cell"><div class="lantern today-lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+        <!-- Read Paper: -✓--✓-- -->
+        <div class="lantern-row">
+          <div class="lantern-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <span>Read Paper</span>
+          </div>
+          <div class="lantern-days">
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern lit" style="animation-delay:0.8s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern lit today-lantern" style="animation-delay:2.3s"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+            <div class="lantern-cell"><div class="lantern"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       4. HALO RINGS
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Halo Rings</div>
+      <div class="card-subtitle">String of warm fairy lights</div>
+      <div class="halo-grid">
+        <div class="day-labels" style="padding-left:140px;">
+          <div class="day-label" style="width:36px;">Sun</div>
+          <div class="day-label" style="width:36px;">Mon</div>
+          <div class="day-label" style="width:36px;">Tue</div>
+          <div class="day-label" style="width:36px;">Wed</div>
+          <div class="day-label today" style="width:36px;">Thu</div>
+          <div class="day-label" style="width:36px;">Fri</div>
+          <div class="day-label" style="width:36px;">Sat</div>
+        </div>
+
+        <!-- RemNote: ✓✓✓✓✓-- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+            <span>RemNote</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.3s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.6s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.9s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done today-halo" style="animation-delay:1.2s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+        <!-- Gym: -✓-✓✓-- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg></div>
+            <span>Gym</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.2s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.8s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done today-halo" style="animation-delay:1.1s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+        <!-- Pimsleur: ✓✓✓✓✓-- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+            <span>Pimsleur</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.15s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.45s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.75s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:1.05s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done today-halo" style="animation-delay:1.35s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+        <!-- Bed by 11: ✓-✓-✓-- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+            <span>Bed by 11</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.1s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.7s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring today-halo"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+        <!-- German: ✓✓✓✓--- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+            <span>German</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.05s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.35s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.65s"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.95s"></div></div>
+            <div class="halo-cell"><div class="halo-ring today-halo"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+        <!-- Read Paper: -✓--✓-- -->
+        <div class="halo-row">
+          <div class="halo-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <span>Read Paper</span>
+          </div>
+          <div class="halo-days">
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring done" style="animation-delay:0.25s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring done today-halo" style="animation-delay:1.25s"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+            <div class="halo-cell"><div class="halo-ring"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       5. EMBER FIELD
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Ember Field</div>
+      <div class="card-subtitle">A warm field of light points</div>
+      <div class="ember-field-container">
+        <div class="ember-day-labels">
+          <div class="ember-day-label" style="width:40px;">Sun</div>
+          <div class="ember-day-label" style="width:40px;">Mon</div>
+          <div class="ember-day-label" style="width:40px;">Tue</div>
+          <div class="ember-day-label" style="width:40px;">Wed</div>
+          <div class="ember-day-label today" style="width:40px;">Thu</div>
+          <div class="ember-day-label" style="width:40px;">Fri</div>
+          <div class="ember-day-label" style="width:40px;">Sat</div>
+        </div>
+
+        <!-- RemNote: ✓✓✓✓✓-- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.5s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.5s"></div></div>
+            <div class="ember-cell"><div class="ember lit bright" style="animation-delay:2s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <!-- Gym: -✓-✓✓-- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.3s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.3s"></div></div>
+            <div class="ember-cell"><div class="ember lit bright" style="animation-delay:1.8s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <!-- Pimsleur: ✓✓✓✓✓-- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.2s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.7s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.2s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.7s"></div></div>
+            <div class="ember-cell"><div class="ember lit bright" style="animation-delay:2.2s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <!-- Bed by 11: ✓-✓-✓-- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.4s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.4s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember bright"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <!-- German: ✓✓✓✓--- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.1s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.6s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.1s"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:1.6s"></div></div>
+            <div class="ember-cell"><div class="ember bright"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <!-- Read Paper: -✓--✓-- -->
+        <div class="ember-row">
+          <div class="ember-label"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="ember-dots">
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember lit" style="animation-delay:0.8s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember lit bright" style="animation-delay:2.3s"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+            <div class="ember-cell"><div class="ember"></div></div>
+          </div>
+        </div>
+        <div class="ember-heat"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       6. STARDUST TRAIL
+       ============================================================ -->
+  <div class="shell">
+    <div class="face">
+      <div class="card-title">Stardust Trail</div>
+      <div class="card-subtitle">Night sky above the desert</div>
+      <div class="stardust-grid">
+        <div class="day-labels" style="padding-left:140px;">
+          <div class="day-label" style="width:44px;">Sun</div>
+          <div class="day-label" style="width:44px;">Mon</div>
+          <div class="day-label" style="width:44px;">Tue</div>
+          <div class="day-label" style="width:44px;">Wed</div>
+          <div class="day-label today" style="width:44px;">Thu</div>
+          <div class="day-label" style="width:44px;">Fri</div>
+          <div class="day-label" style="width:44px;">Sat</div>
+        </div>
+
+        <!-- RemNote: ✓✓✓✓✓-- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+            <span>RemNote</span>
+          </div>
+          <div class="stardust-days">
+            <!-- Constellation lines for consecutive done days -->
+            <div class="stardust-line" style="left:22px;width:44px;"></div>
+            <div class="stardust-line" style="left:66px;width:44px;"></div>
+            <div class="stardust-line" style="left:110px;width:44px;"></div>
+            <div class="stardust-line" style="left:154px;width:44px;"></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.4s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.8s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:1.2s"></div></div>
+            <div class="stardust-cell"><div class="star-point done today-star" style="animation-delay:1.6s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+        <!-- Gym: -✓-✓✓-- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg></div>
+            <span>Gym</span>
+          </div>
+          <div class="stardust-days">
+            <div class="stardust-line" style="left:154px;width:44px;"></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.3s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:1.1s"></div></div>
+            <div class="stardust-cell"><div class="star-point done today-star" style="animation-delay:1.5s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+        <!-- Pimsleur: ✓✓✓✓✓-- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg></div>
+            <span>Pimsleur</span>
+          </div>
+          <div class="stardust-days">
+            <div class="stardust-line" style="left:22px;width:44px;"></div>
+            <div class="stardust-line" style="left:66px;width:44px;"></div>
+            <div class="stardust-line" style="left:110px;width:44px;"></div>
+            <div class="stardust-line" style="left:154px;width:44px;"></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.2s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.6s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:1.0s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:1.4s"></div></div>
+            <div class="stardust-cell"><div class="star-point done today-star" style="animation-delay:1.8s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+        <!-- Bed by 11: ✓-✓-✓-- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+            <span>Bed by 11</span>
+          </div>
+          <div class="stardust-days">
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.1s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.9s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point today-star"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+        <!-- German: ✓✓✓✓--- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+            <span>German</span>
+          </div>
+          <div class="stardust-days">
+            <div class="stardust-line" style="left:22px;width:44px;"></div>
+            <div class="stardust-line" style="left:66px;width:44px;"></div>
+            <div class="stardust-line" style="left:110px;width:44px;"></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.15s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.55s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.95s"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:1.35s"></div></div>
+            <div class="stardust-cell"><div class="star-point today-star"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+        <!-- Read Paper: -✓--✓-- -->
+        <div class="stardust-row">
+          <div class="stardust-row-label">
+            <div class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <span>Read Paper</span>
+          </div>
+          <div class="stardust-days">
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point done" style="animation-delay:0.45s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point done today-star" style="animation-delay:1.65s"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+            <div class="stardust-cell"><div class="star-point"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

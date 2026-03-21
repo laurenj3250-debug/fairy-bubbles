@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown Card v4 — Sculpted Ceramic Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════════════════════════
+     SUNDOWN v4 — Every component is a sculpted 3-layer object
+     Layer 1: Outer shell (darker body)
+     Layer 2: Top face (lighter than shell)
+     Layer 3: Shadow base (contact + ambient)
+
+     NO GLOW. Mass + shadow + edge light ONLY.
+     ══════════════════════════════════════════════════════════ */
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #140B0D 0%, #1A1014 100%);
+    font-family: 'Source Sans 3', sans-serif;
+    color: #F2DFC8;
+    padding: 48px 40px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* Page title */
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: rgba(242, 223, 200, 0.25);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     A. NAV DOCK — Floating sculpted capsule (56-68px tall)
+     ══════════════════════════════════════════════════════════ */
+  .nav-dock {
+    /* LAYER 1: Outer shell — darker body */
+    background: linear-gradient(
+      180deg,
+      #3B241F 0%,
+      #2E1B17 60%,
+      #231410 100%
+    );
+    /* Thickness simulation */
+    border-top: 2px solid rgba(201, 138, 82, 0.22);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.45);
+    border-left: 1.5px solid rgba(201, 138, 82, 0.10);
+    border-right: 1.5px solid rgba(201, 138, 82, 0.10);
+    border-radius: 32px;
+    /* LAYER 3: Shadow base */
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(201, 138, 82, 0.15);
+    padding: 10px 20px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    height: 62px;
+    max-width: 760px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-pill {
+    padding: 10px 22px;
+    border-radius: 26px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #B89476;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .nav-pill:hover:not(.active) {
+    color: #F2DFC8;
+  }
+
+  /* Active tab = RAISED ceramic insert — physically lifted */
+  .nav-pill.active {
+    /* LAYER 2: Top face — lighter than shell */
+    background: linear-gradient(
+      180deg,
+      #6B3F2B 0%,
+      #4E2E1F 100%
+    );
+    color: #F2DFC8;
+    font-weight: 600;
+    border-top: 1.5px solid rgba(201, 138, 82, 0.30);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.40);
+    border-left: 1px solid rgba(201, 138, 82, 0.12);
+    border-right: 1px solid rgba(201, 138, 82, 0.12);
+    box-shadow:
+      0 3px 7px rgba(0,0,0,0.35),
+      0 6px 14px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.12);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     B. STAT CHIPS — Mini ceramic badges, thick enough to press
+     ══════════════════════════════════════════════════════════ */
+  .stat-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    /* 3-LAYER: outer shell */
+    background: linear-gradient(
+      180deg,
+      #5A3825 0%,
+      #3B241F 50%,
+      #2A1A14 100%
+    );
+    /* Thickness: lighter top, darker bottom edge */
+    border-top: 2px solid rgba(201, 138, 82, 0.28);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.50);
+    border-left: 1px solid rgba(201, 138, 82, 0.10);
+    border-right: 1px solid rgba(201, 138, 82, 0.10);
+    border-radius: 22px;
+    /* Shadow base */
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.10);
+    /* Chunky padding — 20-30% taller than typical */
+    padding: 14px 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: #B89476;
+    font-weight: 500;
+  }
+
+  .stat-chip .val {
+    color: #C98A52;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 19px;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     SHARED: Outer slab (large content cards)
+     Heavy ceramic slab — 3-layer with VISIBLE thickness
+     ══════════════════════════════════════════════════════════ */
+  .outer-slab {
+    /* LAYER 1: Outer shell — deep cocoa */
+    background: linear-gradient(
+      180deg,
+      #4A2D22 0%,
+      #3B241F 30%,
+      #2E1B17 70%,
+      #231410 100%
+    );
+    /* Thickness simulation: 12-16px visually */
+    border-top: 2.5px solid rgba(201, 138, 82, 0.25);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.50);
+    border-left: 1.5px solid rgba(201, 138, 82, 0.08);
+    border-right: 1.5px solid rgba(201, 138, 82, 0.08);
+    border-radius: 34px;
+    /* LAYER 3: Shadow base */
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.10);
+    padding: 32px;
+    position: relative;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     SHARED: Inset tray (recessed area inside slab)
+     ══════════════════════════════════════════════════════════ */
+  .inset-tray {
+    background: linear-gradient(
+      180deg,
+      #1E130F 0%,
+      #231710 100%
+    );
+    border-top: 1.5px solid rgba(0, 0, 0, 0.50);
+    border-bottom: 1px solid rgba(255, 220, 180, 0.04);
+    border-left: 1px solid rgba(0, 0, 0, 0.20);
+    border-right: 1px solid rgba(0, 0, 0, 0.20);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow:
+      inset 0 2px 3px rgba(255, 220, 180, 0.06),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.22);
+  }
+
+  /* Card header */
+  .slab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    padding: 0 4px;
+  }
+
+  .slab-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: #F2DFC8;
+  }
+
+  .slab-badge {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 7px 18px;
+    color: #C98A52;
+    background: linear-gradient(180deg, #4A2D22 0%, #3B241F 100%);
+    border-top: 1.5px solid rgba(201, 138, 82, 0.22);
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.40);
+    border-radius: 16px;
+    box-shadow:
+      0 2px 5px rgba(0,0,0,0.30),
+      inset 0 1px 0 rgba(255, 220, 180, 0.08);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     C-1. "THIS WEEK" CARD — Habit grid
+     ══════════════════════════════════════════════════════════ */
+  .main-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 960px;
+    align-items: flex-start;
+  }
+
+  .main-row > .outer-slab { flex: 1; min-width: 0; }
+
+  /* Progress ring in header */
+  .header-ring {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: 48px;
+    height: 48px;
+  }
+
+  .ring-wrap svg {
+    width: 48px;
+    height: 48px;
+    transform: rotate(-90deg);
+    /* NO glow filter */
+  }
+
+  .ring-wrap .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #C98A52;
+  }
+
+  .ring-subtext {
+    font-size: 11px;
+    color: #B89476;
+  }
+
+  /* Habit grid */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 140px repeat(7, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+
+  .day-hdr {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(184, 148, 118, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding-bottom: 4px;
+  }
+
+  .day-hdr.today-hdr {
+    color: #C98A52;
+  }
+
+  .habit-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(242, 223, 200, 0.72);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+
+  .habit-name .hi { font-size: 15px; }
+
+  /* ── Habit cells: the sculpted objects ── */
+  .hcell {
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 44px;
+    max-height: 44px;
+    margin: 0 auto;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  /* Empty = recessed dark cavity */
+  .hcell.empty {
+    background: linear-gradient(180deg, #140F0C 0%, #1A1310 100%);
+    border-top: 1.5px solid rgba(0, 0, 0, 0.55);
+    border-bottom: 1px solid rgba(255, 220, 180, 0.03);
+    box-shadow:
+      inset 0 2px 3px rgba(255, 220, 180, 0.06),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.22);
+    color: transparent;
+  }
+
+  /* Done = raised warm clay tile */
+  .hcell.done {
+    /* LAYER 2: Top face — warm bronze */
+    background: linear-gradient(
+      180deg,
+      #7A4A30 0%,
+      #5A3520 50%,
+      #432818 100%
+    );
+    /* Thickness */
+    border-top: 2px solid rgba(201, 138, 82, 0.35);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.45);
+    border-left: 1px solid rgba(201, 138, 82, 0.10);
+    border-right: 1px solid rgba(201, 138, 82, 0.10);
+    /* Shadow base: contact + ambient */
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.14);
+    color: rgba(242, 223, 200, 0.90);
+    font-weight: 600;
+  }
+
+  /* Today = slightly brighter shell + subtle highlight ring (NOT glowing border) */
+  .hcell.today-cell {
+    outline: 2px solid rgba(201, 138, 82, 0.30);
+    outline-offset: 2px;
+  }
+
+  .hcell.today-cell.empty {
+    background: linear-gradient(180deg, #1E1510 0%, #241A12 100%);
+  }
+
+  /* Future = very muted/dimmed */
+  .hcell.future {
+    opacity: 0.30;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     C-2. "GOALS" CARD
+     ══════════════════════════════════════════════════════════ */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* Each goal = RAISED inner block inside the tray */
+  .goal-module {
+    background: linear-gradient(
+      180deg,
+      #4A2D22 0%,
+      #3B241F 50%,
+      #2E1B17 100%
+    );
+    border-top: 2px solid rgba(201, 138, 82, 0.20);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.42);
+    border-left: 1px solid rgba(201, 138, 82, 0.07);
+    border-right: 1px solid rgba(201, 138, 82, 0.07);
+    border-radius: 22px;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.08);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Progress ring inset well inside goal module */
+  .goal-ring-well {
+    width: 68px;
+    height: 68px;
+    min-width: 68px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #1A1210 0%, #201510 100%);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.30),
+      inset 0 -1px 2px rgba(255, 220, 180, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .goal-ring-well svg {
+    width: 58px;
+    height: 58px;
+    transform: rotate(-90deg);
+  }
+
+  .goal-ring-well .goal-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #C98A52;
+  }
+
+  .goal-info h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #F2DFC8;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .goal-info p {
+    font-size: 11.5px;
+    color: #B89476;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     D. STREAK STRIP — Thinner ceramic slab
+     ══════════════════════════════════════════════════════════ */
+  .streak-slab {
+    background: linear-gradient(
+      180deg,
+      #4A2D22 0%,
+      #3B241F 50%,
+      #2E1B17 100%
+    );
+    border-top: 2px solid rgba(201, 138, 82, 0.20);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.45);
+    border-left: 1.5px solid rgba(201, 138, 82, 0.07);
+    border-right: 1.5px solid rgba(201, 138, 82, 0.07);
+    border-radius: 30px;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.08);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 960px;
+  }
+
+  .streak-text {
+    font-size: 14px;
+    color: #B89476;
+  }
+
+  .streak-text strong {
+    color: #C98A52;
+    font-weight: 600;
+  }
+
+  .streak-dots {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Streak dot: reached = raised warm clay, unreached = recessed cavity */
+  .sdot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .sdot.reached {
+    background: linear-gradient(180deg, #7A4A30 0%, #5A3520 100%);
+    border-top: 1.5px solid rgba(201, 138, 82, 0.30);
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.40);
+    box-shadow:
+      0 2px 5px rgba(0,0,0,0.30),
+      0 4px 10px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255, 220, 180, 0.12);
+  }
+
+  .sdot.unreached {
+    background: linear-gradient(180deg, #140F0C 0%, #1A1310 100%);
+    border-top: 1px solid rgba(0, 0, 0, 0.50);
+    box-shadow:
+      inset 0 2px 3px rgba(0,0,0,0.30),
+      inset 0 -1px 2px rgba(255, 220, 180, 0.03);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     E. BOTTOM MINI CAPSULES — Smaller ceramic capsules
+     ══════════════════════════════════════════════════════════ */
+  .mini-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 960px;
+    justify-content: center;
+  }
+
+  .mini-capsule {
+    flex: 1;
+    min-width: 180px;
+    background: linear-gradient(
+      180deg,
+      #4A2D22 0%,
+      #3B241F 50%,
+      #2A1A14 100%
+    );
+    border-top: 2px solid rgba(201, 138, 82, 0.20);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.45);
+    border-left: 1px solid rgba(201, 138, 82, 0.07);
+    border-right: 1px solid rgba(201, 138, 82, 0.07);
+    border-radius: 28px;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.32),
+      0 12px 28px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255, 220, 180, 0.08);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Icon area = raised mini badge */
+  .mini-badge {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    /* Raised mini ceramic badge */
+    background: linear-gradient(
+      180deg,
+      #6B3F2B 0%,
+      #4E2E1F 50%,
+      #3B241F 100%
+    );
+    border-top: 1.5px solid rgba(201, 138, 82, 0.25);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.40);
+    border-left: 1px solid rgba(201, 138, 82, 0.08);
+    border-right: 1px solid rgba(201, 138, 82, 0.08);
+    box-shadow:
+      0 3px 7px rgba(0,0,0,0.30),
+      0 6px 14px rgba(0,0,0,0.15),
+      inset 0 1px 0 rgba(255, 220, 180, 0.10);
+  }
+
+  .mini-label h5 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #F2DFC8;
+    margin-bottom: 3px;
+  }
+
+  .mini-label p {
+    font-size: 11.5px;
+    color: #B89476;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     RESPONSIVE
+     ══════════════════════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .main-row { flex-direction: column; }
+    .goals-grid { grid-template-columns: 1fr; }
+    .mini-row { flex-wrap: wrap; }
+    .mini-capsule { min-width: 160px; }
+    .habit-grid { grid-template-columns: 110px repeat(7, 1fr); gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Sundown v4 &mdash; Sculpted Ceramic</div>
+
+<!-- ═══════════════════════════════════════════════════
+     A. NAV DOCK — Floating sculpted capsule
+     ═══════════════════════════════════════════════════ -->
+<nav class="nav-dock">
+  <div class="nav-pill active">Dashboard</div>
+  <div class="nav-pill">Habits</div>
+  <div class="nav-pill">Goals</div>
+  <div class="nav-pill">Analytics</div>
+  <div class="nav-pill">Adventures</div>
+  <div class="nav-pill">Wellness</div>
+  <div class="nav-pill">Settings</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     B. STAT CHIPS — Mini ceramic badges
+     ═══════════════════════════════════════════════════ -->
+<div class="stat-row">
+  <div class="stat-chip"><span class="val">329</span> XP</div>
+  <div class="stat-chip">&#128293; <span class="val">22</span> days</div>
+  <div class="stat-chip">Residency <span class="val">2y 3m</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     C. MAIN CONTENT CARDS
+     ═══════════════════════════════════════════════════ -->
+<div class="main-row">
+
+  <!-- ── C-1: THIS WEEK slab ── -->
+  <div class="outer-slab">
+    <div class="slab-header">
+      <span class="slab-title">This Week</span>
+      <div class="header-ring">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(201,138,82,0.12)" stroke-width="4"/>
+            <circle cx="24" cy="24" r="19" fill="none" stroke="#C98A52" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="119.38" stroke-dashoffset="51.16"/>
+          </svg>
+          <div class="ring-label">4/7</div>
+        </div>
+        <span class="ring-subtext">3 left</span>
+      </div>
+    </div>
+
+    <!-- Inset tray containing the habit grid -->
+    <div class="inset-tray">
+      <div class="habit-grid">
+        <!-- Header row -->
+        <div></div>
+        <div class="day-hdr">S</div>
+        <div class="day-hdr">M</div>
+        <div class="day-hdr">T</div>
+        <div class="day-hdr">W</div>
+        <div class="day-hdr">T</div>
+        <div class="day-hdr today-hdr">F</div>
+        <div class="day-hdr">S</div>
+
+        <!-- RemNote -->
+        <div class="habit-name"><span class="hi">&#128209;</span> RemNote</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Gym -->
+        <div class="habit-name"><span class="hi">&#127947;</span> Gym</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Pimsleur -->
+        <div class="habit-name"><span class="hi">&#127911;</span> Pimsleur</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done today-cell">&#10003;</div>
+        <div class="hcell empty future"></div>
+
+        <!-- Bed by 11 -->
+        <div class="habit-name"><span class="hi">&#128716;</span> Bed by 11</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+
+        <!-- German -->
+        <div class="habit-name"><span class="hi">&#127465;&#127466;</span> German</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+
+        <!-- Read a Paper -->
+        <div class="habit-name"><span class="hi">&#128218;</span> Read a Paper</div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty"></div>
+        <div class="hcell empty"></div>
+        <div class="hcell done">&#10003;</div>
+        <div class="hcell empty today-cell"></div>
+        <div class="hcell empty future"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── C-2: GOALS slab ── -->
+  <div class="outer-slab">
+    <div class="slab-header">
+      <span class="slab-title">Goals</span>
+      <div class="slab-badge">2026</div>
+    </div>
+
+    <!-- Inset tray containing goal modules -->
+    <div class="inset-tray">
+      <div class="goals-grid">
+
+        <!-- Goal 1: 2 physical books — 50% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 58 58">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="rgba(201,138,82,0.10)" stroke-width="4.5"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#C98A52" stroke-width="4.5" stroke-linecap="round"
+                stroke-dasharray="144.51" stroke-dashoffset="72.26"/>
+            </svg>
+            <div class="goal-pct">50%</div>
+          </div>
+          <div class="goal-info">
+            <h4>2 physical books</h4>
+            <p>1/2 complete</p>
+          </div>
+        </div>
+
+        <!-- Goal 2: Complete de Lahunta — 35% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 58 58">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="rgba(201,138,82,0.10)" stroke-width="4.5"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#B07040" stroke-width="4.5" stroke-linecap="round"
+                stroke-dasharray="144.51" stroke-dashoffset="93.93"/>
+            </svg>
+            <div class="goal-pct">35%</div>
+          </div>
+          <div class="goal-info">
+            <h4>Complete de Lahunta</h4>
+            <p>9/26 chapters</p>
+          </div>
+        </div>
+
+        <!-- Goal 3: 200 lifting days — 26% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 58 58">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="rgba(201,138,82,0.10)" stroke-width="4.5"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#986838" stroke-width="4.5" stroke-linecap="round"
+                stroke-dasharray="144.51" stroke-dashoffset="106.94"/>
+            </svg>
+            <div class="goal-pct">26%</div>
+          </div>
+          <div class="goal-info">
+            <h4>200 lifting days</h4>
+            <p>51/200</p>
+          </div>
+        </div>
+
+        <!-- Goal 4: 12 outdoor climbing — 25% -->
+        <div class="goal-module">
+          <div class="goal-ring-well">
+            <svg viewBox="0 0 58 58">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="rgba(201,138,82,0.10)" stroke-width="4.5"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#8A5830" stroke-width="4.5" stroke-linecap="round"
+                stroke-dasharray="144.51" stroke-dashoffset="108.38"/>
+            </svg>
+            <div class="goal-pct">25%</div>
+          </div>
+          <div class="goal-info">
+            <h4>12 outdoor climbing</h4>
+            <p>3/12 days</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     D. STREAK STRIP
+     ═══════════════════════════════════════════════════ -->
+<div class="streak-slab">
+  <div class="streak-text"><strong>22 days strong</strong> &mdash; next milestone: 30 days</div>
+  <div class="streak-dots">
+    <div class="sdot reached"></div>
+    <div class="sdot reached"></div>
+    <div class="sdot reached"></div>
+    <div class="sdot unreached"></div>
+    <div class="sdot unreached"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     E. BOTTOM MINI CAPSULES
+     ═══════════════════════════════════════════════════ -->
+<div class="mini-row">
+  <div class="mini-capsule">
+    <div class="mini-badge">&#10024;</div>
+    <div class="mini-label">
+      <h5>Wellness</h5>
+      <p>Check in</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#128218;</div>
+    <div class="mini-label">
+      <h5>Reading</h5>
+      <p>The Living Mountain</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#9968;&#65039;</div>
+    <div class="mini-label">
+      <h5>Adventures</h5>
+      <p>Log outdoor day</p>
+    </div>
+  </div>
+  <div class="mini-capsule">
+    <div class="mini-badge">&#127873;</div>
+    <div class="mini-label">
+      <h5>Rewards</h5>
+      <p>329 XP available</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

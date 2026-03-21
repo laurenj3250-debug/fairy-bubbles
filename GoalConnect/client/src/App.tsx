@@ -18,6 +18,7 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import IcyDash from "@/pages/IcyDash";
+import SundownDash from "@/pages/SundownDash";
 import Journey from "@/pages/Journey";
 import YearlyGoals from "@/pages/YearlyGoals";
 import MediaLibrary from "@/pages/MediaLibrary";
@@ -121,7 +122,7 @@ function AppRoutes() {
       {/* Main Dashboard - IcyDash (no MainLayout — has its own nav) */}
       <Route path="/">
         <RequireAuth>
-          <IcyDash />
+          <SundownDash />
         </RequireAuth>
       </Route>
       <Route path="/habits">

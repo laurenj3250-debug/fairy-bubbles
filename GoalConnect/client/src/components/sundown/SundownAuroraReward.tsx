@@ -8,23 +8,21 @@ interface PointsSummary {
   targetRewardId: number | null;
 }
 
-// Simple level calculation: each level requires more XP
-const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 750, 1100, 1500, 2000, 2600, 3300];
+// Level based on streak days: Level 1 at 7 days, Level 2 at 14, etc.
+const STREAK_LEVEL_DAYS = [0, 7, 14, 21, 28, 42, 56, 84, 120, 180, 365];
 
-function getLevel(totalXp: number): { level: number; currentXp: number; nextThreshold: number; xpToNext: number } {
-  let level = 1;
-  for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
-    if (totalXp >= LEVEL_THRESHOLDS[i]) {
-      level = i + 1;
+function getStreakLevel(streakDays: number): { level: number; daysToNext: number; nextLevelDays: number } {
+  let level = 0;
+  for (let i = 0; i < STREAK_LEVEL_DAYS.length; i++) {
+    if (streakDays >= STREAK_LEVEL_DAYS[i]) {
+      level = i;
     } else {
       break;
     }
   }
-  const currentThreshold = LEVEL_THRESHOLDS[level - 1] || 0;
-  const nextThreshold = LEVEL_THRESHOLDS[level] || currentThreshold + 500;
-  const xpInLevel = totalXp - currentThreshold;
-  const xpToNext = nextThreshold - totalXp;
-  return { level, currentXp: xpInLevel, nextThreshold: nextThreshold - currentThreshold, xpToNext };
+  const nextLevelDays = STREAK_LEVEL_DAYS[level + 1] || STREAK_LEVEL_DAYS[level] + 30;
+  const daysToNext = Math.max(0, nextLevelDays - streakDays);
+  return { level, daysToNext, nextLevelDays };
 }
 
 interface SundownAuroraRewardProps {
@@ -40,9 +38,8 @@ export function SundownAuroraReward({ streak = 0 }: SundownAuroraRewardProps) {
     queryKey: ['/api/rewards'],
   });
 
-  const totalXp = points?.totalEarned ?? 0;
   const available = points?.available ?? 0;
-  const { level, xpToNext, nextThreshold } = getLevel(totalXp);
+  const { level, daysToNext } = getStreakLevel(streak);
 
   // Find next reward
   const unredeemed = rewards?.filter((r) => !r.redeemed) ?? [];
@@ -54,9 +51,6 @@ export function SundownAuroraReward({ streak = 0 }: SundownAuroraRewardProps) {
     ?? (unredeemed.length
       ? unredeemed.reduce((best, r) => (r.cost < best.cost ? r : best))
       : null);
-
-  // Days to next level — rough estimate based on recent earning rate
-  const daysToNext = Math.max(1, Math.ceil(xpToNext / Math.max(1, totalXp > 0 ? totalXp / 30 : 1)));
 
   return (
     <div className="sd-shell sd-aurora-card" style={{ animationDelay: '1s' }}>

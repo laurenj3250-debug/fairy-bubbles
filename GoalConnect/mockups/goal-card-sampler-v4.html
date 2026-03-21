@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Card Sampler v4 — Horizon Lines + Celestial Refined</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --glow-amber: rgba(225,164,92,0.6);
+    --glow-amber-soft: rgba(225,164,92,0.3);
+    --glow-amber-faint: rgba(225,164,92,0.1);
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 420px; margin: 0 auto; padding: 40px 20px 100px; }
+
+  /* PAGE HEADER */
+  .page-header { text-align: center; margin-bottom: 48px; padding-top: 20px; }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 6px;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    margin-bottom: 10px;
+  }
+  .section-label h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 500; letter-spacing: 2px;
+    color: var(--text-accent);
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+  }
+  .section-label p {
+    font-size: 12px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 3px;
+    line-height: 1.5;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 56px;
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, rgba(255,220,160,0.08) 0%, transparent 40%, transparent 60%, rgba(255,200,140,0.04) 100%);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 28px 24px 24px;
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  .face::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: linear-gradient(170deg, rgba(255,220,160,0.06) 0%, transparent 30%),
+                linear-gradient(190deg, rgba(255,200,140,0.03) 0%, transparent 25%);
+    mix-blend-mode: screen;
+  }
+  .face > * { position: relative; z-index: 2; }
+
+  /* ===========================
+     ANIMATIONS
+     =========================== */
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(225,164,92,0.4)); }
+    50% { filter: drop-shadow(0 0 10px rgba(225,164,92,0.7)); }
+  }
+  @keyframes softPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 12px rgba(225,164,92,0.15); }
+    50% { box-shadow: 0 0 10px rgba(225,164,92,0.5), 0 0 20px rgba(225,164,92,0.25); }
+  }
+  @keyframes orbBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes mistDrift {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    50% { opacity: 0.6; transform: translateY(-4px); }
+  }
+  @keyframes crescentPulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(225,164,92,0.4)) drop-shadow(0 0 12px rgba(225,164,92,0.2)); }
+    50% { filter: drop-shadow(0 0 10px rgba(225,164,92,0.6)) drop-shadow(0 0 20px rgba(225,164,92,0.35)); }
+  }
+
+  /* ===========================
+     H1 — MINIMAL HORIZON LINES
+     =========================== */
+  .h1-goal {
+    margin-bottom: 28px;
+  }
+  .h1-goal:last-child { margin-bottom: 0; }
+  .h1-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+  .h1-track {
+    position: relative; height: 3px; width: 100%; border-radius: 2px;
+    background: rgba(225,164,92,0.06);
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+  }
+  .h1-fill {
+    position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.6), rgba(240,200,130,0.8));
+    box-shadow:
+      0 0 6px rgba(225,164,92,0.5),
+      0 0 14px rgba(225,164,92,0.3),
+      0 0 28px rgba(225,164,92,0.15),
+      0 0 50px rgba(225,164,92,0.08);
+    animation: breathe 4s ease-in-out infinite;
+  }
+  .h1-orb {
+    position: absolute; top: 50%; right: -4px; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle, #F5D89A 30%, rgba(225,164,92,0.8) 70%);
+    box-shadow:
+      0 0 6px rgba(245,216,154,0.8),
+      0 0 14px rgba(225,164,92,0.6),
+      0 0 28px rgba(225,164,92,0.3),
+      0 0 50px rgba(225,164,92,0.15);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+  .h1-fraction {
+    position: absolute; right: 0; top: -18px;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
+    opacity: 0.6;
+  }
+
+  /* ===========================
+     H2 — HORIZON LINES + AMBIENT
+     =========================== */
+  .h2-card .face {
+    position: relative;
+  }
+  .h2-ambient {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 70%;
+    pointer-events: none; z-index: 0;
+    border-radius: 0 0 20px 20px;
+    background: radial-gradient(ellipse at 50% 100%, rgba(225,164,92,0.1) 0%, transparent 60%);
+    animation: mistDrift 6s ease-in-out infinite;
+  }
+  .h2-mist {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 40%;
+    pointer-events: none; z-index: 0;
+    border-radius: 0 0 20px 20px;
+    background: linear-gradient(to top, rgba(225,164,92,0.06) 0%, transparent 100%);
+  }
+  .h2-goal {
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+  }
+  .h2-goal:last-child { margin-bottom: 0; }
+  .h2-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .h2-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-secondary); opacity: 0.8;
+  }
+  .h2-frac {
+    font-size: 10px; color: var(--text-muted); opacity: 0.5;
+  }
+  .h2-track {
+    position: relative; height: 2px; width: 100%; border-radius: 2px;
+    background: rgba(225,164,92,0.05);
+  }
+  .h2-fill {
+    position: absolute; top: -1px; left: 0; height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.4), rgba(240,210,140,0.8));
+    box-shadow:
+      0 0 8px rgba(225,164,92,0.5),
+      0 0 18px rgba(225,164,92,0.25),
+      0 0 36px rgba(225,164,92,0.12),
+      0 2px 20px rgba(225,164,92,0.15);
+    animation: breathe 4.5s ease-in-out infinite;
+  }
+  .h2-fill::after {
+    content: ''; position: absolute; top: 50%; right: -3px; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #F5D89A;
+    box-shadow: 0 0 8px rgba(245,216,154,0.9), 0 0 20px rgba(225,164,92,0.5);
+    animation: softPulse 3s ease-in-out infinite;
+  }
+
+  /* ===========================
+     H3 — HORIZON AS LANDSCAPE
+     =========================== */
+  .h3-card .face {
+    padding: 20px 24px 24px;
+    min-height: 240px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    position: relative;
+  }
+  .h3-silhouette {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
+    pointer-events: none; z-index: 0; border-radius: 20px; overflow: hidden;
+  }
+  .h3-silhouette svg {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 80%;
+    opacity: 0.08;
+  }
+  .h3-lines {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    gap: 0;
+  }
+  .h3-goal {
+    position: relative;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .h3-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary); opacity: 0.7;
+    width: 100px; text-align: right; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .h3-line-wrap {
+    flex: 1; position: relative; height: 2px;
+  }
+  .h3-track {
+    position: absolute; inset: 0; border-radius: 2px;
+    background: rgba(225,164,92,0.04);
+  }
+  .h3-fill {
+    position: absolute; top: -1px; left: 0; height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(255,220,160,0.85));
+    box-shadow:
+      0 0 8px rgba(225,164,92,0.5),
+      0 0 20px rgba(225,164,92,0.25),
+      0 0 40px rgba(225,164,92,0.1);
+    animation: breathe 5s ease-in-out infinite;
+  }
+  .h3-fill::after {
+    content: ''; position: absolute; top: 50%; right: -3px; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle, #FFF5E0, #F5D89A);
+    box-shadow: 0 0 6px rgba(255,245,224,0.8), 0 0 16px rgba(225,164,92,0.5), 0 0 30px rgba(225,164,92,0.2);
+    animation: softPulse 3.5s ease-in-out infinite;
+  }
+  .h3-frac {
+    font-size: 9px; color: var(--text-muted); opacity: 0.4;
+    width: 28px; flex-shrink: 0;
+  }
+  /* Altitude spacing — sorted by progress: 50%, 35%, 25%, 25% */
+  .h3-goal:nth-child(1) { margin-bottom: 42px; } /* highest: 50% */
+  .h3-goal:nth-child(2) { margin-bottom: 32px; } /* 35% */
+  .h3-goal:nth-child(3) { margin-bottom: 22px; } /* 25% */
+  .h3-goal:nth-child(4) { margin-bottom: 0; }    /* 25% — ground */
+
+  /* ===========================
+     C1 — ABSTRACT LIGHT PHASES
+     =========================== */
+  .c1-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  .c1-item {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .c1-ring {
+    position: relative; width: 60px; height: 60px;
+  }
+  .c1-ring svg {
+    width: 60px; height: 60px; transform: rotate(-90deg);
+  }
+  .c1-ring-bg {
+    fill: none; stroke: rgba(225,164,92,0.06); stroke-width: 3;
+  }
+  .c1-ring-fill {
+    fill: none; stroke-width: 3; stroke-linecap: round;
+    stroke: url(#c1-gradient);
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.4)) drop-shadow(0 0 10px rgba(225,164,92,0.2));
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+  .c1-ring-center {
+    position: absolute; inset: 8px; border-radius: 50%;
+    background: rgba(45,22,28,0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
+  }
+  .c1-pct {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600; color: var(--text-accent);
+    text-shadow: 0 0 10px rgba(225,164,92,0.3);
+  }
+  .c1-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary); text-align: center;
+    opacity: 0.75;
+  }
+
+  /* ===========================
+     C2 — ECLIPSED ORBS
+     =========================== */
+  .c2-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px 20px;
+  }
+  .c2-item {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .c2-orb-wrap {
+    position: relative; width: 64px; height: 64px;
+  }
+  .c2-dark {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(30,14,18,0.8);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    box-shadow:
+      inset 0 2px 6px rgba(0,0,0,0.4),
+      inset 0 -1px 3px rgba(255,200,140,0.05),
+      0 4px 16px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+  .c2-crescent {
+    position: absolute; inset: -2px; border-radius: 50%;
+    z-index: 1;
+    animation: crescentPulse 4s ease-in-out infinite;
+  }
+  /* Each crescent uses a conic-gradient to show the lit portion */
+  .c2-crescent-25 {
+    background: conic-gradient(from 200deg, rgba(225,164,92,0.7) 0deg, rgba(240,210,140,0.5) 60deg, transparent 90deg, transparent 360deg);
+    filter: blur(1px);
+  }
+  .c2-crescent-35 {
+    background: conic-gradient(from 190deg, rgba(225,164,92,0.7) 0deg, rgba(240,210,140,0.5) 90deg, transparent 126deg, transparent 360deg);
+    filter: blur(1px);
+  }
+  .c2-crescent-50 {
+    background: conic-gradient(from 180deg, rgba(225,164,92,0.7) 0deg, rgba(240,210,140,0.5) 120deg, transparent 180deg, transparent 360deg);
+    filter: blur(1px);
+  }
+  .c2-halo {
+    position: absolute; inset: -8px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.08) 50%, transparent 70%);
+    z-index: 0;
+  }
+  .c2-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary); text-align: center;
+    opacity: 0.7;
+  }
+  .c2-frac {
+    font-size: 9px; color: var(--text-muted); opacity: 0.45;
+  }
+
+  /* ===========================
+     C3 — WAXING GLOW
+     =========================== */
+  .c3-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px 20px;
+  }
+  .c3-item {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .c3-orb {
+    width: 56px; height: 56px; border-radius: 50%;
+    position: relative;
+    animation: orbBreathe 5s ease-in-out infinite;
+  }
+  .c3-orb-inner {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, var(--orb-color-bright), var(--orb-color-mid), var(--orb-color-dim));
+  }
+  /* Brightness by progress */
+  .c3-25 {
+    --orb-color-bright: rgba(225,164,92,0.2);
+    --orb-color-mid: rgba(180,120,60,0.1);
+    --orb-color-dim: rgba(80,40,30,0.15);
+    box-shadow:
+      0 0 12px rgba(225,164,92,0.1),
+      0 0 24px rgba(225,164,92,0.05);
+  }
+  .c3-35 {
+    --orb-color-bright: rgba(225,164,92,0.35);
+    --orb-color-mid: rgba(200,140,70,0.2);
+    --orb-color-dim: rgba(100,50,35,0.15);
+    box-shadow:
+      0 0 14px rgba(225,164,92,0.2),
+      0 0 30px rgba(225,164,92,0.1);
+  }
+  .c3-50 {
+    --orb-color-bright: rgba(240,200,120,0.55);
+    --orb-color-mid: rgba(225,164,92,0.35);
+    --orb-color-dim: rgba(130,70,40,0.2);
+    box-shadow:
+      0 0 16px rgba(225,164,92,0.35),
+      0 0 36px rgba(225,164,92,0.18),
+      0 0 60px rgba(225,164,92,0.08);
+  }
+  .c3-bar-wrap {
+    width: 48px; height: 1px; position: relative;
+    background: rgba(225,164,92,0.08);
+    border-radius: 1px;
+  }
+  .c3-bar-fill {
+    position: absolute; inset: 0; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), var(--text-accent));
+    box-shadow: 0 0 6px rgba(225,164,92,0.3);
+  }
+  .c3-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary); text-align: center;
+    opacity: 0.7;
+  }
+  .c3-pct {
+    font-size: 9px; color: var(--text-muted); opacity: 0.5; margin-top: -4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="content">
+
+  <div class="page-header">
+    <h1>Goal Cards v4</h1>
+    <div class="sub">Horizon Lines + Celestial Refined</div>
+  </div>
+
+  <!-- ================================
+       H1 — MINIMAL HORIZON LINES
+       ================================ -->
+  <div class="section-label">
+    <h2>H1 &mdash; Minimal Horizon Lines</h2>
+    <p>Just the line of light. Ghost track, glowing fill, bright endpoint orb. No noise.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="h1-goal">
+        <div class="h1-label">200 lifting days</div>
+        <div class="h1-track">
+          <div class="h1-fill" style="width: 25.5%;">
+            <div class="h1-orb"></div>
+          </div>
+          <div class="h1-fraction">51/200</div>
+        </div>
+      </div>
+      <div class="h1-goal">
+        <div class="h1-label">Complete de Lahunta</div>
+        <div class="h1-track">
+          <div class="h1-fill" style="width: 34.6%;">
+            <div class="h1-orb"></div>
+          </div>
+          <div class="h1-fraction">9/26</div>
+        </div>
+      </div>
+      <div class="h1-goal">
+        <div class="h1-label">2 physical books</div>
+        <div class="h1-track">
+          <div class="h1-fill" style="width: 50%;">
+            <div class="h1-orb"></div>
+          </div>
+          <div class="h1-fraction">1/2</div>
+        </div>
+      </div>
+      <div class="h1-goal">
+        <div class="h1-label">12 outdoor climbing</div>
+        <div class="h1-track">
+          <div class="h1-fill" style="width: 25%;">
+            <div class="h1-orb"></div>
+          </div>
+          <div class="h1-fraction">3/12</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       H2 — HORIZON + AMBIENT BACKDROP
+       ================================ -->
+  <div class="section-label">
+    <h2>H2 &mdash; Horizon Lines + Ambient Backdrop</h2>
+    <p>Same lines, but the card glows warmer at the bottom. Lines bleed into ambient mist.</p>
+  </div>
+  <div class="shell h2-card">
+    <div class="face">
+      <div class="h2-ambient"></div>
+      <div class="h2-mist"></div>
+      <div class="h2-goal">
+        <div class="h2-top">
+          <span class="h2-name">200 lifting days</span>
+          <span class="h2-frac">51/200</span>
+        </div>
+        <div class="h2-track">
+          <div class="h2-fill" style="width: 25.5%;"></div>
+        </div>
+      </div>
+      <div class="h2-goal">
+        <div class="h2-top">
+          <span class="h2-name">Complete de Lahunta</span>
+          <span class="h2-frac">9/26</span>
+        </div>
+        <div class="h2-track">
+          <div class="h2-fill" style="width: 34.6%;"></div>
+        </div>
+      </div>
+      <div class="h2-goal">
+        <div class="h2-top">
+          <span class="h2-name">2 physical books</span>
+          <span class="h2-frac">1/2</span>
+        </div>
+        <div class="h2-track">
+          <div class="h2-fill" style="width: 50%;"></div>
+        </div>
+      </div>
+      <div class="h2-goal">
+        <div class="h2-top">
+          <span class="h2-name">12 outdoor climbing</span>
+          <span class="h2-frac">3/12</span>
+        </div>
+        <div class="h2-track">
+          <div class="h2-fill" style="width: 25%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       H3 — HORIZON AS LANDSCAPE
+       ================================ -->
+  <div class="section-label">
+    <h2>H3 &mdash; Horizon Lines as Landscape</h2>
+    <p>Lines at different altitudes by progress. Highest progress = highest line. Desert silhouette behind.</p>
+  </div>
+  <div class="shell h3-card">
+    <div class="face">
+      <!-- Faint mountain silhouette -->
+      <div class="h3-silhouette">
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+          <path d="M0,200 L0,140 Q30,100 60,120 Q90,80 120,110 Q150,60 180,90 Q210,50 240,85 Q270,70 300,100 Q330,65 360,95 Q380,80 400,110 L400,200 Z" fill="rgba(225,164,92,0.3)"/>
+          <path d="M0,200 L0,160 Q40,130 80,145 Q120,110 160,135 Q200,100 240,130 Q280,115 320,140 Q360,120 400,145 L400,200 Z" fill="rgba(225,164,92,0.2)"/>
+        </svg>
+      </div>
+      <div class="h3-lines">
+        <!-- Sorted by progress: 50%, 35%, 25%, 25% -->
+        <div class="h3-goal">
+          <span class="h3-name">Physical books</span>
+          <div class="h3-line-wrap">
+            <div class="h3-track"></div>
+            <div class="h3-fill" style="width: 50%;"></div>
+          </div>
+          <span class="h3-frac">1/2</span>
+        </div>
+        <div class="h3-goal">
+          <span class="h3-name">De Lahunta</span>
+          <div class="h3-line-wrap">
+            <div class="h3-track"></div>
+            <div class="h3-fill" style="width: 34.6%;"></div>
+          </div>
+          <span class="h3-frac">9/26</span>
+        </div>
+        <div class="h3-goal">
+          <span class="h3-name">Lifting days</span>
+          <div class="h3-line-wrap">
+            <div class="h3-track"></div>
+            <div class="h3-fill" style="width: 25.5%;"></div>
+          </div>
+          <span class="h3-frac">51/200</span>
+        </div>
+        <div class="h3-goal">
+          <span class="h3-name">Outdoor climbing</span>
+          <div class="h3-line-wrap">
+            <div class="h3-track"></div>
+            <div class="h3-fill" style="width: 25%;"></div>
+          </div>
+          <span class="h3-frac">3/12</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       C1 — ABSTRACT LIGHT PHASES
+       ================================ -->
+  <div class="section-label">
+    <h2>C1 &mdash; Abstract Light Phases</h2>
+    <p>Warm gradient arc on a dark glass circle. The glow IS the progress. No moon literalism.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <!-- SVG gradient definition -->
+      <svg width="0" height="0" style="position:absolute">
+        <defs>
+          <linearGradient id="c1-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(225,164,92,0.5)"/>
+            <stop offset="60%" stop-color="#E1A45C"/>
+            <stop offset="100%" stop-color="#F5D89A"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="c1-grid">
+        <!-- 200 lifting days: 25% = circumference 25% -->
+        <div class="c1-item">
+          <div class="c1-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="c1-ring-bg" cx="30" cy="30" r="26"/>
+              <circle class="c1-ring-fill" cx="30" cy="30" r="26"
+                stroke-dasharray="163.36" stroke-dashoffset="122.52"/>
+            </svg>
+            <div class="c1-ring-center"></div>
+            <div class="c1-pct">25%</div>
+          </div>
+          <div class="c1-name">Lifting Days</div>
+        </div>
+        <!-- De Lahunta: 35% -->
+        <div class="c1-item">
+          <div class="c1-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="c1-ring-bg" cx="30" cy="30" r="26"/>
+              <circle class="c1-ring-fill" cx="30" cy="30" r="26"
+                stroke-dasharray="163.36" stroke-dashoffset="106.18"/>
+            </svg>
+            <div class="c1-ring-center"></div>
+            <div class="c1-pct">35%</div>
+          </div>
+          <div class="c1-name">De Lahunta</div>
+        </div>
+        <!-- Physical books: 50% -->
+        <div class="c1-item">
+          <div class="c1-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="c1-ring-bg" cx="30" cy="30" r="26"/>
+              <circle class="c1-ring-fill" cx="30" cy="30" r="26"
+                stroke-dasharray="163.36" stroke-dashoffset="81.68"/>
+            </svg>
+            <div class="c1-ring-center"></div>
+            <div class="c1-pct">50%</div>
+          </div>
+          <div class="c1-name">Physical Books</div>
+        </div>
+        <!-- Outdoor climbing: 25% -->
+        <div class="c1-item">
+          <div class="c1-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="c1-ring-bg" cx="30" cy="30" r="26"/>
+              <circle class="c1-ring-fill" cx="30" cy="30" r="26"
+                stroke-dasharray="163.36" stroke-dashoffset="122.52"/>
+            </svg>
+            <div class="c1-ring-center"></div>
+            <div class="c1-pct">25%</div>
+          </div>
+          <div class="c1-name">Outdoor Climbing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       C2 — ECLIPSED ORBS
+       ================================ -->
+  <div class="section-label">
+    <h2>C2 &mdash; Eclipsed Orbs</h2>
+    <p>Dark glass circle with a warm crescent peeking from behind. More progress = more light visible.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="c2-grid">
+        <!-- Lifting: 25% -->
+        <div class="c2-item">
+          <div class="c2-orb-wrap">
+            <div class="c2-halo"></div>
+            <div class="c2-crescent c2-crescent-25"></div>
+            <div class="c2-dark"></div>
+          </div>
+          <div class="c2-name">Lifting Days</div>
+          <div class="c2-frac">51/200</div>
+        </div>
+        <!-- De Lahunta: 35% -->
+        <div class="c2-item">
+          <div class="c2-orb-wrap">
+            <div class="c2-halo"></div>
+            <div class="c2-crescent c2-crescent-35"></div>
+            <div class="c2-dark"></div>
+          </div>
+          <div class="c2-name">De Lahunta</div>
+          <div class="c2-frac">9/26</div>
+        </div>
+        <!-- Books: 50% -->
+        <div class="c2-item">
+          <div class="c2-orb-wrap">
+            <div class="c2-halo"></div>
+            <div class="c2-crescent c2-crescent-50"></div>
+            <div class="c2-dark"></div>
+          </div>
+          <div class="c2-name">Physical Books</div>
+          <div class="c2-frac">1/2</div>
+        </div>
+        <!-- Climbing: 25% -->
+        <div class="c2-item">
+          <div class="c2-orb-wrap">
+            <div class="c2-halo"></div>
+            <div class="c2-crescent c2-crescent-25"></div>
+            <div class="c2-dark"></div>
+          </div>
+          <div class="c2-name">Outdoor Climbing</div>
+          <div class="c2-frac">3/12</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       C3 — WAXING GLOW
+       ================================ -->
+  <div class="section-label">
+    <h2>C3 &mdash; Waxing Glow</h2>
+    <p>Same-shaped orbs, brightness conveys progress. 25% = dim ember. 50% = warm glow. No shape change.</p>
+  </div>
+  <div class="shell">
+    <div class="face">
+      <div class="c3-grid">
+        <!-- Lifting: 25% -->
+        <div class="c3-item">
+          <div class="c3-orb c3-25">
+            <div class="c3-orb-inner"></div>
+          </div>
+          <div class="c3-name">Lifting Days</div>
+          <div class="c3-pct">25%</div>
+          <div class="c3-bar-wrap">
+            <div class="c3-bar-fill" style="width: 25%;"></div>
+          </div>
+        </div>
+        <!-- De Lahunta: 35% -->
+        <div class="c3-item">
+          <div class="c3-orb c3-35">
+            <div class="c3-orb-inner"></div>
+          </div>
+          <div class="c3-name">De Lahunta</div>
+          <div class="c3-pct">35%</div>
+          <div class="c3-bar-wrap">
+            <div class="c3-bar-fill" style="width: 35%;"></div>
+          </div>
+        </div>
+        <!-- Books: 50% -->
+        <div class="c3-item">
+          <div class="c3-orb c3-50">
+            <div class="c3-orb-inner"></div>
+          </div>
+          <div class="c3-name">Physical Books</div>
+          <div class="c3-pct">50%</div>
+          <div class="c3-bar-wrap">
+            <div class="c3-bar-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        <!-- Climbing: 25% -->
+        <div class="c3-item">
+          <div class="c3-orb c3-25">
+            <div class="c3-orb-inner"></div>
+          </div>
+          <div class="c3-name">Outdoor Climbing</div>
+          <div class="c3-pct">25%</div>
+          <div class="c3-bar-wrap">
+            <div class="c3-bar-fill" style="width: 25%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Card Sampler — 6 Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --amber-glow: #E1A45C;
+    --amber-dim: rgba(225,164,92,0.25);
+    --ring-1: #E1A45C;
+    --ring-2: #D98A4E;
+    --ring-3: #C97040;
+    --ring-4: #B85A36;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; padding: 60px 40px 100px; max-width: 1280px; margin: 0 auto; }
+
+  /* PAGE HEADER */
+  .page-header {
+    text-align: center; margin-bottom: 60px;
+  }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .page-header .sub {
+    font-size: 14px; color: var(--text-muted); letter-spacing: 2px; margin-top: 6px;
+  }
+
+  /* SAMPLER GRID — 2 columns */
+  .sampler-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+  }
+
+  /* CONCEPT WRAPPER */
+  .concept {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--text-accent);
+    letter-spacing: 1px;
+  }
+  .concept-desc {
+    font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-top: -8px;
+  }
+
+  /* GAME UI SHELL */
+  .card-shell {
+    background: var(--shell-bg);
+    border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+  }
+  .card-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.15);
+    box-shadow: var(--face-inset),
+                inset 0 0 40px rgba(180,100,50,0.04),
+                inset 0 0 80px rgba(140,70,30,0.03);
+    position: relative; overflow: hidden;
+  }
+  .card-face::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,220,160,0.06) 0%, transparent 50%, rgba(255,180,100,0.03) 100%);
+    mix-blend-mode: screen;
+  }
+
+  /* ============================================ */
+  /* CONCEPT 1: 2x2 MODULE GRID                  */
+  /* ============================================ */
+  .module-grid {
+    display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 12px;
+  }
+  .module-item {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(45,22,28,0.4); border-radius: 14px; padding: 14px;
+    border: 1px solid rgba(255,200,140,0.06);
+  }
+  .module-ring-wrap {
+    position: relative; width: 44px; height: 44px; flex-shrink: 0;
+  }
+  .module-ring-wrap svg { width: 44px; height: 44px; transform: rotate(-90deg); }
+  .module-ring-bg { fill: none; stroke: rgba(255,200,140,0.08); stroke-width: 3; }
+  .module-ring-fg { fill: none; stroke: var(--text-accent); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .module-info { flex: 1; min-width: 0; }
+  .module-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600;
+    color: var(--text-primary); line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .module-frac { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ============================================ */
+  /* CONCEPT 2: RADIAL GAUGES                     */
+  /* ============================================ */
+  .gauges-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .gauge-item { text-align: center; }
+  .gauge-svg { width: 100px; height: 60px; display: block; margin: 0 auto; }
+  .gauge-bg { fill: none; stroke: rgba(255,200,140,0.08); stroke-width: 6; stroke-linecap: round; }
+  .gauge-fg { fill: none; stroke: var(--text-accent); stroke-width: 6; stroke-linecap: round; }
+  .gauge-pct {
+    font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+    color: var(--text-primary); margin-top: 4px;
+  }
+  .gauge-name { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+
+  /* ============================================ */
+  /* CONCEPT 3: PROGRESS BARS WITH MILESTONES     */
+  /* ============================================ */
+  .bars-list { display: flex; flex-direction: column; gap: 16px; }
+  .bar-item {}
+  .bar-header {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+  }
+  .bar-name { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .bar-frac { font-size: 12px; color: var(--text-muted); }
+  .bar-track {
+    height: 8px; background: rgba(255,200,140,0.08); border-radius: 4px; position: relative; overflow: visible;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.6), var(--text-accent));
+    position: relative; transition: width 0.6s ease;
+  }
+  .bar-fill::after {
+    content: ''; position: absolute; right: 0; top: -2px; width: 4px; height: 12px;
+    background: var(--text-accent); border-radius: 2px;
+    box-shadow: 0 0 8px rgba(225,164,92,0.5);
+  }
+  .bar-milestones {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .bar-milestone {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,200,140,0.15); border: 1px solid rgba(255,200,140,0.2);
+  }
+  .bar-milestone.reached { background: var(--text-accent); border-color: var(--text-accent); box-shadow: 0 0 6px rgba(225,164,92,0.4); }
+
+  /* ============================================ */
+  /* CONCEPT 4: MOUNTAIN CLIMB                    */
+  /* ============================================ */
+  .mountains-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .mountain-item { text-align: center; }
+  .mountain-svg { width: 100%; height: 100px; display: block; }
+  .mountain-name { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .mountain-frac { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+  /* ============================================ */
+  /* CONCEPT 5: STACKED RINGS                     */
+  /* ============================================ */
+  .stacked-wrap {
+    display: flex; align-items: center; gap: 28px;
+  }
+  .stacked-svg { width: 160px; height: 160px; flex-shrink: 0; }
+  .stacked-ring-bg { fill: none; stroke-width: 10; }
+  .stacked-ring-fg { fill: none; stroke-width: 10; stroke-linecap: round; }
+  .stacked-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-text { font-size: 12px; color: var(--text-secondary); }
+  .legend-pct { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+
+  /* ============================================ */
+  /* CONCEPT 6: CARD TILES                        */
+  /* ============================================ */
+  .tiles-grid {
+    display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 12px;
+  }
+  .tile-item {
+    background: rgba(45,22,28,0.4); border-radius: 14px; padding: 16px;
+    border: 1px solid rgba(255,200,140,0.06);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .tile-pct {
+    font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600;
+    color: var(--text-accent); line-height: 1;
+  }
+  .tile-title {
+    font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.3;
+  }
+  .tile-bar-track {
+    height: 4px; background: rgba(255,200,140,0.08); border-radius: 2px; margin-top: 12px;
+  }
+  .tile-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.5), var(--text-accent));
+  }
+
+  /* SVG ICONS (thin line) */
+  .icon-svg { width: 16px; height: 16px; stroke: var(--text-muted); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="content">
+  <div class="page-header">
+    <h1>Goal Cards</h1>
+    <div class="sub">6 visualization concepts &middot; Game UI shell</div>
+  </div>
+
+  <div class="sampler-grid">
+
+    <!-- ====== CONCEPT 1: 2x2 MODULE GRID ====== -->
+    <div class="concept">
+      <div class="concept-label">1. Module Grid</div>
+      <div class="concept-desc">Four mini cards in a 2&times;2 grid. Progress ring, serif title, fraction. Current mockup style, polished.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="module-grid">
+            <!-- Lifting -->
+            <div class="module-item">
+              <div class="module-ring-wrap">
+                <svg viewBox="0 0 44 44">
+                  <circle class="module-ring-bg" cx="22" cy="22" r="18" />
+                  <circle class="module-ring-fg" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="84.8" />
+                </svg>
+              </div>
+              <div class="module-info">
+                <div class="module-title">200 Lifting Days</div>
+                <div class="module-frac">51 / 200</div>
+              </div>
+            </div>
+            <!-- De Lahunta -->
+            <div class="module-item">
+              <div class="module-ring-wrap">
+                <svg viewBox="0 0 44 44">
+                  <circle class="module-ring-bg" cx="22" cy="22" r="18" />
+                  <circle class="module-ring-fg" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="73.5" />
+                </svg>
+              </div>
+              <div class="module-info">
+                <div class="module-title">De Lahunta</div>
+                <div class="module-frac">9 / 26 ch</div>
+              </div>
+            </div>
+            <!-- Books -->
+            <div class="module-item">
+              <div class="module-ring-wrap">
+                <svg viewBox="0 0 44 44">
+                  <circle class="module-ring-bg" cx="22" cy="22" r="18" />
+                  <circle class="module-ring-fg" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="56.55" />
+                </svg>
+              </div>
+              <div class="module-info">
+                <div class="module-title">Physical Books</div>
+                <div class="module-frac">1 / 2</div>
+              </div>
+            </div>
+            <!-- Climbing -->
+            <div class="module-item">
+              <div class="module-ring-wrap">
+                <svg viewBox="0 0 44 44">
+                  <circle class="module-ring-bg" cx="22" cy="22" r="18" />
+                  <circle class="module-ring-fg" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="84.8" />
+                </svg>
+              </div>
+              <div class="module-info">
+                <div class="module-title">Outdoor Climbing</div>
+                <div class="module-frac">3 / 12</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONCEPT 2: RADIAL GAUGES ====== -->
+    <div class="concept">
+      <div class="concept-label">2. Radial Gauges</div>
+      <div class="concept-desc">Semi-circle gauge meters like a dashboard. Amber fill shows progress. Compact and glanceable.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="gauges-grid">
+            <!-- Lifting 25% -->
+            <div class="gauge-item">
+              <svg class="gauge-svg" viewBox="0 0 100 60">
+                <path class="gauge-bg" d="M 10 55 A 40 40 0 0 1 90 55" />
+                <path class="gauge-fg" d="M 10 55 A 40 40 0 0 1 90 55"
+                  stroke-dasharray="125.66" stroke-dashoffset="94.25" />
+              </svg>
+              <div class="gauge-pct">25%</div>
+              <div class="gauge-name">200 Lifting Days</div>
+            </div>
+            <!-- De Lahunta 35% -->
+            <div class="gauge-item">
+              <svg class="gauge-svg" viewBox="0 0 100 60">
+                <path class="gauge-bg" d="M 10 55 A 40 40 0 0 1 90 55" />
+                <path class="gauge-fg" d="M 10 55 A 40 40 0 0 1 90 55"
+                  stroke-dasharray="125.66" stroke-dashoffset="81.68" />
+              </svg>
+              <div class="gauge-pct">35%</div>
+              <div class="gauge-name">De Lahunta</div>
+            </div>
+            <!-- Books 50% -->
+            <div class="gauge-item">
+              <svg class="gauge-svg" viewBox="0 0 100 60">
+                <path class="gauge-bg" d="M 10 55 A 40 40 0 0 1 90 55" />
+                <path class="gauge-fg" d="M 10 55 A 40 40 0 0 1 90 55"
+                  stroke-dasharray="125.66" stroke-dashoffset="62.83" />
+              </svg>
+              <div class="gauge-pct">50%</div>
+              <div class="gauge-name">Physical Books</div>
+            </div>
+            <!-- Climbing 25% -->
+            <div class="gauge-item">
+              <svg class="gauge-svg" viewBox="0 0 100 60">
+                <path class="gauge-bg" d="M 10 55 A 40 40 0 0 1 90 55" />
+                <path class="gauge-fg" d="M 10 55 A 40 40 0 0 1 90 55"
+                  stroke-dasharray="125.66" stroke-dashoffset="94.25" />
+              </svg>
+              <div class="gauge-pct">25%</div>
+              <div class="gauge-name">Outdoor Climbing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONCEPT 3: PROGRESS BARS WITH MILESTONES ====== -->
+    <div class="concept">
+      <div class="concept-label">3. Progress Bars</div>
+      <div class="concept-desc">Horizontal bars with warm amber gradient fill. Milestone dots at 25%, 50%, 75%. Clean and linear.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="bars-list">
+            <!-- Lifting 25% -->
+            <div class="bar-item">
+              <div class="bar-header">
+                <span class="bar-name">200 Lifting Days</span>
+                <span class="bar-frac">51 / 200</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 25.5%"></div>
+                <div class="bar-milestones">
+                  <div class="bar-milestone reached" style="left: 25%"></div>
+                  <div class="bar-milestone" style="left: 50%"></div>
+                  <div class="bar-milestone" style="left: 75%"></div>
+                </div>
+              </div>
+            </div>
+            <!-- De Lahunta 35% -->
+            <div class="bar-item">
+              <div class="bar-header">
+                <span class="bar-name">Complete de Lahunta</span>
+                <span class="bar-frac">9 / 26 ch</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 34.6%"></div>
+                <div class="bar-milestones">
+                  <div class="bar-milestone reached" style="left: 25%"></div>
+                  <div class="bar-milestone" style="left: 50%"></div>
+                  <div class="bar-milestone" style="left: 75%"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Books 50% -->
+            <div class="bar-item">
+              <div class="bar-header">
+                <span class="bar-name">2 Physical Books</span>
+                <span class="bar-frac">1 / 2</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 50%"></div>
+                <div class="bar-milestones">
+                  <div class="bar-milestone reached" style="left: 25%"></div>
+                  <div class="bar-milestone reached" style="left: 50%"></div>
+                  <div class="bar-milestone" style="left: 75%"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Climbing 25% -->
+            <div class="bar-item">
+              <div class="bar-header">
+                <span class="bar-name">12 Outdoor Climbing</span>
+                <span class="bar-frac">3 / 12</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: 25%"></div>
+                <div class="bar-milestones">
+                  <div class="bar-milestone reached" style="left: 25%"></div>
+                  <div class="bar-milestone" style="left: 50%"></div>
+                  <div class="bar-milestone" style="left: 75%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONCEPT 4: MOUNTAIN CLIMB ====== -->
+    <div class="concept">
+      <div class="concept-label">4. Mountain Climb</div>
+      <div class="concept-desc">Each goal is a mountain slope with a climber dot showing progress. Thematic to Lauren the climber.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="mountains-grid">
+            <!-- Lifting 25% -->
+            <div class="mountain-item">
+              <svg class="mountain-svg" viewBox="0 0 140 100">
+                <defs>
+                  <linearGradient id="mtn1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(225,164,92,0.3)" />
+                    <stop offset="100%" stop-color="rgba(45,22,28,0.5)" />
+                  </linearGradient>
+                </defs>
+                <polygon points="10,90 70,15 130,90" fill="url(#mtn1)" stroke="rgba(225,164,92,0.2)" stroke-width="1" />
+                <!-- trail line -->
+                <path d="M 25,85 Q 45,70 55,55 Q 62,42 70,15" fill="none" stroke="rgba(255,200,140,0.12)" stroke-width="1" stroke-dasharray="3,3" />
+                <!-- climber at 25% -->
+                <circle cx="40" cy="72" r="4" fill="var(--text-accent)" />
+                <circle cx="40" cy="72" r="7" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" />
+                <!-- summit flag -->
+                <line x1="70" y1="15" x2="70" y2="8" stroke="rgba(255,200,140,0.3)" stroke-width="1" />
+                <polygon points="70,8 80,11 70,14" fill="rgba(225,164,92,0.2)" />
+              </svg>
+              <div class="mountain-frac">51 / 200</div>
+              <div class="mountain-name">Lifting Days</div>
+            </div>
+            <!-- De Lahunta 35% -->
+            <div class="mountain-item">
+              <svg class="mountain-svg" viewBox="0 0 140 100">
+                <polygon points="10,90 70,15 130,90" fill="url(#mtn1)" stroke="rgba(225,164,92,0.2)" stroke-width="1" />
+                <path d="M 25,85 Q 45,70 55,55 Q 62,42 70,15" fill="none" stroke="rgba(255,200,140,0.12)" stroke-width="1" stroke-dasharray="3,3" />
+                <circle cx="47" cy="64" r="4" fill="var(--text-accent)" />
+                <circle cx="47" cy="64" r="7" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" />
+                <line x1="70" y1="15" x2="70" y2="8" stroke="rgba(255,200,140,0.3)" stroke-width="1" />
+                <polygon points="70,8 80,11 70,14" fill="rgba(225,164,92,0.2)" />
+              </svg>
+              <div class="mountain-frac">9 / 26 ch</div>
+              <div class="mountain-name">De Lahunta</div>
+            </div>
+            <!-- Books 50% -->
+            <div class="mountain-item">
+              <svg class="mountain-svg" viewBox="0 0 140 100">
+                <polygon points="10,90 70,15 130,90" fill="url(#mtn1)" stroke="rgba(225,164,92,0.2)" stroke-width="1" />
+                <path d="M 25,85 Q 45,70 55,55 Q 62,42 70,15" fill="none" stroke="rgba(255,200,140,0.12)" stroke-width="1" stroke-dasharray="3,3" />
+                <circle cx="55" cy="55" r="4" fill="var(--text-accent)" />
+                <circle cx="55" cy="55" r="7" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" />
+                <line x1="70" y1="15" x2="70" y2="8" stroke="rgba(255,200,140,0.3)" stroke-width="1" />
+                <polygon points="70,8 80,11 70,14" fill="rgba(225,164,92,0.2)" />
+              </svg>
+              <div class="mountain-frac">1 / 2</div>
+              <div class="mountain-name">Physical Books</div>
+            </div>
+            <!-- Climbing 25% -->
+            <div class="mountain-item">
+              <svg class="mountain-svg" viewBox="0 0 140 100">
+                <polygon points="10,90 70,15 130,90" fill="url(#mtn1)" stroke="rgba(225,164,92,0.2)" stroke-width="1" />
+                <path d="M 25,85 Q 45,70 55,55 Q 62,42 70,15" fill="none" stroke="rgba(255,200,140,0.12)" stroke-width="1" stroke-dasharray="3,3" />
+                <circle cx="40" cy="72" r="4" fill="var(--text-accent)" />
+                <circle cx="40" cy="72" r="7" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" />
+                <line x1="70" y1="15" x2="70" y2="8" stroke="rgba(255,200,140,0.3)" stroke-width="1" />
+                <polygon points="70,8 80,11 70,14" fill="rgba(225,164,92,0.2)" />
+              </svg>
+              <div class="mountain-frac">3 / 12</div>
+              <div class="mountain-name">Outdoor Climbing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONCEPT 5: STACKED RINGS ====== -->
+    <div class="concept">
+      <div class="concept-label">5. Stacked Rings</div>
+      <div class="concept-desc">All four goals as concentric rings in one circle, like Apple Watch activity rings. One compact visual.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="stacked-wrap">
+            <svg class="stacked-svg" viewBox="0 0 160 160">
+              <!-- Ring 1 (outermost): Lifting 25% — r=70 -->
+              <circle class="stacked-ring-bg" cx="80" cy="80" r="70" stroke="rgba(225,164,92,0.1)" />
+              <circle class="stacked-ring-fg" cx="80" cy="80" r="70" stroke="#E1A45C"
+                stroke-dasharray="439.82" stroke-dashoffset="329.87" transform="rotate(-90 80 80)" />
+              <!-- Ring 2: De Lahunta 35% — r=56 -->
+              <circle class="stacked-ring-bg" cx="80" cy="80" r="56" stroke="rgba(217,138,78,0.1)" />
+              <circle class="stacked-ring-fg" cx="80" cy="80" r="56" stroke="#D98A4E"
+                stroke-dasharray="351.86" stroke-dashoffset="228.71" transform="rotate(-90 80 80)" />
+              <!-- Ring 3: Books 50% — r=42 -->
+              <circle class="stacked-ring-bg" cx="80" cy="80" r="42" stroke="rgba(201,112,64,0.1)" />
+              <circle class="stacked-ring-fg" cx="80" cy="80" r="42" stroke="#C97040"
+                stroke-dasharray="263.89" stroke-dashoffset="131.95" transform="rotate(-90 80 80)" />
+              <!-- Ring 4 (innermost): Climbing 25% — r=28 -->
+              <circle class="stacked-ring-bg" cx="80" cy="80" r="28" stroke="rgba(184,90,54,0.1)" />
+              <circle class="stacked-ring-fg" cx="80" cy="80" r="28" stroke="#B85A36"
+                stroke-dasharray="175.93" stroke-dashoffset="131.95" transform="rotate(-90 80 80)" />
+            </svg>
+            <div class="stacked-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background: #E1A45C"></div>
+                <span class="legend-text">Lifting Days</span>
+                <span class="legend-pct">25%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: #D98A4E"></div>
+                <span class="legend-text">De Lahunta</span>
+                <span class="legend-pct">35%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: #C97040"></div>
+                <span class="legend-text">Physical Books</span>
+                <span class="legend-pct">50%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: #B85A36"></div>
+                <span class="legend-text">Outdoor Climbing</span>
+                <span class="legend-pct">25%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONCEPT 6: CARD TILES ====== -->
+    <div class="concept">
+      <div class="concept-label">6. Card Tiles</div>
+      <div class="concept-desc">Bold typography-driven tiles. The large percentage IS the visual. Thin progress bar below each.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="tiles-grid">
+            <!-- Lifting -->
+            <div class="tile-item">
+              <div>
+                <div class="tile-pct">25%</div>
+                <div class="tile-title">200 Lifting Days<br><span style="color: var(--text-muted)">51 / 200</span></div>
+              </div>
+              <div class="tile-bar-track">
+                <div class="tile-bar-fill" style="width: 25.5%"></div>
+              </div>
+            </div>
+            <!-- De Lahunta -->
+            <div class="tile-item">
+              <div>
+                <div class="tile-pct">35%</div>
+                <div class="tile-title">De Lahunta<br><span style="color: var(--text-muted)">9 / 26 chapters</span></div>
+              </div>
+              <div class="tile-bar-track">
+                <div class="tile-bar-fill" style="width: 34.6%"></div>
+              </div>
+            </div>
+            <!-- Books -->
+            <div class="tile-item">
+              <div>
+                <div class="tile-pct">50%</div>
+                <div class="tile-title">Physical Books<br><span style="color: var(--text-muted)">1 / 2</span></div>
+              </div>
+              <div class="tile-bar-track">
+                <div class="tile-bar-fill" style="width: 50%"></div>
+              </div>
+            </div>
+            <!-- Climbing -->
+            <div class="tile-item">
+              <div>
+                <div class="tile-pct">25%</div>
+                <div class="tile-title">Outdoor Climbing<br><span style="color: var(--text-muted)">3 / 12</span></div>
+              </div>
+              <div class="tile-bar-track">
+                <div class="tile-bar-fill" style="width: 25%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sampler-grid -->
+</div><!-- /content -->
+
+</body>
+</html>

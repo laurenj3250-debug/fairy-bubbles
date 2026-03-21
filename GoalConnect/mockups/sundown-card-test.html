@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown Card Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    /* Dark warm base with subtle radial warm glow */
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(120, 60, 20, 0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 70%, rgba(120, 60, 20, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(80, 40, 15, 0.1) 0%, transparent 70%),
+      #171010;
+    font-family: 'Source Sans 3', sans-serif;
+    color: #f5e6d0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    padding: 48px;
+    align-items: start;
+    justify-content: center;
+  }
+
+  h2 {
+    width: 100%;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: rgba(245,230,208,0.4);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: -16px;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     THE SUNDOWN CARD — matching the reference image exactly
+
+     Key visual properties from the reference:
+     1. Warm amber gradient glass (not flat dark)
+     2. Thick rounded bezel/border (3D edge feel)
+     3. Multi-layer shadows for physical elevation
+     4. Inner glow on all edges
+     5. Surface is WARM, not dark
+     6. Rounded corners ~26px
+     ══════════════════════════════════════════════════════ */
+
+  .sundown-card {
+    /* Warm gradient glass — the KEY difference from flat dark cards */
+    background: linear-gradient(
+      145deg,
+      rgba(140, 75, 30, 0.65) 0%,
+      rgba(110, 58, 22, 0.55) 40%,
+      rgba(95, 50, 20, 0.50) 70%,
+      rgba(80, 42, 18, 0.55) 100%
+    );
+
+    /* Glass blur */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* Thick warm bezel border — gives the 3D edge feel */
+    border: 2px solid rgba(200, 130, 60, 0.35);
+
+    /* Big chunky rounded corners */
+    border-radius: 26px;
+
+    /* MULTI-LAYER SHADOWS — this creates physical elevation + bezel */
+    box-shadow:
+      /* Outer shadow for elevation */
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      0 24px 48px rgba(0, 0, 0, 0.15),
+      /* THICK inner border glow — this creates the bezel feel */
+      inset 0 0 0 1px rgba(220, 160, 80, 0.15),
+      /* Strong inner glow along all edges */
+      inset 0 2px 4px rgba(245, 200, 130, 0.12),
+      inset 2px 0 4px rgba(245, 200, 130, 0.06),
+      inset -1px -1px 3px rgba(245, 200, 130, 0.04),
+      /* Ambient inner warmth */
+      inset 0 0 40px rgba(180, 100, 40, 0.08);
+
+    /* Padding */
+    padding: 24px;
+
+    /* 3D transform setup */
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Hover: subtle lift + tilt */
+  .sundown-card:hover {
+    transform: translateY(-2px) translateZ(10px);
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.5),
+      0 16px 40px rgba(0, 0, 0, 0.3),
+      0 32px 64px rgba(0, 0, 0, 0.15),
+      inset 0 0 0 1px rgba(220, 160, 80, 0.2),
+      inset 0 2px 4px rgba(245, 200, 130, 0.15),
+      inset 2px 0 4px rgba(245, 200, 130, 0.08),
+      inset -1px -1px 3px rgba(245, 200, 130, 0.06),
+      inset 0 0 50px rgba(180, 100, 40, 0.1);
+  }
+
+  /* ── Inner card (for nested elements like goal cards) ── */
+  .sundown-card-inner {
+    background: linear-gradient(
+      145deg,
+      rgba(130, 70, 28, 0.35) 0%,
+      rgba(95, 52, 20, 0.25) 100%
+    );
+    border: 1.5px solid rgba(200, 130, 60, 0.2);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow:
+      inset 0 1px 2px rgba(245, 200, 130, 0.08),
+      inset 0 0 0 1px rgba(220, 160, 80, 0.06),
+      0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* ── Section headers ── */
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f5e6d0;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title .badge {
+    font-size: 11px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(212, 133, 74, 0.2);
+    color: #d4854a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── Habit grid ── */
+  .habit-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 6px;
+    align-items: center;
+  }
+
+  .habit-grid .day-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(245, 230, 208, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 4px;
+  }
+
+  .habit-grid .day-header.today {
+    color: #d4854a;
+  }
+
+  .habit-grid .habit-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(245, 230, 208, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .habit-grid .habit-label .icon {
+    font-size: 14px;
+  }
+
+  .habit-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 38px;
+    max-height: 38px;
+    margin: 0 auto;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    /* Default empty cell */
+    background: rgba(180, 120, 60, 0.08);
+    border: 1px solid rgba(200, 130, 70, 0.12);
+  }
+
+  .habit-cell.done {
+    background: linear-gradient(135deg, rgba(220, 140, 60, 0.55), rgba(190, 100, 40, 0.45));
+    border-color: rgba(220, 140, 60, 0.5);
+    box-shadow:
+      0 0 14px rgba(220, 140, 60, 0.25),
+      inset 0 1px 0 rgba(255, 220, 160, 0.15);
+    color: rgba(255, 240, 210, 0.95);
+  }
+
+  .habit-cell.today {
+    border-color: rgba(212, 133, 74, 0.4);
+    box-shadow: 0 0 0 2px rgba(212, 133, 74, 0.15);
+  }
+
+  .habit-cell.today.done {
+    box-shadow:
+      0 0 16px rgba(212, 133, 74, 0.3),
+      0 0 0 2px rgba(212, 133, 74, 0.25),
+      inset 0 1px 0 rgba(245, 220, 180, 0.12);
+  }
+
+  .habit-cell.future {
+    opacity: 0.3;
+    border-style: dashed;
+  }
+
+  /* ── Progress ring with glow ── */
+  .progress-ring-wrapper {
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+
+  .progress-ring-wrapper svg {
+    width: 64px;
+    height: 64px;
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 10px rgba(212, 133, 74, 0.5)) drop-shadow(0 0 20px rgba(212, 133, 74, 0.2));
+  }
+
+  .progress-ring-wrapper .pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #d4854a;
+  }
+
+  /* ── Goal cards in 2x2 grid ── */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .goal-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .goal-card .goal-info h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f5e6d0;
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .goal-card .goal-info p {
+    font-size: 11px;
+    color: rgba(245, 230, 208, 0.4);
+  }
+
+  /* ── Nav pills ── */
+  .nav-demo {
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 26px;
+    background: linear-gradient(
+      145deg,
+      rgba(140, 75, 30, 0.65) 0%,
+      rgba(110, 58, 22, 0.55) 40%,
+      rgba(95, 50, 20, 0.50) 70%,
+      rgba(80, 42, 18, 0.55) 100%
+    );
+    border: 2px solid rgba(200, 130, 60, 0.35);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      0 24px 48px rgba(0, 0, 0, 0.15),
+      inset 0 0 0 1px rgba(220, 160, 80, 0.15),
+      inset 0 2px 4px rgba(245, 200, 130, 0.12),
+      inset 2px 0 4px rgba(245, 200, 130, 0.06),
+      inset -1px -1px 3px rgba(245, 200, 130, 0.04),
+      inset 0 0 40px rgba(180, 100, 40, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .nav-demo .pill {
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(245, 230, 208, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-demo .pill.active {
+    background: linear-gradient(135deg, rgba(212, 133, 74, 0.35), rgba(180, 90, 30, 0.25));
+    color: #f5e6d0;
+    box-shadow:
+      0 0 12px rgba(212, 133, 74, 0.15),
+      inset 0 1px 0 rgba(245, 220, 180, 0.08);
+  }
+
+  .nav-demo .pill:hover:not(.active) {
+    color: rgba(245, 230, 208, 0.7);
+    background: rgba(212, 133, 74, 0.08);
+  }
+
+  /* ── Bottom mini cards ── */
+  .mini-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+
+  .mini-card .mini-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: linear-gradient(135deg, rgba(212, 133, 74, 0.2), rgba(180, 90, 30, 0.15));
+    box-shadow: inset 0 1px 0 rgba(245, 220, 180, 0.08);
+  }
+
+  .mini-card .mini-text h5 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f5e6d0;
+  }
+
+  .mini-card .mini-text p {
+    font-size: 10px;
+    color: rgba(245, 230, 208, 0.4);
+  }
+
+  /* ── Stat pills (for hero) ── */
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 16px;
+    font-size: 12px;
+    color: rgba(245, 230, 208, 0.7);
+    background: linear-gradient(
+      145deg,
+      rgba(140, 75, 30, 0.6) 0%,
+      rgba(110, 58, 22, 0.5) 40%,
+      rgba(95, 50, 20, 0.45) 100%
+    );
+    border: 2px solid rgba(200, 130, 60, 0.3);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      0 8px 20px rgba(0, 0, 0, 0.2),
+      inset 0 0 0 1px rgba(220, 160, 80, 0.12),
+      inset 0 2px 4px rgba(245, 200, 130, 0.1),
+      inset 0 0 20px rgba(180, 100, 40, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .stat-pill .val {
+    color: #d4854a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  /* ── Streak strip ── */
+  .streak-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+  }
+
+  .streak-strip .text {
+    font-size: 12px;
+    color: rgba(245, 230, 208, 0.55);
+  }
+
+  .streak-strip .text strong {
+    color: #d4854a;
+  }
+
+  .streak-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .streak-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(212, 133, 74, 0.15);
+  }
+
+  .streak-dot.reached {
+    background: #d4854a;
+    box-shadow: 0 0 8px rgba(212, 133, 74, 0.5);
+  }
+
+  /* ── Layout helpers ── */
+  .demo-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .w-half { width: calc(50% - 10px); min-width: 400px; }
+  .w-full { width: 100%; max-width: 900px; }
+  .w-quarter { width: calc(25% - 15px); min-width: 200px; }
+</style>
+</head>
+<body>
+
+<h2>Sundown Card Components</h2>
+
+<!-- Nav bar -->
+<div class="w-full" style="max-width: 700px;">
+  <nav class="nav-demo">
+    <div class="pill active">Dashboard</div>
+    <div class="pill">Habits</div>
+    <div class="pill">Goals</div>
+    <div class="pill">Analytics</div>
+    <div class="pill">Adventures</div>
+    <div class="pill">Wellness</div>
+    <div class="pill">Settings</div>
+  </nav>
+</div>
+
+<!-- Stat pills -->
+<div style="display:flex; gap:12px; width:100%; justify-content:center;">
+  <div class="stat-pill"><span class="val">329</span> XP</div>
+  <div class="stat-pill">&#128293; <span class="val">22</span> days</div>
+  <div class="stat-pill">Residency <span class="val">2y 3m</span></div>
+</div>
+
+<!-- Main cards row -->
+<div class="demo-row">
+
+  <!-- Habits card -->
+  <div class="sundown-card w-half">
+    <div class="card-title">
+      This Week
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="progress-ring-wrapper" style="width:40px; height:40px;">
+          <svg viewBox="0 0 40 40" style="width:40px; height:40px; filter: drop-shadow(0 0 10px rgba(212,133,74,0.5)) drop-shadow(0 0 20px rgba(212,133,74,0.2));">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(212,133,74,0.12)" stroke-width="3"/>
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#d4854a" stroke-width="3" stroke-linecap="round"
+              stroke-dasharray="100.53" stroke-dashoffset="43.08"/>
+          </svg>
+          <div class="pct" style="font-size:11px;">4/7</div>
+        </div>
+        <span style="font-size:11px; color:rgba(245,230,208,0.4);">3 left</span>
+      </div>
+    </div>
+    <div class="habit-grid">
+      <div></div>
+      <div class="day-header">S</div>
+      <div class="day-header">M</div>
+      <div class="day-header">T</div>
+      <div class="day-header">W</div>
+      <div class="day-header">T</div>
+      <div class="day-header today">F</div>
+      <div class="day-header">S</div>
+
+      <div class="habit-label"><span class="icon">&#127481;&#127479;</span> RemNote</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell today done">&#10003;</div>
+      <div class="habit-cell future"></div>
+
+      <div class="habit-label"><span class="icon">&#127947;</span> Gym</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell today done">&#10003;</div>
+      <div class="habit-cell future"></div>
+
+      <div class="habit-label"><span class="icon">&#127911;</span> Pimsleur</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell today done">&#10003;</div>
+      <div class="habit-cell future"></div>
+
+      <div class="habit-label"><span class="icon">&#128716;</span> Bed by 11</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell today"></div>
+      <div class="habit-cell future"></div>
+
+      <div class="habit-label"><span class="icon">&#127466;&#127462;</span> German</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell today"></div>
+      <div class="habit-cell future"></div>
+
+      <div class="habit-label"><span class="icon">&#128218;</span> Read a Paper</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell"></div>
+      <div class="habit-cell done">&#10003;</div>
+      <div class="habit-cell today"></div>
+      <div class="habit-cell future"></div>
+    </div>
+  </div>
+
+  <!-- Goals card -->
+  <div class="sundown-card w-half">
+    <div class="card-title">
+      Goals
+      <span class="badge">2026</span>
+    </div>
+    <div class="goals-grid">
+      <div class="sundown-card-inner goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(212,133,74,0.1)" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#d4854a" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="81.68"/>
+          </svg>
+          <div class="pct">50%</div>
+        </div>
+        <div class="goal-info">
+          <h4>2 physical books</h4>
+          <p>1/2 complete</p>
+        </div>
+      </div>
+      <div class="sundown-card-inner goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(212,133,74,0.1)" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#e09050" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="106.18"/>
+          </svg>
+          <div class="pct">35%</div>
+        </div>
+        <div class="goal-info">
+          <h4>Complete de Lahunta</h4>
+          <p>9/26 chapters</p>
+        </div>
+      </div>
+      <div class="sundown-card-inner goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(212,133,74,0.1)" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#c07040" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="120.89"/>
+          </svg>
+          <div class="pct">26%</div>
+        </div>
+        <div class="goal-info">
+          <h4>200 lifting days</h4>
+          <p>51/200</p>
+        </div>
+      </div>
+      <div class="sundown-card-inner goal-card">
+        <div class="progress-ring-wrapper">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(212,133,74,0.1)" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#a06030" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.36" stroke-dashoffset="122.52"/>
+          </svg>
+          <div class="pct">25%</div>
+        </div>
+        <div class="goal-info">
+          <h4>12 outdoor climbing</h4>
+          <p>3/12 days</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Streak strip -->
+<div class="sundown-card w-full" style="max-width: 860px; padding: 0;">
+  <div class="streak-strip">
+    <div class="text"><strong>22 days strong</strong> &mdash; next milestone: 30 days</div>
+    <div class="streak-dots">
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot reached"></div>
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom mini cards -->
+<div class="demo-row">
+  <div class="sundown-card w-quarter mini-card">
+    <div class="mini-icon">&#10024;</div>
+    <div class="mini-text">
+      <h5>Wellness</h5>
+      <p>Check in</p>
+    </div>
+  </div>
+  <div class="sundown-card w-quarter mini-card">
+    <div class="mini-icon">&#128218;</div>
+    <div class="mini-text">
+      <h5>Reading</h5>
+      <p>The Living Mountain</p>
+    </div>
+  </div>
+  <div class="sundown-card w-quarter mini-card">
+    <div class="mini-icon">&#9968;&#65039;</div>
+    <div class="mini-text">
+      <h5>Adventures</h5>
+      <p>Log outdoor day</p>
+    </div>
+  </div>
+  <div class="sundown-card w-quarter mini-card">
+    <div class="mini-icon">&#127873;</div>
+    <div class="mini-text">
+      <h5>Rewards</h5>
+      <p>329 XP available</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

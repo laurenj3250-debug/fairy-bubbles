@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yearly Goals Display — Sampler</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 680px; margin: 0 auto; padding: 60px 24px 80px; }
+
+  /* Particles */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+
+  .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; animation-delay: 0s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px; left: 50%; top: 20%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* Card system */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  /* Light ray */
+  .face::before {
+    content: ''; position: absolute; top: -40px; right: -20px;
+    width: 120px; height: 200px;
+    background: linear-gradient(135deg, rgba(255,220,160,0.06) 0%, transparent 60%);
+    transform: rotate(-15deg); pointer-events: none;
+  }
+  .tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 16px;
+    box-shadow: var(--tray-inset); border: 1px solid rgba(0,0,0,0.15);
+  }
+
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--text-primary);
+  }
+  .badge {
+    font-size: 11px; font-weight: 600; color: var(--text-accent);
+    background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px;
+  }
+
+  /* Category tabs (small pills) */
+  .cat-tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .cat-tab {
+    padding: 5px 14px; border-radius: 14px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border: none;
+    background: rgba(15,10,8,0.4); letter-spacing: 0.5px; text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1.5px;
+    transition: all 0.2s;
+  }
+  .cat-tab.active { background: rgba(200,131,73,0.2); color: var(--text-accent); }
+  .cat-tab:hover:not(.active) { color: var(--text-secondary); }
+
+  /* Expand button */
+  .expand-btn {
+    display: block; width: 100%; text-align: center;
+    margin-top: 14px; padding: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-accent); background: none; border: none; cursor: pointer;
+    text-shadow: 0 0 20px rgba(225,164,92,0.4);
+    transition: all 0.3s;
+  }
+  .expand-btn:hover { text-shadow: 0 0 30px rgba(225,164,92,0.7); color: #F0DEC7; }
+
+  /* Concept label */
+  .concept-wrap { margin-bottom: 32px; }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 6px;
+    text-shadow: 0 2px 20px rgba(200,130,70,0.2);
+  }
+  .concept-desc {
+    font-size: 13px; color: var(--text-muted); line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* Page title */
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+    text-align: center; margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center; font-size: 13px; color: var(--text-muted);
+    letter-spacing: 1px; margin-bottom: 48px;
+  }
+
+  /* ========================================
+     CONCEPT 1: HORIZON LINES LIST
+     ======================================== */
+
+  .horizon-goal { margin-bottom: 18px; }
+  .horizon-goal:last-child { margin-bottom: 0; }
+  .horizon-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .horizon-label .frac { color: var(--text-muted); font-size: 11px; font-weight: 500; }
+  .horizon-bar-wrap {
+    height: 3px; border-radius: 2px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: visible;
+  }
+  .horizon-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(200,131,73,0.4), #E1A45C);
+    box-shadow: 0 0 8px rgba(225,164,92,0.3), 0 0 20px rgba(225,164,92,0.15);
+    position: relative;
+    transition: width 0.8s ease;
+  }
+  .horizon-fill::after {
+    content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #E1A45C;
+    box-shadow: 0 0 6px rgba(225,164,92,0.6), 0 0 14px rgba(225,164,92,0.3);
+  }
+  /* Dim orb for 0% */
+  .horizon-fill.zero::after {
+    background: rgba(169,130,106,0.4);
+    box-shadow: 0 0 4px rgba(169,130,106,0.2);
+    right: 0; left: -3px;
+  }
+
+  /* ========================================
+     CONCEPT 2: STARDUST ROWS
+     ======================================== */
+
+  .stardust-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .stardust-row:last-child { border-bottom: none; }
+  .stardust-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 1px; text-transform: uppercase;
+    width: 160px; min-width: 160px;
+    line-height: 1.2;
+  }
+  .stardust-dots { display: flex; gap: 3px; flex-wrap: wrap; flex: 1; }
+  .stardust-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(15,10,8,0.6);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+  }
+  .stardust-dot.lit {
+    background: radial-gradient(circle at 40% 35%, #F0DEC7, #D08A4F);
+    box-shadow: 0 0 4px rgba(225,164,92,0.5), 0 0 10px rgba(225,164,92,0.2);
+  }
+  .stardust-dot.half {
+    background: radial-gradient(circle at 40% 35%, rgba(240,222,199,0.5), rgba(208,138,79,0.5));
+    box-shadow: 0 0 3px rgba(225,164,92,0.3);
+  }
+  .stardust-frac {
+    font-size: 11px; color: var(--text-muted); min-width: 45px; text-align: right;
+  }
+
+  /* ========================================
+     CONCEPT 3: GLOWING LIST
+     ======================================== */
+
+  .glow-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .glow-row:last-child { border-bottom: none; }
+  .glow-orb {
+    width: 14px; height: 14px; min-width: 14px; border-radius: 50%;
+    transition: all 0.3s;
+  }
+  .glow-orb.bright {
+    background: radial-gradient(circle at 40% 35%, #F0DEC7, #E1A45C);
+    box-shadow: 0 0 8px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3), 0 0 40px rgba(225,164,92,0.1);
+  }
+  .glow-orb.medium {
+    background: radial-gradient(circle at 40% 35%, rgba(240,222,199,0.7), rgba(208,138,79,0.7));
+    box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 14px rgba(225,164,92,0.2);
+  }
+  .glow-orb.dim {
+    background: radial-gradient(circle at 40% 35%, rgba(169,130,106,0.5), rgba(120,80,60,0.4));
+    box-shadow: 0 0 4px rgba(169,130,106,0.2);
+  }
+  .glow-orb.ember {
+    background: radial-gradient(circle at 40% 35%, rgba(100,65,50,0.6), rgba(60,35,25,0.5));
+    box-shadow: 0 0 3px rgba(100,65,50,0.15);
+  }
+  .glow-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; font-weight: 600; color: var(--text-primary);
+    flex: 1; line-height: 1.2;
+  }
+  .glow-frac { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+  /* ========================================
+     CONCEPT 4: NESTED CARDS
+     ======================================== */
+
+  .nested-list { display: flex; flex-direction: column; gap: 8px; }
+  .nested-card {
+    border-radius: 14px; padding: 2px;
+    transition: all 0.3s;
+  }
+  .nested-card.warm {
+    background: linear-gradient(135deg, rgba(200,131,73,0.35), rgba(160,90,50,0.2));
+    box-shadow: 0 0 12px rgba(225,164,92,0.1);
+  }
+  .nested-card.cool {
+    background: rgba(52,28,32,0.5);
+  }
+  .nested-inner {
+    background: rgba(85,48,50,0.4); border-radius: 12px; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .nested-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600; color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .nested-meta { display: flex; align-items: center; gap: 10px; }
+  .nested-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 700; color: var(--text-accent);
+  }
+  .nested-frac { font-size: 11px; color: var(--text-muted); }
+  .nested-mini-bar {
+    width: 50px; height: 3px; border-radius: 2px;
+    background: rgba(15,10,8,0.5);
+    overflow: hidden;
+  }
+  .nested-mini-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(200,131,73,0.5), #E1A45C);
+  }
+
+  /* ========================================
+     CONCEPT 5: HORIZON LANDSCAPE
+     ======================================== */
+
+  .landscape-card {
+    position: relative; height: 320px; overflow: hidden;
+  }
+  .landscape-line {
+    position: absolute; left: 20px; right: 20px;
+    height: 2px; border-radius: 1px;
+  }
+  .landscape-line-bg {
+    position: absolute; inset: 0;
+    background: rgba(15,10,8,0.3);
+  }
+  .landscape-line-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    border-radius: 1px;
+    background: linear-gradient(90deg, rgba(200,131,73,0.3), #E1A45C);
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 16px rgba(225,164,92,0.15);
+  }
+  .landscape-line-fill::after {
+    content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #E1A45C;
+    box-shadow: 0 0 6px rgba(225,164,92,0.6);
+  }
+  .landscape-line-label {
+    position: absolute; left: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 1px; text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+  }
+  .landscape-line-pct {
+    position: absolute; right: 0;
+    font-size: 10px; color: var(--text-muted);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+  /* Atmospheric haze layers */
+  .landscape-card::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(to top,
+      rgba(18,10,14,0.7) 0%,
+      rgba(18,10,14,0.2) 30%,
+      rgba(85,48,52,0.1) 60%,
+      rgba(255,200,140,0.04) 100%);
+  }
+  .landscape-card .landscape-line { z-index: 2; }
+  .landscape-card .landscape-line-label { z-index: 3; }
+  .landscape-card .landscape-line-pct { z-index: 3; }
+
+  /* ========================================
+     CONCEPT 6: COMPACT DOTS
+     ======================================== */
+
+  .compact-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+  }
+  .compact-name {
+    font-size: 12px; color: var(--text-secondary);
+    width: 180px; min-width: 180px;
+    line-height: 1.2;
+  }
+  .compact-dots { display: flex; gap: 3px; }
+  .compact-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(15,10,8,0.6);
+    box-shadow: inset 0 0.5px 1px rgba(0,0,0,0.3);
+  }
+  .compact-dot.lit {
+    background: radial-gradient(circle at 40% 35%, #F0DEC7, #D08A4F);
+    box-shadow: 0 0 3px rgba(225,164,92,0.5), 0 0 8px rgba(225,164,92,0.2);
+  }
+  .compact-dot.half {
+    background: radial-gradient(circle at 40% 35%, rgba(240,222,199,0.45), rgba(208,138,79,0.45));
+    box-shadow: 0 0 2px rgba(225,164,92,0.25);
+  }
+  .compact-frac {
+    font-size: 10px; color: var(--text-muted); margin-left: auto; white-space: nowrap;
+  }
+
+  /* ========================================
+     ANIMATIONS
+     ======================================== */
+
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 14px rgba(225,164,92,0.2); }
+    50% { box-shadow: 0 0 10px rgba(225,164,92,0.6), 0 0 24px rgba(225,164,92,0.3); }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+</div>
+
+<div class="sun-glow"></div>
+
+<div class="content">
+
+  <h1 class="page-title">Yearly Goals</h1>
+  <p class="page-sub">6 display concepts for browsing 30 goals with category tabs</p>
+
+
+  <!-- ============================================
+       CONCEPT 1: HORIZON LINES LIST
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">1. Horizon Lines List</div>
+    <div class="concept-desc">Each yearly goal is a glowing horizon line with endpoint orb. Goal name as small serif label above. Fraction at right. A longer version of the locked goal card format.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray">
+        <div class="horizon-goal">
+          <div class="horizon-label">
+            <span>Complete a solo hemilaminectomy</span>
+            <span class="frac">0/1</span>
+          </div>
+          <div class="horizon-bar-wrap">
+            <div class="horizon-fill zero" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div class="horizon-goal">
+          <div class="horizon-label">
+            <span>300 PowerPoints studied</span>
+            <span class="frac">14/300</span>
+          </div>
+          <div class="horizon-bar-wrap">
+            <div class="horizon-fill" style="width: 5%;"></div>
+          </div>
+        </div>
+        <div class="horizon-goal">
+          <div class="horizon-label">
+            <span>Complete de Lahunta</span>
+            <span class="frac">9/26</span>
+          </div>
+          <div class="horizon-bar-wrap">
+            <div class="horizon-fill" style="width: 35%;"></div>
+          </div>
+        </div>
+        <div class="horizon-goal">
+          <div class="horizon-label">
+            <span>200 lifting days</span>
+            <span class="frac">52/200</span>
+          </div>
+          <div class="horizon-bar-wrap">
+            <div class="horizon-fill" style="width: 26%;"></div>
+          </div>
+        </div>
+        <div class="horizon-goal">
+          <div class="horizon-label">
+            <span>10 pull-ups in a row</span>
+            <span class="frac">0/1</span>
+          </div>
+          <div class="horizon-bar-wrap">
+            <div class="horizon-fill zero" style="width: 0%;"></div>
+          </div>
+        </div>
+        <button class="expand-btn">Show all 30 goals</button>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- ============================================
+       CONCEPT 2: STARDUST ROWS
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">2. Stardust Rows</div>
+    <div class="concept-desc">Each goal has a row of small star dots representing progress segments. Lit dots = progress. Like a horizontal mini-constellation per goal.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray">
+        <!-- Hemilaminectomy: 0/1 = 0% -> 0 of 1 dot lit -->
+        <div class="stardust-row">
+          <div class="stardust-name">Solo hemilaminectomy</div>
+          <div class="stardust-dots">
+            <div class="stardust-dot"></div>
+          </div>
+          <div class="stardust-frac">0/1</div>
+        </div>
+        <!-- PowerPoints: 14/300 = 5% -> 1.5 of 30 dots lit (show 20 dots, 1 lit) -->
+        <div class="stardust-row">
+          <div class="stardust-name">300 PowerPoints</div>
+          <div class="stardust-dots">
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot half"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+          </div>
+          <div class="stardust-frac">14/300</div>
+        </div>
+        <!-- de Lahunta: 9/26 = 35% -> ~9 of 26 dots lit -->
+        <div class="stardust-row">
+          <div class="stardust-name">Complete de Lahunta</div>
+          <div class="stardust-dots">
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+          </div>
+          <div class="stardust-frac">9/26</div>
+        </div>
+        <!-- 200 lifting days: 52/200 = 26% -> ~5 of 20 dots lit -->
+        <div class="stardust-row">
+          <div class="stardust-name">200 lifting days</div>
+          <div class="stardust-dots">
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot lit"></div>
+            <div class="stardust-dot half"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+            <div class="stardust-dot"></div>
+          </div>
+          <div class="stardust-frac">52/200</div>
+        </div>
+        <!-- 10 pull-ups: 0/1 = 0% -->
+        <div class="stardust-row">
+          <div class="stardust-name">10 pull-ups in a row</div>
+          <div class="stardust-dots">
+            <div class="stardust-dot"></div>
+          </div>
+          <div class="stardust-frac">0/1</div>
+        </div>
+        <button class="expand-btn">Show all 30 goals</button>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- ============================================
+       CONCEPT 3: GLOWING LIST
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">3. Glowing List</div>
+    <div class="concept-desc">Clean editorial list. Each goal has a glowing orb whose brightness indicates progress. Done goals = bright. 0% = dim ember. The orb IS the progress indicator.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray">
+        <div class="glow-row">
+          <div class="glow-orb ember"></div>
+          <div class="glow-name">Complete a solo hemilaminectomy</div>
+          <div class="glow-frac">0/1</div>
+        </div>
+        <div class="glow-row">
+          <div class="glow-orb dim"></div>
+          <div class="glow-name">300 PowerPoints studied</div>
+          <div class="glow-frac">14/300</div>
+        </div>
+        <div class="glow-row">
+          <div class="glow-orb medium"></div>
+          <div class="glow-name">Complete de Lahunta</div>
+          <div class="glow-frac">9/26</div>
+        </div>
+        <div class="glow-row">
+          <div class="glow-orb medium"></div>
+          <div class="glow-name">200 lifting days</div>
+          <div class="glow-frac">52/200</div>
+        </div>
+        <div class="glow-row">
+          <div class="glow-orb ember"></div>
+          <div class="glow-name">10 pull-ups in a row</div>
+          <div class="glow-frac">0/1</div>
+        </div>
+        <button class="expand-btn">Show all 30 goals</button>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- ============================================
+       CONCEPT 4: NESTED CARDS
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">4. Nested Cards</div>
+    <div class="concept-desc">Each goal gets a mini card with warm gradient border if >25% done, dim border if less. Goal name + fraction + mini progress bar inside. Stacked list of small glowy vessels.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray">
+        <div class="nested-list">
+          <div class="nested-card cool">
+            <div class="nested-inner">
+              <div>
+                <div class="nested-name">Complete a solo hemilaminectomy</div>
+                <div class="nested-frac">0/1</div>
+              </div>
+              <div class="nested-meta">
+                <div class="nested-mini-bar"><div class="nested-mini-fill" style="width: 0%;"></div></div>
+                <div class="nested-pct">0%</div>
+              </div>
+            </div>
+          </div>
+          <div class="nested-card cool">
+            <div class="nested-inner">
+              <div>
+                <div class="nested-name">300 PowerPoints studied</div>
+                <div class="nested-frac">14/300</div>
+              </div>
+              <div class="nested-meta">
+                <div class="nested-mini-bar"><div class="nested-mini-fill" style="width: 5%;"></div></div>
+                <div class="nested-pct">5%</div>
+              </div>
+            </div>
+          </div>
+          <div class="nested-card warm">
+            <div class="nested-inner">
+              <div>
+                <div class="nested-name">Complete de Lahunta</div>
+                <div class="nested-frac">9/26</div>
+              </div>
+              <div class="nested-meta">
+                <div class="nested-mini-bar"><div class="nested-mini-fill" style="width: 35%;"></div></div>
+                <div class="nested-pct">35%</div>
+              </div>
+            </div>
+          </div>
+          <div class="nested-card warm">
+            <div class="nested-inner">
+              <div>
+                <div class="nested-name">200 lifting days</div>
+                <div class="nested-frac">52/200</div>
+              </div>
+              <div class="nested-meta">
+                <div class="nested-mini-bar"><div class="nested-mini-fill" style="width: 26%;"></div></div>
+                <div class="nested-pct">26%</div>
+              </div>
+            </div>
+          </div>
+          <div class="nested-card cool">
+            <div class="nested-inner">
+              <div>
+                <div class="nested-name">10 pull-ups in a row</div>
+                <div class="nested-frac">0/1</div>
+              </div>
+              <div class="nested-meta">
+                <div class="nested-mini-bar"><div class="nested-mini-fill" style="width: 0%;"></div></div>
+                <div class="nested-pct">0%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="expand-btn">Show all 30 goals</button>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- ============================================
+       CONCEPT 5: HORIZON LANDSCAPE
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">5. Horizon Landscape</div>
+    <div class="concept-desc">All goals as horizon lines at different altitudes. Higher progress = higher on the card. Reads as a layered landscape of light lines. Goal names float near each line. Not a list -- a visualization.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray" style="padding: 0; overflow: hidden; border-radius: 16px;">
+        <div class="landscape-card">
+          <!-- 35% — de Lahunta — highest -->
+          <div class="landscape-line" style="bottom: 240px;">
+            <div class="landscape-line-bg"></div>
+            <div class="landscape-line-fill" style="width: 35%;"></div>
+            <div class="landscape-line-label" style="bottom: 8px;">Complete de Lahunta</div>
+            <div class="landscape-line-pct" style="bottom: 8px;">35%</div>
+          </div>
+
+          <!-- 26% — 200 lifting days -->
+          <div class="landscape-line" style="bottom: 195px;">
+            <div class="landscape-line-bg"></div>
+            <div class="landscape-line-fill" style="width: 26%;"></div>
+            <div class="landscape-line-label" style="bottom: 8px;">200 lifting days</div>
+            <div class="landscape-line-pct" style="bottom: 8px;">26%</div>
+          </div>
+
+          <!-- 5% — PowerPoints -->
+          <div class="landscape-line" style="bottom: 120px;">
+            <div class="landscape-line-bg"></div>
+            <div class="landscape-line-fill" style="width: 5%;"></div>
+            <div class="landscape-line-label" style="bottom: 8px;">300 PowerPoints</div>
+            <div class="landscape-line-pct" style="bottom: 8px;">5%</div>
+          </div>
+
+          <!-- 0% — Hemilaminectomy -->
+          <div class="landscape-line" style="bottom: 60px;">
+            <div class="landscape-line-bg"></div>
+            <div class="landscape-line-fill" style="width: 0%;"></div>
+            <div class="landscape-line-label" style="bottom: 8px;">Solo hemilaminectomy</div>
+            <div class="landscape-line-pct" style="bottom: 8px;">0%</div>
+          </div>
+
+          <!-- 0% — Pull-ups -->
+          <div class="landscape-line" style="bottom: 30px;">
+            <div class="landscape-line-bg"></div>
+            <div class="landscape-line-fill" style="width: 0%;"></div>
+            <div class="landscape-line-label" style="bottom: 8px;">10 pull-ups in a row</div>
+            <div class="landscape-line-pct" style="bottom: 8px;">0%</div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- ============================================
+       CONCEPT 6: COMPACT DOTS
+       ============================================ -->
+  <div class="concept-wrap">
+    <div class="concept-label">6. Compact Dots</div>
+    <div class="concept-desc">Maximum density. Each goal is name + a row of 10 tiny 6px dots where filled dots = progress in 10% increments. Very compact, shows lots of goals without scrolling.</div>
+
+    <div class="shell"><div class="face">
+      <div class="card-hdr">
+        <span class="card-title">Yearly Goals</span>
+        <span class="badge">3/30 complete</span>
+      </div>
+      <div class="cat-tabs">
+        <div class="cat-tab active">All</div>
+        <div class="cat-tab">Fitness</div>
+        <div class="cat-tab">Learning</div>
+        <div class="cat-tab">Adventure</div>
+      </div>
+      <div class="tray">
+        <!-- Hemilaminectomy: 0% -> 0 dots -->
+        <div class="compact-row">
+          <div class="compact-name">Complete a solo hemilaminectomy</div>
+          <div class="compact-dots">
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+          </div>
+          <div class="compact-frac">0/1</div>
+        </div>
+        <!-- PowerPoints: 5% -> 0.5 dots (half) -->
+        <div class="compact-row">
+          <div class="compact-name">300 PowerPoints studied</div>
+          <div class="compact-dots">
+            <div class="compact-dot half"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+          </div>
+          <div class="compact-frac">14/300</div>
+        </div>
+        <!-- de Lahunta: 35% -> 3 lit + 1 half -->
+        <div class="compact-row">
+          <div class="compact-name">Complete de Lahunta</div>
+          <div class="compact-dots">
+            <div class="compact-dot lit"></div>
+            <div class="compact-dot lit"></div>
+            <div class="compact-dot lit"></div>
+            <div class="compact-dot half"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+          </div>
+          <div class="compact-frac">9/26</div>
+        </div>
+        <!-- 200 lifting days: 26% -> 2 lit + 1 half -->
+        <div class="compact-row">
+          <div class="compact-name">200 lifting days</div>
+          <div class="compact-dots">
+            <div class="compact-dot lit"></div>
+            <div class="compact-dot lit"></div>
+            <div class="compact-dot half"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+          </div>
+          <div class="compact-frac">52/200</div>
+        </div>
+        <!-- 10 pull-ups: 0% -> 0 dots -->
+        <div class="compact-row">
+          <div class="compact-name">10 pull-ups in a row</div>
+          <div class="compact-dots">
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+            <div class="compact-dot"></div>
+          </div>
+          <div class="compact-frac">0/1</div>
+        </div>
+        <button class="expand-btn">Show all 30 goals</button>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+</body>
+</html>

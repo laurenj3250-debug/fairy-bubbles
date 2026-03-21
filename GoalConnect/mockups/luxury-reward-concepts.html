@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxury Reward Concepts — 5 Haute Couture Variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* PARTICLES */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 78%; bottom: 38%; animation-duration: 16s; animation-delay: 3s; }
+
+  /* PAGE */
+  .page-content {
+    position: relative; z-index: 5;
+    max-width: 900px; margin: 0 auto;
+    padding: 40px 20px 100px;
+  }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300;
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .page-subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 50px;
+  }
+
+  /* CONCEPT SECTION */
+  .concept-section {
+    margin-bottom: 70px;
+  }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-left: 4px;
+  }
+  .concept-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    padding-left: 4px;
+  }
+
+  /* V2 RIGHT COLUMN CONTEXT */
+  .column-context {
+    width: 280px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* SHARED CARD SHELL */
+  .card-shell {
+    background: var(--shell-bg);
+    border-radius: 16px;
+    border: 1px solid rgba(225,180,120,0.08);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+  .card-face {
+    background: var(--face-bg);
+    border-radius: 12px;
+    margin: 6px;
+    box-shadow: var(--face-inset);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* LIGHT RAY */
+  .card-face::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: 30%; right: 30%;
+    height: 80%;
+    background: radial-gradient(ellipse at center top, rgba(255,220,160,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* STARDUST RING (simplified for context) */
+  .stardust-card .card-face {
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .stardust-ring {
+    width: 72px; height: 72px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .stardust-ring svg {
+    width: 100%; height: 100%;
+  }
+  .stardust-ring .ring-track {
+    fill: none;
+    stroke: rgba(169,130,106,0.15);
+    stroke-width: 2;
+  }
+  .stardust-ring .ring-fill {
+    fill: none;
+    stroke: var(--text-accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 201;
+    stroke-dashoffset: 44.2; /* 201 * (1 - 0.78) */
+    transform: rotate(-90deg);
+    transform-origin: center;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.4));
+  }
+  .stardust-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .stardust-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ======================== */
+  /* CONCEPT 1: THE SEAL     */
+  /* ======================== */
+  .seal-card .card-face {
+    padding: 32px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .wax-seal {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    position: relative;
+    margin-bottom: 20px;
+    /* Layered gradients for wax texture */
+    background:
+      radial-gradient(circle at 35% 35%, rgba(255,200,140,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 65% 65%, rgba(80,30,20,0.3) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(160,80,50,0.6) 0%, rgba(120,55,35,0.8) 40%, rgba(90,40,25,0.9) 70%, rgba(70,30,20,1) 100%);
+    /* Wax surface texture */
+    background-color: #7a3828;
+    box-shadow:
+      0 0 0 2px rgba(225,164,92,0.35),
+      0 0 12px rgba(225,164,92,0.15),
+      inset 0 2px 8px rgba(255,200,140,0.12),
+      inset 0 -4px 12px rgba(30,10,5,0.5),
+      0 4px 16px rgba(0,0,0,0.5);
+  }
+  .wax-seal::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background:
+      conic-gradient(
+        from 0deg,
+        rgba(180,90,55,0.4) 0deg,
+        rgba(140,65,40,0.6) 30deg,
+        rgba(180,90,55,0.3) 60deg,
+        rgba(150,70,45,0.5) 90deg,
+        rgba(180,90,55,0.4) 120deg,
+        rgba(140,65,40,0.6) 150deg,
+        rgba(170,85,50,0.4) 180deg,
+        rgba(140,65,40,0.5) 210deg,
+        rgba(180,90,55,0.3) 240deg,
+        rgba(150,70,45,0.6) 270deg,
+        rgba(180,90,55,0.4) 300deg,
+        rgba(140,65,40,0.5) 330deg,
+        rgba(180,90,55,0.4) 360deg
+      );
+    border-radius: 50%;
+  }
+  .wax-seal::after {
+    /* Subtle rim highlight */
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(225,180,120,0.2);
+    background: radial-gradient(circle at 40% 30%, rgba(255,220,180,0.08) 0%, transparent 60%);
+  }
+  .seal-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: rgba(200,140,90,0.7);
+    text-shadow:
+      inset 0 0 0 transparent,
+      0 1px 0 rgba(40,15,5,0.8),
+      0 -1px 0 rgba(255,200,140,0.15);
+    /* Embossed / pressed-in look */
+    filter: url(#seal-emboss);
+    z-index: 2;
+  }
+  .seal-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .seal-divider {
+    width: 60px;
+    height: 0;
+    border: none;
+    border-top: 0.5px solid rgba(225,180,120,0.2);
+    margin-bottom: 16px;
+  }
+  .seal-reward {
+    text-align: center;
+  }
+  .seal-reward-name {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .seal-reward-fraction {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+
+  /* ======================== */
+  /* CONCEPT 2: MONOGRAM CARD */
+  /* ======================== */
+  .monogram-card .card-face {
+    padding: 36px 28px 30px;
+    position: relative;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .monogram-watermark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 110px;
+    font-weight: 300;
+    color: rgba(240,222,199,0.035);
+    letter-spacing: 8px;
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .monogram-content {
+    position: relative;
+    z-index: 1;
+  }
+  .monogram-level {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .monogram-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+  }
+  .monogram-divider-thin {
+    width: 30px;
+    height: 0;
+    border: none;
+    border-top: 0.5px solid rgba(225,180,120,0.15);
+    margin-bottom: 20px;
+  }
+  .monogram-reward-text {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+  }
+  .monogram-reward-text em {
+    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  /* ======================== */
+  /* CONCEPT 3: CELESTIAL WATCH */
+  /* ======================== */
+  @keyframes watch-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .watch-card .card-face {
+    padding: 28px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .watch-container {
+    width: 110px; height: 110px;
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .watch-face-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(85,48,52,0.2) 0%, rgba(45,22,28,0.5) 70%, rgba(30,14,18,0.7) 100%);
+    border: 0.5px solid rgba(225,180,120,0.12);
+    box-shadow:
+      inset 0 0 20px rgba(0,0,0,0.3),
+      0 0 20px rgba(225,164,92,0.05);
+  }
+  .watch-markers {
+    position: absolute;
+    inset: 0;
+    animation: watch-rotate 2419200s linear infinite; /* 28 days in seconds */
+  }
+  .watch-marker {
+    position: absolute;
+    width: 0.5px;
+    height: 6px;
+    background: rgba(225,180,120,0.15);
+    top: 6px;
+    left: 50%;
+    transform-origin: 0 49px;
+  }
+  .watch-marker.major {
+    height: 8px;
+    width: 1px;
+    background: rgba(225,180,120,0.25);
+  }
+  .watch-hand-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .watch-hand {
+    position: absolute;
+    width: 1px;
+    height: 36px;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    /* 22/28 = 0.786, * 360 = 283deg */
+    transform: translateX(-0.5px) rotate(283deg);
+    background: linear-gradient(to top, rgba(225,164,92,0.9), rgba(225,164,92,0.3));
+    border-radius: 1px;
+    box-shadow: 0 0 6px rgba(225,164,92,0.3);
+  }
+  .watch-hand::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: -1.5px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--text-accent);
+    box-shadow: 0 0 4px rgba(225,164,92,0.4);
+  }
+  .watch-numeral {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: 3px;
+    z-index: 2;
+  }
+  .watch-reward {
+    text-align: center;
+  }
+  .watch-reward-line {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+  }
+  .watch-reward-sep {
+    display: inline-block;
+    margin: 0 8px;
+    color: rgba(225,180,120,0.25);
+  }
+
+  /* ======================== */
+  /* CONCEPT 4: AURORA        */
+  /* ======================== */
+  @keyframes aurora-breathe {
+    0%, 100% { height: 79%; }
+    50% { height: 82%; }
+  }
+  @keyframes aurora-shimmer {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  .aurora-card .card-face {
+    padding: 0;
+    min-height: 200px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .aurora-gradient-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+  .aurora-gradient {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 79%;
+    animation: aurora-breathe 8s ease-in-out infinite;
+    background:
+      linear-gradient(
+        to top,
+        rgba(225,164,92,0.25) 0%,
+        rgba(200,140,70,0.18) 20%,
+        rgba(180,110,55,0.12) 40%,
+        rgba(160,85,45,0.06) 65%,
+        rgba(140,70,40,0.02) 85%,
+        transparent 100%
+      );
+  }
+  .aurora-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        170deg,
+        transparent 0%,
+        rgba(255,200,120,0.06) 30%,
+        transparent 50%,
+        rgba(225,180,100,0.04) 70%,
+        transparent 100%
+      );
+    animation: aurora-shimmer 12s ease-in-out infinite;
+  }
+  .aurora-gradient::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 30%;
+    background: linear-gradient(to top, rgba(225,164,92,0.08) 0%, transparent 100%);
+  }
+  .aurora-content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px 28px 28px;
+  }
+  .aurora-top {
+    /* Empty dark zone at top */
+  }
+  .aurora-middle {
+    text-align: center;
+  }
+  .aurora-level {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .aurora-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+  }
+  .aurora-days-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+  }
+  .aurora-bottom {
+    text-align: center;
+  }
+  .aurora-reward-name {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  .aurora-reward-xp {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(169,130,106,0.6);
+  }
+
+  /* ======================== */
+  /* CONCEPT 5: FACETED GEM   */
+  /* ======================== */
+  @keyframes gem-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes gem-glow-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+  .gem-card .card-face {
+    padding: 30px 24px 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .gem-container {
+    width: 90px; height: 90px;
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .gem-shape {
+    width: 100%; height: 100%;
+    position: relative;
+    animation: gem-rotate 60s linear infinite;
+  }
+  .gem-facet {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+  }
+  /* 10-facet diamond top view using CSS triangles arranged radially */
+  .gem-inner {
+    width: 100%; height: 100%;
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(
+      50% 0%,
+      79% 10%,
+      97% 35%,
+      97% 65%,
+      79% 90%,
+      50% 100%,
+      21% 90%,
+      3% 65%,
+      3% 35%,
+      21% 10%
+    );
+    background:
+      conic-gradient(
+        from 0deg at 50% 50%,
+        rgba(225,164,92,0.45) 0deg,
+        rgba(200,140,70,0.55) 36deg,
+        rgba(180,120,60,0.40) 72deg,
+        rgba(210,150,80,0.60) 108deg,
+        rgba(190,130,65,0.45) 144deg,
+        rgba(225,164,92,0.55) 180deg,
+        rgba(200,140,70,0.40) 216deg,
+        rgba(180,120,60,0.55) 252deg,
+        rgba(210,150,80,0.45) 288deg,
+        rgba(190,130,65,0.55) 324deg,
+        rgba(225,164,92,0.45) 360deg
+      );
+    box-shadow:
+      inset 0 0 15px rgba(225,164,92,0.15),
+      inset 0 0 30px rgba(0,0,0,0.2);
+  }
+  .gem-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: inherit;
+    background:
+      conic-gradient(
+        from 18deg at 50% 50%,
+        transparent 0deg,
+        rgba(255,220,160,0.1) 10deg,
+        transparent 20deg,
+        rgba(255,220,160,0.08) 56deg,
+        transparent 66deg,
+        rgba(255,220,160,0.12) 92deg,
+        transparent 102deg,
+        rgba(255,220,160,0.06) 128deg,
+        transparent 138deg,
+        rgba(255,220,160,0.1) 174deg,
+        transparent 184deg,
+        rgba(255,220,160,0.08) 220deg,
+        transparent 230deg,
+        rgba(255,220,160,0.12) 266deg,
+        transparent 276deg,
+        rgba(255,220,160,0.06) 312deg,
+        transparent 322deg,
+        rgba(255,220,160,0.1) 358deg,
+        transparent 360deg
+      );
+  }
+  .gem-inner::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    clip-path: polygon(
+      50% 5%,
+      77% 13%,
+      93% 37%,
+      93% 63%,
+      77% 87%,
+      50% 95%,
+      23% 87%,
+      7% 63%,
+      7% 37%,
+      23% 13%
+    );
+    border: 0.5px solid rgba(225,180,120,0.1);
+    background: transparent;
+  }
+  .gem-glow {
+    position: absolute;
+    inset: -15px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.12) 0%, transparent 70%);
+    animation: gem-glow-pulse 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .gem-numeral {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    z-index: 3;
+    /* Counter-rotate so text stays upright */
+    animation: gem-rotate 60s linear infinite reverse;
+  }
+  .gem-reward {
+    text-align: center;
+  }
+  .gem-reward-name {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .gem-reward-xp {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(169,130,106,0.6);
+  }
+
+  /* SVG filter for emboss */
+  .svg-filters {
+    position: absolute;
+    width: 0; height: 0;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG Filters -->
+<svg class="svg-filters">
+  <defs>
+    <filter id="seal-emboss">
+      <feOffset dx="0" dy="1" in="SourceAlpha" result="offset"/>
+      <feGaussianBlur stdDeviation="0.5" in="offset" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ENVIRONMENT -->
+<div class="landscape"></div>
+<div class="particles">
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+</div>
+
+<div class="page-content">
+  <div class="page-title">Luxury Reward Concepts</div>
+  <div class="page-subtitle">V2 RIGHT COLUMN CONTEXT &mdash; 0.7fr WIDTH</div>
+
+  <!-- ===================== -->
+  <!-- CONCEPT 1: THE SEAL   -->
+  <!-- ===================== -->
+  <div class="concept-section">
+    <div class="concept-label">Concept I</div>
+    <div class="concept-name">The Seal</div>
+    <div class="column-context">
+      <!-- Stardust Ring Card -->
+      <div class="card-shell stardust-card">
+        <div class="card-face">
+          <div class="stardust-ring">
+            <svg viewBox="0 0 72 72">
+              <circle class="ring-track" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32"/>
+            </svg>
+            <div class="stardust-pct">78%</div>
+          </div>
+          <div class="stardust-label">WEEKLY GOALS</div>
+        </div>
+      </div>
+      <!-- Seal Reward Card -->
+      <div class="card-shell seal-card">
+        <div class="card-face">
+          <div class="wax-seal">
+            <span class="seal-number">3</span>
+          </div>
+          <div class="seal-days">Twenty-Two Days</div>
+          <hr class="seal-divider">
+          <div class="seal-reward">
+            <div class="seal-reward-name">Custom Scrub Cap</div>
+            <div class="seal-reward-fraction">341 of 500</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= -->
+  <!-- CONCEPT 2: MONOGRAM CARD  -->
+  <!-- ========================= -->
+  <div class="concept-section">
+    <div class="concept-label">Concept II</div>
+    <div class="concept-name">Monogram Card</div>
+    <div class="column-context">
+      <!-- Stardust Ring Card -->
+      <div class="card-shell stardust-card">
+        <div class="card-face">
+          <div class="stardust-ring">
+            <svg viewBox="0 0 72 72">
+              <circle class="ring-track" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32"/>
+            </svg>
+            <div class="stardust-pct">78%</div>
+          </div>
+          <div class="stardust-label">WEEKLY GOALS</div>
+        </div>
+      </div>
+      <!-- Monogram Reward Card -->
+      <div class="card-shell monogram-card">
+        <div class="card-face">
+          <div class="monogram-watermark">III</div>
+          <div class="monogram-content">
+            <div class="monogram-level">Level Three</div>
+            <div class="monogram-days">22 Days</div>
+            <hr class="monogram-divider-thin">
+            <div class="monogram-reward-text">
+              You are 159 XP from earning:<br>
+              <em>Custom Scrub Cap</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= -->
+  <!-- CONCEPT 3: CELESTIAL WATCH    -->
+  <!-- ============================= -->
+  <div class="concept-section">
+    <div class="concept-label">Concept III</div>
+    <div class="concept-name">Celestial Watch Face</div>
+    <div class="column-context">
+      <!-- Stardust Ring Card -->
+      <div class="card-shell stardust-card">
+        <div class="card-face">
+          <div class="stardust-ring">
+            <svg viewBox="0 0 72 72">
+              <circle class="ring-track" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32"/>
+            </svg>
+            <div class="stardust-pct">78%</div>
+          </div>
+          <div class="stardust-label">WEEKLY GOALS</div>
+        </div>
+      </div>
+      <!-- Watch Reward Card -->
+      <div class="card-shell watch-card">
+        <div class="card-face">
+          <div class="watch-container">
+            <div class="watch-face-bg"></div>
+            <div class="watch-markers" id="watchMarkers1"></div>
+            <div class="watch-hand"></div>
+            <div class="watch-numeral">III</div>
+          </div>
+          <div class="watch-reward">
+            <span class="watch-reward-line">Custom Scrub Cap</span>
+            <span class="watch-reward-sep">&mdash;</span>
+            <span class="watch-reward-line">68%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== -->
+  <!-- CONCEPT 4: AURORA        -->
+  <!-- ======================== -->
+  <div class="concept-section">
+    <div class="concept-label">Concept IV</div>
+    <div class="concept-name">Aurora Gradient</div>
+    <div class="column-context">
+      <!-- Stardust Ring Card -->
+      <div class="card-shell stardust-card">
+        <div class="card-face">
+          <div class="stardust-ring">
+            <svg viewBox="0 0 72 72">
+              <circle class="ring-track" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32"/>
+            </svg>
+            <div class="stardust-pct">78%</div>
+          </div>
+          <div class="stardust-label">WEEKLY GOALS</div>
+        </div>
+      </div>
+      <!-- Aurora Reward Card -->
+      <div class="card-shell aurora-card">
+        <div class="card-face">
+          <div class="aurora-gradient-container">
+            <div class="aurora-gradient"></div>
+          </div>
+          <div class="aurora-content">
+            <div class="aurora-top"></div>
+            <div class="aurora-middle">
+              <div class="aurora-level">Level 3</div>
+              <div class="aurora-days">22</div>
+              <div class="aurora-days-label">days</div>
+            </div>
+            <div class="aurora-bottom">
+              <div class="aurora-reward-name">Custom Scrub Cap</div>
+              <div class="aurora-reward-xp">341 / 500 XP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== -->
+  <!-- CONCEPT 5: FACETED GEM   -->
+  <!-- ======================== -->
+  <div class="concept-section">
+    <div class="concept-label">Concept V</div>
+    <div class="concept-name">Faceted Gem</div>
+    <div class="column-context">
+      <!-- Stardust Ring Card -->
+      <div class="card-shell stardust-card">
+        <div class="card-face">
+          <div class="stardust-ring">
+            <svg viewBox="0 0 72 72">
+              <circle class="ring-track" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32"/>
+            </svg>
+            <div class="stardust-pct">78%</div>
+          </div>
+          <div class="stardust-label">WEEKLY GOALS</div>
+        </div>
+      </div>
+      <!-- Gem Reward Card -->
+      <div class="card-shell gem-card">
+        <div class="card-face">
+          <div class="gem-container">
+            <div class="gem-glow"></div>
+            <div class="gem-shape">
+              <div class="gem-inner"></div>
+            </div>
+            <div class="gem-numeral">III</div>
+          </div>
+          <div class="gem-reward">
+            <div class="gem-reward-name">Custom Scrub Cap</div>
+            <div class="gem-reward-xp">341 / 500 XP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Generate watch markers (28 positions, every 4th is major)
+  function createWatchMarkers(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    for (let i = 0; i < 28; i++) {
+      const marker = document.createElement('div');
+      const angle = (i / 28) * 360;
+      marker.className = 'watch-marker' + (i % 7 === 0 ? ' major' : '');
+      marker.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+      container.appendChild(marker);
+    }
+  }
+  createWatchMarkers('watchMarkers1');
+</script>
+
+</body>
+</html>

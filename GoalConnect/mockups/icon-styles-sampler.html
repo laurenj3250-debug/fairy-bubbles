@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Icon Style Sampler</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --text-primary: #F0DEC7; --text-muted: #A9826A; --text-accent: #E1A45C; --shell-bg: rgba(45,22,28,0.75); --face-bg: rgba(85,48,52,0.35); }
+  body { font-family: 'Source Sans 3', sans-serif; color: var(--text-primary); background: #0a0507; }
+  .landscape { position: fixed; inset: 0; z-index: 0; background-color: #1a0e10; background-image: url('../client/public/backgrounds/desert-hero.png'); background-size: 120vw auto; background-position: center bottom; background-repeat: no-repeat; }
+  .landscape::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%); }
+
+  .shell { background: var(--shell-bg); border-radius: 24px; padding: 4px; box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4); }
+  .face { position: relative; overflow: hidden; background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3); border-radius: 20px; padding: 20px; border-top: 1px solid rgba(255,200,140,0.15); box-shadow: inset 0 1px 0 rgba(255,200,140,0.2), inset 0 -8px 16px rgba(0,0,0,0.2), inset 6px 0 20px rgba(255,180,100,0.06); }
+  .face::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,200,140,0.12) 0%, transparent 40%, rgba(255,180,100,0.08) 100%); mix-blend-mode: screen; pointer-events: none; z-index: 1; }
+
+  .content { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 30px 40px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; text-align: center; color: rgba(240,222,199,0.85); margin-bottom: 6px; letter-spacing: 3px; }
+  .sub { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 30px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+  .label { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--text-accent); margin-bottom: 4px; }
+  .desc { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+
+  @keyframes glow-pulse { 0%, 100% { filter: drop-shadow(0 0 4px rgba(225,164,92,0.2)); } 50% { filter: drop-shadow(0 0 12px rgba(225,164,92,0.4)); } }
+
+  /* Ring shared */
+  .ring-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 6px; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .habit-label { font-size: 11px; font-weight: 600; text-align: center; }
+  .habit-streak { font-size: 10px; color: var(--text-accent); text-align: center; }
+  .habit-streak.dim { color: var(--text-muted); }
+  .habits-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 10px 0; }
+
+  /* Icon styles */
+  .icon-emoji { font-size: 22px; }
+  .icon-mono { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--text-accent); }
+  .icon-line { width: 24px; height: 24px; stroke: var(--text-accent); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-none { font-size: 0; }
+  .icon-shape { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+<div class="content">
+  <h1>Icon Styles</h1>
+  <p class="sub">Same Streaks Ring layout — 4 different icon treatments. Which feels right?</p>
+
+  <div class="grid">
+
+    <!-- A: EMOJI -->
+    <div>
+      <div class="label">A — Emoji (current)</div>
+      <div class="desc">Colorful, playful, recognizable. But can feel childish on a premium dark UI.</div>
+      <div class="shell"><div class="face">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 14px;">Today <span style="float: right; font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; vertical-align: middle;">5/6</span></div>
+        <div class="habits-row">
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span class="icon-emoji">📋</span></div>
+            </div>
+            <div class="habit-label">RemNote</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="100.5"/></svg>
+              <div class="ring-icon"><span class="icon-emoji">🏋</span></div>
+            </div>
+            <div class="habit-label">Gym</div>
+            <div class="habit-streak dim">3 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite 0.5s;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span class="icon-emoji">🎧</span></div>
+            </div>
+            <div class="habit-label">Pimsleur</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- B: MONOGRAM -->
+    <div>
+      <div class="label">B — Serif Monogram</div>
+      <div class="desc">Single letter in Cormorant Garamond. Elegant, premium, timeless. Feels like a wax seal or luxury brand mark.</div>
+      <div class="shell"><div class="face">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 14px;">Today <span style="float: right; font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; vertical-align: middle;">5/6</span></div>
+        <div class="habits-row">
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span class="icon-mono">R</span></div>
+            </div>
+            <div class="habit-label">RemNote</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="100.5"/></svg>
+              <div class="ring-icon"><span class="icon-mono">G</span></div>
+            </div>
+            <div class="habit-label">Gym</div>
+            <div class="habit-streak dim">3 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite 0.5s;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span class="icon-mono">P</span></div>
+            </div>
+            <div class="habit-label">Pimsleur</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- C: LINE ICONS -->
+    <div>
+      <div class="label">C — Thin Line Icons</div>
+      <div class="desc">Minimal single-stroke SVG icons. Clean, modern, doesn't compete with the ring. Feels like a premium fitness app.</div>
+      <div class="shell"><div class="face">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 14px;">Today <span style="float: right; font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; vertical-align: middle;">5/6</span></div>
+        <div class="habits-row">
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon">
+                <svg viewBox="0 0 24 24" class="icon-line"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              </div>
+            </div>
+            <div class="habit-label">RemNote</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="100.5"/></svg>
+              <div class="ring-icon">
+                <svg viewBox="0 0 24 24" class="icon-line"><circle cx="12" cy="5" r="2"/><path d="M6 20l2-8h8l2 8M9 12l-1-4h8l-1 4"/></svg>
+              </div>
+            </div>
+            <div class="habit-label">Gym</div>
+            <div class="habit-streak dim">3 days</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite 0.5s;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon">
+                <svg viewBox="0 0 24 24" class="icon-line"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+              </div>
+            </div>
+            <div class="habit-label">Pimsleur</div>
+            <div class="habit-streak">5 days</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- D: NO ICONS -->
+    <div>
+      <div class="label">D — No Icons (ring only)</div>
+      <div class="desc">Just the glowing ring + streak count inside. Habit name below. The ring itself is the visual. Nothing competing for attention. Maximum elegance.</div>
+      <div class="shell"><div class="face">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 14px;">Today <span style="float: right; font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; vertical-align: middle;">5/6</span></div>
+        <div class="habits-row">
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span style="font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: var(--text-accent);">5</span></div>
+            </div>
+            <div class="habit-label">RemNote</div>
+            <div class="habit-streak">day streak</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="100.5"/></svg>
+              <div class="ring-icon"><span style="font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: var(--text-muted);">3</span></div>
+            </div>
+            <div class="habit-label">Gym</div>
+            <div class="habit-streak dim">day streak</div>
+          </div>
+          <div>
+            <div class="ring-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="animation: glow-pulse 3s ease-in-out infinite 0.5s;"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(60,40,30,0.25)" stroke-width="6"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--text-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="201.1" stroke-dashoffset="0" style="filter: drop-shadow(0 0 6px rgba(225,164,92,0.35));"/></svg>
+              <div class="ring-icon"><span style="font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: var(--text-accent);">5</span></div>
+            </div>
+            <div class="habit-label">Pimsleur</div>
+            <div class="habit-streak">day streak</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

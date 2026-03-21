@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown Dashboard — Vibe Check</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; }
+
+  /* HERO */
+  .hero {
+    height: 36vh; min-height: 260px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; padding-top: 24px;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px; font-weight: 400; letter-spacing: 8px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+  }
+  .hero .sub { font-size: 14px; color: rgba(217,183,154,0.45); letter-spacing: 2px; margin-top: 4px; }
+
+  /* STAT PILLS — in hero top-right */
+  .hero-pills { position: absolute; top: 20px; right: 32px; display: flex; gap: 10px; }
+  .pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+    box-shadow: 0 4px 8px rgba(40,20,10,0.3);
+  }
+  .pill-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 18px; padding: 6px 14px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-secondary);
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  .pill-face .val { color: var(--text-accent); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 16px; }
+
+  /* RESIDENCY STRIP — thin bar below hero, above tabs */
+  .residency-strip {
+    max-width: 1200px; margin: 0 auto; padding: 0 40px 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .residency-strip .icon { font-size: 18px; }
+  .residency-strip .bar-wrap {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    position: relative; overflow: hidden;
+  }
+  .residency-strip .bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #c47a20, #E1A45C);
+    box-shadow: 0 0 6px rgba(218,165,32,0.3);
+  }
+  .residency-strip .bar-wrap .marker {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: rgba(255,200,140,0.2);
+  }
+  .residency-strip .days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 700; color: var(--text-accent);
+    white-space: nowrap;
+  }
+  .residency-strip .time-left {
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* TAB DOCK */
+  .tab-wrap { display: flex; justify-content: center; padding: 0 40px 20px; }
+  .tab-dock {
+    background: var(--shell-bg); border-radius: 30px; padding: 3px;
+    box-shadow: var(--card-shadow); max-width: 480px; width: 100%;
+  }
+  .tab-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 27px; height: 48px;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    border-top: 1px solid rgba(255,200,140,0.1);
+  }
+  .tab { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border: none; background: none; }
+  .tab.active { background: var(--shell-bg); color: var(--text-primary); font-weight: 600; }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .shell:hover { transform: translateY(-3px); }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 20px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+  }
+  .tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 16px;
+    box-shadow: var(--tray-inset); border: 1px solid rgba(0,0,0,0.15);
+  }
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; }
+
+  /* LAYOUT */
+  .row { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+  .three-col { display: grid; grid-template-columns: 1.3fr 1fr 0.7fr; gap: 20px; margin-bottom: 20px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* HABIT GRID */
+  .habit-grid {
+    display: grid; grid-template-columns: 110px repeat(7, 1fr);
+    column-gap: 4px; row-gap: 8px; align-items: center;
+  }
+  .day-hdr { text-align: center; font-size: 10px; font-weight: 600; color: rgba(169,130,106,0.5); text-transform: uppercase; }
+  .day-hdr.today { color: rgba(225,164,92,0.7); }
+  .habit-name { font-size: 12px; color: rgba(240,222,199,0.7); white-space: nowrap; overflow: hidden; }
+  .hcell {
+    width: 30px; height: 30px; border-radius: 8px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
+  }
+  .hcell.empty { background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+  .hcell.done { background: rgba(200,131,73,0.35); color: rgba(240,222,199,0.8); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+  .hcell.today-cell { box-shadow: inset 0 0 0 2px rgba(225,164,92,0.45); }
+  .hcell.done.today-cell { box-shadow: inset 0 0 0 2px rgba(225,164,92,0.45), 0 2px 4px rgba(0,0,0,0.15); }
+  .hcell.future { opacity: 0.3; }
+
+  /* GOAL MODULE */
+  .goals-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .goal-mod { background: rgba(52,28,32,0.6); border-radius: 14px; padding: 2px; }
+  .goal-inner {
+    background: rgba(85,48,50,0.4); border-radius: 12px; padding: 12px;
+    display: flex; align-items: center; gap: 10px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .goal-ring { width: 44px; height: 44px; min-width: 44px; border-radius: 50%; background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; position: relative; }
+  .goal-ring svg { width: 36px; height: 36px; transform: rotate(-90deg); }
+  .goal-ring .pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 700; color: var(--text-accent); }
+  .goal-title { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+  .goal-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* PROGRESS RING */
+  .ring-card .tray { display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .big-ring { width: 150px; height: 150px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 5px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; position: relative; }
+  .big-ring svg { width: 130px; height: 130px; transform: rotate(-90deg); filter: drop-shadow(0 0 10px rgba(218,165,32,0.35)); }
+  .big-ring .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .big-ring .pct-text { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--text-accent); }
+  .big-ring .pct-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+
+  /* YEARLY GOALS BROWSER */
+  .yearly-tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .yearly-tab {
+    padding: 5px 14px; border-radius: 14px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border: none;
+    background: rgba(15,10,8,0.4); letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .yearly-tab.active { background: rgba(200,131,73,0.2); color: var(--text-accent); }
+  .yearly-goals-list { display: flex; flex-direction: column; gap: 10px; }
+  .yearly-goal-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .yearly-goal-row:last-child { border-bottom: none; }
+  .yg-ring { width: 36px; height: 36px; min-width: 36px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 3px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; position: relative; }
+  .yg-ring svg { width: 28px; height: 28px; transform: rotate(-90deg); }
+  .yg-ring .ypct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: var(--text-accent); }
+  .yg-info { flex: 1; }
+  .yg-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+  .yg-progress { font-size: 11px; color: var(--text-muted); }
+
+  /* REWARD + STREAK ROW */
+  .reward-strip {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .reward-icon { font-size: 24px; }
+  .reward-info { flex: 1; }
+  .reward-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .reward-bar { height: 5px; border-radius: 3px; background: rgba(15,10,8,0.5); box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); overflow: hidden; margin-bottom: 3px; }
+  .reward-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #c47a20, #E1A45C); }
+  .reward-xp { font-size: 11px; color: var(--text-muted); }
+
+  .streak-display { text-align: center; }
+  .streak-flame { font-size: 22px; line-height: 1; }
+  .streak-num { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--text-accent); }
+  .streak-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* NAV LINKS */
+  .nav-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 12px 0 24px; }
+  .nav-link {
+    padding: 6px 16px; border-radius: 14px; font-size: 12px; font-weight: 500;
+    color: var(--text-muted); background: rgba(40,22,18,0.4); cursor: pointer;
+    text-decoration: none; border: 1px solid rgba(255,200,140,0.06);
+    transition: all 0.2s;
+  }
+  .nav-link:hover { color: var(--text-primary); background: rgba(80,50,35,0.3); }
+
+  /* ALIVE — particles + breathing glow */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6);
+    animation: float-up linear infinite;
+  }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; animation-delay: 0s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px;
+    left: 50%; top: 20%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @media (max-width: 1024px) {
+    .three-col, .two-col { grid-template-columns: 1fr; }
+    .hero-pills { position: static; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .hero { height: auto; min-height: 200px; padding: 24px 16px; }
+    .row { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+
+<!-- Floating dust particles -->
+<div class="particles">
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+</div>
+
+<!-- Breathing sun glow -->
+<div class="sun-glow"></div>
+
+<div class="content">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-pills">
+      <div class="pill"><div class="pill-face">☀️ <span class="val">72°</span> Clear</div></div>
+      <div class="pill"><div class="pill-face">🚶 <span class="val">7,300</span> Steps</div></div>
+      <div class="pill"><div class="pill-face">🔥 <span class="val">22</span> Day Streak</div></div>
+      <div class="pill"><div class="pill-face">✅ <span class="val">4/7</span> Today</div></div>
+    </div>
+    <h1>Sundown</h1>
+    <p class="sub">Personal Dashboard</p>
+  </section>
+
+  <!-- RESIDENCY — thin strip -->
+  <div class="residency-strip">
+    <span class="icon">🎓</span>
+    <div class="bar-wrap">
+      <div class="bar-fill" style="width: 25%;"></div>
+      <div class="marker" style="left: 33.33%;"></div>
+      <div class="marker" style="left: 66.66%;"></div>
+    </div>
+    <div>
+      <div class="days">812</div>
+      <div class="time-left">2y 3m left</div>
+    </div>
+  </div>
+
+  <!-- TAB DOCK -->
+  <div class="tab-wrap">
+    <div class="tab-dock"><div class="tab-face">
+      <div class="tab active">Overview</div>
+      <div class="tab">Goals</div>
+      <div class="tab">Habits</div>
+      <div class="tab">Journal</div>
+    </div></div>
+  </div>
+
+  <div class="row">
+    <!-- ROW 1: Habits | Weekly Goals | Progress Ring -->
+    <div class="three-col">
+      <!-- HABITS -->
+      <div class="shell"><div class="face">
+        <div class="card-hdr">
+          <span class="card-title">This Week</span>
+          <span class="badge">4/7</span>
+        </div>
+        <div class="tray">
+          <div class="habit-grid">
+            <div></div>
+            <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+            <div class="day-hdr">W</div><div class="day-hdr">T</div>
+            <div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+            <div class="habit-name">📋 RemNote</div>
+            <div class="hcell done">✓</div><div class="hcell done">✓</div><div class="hcell done">✓</div>
+            <div class="hcell done">✓</div><div class="hcell done">✓</div><div class="hcell done today-cell">✓</div>
+            <div class="hcell empty future"></div>
+
+            <div class="habit-name">🏋 Gym</div>
+            <div class="hcell empty"></div><div class="hcell done">✓</div><div class="hcell empty"></div>
+            <div class="hcell done">✓</div><div class="hcell empty"></div><div class="hcell done today-cell">✓</div>
+            <div class="hcell empty future"></div>
+
+            <div class="habit-name">🎧 Pimsleur</div>
+            <div class="hcell done">✓</div><div class="hcell done">✓</div><div class="hcell done">✓</div>
+            <div class="hcell done">✓</div><div class="hcell done">✓</div><div class="hcell done today-cell">✓</div>
+            <div class="hcell empty future"></div>
+
+            <div class="habit-name">🛌 Bed by 11</div>
+            <div class="hcell done">✓</div><div class="hcell empty"></div><div class="hcell done">✓</div>
+            <div class="hcell empty"></div><div class="hcell done">✓</div><div class="hcell empty today-cell"></div>
+            <div class="hcell empty future"></div>
+
+            <div class="habit-name">🇩🇪 German</div>
+            <div class="hcell done">✓</div><div class="hcell done">✓</div><div class="hcell done">✓</div>
+            <div class="hcell done">✓</div><div class="hcell empty"></div><div class="hcell empty today-cell"></div>
+            <div class="hcell empty future"></div>
+
+            <div class="habit-name">📚 Read a Paper</div>
+            <div class="hcell empty"></div><div class="hcell done">✓</div><div class="hcell empty"></div>
+            <div class="hcell empty"></div><div class="hcell done">✓</div><div class="hcell empty today-cell"></div>
+            <div class="hcell empty future"></div>
+          </div>
+        </div>
+      </div></div>
+
+      <!-- WEEKLY GOALS -->
+      <div class="shell"><div class="face">
+        <div class="card-hdr">
+          <span class="card-title">Goals</span>
+          <span class="badge">2026</span>
+        </div>
+        <div class="tray">
+          <div class="goals-2x2">
+            <div class="goal-mod"><div class="goal-inner">
+              <div class="goal-ring">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="rgba(60,40,30,0.4)" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#D08A4F" stroke-width="4" stroke-linecap="round" stroke-dasharray="87.96" stroke-dashoffset="43.98"/></svg>
+                <div class="pct">50%</div>
+              </div>
+              <div><div class="goal-title">2 physical books</div><div class="goal-sub">1/2</div></div>
+            </div></div>
+            <div class="goal-mod"><div class="goal-inner">
+              <div class="goal-ring">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="rgba(60,40,30,0.4)" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#D08A4F" stroke-width="4" stroke-linecap="round" stroke-dasharray="87.96" stroke-dashoffset="57.17"/></svg>
+                <div class="pct">35%</div>
+              </div>
+              <div><div class="goal-title">Complete de Lahunta</div><div class="goal-sub">9/26</div></div>
+            </div></div>
+            <div class="goal-mod"><div class="goal-inner">
+              <div class="goal-ring">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="rgba(60,40,30,0.4)" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#D08A4F" stroke-width="4" stroke-linecap="round" stroke-dasharray="87.96" stroke-dashoffset="65.09"/></svg>
+                <div class="pct">26%</div>
+              </div>
+              <div><div class="goal-title">200 lifting days</div><div class="goal-sub">51/200</div></div>
+            </div></div>
+            <div class="goal-mod"><div class="goal-inner">
+              <div class="goal-ring">
+                <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="rgba(60,40,30,0.4)" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#D08A4F" stroke-width="4" stroke-linecap="round" stroke-dasharray="87.96" stroke-dashoffset="65.97"/></svg>
+                <div class="pct">25%</div>
+              </div>
+              <div><div class="goal-title">12 outdoor climbing</div><div class="goal-sub">3/12</div></div>
+            </div></div>
+          </div>
+        </div>
+      </div></div>
+
+      <!-- PROGRESS RING -->
+      <div class="shell ring-card"><div class="face">
+        <div class="card-hdr"><span class="card-title">Progress</span></div>
+        <div class="tray">
+          <div class="big-ring">
+            <svg viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(225,164,92,0.08)" stroke-width="8"/>
+              <circle cx="65" cy="65" r="55" fill="none" stroke="#D08A4F" stroke-width="8" stroke-linecap="round" stroke-dasharray="345.58" stroke-dashoffset="76"/>
+            </svg>
+            <div class="center">
+              <span class="pct-text">78%</span>
+              <span class="pct-label">This Week</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ROW 2: Yearly Goals (full width, tabbed) -->
+    <div style="margin-bottom: 20px;">
+      <div class="shell"><div class="face">
+        <div class="card-hdr">
+          <span class="card-title">Yearly Goals</span>
+          <span class="badge">4/22 complete</span>
+        </div>
+        <div class="yearly-tabs">
+          <div class="yearly-tab active">All</div>
+          <div class="yearly-tab">Fitness</div>
+          <div class="yearly-tab">Learning</div>
+          <div class="yearly-tab">Adventure</div>
+          <div class="yearly-tab">Personal</div>
+        </div>
+        <div class="tray">
+          <div class="yearly-goals-list">
+            <div class="yearly-goal-row">
+              <div class="yg-ring"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="3"/><circle cx="14" cy="14" r="11" fill="none" stroke="#D08A4F" stroke-width="3" stroke-linecap="round" stroke-dasharray="69.12" stroke-dashoffset="51.84"/></svg><div class="ypct">25%</div></div>
+              <div class="yg-info"><div class="yg-name">200 lifting days</div><div class="yg-progress">51/200</div></div>
+            </div>
+            <div class="yearly-goal-row">
+              <div class="yg-ring"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="3"/><circle cx="14" cy="14" r="11" fill="none" stroke="#D08A4F" stroke-width="3" stroke-linecap="round" stroke-dasharray="69.12" stroke-dashoffset="44.93"/></svg><div class="ypct">35%</div></div>
+              <div class="yg-info"><div class="yg-name">Complete de Lahunta</div><div class="yg-progress">9/26 chapters</div></div>
+            </div>
+            <div class="yearly-goal-row">
+              <div class="yg-ring"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="3"/><circle cx="14" cy="14" r="11" fill="none" stroke="#D08A4F" stroke-width="3" stroke-linecap="round" stroke-dasharray="69.12" stroke-dashoffset="34.56"/></svg><div class="ypct">50%</div></div>
+              <div class="yg-info"><div class="yg-name">2 physical books</div><div class="yg-progress">1/2 complete</div></div>
+            </div>
+            <div class="yearly-goal-row">
+              <div class="yg-ring"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="3"/><circle cx="14" cy="14" r="11" fill="none" stroke="#D08A4F" stroke-width="3" stroke-linecap="round" stroke-dasharray="69.12" stroke-dashoffset="51.84"/></svg><div class="ypct">25%</div></div>
+              <div class="yg-info"><div class="yg-name">12 outdoor climbing days</div><div class="yg-progress">3/12</div></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ROW 3: Next Reward | Streak -->
+    <div class="two-col" style="margin-bottom: 0;">
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Next Reward</span><span class="badge">340/500 XP</span></div>
+        <div class="reward-strip">
+          <span class="reward-icon">🎁</span>
+          <div class="reward-info">
+            <div class="reward-title">New climbing shoes</div>
+            <div class="reward-bar"><div class="reward-fill" style="width: 68%;"></div></div>
+            <div class="reward-xp">160 XP to go</div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Streak</span></div>
+        <div class="streak-display">
+          <div class="streak-flame">🔥</div>
+          <div class="streak-num">22</div>
+          <div class="streak-label">day streak</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- NAV LINKS -->
+    <div class="nav-row">
+      <a class="nav-link" href="#">Habits</a>
+      <a class="nav-link" href="#">Goals</a>
+      <a class="nav-link" href="#">Analytics</a>
+      <a class="nav-link" href="#">Adventures</a>
+      <a class="nav-link" href="#">Wellness</a>
+      <a class="nav-link" href="#">Settings</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

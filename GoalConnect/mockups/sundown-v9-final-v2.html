@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sundown v9 — Final V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Source Sans 3', sans-serif;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0508;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ==================== BACKGROUND ==================== */
+  .bg-landscape {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: url('../client/public/backgrounds/desert-hero.png') center/cover no-repeat;
+    z-index: 0;
+  }
+  .bg-landscape::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 120% 80% at 50% 20%, transparent 30%, rgba(10,5,8,0.7) 100%);
+    z-index: 1;
+  }
+  .bg-landscape::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(to top, rgba(10,5,8,0.95) 0%, rgba(10,5,8,0.6) 40%, transparent 100%);
+    z-index: 2;
+  }
+
+  /* Sun glow */
+  .sun-glow {
+    position: fixed; top: 8%; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.12) 0%, rgba(225,164,92,0.04) 40%, transparent 70%);
+    animation: sd-breathe 8s ease-in-out infinite;
+    z-index: 3; pointer-events: none;
+  }
+
+  /* Floating particles */
+  .particle {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 4;
+    background: radial-gradient(circle, rgba(225,164,92,0.6), rgba(225,164,92,0.1));
+  }
+  .particle:nth-child(1) { width:3px; height:3px; left:15%; top:70%; animation: float-up 14s 0s infinite; }
+  .particle:nth-child(2) { width:2px; height:2px; left:30%; top:80%; animation: float-up 18s 2s infinite; }
+  .particle:nth-child(3) { width:4px; height:4px; left:50%; top:75%; animation: float-up 16s 4s infinite; }
+  .particle:nth-child(4) { width:2px; height:2px; left:65%; top:85%; animation: float-up 20s 1s infinite; }
+  .particle:nth-child(5) { width:3px; height:3px; left:80%; top:72%; animation: float-up 15s 6s infinite; }
+  .particle:nth-child(6) { width:2px; height:2px; left:22%; top:90%; animation: float-up 22s 3s infinite; }
+  .particle:nth-child(7) { width:3px; height:3px; left:72%; top:78%; animation: float-up 17s 8s infinite; }
+  .particle:nth-child(8) { width:2px; height:2px; left:45%; top:88%; animation: float-up 19s 5s infinite; }
+
+  /* ==================== LAYOUT WRAPPER ==================== */
+  .page { position: relative; z-index: 10; }
+
+  /* ==================== CARD SYSTEM ==================== */
+  .card-shell {
+    background: var(--shell-bg);
+    border-radius: 20px;
+    padding: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-shell::before {
+    content: ''; position: absolute; inset: 0; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(225,164,92,0.08) 0%, transparent 50%, rgba(225,164,92,0.04) 100%);
+    pointer-events: none; z-index: 1;
+  }
+  /* Light ray overlay */
+  .card-shell::after {
+    content: ''; position: absolute; top: -50%; left: -20%; width: 140%; height: 80%;
+    background: linear-gradient(195deg, rgba(255,250,235,0.03) 0%, transparent 60%);
+    pointer-events: none; z-index: 2; border-radius: 20px;
+  }
+  .card-face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 18px;
+    border: 1px solid rgba(225,164,92,0.06);
+    position: relative; z-index: 3;
+  }
+
+  /* ==================== HERO ==================== */
+  .hero {
+    min-height: 180px; height: 20vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    padding: 20px 40px;
+  }
+  .hero-title {
+    font-family: var(--font-display); font-size: 42px; font-weight: 300;
+    text-transform: uppercase; letter-spacing: 8px; color: var(--text-primary);
+    text-shadow: 0 0 40px rgba(225,164,92,0.3), 0 0 80px rgba(225,164,92,0.1);
+  }
+  .hero-pills {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .hero-pill {
+    background: var(--shell-bg); border-radius: 20px; padding: 2px;
+  }
+  .hero-pill-face {
+    background: var(--face-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: 18px; padding: 5px 14px;
+    font-family: var(--font-display); font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary);
+  }
+
+  /* ==================== RESIDENCY STRIP ==================== */
+  .residency-strip {
+    max-width: 1200px; margin: 0 auto; padding: 8px 40px 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .residency-icon { font-size: 18px; flex-shrink: 0; }
+  .residency-line {
+    flex: 1; height: 2px; position: relative;
+    background: rgba(169,130,106,0.08); border-radius: 1px;
+  }
+  .residency-fill {
+    position: absolute; top: -2px; left: 0; width: 25%; height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(225,164,92,0.8));
+    box-shadow: 0 0 4px rgba(225,164,92,0.4), 0 0 10px rgba(225,164,92,0.2),
+                0 0 20px rgba(225,164,92,0.1), 0 0 40px rgba(225,164,92,0.05);
+  }
+  .residency-num {
+    font-family: var(--font-display); font-size: 18px; color: var(--text-accent);
+    flex-shrink: 0;
+  }
+  .residency-label {
+    font-family: var(--font-body); font-size: 11px; color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ==================== TAB DOCK ==================== */
+  .tab-dock {
+    display: flex; justify-content: center; margin-bottom: 16px; padding: 0 40px;
+  }
+  .tab-dock-shell {
+    background: var(--shell-bg); border-radius: 28px; padding: 3px;
+    display: inline-block;
+  }
+  .tab-dock-face {
+    background: var(--face-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: 25px; height: 40px; display: flex; align-items: center;
+    gap: 0; padding: 3px; max-width: 420px;
+  }
+  .tab-item {
+    font-family: var(--font-display); font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    padding: 6px 18px; border-radius: 22px; cursor: pointer;
+    transition: all 0.3s ease; white-space: nowrap;
+  }
+  .tab-item.active {
+    background: var(--shell-bg); color: var(--text-accent); padding: 4px 16px;
+  }
+  .tab-item.active .tab-inner {
+    background: var(--face-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px; padding: 4px 12px; display: block;
+  }
+
+  /* ==================== MAIN GRID ==================== */
+  .main-grid {
+    max-width: 1200px; padding: 0 40px; margin: 0 auto;
+    display: grid; grid-template-columns: 1.3fr 1fr 0.7fr;
+    gap: 14px; align-items: start;
+  }
+
+  .card-title {
+    font-family: var(--font-display); font-size: 18px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-primary);
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .card-badge {
+    font-family: var(--font-display); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-accent);
+    background: rgba(225,164,92,0.1); border: 1px solid rgba(225,164,92,0.15);
+    border-radius: 10px; padding: 3px 10px;
+  }
+
+  /* ==================== STARDUST TRAIL HABITS ==================== */
+  .habits-face { padding: 16px; }
+
+  .habits-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 42px);
+    row-gap: 10px; align-items: center;
+  }
+
+  .day-label {
+    font-family: var(--font-display); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    text-align: center;
+  }
+  .day-label.today { color: var(--text-accent); font-weight: 700; }
+
+  .habit-name-cell {
+    display: flex; align-items: center; gap: 6px;
+    padding-right: 8px;
+  }
+  .habit-icon {
+    width: 16px; height: 16px; flex-shrink: 0;
+  }
+  .habit-icon svg {
+    width: 16px; height: 16px; stroke: var(--text-accent); stroke-width: 1.5;
+    stroke-linecap: round; stroke-linejoin: round; fill: none;
+  }
+  .habit-label {
+    font-family: var(--font-display); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: rgba(217,183,154,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .star-cell {
+    display: flex; align-items: center; justify-content: center;
+    height: 20px; position: relative;
+  }
+
+  .star-dot {
+    border-radius: 50%; position: relative;
+  }
+  .star-dot.done {
+    width: 10px; height: 10px;
+    background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.9));
+    box-shadow: 0 0 3px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7),
+                0 0 18px rgba(225,164,92,0.4), 0 0 32px rgba(225,164,92,0.15);
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  .star-dot.not-done {
+    width: 8px; height: 8px;
+    background: rgba(60,35,30,0.4);
+    border: 1px solid rgba(169,130,106,0.1);
+  }
+  .star-dot.today-done {
+    width: 14px; height: 14px;
+    background: radial-gradient(circle at 35% 35%, rgba(255,250,235,1), rgba(225,164,92,0.95));
+    box-shadow: 0 0 4px rgba(255,250,235,1), 0 0 10px rgba(225,164,92,0.9),
+                0 0 20px rgba(225,164,92,0.6), 0 0 35px rgba(225,164,92,0.3),
+                0 0 50px rgba(225,164,92,0.15);
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  .star-dot.today-not-done {
+    width: 11px; height: 11px;
+    background: rgba(60,35,30,0.4);
+    border: 1px solid rgba(225,164,92,0.3);
+  }
+  .star-dot.future {
+    opacity: 0.4;
+  }
+
+  /* Constellation lines */
+  .star-cell.has-line::after {
+    content: ''; position: absolute; left: calc(50% + 5px); top: 50%;
+    width: 32px; height: 1px; transform: translateY(-50%);
+    background: linear-gradient(90deg, rgba(225,164,92,0.4), rgba(225,164,92,0.1));
+    box-shadow: 0 0 3px rgba(225,164,92,0.2);
+    z-index: -1;
+  }
+
+  /* ==================== HORIZON LINES GOALS ==================== */
+  .goals-face {
+    padding: 16px; position: relative; overflow: hidden;
+  }
+
+  .goals-ambient-warm {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
+    background: radial-gradient(ellipse 140% 100% at 50% 100%, rgba(225,164,92,0.1), transparent 70%);
+    animation: breathe 8s ease-in-out infinite; z-index: 0; pointer-events: none;
+  }
+  .goals-ambient-mist {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60%;
+    background: linear-gradient(to top, rgba(225,164,92,0.06), transparent);
+    filter: blur(10px); animation: mistDrift 10s ease-in-out infinite;
+    z-index: 0; pointer-events: none;
+  }
+  .goals-ambient-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(225,164,92,0.05), transparent 70%);
+    z-index: 0; pointer-events: none;
+  }
+
+  .goals-content { position: relative; z-index: 2; }
+
+  .goal-item { position: relative; margin-bottom: 24px; }
+  .goal-item:last-child { margin-bottom: 0; }
+
+  .goal-label {
+    font-family: var(--font-display); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: rgba(217,183,154,0.45); margin-bottom: 8px;
+  }
+  .goal-fraction {
+    position: absolute; right: 0; top: 0;
+    font-family: var(--font-display); font-size: 10px; font-weight: 400;
+    color: rgba(169,130,106,0.4);
+  }
+  .goal-track {
+    position: relative; height: 2px; width: 100%;
+    background: rgba(169,130,106,0.08); border-radius: 1px;
+  }
+  .goal-fill {
+    position: absolute; top: -2px; left: 0; height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.3), rgba(225,164,92,0.85));
+    box-shadow: 0 0 4px rgba(225,164,92,0.5), 0 0 10px rgba(225,164,92,0.3),
+                0 0 20px rgba(225,164,92,0.15), 0 0 40px rgba(225,164,92,0.05);
+  }
+  .goal-orb {
+    position: absolute; top: 50%; right: -5px; transform: translateY(-50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.8));
+    box-shadow: 0 0 4px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7),
+                0 0 16px rgba(225,164,92,0.4), 0 0 28px rgba(225,164,92,0.2),
+                0 0 40px rgba(225,164,92,0.1);
+    animation: softPulse 4s ease-in-out infinite;
+  }
+
+  /* ==================== COL 3 ==================== */
+  .col3-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ==================== STARDUST RING ==================== */
+  .ring-face { padding: 16px; }
+  .ring-container {
+    position: relative; width: 112px; height: 112px; margin: 8px auto 12px;
+  }
+  .ring-dot {
+    position: absolute; border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .ring-dot.lit {
+    width: 8px; height: 8px;
+    background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.9));
+    box-shadow: 0 0 3px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7),
+                0 0 18px rgba(225,164,92,0.4), 0 0 32px rgba(225,164,92,0.15);
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  .ring-dot.dim {
+    width: 6px; height: 6px;
+    background: rgba(60,35,30,0.4);
+    border: 1px solid rgba(169,130,106,0.1);
+  }
+  .ring-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center;
+  }
+  .ring-pct {
+    font-family: var(--font-display); font-size: 24px; font-weight: 400;
+    color: var(--text-primary);
+    text-shadow: 0 0 20px rgba(225,164,92,0.3);
+  }
+  .ring-label {
+    font-family: var(--font-display); font-size: 9px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .ring-svg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .ring-svg line {
+    stroke: rgba(225,164,92,0.15); stroke-width: 0.5;
+  }
+
+  /* ==================== AURORA GRADIENT REWARD/STREAK ==================== */
+  .aurora-shell .card-face { padding: 0; overflow: hidden; }
+
+  .aurora-face {
+    position: relative; min-height: 220px;
+  }
+  .aurora-base {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 79%;
+    background: linear-gradient(to top,
+      rgba(225,164,92,0.2) 0%,
+      rgba(200,131,73,0.12) 40%,
+      rgba(180,100,60,0.05) 70%,
+      transparent 100%
+    );
+    animation: breathe 8s ease-in-out infinite;
+    z-index: 1;
+  }
+  .aurora-shimmer {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 79%;
+    background: linear-gradient(120deg,
+      transparent 0%,
+      rgba(225,164,92,0.06) 25%,
+      transparent 50%,
+      rgba(200,131,73,0.04) 75%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 12s linear infinite;
+    z-index: 2;
+  }
+  .aurora-blur {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 82%;
+    background: linear-gradient(to top,
+      rgba(225,164,92,0.08) 0%,
+      rgba(180,100,60,0.04) 60%,
+      transparent 100%
+    );
+    filter: blur(20px);
+    z-index: 0;
+  }
+
+  .aurora-content {
+    position: relative; z-index: 10; padding: 24px;
+    display: flex; flex-direction: column; height: 100%; min-height: 220px;
+  }
+  .aurora-top-text {
+    font-family: var(--font-display); font-size: 9px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(169,130,106,0.35); text-align: center;
+  }
+  .aurora-main {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    margin-top: auto;
+  }
+  .aurora-level-label {
+    font-family: var(--font-display); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary);
+  }
+  .aurora-level-num {
+    font-family: var(--font-display); font-size: 32px; font-weight: 300;
+    color: var(--text-primary);
+    text-shadow: 0 0 20px rgba(225,164,92,0.4), 0 0 40px rgba(225,164,92,0.15);
+  }
+  .aurora-streak {
+    font-family: var(--font-display); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .aurora-divider {
+    width: 40px; height: 0.5px; margin: 10px auto;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.3), transparent);
+  }
+  .aurora-reward {
+    font-family: var(--font-display); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary);
+    text-align: center;
+  }
+  .aurora-xp {
+    font-family: var(--font-display); font-size: 10px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+    text-align: center; margin-top: 4px;
+  }
+
+  /* ==================== YEARLY GOALS ==================== */
+  .yearly-section {
+    max-width: 1200px; margin: 14px auto 0; padding: 0 40px;
+  }
+  .yearly-face { padding: 16px; }
+
+  .yearly-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .yearly-tabs {
+    display: flex; gap: 6px; margin-left: auto;
+  }
+  .yearly-tab {
+    font-family: var(--font-display); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    padding: 3px 10px; border-radius: 10px; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .yearly-tab.active {
+    background: rgba(225,164,92,0.1); color: var(--text-accent);
+    border: 1px solid rgba(225,164,92,0.15);
+  }
+
+  .yearly-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .yearly-tile {
+    background: rgba(45,22,28,0.5); border-radius: 14px; padding: 14px;
+    transition: all 0.3s;
+  }
+  .yearly-tile.has-progress {
+    box-shadow: 0 0 8px rgba(225,164,92,0.08), 0 0 20px rgba(225,164,92,0.04);
+  }
+  .yearly-tile-name {
+    font-family: var(--font-display); font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .yearly-tile-frac {
+    font-family: var(--font-body); font-size: 10px; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .yearly-tile-track {
+    height: 3px; width: 100%; background: rgba(169,130,106,0.08);
+    border-radius: 1.5px; position: relative;
+  }
+  .yearly-tile-fill {
+    position: absolute; top: 0; left: 0; height: 100%; border-radius: 1.5px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.4), rgba(225,164,92,0.8));
+    box-shadow: 0 0 4px rgba(225,164,92,0.3), 0 0 10px rgba(225,164,92,0.15);
+  }
+  .yearly-tile.dim { opacity: 0.5; }
+
+  .yearly-show-all {
+    font-family: var(--font-display); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-accent);
+    background: none; border: none; cursor: pointer;
+    display: block; margin: 16px auto 0; padding: 8px 16px;
+    transition: opacity 0.3s;
+  }
+  .yearly-show-all:hover { opacity: 0.7; }
+
+  /* ==================== NAV LINKS ==================== */
+  .nav-links {
+    display: flex; justify-content: center; gap: 8px; padding: 16px 40px 24px;
+    flex-wrap: wrap; max-width: 1200px; margin: 0 auto;
+  }
+  .nav-pill {
+    background: var(--shell-bg); border-radius: 14px; padding: 2px;
+  }
+  .nav-pill-face {
+    background: var(--face-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 12px; padding: 6px 16px;
+    font-family: var(--font-display); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);
+    cursor: pointer; transition: color 0.3s;
+  }
+  .nav-pill-face:hover { color: var(--text-secondary); }
+
+  /* ==================== ANIMATIONS ==================== */
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.9); }
+  }
+  .star-dot.done, .star-dot.today-done {
+    /* Override for non-ring dots (no translate needed) */
+  }
+  .habits-grid .star-dot {
+    animation-name: starTwinkleSimple;
+  }
+  @keyframes starTwinkleSimple {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.9); }
+  }
+
+  @keyframes softPulse {
+    0%, 100% {
+      box-shadow: 0 0 4px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7),
+                  0 0 16px rgba(225,164,92,0.4), 0 0 28px rgba(225,164,92,0.2),
+                  0 0 40px rgba(225,164,92,0.1);
+    }
+    50% {
+      box-shadow: 0 0 6px rgba(255,250,235,1), 0 0 12px rgba(225,164,92,0.9),
+                  0 0 24px rgba(225,164,92,0.6), 0 0 40px rgba(225,164,92,0.3),
+                  0 0 60px rgba(225,164,92,0.15);
+    }
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes mistDrift {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-3px); opacity: 0.7; }
+  }
+
+  @keyframes float-up {
+    0% { transform: translateY(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-30vh) translateX(15px); opacity: 0; }
+  }
+
+  @keyframes sd-breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1) translateX(-50%); }
+    50% { opacity: 0.14; transform: scale(1.05) translateX(-50%); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* ==================== RESPONSIVE ==================== */
+  @media (max-width: 1024px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+    }
+    .yearly-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .hero-pills { flex-wrap: wrap; }
+    .residency-strip, .yearly-section, .main-grid, .nav-links {
+      padding-left: 20px; padding-right: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-landscape"></div>
+<div class="sun-glow"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+
+<div class="page">
+
+  <!-- 1. HERO -->
+  <div class="hero">
+    <h1 class="hero-title">Sundown</h1>
+    <div class="hero-pills">
+      <div class="hero-pill"><div class="hero-pill-face">72&deg; Clear</div></div>
+      <div class="hero-pill"><div class="hero-pill-face">7,300 Steps</div></div>
+      <div class="hero-pill"><div class="hero-pill-face">4/7 Tasks</div></div>
+    </div>
+  </div>
+
+  <!-- 2. RESIDENCY COUNTDOWN -->
+  <div class="residency-strip">
+    <span class="residency-icon">&#127891;</span>
+    <div class="residency-line">
+      <div class="residency-fill"></div>
+    </div>
+    <span class="residency-num">846</span>
+    <span class="residency-label">2y 3m left</span>
+  </div>
+
+  <!-- 3. TAB DOCK -->
+  <div class="tab-dock">
+    <div class="tab-dock-shell">
+      <div class="tab-dock-face">
+        <div class="tab-item active"><span class="tab-inner">Overview</span></div>
+        <div class="tab-item">Goals</div>
+        <div class="tab-item">Habits</div>
+        <div class="tab-item">Journal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- COL 1: STARDUST TRAIL HABITS -->
+    <div class="card-shell">
+      <div class="card-face habits-face">
+        <div class="card-title">
+          This Week
+          <span class="card-badge">5/6 Today</span>
+        </div>
+        <div class="habits-grid" id="habitsGrid">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: HORIZON LINES GOALS -->
+    <div class="card-shell">
+      <div class="card-face goals-face">
+        <div class="goals-ambient-warm"></div>
+        <div class="goals-ambient-mist"></div>
+        <div class="goals-ambient-center"></div>
+        <div class="goals-content">
+          <div class="card-title">
+            Goals
+            <span class="card-badge">2026</span>
+          </div>
+
+          <div class="goal-item">
+            <div class="goal-label">2 Physical Books</div>
+            <div class="goal-fraction">1 / 2</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width:50%">
+                <div class="goal-orb" style="animation-delay:0s"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="goal-item">
+            <div class="goal-label">Complete de Lahunta</div>
+            <div class="goal-fraction">7 / 20</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width:35%">
+                <div class="goal-orb" style="animation-delay:0.8s"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="goal-item">
+            <div class="goal-label">200 Lifting Days</div>
+            <div class="goal-fraction">50 / 200</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width:25%">
+                <div class="goal-orb" style="animation-delay:1.6s"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="goal-item">
+            <div class="goal-label">12 Outdoor Climbing</div>
+            <div class="goal-fraction">3 / 12</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width:25%">
+                <div class="goal-orb" style="animation-delay:2.4s"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 3: STACKED -->
+    <div class="col3-stack">
+
+      <!-- STARDUST RING PROGRESS -->
+      <div class="card-shell">
+        <div class="card-face ring-face">
+          <div class="card-title" style="margin-bottom:8px; justify-content:center;">Progress</div>
+          <div class="ring-container" id="ringContainer">
+            <svg class="ring-svg" id="ringSvg"></svg>
+            <div class="ring-center">
+              <div class="ring-pct">78%</div>
+              <div class="ring-label">This Week</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AURORA GRADIENT REWARD/STREAK -->
+      <div class="card-shell aurora-shell">
+        <div class="card-face">
+          <div class="aurora-face">
+            <div class="aurora-blur"></div>
+            <div class="aurora-base"></div>
+            <div class="aurora-shimmer"></div>
+            <div class="aurora-content">
+              <div class="aurora-top-text">6 Days to Level 4</div>
+              <div class="aurora-main">
+                <div class="aurora-level-label">Level</div>
+                <div class="aurora-level-num">3</div>
+                <div class="aurora-streak">22 Day Streak</div>
+                <div class="aurora-divider"></div>
+                <div class="aurora-reward">Custom Scrub Cap</div>
+                <div class="aurora-xp">341 of 500 XP</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. YEARLY GOALS -->
+  <div class="yearly-section">
+    <div class="card-shell">
+      <div class="card-face yearly-face">
+        <div class="yearly-header">
+          <div class="card-title" style="margin-bottom:0;">
+            Yearly Goals
+            <span class="card-badge">3/30 Complete</span>
+          </div>
+          <div class="yearly-tabs">
+            <div class="yearly-tab active">All</div>
+            <div class="yearly-tab">Fitness</div>
+            <div class="yearly-tab">Learning</div>
+            <div class="yearly-tab">Adventure</div>
+          </div>
+        </div>
+        <div class="yearly-grid">
+          <div class="yearly-tile dim">
+            <div class="yearly-tile-name">Hemilaminectomy</div>
+            <div class="yearly-tile-frac">0 / 1</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:0%"></div></div>
+          </div>
+          <div class="yearly-tile">
+            <div class="yearly-tile-name">300 PowerPoints</div>
+            <div class="yearly-tile-frac">15 / 300</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:5%"></div></div>
+          </div>
+          <div class="yearly-tile has-progress">
+            <div class="yearly-tile-name">de Lahunta</div>
+            <div class="yearly-tile-frac">7 / 20 chapters</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:35%"></div></div>
+          </div>
+          <div class="yearly-tile has-progress">
+            <div class="yearly-tile-name">200 Lifting Days</div>
+            <div class="yearly-tile-frac">52 / 200</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:26%"></div></div>
+          </div>
+          <div class="yearly-tile dim">
+            <div class="yearly-tile-name">10 Pull-ups</div>
+            <div class="yearly-tile-frac">0 / 10</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:0%"></div></div>
+          </div>
+          <div class="yearly-tile dim">
+            <div class="yearly-tile-name">Finish Residency</div>
+            <div class="yearly-tile-frac">0 / 1</div>
+            <div class="yearly-tile-track"><div class="yearly-tile-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <button class="yearly-show-all">Show All 30 Goals</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. NAV LINKS -->
+  <div class="nav-links">
+    <div class="nav-pill"><div class="nav-pill-face">Habits</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Goals</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Analytics</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Adventures</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Wellness</div></div>
+    <div class="nav-pill"><div class="nav-pill-face">Settings</div></div>
+  </div>
+
+</div>
+
+<script>
+// ==================== HABITS GRID ====================
+const habitsGrid = document.getElementById('habitsGrid');
+
+const habits = [
+  {
+    name: 'RemNote',
+    icon: '<svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
+    // Sun Mon Tue Wed Thu Fri Sat
+    data: [1,1,1,1,1,0,0] // ✓✓✓✓✓--
+  },
+  {
+    name: 'Gym',
+    icon: '<svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg>',
+    data: [0,1,0,1,1,0,0] // -✓-✓✓--
+  },
+  {
+    name: 'Pimsleur',
+    icon: '<svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>',
+    data: [1,1,1,1,1,0,0] // ✓✓✓✓✓--
+  },
+  {
+    name: 'Bed by 11',
+    icon: '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>',
+    data: [1,0,1,0,0,0,0] // ✓-✓---
+  },
+  {
+    name: 'German',
+    icon: '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
+    data: [1,1,1,1,0,0,0] // ✓✓✓✓---
+  },
+  {
+    name: 'Read Paper',
+    icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    data: [0,1,0,0,1,0,0] // -✓--✓--
+  }
+];
+
+const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const todayIdx = 4; // Thursday
+
+// Day labels row
+const emptyCell = document.createElement('div');
+habitsGrid.appendChild(emptyCell);
+
+days.forEach((day, i) => {
+  const label = document.createElement('div');
+  label.className = 'day-label' + (i === todayIdx ? ' today' : '');
+  label.textContent = day;
+  habitsGrid.appendChild(label);
+});
+
+// Habit rows
+let dotDelay = 0;
+habits.forEach(habit => {
+  // Name cell
+  const nameCell = document.createElement('div');
+  nameCell.className = 'habit-name-cell';
+  nameCell.innerHTML = `<span class="habit-icon">${habit.icon}</span><span class="habit-label">${habit.name}</span>`;
+  habitsGrid.appendChild(nameCell);
+
+  // Star cells
+  habit.data.forEach((val, dayI) => {
+    const cell = document.createElement('div');
+    cell.className = 'star-cell';
+
+    const dot = document.createElement('div');
+    dot.className = 'star-dot';
+
+    const isToday = dayI === todayIdx;
+    const isFuture = dayI > todayIdx;
+
+    if (isFuture) {
+      dot.classList.add('not-done', 'future');
+    } else if (isToday && val) {
+      dot.classList.add('today-done');
+      dot.style.animationDelay = (dotDelay * 0.3) + 's';
+      dotDelay++;
+    } else if (isToday && !val) {
+      dot.classList.add('today-not-done');
+    } else if (val) {
+      dot.classList.add('done');
+      dot.style.animationDelay = (dotDelay * 0.3) + 's';
+      dotDelay++;
+      // Add constellation line if next day is also done and not future
+      if (dayI < todayIdx && habit.data[dayI + 1] === 1) {
+        cell.classList.add('has-line');
+      }
+    } else {
+      dot.classList.add('not-done');
+    }
+
+    cell.appendChild(dot);
+    habitsGrid.appendChild(cell);
+  });
+});
+
+// ==================== STARDUST RING ====================
+const ringContainer = document.getElementById('ringContainer');
+const ringSvg = document.getElementById('ringSvg');
+const radius = 48;
+const centerX = 56;
+const centerY = 56;
+const totalDots = 24;
+const litCount = 19;
+
+const dotPositions = [];
+
+for (let i = 0; i < totalDots; i++) {
+  const angle = (i / totalDots) * Math.PI * 2 - Math.PI / 2;
+  const x = centerX + radius * Math.cos(angle);
+  const y = centerY + radius * Math.sin(angle);
+  dotPositions.push({ x, y });
+
+  const dot = document.createElement('div');
+  dot.className = 'ring-dot ' + (i < litCount ? 'lit' : 'dim');
+  dot.style.left = x + 'px';
+  dot.style.top = y + 'px';
+  if (i < litCount) {
+    dot.style.animationDelay = (i * 0.2) + 's';
+  }
+  ringContainer.appendChild(dot);
+}
+
+// Constellation lines between adjacent lit dots
+for (let i = 0; i < litCount - 1; i++) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', dotPositions[i].x);
+  line.setAttribute('y1', dotPositions[i].y);
+  line.setAttribute('x2', dotPositions[i + 1].x);
+  line.setAttribute('y2', dotPositions[i + 1].y);
+  ringSvg.appendChild(line);
+}
+</script>
+
+</body>
+</html>

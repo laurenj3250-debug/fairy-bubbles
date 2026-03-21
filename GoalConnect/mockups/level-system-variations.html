@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level System Variations — 6 Visual Treatments</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  /* LANDSCAPE */
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  /* PARTICLES */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+  .particles {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px; left: 50%; top: 15%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* CONTENT */
+  .content { position: relative; z-index: 10; padding: 40px 40px 60px; }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+    text-align: center; margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center; font-size: 14px; color: var(--text-muted); letter-spacing: 2px;
+    margin-bottom: 40px;
+  }
+
+  /* GRID */
+  .sampler-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* CONCEPT WRAPPER */
+  .concept { display: flex; flex-direction: column; gap: 12px; }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 600; color: var(--text-accent);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .concept-desc {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px;
+  }
+
+  /* CARD SYSTEM */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+    position: relative; overflow: hidden;
+  }
+  .shell::before {
+    content: ''; position: absolute; top: -40%; left: 20%; width: 60%; height: 80%;
+    background: radial-gradient(ellipse at center, rgba(255,210,140,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; z-index: 1;
+  }
+  .shell::after {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none; z-index: 2;
+    box-shadow: inset 0 0 30px rgba(225,164,92,0.04), inset 0 1px 0 rgba(255,200,140,0.08);
+  }
+
+  /* SHARED LABELS */
+  .label {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .label-sm { font-size: 11px; color: var(--text-muted); }
+  .label-md { font-size: 13px; color: var(--text-secondary); }
+  .label-lg { font-size: 16px; color: var(--text-accent); }
+
+  /* ANIMATIONS */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(225,164,92,0.15), 0 0 40px rgba(225,164,92,0.08); }
+    50% { box-shadow: 0 0 30px rgba(225,164,92,0.25), 0 0 60px rgba(225,164,92,0.12); }
+  }
+  @keyframes pulse-text {
+    0%, 100% { text-shadow: 0 0 20px rgba(225,164,92,0.3), 0 0 40px rgba(225,164,92,0.15); }
+    50% { text-shadow: 0 0 30px rgba(225,164,92,0.5), 0 0 60px rgba(225,164,92,0.25), 0 0 80px rgba(225,164,92,0.1); }
+  }
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(225,164,92,0.25); box-shadow: 0 0 15px rgba(225,164,92,0.1), inset 0 0 15px rgba(225,164,92,0.05); }
+    50% { border-color: rgba(225,164,92,0.45); box-shadow: 0 0 25px rgba(225,164,92,0.2), inset 0 0 25px rgba(225,164,92,0.1); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(225,164,92,0.4), 0 0 12px rgba(225,164,92,0.2); }
+    50% { transform: scale(1.2); box-shadow: 0 0 10px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3); }
+  }
+
+  /* HORIZON LINE (shared progress bar) */
+  .horizon-line {
+    position: relative; height: 2px; border-radius: 1px;
+    background: rgba(169,130,106,0.15);
+    overflow: visible;
+  }
+  .horizon-fill {
+    position: absolute; left: 0; top: 0; height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, rgba(225,164,92,0.6), rgba(225,164,92,0.9));
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.15);
+  }
+  .horizon-orb {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle, #E1A45C 30%, rgba(225,164,92,0.4) 100%);
+    animation: orb-pulse 3s ease-in-out infinite;
+  }
+
+  /* REWARD SECTION (shared) */
+  .reward-section {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid rgba(169,130,106,0.1);
+  }
+  .reward-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .reward-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .reward-xp {
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1px;
+  }
+  .lock-icon {
+    display: inline-block; width: 14px; height: 14px; margin-right: 6px;
+    position: relative; top: 1px; opacity: 0.4;
+  }
+  .lock-icon svg { width: 100%; height: 100%; }
+
+  /* DIVIDER GLOW */
+  .glow-divider {
+    height: 1px; border: none; margin: 14px 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.2), transparent);
+  }
+
+  /* ===================== */
+  /* V1: MINIMAL BADGE     */
+  /* ===================== */
+  .v1-level-area { text-align: center; padding-bottom: 8px; }
+  .v1-level-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .v1-level-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px; font-weight: 600; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 30px rgba(225,164,92,0.35), 0 0 60px rgba(225,164,92,0.15), 0 0 100px rgba(225,164,92,0.08);
+    animation: pulse-text 4s ease-in-out infinite;
+    position: relative;
+  }
+  .v1-level-number::after {
+    content: ''; position: absolute; inset: -20px -30px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.08) 0%, transparent 70%);
+    z-index: -1;
+  }
+  .v1-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .v1-progress-label {
+    display: flex; justify-content: space-between; margin-top: 14px; margin-bottom: 6px;
+  }
+
+  /* ===================== */
+  /* V2: CIRCULAR BADGE    */
+  /* ===================== */
+  .v2-circle-area { display: flex; flex-direction: column; align-items: center; padding-bottom: 8px; }
+  .v2-ring-container {
+    position: relative; width: 88px; height: 88px;
+  }
+  .v2-ring-svg { width: 88px; height: 88px; }
+  .v2-ring-dot {
+    fill: rgba(169,130,106,0.15);
+    transition: fill 0.3s;
+  }
+  .v2-ring-dot.lit {
+    fill: #E1A45C;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.5));
+  }
+  .v2-center-text {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .v2-lvl-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: -2px;
+  }
+  .v2-lvl-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 600; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(225,164,92,0.3), 0 0 40px rgba(225,164,92,0.12);
+  }
+  .v2-ring-glow {
+    position: absolute; inset: -8px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.06) 40%, transparent 70%);
+    animation: breathe 5s ease-in-out infinite;
+  }
+  .v2-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* ===================== */
+  /* V3: TIERED STEPS      */
+  /* ===================== */
+  .v3-steps-area { padding-bottom: 8px; }
+  .v3-steps {
+    display: flex; align-items: flex-end; justify-content: center; gap: 6px;
+    height: 100px; padding: 0 10px;
+  }
+  .v3-step {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    position: relative;
+  }
+  .v3-platform {
+    width: 80px; border-radius: 6px 6px 0 0; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    padding-bottom: 6px;
+    transition: all 0.3s;
+  }
+  .v3-platform.lit {
+    background: linear-gradient(180deg, rgba(225,164,92,0.2) 0%, rgba(225,164,92,0.08) 100%);
+    border: 1px solid rgba(225,164,92,0.2);
+    border-bottom: none;
+    box-shadow: 0 -4px 15px rgba(225,164,92,0.1), inset 0 0 20px rgba(225,164,92,0.05);
+  }
+  .v3-platform.dim {
+    background: rgba(169,130,106,0.05);
+    border: 1px solid rgba(169,130,106,0.08);
+    border-bottom: none;
+  }
+  .v3-step-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .v3-step-label.lit { color: var(--text-accent); }
+  .v3-step-label.dim { color: rgba(169,130,106,0.3); }
+  .v3-step-days {
+    font-size: 9px; letter-spacing: 1px;
+  }
+  .v3-step-days.lit { color: var(--text-muted); }
+  .v3-step-days.dim { color: rgba(169,130,106,0.2); }
+  .v3-traveler {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #E1A45C;
+    box-shadow: 0 0 8px rgba(225,164,92,0.6), 0 0 20px rgba(225,164,92,0.3);
+    animation: orb-pulse 3s ease-in-out infinite;
+    margin-bottom: 4px;
+  }
+  .v3-current-label {
+    text-align: center; margin-top: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; color: var(--text-accent); letter-spacing: 1.5px; text-transform: uppercase;
+    text-shadow: 0 0 15px rgba(225,164,92,0.25);
+  }
+
+  /* ===================== */
+  /* V4: SHIELD + GLOW     */
+  /* ===================== */
+  .v4-shield-area { display: flex; flex-direction: column; align-items: center; padding-bottom: 8px; }
+  .v4-shield-wrap { position: relative; margin-bottom: 10px; }
+  .v4-shield {
+    width: 80px; height: 92px;
+    clip-path: polygon(50% 0%, 100% 20%, 100% 70%, 50% 100%, 0% 70%, 0% 20%);
+    background: linear-gradient(180deg, rgba(225,164,92,0.25) 0%, rgba(225,164,92,0.08) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .v4-shield-border {
+    position: absolute; inset: -3px;
+    clip-path: polygon(50% 0%, 100% 20%, 100% 70%, 50% 100%, 0% 70%, 0% 20%);
+    background: linear-gradient(180deg, rgba(225,164,92,0.35) 0%, rgba(225,164,92,0.1) 100%);
+    z-index: -1;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+  .v4-shield-glow {
+    position: absolute; inset: -20px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.1) 0%, transparent 60%);
+    animation: breathe 4s ease-in-out infinite;
+    z-index: -2;
+  }
+  .v4-shield-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: -2px;
+  }
+  .v4-shield-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px; font-weight: 600; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(225,164,92,0.35);
+  }
+  .v4-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .v4-progress-row {
+    display: flex; justify-content: space-between; width: 100%; margin-top: 12px; margin-bottom: 6px;
+  }
+
+  /* ===================== */
+  /* V5: SPLIT CARD        */
+  /* ===================== */
+  .v5-split { display: flex; gap: 0; }
+  .v5-half {
+    flex: 1; padding: 24px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .v5-divider {
+    width: 1px; flex-shrink: 0;
+    background: linear-gradient(180deg, transparent, rgba(225,164,92,0.2), rgba(225,164,92,0.3), rgba(225,164,92,0.2), transparent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.08);
+  }
+  .v5-level-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .v5-level-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px; font-weight: 600; color: var(--text-accent); line-height: 1;
+    text-shadow: 0 0 25px rgba(225,164,92,0.3), 0 0 50px rgba(225,164,92,0.12);
+    position: relative;
+  }
+  .v5-level-num::after {
+    content: ''; position: absolute; inset: -16px -24px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.06) 0%, transparent 70%);
+    z-index: -1;
+  }
+  .v5-days {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 6px; margin-bottom: 12px;
+  }
+  .v5-dots {
+    display: flex; gap: 4px; margin-top: 4px;
+  }
+  .v5-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+  }
+  .v5-dot.lit {
+    background: #E1A45C;
+    box-shadow: 0 0 4px rgba(225,164,92,0.5);
+  }
+  .v5-dot.dim {
+    background: rgba(169,130,106,0.15);
+  }
+  .v5-next-label {
+    font-size: 10px; color: rgba(169,130,106,0.4); letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif;
+    margin-top: 6px;
+  }
+  .v5-reward-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .v5-reward-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase;
+    text-align: center; line-height: 1.3; margin-bottom: 12px;
+  }
+  .v5-xp {
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1px; margin-top: 8px;
+  }
+
+  /* ===================== */
+  /* V6: VERTICAL COMPACT  */
+  /* ===================== */
+  .v6-compact { text-align: center; }
+  .v6-badge-circle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1.5px solid rgba(225,164,92,0.3);
+    background: rgba(225,164,92,0.06);
+    box-shadow: 0 0 12px rgba(225,164,92,0.1), inset 0 0 8px rgba(225,164,92,0.05);
+    animation: pulse-border 4s ease-in-out infinite;
+  }
+  .v6-badge-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600; color: var(--text-accent); letter-spacing: 1.5px; text-transform: uppercase;
+    line-height: 1;
+  }
+  .v6-streak-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase;
+    margin: 10px 0 8px;
+  }
+  .v6-progress-row {
+    display: flex; justify-content: space-between; margin-bottom: 5px;
+  }
+  .v6-reward-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .v6-xp {
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1px; margin-top: 6px;
+  }
+
+  /* Lock SVG inline */
+  .lock-svg {
+    display: inline-block; width: 12px; height: 12px; margin-right: 5px; opacity: 0.35; vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+<div class="sun-glow"></div>
+
+<div class="content">
+  <div class="page-title">Level System</div>
+  <div class="page-sub">6 visual treatments of the streak-as-level concept</div>
+
+  <div class="sampler-grid">
+
+    <!-- ==================== V1: MINIMAL BADGE ==================== -->
+    <div class="concept">
+      <div class="concept-label">1. Minimal Badge</div>
+      <div class="concept-desc">The number IS the badge. Large glowing "3" with warm halo, thin horizon progress line, reward below with lock icon.</div>
+      <div class="shell">
+        <div class="face">
+          <div class="v1-level-area">
+            <div class="v1-level-label">Level</div>
+            <div class="v1-level-number">3</div>
+            <div class="v1-days">22 days</div>
+          </div>
+          <div class="v1-progress-label">
+            <span class="label label-sm">Level 3</span>
+            <span class="label label-sm">Level 4</span>
+          </div>
+          <div class="horizon-line">
+            <div class="horizon-fill" style="width: 79%;"></div>
+            <div class="horizon-orb" style="left: 79%;"></div>
+          </div>
+          <div class="reward-section">
+            <div class="reward-header">
+              <span class="reward-name">
+                <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Custom Scrub Cap
+              </span>
+              <span class="reward-xp">341 / 500 XP</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== V2: CIRCULAR BADGE ==================== -->
+    <div class="concept">
+      <div class="concept-label">2. Circular Badge</div>
+      <div class="concept-desc">Stardust Ring: 28 dots around the circumference, 22 lit. Level number centered. Reward below with horizon line.</div>
+      <div class="shell">
+        <div class="face">
+          <div class="v2-circle-area">
+            <div class="v2-ring-container">
+              <div class="v2-ring-glow"></div>
+              <svg class="v2-ring-svg" viewBox="0 0 88 88">
+                <script type="text/javascript">
+                  // Generate 28 dots around a circle
+                </script>
+              </svg>
+              <!-- We'll use inline circles instead -->
+              <svg class="v2-ring-svg" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;">
+                <!-- 28 dots, 22 lit -->
+                <circle cx="50" cy="5" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="58.2" cy="5.6" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="65.8" cy="8.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="72.4" cy="12.8" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="77.6" cy="19" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="81.2" cy="26.4" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="83" cy="34.6" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="82.8" cy="43" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="80.8" cy="51" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="77" cy="58.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="71.8" cy="64.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="65.2" cy="68.6" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="57.8" cy="71.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="50" cy="72" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="42.2" cy="71.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="34.8" cy="68.6" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="28.2" cy="64.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="23" cy="58.2" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="19.2" cy="51" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="17.2" cy="43" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="17" cy="34.6" r="2.2" class="v2-ring-dot lit"/>
+                <circle cx="18.8" cy="26.4" r="2.2" class="v2-ring-dot lit"/>
+                <!-- 6 unlit -->
+                <circle cx="22.4" cy="19" r="2.2" class="v2-ring-dot"/>
+                <circle cx="27.6" cy="12.8" r="2.2" class="v2-ring-dot"/>
+                <circle cx="34.2" cy="8.2" r="2.2" class="v2-ring-dot"/>
+                <circle cx="41.8" cy="5.6" r="2.2" class="v2-ring-dot"/>
+                <!-- extra positioning dots to fill 28 -->
+              </svg>
+              <div class="v2-center-text">
+                <div class="v2-lvl-label">Lvl</div>
+                <div class="v2-lvl-num">3</div>
+              </div>
+            </div>
+            <div class="v2-days">22 days</div>
+          </div>
+          <div class="reward-section">
+            <div class="reward-header">
+              <span class="reward-name">
+                <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Custom Scrub Cap
+              </span>
+              <span class="reward-xp">341 / 500 XP</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== V3: TIERED STEPS ==================== -->
+    <div class="concept">
+      <div class="concept-label">3. Tiered Steps</div>
+      <div class="concept-desc">4 ascending platforms (Levels 1-4). Steps 1-3 lit, step 4 dim. Glowing traveler dot on step 3. Day thresholds shown.</div>
+      <div class="shell">
+        <div class="face">
+          <div class="v3-steps-area">
+            <div class="v3-steps">
+              <div class="v3-step">
+                <div class="v3-platform lit" style="height: 30px;">
+                  <div class="v3-step-label lit">1</div>
+                  <div class="v3-step-days lit">7d</div>
+                </div>
+              </div>
+              <div class="v3-step">
+                <div class="v3-platform lit" style="height: 48px;">
+                  <div class="v3-step-label lit">2</div>
+                  <div class="v3-step-days lit">14d</div>
+                </div>
+              </div>
+              <div class="v3-step">
+                <div class="v3-platform lit" style="height: 66px;">
+                  <div class="v3-traveler"></div>
+                  <div class="v3-step-label lit">3</div>
+                  <div class="v3-step-days lit">21d</div>
+                </div>
+              </div>
+              <div class="v3-step">
+                <div class="v3-platform dim" style="height: 84px;">
+                  <div class="v3-step-label dim">4</div>
+                  <div class="v3-step-days dim">28d</div>
+                </div>
+              </div>
+            </div>
+            <div class="v3-current-label">22 Days &mdash; Level 3</div>
+          </div>
+          <div class="reward-section">
+            <div class="reward-header">
+              <span class="reward-name">
+                <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Custom Scrub Cap
+              </span>
+              <span class="reward-xp">341 / 500 XP</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== V4: SHIELD + GLOW ==================== -->
+    <div class="concept">
+      <div class="concept-label">4. Shield + Glow</div>
+      <div class="concept-desc">Elegant shield/crest shape with warm gradient, pulsing amber glow border. Premium and refined. Progress line + reward below.</div>
+      <div class="shell">
+        <div class="face">
+          <div class="v4-shield-area">
+            <div class="v4-shield-wrap">
+              <div class="v4-shield-glow"></div>
+              <div class="v4-shield-border"></div>
+              <div class="v4-shield">
+                <div class="v4-shield-label">Level</div>
+                <div class="v4-shield-num">3</div>
+              </div>
+            </div>
+            <div class="v4-days">22 days</div>
+            <div class="v4-progress-row">
+              <span class="label label-sm">Level 3</span>
+              <span class="label label-sm">Level 4</span>
+            </div>
+            <div class="horizon-line" style="width: 100%;">
+              <div class="horizon-fill" style="width: 79%;"></div>
+              <div class="horizon-orb" style="left: 79%;"></div>
+            </div>
+          </div>
+          <div class="reward-section">
+            <div class="reward-header">
+              <span class="reward-name">
+                <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Custom Scrub Cap
+              </span>
+              <span class="reward-xp">341 / 500 XP</span>
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== V5: SPLIT CARD ==================== -->
+    <div class="concept">
+      <div class="concept-label">5. Split Card</div>
+      <div class="concept-desc">Card split into two balanced halves. Left: Level display with progress dots. Right: Reward with horizon line. Clean, balanced.</div>
+      <div class="shell">
+        <div class="face" style="padding: 0;">
+          <div class="v5-split">
+            <div class="v5-half">
+              <div class="v5-level-label">Level</div>
+              <div class="v5-level-num">3</div>
+              <div class="v5-days">22 days</div>
+              <div class="v5-dots">
+                <!-- 28 dots total, first 22 lit -->
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot lit"></span><span class="v5-dot lit"></span>
+                <span class="v5-dot dim"></span><span class="v5-dot dim"></span><span class="v5-dot dim"></span><span class="v5-dot dim"></span>
+                <span class="v5-dot dim"></span><span class="v5-dot dim"></span>
+              </div>
+              <div class="v5-next-label">6 to Level 4</div>
+            </div>
+            <div class="v5-divider"></div>
+            <div class="v5-half">
+              <div class="v5-reward-title">Reward</div>
+              <div class="v5-reward-name">
+                <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Custom Scrub Cap
+              </div>
+              <div class="horizon-line" style="width: 100%;">
+                <div class="horizon-fill" style="width: 68%;"></div>
+                <div class="horizon-orb" style="left: 68%;"></div>
+              </div>
+              <div class="v5-xp">341 / 500 XP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== V6: VERTICAL COMPACT ==================== -->
+    <div class="concept">
+      <div class="concept-label">6. Vertical Stack &mdash; Compact</div>
+      <div class="concept-desc">Everything stacked vertically in a narrow card. Small badge circle, streak text, progress line, reward, XP. Sidebar-friendly.</div>
+      <div class="shell" style="max-width: 280px; margin: 0 auto;">
+        <div class="face">
+          <div class="v6-compact">
+            <div class="v6-badge-circle">
+              <span class="v6-badge-text">Lvl 3</span>
+            </div>
+            <div class="v6-streak-text">22 Day Streak</div>
+            <div class="v6-progress-row">
+              <span class="label label-sm">Level 3</span>
+              <span class="label label-sm">Level 4</span>
+            </div>
+            <div class="horizon-line" style="margin-bottom: 4px;">
+              <div class="horizon-fill" style="width: 79%;"></div>
+              <div class="horizon-orb" style="left: 79%;"></div>
+            </div>
+            <div class="glow-divider"></div>
+            <div class="v6-reward-name">
+              <svg class="lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Custom Scrub Cap
+            </div>
+            <div class="horizon-line">
+              <div class="horizon-fill" style="width: 68%;"></div>
+              <div class="horizon-orb" style="left: 68%;"></div>
+            </div>
+            <div class="v6-xp">341 / 500 XP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- sampler-grid -->
+</div><!-- content -->
+
+<!-- Generate the circular badge dots programmatically for V2 -->
+<script>
+  // Replace the hand-coded SVG dots in V2 with properly calculated ones
+  const svgNS = "http://www.w3.org/2000/svg";
+  const container = document.querySelector('.v2-ring-container');
+  // Remove the old SVGs
+  const oldSvgs = container.querySelectorAll('svg');
+  oldSvgs.forEach(s => s.remove());
+
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+
+  const totalDots = 28;
+  const litDots = 22;
+  const cx = 50, cy = 50, r = 44;
+
+  for (let i = 0; i < totalDots; i++) {
+    const angle = (i / totalDots) * Math.PI * 2 - Math.PI / 2; // start from top
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const circle = document.createElementNS(svgNS, "circle");
+    circle.setAttribute("cx", x.toFixed(1));
+    circle.setAttribute("cy", y.toFixed(1));
+    circle.setAttribute("r", "2.2");
+    if (i < litDots) {
+      circle.setAttribute("class", "v2-ring-dot lit");
+    } else {
+      circle.setAttribute("class", "v2-ring-dot");
+    }
+    svg.appendChild(circle);
+  }
+
+  container.insertBefore(svg, container.querySelector('.v2-center-text'));
+</script>
+
+</body>
+</html>

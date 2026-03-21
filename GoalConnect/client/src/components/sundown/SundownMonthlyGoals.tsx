@@ -27,9 +27,21 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
 
   const completedCount = goals.filter((g) => g.current >= g.target).length;
 
-  // For now, show all goals for any selected month
-  // (monthly goal filtering can be added when backend supports it)
-  const displayGoals = useMemo(() => goals, [goals]);
+  const [showAll, setShowAll] = useState(false);
+
+  // Show first 6 goals collapsed, all when expanded
+  const displayGoals = useMemo(() => {
+    const sorted = [...goals].sort((a, b) => {
+      // Completed last, then by progress descending
+      const aComplete = a.current >= a.target ? 1 : 0;
+      const bComplete = b.current >= b.target ? 1 : 0;
+      if (aComplete !== bComplete) return aComplete - bComplete;
+      const aPct = a.target > 0 ? a.current / a.target : 0;
+      const bPct = b.target > 0 ? b.current / b.target : 0;
+      return bPct - aPct;
+    });
+    return showAll ? sorted : sorted.slice(0, 6);
+  }, [goals, showAll]);
 
   return (
     <div className="sd-full-width">
@@ -106,7 +118,12 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
           </div>
 
           {goals.length > 6 && (
-            <button className="sd-show-all-btn">Show All Months</button>
+            <button
+              className="sd-show-all-btn"
+              onClick={() => setShowAll(!showAll)}
+            >
+              {showAll ? 'Show Less' : `Show All ${goals.length} Goals`}
+            </button>
           )}
         </div>
       </div>

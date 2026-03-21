@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Pairing — Maximum Glow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+  body { font-family: 'Source Sans 3', sans-serif; color: var(--text-primary); background: #0a0507; min-height: 100vh; }
+
+  .landscape { position: fixed; inset: 0; z-index: 0; background-color: #1a0e10; background-image: url('../client/public/backgrounds/desert-hero.png'); background-size: 120vw auto; background-position: center bottom; background-repeat: no-repeat; }
+  .landscape::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%), radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%); }
+  .landscape::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%); }
+
+  /* Game UI card */
+  .shell { background: var(--shell-bg); border-radius: 24px; padding: 4px; box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25); }
+  .face { position: relative; overflow: hidden; background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); border-radius: 20px; padding: 20px; border-top: 1px solid rgba(255,200,140,0.15); box-shadow: inset 0 1px 0 rgba(255,200,140,0.2), inset 0 -8px 16px rgba(0,0,0,0.2), inset 6px 0 20px rgba(255,180,100,0.06), inset -6px 0 20px rgba(255,180,100,0.03); }
+  .face::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,200,140,0.12) 0%, rgba(255,180,100,0.06) 15%, transparent 40%, transparent 60%, rgba(255,200,140,0.03) 80%, rgba(255,180,100,0.08) 100%); mix-blend-mode: screen; pointer-events: none; z-index: 1; }
+
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; position: relative; z-index: 2; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; }
+
+  .content { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 40px; }
+  .page-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; text-align: center; color: rgba(240,222,199,0.85); margin-bottom: 6px; letter-spacing: 3px; }
+  .page-sub { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 30px; }
+
+  .pairing { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+
+  /* Animations */
+  @keyframes starTwinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.9); } }
+  @keyframes softPulse { 0%, 100% { box-shadow: 0 0 6px white, 0 0 14px rgba(225,164,92,0.7), 0 0 28px rgba(225,164,92,0.4), 0 0 45px rgba(225,164,92,0.15); } 50% { box-shadow: 0 0 8px white, 0 0 20px rgba(225,164,92,0.9), 0 0 40px rgba(225,164,92,0.5), 0 0 60px rgba(225,164,92,0.2); } }
+  @keyframes breathe { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+  @keyframes mistDrift { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 0.8; } }
+
+  /* ═══════════════════════════════════════════════
+     STARDUST TRAIL — HABIT TRACKER
+     ═══════════════════════════════════════════════ */
+  .stardust-grid {
+    display: grid;
+    grid-template-columns: 130px repeat(7, 46px);
+    row-gap: 14px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .sd-day {
+    text-align: center; font-size: 10px; font-weight: 500;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .sd-day.today { color: var(--text-accent); font-weight: 700; }
+  .sd-habit {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 500; letter-spacing: 1px;
+    color: rgba(217,183,154,0.5); text-transform: uppercase;
+  }
+  .sd-habit svg {
+    width: 18px; height: 18px; stroke: var(--text-accent); stroke-width: 1.5;
+    fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+  }
+  .sd-cell { display: flex; align-items: center; justify-content: center; position: relative; }
+
+  /* Star points */
+  .star {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(60,35,30,0.4);
+    border: 1px solid rgba(169,130,106,0.1);
+  }
+  .star.done {
+    width: 10px; height: 10px; border: none;
+    background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.9));
+    box-shadow:
+      0 0 3px rgba(255,250,235,0.9),
+      0 0 8px rgba(225,164,92,0.7),
+      0 0 18px rgba(225,164,92,0.4),
+      0 0 32px rgba(225,164,92,0.15);
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  .star.today-col { width: 11px; height: 11px; border: 1px solid rgba(225,164,92,0.3); }
+  .star.done.today-col {
+    width: 14px; height: 14px;
+    box-shadow:
+      0 0 4px rgba(255,250,235,1),
+      0 0 12px rgba(225,164,92,0.9),
+      0 0 24px rgba(225,164,92,0.5),
+      0 0 42px rgba(225,164,92,0.25),
+      0 0 65px rgba(225,164,92,0.1);
+  }
+
+  /* Constellation lines */
+  .sd-line {
+    position: absolute; top: 50%; height: 1px; transform: translateY(-50%);
+    background: linear-gradient(90deg, rgba(225,164,92,0.25), rgba(225,164,92,0.4), rgba(225,164,92,0.25));
+    box-shadow: 0 0 4px rgba(225,164,92,0.2), 0 0 8px rgba(225,164,92,0.1);
+    z-index: -1;
+  }
+
+  /* ═══════════════════════════════════════════════
+     HORIZON LINES — GOAL CARD (H1 + H2 combined, max glow)
+     ═══════════════════════════════════════════════ */
+  .goals-face { position: relative; overflow: hidden; }
+
+  /* Ambient backdrop from H2 — cranked up */
+  .goals-ambient {
+    position: absolute; bottom: 0; left: -20%; right: -20%; height: 120px;
+    background: radial-gradient(ellipse 140% 100% at 50% 100%, rgba(225,164,92,0.12) 0%, rgba(200,131,73,0.05) 40%, transparent 70%);
+    animation: breathe 5s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+  }
+  .goals-mist {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+    background: linear-gradient(to top, rgba(225,164,92,0.08), transparent);
+    filter: blur(12px);
+    animation: mistDrift 7s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+  }
+  /* Extra warm ambient glow in center */
+  .goals-center-glow {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(225,164,92,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .goals-list { display: flex; flex-direction: column; gap: 30px; padding-top: 4px; position: relative; z-index: 2; }
+
+  .goal-item { position: relative; }
+  .goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(217,183,154,0.5);
+    margin-bottom: 10px;
+  }
+  .goal-track {
+    position: relative; height: 2px; width: 100%;
+    background: rgba(169,130,106,0.08);
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(169,130,106,0.03);
+  }
+  .goal-fill {
+    position: absolute; left: 0; top: -2px; height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(200,131,73,0.2), rgba(225,164,92,0.6), rgba(255,220,160,0.8));
+    box-shadow:
+      0 0 4px rgba(255,220,160,0.5),
+      0 0 10px rgba(225,164,92,0.5),
+      0 0 22px rgba(225,164,92,0.3),
+      0 0 40px rgba(225,164,92,0.12);
+  }
+  .goal-orb {
+    position: absolute; top: 50%; transform: translate(50%, -50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,245,1), rgba(225,164,92,0.9));
+    box-shadow:
+      0 0 4px rgba(255,255,245,1),
+      0 0 10px rgba(225,164,92,0.8),
+      0 0 22px rgba(225,164,92,0.5),
+      0 0 38px rgba(225,164,92,0.25),
+      0 0 55px rgba(225,164,92,0.1);
+    animation: softPulse 3.5s ease-in-out infinite;
+  }
+  .goal-fraction {
+    position: absolute; right: 0; top: -20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; color: rgba(169,130,106,0.4); letter-spacing: 0.5px;
+  }
+
+  .goal-item:nth-child(1) .goal-orb { animation-delay: 0s; }
+  .goal-item:nth-child(2) .goal-orb { animation-delay: 0.8s; }
+  .goal-item:nth-child(3) .goal-orb { animation-delay: 1.6s; }
+  .goal-item:nth-child(4) .goal-orb { animation-delay: 0.4s; }
+
+  /* Warm glow trail behind each fill */
+  .goal-fill::after {
+    content: '';
+    position: absolute; inset: -8px -4px -8px 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.08));
+    border-radius: 8px;
+    filter: blur(6px);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+<div class="content">
+  <div class="page-title">Final Pairing — Maximum Glow</div>
+  <div class="page-sub">Stardust Trail habits + Horizon Lines goals. Both cranked to max glow.</div>
+
+  <div class="pairing">
+    <!-- ═══ STARDUST TRAIL HABIT CARD ═══ -->
+    <div class="shell">
+      <div class="face">
+        <div class="card-hdr">
+          <span class="card-title">This Week</span>
+          <span class="badge">5/6 today</span>
+        </div>
+        <div class="stardust-grid">
+          <!-- Day labels row -->
+          <div></div>
+          <div class="sd-day">Sun</div><div class="sd-day">Mon</div><div class="sd-day">Tue</div><div class="sd-day">Wed</div><div class="sd-day today">Thu</div><div class="sd-day">Fri</div><div class="sd-day">Sat</div>
+
+          <!-- RemNote: ✓✓✓✓✓-- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>RemNote</div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.3s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.6s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.9s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done today-col" style="animation-delay:1.2s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+
+          <!-- Gym: -✓-✓✓-- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/></svg>Gym</div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.4s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:1.0s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done today-col" style="animation-delay:1.3s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+
+          <!-- Pimsleur: ✓✓✓✓✓-- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Pimsleur</div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.2s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.5s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.8s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:1.1s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done today-col" style="animation-delay:1.4s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+
+          <!-- Bed by 11: ✓-✓--- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>Bed by 11</div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.15s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.75s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star today-col"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+
+          <!-- German: ✓✓✓✓--- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>German</div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.35s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.65s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.95s"></div><div class="sd-line" style="left:60%;width:46px;"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:1.25s"></div></div>
+          <div class="sd-cell"><div class="star today-col"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+
+          <!-- Read Paper: -✓--✓-- -->
+          <div class="sd-habit"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Read Paper</div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star done" style="animation-delay:0.55s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star done today-col" style="animation-delay:1.45s"></div></div>
+          <div class="sd-cell"><div class="star"></div></div>
+          <div class="sd-cell"><div class="star" style="opacity:0.4"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HORIZON LINES GOAL CARD ═══ -->
+    <div class="shell">
+      <div class="face goals-face">
+        <!-- Ambient layers -->
+        <div class="goals-ambient"></div>
+        <div class="goals-mist"></div>
+        <div class="goals-center-glow"></div>
+
+        <div class="card-hdr">
+          <span class="card-title">Goals</span>
+          <span class="badge">2026</span>
+        </div>
+
+        <div class="goals-list">
+          <!-- 2 books — 50% -->
+          <div class="goal-item">
+            <div class="goal-name">2 physical books</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 50%;"></div>
+              <div class="goal-orb" style="right: 50%;"></div>
+            </div>
+            <div class="goal-fraction">1/2</div>
+          </div>
+
+          <!-- de Lahunta — 35% -->
+          <div class="goal-item">
+            <div class="goal-name">Complete de Lahunta</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 35%;"></div>
+              <div class="goal-orb" style="right: 65%;"></div>
+            </div>
+            <div class="goal-fraction">9/26</div>
+          </div>
+
+          <!-- 200 lifting — 25% -->
+          <div class="goal-item">
+            <div class="goal-name">200 lifting days</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 25%;"></div>
+              <div class="goal-orb" style="right: 75%;"></div>
+            </div>
+            <div class="goal-fraction">51/200</div>
+          </div>
+
+          <!-- 12 outdoor — 25% -->
+          <div class="goal-item">
+            <div class="goal-name">12 outdoor climbing</div>
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 25%;"></div>
+              <div class="goal-orb" style="right: 75%;"></div>
+            </div>
+            <div class="goal-fraction">3/12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reward/Streak In Context — 5 Concepts (No Dots)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.2), inset 0 -8px 16px rgba(0,0,0,0.2), inset 6px 0 20px rgba(255,180,100,0.06), inset -6px 0 20px rgba(255,180,100,0.03);
+  }
+  body { font-family: 'Source Sans 3', sans-serif; color: var(--text-primary); background: #0a0507; min-height: 100vh; overflow-x: hidden; }
+
+  .landscape { position: fixed; inset: 0; z-index: 0; background-color: #1a0e10; background-image: url('../client/public/backgrounds/desert-hero.png'); background-size: 120vw auto; background-position: center bottom; background-repeat: no-repeat; }
+  .landscape::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%), radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%); }
+  .landscape::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%); }
+
+  .content { position: relative; z-index: 10; max-width: 1300px; margin: 0 auto; padding: 40px 24px 100px; }
+  .page-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; text-align: center; color: rgba(240,222,199,0.85); letter-spacing: 6px; text-transform: uppercase; text-shadow: 0 2px 40px rgba(200,130,70,0.3); }
+  .page-sub { text-align: center; color: var(--text-muted); font-size: 13px; margin: 6px auto 50px; max-width: 650px; line-height: 1.6; }
+
+  /* Section labels */
+  .section { margin-bottom: 70px; }
+  .section-num { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: rgba(225,164,92,0.4); text-align: center; margin-bottom: 4px; }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--text-accent); text-align: center; margin-bottom: 4px; text-shadow: 0 0 20px rgba(225,164,92,0.3); }
+  .section-desc { text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+  /* 3-column grid */
+  .v2-grid { display: grid; grid-template-columns: 1.3fr 1fr 0.7fr; gap: 14px; max-width: 1200px; margin: 0 auto; align-items: start; }
+
+  /* Shell + Face */
+  .shell { background: var(--shell-bg); border-radius: 24px; padding: 4px; box-shadow: var(--card-shadow); }
+  .face { position: relative; overflow: hidden; background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); border-radius: 20px; padding: 16px; border-top: 1px solid rgba(255,200,140,0.15); box-shadow: var(--face-inset); }
+  .face::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,200,140,0.12) 0%, rgba(255,180,100,0.06) 15%, transparent 40%, transparent 60%, rgba(255,200,140,0.03) 80%, rgba(255,180,100,0.08) 100%); mix-blend-mode: screen; pointer-events: none; z-index: 1; }
+  .face::after { content: ''; position: absolute; top: -20%; left: -10%; width: 60%; height: 140%; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255,220,160,0.06) 0%, transparent 70%); transform: rotate(-25deg); pointer-events: none; z-index: 1; }
+
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; position: relative; z-index: 2; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .badge { font-size: 10px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 2px 8px; border-radius: 8px; }
+
+  /* Right column stack */
+  .right-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ═══════════════════════════════════════════════
+     SHARED: STARDUST TRAIL (SIMPLIFIED HABITS)
+     ═══════════════════════════════════════════════ */
+  .habit-grid { display: grid; grid-template-columns: 80px repeat(7, 1fr); column-gap: 3px; row-gap: 8px; align-items: center; position: relative; z-index: 2; }
+  .hday { text-align: center; font-family: 'Cormorant Garamond', serif; font-size: 9px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .hday.today { color: var(--text-accent); }
+  .hname { font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500; letter-spacing: 1px; color: rgba(217,183,154,0.45); text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+  .hcell { display: flex; align-items: center; justify-content: center; }
+  .hdot { border-radius: 50%; }
+  .hdot.empty { width: 7px; height: 7px; background: rgba(60,35,30,0.4); border: 1px solid rgba(169,130,106,0.1); }
+  .hdot.done { width: 9px; height: 9px; background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.9)); box-shadow: 0 0 3px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7), 0 0 18px rgba(225,164,92,0.4); animation: starTwinkle 4s ease-in-out infinite; }
+  .hdot.future { width: 6px; height: 6px; background: rgba(60,35,30,0.25); border: 1px solid rgba(169,130,106,0.06); }
+
+  @keyframes starTwinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.9); } }
+  @keyframes softPulse { 0%, 100% { box-shadow: 0 0 6px white, 0 0 14px rgba(225,164,92,0.7), 0 0 28px rgba(225,164,92,0.4); } 50% { box-shadow: 0 0 8px white, 0 0 20px rgba(225,164,92,0.9), 0 0 40px rgba(225,164,92,0.5), 0 0 60px rgba(225,164,92,0.2); } }
+  @keyframes breathe { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+  /* ═══════════════════════════════════════════════
+     SHARED: HORIZON LINES (SIMPLIFIED GOALS)
+     ═══════════════════════════════════════════════ */
+  .goals-face { position: relative; }
+  .goals-ambient { position: absolute; bottom: 0; left: -20%; right: -20%; height: 100px; background: radial-gradient(ellipse 140% 100% at 50% 100%, rgba(225,164,92,0.1) 0%, rgba(200,131,73,0.04) 40%, transparent 70%); animation: breathe 5s ease-in-out infinite; pointer-events: none; z-index: 0; }
+  .goals-list { display: flex; flex-direction: column; gap: 24px; padding-top: 4px; position: relative; z-index: 2; }
+  .goal-item { position: relative; }
+  .goal-name { font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(217,183,154,0.45); margin-bottom: 8px; }
+  .goal-track { position: relative; height: 2px; width: 100%; background: rgba(169,130,106,0.08); border-radius: 1px; }
+  .goal-fill { position: absolute; left: 0; top: -2px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, rgba(200,131,73,0.2), rgba(225,164,92,0.6), rgba(255,220,160,0.8)); box-shadow: 0 0 4px rgba(255,220,160,0.5), 0 0 10px rgba(225,164,92,0.5), 0 0 22px rgba(225,164,92,0.3); }
+  .goal-orb { position: absolute; top: 50%; transform: translate(50%, -50%); width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,255,245,1), rgba(225,164,92,0.9)); box-shadow: 0 0 4px rgba(255,255,245,1), 0 0 10px rgba(225,164,92,0.8), 0 0 22px rgba(225,164,92,0.5), 0 0 38px rgba(225,164,92,0.25); animation: softPulse 3.5s ease-in-out infinite; }
+  .goal-fraction { position: absolute; right: 0; top: -18px; font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500; color: rgba(169,130,106,0.35); }
+
+  /* ═══════════════════════════════════════════════
+     SHARED: STARDUST RING (top of right column)
+     ═══════════════════════════════════════════════ */
+  .ring-card .face { display: flex; flex-direction: column; align-items: center; padding: 16px 12px; }
+  .ring-wrap { position: relative; width: 120px; height: 120px; margin: 8px auto 4px; }
+  .ring-ambient { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 160px; background: radial-gradient(circle, rgba(225,164,92,0.08) 0%, transparent 70%); animation: breathe 5s ease-in-out infinite; pointer-events: none; }
+  .ring-dot { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
+  .ring-dot.lit { width: 7px; height: 7px; background: radial-gradient(circle at 35% 35%, rgba(255,250,235,0.95), rgba(225,164,92,0.9)); box-shadow: 0 0 3px rgba(255,250,235,0.9), 0 0 8px rgba(225,164,92,0.7), 0 0 18px rgba(225,164,92,0.4); animation: starTwinkle 4s ease-in-out infinite; }
+  .ring-dot.dim { width: 5px; height: 5px; background: rgba(60,35,30,0.4); border: 1px solid rgba(169,130,106,0.15); }
+  .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 3; }
+  .ring-number { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--text-primary); text-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2); }
+  .ring-label { font-family: 'Cormorant Garamond', serif; font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-top: -2px; }
+
+  /* ═══════════════════════════════════════════════
+     CONCEPT 1: GLOWING TYPOGRAPHY
+     ═══════════════════════════════════════════════ */
+  .typo-reward .face { padding: 20px 16px; text-align: center; }
+  .typo-level {
+    font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600;
+    letter-spacing: 4px; text-transform: uppercase; color: var(--text-primary);
+    text-shadow: 0 0 6px rgba(255,220,160,0.6), 0 0 16px rgba(225,164,92,0.5), 0 0 32px rgba(225,164,92,0.3), 0 0 50px rgba(200,131,73,0.15);
+    position: relative; z-index: 2; margin-bottom: 4px;
+  }
+  .typo-streak {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+    position: relative; z-index: 2; margin-bottom: 18px;
+  }
+  .typo-divider {
+    height: 1px; margin: 0 auto 14px;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.3), rgba(255,220,160,0.5), rgba(225,164,92,0.3), transparent);
+    box-shadow: 0 0 6px rgba(225,164,92,0.3), 0 0 14px rgba(225,164,92,0.15);
+    position: relative; z-index: 2;
+  }
+  .typo-reward-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted);
+    position: relative; z-index: 2; margin-bottom: 10px;
+  }
+  .typo-reward-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600;
+    color: var(--text-secondary); letter-spacing: 1px;
+    position: relative; z-index: 2; margin-bottom: 10px;
+  }
+  .typo-horizon-track {
+    position: relative; height: 2px; background: rgba(169,130,106,0.08); border-radius: 1px;
+    margin-bottom: 6px; z-index: 2;
+  }
+  .typo-horizon-fill {
+    position: absolute; left: 0; top: -1px; height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(200,131,73,0.2), rgba(225,164,92,0.6), rgba(255,220,160,0.8));
+    box-shadow: 0 0 4px rgba(255,220,160,0.5), 0 0 10px rgba(225,164,92,0.5), 0 0 22px rgba(225,164,92,0.3);
+  }
+  .typo-xp {
+    font-family: 'Source Sans 3', sans-serif; font-size: 10px; color: var(--text-muted);
+    position: relative; z-index: 2;
+  }
+
+  /* ═══════════════════════════════════════════════
+     CONCEPT 2: ORNATE SVG FRAME
+     ═══════════════════════════════════════════════ */
+  .frame-reward .face { padding: 20px 14px; display: flex; flex-direction: column; align-items: center; }
+  .frame-svg-wrap { position: relative; z-index: 2; width: 100%; display: flex; justify-content: center; margin-bottom: 6px; }
+  .frame-svg-wrap svg { filter: drop-shadow(0 0 6px rgba(225,164,92,0.4)) drop-shadow(0 0 16px rgba(225,164,92,0.2)); }
+  .frame-level-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600;
+    color: var(--text-primary); text-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.2);
+  }
+  .frame-streak {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+    position: relative; z-index: 2; margin-bottom: 14px;
+  }
+  .frame-reward-section { width: 100%; position: relative; z-index: 2; text-align: center; }
+  .frame-reward-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     CONCEPT 3: FLAME PILLAR
+     ═══════════════════════════════════════════════ */
+  .flame-reward .face { padding: 16px 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
+  .flame-container {
+    position: relative; z-index: 2; width: 60px; height: 100px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+  .flame-body {
+    position: absolute; bottom: 0; width: 100%; border-radius: 50% 50% 8px 8px;
+    background: linear-gradient(to top,
+      rgba(200,131,73,0.6) 0%,
+      rgba(225,164,92,0.5) 30%,
+      rgba(255,200,140,0.4) 60%,
+      rgba(255,220,160,0.15) 85%,
+      transparent 100%
+    );
+    animation: flameFlicker 2.5s ease-in-out infinite alternate;
+    filter: blur(1px);
+  }
+  .flame-body::before {
+    content: ''; position: absolute; bottom: 0; left: 15%; right: 15%; height: 80%;
+    border-radius: 50% 50% 6px 6px;
+    background: linear-gradient(to top,
+      rgba(255,220,160,0.6) 0%,
+      rgba(255,200,140,0.4) 40%,
+      rgba(255,250,235,0.15) 80%,
+      transparent 100%
+    );
+    animation: flameInner 1.8s ease-in-out infinite alternate;
+  }
+  .flame-body::after {
+    content: ''; position: absolute; bottom: 0; left: 30%; right: 30%; height: 60%;
+    border-radius: 50% 50% 4px 4px;
+    background: linear-gradient(to top,
+      rgba(255,250,235,0.5) 0%,
+      rgba(255,250,235,0.2) 50%,
+      transparent 100%
+    );
+    animation: flameCore 1.3s ease-in-out infinite alternate;
+  }
+  .flame-number {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700;
+    color: rgba(255,250,235,0.95); position: relative; z-index: 3;
+    text-shadow: 0 0 10px rgba(255,220,160,0.8), 0 0 25px rgba(225,164,92,0.6), 0 0 45px rgba(200,131,73,0.3);
+    margin-bottom: 10px;
+  }
+  .flame-glow {
+    position: absolute; bottom: 0; left: -30%; right: -30%; height: 50%;
+    background: radial-gradient(ellipse 100% 100% at 50% 100%, rgba(225,164,92,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .flame-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted);
+    position: relative; z-index: 2;
+  }
+  .flame-level-label {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+    position: relative; z-index: 2; margin-bottom: 4px;
+  }
+  .flame-divider {
+    width: 80%; height: 1px; margin: 10px 0;
+    background: linear-gradient(90deg, transparent, rgba(225,164,92,0.2), transparent);
+    position: relative; z-index: 2;
+  }
+  .flame-reward-section { width: 100%; text-align: center; position: relative; z-index: 2; }
+  .flame-reward-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;
+  }
+
+  @keyframes flameFlicker {
+    0% { height: 85px; opacity: 0.85; }
+    25% { height: 90px; opacity: 0.95; }
+    50% { height: 82px; opacity: 0.8; }
+    75% { height: 92px; opacity: 1; }
+    100% { height: 86px; opacity: 0.88; }
+  }
+  @keyframes flameInner {
+    0% { height: 75%; opacity: 0.8; }
+    50% { height: 85%; opacity: 1; }
+    100% { height: 72%; opacity: 0.75; }
+  }
+  @keyframes flameCore {
+    0% { height: 55%; opacity: 0.7; }
+    50% { height: 65%; opacity: 1; }
+    100% { height: 50%; opacity: 0.6; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     CONCEPT 4: ASCENDING WARMTH
+     ═══════════════════════════════════════════════ */
+  .warmth-reward .face { padding: 0; overflow: hidden; position: relative; min-height: 220px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .warmth-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(to top,
+      rgba(200,131,73,0.25) 0%,
+      rgba(200,131,73,0.18) 30%,
+      rgba(200,131,73,0.08) 60%,
+      rgba(85,48,52,0.15) 79%,
+      rgba(45,22,28,0.1) 100%
+    );
+  }
+  .warmth-boundary {
+    position: absolute; left: 0; right: 0; z-index: 1; height: 30px;
+    bottom: 79%;
+    background: linear-gradient(to top, rgba(200,131,73,0.12), transparent);
+    filter: blur(12px);
+  }
+  .warmth-content { position: relative; z-index: 2; padding: 16px; text-align: center; }
+  .warmth-level {
+    font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--text-primary);
+    text-shadow: 0 0 8px rgba(225,164,92,0.3);
+    margin-bottom: 2px;
+  }
+  .warmth-streak {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .warmth-cold-zone {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+    padding: 16px; text-align: center;
+  }
+  .warmth-next {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: rgba(169,130,106,0.35);
+  }
+  .warmth-reward-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;
+  }
+  .warmth-xp {
+    font-family: 'Source Sans 3', sans-serif; font-size: 10px; color: var(--text-muted);
+  }
+
+  /* ═══════════════════════════════════════════════
+     CONCEPT 5: GOLDEN THREAD PATH
+     ═══════════════════════════════════════════════ */
+  .thread-reward .face { padding: 20px 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: visible; }
+  .thread-svg-wrap { position: relative; z-index: 2; width: 100%; height: 200px; }
+  .thread-svg-wrap svg { width: 100%; height: 100%; overflow: visible; }
+  .thread-path {
+    fill: none; stroke: rgba(225,164,92,0.6); stroke-width: 1.5;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.5)) drop-shadow(0 0 10px rgba(225,164,92,0.3));
+  }
+  .thread-path-shimmer {
+    fill: none; stroke: rgba(255,250,235,0.7); stroke-width: 1;
+    stroke-dasharray: 4 12;
+    animation: shimmerDash 3s linear infinite;
+    filter: drop-shadow(0 0 3px rgba(255,250,235,0.6));
+  }
+  @keyframes shimmerDash { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -48; } }
+
+  .thread-level-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600;
+    fill: var(--text-primary);
+  }
+  .thread-label-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 9px; font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    fill: var(--text-muted);
+  }
+  .thread-streak-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px;
+    fill: var(--text-muted);
+  }
+  .thread-reward-text {
+    font-family: 'Cormorant Garamond', serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 1px;
+    fill: var(--text-secondary);
+  }
+  .thread-xp-text {
+    font-family: 'Source Sans 3', sans-serif; font-size: 9px;
+    fill: var(--text-muted);
+  }
+
+  /* Shared horizon progress bar */
+  .horizon-track { position: relative; height: 2px; background: rgba(169,130,106,0.08); border-radius: 1px; width: 100%; }
+  .horizon-fill { position: absolute; left: 0; top: -1px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(200,131,73,0.2), rgba(225,164,92,0.6), rgba(255,220,160,0.8)); box-shadow: 0 0 4px rgba(255,220,160,0.5), 0 0 10px rgba(225,164,92,0.5), 0 0 22px rgba(225,164,92,0.3); }
+  .xp-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; color: var(--text-muted); position: relative; z-index: 2; margin-top: 6px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+<div class="content">
+  <div class="page-title">Reward & Streak In Context</div>
+  <div class="page-sub">Five reward/streak concepts in the V2 three-column layout. Same habits (left) and goals (middle) in every row. The right column stacks the Stardust Ring on top with a different reward/streak treatment below. Constraint: NO DOTS in the reward card.</div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCEPT 1: GLOWING TYPOGRAPHY
+       ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Concept 1</div>
+    <div class="section-title">Glowing Typography</div>
+    <div class="section-desc">Pure text, no shapes. The typography itself glows with multi-layer warm text-shadow. Horizon line for reward progress. Elegant restraint.</div>
+    <div class="v2-grid">
+      <!-- LEFT: Habits -->
+      <div class="shell"><div class="face" id="habits-1"></div></div>
+      <!-- MIDDLE: Goals -->
+      <div class="shell"><div class="face goals-face" id="goals-1"></div></div>
+      <!-- RIGHT: Ring + Reward -->
+      <div class="right-stack">
+        <div class="shell ring-card"><div class="face" id="ring-1"></div></div>
+        <div class="shell typo-reward"><div class="face">
+          <div class="typo-level">Level Three</div>
+          <div class="typo-streak">22 Day Streak</div>
+          <div class="typo-divider"></div>
+          <div class="typo-reward-label">Next Reward</div>
+          <div class="typo-reward-name">Custom Scrub Cap</div>
+          <div class="typo-horizon-track"><div class="typo-horizon-fill" style="width: 68%;"></div></div>
+          <div class="typo-xp">341 / 500 XP</div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCEPT 2: ORNATE SVG FRAME
+       ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Concept 2</div>
+    <div class="section-title">Ornate SVG Frame</div>
+    <div class="section-desc">Level number inside a decorative laurel frame with thin SVG leaf branches curving upward to a diamond. Heraldic, premium, organic shapes.</div>
+    <div class="v2-grid">
+      <div class="shell"><div class="face" id="habits-2"></div></div>
+      <div class="shell"><div class="face goals-face" id="goals-2"></div></div>
+      <div class="right-stack">
+        <div class="shell ring-card"><div class="face" id="ring-2"></div></div>
+        <div class="shell frame-reward"><div class="face">
+          <div class="frame-svg-wrap">
+            <svg width="120" height="110" viewBox="0 0 120 110">
+              <!-- Left laurel branch -->
+              <path d="M 35 90 Q 20 75 22 60 Q 18 55 20 48 Q 16 42 19 35 Q 15 28 20 22 Q 22 16 28 12 Q 35 8 42 6 Q 48 4 55 3" fill="none" stroke="rgba(225,164,92,0.5)" stroke-width="1.2" stroke-linecap="round"/>
+              <!-- Left leaves -->
+              <path d="M 22 60 Q 12 56 18 48" fill="none" stroke="rgba(225,164,92,0.4)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 48 Q 10 44 16 36" fill="none" stroke="rgba(225,164,92,0.35)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 19 35 Q 9 30 15 23" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 22 Q 14 16 22 12" fill="none" stroke="rgba(225,164,92,0.35)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 28 12 Q 26 5 35 6" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" stroke-linecap="round"/>
+              <!-- Right laurel branch -->
+              <path d="M 85 90 Q 100 75 98 60 Q 102 55 100 48 Q 104 42 101 35 Q 105 28 100 22 Q 98 16 92 12 Q 85 8 78 6 Q 72 4 65 3" fill="none" stroke="rgba(225,164,92,0.5)" stroke-width="1.2" stroke-linecap="round"/>
+              <!-- Right leaves -->
+              <path d="M 98 60 Q 108 56 102 48" fill="none" stroke="rgba(225,164,92,0.4)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 100 48 Q 110 44 104 36" fill="none" stroke="rgba(225,164,92,0.35)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 101 35 Q 111 30 105 23" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 100 22 Q 106 16 98 12" fill="none" stroke="rgba(225,164,92,0.35)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 92 12 Q 94 5 85 6" fill="none" stroke="rgba(225,164,92,0.3)" stroke-width="1" stroke-linecap="round"/>
+              <!-- Top diamond -->
+              <path d="M 55 3 L 60 0 L 65 3 L 60 6 Z" fill="rgba(225,164,92,0.5)" stroke="rgba(255,220,160,0.6)" stroke-width="0.5"/>
+              <!-- Level number -->
+              <text x="60" y="62" text-anchor="middle" class="frame-level-num" style="font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; fill: #F0DEC7;">3</text>
+              <!-- Glow filter for the number -->
+            </svg>
+          </div>
+          <div class="frame-streak">22 Day Streak</div>
+          <div class="frame-reward-section">
+            <div class="frame-reward-name">Custom Scrub Cap</div>
+            <div class="horizon-track"><div class="horizon-fill" style="width: 68%;"></div></div>
+            <div class="xp-label">341 / 500 XP</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCEPT 3: FLAME PILLAR
+       ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Concept 3</div>
+    <div class="section-title">Flame Pillar</div>
+    <div class="section-desc">A vertical flame built with layered CSS gradients. The flame height represents the streak (22 days = tall). The number floats inside the fire. Desert campfire energy.</div>
+    <div class="v2-grid">
+      <div class="shell"><div class="face" id="habits-3"></div></div>
+      <div class="shell"><div class="face goals-face" id="goals-3"></div></div>
+      <div class="right-stack">
+        <div class="shell ring-card"><div class="face" id="ring-3"></div></div>
+        <div class="shell flame-reward"><div class="face">
+          <div class="flame-level-label">Level Three</div>
+          <div class="flame-container">
+            <div class="flame-glow"></div>
+            <div class="flame-body"></div>
+            <div class="flame-number">22</div>
+          </div>
+          <div class="flame-label">Day Streak</div>
+          <div class="flame-divider"></div>
+          <div class="flame-reward-section">
+            <div class="flame-reward-name">Custom Scrub Cap</div>
+            <div class="horizon-track"><div class="horizon-fill" style="width: 68%;"></div></div>
+            <div class="xp-label">341 / 500 XP</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCEPT 4: ASCENDING WARMTH
+       ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Concept 4</div>
+    <div class="section-title">Ascending Warmth</div>
+    <div class="section-desc">The card itself visualizes progress through ambient temperature. Warmth rises from the bottom (79% = 22/28 days). Level info lives in the warm zone. The boundary between warm and cold is soft and blurred.</div>
+    <div class="v2-grid">
+      <div class="shell"><div class="face" id="habits-4"></div></div>
+      <div class="shell"><div class="face goals-face" id="goals-4"></div></div>
+      <div class="right-stack">
+        <div class="shell ring-card"><div class="face" id="ring-4"></div></div>
+        <div class="shell warmth-reward"><div class="face">
+          <div class="warmth-bg"></div>
+          <div class="warmth-boundary"></div>
+          <div class="warmth-cold-zone">
+            <div class="warmth-next">6 Days to Level 4</div>
+          </div>
+          <div class="warmth-content">
+            <div class="warmth-level">Level 3</div>
+            <div class="warmth-streak">22 Day Streak</div>
+            <div class="warmth-reward-name">Custom Scrub Cap</div>
+            <div class="horizon-track"><div class="horizon-fill" style="width: 68%;"></div></div>
+            <div class="warmth-xp" style="margin-top: 6px;">341 / 500 XP</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCEPT 5: GOLDEN THREAD PATH
+       ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Concept 5</div>
+    <div class="section-title">Golden Thread Path</div>
+    <div class="section-desc">A single continuous SVG curve weaves vertically through the card, looping around the level number, passing the streak, then becoming the reward horizon line. One flowing golden line connecting all information. Shimmer animation on a dashed overlay.</div>
+    <div class="v2-grid">
+      <div class="shell"><div class="face" id="habits-5"></div></div>
+      <div class="shell"><div class="face goals-face" id="goals-5"></div></div>
+      <div class="right-stack">
+        <div class="shell ring-card"><div class="face" id="ring-5"></div></div>
+        <div class="shell thread-reward"><div class="face">
+          <div class="thread-svg-wrap">
+            <svg viewBox="0 0 160 200" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <filter id="threadGlow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <!-- The golden thread: enters top, loops around "3", continues down past streak, becomes horizon -->
+              <path d="M 80 5 C 80 15, 110 20, 115 40 C 120 55, 115 70, 100 75 C 85 80, 55 80, 45 65 C 35 50, 45 30, 60 28 C 75 26, 95 35, 95 50 C 95 60, 85 68, 80 70 C 75 72, 70 78, 75 85 C 80 92, 80 100, 80 110 C 80 125, 80 135, 80 145 C 80 155, 70 158, 15 160 L 145 160"
+                class="thread-path" filter="url(#threadGlow)"/>
+              <path d="M 80 5 C 80 15, 110 20, 115 40 C 120 55, 115 70, 100 75 C 85 80, 55 80, 45 65 C 35 50, 45 30, 60 28 C 75 26, 95 35, 95 50 C 95 60, 85 68, 80 70 C 75 72, 70 78, 75 85 C 80 92, 80 100, 80 110 C 80 125, 80 135, 80 145 C 80 155, 70 158, 15 160 L 145 160"
+                class="thread-path-shimmer"/>
+              <!-- Level number inside the loop -->
+              <text x="75" y="60" text-anchor="middle" class="thread-level-text">3</text>
+              <text x="75" y="72" text-anchor="middle" class="thread-label-text">LEVEL</text>
+              <!-- Streak text beside the thread -->
+              <text x="100" y="112" text-anchor="middle" class="thread-streak-text">22 DAYS</text>
+              <!-- Reward text near the horizon -->
+              <text x="80" y="148" text-anchor="middle" class="thread-reward-text">CUSTOM SCRUB CAP</text>
+              <!-- XP below horizon -->
+              <text x="80" y="178" text-anchor="middle" class="thread-xp-text">341 / 500 XP</text>
+              <!-- Horizon glow fill (68%) -->
+              <rect x="15" y="158" width="88" height="4" rx="2" fill="url(#horizGrad)" opacity="0.8"/>
+              <defs>
+                <linearGradient id="horizGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="rgba(200,131,73,0.3)"/>
+                  <stop offset="60%" stop-color="rgba(225,164,92,0.7)"/>
+                  <stop offset="100%" stop-color="rgba(255,220,160,0.9)"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// GENERATE SHARED COMPONENTS VIA JS
+// ═══════════════════════════════════════════════
+
+const habits = ['Meditation', 'Exercise', 'German', 'Reading', 'Sleep Log'];
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Pattern: rows of done/empty for M-Sun, today = Thu (index 3)
+const habitPattern = [
+  [1,1,1,1,0,0,0],
+  [1,0,1,1,0,0,0],
+  [1,1,1,0,0,0,0],
+  [0,1,1,1,0,0,0],
+  [1,1,0,1,0,0,0],
+];
+
+function buildHabitCard(container) {
+  let html = '<div class="card-hdr"><div class="card-title">This Week</div><div class="badge">5 / 7</div></div>';
+  html += '<div class="habit-grid">';
+  // header row
+  html += '<div></div>';
+  days.forEach((d, i) => {
+    html += `<div class="hday ${i === 3 ? 'today' : ''}">${d}</div>`;
+  });
+  // habit rows
+  habits.forEach((name, r) => {
+    html += `<div class="hname">${name}</div>`;
+    habitPattern[r].forEach((val, c) => {
+      let cls = 'hdot ';
+      if (c > 3) cls += 'future';
+      else if (val) cls += 'done';
+      else cls += 'empty';
+      const delay = (r * 0.3 + c * 0.15).toFixed(1);
+      html += `<div class="hcell"><div class="${cls}" style="animation-delay: ${delay}s;"></div></div>`;
+    });
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+const goals = [
+  { name: 'Board Exams', frac: '12/20', pct: 60 },
+  { name: 'Climbing V5', frac: '3/5', pct: 60 },
+  { name: 'German B1', frac: '45/60', pct: 75 },
+  { name: 'Save for Glasgow', frac: '2800/5000', pct: 56 },
+];
+
+function buildGoalCard(container) {
+  let html = '<div class="goals-ambient"></div>';
+  html += '<div class="card-hdr"><div class="card-title">Goals</div><div class="badge">4 Active</div></div>';
+  html += '<div class="goals-list">';
+  goals.forEach((g, i) => {
+    html += `<div class="goal-item">
+      <div class="goal-name">${g.name}</div>
+      <div class="goal-track">
+        <div class="goal-fill" style="width: ${g.pct}%;"></div>
+        <div class="goal-orb" style="right: ${100 - g.pct}%; animation-delay: ${i * 0.7}s;"></div>
+      </div>
+      <div class="goal-fraction">${g.frac}</div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  container.classList.add('goals-face');
+}
+
+function buildRing(container) {
+  const total = 24;
+  const lit = Math.round(total * 0.78); // 78%
+  const cx = 60, cy = 60, r = 50;
+  let html = '<div class="card-hdr" style="width:100%;"><div class="card-title">Progress</div></div>';
+  html += '<div class="ring-wrap"><div class="ring-ambient"></div>';
+  for (let i = 0; i < total; i++) {
+    const angle = (i / total) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    const isLit = i < lit;
+    const delay = (i * 0.15).toFixed(1);
+    html += `<div class="ring-dot ${isLit ? 'lit' : 'dim'}" style="left:${x}px; top:${y}px; ${isLit ? 'animation-delay:' + delay + 's;' : ''}"></div>`;
+  }
+  html += `<div class="ring-center"><div class="ring-number">78%</div><div class="ring-label">Weekly</div></div>`;
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Build all 5 instances
+for (let i = 1; i <= 5; i++) {
+  buildHabitCard(document.getElementById('habits-' + i));
+  buildGoalCard(document.getElementById('goals-' + i));
+  buildRing(document.getElementById('ring-' + i));
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,15 @@
 import React from 'react';
 import { format } from 'date-fns';
 
+const HABIT_ICONS: Record<string, string> = {
+  '📋': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+  '🏋': 'M6 4v6a6 6 0 0012 0V4',
+  '🎧': 'M3 18v-6a9 9 0 0118 0v6',
+  '🌙': 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
+  '📚': 'M4 19.5A2.5 2.5 0 016.5 17H20',
+  '📄': 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z',
+};
+
 interface SundownStardustTrailProps {
   habits: Array<{ id: number; name: string; icon?: string }>;
   habitLogs: Array<{ habitId: number; date: string; completed: boolean }>;
@@ -57,7 +66,9 @@ export function SundownStardustTrail({
             {habits.map((habit) => (
               <React.Fragment key={habit.id}>
                 <div className="sd-habit-label">
-                  <span>{habit.icon || '⭐'}</span>
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d={HABIT_ICONS[habit.icon || ''] || HABIT_ICONS['📋']} strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                   {habit.name}
                 </div>
 

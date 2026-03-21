@@ -16,7 +16,7 @@ function drawStardustRing(
   const h = canvas.height;
   const cx = w / 2;
   const cy = h / 2;
-  const r = radius * 2; // account for 2x canvas
+  const r = radius; // radius in canvas space
 
   ctx.clearRect(0, 0, w, h);
 

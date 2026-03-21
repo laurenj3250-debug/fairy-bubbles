@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Card Sampler v3 — GoalConnect</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1a0e12;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    background: url('../client/public/backgrounds/desert-hero.png') center/cover no-repeat;
+    z-index: 0;
+  }
+  .bg-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(30, 12, 18, 0.6) 0%,
+      rgba(45, 22, 28, 0.75) 40%,
+      rgba(30, 12, 18, 0.85) 100%
+    );
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .page-sub {
+    font-size: 15px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .sample {
+    display: flex;
+    flex-direction: column;
+  }
+  .sample-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .sample-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .sample-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  /* === GAME UI CARD SHELL === */
+  .card-shell {
+    background: var(--shell-bg);
+    border-radius: 24px;
+    padding: 4px;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.5),
+      0 2px 8px rgba(0,0,0,0.3);
+    flex: 1;
+  }
+  .card-face {
+    position: relative;
+    background: var(--face-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 24px;
+    overflow: hidden;
+    height: 100%;
+    box-shadow:
+      inset 0 1px 0 rgba(225, 164, 92, 0.08),
+      inset 0 0 40px rgba(225, 164, 92, 0.03);
+  }
+  .card-face::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: 10%;
+    width: 80%;
+    height: 60%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 220, 160, 0.06) 0%,
+      transparent 100%
+    );
+    mix-blend-mode: screen;
+    pointer-events: none;
+    border-radius: 50%;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+  }
+
+  /* SVG icon defaults */
+  .habit-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--text-secondary);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+
+  /* =============================
+     ANIMATIONS
+     ============================= */
+  @keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(225, 164, 92, 0.4)); }
+    50% { filter: drop-shadow(0 0 14px rgba(225, 164, 92, 0.7)); }
+  }
+  @keyframes ember-float {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    60% { opacity: 0.6; }
+    100% { transform: translateY(-28px) scale(0.3); opacity: 0; }
+  }
+  @keyframes star-twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* =============================
+     1. STREAKS RINGS
+     ============================= */
+  .rings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .ring-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+  .ring-wrap svg.ring-svg {
+    width: 80px;
+    height: 80px;
+    transform: rotate(-90deg);
+  }
+  .ring-wrap svg.ring-svg circle {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+  .ring-bg { stroke: rgba(169, 130, 106, 0.15); }
+  .ring-fg { transition: stroke-dashoffset 0.6s ease; }
+  .ring-fg.complete {
+    stroke: var(--text-accent);
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+  .ring-fg.partial { stroke: var(--text-muted); opacity: 0.6; }
+  .ring-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .ring-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  .ring-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: center;
+  }
+  .ring-streak {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+  .ring-item.complete .ring-name { color: var(--text-accent); }
+  .ring-item.complete .ring-icon svg { stroke: var(--text-accent); }
+
+  /* =============================
+     2. CUBERTO FLUID CIRCLES
+     ============================= */
+  .fluid-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 14px;
+    padding-bottom: 12px;
+    min-height: 90px;
+  }
+  .fluid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .fluid-circle {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 35% 35%, rgba(225, 164, 92, 0.5), rgba(169, 130, 106, 0.15));
+    transition: all 0.4s ease;
+  }
+  .fluid-circle.dim {
+    background: radial-gradient(circle at 35% 35%, rgba(169, 130, 106, 0.15), rgba(85, 48, 52, 0.2));
+  }
+  .fluid-circle svg {
+    width: 18px;
+    height: 18px;
+  }
+  .fluid-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 54px;
+    font-weight: 400;
+  }
+  .fluid-heatmap {
+    display: flex;
+    gap: 3px;
+    margin-top: 12px;
+    justify-content: center;
+  }
+  .heat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: rgba(169, 130, 106, 0.1);
+  }
+  .heat-dot.on { background: rgba(225, 164, 92, 0.5); }
+  .heat-dot.bright { background: rgba(225, 164, 92, 0.85); }
+
+  /* =============================
+     3. DESERT EMBERS
+     ============================= */
+  .embers-card .card-face {
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(225, 164, 92, 0.08) 0%, transparent 60%),
+      var(--face-bg);
+  }
+  .embers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding-top: 4px;
+  }
+  .ember-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .ember-core {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ember-core.lit {
+    background: radial-gradient(circle, rgba(225, 164, 92, 0.5) 0%, rgba(200, 120, 50, 0.15) 60%, transparent 80%);
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  .ember-core.dark {
+    background: radial-gradient(circle, rgba(80, 50, 40, 0.4) 0%, rgba(40, 20, 15, 0.2) 70%, transparent 90%);
+    opacity: 0.45;
+  }
+  .ember-core.lit svg { stroke: var(--text-accent); }
+  .ember-core.dark svg { stroke: var(--text-muted); }
+  .ember-name {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    font-weight: 400;
+  }
+  .ember-item.lit .ember-name { color: var(--text-secondary); }
+
+  /* Spark particles */
+  .spark {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-accent);
+    animation: ember-float 1.8s ease-out infinite;
+  }
+  .spark:nth-child(2) { left: 60%; top: 20%; animation-delay: 0.4s; animation-duration: 2.2s; }
+  .spark:nth-child(3) { left: 30%; top: 10%; animation-delay: 0.9s; animation-duration: 1.6s; }
+  .spark:nth-child(4) { left: 70%; top: 30%; animation-delay: 1.3s; animation-duration: 2s; }
+
+  /* =============================
+     4. VESSEL FLOWING CARDS
+     ============================= */
+  .vessel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .vessel-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .vessel-row.active {
+    background: linear-gradient(135deg, rgba(225, 164, 92, 0.12) 0%, rgba(200, 120, 50, 0.06) 100%);
+    border: 1px solid rgba(225, 164, 92, 0.15);
+  }
+  .vessel-row.inactive {
+    background: rgba(30, 15, 20, 0.3);
+    border: 1px solid rgba(169, 130, 106, 0.06);
+    opacity: 0.5;
+  }
+  .vessel-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .vessel-row.active .vessel-icon-wrap {
+    background: rgba(225, 164, 92, 0.12);
+  }
+  .vessel-row.inactive .vessel-icon-wrap {
+    background: rgba(85, 48, 52, 0.3);
+  }
+  .vessel-text {
+    flex: 1;
+  }
+  .vessel-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .vessel-row.inactive .vessel-name { color: var(--text-muted); }
+  .vessel-streak {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+  .vessel-row.active .vessel-streak { color: var(--text-accent); }
+  .vessel-check {
+    font-size: 14px;
+    color: var(--text-accent);
+  }
+
+  /* =============================
+     5. NIGHT SKY CONSTELLATION
+     ============================= */
+  .constellation-field {
+    position: relative;
+    width: 100%;
+    height: 220px;
+  }
+  .constellation-field svg.conn-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .star-node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transform: translate(-50%, -50%);
+  }
+  .star-glow {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .star-glow.lit {
+    background: radial-gradient(circle, rgba(225, 164, 92, 0.35) 0%, transparent 70%);
+    animation: star-twinkle 3s ease-in-out infinite;
+  }
+  .star-glow.dim {
+    background: radial-gradient(circle, rgba(169, 130, 106, 0.1) 0%, transparent 70%);
+    opacity: 0.4;
+  }
+  .star-glow.lit svg { stroke: var(--text-accent); }
+  .star-glow.dim svg { stroke: var(--text-muted); }
+  .star-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-weight: 400;
+  }
+  .star-node.lit .star-label { color: var(--text-secondary); }
+
+  /* =============================
+     6. SUNRISE HORIZON
+     ============================= */
+  .sunrise-card .card-face {
+    background:
+      linear-gradient(180deg,
+        rgba(45, 22, 28, 0.6) 0%,
+        rgba(160, 90, 40, 0.12) 60%,
+        rgba(225, 164, 92, 0.1) 100%
+      ),
+      var(--face-bg);
+  }
+  .sunrise-sun {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225, 164, 92, 0.5) 0%, rgba(225, 164, 92, 0.05) 70%, transparent 100%);
+    margin: 0 auto 10px;
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  .sunrise-horizon-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(225, 164, 92, 0.25), transparent);
+    margin-bottom: 16px;
+  }
+  .sunrise-icons {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+  .sunrise-icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+  }
+  .sunrise-icon-item.lit {
+    opacity: 1;
+  }
+  .sunrise-icon-item.lit svg {
+    stroke: var(--text-accent);
+    filter: drop-shadow(0 0 6px rgba(225, 164, 92, 0.4));
+  }
+  .sunrise-icon-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+  .sunrise-icon-item.lit .sunrise-icon-label { color: var(--text-secondary); }
+  .sunrise-status {
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+
+<div class="page">
+  <h1 class="page-title">Habit Tracker Sampler</h1>
+  <p class="page-sub">6 concepts / Game UI shell / thin line SVG icons / pick your favorite</p>
+
+  <div class="grid">
+
+    <!-- ==================== 1. STREAKS RINGS ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 1</div>
+      <div class="sample-label">Streaks Rings</div>
+      <div class="sample-desc">Big SVG rings that fill with streak progress. Complete = amber glow pulse. Icons centered in rings.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="card-title">Today's Habits</div>
+          <div class="rings-grid">
+            <!-- RemNote - complete, 12 day streak -->
+            <div class="ring-item complete">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg complete" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="0" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">RemNote</div>
+              <div class="ring-streak">12 day streak</div>
+            </div>
+            <!-- Gym - complete, 5 day -->
+            <div class="ring-item complete">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg complete" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="0" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">Gym</div>
+              <div class="ring-streak">5 day streak</div>
+            </div>
+            <!-- Pimsleur - complete, 8 day -->
+            <div class="ring-item complete">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg complete" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="0" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">Pimsleur</div>
+              <div class="ring-streak">8 day streak</div>
+            </div>
+            <!-- Bed by 11 - incomplete, 0 -->
+            <div class="ring-item">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg partial" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="160" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">Bed by 11</div>
+              <div class="ring-streak">0 day streak</div>
+            </div>
+            <!-- German - complete, 14 day -->
+            <div class="ring-item complete">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg complete" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="0" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">German</div>
+              <div class="ring-streak">14 day streak</div>
+            </div>
+            <!-- Read Paper - incomplete, 2 day -->
+            <div class="ring-item">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 80 80">
+                  <circle class="ring-bg" cx="40" cy="40" r="34" />
+                  <circle class="ring-fg partial" cx="40" cy="40" r="34"
+                    stroke-dasharray="213.6" stroke-dashoffset="107" />
+                </svg>
+                <div class="ring-icon habit-icon">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                </div>
+              </div>
+              <div class="ring-name">Read Paper</div>
+              <div class="ring-streak">2 day streak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2. CUBERTO FLUID CIRCLES ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 2</div>
+      <div class="sample-label">Cuberto Fluid Circles</div>
+      <div class="sample-desc">Circles scale by weekly completion. 5/6 done = big, 1/6 = small. Bottom-aligned with mini heatmap.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="card-title">This Week</div>
+          <div class="fluid-row">
+            <!-- RemNote 6/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle" style="width:60px;height:60px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg></span>
+              </div>
+              <div class="fluid-label">RemNote</div>
+            </div>
+            <!-- Gym 4/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle" style="width:48px;height:48px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg></span>
+              </div>
+              <div class="fluid-label">Gym</div>
+            </div>
+            <!-- Pimsleur 7/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle" style="width:64px;height:64px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></span>
+              </div>
+              <div class="fluid-label">Pimsleur</div>
+            </div>
+            <!-- Bed by 11 1/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle dim" style="width:36px;height:36px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+              </div>
+              <div class="fluid-label">Bed by 11</div>
+            </div>
+            <!-- German 5/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle" style="width:54px;height:54px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg></span>
+              </div>
+              <div class="fluid-label">German</div>
+            </div>
+            <!-- Read Paper 2/7 -->
+            <div class="fluid-item">
+              <div class="fluid-circle dim" style="width:40px;height:40px;">
+                <span class="habit-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span>
+              </div>
+              <div class="fluid-label">Read Paper</div>
+            </div>
+          </div>
+          <!-- Weekly heatmap -->
+          <div class="fluid-heatmap">
+            <div class="heat-dot bright"></div>
+            <div class="heat-dot bright"></div>
+            <div class="heat-dot on"></div>
+            <div class="heat-dot bright"></div>
+            <div class="heat-dot on"></div>
+            <div class="heat-dot"></div>
+            <div class="heat-dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 3. DESERT EMBERS ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 3</div>
+      <div class="sample-label">Desert Embers</div>
+      <div class="sample-desc">Glowing embers for done habits, dark coals for undone. Floating spark particles. Firelight gradient.</div>
+      <div class="card-shell embers-card">
+        <div class="card-face">
+          <div class="card-title">Tonight's Fire</div>
+          <div class="embers-grid">
+            <!-- RemNote - lit -->
+            <div class="ember-item lit">
+              <div class="ember-core lit">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg></span>
+                <div class="spark" style="left:40%;top:15%;"></div>
+                <div class="spark" style="left:65%;top:25%;"></div>
+                <div class="spark" style="left:25%;top:10%;"></div>
+              </div>
+              <div class="ember-name">RemNote</div>
+            </div>
+            <!-- Gym - lit -->
+            <div class="ember-item lit">
+              <div class="ember-core lit">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg></span>
+                <div class="spark" style="left:50%;top:10%;"></div>
+                <div class="spark" style="left:30%;top:20%;"></div>
+              </div>
+              <div class="ember-name">Gym</div>
+            </div>
+            <!-- Pimsleur - lit -->
+            <div class="ember-item lit">
+              <div class="ember-core lit">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></span>
+                <div class="spark" style="left:55%;top:12%;"></div>
+                <div class="spark" style="left:35%;top:8%;"></div>
+                <div class="spark" style="left:70%;top:22%;"></div>
+              </div>
+              <div class="ember-name">Pimsleur</div>
+            </div>
+            <!-- Bed by 11 - dark -->
+            <div class="ember-item">
+              <div class="ember-core dark">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+              </div>
+              <div class="ember-name">Bed by 11</div>
+            </div>
+            <!-- German - lit -->
+            <div class="ember-item lit">
+              <div class="ember-core lit">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg></span>
+                <div class="spark" style="left:45%;top:15%;"></div>
+                <div class="spark" style="left:60%;top:10%;"></div>
+              </div>
+              <div class="ember-name">German</div>
+            </div>
+            <!-- Read Paper - dark -->
+            <div class="ember-item">
+              <div class="ember-core dark">
+                <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span>
+              </div>
+              <div class="ember-name">Read Paper</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 4. VESSEL FLOWING CARDS ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 4</div>
+      <div class="sample-label">Vessel Flowing Cards</div>
+      <div class="sample-desc">Editorial mini-card rows. Complete = warm gradient border. Serif names. Clean and readable.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="card-title">Daily Vessel</div>
+          <div class="vessel-list">
+            <div class="vessel-row active">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">RemNote</div>
+                <div class="vessel-streak">12 day streak</div>
+              </div>
+              <div class="vessel-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <div class="vessel-row active">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">Gym</div>
+                <div class="vessel-streak">5 day streak</div>
+              </div>
+              <div class="vessel-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <div class="vessel-row active">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">Pimsleur</div>
+                <div class="vessel-streak">8 day streak</div>
+              </div>
+              <div class="vessel-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <div class="vessel-row inactive">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">Bed by 11</div>
+                <div class="vessel-streak">not yet</div>
+              </div>
+            </div>
+            <div class="vessel-row active">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">German</div>
+                <div class="vessel-streak">14 day streak</div>
+              </div>
+              <div class="vessel-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <div class="vessel-row inactive">
+              <div class="vessel-icon-wrap"><span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span></div>
+              <div class="vessel-text">
+                <div class="vessel-name">Read Paper</div>
+                <div class="vessel-streak">not yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 5. NIGHT SKY CONSTELLATION ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 5</div>
+      <div class="sample-label">Night Sky Constellation</div>
+      <div class="sample-desc">Habits as stars. Complete ones glow and connect with golden lines. Incomplete = dim with dashed lines.</div>
+      <div class="card-shell">
+        <div class="card-face">
+          <div class="card-title">Tonight's Stars</div>
+          <div class="constellation-field">
+            <!-- Connection lines -->
+            <svg class="conn-lines" viewBox="0 0 440 220">
+              <!-- Lit connections (solid golden) -->
+              <line x1="80" y1="55" x2="220" y2="40" stroke="rgba(225,164,92,0.25)" stroke-width="1"/>
+              <line x1="220" y1="40" x2="360" y2="60" stroke="rgba(225,164,92,0.25)" stroke-width="1"/>
+              <line x1="80" y1="55" x2="160" y2="160" stroke="rgba(225,164,92,0.25)" stroke-width="1"/>
+              <line x1="360" y1="60" x2="300" y2="170" stroke="rgba(225,164,92,0.25)" stroke-width="1"/>
+              <line x1="300" y1="170" x2="160" y2="160" stroke="rgba(225,164,92,0.25)" stroke-width="1"/>
+              <!-- Dim connections (dashed) -->
+              <line x1="160" y1="160" x2="80" y2="55" stroke="rgba(169,130,106,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+              <line x1="220" y1="40" x2="160" y2="160" stroke="rgba(169,130,106,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+            </svg>
+            <!-- RemNote - lit -->
+            <div class="star-node lit" style="left:18%;top:25%;">
+              <div class="star-glow lit"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg></span></div>
+              <div class="star-label">RemNote</div>
+            </div>
+            <!-- Gym - lit -->
+            <div class="star-node lit" style="left:50%;top:18%;">
+              <div class="star-glow lit"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg></span></div>
+              <div class="star-label">Gym</div>
+            </div>
+            <!-- Pimsleur - lit -->
+            <div class="star-node lit" style="left:82%;top:27%;">
+              <div class="star-glow lit"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></span></div>
+              <div class="star-label">Pimsleur</div>
+            </div>
+            <!-- Bed by 11 - dim -->
+            <div class="star-node" style="left:36%;top:73%;">
+              <div class="star-glow dim"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></div>
+              <div class="star-label">Bed by 11</div>
+            </div>
+            <!-- German - lit -->
+            <div class="star-node lit" style="left:68%;top:77%;">
+              <div class="star-glow lit"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg></span></div>
+              <div class="star-label">German</div>
+            </div>
+            <!-- Read Paper - dim -->
+            <div class="star-node" style="left:15%;top:80%;">
+              <div class="star-glow dim"><span class="habit-icon"><svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span></div>
+              <div class="star-label">Read Paper</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 6. SUNRISE HORIZON ==================== -->
+    <div class="sample">
+      <div class="sample-number">Concept 6</div>
+      <div class="sample-label">Sunrise Horizon</div>
+      <div class="sample-desc">Card warms with completions. Sun rises higher. "Almost sunrise" progress messaging.</div>
+      <div class="card-shell sunrise-card">
+        <div class="card-face">
+          <div class="card-title" style="text-align:center;">Sunrise</div>
+          <div class="sunrise-sun"></div>
+          <div class="sunrise-horizon-line"></div>
+          <div class="sunrise-icons">
+            <!-- RemNote - lit -->
+            <div class="sunrise-icon-item lit">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 10l2 2 4-4"/></svg></span>
+              <div class="sunrise-icon-label">RemNote</div>
+            </div>
+            <!-- Gym - lit -->
+            <div class="sunrise-icon-item lit">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M2 9v6M22 9v6M4 8v8M20 8v8"/></svg></span>
+              <div class="sunrise-icon-label">Gym</div>
+            </div>
+            <!-- Pimsleur - lit -->
+            <div class="sunrise-icon-item lit">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M3 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M15 18V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v12"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></span>
+              <div class="sunrise-icon-label">Pimsleur</div>
+            </div>
+            <!-- Bed by 11 - dim -->
+            <div class="sunrise-icon-item">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+              <div class="sunrise-icon-label">Bed by 11</div>
+            </div>
+            <!-- German - lit -->
+            <div class="sunrise-icon-item lit">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 10h6M9 14h4"/></svg></span>
+              <div class="sunrise-icon-label">German</div>
+            </div>
+            <!-- Read Paper - dim -->
+            <div class="sunrise-icon-item">
+              <span class="habit-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span>
+              <div class="sunrise-icon-label">Read Paper</div>
+            </div>
+          </div>
+          <div class="sunrise-status">Almost sunrise &mdash; 2 habits to go</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /page -->
+
+</body>
+</html>

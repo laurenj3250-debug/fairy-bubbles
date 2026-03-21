@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yearly Goals Display v2 — Non-List Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+    --face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    --tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+
+  .landscape {
+    position: fixed; inset: 0; z-index: 0;
+    background-color: #1a0e10;
+    background-image: url('../client/public/backgrounds/desert-hero.png');
+    background-size: 120vw auto;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  .landscape::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%),
+                radial-gradient(ellipse 60% 50% at 50% 60%, rgba(60,20,35,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%);
+  }
+  .landscape::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    background: #0a0507;
+  }
+
+  .content { position: relative; z-index: 10; max-width: 680px; margin: 0 auto; padding: 60px 24px 80px; }
+
+  /* Particles */
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-30vh) translateX(20px); opacity: 0; }
+  }
+  @keyframes float-up-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.7; }
+    100% { transform: translateY(-25vh) translateX(-15px); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.08; transform: scale(1); }
+    50% { opacity: 0.14; transform: scale(1.05); }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes orbit-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  @keyframes river-flow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(225,180,120,0.6); animation: float-up linear infinite;
+  }
+  .particle:nth-child(1) { left: 22%; bottom: 36%; animation-duration: 18s; animation-delay: 6s; }
+  .particle:nth-child(2) { left: 15%; bottom: 35%; animation-duration: 12s; animation-delay: 0s; width: 3px; height: 3px; background: rgba(225,180,120,0.4); }
+  .particle:nth-child(3) { left: 30%; bottom: 30%; animation-duration: 15s; animation-delay: 2s; }
+  .particle:nth-child(4) { left: 50%; bottom: 40%; animation-duration: 10s; animation-delay: 4s; width: 2.5px; height: 2.5px; animation-name: float-up-2; }
+  .particle:nth-child(5) { left: 65%; bottom: 32%; animation-duration: 14s; animation-delay: 1s; }
+  .particle:nth-child(6) { left: 80%; bottom: 38%; animation-duration: 11s; animation-delay: 3s; width: 3px; height: 3px; background: rgba(225,180,120,0.35); }
+  .particle:nth-child(7) { left: 42%; bottom: 28%; animation-duration: 16s; animation-delay: 5s; }
+  .particle:nth-child(8) { left: 72%; bottom: 42%; animation-duration: 13s; animation-delay: 7s; animation-name: float-up-2; width: 2.5px; height: 2.5px; }
+
+  .sun-glow {
+    position: fixed; z-index: 1; pointer-events: none;
+    width: 300px; height: 200px; left: 50%; top: 20%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255,220,150,0.12) 0%, transparent 70%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* Card system */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: var(--card-shadow);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 24px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: var(--face-inset);
+    position: relative; overflow: hidden;
+  }
+  .face::before {
+    content: ''; position: absolute; top: -40px; right: -20px;
+    width: 120px; height: 200px;
+    background: linear-gradient(135deg, rgba(255,220,160,0.06) 0%, transparent 60%);
+    transform: rotate(-15deg); pointer-events: none;
+  }
+  .tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 16px;
+    box-shadow: var(--tray-inset); border: 1px solid rgba(0,0,0,0.15);
+  }
+
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--text-primary);
+  }
+  .badge {
+    font-size: 11px; font-weight: 600; color: var(--text-accent);
+    background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px;
+  }
+
+  /* Category tabs */
+  .cat-tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .cat-tab {
+    padding: 5px 14px; border-radius: 14px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border: none;
+    background: rgba(15,10,8,0.4); letter-spacing: 1.5px; text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif;
+    transition: all 0.2s;
+  }
+  .cat-tab.active { background: rgba(200,131,73,0.2); color: var(--text-accent); }
+  .cat-tab:hover:not(.active) { color: var(--text-secondary); }
+
+  /* Expand button */
+  .expand-btn {
+    display: block; width: 100%; text-align: center;
+    margin-top: 14px; padding: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-accent); background: none; border: none; cursor: pointer;
+    text-shadow: 0 0 20px rgba(225,164,92,0.4);
+    transition: all 0.3s;
+  }
+  .expand-btn:hover { text-shadow: 0 0 30px rgba(225,164,92,0.7); color: #F0DEC7; }
+
+  /* Concept label */
+  .concept-wrap { margin-bottom: 40px; }
+  .concept-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 6px;
+    text-shadow: 0 2px 20px rgba(200,130,70,0.2);
+  }
+  .concept-num {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; font-weight: 600; color: var(--text-accent);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .concept-desc {
+    font-size: 13px; color: var(--text-muted); line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* Page title */
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase;
+    color: rgba(240,222,199,0.85);
+    text-shadow: 0 2px 40px rgba(200,130,70,0.3);
+    text-align: center; margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center; font-size: 13px; color: var(--text-muted);
+    letter-spacing: 1px; margin-bottom: 48px;
+  }
+
+  /* ========================================
+     CONCEPT 1: CARD GRID
+     ======================================== */
+
+  .grid-goals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .grid-tile {
+    background: rgba(18, 10, 14, 0.6);
+    border-radius: 14px;
+    padding: 14px 12px 12px;
+    border: 1px solid rgba(255,200,140,0.04);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .grid-tile.dim {
+    opacity: 0.45;
+  }
+
+  .grid-tile.warm {
+    border-color: rgba(225,164,92,0.15);
+    box-shadow: 0 0 20px rgba(225,164,92,0.06), 0 0 40px rgba(200,130,70,0.04), inset 0 0 30px rgba(225,164,92,0.03);
+  }
+
+  .grid-tile.blaze {
+    border-color: rgba(225,164,92,0.35);
+    box-shadow: 0 0 30px rgba(225,164,92,0.15), 0 0 60px rgba(200,130,70,0.1), 0 0 100px rgba(225,164,92,0.05), inset 0 0 40px rgba(225,164,92,0.06);
+  }
+
+  .grid-tile-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.8px; text-transform: uppercase;
+    line-height: 1.35;
+  }
+
+  .grid-tile-bottom {
+    margin-top: auto;
+  }
+
+  .grid-tile-frac {
+    font-size: 10px; font-weight: 500; color: var(--text-muted);
+    margin-bottom: 6px;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+
+  .grid-horizon {
+    height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-horizon-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, var(--text-accent), #F0C070);
+    box-shadow: 0 0 8px rgba(225,164,92,0.5), 0 0 20px rgba(225,164,92,0.2);
+    transition: width 1s ease;
+  }
+
+  /* ========================================
+     CONCEPT 2: KANBAN COLUMNS
+     ======================================== */
+
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .kanban-col {
+    background: rgba(18, 10, 14, 0.4);
+    border-radius: 14px;
+    padding: 12px 10px;
+    border: 1px solid rgba(255,200,140,0.03);
+    min-height: 180px;
+  }
+
+  .kanban-col.col-not-started {
+    opacity: 0.5;
+  }
+
+  .kanban-col.col-in-progress {
+    border-color: rgba(225,164,92,0.12);
+    box-shadow: 0 0 30px rgba(225,164,92,0.05), inset 0 0 40px rgba(225,164,92,0.02);
+  }
+
+  .kanban-col.col-complete {
+    border-color: rgba(225,164,92,0.25);
+    box-shadow: 0 0 40px rgba(225,164,92,0.1), 0 0 80px rgba(200,130,70,0.06), inset 0 0 50px rgba(225,164,92,0.04);
+  }
+
+  .kanban-col-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,200,140,0.06);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kanban-col.col-in-progress .kanban-col-title { color: var(--text-accent); }
+  .kanban-col.col-complete .kanban-col-title { color: var(--text-accent); text-shadow: 0 0 12px rgba(225,164,92,0.4); }
+
+  .kanban-col-count {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 9px; font-weight: 600;
+    background: rgba(200,131,73,0.15); color: var(--text-accent);
+    padding: 1px 6px; border-radius: 6px;
+  }
+
+  .kanban-card {
+    background: rgba(85, 48, 52, 0.25);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,200,140,0.04);
+  }
+
+  .kanban-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  .kanban-card-frac {
+    font-size: 9px; color: var(--text-muted); margin-top: 4px;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+
+  .kanban-card-bar {
+    height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.5);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .kanban-card-bar-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, var(--text-accent), #F0C070);
+    box-shadow: 0 0 6px rgba(225,164,92,0.4);
+  }
+
+  /* ========================================
+     CONCEPT 3: CONSTELLATION MAP
+     ======================================== */
+
+  .constellation-wrap {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(30,15,20,0.8) 0%, rgba(12,6,10,0.95) 70%);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .constellation-wrap::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 30%, rgba(100,60,40,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 60%, rgba(80,50,35,0.04) 0%, transparent 40%);
+  }
+
+  /* Tiny ambient stars */
+  .ambient-star {
+    position: absolute;
+    width: 1px; height: 1px;
+    border-radius: 50%;
+    background: rgba(225,200,170,0.2);
+  }
+
+  .constellation-star {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    cursor: default;
+    z-index: 2;
+  }
+
+  .star-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 6px;
+    background: var(--text-accent);
+    transition: all 0.3s;
+  }
+
+  .star-dot.brightness-0 {
+    background: rgba(169,130,106,0.3);
+    box-shadow: 0 0 4px rgba(169,130,106,0.15);
+    width: 5px; height: 5px;
+  }
+
+  .star-dot.brightness-low {
+    background: rgba(225,164,92,0.5);
+    box-shadow: 0 0 8px rgba(225,164,92,0.3), 0 0 16px rgba(225,164,92,0.1);
+    width: 6px; height: 6px;
+  }
+
+  .star-dot.brightness-mid {
+    background: rgba(225,164,92,0.8);
+    box-shadow: 0 0 10px rgba(225,164,92,0.5), 0 0 25px rgba(225,164,92,0.2), 0 0 40px rgba(225,164,92,0.08);
+    width: 8px; height: 8px;
+  }
+
+  .star-dot.brightness-high {
+    background: #F0C070;
+    box-shadow: 0 0 12px rgba(240,192,112,0.7), 0 0 30px rgba(225,164,92,0.4), 0 0 60px rgba(225,164,92,0.15);
+    width: 10px; height: 10px;
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .star-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+    max-width: 90px;
+    line-height: 1.2;
+  }
+
+  .constellation-line {
+    position: absolute;
+    height: 1px;
+    background: rgba(225,164,92,0.08);
+    transform-origin: 0 50%;
+    z-index: 1;
+  }
+
+  .constellation-legend {
+    position: absolute;
+    bottom: 10px; left: 12px;
+    display: flex; gap: 12px;
+    z-index: 3;
+  }
+
+  .legend-item {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 8px; color: var(--text-muted);
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  .legend-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+  }
+
+  /* ========================================
+     CONCEPT 4: RADIAL ORBIT
+     ======================================== */
+
+  .orbit-wrap {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(40,20,25,0.6) 0%, rgba(12,6,10,0.9) 60%);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .orbit-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 5;
+  }
+
+  .orbit-year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400; letter-spacing: 6px;
+    color: var(--text-primary);
+    text-shadow: 0 0 30px rgba(225,164,92,0.3), 0 0 60px rgba(200,130,70,0.15);
+  }
+
+  .orbit-sub {
+    font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .orbit-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba(225,164,92,0.04);
+    transform: translate(-50%, -50%);
+  }
+
+  .orbit-ring-1 { width: 120px; height: 120px; border-color: rgba(225,164,92,0.08); }
+  .orbit-ring-2 { width: 200px; height: 200px; border-color: rgba(225,164,92,0.05); }
+  .orbit-ring-3 { width: 280px; height: 280px; border-color: rgba(225,164,92,0.03); }
+  .orbit-ring-4 { width: 350px; height: 350px; border-color: rgba(225,164,92,0.02); }
+
+  .orbit-center-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(225,164,92,0.12) 0%, transparent 70%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .orbit-goal {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 3;
+  }
+
+  .orbit-goal-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin: 0 auto 5px;
+    background: var(--text-accent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 20px rgba(225,164,92,0.15);
+  }
+
+  .orbit-goal-dot.dim {
+    background: rgba(169,130,106,0.35);
+    box-shadow: 0 0 4px rgba(169,130,106,0.2);
+    width: 7px; height: 7px;
+  }
+
+  .orbit-goal-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted);
+    max-width: 70px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .orbit-goal-pct {
+    font-size: 8px; color: var(--text-accent);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ========================================
+     CONCEPT 5: TIMELINE RIVER
+     ======================================== */
+
+  .river-wrap {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px;
+    background: rgba(12,6,10,0.8);
+  }
+
+  .river-inner {
+    position: relative;
+    width: 900px;
+    height: 260px;
+    padding: 20px 30px;
+  }
+
+  /* Month labels */
+  .river-months {
+    position: absolute;
+    bottom: 12px; left: 30px; right: 30px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .river-month {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  .river-month.current {
+    color: var(--text-accent);
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(225,164,92,0.4);
+  }
+
+  /* The river itself */
+  .river-line {
+    position: absolute;
+    bottom: 40px; left: 30px; right: 30px;
+    height: 2px;
+    background: rgba(225,164,92,0.08);
+    border-radius: 1px;
+  }
+
+  .river-glow {
+    position: absolute;
+    bottom: 32px; left: 30px; right: 30px;
+    height: 18px;
+    background: linear-gradient(90deg,
+      rgba(225,164,92,0.06) 0%,
+      rgba(225,164,92,0.12) 20%,
+      rgba(225,164,92,0.04) 40%,
+      rgba(225,164,92,0.08) 60%,
+      rgba(225,164,92,0.03) 80%,
+      rgba(225,164,92,0.01) 100%
+    );
+    filter: blur(6px);
+    background-size: 200% 100%;
+    animation: river-flow 8s linear infinite;
+  }
+
+  /* Current month marker */
+  .river-now {
+    position: absolute;
+    bottom: 36px;
+    left: calc(30px + (840px * 0.2)); /* March = ~20% through year */
+    width: 4px; height: 10px;
+    background: var(--text-accent);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(225,164,92,0.5), 0 0 20px rgba(225,164,92,0.2);
+    z-index: 3;
+  }
+
+  .river-now-label {
+    position: absolute;
+    bottom: 50px;
+    left: calc(30px + (840px * 0.2));
+    transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-accent);
+    text-shadow: 0 0 8px rgba(225,164,92,0.3);
+    white-space: nowrap;
+  }
+
+  /* Goal markers on the river */
+  .river-goal {
+    position: absolute;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+  }
+
+  .river-goal-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 4px;
+    background: var(--text-accent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 0 16px rgba(225,164,92,0.15);
+  }
+
+  .river-goal-dot.dim {
+    background: rgba(169,130,106,0.3);
+    box-shadow: 0 0 4px rgba(169,130,106,0.15);
+    width: 6px; height: 6px;
+  }
+
+  .river-goal-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted);
+    max-width: 80px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .river-goal-trail {
+    position: absolute;
+    height: 2px;
+    bottom: 40px;
+    left: 30px;
+    background: linear-gradient(90deg, var(--text-accent), rgba(225,164,92,0.3));
+    box-shadow: 0 0 6px rgba(225,164,92,0.3);
+    border-radius: 1px;
+    opacity: 0.5;
+  }
+
+  .river-scroll-hint {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 9px; color: var(--text-muted);
+    opacity: 0.4;
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 1px;
+    writing-mode: vertical-rl;
+  }
+
+  /* ========================================
+     CONCEPT 6: ACCORDION CATEGORIES
+     ======================================== */
+
+  .accordion-section {
+    margin-bottom: 6px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(18, 10, 14, 0.5);
+    border: 1px solid rgba(255,200,140,0.04);
+    transition: all 0.3s;
+  }
+
+  .accordion-section.has-progress {
+    border-color: rgba(225,164,92,0.08);
+  }
+
+  .accordion-header {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .accordion-header:hover {
+    background: rgba(85, 48, 52, 0.15);
+  }
+
+  .accordion-cat-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .accordion-cat-summary {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .accordion-cat-frac {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-accent);
+    text-shadow: 0 0 10px rgba(225,164,92,0.3);
+  }
+
+  .accordion-chevron {
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: transform 0.3s;
+  }
+
+  .accordion-section.open .accordion-chevron {
+    transform: rotate(180deg);
+  }
+
+  .accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+
+  .accordion-section.open .accordion-body {
+    max-height: 400px;
+  }
+
+  .accordion-goal {
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255,200,140,0.03);
+  }
+
+  .accordion-goal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .accordion-goal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .accordion-goal-frac {
+    font-size: 10px; color: var(--text-muted);
+    font-family: 'Source Sans 3', sans-serif;
+  }
+
+  .accordion-bar {
+    height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.5);
+    overflow: hidden;
+  }
+
+  .accordion-bar-fill {
+    height: 100%; border-radius: 1px;
+    background: linear-gradient(90deg, var(--text-accent), #F0C070);
+    box-shadow: 0 0 6px rgba(225,164,92,0.4);
+  }
+
+  .accordion-mini-bar {
+    width: 40px; height: 2px; border-radius: 1px;
+    background: rgba(15,10,8,0.5);
+    overflow: hidden;
+  }
+
+  .accordion-mini-fill {
+    height: 100%; border-radius: 1px;
+    background: var(--text-accent);
+    box-shadow: 0 0 4px rgba(225,164,92,0.3);
+  }
+
+</style>
+</head>
+<body>
+
+<div class="landscape"></div>
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+<div class="sun-glow"></div>
+
+<div class="content">
+
+  <div class="page-title">YEARLY GOALS</div>
+  <div class="page-sub">6 non-list display concepts &middot; v2</div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 1: CARD GRID
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 1</div>
+    <div class="concept-label">Card Grid</div>
+    <div class="concept-desc">Goals as individual glowing tiles in a responsive 3-column grid. Brightness correlates with progress. 0% tiles are dim, 25%+ tiles glow warm, 100% would blaze.</div>
+
+    <div class="shell">
+      <div class="face">
+        <div class="card-hdr">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+        <div class="cat-tabs">
+          <button class="cat-tab active">ALL</button>
+          <button class="cat-tab">FITNESS</button>
+          <button class="cat-tab">LEARNING</button>
+          <button class="cat-tab">ADVENTURE</button>
+        </div>
+
+        <div class="grid-goals">
+          <!-- 0% = dim -->
+          <div class="grid-tile dim">
+            <div class="grid-tile-title">SOLO HEMILAMINECTOMY</div>
+            <div class="grid-tile-bottom">
+              <div class="grid-tile-frac">0 / 1</div>
+              <div class="grid-horizon"><div class="grid-horizon-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+
+          <!-- 5% = dim -->
+          <div class="grid-tile dim">
+            <div class="grid-tile-title">POWERPOINTS STUDIED</div>
+            <div class="grid-tile-bottom">
+              <div class="grid-tile-frac">14 / 300</div>
+              <div class="grid-horizon"><div class="grid-horizon-fill" style="width: 5%"></div></div>
+            </div>
+          </div>
+
+          <!-- 35% = warm -->
+          <div class="grid-tile warm">
+            <div class="grid-tile-title">COMPLETE DE LAHUNTA</div>
+            <div class="grid-tile-bottom">
+              <div class="grid-tile-frac">9 / 26</div>
+              <div class="grid-horizon"><div class="grid-horizon-fill" style="width: 35%"></div></div>
+            </div>
+          </div>
+
+          <!-- 26% = warm -->
+          <div class="grid-tile warm">
+            <div class="grid-tile-title">LIFTING DAYS</div>
+            <div class="grid-tile-bottom">
+              <div class="grid-tile-frac">52 / 200</div>
+              <div class="grid-horizon"><div class="grid-horizon-fill" style="width: 26%"></div></div>
+            </div>
+          </div>
+
+          <!-- 0% = dim -->
+          <div class="grid-tile dim">
+            <div class="grid-tile-title">10 PULL-UPS IN A ROW</div>
+            <div class="grid-tile-bottom">
+              <div class="grid-tile-frac">0 / 1</div>
+              <div class="grid-horizon"><div class="grid-horizon-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+
+          <!-- Placeholder for the 6th tile to fill grid -->
+          <div class="grid-tile" style="opacity: 0.15; border-style: dashed; border-color: rgba(169,130,106,0.15);">
+            <div class="grid-tile-title" style="color: var(--text-muted); opacity: 0.5;">+ 25 MORE</div>
+            <div class="grid-tile-bottom"></div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 2: KANBAN COLUMNS
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 2</div>
+    <div class="concept-label">Kanban Columns</div>
+    <div class="concept-desc">3 status columns: Not Started, In Progress, Complete. Ambient glow intensifies per column. Visual triage of the whole year at a glance.</div>
+
+    <div class="shell">
+      <div class="face">
+        <div class="card-hdr">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+        <div class="cat-tabs">
+          <button class="cat-tab active">ALL</button>
+          <button class="cat-tab">FITNESS</button>
+          <button class="cat-tab">LEARNING</button>
+          <button class="cat-tab">ADVENTURE</button>
+        </div>
+
+        <div class="kanban">
+          <!-- NOT STARTED -->
+          <div class="kanban-col col-not-started">
+            <div class="kanban-col-title">NOT STARTED <span class="kanban-col-count">2</span></div>
+            <div class="kanban-card">
+              <div class="kanban-card-title">Solo Hemilaminectomy</div>
+              <div class="kanban-card-frac">0 / 1</div>
+            </div>
+            <div class="kanban-card">
+              <div class="kanban-card-title">10 Pull-Ups in a Row</div>
+              <div class="kanban-card-frac">0 / 1</div>
+            </div>
+          </div>
+
+          <!-- IN PROGRESS -->
+          <div class="kanban-col col-in-progress">
+            <div class="kanban-col-title">IN PROGRESS <span class="kanban-col-count">3</span></div>
+            <div class="kanban-card">
+              <div class="kanban-card-title">Complete de Lahunta</div>
+              <div class="kanban-card-frac">9 / 26 chapters</div>
+              <div class="kanban-card-bar"><div class="kanban-card-bar-fill" style="width: 35%"></div></div>
+            </div>
+            <div class="kanban-card">
+              <div class="kanban-card-title">200 Lifting Days</div>
+              <div class="kanban-card-frac">52 / 200</div>
+              <div class="kanban-card-bar"><div class="kanban-card-bar-fill" style="width: 26%"></div></div>
+            </div>
+            <div class="kanban-card">
+              <div class="kanban-card-title">PowerPoints Studied</div>
+              <div class="kanban-card-frac">14 / 300</div>
+              <div class="kanban-card-bar"><div class="kanban-card-bar-fill" style="width: 5%"></div></div>
+            </div>
+          </div>
+
+          <!-- COMPLETE -->
+          <div class="kanban-col col-complete">
+            <div class="kanban-col-title">COMPLETE <span class="kanban-col-count">0</span></div>
+            <div style="padding: 20px 0; text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); opacity: 0.4; font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; text-transform: uppercase;">Nothing yet</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 3: CONSTELLATION MAP
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 3</div>
+    <div class="concept-label">Constellation Map</div>
+    <div class="concept-desc">Goals as stars. Brightness = progress. Lines connect goals in the same category, forming constellations. Atmospheric and very Stardust Trail.</div>
+
+    <div class="shell">
+      <div class="face" style="padding: 16px;">
+        <div class="card-hdr" style="padding: 0 8px;">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+        <div class="cat-tabs" style="padding: 0 8px;">
+          <button class="cat-tab active">ALL</button>
+          <button class="cat-tab">FITNESS</button>
+          <button class="cat-tab">LEARNING</button>
+          <button class="cat-tab">ADVENTURE</button>
+        </div>
+
+        <div class="constellation-wrap">
+          <!-- Ambient background stars -->
+          <div class="ambient-star" style="top:12%;left:8%;"></div>
+          <div class="ambient-star" style="top:25%;left:45%;opacity:0.15;"></div>
+          <div class="ambient-star" style="top:60%;left:15%;opacity:0.1;"></div>
+          <div class="ambient-star" style="top:35%;left:82%;opacity:0.12;"></div>
+          <div class="ambient-star" style="top:75%;left:55%;opacity:0.08;"></div>
+          <div class="ambient-star" style="top:18%;left:68%;opacity:0.14;"></div>
+          <div class="ambient-star" style="top:80%;left:30%;opacity:0.1;"></div>
+          <div class="ambient-star" style="top:45%;left:92%;opacity:0.06;"></div>
+          <div class="ambient-star" style="top:55%;left:5%;opacity:0.1;"></div>
+          <div class="ambient-star" style="top:10%;left:33%;opacity:0.12;"></div>
+          <div class="ambient-star" style="top:90%;left:75%;opacity:0.08;"></div>
+          <div class="ambient-star" style="top:42%;left:60%;opacity:0.1;"></div>
+
+          <!-- Constellation lines (connecting same-category goals) -->
+          <!-- Fitness constellation: Hemilaminectomy(22%,30%) -> Lifting(38%,55%) -> Pull-ups(18%,72%) -->
+          <svg style="position:absolute;inset:0;width:100%;height:100%;z-index:1;" preserveAspectRatio="none">
+            <!-- Fitness lines -->
+            <line x1="38%" y1="55%" x2="18%" y2="72%" stroke="rgba(225,164,92,0.07)" stroke-width="1"/>
+            <line x1="38%" y1="55%" x2="55%" y2="38%" stroke="rgba(225,164,92,0.07)" stroke-width="1" stroke-dasharray="2,4"/>
+            <!-- Learning lines -->
+            <line x1="65%" y1="28%" x2="78%" y2="58%" stroke="rgba(225,164,92,0.1)" stroke-width="1"/>
+          </svg>
+
+          <!-- Goal stars -->
+          <!-- Hemilaminectomy: 0% -->
+          <div class="constellation-star" style="left: 55%; top: 38%;">
+            <div class="star-dot brightness-0"></div>
+            <div class="star-label">Hemilaminectomy</div>
+          </div>
+
+          <!-- PowerPoints: 5% -->
+          <div class="constellation-star" style="left: 78%; top: 58%;">
+            <div class="star-dot brightness-low"></div>
+            <div class="star-label">PowerPoints</div>
+          </div>
+
+          <!-- de Lahunta: 35% -->
+          <div class="constellation-star" style="left: 65%; top: 28%;">
+            <div class="star-dot brightness-mid"></div>
+            <div class="star-label">de Lahunta</div>
+          </div>
+
+          <!-- Lifting Days: 26% -->
+          <div class="constellation-star" style="left: 38%; top: 55%;">
+            <div class="star-dot brightness-mid"></div>
+            <div class="star-label">Lifting Days</div>
+          </div>
+
+          <!-- Pull-ups: 0% -->
+          <div class="constellation-star" style="left: 18%; top: 72%;">
+            <div class="star-dot brightness-0"></div>
+            <div class="star-label">Pull-Ups</div>
+          </div>
+
+          <!-- Legend -->
+          <div class="constellation-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background: rgba(169,130,106,0.3);"></div>
+              0%
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: rgba(225,164,92,0.5); box-shadow: 0 0 4px rgba(225,164,92,0.3);"></div>
+              1-24%
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: rgba(225,164,92,0.8); box-shadow: 0 0 6px rgba(225,164,92,0.4);"></div>
+              25-74%
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: #F0C070; box-shadow: 0 0 8px rgba(240,192,112,0.5);"></div>
+              75%+
+            </div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 4: RADIAL ORBIT
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 4</div>
+    <div class="concept-label">Radial Orbit</div>
+    <div class="concept-desc">Goals orbit a central "2026" element. Closer to center = closer to completion. 0% goals sit at the outer edge. A solar system of progress.</div>
+
+    <div class="shell">
+      <div class="face" style="padding: 16px;">
+        <div class="card-hdr" style="padding: 0 8px;">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+        <div class="cat-tabs" style="padding: 0 8px;">
+          <button class="cat-tab active">ALL</button>
+          <button class="cat-tab">FITNESS</button>
+          <button class="cat-tab">LEARNING</button>
+          <button class="cat-tab">ADVENTURE</button>
+        </div>
+
+        <div class="orbit-wrap">
+          <!-- Concentric rings -->
+          <div class="orbit-ring orbit-ring-1"></div>
+          <div class="orbit-ring orbit-ring-2"></div>
+          <div class="orbit-ring orbit-ring-3"></div>
+          <div class="orbit-ring orbit-ring-4"></div>
+
+          <!-- Center glow -->
+          <div class="orbit-center-glow"></div>
+
+          <!-- Center label -->
+          <div class="orbit-center">
+            <div class="orbit-year">2026</div>
+            <div class="orbit-sub">3 / 30 COMPLETE</div>
+          </div>
+
+          <!-- Goals positioned by distance from center (inversely proportional to progress) -->
+          <!-- de Lahunta: 35% -> medium distance, upper-right -->
+          <div class="orbit-goal" style="left: 65%; top: 28%;">
+            <div class="orbit-goal-dot"></div>
+            <div class="orbit-goal-label">de Lahunta</div>
+            <div class="orbit-goal-pct">35%</div>
+          </div>
+
+          <!-- Lifting Days: 26% -> medium-far, lower-left -->
+          <div class="orbit-goal" style="left: 28%; top: 62%;">
+            <div class="orbit-goal-dot"></div>
+            <div class="orbit-goal-label">Lifting Days</div>
+            <div class="orbit-goal-pct">26%</div>
+          </div>
+
+          <!-- PowerPoints: 5% -> far out, right -->
+          <div class="orbit-goal" style="left: 82%; top: 55%;">
+            <div class="orbit-goal-dot dim"></div>
+            <div class="orbit-goal-label">PowerPoints</div>
+            <div class="orbit-goal-pct">5%</div>
+          </div>
+
+          <!-- Hemilaminectomy: 0% -> outermost, upper-left -->
+          <div class="orbit-goal" style="left: 15%; top: 22%;">
+            <div class="orbit-goal-dot dim"></div>
+            <div class="orbit-goal-label">Hemilaminectomy</div>
+            <div class="orbit-goal-pct">0%</div>
+          </div>
+
+          <!-- Pull-ups: 0% -> outermost, lower-right -->
+          <div class="orbit-goal" style="left: 78%; top: 80%;">
+            <div class="orbit-goal-dot dim"></div>
+            <div class="orbit-goal-label">Pull-Ups</div>
+            <div class="orbit-goal-pct">0%</div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 5: TIMELINE RIVER
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 5</div>
+    <div class="concept-label">Timeline River</div>
+    <div class="concept-desc">Horizontal timeline for the year. Each goal is a glowing marker. Progress shows as a warm trail from January to the current position. The river itself glows amber. Scrolls horizontally.</div>
+
+    <div class="shell">
+      <div class="face" style="padding: 16px;">
+        <div class="card-hdr" style="padding: 0 8px;">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+        <div class="cat-tabs" style="padding: 0 8px; margin-bottom: 10px;">
+          <button class="cat-tab active">ALL</button>
+          <button class="cat-tab">FITNESS</button>
+          <button class="cat-tab">LEARNING</button>
+          <button class="cat-tab">ADVENTURE</button>
+        </div>
+
+        <div class="river-wrap">
+          <div class="river-inner">
+            <!-- Progress trails -->
+            <div class="river-goal-trail" style="width: calc(840px * 0.05); opacity: 0.2;"></div>
+
+            <!-- River glow -->
+            <div class="river-glow"></div>
+
+            <!-- The river line -->
+            <div class="river-line"></div>
+
+            <!-- Current month marker -->
+            <div class="river-now"></div>
+            <div class="river-now-label">NOW</div>
+
+            <!-- Goal markers positioned along timeline -->
+            <!-- Hemilaminectomy: target Dec, 0% progress -> dot at Dec position, dim -->
+            <div class="river-goal" style="left: calc(30px + (840px * 0.92)); bottom: 70px;">
+              <div class="river-goal-dot dim"></div>
+              <div class="river-goal-label">Hemilaminectomy</div>
+            </div>
+
+            <!-- PowerPoints: target year-long, 5% -> dot at current position, dim -->
+            <div class="river-goal" style="left: calc(30px + (840px * 0.85)); bottom: 110px;">
+              <div class="river-goal-dot dim"></div>
+              <div class="river-goal-label">PowerPoints</div>
+            </div>
+
+            <!-- de Lahunta: target Oct, 35% -> dot at Oct, warm -->
+            <div class="river-goal" style="left: calc(30px + (840px * 0.75)); bottom: 70px;">
+              <div class="river-goal-dot"></div>
+              <div class="river-goal-label">de Lahunta</div>
+            </div>
+
+            <!-- Lifting Days: year-long, 26% -> dot spread across year, warm -->
+            <div class="river-goal" style="left: calc(30px + (840px * 0.92)); bottom: 150px;">
+              <div class="river-goal-dot"></div>
+              <div class="river-goal-label">Lifting Days</div>
+            </div>
+
+            <!-- Pull-ups: target ?, 0% -> dim -->
+            <div class="river-goal" style="left: calc(30px + (840px * 0.5)); bottom: 110px;">
+              <div class="river-goal-dot dim"></div>
+              <div class="river-goal-label">Pull-Ups</div>
+            </div>
+
+            <!-- Month labels -->
+            <div class="river-months">
+              <span class="river-month">JAN</span>
+              <span class="river-month">FEB</span>
+              <span class="river-month current">MAR</span>
+              <span class="river-month">APR</span>
+              <span class="river-month">MAY</span>
+              <span class="river-month">JUN</span>
+              <span class="river-month">JUL</span>
+              <span class="river-month">AUG</span>
+              <span class="river-month">SEP</span>
+              <span class="river-month">OCT</span>
+              <span class="river-month">NOV</span>
+              <span class="river-month">DEC</span>
+            </div>
+
+            <div class="river-scroll-hint">SCROLL</div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONCEPT 6: ACCORDION CATEGORIES
+       ═══════════════════════════════════════ -->
+  <div class="concept-wrap">
+    <div class="concept-num">CONCEPT 6</div>
+    <div class="concept-label">Accordion Categories</div>
+    <div class="concept-desc">Each category is a collapsible section. Collapsed = compact summary with fraction. Expanded = elegant rows with glowing horizon lines. Click any header to toggle.</div>
+
+    <div class="shell">
+      <div class="face">
+        <div class="card-hdr">
+          <div class="card-title">Yearly Goals</div>
+          <div class="badge">3 / 30 COMPLETE</div>
+        </div>
+
+        <!-- FITNESS — expanded by default to show the pattern -->
+        <div class="accordion-section has-progress open" id="acc-fitness">
+          <div class="accordion-header" onclick="toggleAccordion('acc-fitness')">
+            <div class="accordion-cat-name">FITNESS</div>
+            <div class="accordion-cat-summary">
+              <div class="accordion-mini-bar"><div class="accordion-mini-fill" style="width: 18%"></div></div>
+              <div class="accordion-cat-frac">0 / 3</div>
+              <div class="accordion-chevron">&#9660;</div>
+            </div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name">200 LIFTING DAYS</div>
+                <div class="accordion-goal-frac">52 / 200</div>
+              </div>
+              <div class="accordion-bar"><div class="accordion-bar-fill" style="width: 26%"></div></div>
+            </div>
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name">10 PULL-UPS IN A ROW</div>
+                <div class="accordion-goal-frac">0 / 1</div>
+              </div>
+              <div class="accordion-bar"><div class="accordion-bar-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEARNING — collapsed -->
+        <div class="accordion-section has-progress" id="acc-learning">
+          <div class="accordion-header" onclick="toggleAccordion('acc-learning')">
+            <div class="accordion-cat-name">LEARNING</div>
+            <div class="accordion-cat-summary">
+              <div class="accordion-mini-bar"><div class="accordion-mini-fill" style="width: 14%"></div></div>
+              <div class="accordion-cat-frac">0 / 4</div>
+              <div class="accordion-chevron">&#9660;</div>
+            </div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name">COMPLETE DE LAHUNTA</div>
+                <div class="accordion-goal-frac">9 / 26</div>
+              </div>
+              <div class="accordion-bar"><div class="accordion-bar-fill" style="width: 35%"></div></div>
+            </div>
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name">300 POWERPOINTS STUDIED</div>
+                <div class="accordion-goal-frac">14 / 300</div>
+              </div>
+              <div class="accordion-bar"><div class="accordion-bar-fill" style="width: 5%"></div></div>
+            </div>
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name">SOLO HEMILAMINECTOMY</div>
+                <div class="accordion-goal-frac">0 / 1</div>
+              </div>
+              <div class="accordion-bar"><div class="accordion-bar-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADVENTURE — collapsed, empty placeholder -->
+        <div class="accordion-section" id="acc-adventure">
+          <div class="accordion-header" onclick="toggleAccordion('acc-adventure')">
+            <div class="accordion-cat-name">ADVENTURE</div>
+            <div class="accordion-cat-summary">
+              <div class="accordion-mini-bar"><div class="accordion-mini-fill" style="width: 0%"></div></div>
+              <div class="accordion-cat-frac">0 / 5</div>
+              <div class="accordion-chevron">&#9660;</div>
+            </div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name" style="color: var(--text-muted); opacity: 0.5;">5 GOALS IN THIS CATEGORY</div>
+                <div class="accordion-goal-frac"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERSONAL — collapsed -->
+        <div class="accordion-section" id="acc-personal">
+          <div class="accordion-header" onclick="toggleAccordion('acc-personal')">
+            <div class="accordion-cat-name">PERSONAL</div>
+            <div class="accordion-cat-summary">
+              <div class="accordion-mini-bar"><div class="accordion-mini-fill" style="width: 33%"></div></div>
+              <div class="accordion-cat-frac">3 / 18</div>
+              <div class="accordion-chevron">&#9660;</div>
+            </div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-goal">
+              <div class="accordion-goal-row">
+                <div class="accordion-goal-name" style="color: var(--text-muted); opacity: 0.5;">18 GOALS IN THIS CATEGORY</div>
+                <div class="accordion-goal-frac"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="expand-btn">SHOW ALL 30 GOALS</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleAccordion(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>

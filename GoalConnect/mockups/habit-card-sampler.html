@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker Sampler — 8 Styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+  }
+  body { font-family: 'Source Sans 3', sans-serif; color: var(--text-primary); background: #0a0507; }
+  .landscape { position: fixed; inset: 0; z-index: 0; background-color: #1a0e10; background-image: url('../client/public/backgrounds/desert-hero.png'); background-size: 120vw auto; background-position: center bottom; background-repeat: no-repeat; }
+  .landscape::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(28,14,18,0.55) 100%), radial-gradient(ellipse 35% 40% at 50% 35%, rgba(255,248,231,0.12) 0%, transparent 70%); }
+  .landscape::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(12,5,8,0.92) 0%, rgba(12,5,8,0.6) 20%, rgba(12,5,8,0.15) 40%, transparent 55%); }
+
+  /* Game UI card */
+  .shell { background: var(--shell-bg); border-radius: 24px; padding: 4px; box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4); }
+  .face { position: relative; overflow: hidden; background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); border-radius: 20px; padding: 20px; border-top: 1px solid rgba(255,200,140,0.15); box-shadow: inset 0 1px 0 rgba(255,200,140,0.2), inset 0 -8px 16px rgba(0,0,0,0.2), inset 6px 0 20px rgba(255,180,100,0.06), inset -6px 0 20px rgba(255,180,100,0.03); }
+  .face::before { content: ''; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(135deg, rgba(255,200,140,0.12) 0%, rgba(255,180,100,0.06) 15%, transparent 40%, transparent 60%, rgba(255,200,140,0.03) 80%, rgba(255,180,100,0.08) 100%); mix-blend-mode: screen; pointer-events: none; z-index: 1; }
+  .tray { background: var(--tray-bg); border-radius: 16px; padding: 16px; box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.15); }
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 600; color: var(--text-accent); background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px; }
+
+  .content { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; letter-spacing: 4px; text-align: center; color: rgba(240,222,199,0.85); margin-bottom: 8px; }
+  .subtitle { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 40px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+  .sample-label { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--text-accent); margin-bottom: 4px; }
+  .sample-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+
+  /* Shared habit data styles */
+  .h-name { font-size: 12px; color: rgba(240,222,199,0.7); white-space: nowrap; overflow: hidden; }
+  .h-icon { margin-right: 4px; }
+  .check { color: rgba(240,222,199,0.8); font-weight: 600; }
+  .amber { color: var(--text-accent); }
+</style>
+</head>
+<body>
+<div class="landscape"></div>
+<div class="content">
+  <h1>Habit Tracker Sampler</h1>
+  <p class="subtitle">Same data, 8 different visualizations. All using Game UI card style.</p>
+
+  <div class="grid">
+
+    <!-- ═══ 1. CLASSIC GRID (current) ═══ -->
+    <div>
+      <div class="sample-label">1. Classic Grid</div>
+      <div class="sample-desc">The standard 7-day grid. Rows = habits, columns = days. Checkmarks in cells. What we have now.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">4/7</span></div>
+        <div class="tray">
+          <div style="display: grid; grid-template-columns: 100px repeat(7, 1fr); column-gap: 4px; row-gap: 6px; align-items: center;">
+            <div></div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">S</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">M</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">T</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">W</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(225,164,92,0.7); font-weight: 700;">T</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">F</div>
+            <div style="text-align: center; font-size: 10px; color: rgba(169,130,106,0.5);">S</div>
+
+            <div class="h-name"><span class="h-icon">📋</span>RemNote</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;box-shadow:inset 0 0 0 2px rgba(225,164,92,0.45);">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);opacity:0.3;"></div>
+
+            <div class="h-name"><span class="h-icon">🏋</span>Gym</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;box-shadow:inset 0 0 0 2px rgba(225,164,92,0.45);">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);opacity:0.3;"></div>
+
+            <div class="h-name"><span class="h-icon">🎧</span>Pimsleur</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(200,131,73,0.35);color:rgba(240,222,199,0.8);font-weight:600;box-shadow:inset 0 0 0 2px rgba(225,164,92,0.45);">✓</div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="width:28px;height:28px;border-radius:8px;margin:0 auto;background:rgba(15,10,8,0.6);opacity:0.3;"></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 2. HEATMAP (GitHub contribution-style) ═══ -->
+    <div>
+      <div class="sample-label">2. Heatmap</div>
+      <div class="sample-desc">GitHub-style contribution heatmap. Darker = fewer habits done. Brighter amber = all done. One square per day, intensity shows completion rate.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">78%</span></div>
+        <div class="tray">
+          <div style="display: flex; gap: 6px; justify-content: center; margin-bottom: 12px;">
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">SUN</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--text-accent);">4/6</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">MON</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(200,131,73,0.65); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--text-accent);">5/6</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">TUE</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--text-accent);">4/6</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">WED</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(200,131,73,0.5); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--text-accent);">4/6</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: rgba(225,164,92,0.7); margin-bottom: 4px; font-weight: 700;">THU</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(200,131,73,0.8); box-shadow: inset 0 0 0 2px rgba(225,164,92,0.5), 0 0 12px rgba(225,164,92,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--text-primary);">5/6</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">FRI</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted);">—</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 4px;">SAT</div>
+              <div style="width: 52px; height: 52px; border-radius: 10px; background: rgba(15,10,8,0.4); opacity: 0.4; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted);">—</div>
+            </div>
+          </div>
+          <!-- Legend -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 10px; color: var(--text-muted);">
+            <span>Less</span>
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: rgba(200,131,73,0.15);"></div>
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: rgba(200,131,73,0.35);"></div>
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: rgba(200,131,73,0.55);"></div>
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: rgba(200,131,73,0.75);"></div>
+            <span>All</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 3. STREAK ROWS (per-habit streaks) ═══ -->
+    <div>
+      <div class="sample-label">3. Streak Rows</div>
+      <div class="sample-desc">Each habit shows its current streak as a progress bar. Focus on momentum, not individual days. The longer the bar, the stronger the streak.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Streaks</span><span class="badge">This Week</span></div>
+        <div class="tray">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 14px; width: 24px; text-align: center;">📋</span>
+              <span style="font-size: 12px; color: var(--text-primary); width: 80px;">RemNote</span>
+              <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 85%; height: 100%; border-radius: 4px; background: linear-gradient(90deg, rgba(200,131,73,0.4), var(--text-accent)); box-shadow: 0 0 8px rgba(225,164,92,0.2);"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-accent); font-weight: 700; min-width: 30px; text-align: right;">5d</span>
+              <span style="font-size: 18px;">🔥</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 14px; width: 24px; text-align: center;">🏋</span>
+              <span style="font-size: 12px; color: var(--text-primary); width: 80px;">Gym</span>
+              <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 42%; height: 100%; border-radius: 4px; background: linear-gradient(90deg, rgba(200,131,73,0.4), var(--text-accent));"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-accent); font-weight: 700; min-width: 30px; text-align: right;">3d</span>
+              <span style="font-size: 18px; opacity: 0.3;">🔥</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 14px; width: 24px; text-align: center;">🎧</span>
+              <span style="font-size: 12px; color: var(--text-primary); width: 80px;">Pimsleur</span>
+              <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 85%; height: 100%; border-radius: 4px; background: linear-gradient(90deg, rgba(200,131,73,0.4), var(--text-accent)); box-shadow: 0 0 8px rgba(225,164,92,0.2);"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-accent); font-weight: 700; min-width: 30px; text-align: right;">5d</span>
+              <span style="font-size: 18px;">🔥</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 14px; width: 24px; text-align: center;">🛌</span>
+              <span style="font-size: 12px; color: var(--text-primary); width: 80px;">Bed by 11</span>
+              <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 14%; height: 100%; border-radius: 4px; background: rgba(200,131,73,0.4);"></div>
+              </div>
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; min-width: 30px; text-align: right;">1d</span>
+              <span style="font-size: 18px; opacity: 0.15;">🔥</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 4. RINGS (one ring per habit) ═══ -->
+    <div>
+      <div class="sample-label">4. Ring Dashboard</div>
+      <div class="sample-desc">Each habit gets its own completion ring showing weekly percentage. Compact, scannable. Inspired by Apple Watch activity rings.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">78%</span></div>
+        <div class="tray">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="25.1"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">📋 RemNote</div>
+              <div style="font-size: 10px; color: var(--text-accent);">5/6 days</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="75.4"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">🏋 Gym</div>
+              <div style="font-size: 10px; color: var(--text-accent);">3/6 days</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="25.1"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">🎧 Pimsleur</div>
+              <div style="font-size: 10px; color: var(--text-accent);">5/6 days</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="100.5"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">🛌 Bed by 11</div>
+              <div style="font-size: 10px; color: var(--text-muted);">2/6 days</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="50.3"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">🇩🇪 German</div>
+              <div style="font-size: 10px; color: var(--text-accent);">4/6 days</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="58" height="58" viewBox="0 0 58 58" style="transform: rotate(-90deg);"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(60,40,30,0.3)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="#D08A4F" stroke-width="5" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="100.5"/></svg>
+              </div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">📚 Read Paper</div>
+              <div style="font-size: 10px; color: var(--text-muted);">2/6 days</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 5. TODAY FOCUS (just today + streaks) ═══ -->
+    <div>
+      <div class="sample-label">5. Today Focus</div>
+      <div class="sample-desc">Only shows TODAY's status. Big checkboxes. Each habit shows its streak count. Minimalist — you only care about right now.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">Today</span><span class="badge">Thursday</span></div>
+        <div class="tray">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(200,131,73,0.12); border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(200,131,73,0.4); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-primary);">✓</div>
+              <span style="font-size: 14px; flex: 1;">📋 RemNote</span>
+              <span style="font-size: 11px; color: var(--text-accent);">🔥 5 days</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(200,131,73,0.12); border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(200,131,73,0.4); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-primary);">✓</div>
+              <span style="font-size: 14px; flex: 1;">🏋 Gym</span>
+              <span style="font-size: 11px; color: var(--text-accent);">🔥 3 days</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(200,131,73,0.12); border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(200,131,73,0.4); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-primary);">✓</div>
+              <span style="font-size: 14px; flex: 1;">🎧 Pimsleur</span>
+              <span style="font-size: 11px; color: var(--text-accent);">🔥 5 days</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"></div>
+              <span style="font-size: 14px; flex: 1; opacity: 0.6;">🛌 Bed by 11</span>
+              <span style="font-size: 11px; color: var(--text-muted);">0 days</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"></div>
+              <span style="font-size: 14px; flex: 1; opacity: 0.6;">🇩🇪 German</span>
+              <span style="font-size: 11px; color: var(--text-muted);">0 days</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(200,131,73,0.12); border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(200,131,73,0.4); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text-primary);">✓</div>
+              <span style="font-size: 14px; flex: 1;">📚 Read a Paper</span>
+              <span style="font-size: 11px; color: var(--text-accent);">🔥 1 day</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 6. CALENDAR DOTS (month view, tiny dots) ═══ -->
+    <div>
+      <div class="sample-label">6. Calendar Dots</div>
+      <div class="sample-desc">Month-at-a-glance. Each day is a dot — amber = all done, dim = partial, dark = nothing. See your whole month pattern instantly. Inspired by Daylio.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">March 2026</span><span class="badge">78%</span></div>
+        <div class="tray">
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; justify-items: center;">
+            <div style="font-size: 9px; color: var(--text-muted);">S</div><div style="font-size: 9px; color: var(--text-muted);">M</div><div style="font-size: 9px; color: var(--text-muted);">T</div><div style="font-size: 9px; color: var(--text-muted);">W</div><div style="font-size: 9px; color: var(--text-muted);">T</div><div style="font-size: 9px; color: var(--text-muted);">F</div><div style="font-size: 9px; color: var(--text-muted);">S</div>
+            <!-- Week 1 (starts on Sunday) -->
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.7);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.5);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.8);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.7);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.4);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.3);"></div>
+            <!-- Week 2 -->
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.8);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.5);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.7);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.9); box-shadow: 0 0 8px rgba(225,164,92,0.3);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.4);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.2);"></div>
+            <!-- Week 3 -->
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.7);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.8);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.7);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(200,131,73,0.8); box-shadow: inset 0 0 0 2px rgba(225,164,92,0.5), 0 0 8px rgba(225,164,92,0.2);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: rgba(15,10,8,0.3); opacity: 0.4;"></div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 10px; color: var(--text-muted); margin-top: 10px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: rgba(200,131,73,0.2);"></div> 1-2
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: rgba(200,131,73,0.5);"></div> 3-4
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: rgba(200,131,73,0.8);"></div> 5-6
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 7. STACKED BARS (horizontal bars per day) ═══ -->
+    <div>
+      <div class="sample-label">7. Stacked Bars</div>
+      <div class="sample-desc">Each day gets a horizontal bar showing how many habits completed. Visual emphasis on daily totals. Good for seeing which days you slack off.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">22/42</span></div>
+        <div class="tray">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px;">Sun</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden; position: relative;">
+                <div style="width: 66%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(200,131,73,0.5), rgba(225,164,92,0.7));"></div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-accent); font-weight: 600; width: 24px; text-align: right;">4/6</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px;">Mon</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 83%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(200,131,73,0.5), rgba(225,164,92,0.7)); box-shadow: 0 0 6px rgba(225,164,92,0.15);"></div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-accent); font-weight: 600; width: 24px; text-align: right;">5/6</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px;">Tue</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 66%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(200,131,73,0.5), rgba(225,164,92,0.7));"></div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-accent); font-weight: 600; width: 24px; text-align: right;">4/6</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px;">Wed</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 66%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(200,131,73,0.5), rgba(225,164,92,0.7));"></div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-accent); font-weight: 600; width: 24px; text-align: right;">4/6</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: rgba(225,164,92,0.7); font-weight: 700; width: 30px;">Thu</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden;">
+                <div style="width: 83%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(200,131,73,0.5), rgba(225,164,92,0.8)); box-shadow: 0 0 8px rgba(225,164,92,0.2);"></div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-accent); font-weight: 600; width: 24px; text-align: right;">5/6</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px;">Fri</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.5); overflow: hidden;"></div>
+              <span style="font-size: 11px; color: var(--text-muted); width: 24px; text-align: right;">—</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); width: 30px; opacity: 0.4;">Sat</span>
+              <div style="flex: 1; height: 18px; border-radius: 6px; background: rgba(15,10,8,0.3); opacity: 0.4; overflow: hidden;"></div>
+              <span style="font-size: 11px; color: var(--text-muted); width: 24px; text-align: right; opacity: 0.4;">—</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ═══ 8. COMPACT LIST (minimal, text-focused) ═══ -->
+    <div>
+      <div class="sample-label">8. Compact List</div>
+      <div class="sample-desc">No grid, no rings. Just a clean list with inline dot indicators per day. Maximum information in minimum space. For data-oriented people.</div>
+      <div class="shell"><div class="face">
+        <div class="card-hdr"><span class="card-title">This Week</span><span class="badge">5/7 done today</span></div>
+        <div class="tray" style="padding: 12px;">
+          <div style="display: flex; gap: 4px; margin-bottom: 10px; padding-left: 100px;">
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">S</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">M</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">T</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">W</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: rgba(225,164,92,0.7); font-weight: 700;">T</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">F</span>
+            <span style="width: 16px; text-align: center; font-size: 9px; color: var(--text-muted);">S</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 12px; color: var(--text-primary); width: 100px;">📋 RemNote</span>
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.8); box-shadow: 0 0 4px rgba(225,164,92,0.3);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.3); opacity: 0.4;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 12px; color: var(--text-primary); width: 100px;">🏋 Gym</span>
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.8); box-shadow: 0 0 4px rgba(225,164,92,0.3);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.3); opacity: 0.4;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 12px; color: var(--text-primary); width: 100px;">🎧 Pimsleur</span>
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.8); box-shadow: 0 0 4px rgba(225,164,92,0.3);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.3); opacity: 0.4;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 12px; color: var(--text-primary); width: 100px;">🛌 Bed by 11</span>
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(200,131,73,0.6);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.5); box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.4);"></div>
+                <div style="width: 16px; height: 16px; border-radius: 50%; background: rgba(15,10,8,0.3); opacity: 0.4;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
