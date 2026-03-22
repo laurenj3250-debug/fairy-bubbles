@@ -73,7 +73,7 @@ export function SundownAuroraReward({ streak = 0 }: SundownAuroraRewardProps) {
             <div className="sd-aurora-xp">
               {nextReward
                 ? `${available} of ${nextReward.cost} XP`
-                : `${totalXp} XP Total`}
+                : `${points?.totalEarned ?? 0} XP Total`}
             </div>
           </div>
         </div>
