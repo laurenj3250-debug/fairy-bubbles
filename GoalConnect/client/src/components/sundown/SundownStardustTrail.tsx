@@ -1,13 +1,17 @@
 import React from 'react';
 import { format } from 'date-fns';
 
-const HABIT_ICONS: Record<string, string> = {
-  '📋': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-  '🏋': 'M6 4v6a6 6 0 0012 0V4',
-  '🎧': 'M3 18v-6a9 9 0 0118 0v6',
-  '🌙': 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
-  '📚': 'M4 19.5A2.5 2.5 0 016.5 17H20',
-  '📄': 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z',
+const ICON_PATHS: Record<string, string[]> = {
+  '📋': ['M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'M9 5a2 2 0 012-2h2a2 2 0 012 2', 'M9 12l2 2 4-4'],
+  '🏋': ['M6 4v6a6 6 0 0012 0V4'],
+  '🏋️': ['M6 4v6a6 6 0 0012 0V4'],
+  '🎧': ['M3 18v-6a9 9 0 0118 0v6', 'M21 19a1 1 0 01-1 1h-1a1 1 0 01-1-1v-3a1 1 0 011-1h2v4z', 'M3 19a1 1 0 001 1h1a1 1 0 001-1v-3a1 1 0 00-1-1H3v4z'],
+  '🌙': ['M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z'],
+  '📚': ['M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z', 'M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z'],
+  '📄': ['M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'],
+  '💧': ['M12 2.69l5.66 5.66a8 8 0 11-11.31 0z'],
+  '🇩🇪': ['M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z', 'M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z'],
+  'default': ['M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'M9 5a2 2 0 012-2h2a2 2 0 012 2'],
 };
 
 interface SundownStardustTrailProps {
@@ -66,8 +70,10 @@ export function SundownStardustTrail({
             {habits.map((habit) => (
               <React.Fragment key={habit.id}>
                 <div className="sd-habit-label">
-                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d={HABIT_ICONS[habit.icon || ''] || HABIT_ICONS['📋']} strokeLinecap="round" strokeLinejoin="round" />
+                  <svg className="sd-habit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {(ICON_PATHS[habit.icon || ''] || ICON_PATHS['default']).map((d, i) => (
+                      <path key={i} d={d} />
+                    ))}
                   </svg>
                   {habit.name}
                 </div>
@@ -97,7 +103,9 @@ export function SundownStardustTrail({
                       }}
                       onClick={() => onToggle(habit.id, date)}
                       aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
-                    />
+                    >
+                      {done ? '✓' : ''}
+                    </button>
                   );
                 })}
               </React.Fragment>

@@ -19,6 +19,9 @@ import { SundownStardustTrail } from '@/components/sundown/SundownStardustTrail'
 import { SundownAuroraReward } from '@/components/sundown/SundownAuroraReward';
 import { SundownStardustRing } from '@/components/sundown/SundownStardustRing';
 import { SundownMonthlyGoals } from '@/components/sundown/SundownMonthlyGoals';
+import { SundownGoalsTab } from '@/components/sundown/SundownGoalsTab';
+import { SundownHabitsTab } from '@/components/sundown/SundownHabitsTab';
+import { SundownJournalTab } from '@/components/sundown/SundownJournalTab';
 
 // ============================================================================
 // DATE UTILITIES
@@ -207,29 +210,49 @@ export default function SundownDash() {
         {/* Tab dock */}
         <SundownTabDock activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Arrangement A: 2-column layout */}
+        {/* Tab content — CSS display:none to prevent remounting */}
         <div className="sd-row">
-          <div className="sd-layout-2col">
-            {/* Column 1: Stardust Trail habit tracker */}
-            <SundownStardustTrail
+          {/* Overview tab */}
+          <div style={{ display: activeTab === 'Overview' ? 'block' : 'none' }}>
+            <div className="sd-layout-2col">
+              <SundownStardustTrail
+                habits={habitCardData}
+                habitLogs={habitLogCardData}
+                weekDates={week.dates}
+                todayIndex={week.todayIndex}
+                onToggle={handleToggle}
+              />
+              <div className="sd-col-stack">
+                <SundownAuroraReward streak={streak} />
+                <SundownStardustRing percentage={completionPct} />
+              </div>
+            </div>
+            <SundownMonthlyGoals goals={yearlyGoalsData} />
+          </div>
+
+          {/* Goals tab */}
+          <div style={{ display: activeTab === 'Goals' ? 'block' : 'none' }}>
+            <SundownGoalsTab goals={yearlyGoalsData} />
+          </div>
+
+          {/* Habits tab */}
+          <div style={{ display: activeTab === 'Habits' ? 'block' : 'none' }}>
+            <SundownHabitsTab
               habits={habitCardData}
               habitLogs={habitLogCardData}
               weekDates={week.dates}
               todayIndex={week.todayIndex}
               onToggle={handleToggle}
+              completionPct={completionPct}
             />
-
-            {/* Column 2: Aurora + Ring stacked */}
-            <div className="sd-col-stack">
-              <SundownAuroraReward streak={streak} />
-              <SundownStardustRing percentage={completionPct} />
-            </div>
           </div>
 
-          {/* Monthly Goals Grid — full width below */}
-          <SundownMonthlyGoals goals={yearlyGoalsData} />
+          {/* Journal tab */}
+          <div style={{ display: activeTab === 'Journal' ? 'block' : 'none' }}>
+            <SundownJournalTab />
+          </div>
 
-          {/* Nav links */}
+          {/* Nav links — always visible */}
           <div className="sd-nav-row">
             {[
               { href: '/habits', label: 'Habits' },

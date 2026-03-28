@@ -639,6 +639,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Weather proxy (Open-Meteo has no CORS headers for browser requests)
+  app.get("/api/weather", async (_req, res) => {
+    try {
+      const url = "https://api.open-meteo.com/v1/forecast?latitude=55.86&longitude=-4.25&current=temperature_2m,weather_code&temperature_unit=fahrenheit";
+      const response = await fetch(url);
+      const data = await response.json();
+      res.json(data);
+    } catch {
+      res.json({ current: { temperature_2m: null, weather_code: null } });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
