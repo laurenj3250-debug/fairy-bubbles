@@ -10,6 +10,7 @@ import { Link } from 'wouter';
 import type { Habit, HabitLog } from '@shared/schema';
 import { XP_CONFIG } from '@shared/xp-config';
 import { useYearlyGoals } from '@/hooks/useYearlyGoals';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 import { SundownLandscape } from '@/components/sundown/SundownLandscape';
 import { SundownHero } from '@/components/sundown/SundownHero';
@@ -55,15 +56,17 @@ export default function SundownDash() {
   const { toast } = useToast();
 
   // ---- Data fetching ----
-  const { data: habits = [] } = useQuery<Habit[]>({
+  const { data: habits = [], isPending: habitsLoading } = useQuery<Habit[]>({
     queryKey: ['/api/habits'],
   });
 
-  const { data: habitLogs = [] } = useQuery<HabitLog[]>({
+  const { data: habitLogs = [], isPending: logsLoading } = useQuery<HabitLog[]>({
     queryKey: ['/api/habit-logs'],
   });
 
-  const { goals } = useYearlyGoals();
+  const { goals, isLoading: goalsLoading } = useYearlyGoals();
+
+  const dataLoading = habitsLoading || logsLoading;
 
   // ---- Habit toggle mutation (with streak + confetti) ----
   const toggleMutation = useMutation({
@@ -211,44 +214,68 @@ export default function SundownDash() {
 
         {/* Tab content — CSS display:none to prevent remounting */}
         <div className="sd-row">
+          {/* Loading state */}
+          {dataLoading && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '48px 0', gap: 12,
+            }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%',
+                border: '3px solid rgba(225,164,92,0.15)',
+                borderTopColor: 'var(--sd-text-accent)',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+              <span style={{ fontSize: 13, color: 'var(--sd-text-muted)' }}>Loading...</span>
+            </div>
+          )}
+
           {/* Overview tab */}
-          <div style={{ display: activeTab === 'Overview' ? 'block' : 'none' }}>
-            <div className="sd-layout-2col">
-              <SundownStardustTrail
+          <div style={{ display: !dataLoading && activeTab === 'Overview' ? 'block' : 'none' }}>
+            <ErrorBoundary fallbackMessage="Overview couldn't load">
+              <div className="sd-layout-2col">
+                <SundownStardustTrail
+                  habits={habitCardData}
+                  habitLogs={habitLogCardData}
+                  weekDates={week.dates}
+                  todayIndex={week.todayIndex}
+                  onToggle={handleToggle}
+                />
+                <div className="sd-col-stack">
+                  <SundownAuroraReward streak={streak} />
+                  <SundownStardustRing percentage={completionPct} />
+                </div>
+              </div>
+              <SundownMonthlyGoals goals={yearlyGoalsData} />
+            </ErrorBoundary>
+          </div>
+
+          {/* Goals tab */}
+          <div style={{ display: !dataLoading && activeTab === 'Goals' ? 'block' : 'none' }}>
+            <ErrorBoundary fallbackMessage="Goals couldn't load">
+              <SundownGoalsTab goals={yearlyGoalsData} />
+            </ErrorBoundary>
+          </div>
+
+          {/* Habits tab */}
+          <div style={{ display: !dataLoading && activeTab === 'Habits' ? 'block' : 'none' }}>
+            <ErrorBoundary fallbackMessage="Habits couldn't load">
+              <SundownHabitsTab
                 habits={habitCardData}
                 habitLogs={habitLogCardData}
                 weekDates={week.dates}
                 todayIndex={week.todayIndex}
                 onToggle={handleToggle}
+                completionPct={completionPct}
               />
-              <div className="sd-col-stack">
-                <SundownAuroraReward streak={streak} />
-                <SundownStardustRing percentage={completionPct} />
-              </div>
-            </div>
-            <SundownMonthlyGoals goals={yearlyGoalsData} />
-          </div>
-
-          {/* Goals tab */}
-          <div style={{ display: activeTab === 'Goals' ? 'block' : 'none' }}>
-            <SundownGoalsTab goals={yearlyGoalsData} />
-          </div>
-
-          {/* Habits tab */}
-          <div style={{ display: activeTab === 'Habits' ? 'block' : 'none' }}>
-            <SundownHabitsTab
-              habits={habitCardData}
-              habitLogs={habitLogCardData}
-              weekDates={week.dates}
-              todayIndex={week.todayIndex}
-              onToggle={handleToggle}
-              completionPct={completionPct}
-            />
+            </ErrorBoundary>
           </div>
 
           {/* Journal tab */}
-          <div style={{ display: activeTab === 'Journal' ? 'block' : 'none' }}>
-            <SundownJournalTab />
+          <div style={{ display: !dataLoading && activeTab === 'Journal' ? 'block' : 'none' }}>
+            <ErrorBoundary fallbackMessage="Journal couldn't load">
+              <SundownJournalTab />
+            </ErrorBoundary>
           </div>
 
           {/* Nav links — always visible */}
