@@ -63,6 +63,7 @@ export function SundownStardustTrail({
                       if (el.type === 'path') return <path key={i} d={el.d} />;
                       if (el.type === 'circle') return <circle key={i} cx={el.cx} cy={el.cy} r={el.r} />;
                       if (el.type === 'rect') return <rect key={i} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} />;
+                      if (el.type === 'polygon') return <polygon key={i} points={el.points} />;
                       return null;
                     })}
                   </svg>

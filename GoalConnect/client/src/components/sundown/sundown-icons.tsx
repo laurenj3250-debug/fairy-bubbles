@@ -7,7 +7,8 @@
 type SvgElement =
   | { type: 'path'; d: string }
   | { type: 'circle'; cx: string; cy: string; r: string }
-  | { type: 'rect'; x: string; y: string; width: string; height: string; rx: string };
+  | { type: 'rect'; x: string; y: string; width: string; height: string; rx: string }
+  | { type: 'polygon'; points: string };
 
 export const ICON_MAP: Record<string, SvgElement[]> = {
   Languages: [
@@ -73,6 +74,9 @@ export const ICON_MAP: Record<string, SvgElement[]> = {
   Moon: [
     { type: 'path', d: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z' },
   ],
+  Star: [
+    { type: 'polygon', points: '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2' },
+  ],
 };
 
 // Emoji aliases — existing habits store emoji strings, map them to Lucide equivalents
@@ -82,8 +86,8 @@ const EMOJI_ALIASES: Record<string, string> = {
   '\u{1F4D3}': 'BookOpen',    // 📓
   '\u{1F4CB}': 'FileText',    // 📋
   '\u{1F4C4}': 'FileText',    // 📄
-  '\u{2B50}': 'Sun',          // ⭐
-  '\u{1F31F}': 'Sun',         // 🌟
+  '\u{2B50}': 'Star',          // ⭐
+  '\u{1F31F}': 'Star',        // 🌟
   '\u{1F319}': 'Moon',        // 🌙
   '\u{1F3CB}': 'Dumbbell',    // 🏋
   '\u{1F3CB}\uFE0F': 'Dumbbell', // 🏋️
@@ -132,6 +136,7 @@ export function HabitIcon({ icon, size = 20 }: HabitIconProps) {
         if (el.type === 'path') return <path key={i} d={el.d} />;
         if (el.type === 'circle') return <circle key={i} cx={el.cx} cy={el.cy} r={el.r} />;
         if (el.type === 'rect') return <rect key={i} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} />;
+        if (el.type === 'polygon') return <polygon key={i} points={el.points} />;
         return null;
       })}
     </svg>
