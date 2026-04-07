@@ -68,8 +68,7 @@ export default function SundownDash() {
   // ---- Habit toggle mutation (with streak + confetti) ----
   const toggleMutation = useMutation({
     mutationFn: async ({ habitId, date }: { habitId: number; date: string }) => {
-      const res = await apiRequest('POST', '/api/habit-logs/toggle', { habitId, date });
-      return res.json();
+      return await apiRequest('/api/habit-logs/toggle', 'POST', { habitId, date });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/habits'] });
