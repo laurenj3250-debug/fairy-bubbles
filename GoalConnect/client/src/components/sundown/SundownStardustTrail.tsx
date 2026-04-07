@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { ICON_MAP } from './sundown-icons';
+import { resolveIcon } from './sundown-icons';
 
 interface SundownStardustTrailProps {
   habits: Array<{ id: number; name: string; icon?: string }>;
@@ -59,7 +59,7 @@ export function SundownStardustTrail({
               <React.Fragment key={habit.id}>
                 <div className="sd-habit-label">
                   <svg className="sd-habit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    {(ICON_MAP[habit.icon || ''] || ICON_MAP['Languages']).map((el, i) => {
+                    {resolveIcon(habit.icon).map((el, i) => {
                       if (el.type === 'path') return <path key={i} d={el.d} />;
                       if (el.type === 'circle') return <circle key={i} cx={el.cx} cy={el.cy} r={el.r} />;
                       if (el.type === 'rect') return <rect key={i} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} />;

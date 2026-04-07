@@ -75,6 +75,35 @@ export const ICON_MAP: Record<string, SvgElement[]> = {
   ],
 };
 
+// Emoji aliases — existing habits store emoji strings, map them to Lucide equivalents
+const EMOJI_ALIASES: Record<string, string> = {
+  '\u{1F4DA}': 'BookOpen',    // 📚
+  '\u{1F4D6}': 'BookOpen',    // 📖
+  '\u{1F4D3}': 'BookOpen',    // 📓
+  '\u{1F4CB}': 'FileText',    // 📋
+  '\u{1F4C4}': 'FileText',    // 📄
+  '\u{2B50}': 'Sun',          // ⭐
+  '\u{1F31F}': 'Sun',         // 🌟
+  '\u{1F319}': 'Moon',        // 🌙
+  '\u{1F3CB}': 'Dumbbell',    // 🏋
+  '\u{1F3CB}\uFE0F': 'Dumbbell', // 🏋️
+  '\u{1F4A7}': 'Droplet',     // 💧
+  '\u{1F3A7}': 'Music',       // 🎧
+  '\u{1F1E9}\u{1F1EA}': 'Languages', // 🇩🇪
+  '\u{26F0}': 'Mountain',     // ⛰
+  '\u{1F3D4}\uFE0F': 'Mountain', // 🏔️
+};
+
+export function resolveIcon(icon?: string): SvgElement[] {
+  if (!icon) return DEFAULT_ELEMENTS;
+  // Direct Lucide name match
+  if (ICON_MAP[icon]) return ICON_MAP[icon];
+  // Emoji alias match
+  const alias = EMOJI_ALIASES[icon];
+  if (alias && ICON_MAP[alias]) return ICON_MAP[alias];
+  return DEFAULT_ELEMENTS;
+}
+
 const DEFAULT_ELEMENTS: SvgElement[] = [
   { type: 'path', d: 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z' },
   { type: 'path', d: 'M14 2v4a2 2 0 0 0 2 2h4' },
@@ -86,7 +115,7 @@ interface HabitIconProps {
 }
 
 export function HabitIcon({ icon, size = 20 }: HabitIconProps) {
-  const elements = ICON_MAP[icon || ''] || DEFAULT_ELEMENTS;
+  const elements = resolveIcon(icon);
   return (
     <svg
       width={size}
