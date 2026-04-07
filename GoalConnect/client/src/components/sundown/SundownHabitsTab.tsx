@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SundownStardustTrail } from "./SundownStardustTrail";
+import { HabitIcon } from "./sundown-icons";
 
 interface Habit {
   id: number;
@@ -25,43 +26,6 @@ interface SundownHabitsTabProps {
   todayIndex: number;
   onToggle: (habitId: number, date: string) => void;
   completionPct: number;
-}
-
-const ICON_PATHS: Record<string, string[]> = {
-  'Languages': ['M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z', 'M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z'],
-  'GraduationCap': ['M22 10l-10-5-10 5 10 5z', 'M6 12v5c0 2 6 3 6 3s6-1 6-3v-5'],
-  'Dumbbell': ['M6.5 6.5h11', 'M17.5 6.5v11', 'M6.5 6.5v11', 'M4 8v6', 'M20 8v6'],
-  'Music': ['M3 18v-6a9 9 0 0118 0v6', 'M21 19a1 1 0 01-1 1h-1a1 1 0 01-1-1v-3a1 1 0 011-1h2v4z', 'M3 19a1 1 0 001 1h1a1 1 0 001-1v-3a1 1 0 00-1-1H3v4z'],
-  'Sun': ['M12 8a4 4 0 100 8 4 4 0 000-8z', 'M12 2v2', 'M12 20v2', 'M2 12h2', 'M20 12h2'],
-  'BookOpen': ['M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z', 'M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z'],
-  'FileText': ['M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z', 'M14 2v6h6', 'M16 13H8', 'M16 17H8', 'M10 9H8'],
-  'Video': ['M23 7l-7 5 7 5V7z', 'M1 5h15v14H1z'],
-  'Mountain': ['M8 21l4-10 4 10', 'M2 21h20', 'M15 11l4 10'],
-  'Activity': ['M22 12h-4l-3 9L9 3l-3 9H2'],
-  'Droplet': ['M12 2.69l5.66 5.66a8 8 0 11-11.31 0z'],
-  'Moon': ['M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z'],
-  'default': ['M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-};
-
-function HabitIcon({ icon, size = 20 }: { icon?: string; size?: number }) {
-  const paths = ICON_PATHS[icon || ''] || ICON_PATHS['default'];
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--sd-text-accent)"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ flexShrink: 0, filter: 'drop-shadow(0 0 3px rgba(225,164,92,0.2))' }}
-    >
-      {paths.map((d, i) => (
-        <path key={i} d={d} />
-      ))}
-    </svg>
-  );
 }
 
 type ViewMode = 'today' | 'week' | 'rings';
