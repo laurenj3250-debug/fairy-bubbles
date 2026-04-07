@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habits Tab — Multi-View</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --accent: #E1A45C;
+    --accent-dark: #c47a20;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0507;
+    color: var(--text-primary);
+    font-family: 'Source Sans 3', sans-serif;
+    padding: 30px 40px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 50% 15%, rgba(120,60,30,0.2) 0%, transparent 50%),
+      linear-gradient(to bottom, #1a0e10, #0a0507);
+  }
+
+  @keyframes breathe { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+  @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+  @keyframes ring-glow {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(225,164,92,0.2)); }
+    50% { filter: drop-shadow(0 0 14px rgba(225,164,92,0.4)); }
+  }
+  @keyframes soft-pulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(225,164,92,0.15), 0 0 30px rgba(225,164,92,0.05); }
+    50% { box-shadow: 0 0 25px rgba(225,164,92,0.25), 0 0 50px rgba(225,164,92,0.1); }
+  }
+  @keyframes card-breathe {
+    0%, 100% { box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.3); }
+    50% { box-shadow: 0 4px 12px rgba(60,30,15,0.4), 0 20px 50px rgba(40,20,10,0.4), 0 0 30px rgba(225,164,92,0.06); }
+  }
+
+  .habit-icon {
+    width: 20px; height: 20px;
+    stroke: var(--text-accent); fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
+  }
+  .habit-icon.lg { width: 28px; height: 28px; stroke-width: 1.5; filter: drop-shadow(0 0 5px rgba(225,164,92,0.25)); }
+
+  /* ===== VIEW SWITCHER ===== */
+  .view-switcher {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 20px;
+  }
+  .view-switcher-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; letter-spacing: 1px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .view-pills {
+    display: flex; gap: 2px;
+    background: var(--shell-bg); border-radius: 14px; padding: 3px;
+    box-shadow: 0 2px 8px rgba(40,20,10,0.3);
+  }
+  .view-pill {
+    padding: 5px 14px; border-radius: 11px; border: none;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+    color: var(--text-muted); cursor: pointer;
+    background: transparent; transition: all 0.15s;
+  }
+  .view-pill:hover { color: var(--text-secondary); }
+  .view-pill.active {
+    background: var(--face-bg);
+    color: var(--text-primary);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .view-count {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; color: var(--text-accent);
+    margin-left: auto;
+    text-shadow: 0 0 8px rgba(225,164,92,0.2);
+  }
+
+  /* ===== VIEW: TODAY (checklist) ===== */
+  .today-view { max-width: 700px; }
+  .today-list { display: flex; flex-direction: column; gap: 6px; }
+  .today-shell {
+    background: var(--shell-bg); border-radius: 18px; padding: 3px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.2), 0 12px 24px rgba(40,20,10,0.2);
+    transition: transform 0.2s;
+  }
+  .today-shell:hover { transform: translateY(-2px); }
+  .today-shell.has-glow { animation: card-breathe 8s ease-in-out infinite; }
+  .today-face {
+    background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 16px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 14px;
+    border-top: 1px solid rgba(255,200,140,0.1);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.12), inset 0 -6px 12px rgba(0,0,0,0.15);
+    position: relative; overflow: hidden;
+  }
+  .today-face::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,220,160,0.03) 50%, transparent 60%);
+    background-size: 200% 100%; animation: shimmer 10s ease-in-out infinite; pointer-events: none;
+  }
+  .today-face.done-glow::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 15% 50%, rgba(225,164,92,0.06), transparent 50%);
+    pointer-events: none;
+  }
+  .today-toggle {
+    width: 42px; height: 42px; min-width: 42px;
+    border-radius: 13px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s;
+  }
+  .today-toggle.off {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+    border: 1.5px solid rgba(225,164,92,0.1);
+  }
+  .today-toggle.on {
+    background: linear-gradient(145deg, rgba(225,180,110,0.45), rgba(200,131,73,0.55));
+    box-shadow: 0 0 12px rgba(225,164,92,0.3), 0 0 24px rgba(225,164,92,0.1), inset 0 1px 2px rgba(255,240,200,0.2);
+    border: 1px solid rgba(255,200,140,0.25);
+    animation: soft-pulse 4s ease-in-out infinite;
+    color: #1a0e10; font-size: 16px; font-weight: 700;
+  }
+  .today-info { flex: 1; }
+  .today-name-row { display: flex; align-items: center; gap: 8px; }
+  .today-name { font-size: 14px; font-weight: 500; }
+  .today-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .today-streak-wrap { text-align: right; min-width: 50px; }
+  .today-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 700; color: var(--text-accent);
+    text-shadow: 0 0 10px rgba(225,164,92,0.25); line-height: 1;
+  }
+  .today-streak.zero { color: var(--text-muted); font-size: 14px; text-shadow: none; }
+  .today-streak-label { font-size: 9px; color: var(--text-muted); }
+
+  /* ===== VIEW: WEEK (grid) ===== */
+  .week-view { max-width: 700px; }
+  .week-shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+    animation: card-breathe 8s ease-in-out infinite;
+  }
+  .week-face {
+    background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 18px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    position: relative; overflow: hidden;
+  }
+  .week-face::before {
+    content: ''; position: absolute; top: 0; left: 10%; right: 60%;
+    height: 1px; background: linear-gradient(90deg, transparent, rgba(255,200,140,0.15), transparent);
+    pointer-events: none;
+  }
+  .week-face::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,220,160,0.03) 50%, transparent 60%);
+    background-size: 200% 100%; animation: shimmer 8s ease-in-out infinite; pointer-events: none;
+  }
+  .week-tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 16px;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .week-grid {
+    display: grid; grid-template-columns: 150px repeat(7, 1fr);
+    column-gap: 6px; row-gap: 10px; align-items: center;
+  }
+  .week-day-hdr { text-align: center; font-size: 10px; font-weight: 600; color: rgba(169,130,106,0.5); text-transform: uppercase; font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; }
+  .week-day-hdr.today { color: var(--text-accent); text-shadow: 0 0 8px rgba(225,164,92,0.3); }
+  .week-habit-name { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(240,222,199,0.75); white-space: nowrap; overflow: hidden; }
+  .week-cell {
+    width: 30px; height: 30px; border-radius: 10px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; transition: all 0.25s; position: relative;
+  }
+  .week-cell.empty { background: rgba(15,10,8,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.35); border: 1px solid rgba(255,200,140,0.03); }
+  .week-cell.done {
+    background: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+    box-shadow: 0 0 8px rgba(225,164,92,0.25), 0 0 16px rgba(225,164,92,0.1), inset 0 1px 2px rgba(255,240,200,0.15);
+    border: 1px solid rgba(255,200,140,0.15); color: rgba(30,15,10,0.8); font-size: 11px; font-weight: 700;
+    animation: breathe 5s ease-in-out infinite;
+  }
+  .week-cell.done::after { content: ''; position: absolute; inset: -3px; border-radius: 13px; background: radial-gradient(circle, rgba(225,164,92,0.08), transparent 70%); pointer-events: none; }
+  .week-cell.today-ring { box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4), 0 0 6px rgba(225,164,92,0.1); }
+  .week-cell.done.today-ring { box-shadow: inset 0 0 0 1.5px rgba(255,220,160,0.4), 0 0 10px rgba(225,164,92,0.3), 0 0 20px rgba(225,164,92,0.1); }
+  .week-cell.future { opacity: 0.15; }
+
+  /* ===== VIEW: RINGS (portrait cards) ===== */
+  .rings-view { max-width: 700px; }
+  .rings-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .ring-shell {
+    background: var(--shell-bg); border-radius: 22px; padding: 3px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 16px 32px rgba(40,20,10,0.3);
+    animation: card-breathe 8s ease-in-out infinite; transition: transform 0.3s;
+  }
+  .ring-shell:hover { transform: translateY(-3px); }
+  .ring-face {
+    background: var(--face-bg); backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 20px 14px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+    position: relative; overflow: hidden;
+  }
+  .ring-face::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,220,160,0.04) 50%, transparent 60%);
+    background-size: 200% 100%; animation: shimmer 8s ease-in-out infinite; pointer-events: none;
+  }
+  .ring-container { position: relative; width: 80px; height: 80px; margin-bottom: 10px; }
+  .ring-svg { width: 80px; height: 80px; }
+  .ring-svg .track { fill: none; stroke: rgba(15,10,8,0.6); stroke-width: 5; }
+  .ring-svg .fill { fill: none; stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+  .ring-svg .fill.active { stroke: url(#ringGrad); filter: drop-shadow(0 0 6px rgba(225,164,92,0.3)); animation: ring-glow 4s ease-in-out infinite; }
+  .ring-svg .fill.hot { stroke: url(#ringGradHot); filter: drop-shadow(0 0 10px rgba(255,200,120,0.4)); animation: ring-glow 3s ease-in-out infinite; }
+  .ring-svg .fill.zero { stroke: transparent; }
+  .ring-icon-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .ring-name { font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 3px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .ring-streak { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-weight: 600; color: var(--text-accent); text-shadow: 0 0 8px rgba(225,164,92,0.3); }
+  .ring-streak.zero { color: var(--text-muted); text-shadow: none; }
+  .ring-today-badge {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #1a0e10; font-weight: 700;
+    box-shadow: 0 0 8px rgba(225,164,92,0.4), 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .divider { height: 1px; margin: 40px 0; background: linear-gradient(90deg, transparent, rgba(255,200,140,0.08), transparent); }
+  .section-note { font-size: 11px; color: rgba(169,130,106,0.5); margin-bottom: 30px; }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E1A45C"/><stop offset="100%" stop-color="#c47a20"/>
+    </linearGradient>
+    <linearGradient id="ringGradHot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd080"/><stop offset="50%" stop-color="#E1A45C"/><stop offset="100%" stop-color="#c47a20"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ===== HABITS TAB WITH VIEW SWITCHER ===== -->
+
+<div class="view-switcher">
+  <span class="view-switcher-label">Habits</span>
+  <div class="view-pills">
+    <button class="view-pill active" onclick="showView('today')">Today</button>
+    <button class="view-pill" onclick="showView('week')">Week</button>
+    <button class="view-pill" onclick="showView('rings')">Rings</button>
+  </div>
+  <span class="view-count">2/7 done</span>
+</div>
+
+<!-- ===== TODAY VIEW ===== -->
+<div id="view-today" class="today-view">
+  <div class="today-list">
+
+    <div class="today-shell has-glow"><div class="today-face done-glow">
+      <button class="today-toggle on">✓</button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>
+          <span class="today-name">RemNote</span>
+        </div>
+        <div class="today-sub">Done today</div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak">5d</div><div class="today-streak-label">streak</div></div>
+    </div></div>
+
+    <div class="today-shell has-glow"><div class="today-face done-glow">
+      <button class="today-toggle on">✓</button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="21" x2="20" y2="21"/><line x1="12" y1="16" x2="12" y2="21"/></svg>
+          <span class="today-name">Gym</span>
+        </div>
+        <div class="today-sub">Done today</div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak">7d</div><div class="today-streak-label">streak</div></div>
+    </div></div>
+
+    <div class="today-shell"><div class="today-face">
+      <button class="today-toggle off"></button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a1 1 0 01-1 1h-1a1 1 0 01-1-1v-3a1 1 0 011-1h2v4z"/><path d="M3 19a1 1 0 001 1h1a1 1 0 001-1v-3a1 1 0 00-1-1H3v4z"/></svg>
+          <span class="today-name">Pimsleur</span>
+        </div>
+        <div class="today-sub" style="color: rgba(225,164,92,0.6);">3d streak at risk</div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak">3d</div><div class="today-streak-label">streak</div></div>
+    </div></div>
+
+    <div class="today-shell"><div class="today-face">
+      <button class="today-toggle off"></button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          <span class="today-name">Bed by 9pm</span>
+        </div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak zero">--</div></div>
+    </div></div>
+
+    <div class="today-shell"><div class="today-face">
+      <button class="today-toggle off"></button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+          <span class="today-name">Drink Water 2L</span>
+        </div>
+        <div class="today-sub" style="color: rgba(225,164,92,0.6);">1d streak at risk</div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak">1d</div><div class="today-streak-label">streak</div></div>
+    </div></div>
+
+    <div class="today-shell"><div class="today-face">
+      <button class="today-toggle off"></button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          <span class="today-name">German Anki</span>
+        </div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak zero">--</div></div>
+    </div></div>
+
+    <div class="today-shell"><div class="today-face">
+      <button class="today-toggle off"></button>
+      <div class="today-info">
+        <div class="today-name-row">
+          <svg class="habit-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="today-name">Read a Paper</span>
+        </div>
+      </div>
+      <div class="today-streak-wrap"><div class="today-streak zero">--</div></div>
+    </div></div>
+
+  </div>
+</div>
+
+<!-- ===== WEEK VIEW ===== -->
+<div id="view-week" class="week-view" style="display:none;">
+  <div class="week-shell"><div class="week-face">
+    <div class="week-tray">
+      <div class="week-grid">
+        <div></div>
+        <div class="week-day-hdr">S</div><div class="week-day-hdr">M</div><div class="week-day-hdr">T</div>
+        <div class="week-day-hdr">W</div><div class="week-day-hdr">T</div><div class="week-day-hdr today">F</div><div class="week-day-hdr">S</div>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg> RemNote</div>
+        <button class="week-cell done">✓</button><button class="week-cell done">✓</button><button class="week-cell done">✓</button>
+        <button class="week-cell done">✓</button><button class="week-cell empty"></button><button class="week-cell done today-ring">✓</button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="21" x2="20" y2="21"/><line x1="12" y1="16" x2="12" y2="21"/></svg> Gym</div>
+        <button class="week-cell done">✓</button><button class="week-cell done">✓</button><button class="week-cell done">✓</button>
+        <button class="week-cell done">✓</button><button class="week-cell done">✓</button><button class="week-cell done today-ring">✓</button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a1 1 0 01-1 1h-1a1 1 0 01-1-1v-3a1 1 0 011-1h2v4z"/><path d="M3 19a1 1 0 001 1h1a1 1 0 001-1v-3a1 1 0 00-1-1H3v4z"/></svg> Pimsleur</div>
+        <button class="week-cell done">✓</button><button class="week-cell empty"></button><button class="week-cell done">✓</button>
+        <button class="week-cell done">✓</button><button class="week-cell done">✓</button><button class="week-cell today-ring"></button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> Bed by 9pm</div>
+        <button class="week-cell empty"></button><button class="week-cell done">✓</button><button class="week-cell empty"></button>
+        <button class="week-cell done">✓</button><button class="week-cell done">✓</button><button class="week-cell today-ring"></button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg> Drink Water 2L</div>
+        <button class="week-cell empty"></button><button class="week-cell done">✓</button><button class="week-cell done">✓</button>
+        <button class="week-cell empty"></button><button class="week-cell done">✓</button><button class="week-cell today-ring"></button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg> German Anki</div>
+        <button class="week-cell empty"></button><button class="week-cell empty"></button><button class="week-cell done">✓</button>
+        <button class="week-cell empty"></button><button class="week-cell empty"></button><button class="week-cell today-ring"></button><button class="week-cell future"></button>
+
+        <div class="week-habit-name"><svg class="habit-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Read a Paper</div>
+        <button class="week-cell empty"></button><button class="week-cell done">✓</button><button class="week-cell empty"></button>
+        <button class="week-cell empty"></button><button class="week-cell done">✓</button><button class="week-cell today-ring"></button><button class="week-cell future"></button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ===== RINGS VIEW ===== -->
+<div id="view-rings" class="rings-view" style="display:none;">
+  <div class="rings-grid">
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill active" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="30"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="ring-today-badge">✓</div>
+      </div>
+      <div class="ring-name">RemNote</div>
+      <div class="ring-streak">5d streak</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill hot" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="0"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0012 0V4"/><line x1="4" y1="21" x2="20" y2="21"/><line x1="12" y1="16" x2="12" y2="21"/></svg></div>
+        <div class="ring-today-badge">✓</div>
+      </div>
+      <div class="ring-name">Gym</div>
+      <div class="ring-streak">7d streak</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill active" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="89"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a1 1 0 01-1 1h-1a1 1 0 01-1-1v-3a1 1 0 011-1h2v4z"/><path d="M3 19a1 1 0 001 1h1a1 1 0 001-1v-3a1 1 0 00-1-1H3v4z"/></svg></div>
+      </div>
+      <div class="ring-name">Pimsleur</div>
+      <div class="ring-streak">3d streak</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill active" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="119"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
+      </div>
+      <div class="ring-name">Bed by 9pm</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill active" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="148"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div>
+      </div>
+      <div class="ring-name">Water 2L</div>
+      <div class="ring-streak">1d</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill zero" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="207.3"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+      </div>
+      <div class="ring-name">German Anki</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+    <div class="ring-shell"><div class="ring-face">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="33"/><circle class="fill active" cx="40" cy="40" r="33" stroke-dasharray="207.3" stroke-dashoffset="148"/></svg>
+        <div class="ring-icon-wrap"><svg class="habit-icon lg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      </div>
+      <div class="ring-name">Read a Paper</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+  </div>
+</div>
+
+<script>
+function showView(name) {
+  document.querySelectorAll('[id^="view-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('view-' + name).style.display = 'block';
+  document.querySelectorAll('.view-pill').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

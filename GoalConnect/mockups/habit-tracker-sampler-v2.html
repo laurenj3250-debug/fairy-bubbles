@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker v2 — Radically Different</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --accent: #E1A45C;
+    --accent-dark: #c47a20;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0507;
+    color: var(--text-primary);
+    font-family: 'Source Sans 3', sans-serif;
+    padding: 40px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 50% 20%, rgba(80,40,30,0.3) 0%, transparent 60%),
+      linear-gradient(to bottom, #1a0e10, #0a0507);
+  }
+
+  .section-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 8px;
+  }
+  .section-desc {
+    font-size: 12px; color: rgba(169,130,106,0.6); margin-bottom: 24px;
+  }
+  .divider {
+    height: 1px; margin: 60px 0;
+    background: linear-gradient(90deg, transparent, rgba(255,200,140,0.12), transparent);
+  }
+
+  /* ============================================================
+     OPTION A — RING PORTRAITS (Streaks-app inspired)
+     Each habit is a ring showing weekly completion.
+     Big, beautiful, tactile. Tap the ring to toggle today.
+     ============================================================ */
+  .rings-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 700px;
+  }
+  .ring-card {
+    background: rgba(45, 22, 28, 0.6);
+    border-radius: 20px; padding: 3px;
+  }
+  .ring-card-inner {
+    background: rgba(85, 48, 52, 0.25);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 20px 12px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ring-card-inner:hover {
+    background: rgba(85, 48, 52, 0.35);
+  }
+  .ring-svg {
+    width: 72px; height: 72px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 8px rgba(225,164,92,0.15));
+  }
+  .ring-track {
+    fill: none;
+    stroke: rgba(15,10,8,0.6);
+    stroke-width: 4;
+  }
+  .ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .ring-fill.full {
+    stroke: #d4a056;
+    filter: drop-shadow(0 0 4px rgba(225,164,92,0.4));
+  }
+  .ring-fill.zero {
+    stroke: transparent;
+  }
+  .ring-icon {
+    font-size: 20px;
+  }
+  .ring-name {
+    font-size: 11px; font-weight: 500;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+  .ring-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-accent);
+  }
+  .ring-streak.zero { color: var(--text-muted); }
+  .ring-today-check {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #1a0e10; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .ring-container { position: relative; }
+
+  /* ============================================================
+     OPTION B — GLASS ROWS (premium list)
+     Minimal. Each habit = one glass row.
+     Week shown as tiny dots. Streak on right. Today = prominent toggle.
+     ============================================================ */
+  .glass-list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-width: 600px;
+  }
+  .glass-row {
+    background: rgba(45, 22, 28, 0.5);
+    border-radius: 16px; padding: 2px;
+  }
+  .glass-row-inner {
+    background: rgba(85, 48, 52, 0.2);
+    backdrop-filter: blur(16px);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 14px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+    transition: background 0.15s;
+  }
+  .glass-row-inner:hover {
+    background: rgba(85, 48, 52, 0.3);
+  }
+  .glass-toggle {
+    width: 38px; height: 38px; min-width: 38px;
+    border-radius: 12px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .glass-toggle.unchecked {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    color: rgba(225,164,92,0.3);
+    font-size: 16px;
+  }
+  .glass-toggle.checked {
+    background: linear-gradient(135deg, rgba(225,180,110,0.4), rgba(200,131,73,0.5));
+    box-shadow: 0 0 12px rgba(225,164,92,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    color: var(--text-primary);
+    font-size: 15px;
+  }
+  .glass-info { flex: 1; min-width: 0; }
+  .glass-name {
+    font-size: 14px; font-weight: 500; color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+  .glass-week {
+    display: flex; gap: 5px; align-items: center;
+  }
+  .glass-dot {
+    width: 8px; height: 8px; border-radius: 3px;
+  }
+  .glass-dot.done { background: rgba(225,164,92,0.5); }
+  .glass-dot.empty { background: rgba(15,10,8,0.4); }
+  .glass-dot.today { box-shadow: 0 0 0 1.5px rgba(225,164,92,0.4); }
+  .glass-dot.future { opacity: 0.2; }
+  .glass-streak {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text-accent);
+    min-width: 36px; text-align: right;
+  }
+  .glass-streak.zero { color: var(--text-muted); font-size: 14px; font-weight: 400; }
+  .glass-streak-label {
+    font-size: 9px; color: var(--text-muted); text-align: right;
+    letter-spacing: 0.5px;
+  }
+  .glass-streak-wrap { text-align: right; }
+
+  /* ============================================================
+     OPTION C — CONSTELLATION
+     Habits arranged like stars. Lit = done today.
+     Connected by faint lines. Celestial feel.
+     ============================================================ */
+  .constellation-wrap {
+    position: relative;
+    width: 600px; height: 400px;
+    background: rgba(18, 10, 14, 0.4);
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255,200,140,0.05);
+  }
+  .constellation-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(80,40,30,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, rgba(60,30,40,0.1) 0%, transparent 50%);
+  }
+  .constellation-line {
+    position: absolute;
+    background: rgba(225,164,92,0.06);
+    transform-origin: left center;
+  }
+  .star-habit {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: all 0.3s;
+    z-index: 2;
+  }
+  .star-orb {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 6px;
+    transition: all 0.3s;
+  }
+  .star-orb.lit {
+    background: radial-gradient(circle at 40% 40%, rgba(255,240,210,0.3), rgba(225,164,92,0.2));
+    box-shadow: 0 0 20px rgba(225,164,92,0.25), 0 0 40px rgba(225,164,92,0.1);
+  }
+  .star-orb.dim {
+    background: rgba(15,10,8,0.4);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    opacity: 0.6;
+  }
+  .star-label {
+    font-size: 10px; font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+  }
+  .star-streak-badge {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px; color: var(--text-accent);
+    margin-top: 1px;
+  }
+  /* Subtle connecting lines via SVG */
+  .constellation-svg {
+    position: absolute; inset: 0; z-index: 1;
+  }
+  .constellation-svg line {
+    stroke: rgba(225,164,92,0.07);
+    stroke-width: 1;
+  }
+
+  /* ============================================================
+     OPTION D — MINIMAL VERTICAL CARDS (today-focused)
+     Today's habits only. Big toggle. Clean.
+     Week history hidden behind a subtle expand.
+     ============================================================ */
+  .today-stack {
+    display: flex; flex-direction: column; gap: 6px;
+    max-width: 500px;
+  }
+  .today-hdr {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 12px; padding: 0 4px;
+  }
+  .today-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .today-count {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; color: var(--text-accent);
+  }
+  .today-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: rgba(45, 22, 28, 0.4);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid rgba(255,200,140,0.04);
+  }
+  .today-item:hover {
+    background: rgba(45, 22, 28, 0.6);
+    border-color: rgba(255,200,140,0.08);
+  }
+  .today-item.completed {
+    opacity: 0.55;
+  }
+  .today-check {
+    width: 32px; height: 32px; min-width: 32px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; font-size: 14px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .today-check.off {
+    background: rgba(15,10,8,0.5);
+    border: 1.5px solid rgba(225,164,92,0.15);
+    color: transparent;
+  }
+  .today-check.on {
+    background: rgba(225,164,92,0.2);
+    border: 1.5px solid rgba(225,164,92,0.5);
+    color: var(--text-accent);
+  }
+  .today-name {
+    font-size: 15px; font-weight: 500; color: var(--text-primary);
+    flex: 1;
+  }
+  .today-item.completed .today-name {
+    text-decoration: line-through;
+    text-decoration-color: rgba(225,164,92,0.3);
+  }
+  .today-streak-pill {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-accent);
+    background: rgba(225,164,92,0.1);
+    padding: 3px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .today-streak-pill.zero {
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.15);
+  }
+
+  /* ============================================================
+     HABITS TAB — Two new layouts
+     ============================================================ */
+
+  /* Tab G: Ring portraits + today checklist below */
+  .tab-g { max-width: 700px; }
+  .tab-g .section-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin: 24px 0 12px; display: block;
+  }
+
+  /* Tab H: Full glass list — the Habits tab IS the glass rows,
+     but with expanded detail per habit */
+  .detail-list {
+    display: flex; flex-direction: column; gap: 10px;
+    max-width: 600px;
+  }
+  .detail-card {
+    background: rgba(45, 22, 28, 0.55);
+    border-radius: 18px; padding: 3px;
+  }
+  .detail-inner {
+    background: rgba(85, 48, 52, 0.2);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 16px 18px;
+    border-top: 1px solid rgba(255,200,140,0.06);
+  }
+  .detail-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .detail-icon {
+    font-size: 22px; width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15,10,8,0.4);
+    border-radius: 12px;
+  }
+  .detail-name {
+    font-size: 16px; font-weight: 500; color: var(--text-primary);
+    flex: 1;
+  }
+  .detail-streak-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 700;
+    color: var(--text-accent);
+  }
+  .detail-streak-num.zero { color: var(--text-muted); font-size: 18px; }
+  .detail-streak-unit {
+    font-size: 10px; color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+  .detail-week {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .detail-day {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .detail-day-label {
+    font-size: 9px; color: var(--text-muted);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600; letter-spacing: 1px;
+  }
+  .detail-day-label.today { color: var(--text-accent); }
+  .detail-day-dot {
+    width: 100%; height: 6px; border-radius: 3px;
+  }
+  .detail-day-dot.done {
+    background: linear-gradient(90deg, rgba(200,131,73,0.4), rgba(225,164,92,0.5));
+  }
+  .detail-day-dot.empty {
+    background: rgba(15,10,8,0.4);
+  }
+  .detail-day-dot.today-ring {
+    box-shadow: inset 0 0 0 1px rgba(225,164,92,0.4);
+  }
+  .detail-day-dot.future { opacity: 0.2; }
+
+  .option-tag {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 16px; display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="section-label">Overview Grid — Replacing the Orbs</div>
+<p class="section-desc">4 completely different ways to show "this week's habits" on the Overview tab.</p>
+
+<!-- ===== OPTION A: Ring Portraits ===== -->
+<div style="margin-bottom: 50px;">
+  <span class="option-tag">A — Ring Portraits (Streaks-app energy — each habit is a ring)</span>
+  <div class="rings-grid">
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="54"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">📋</span>
+        </div>
+      </div>
+      <div class="ring-name">RemNote</div>
+      <div class="ring-streak">4d streak</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill full" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="27"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">🏋️</span>
+        </div>
+      </div>
+      <div class="ring-name">Gym</div>
+      <div class="ring-streak">6d streak</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="81"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">🎧</span>
+        </div>
+      </div>
+      <div class="ring-name">Pimsleur</div>
+      <div class="ring-streak">3d streak</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="108"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">🌙</span>
+        </div>
+      </div>
+      <div class="ring-name">Bed by 9pm</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="108"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">💧</span>
+        </div>
+      </div>
+      <div class="ring-name">Water 2L</div>
+      <div class="ring-streak">1d</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill zero" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">🇩🇪</span>
+        </div>
+      </div>
+      <div class="ring-name">German Anki</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+    <div class="ring-card"><div class="ring-card-inner">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 72 72">
+          <circle class="ring-track" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="135"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <span class="ring-icon">📄</span>
+        </div>
+      </div>
+      <div class="ring-name">Read a Paper</div>
+      <div class="ring-streak zero">--</div>
+    </div></div>
+
+  </div>
+</div>
+
+<!-- ===== OPTION B: Glass Rows ===== -->
+<div style="margin-bottom: 50px;">
+  <span class="option-tag">B — Glass Rows (premium list — toggle + tiny week dots + streak)</span>
+  <div class="glass-list">
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle checked">✓</button>
+      <div class="glass-info">
+        <div class="glass-name">📋 RemNote</div>
+        <div class="glass-week">
+          <div class="glass-dot done"></div><div class="glass-dot done"></div><div class="glass-dot done"></div>
+          <div class="glass-dot done"></div><div class="glass-dot empty"></div><div class="glass-dot done today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak">4d</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle checked">✓</button>
+      <div class="glass-info">
+        <div class="glass-name">🏋️ Gym</div>
+        <div class="glass-week">
+          <div class="glass-dot done"></div><div class="glass-dot done"></div><div class="glass-dot done"></div>
+          <div class="glass-dot done"></div><div class="glass-dot done"></div><div class="glass-dot done today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak">6d</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle unchecked">○</button>
+      <div class="glass-info">
+        <div class="glass-name">🎧 Pimsleur</div>
+        <div class="glass-week">
+          <div class="glass-dot done"></div><div class="glass-dot empty"></div><div class="glass-dot done"></div>
+          <div class="glass-dot done"></div><div class="glass-dot done"></div><div class="glass-dot empty today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak">3d</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle unchecked">○</button>
+      <div class="glass-info">
+        <div class="glass-name">🌙 Bed by 9pm</div>
+        <div class="glass-week">
+          <div class="glass-dot empty"></div><div class="glass-dot done"></div><div class="glass-dot empty"></div>
+          <div class="glass-dot done"></div><div class="glass-dot done"></div><div class="glass-dot empty today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak zero">--</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle unchecked">○</button>
+      <div class="glass-info">
+        <div class="glass-name">💧 Drink Water 2L</div>
+        <div class="glass-week">
+          <div class="glass-dot empty"></div><div class="glass-dot done"></div><div class="glass-dot done"></div>
+          <div class="glass-dot empty"></div><div class="glass-dot done"></div><div class="glass-dot empty today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak">1d</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle unchecked">○</button>
+      <div class="glass-info">
+        <div class="glass-name">🇩🇪 German Anki</div>
+        <div class="glass-week">
+          <div class="glass-dot empty"></div><div class="glass-dot empty"></div><div class="glass-dot done"></div>
+          <div class="glass-dot empty"></div><div class="glass-dot empty"></div><div class="glass-dot empty today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak zero">--</div>
+      </div>
+    </div></div>
+
+    <div class="glass-row"><div class="glass-row-inner">
+      <button class="glass-toggle unchecked">○</button>
+      <div class="glass-info">
+        <div class="glass-name">📄 Read a Paper</div>
+        <div class="glass-week">
+          <div class="glass-dot empty"></div><div class="glass-dot done"></div><div class="glass-dot empty"></div>
+          <div class="glass-dot empty"></div><div class="glass-dot done"></div><div class="glass-dot empty today"></div><div class="glass-dot future"></div>
+        </div>
+      </div>
+      <div class="glass-streak-wrap">
+        <div class="glass-streak zero">--</div>
+      </div>
+    </div></div>
+
+  </div>
+</div>
+
+<!-- ===== OPTION C: Constellation ===== -->
+<div style="margin-bottom: 50px;">
+  <span class="option-tag">C — Constellation (habits as stars — lit when done today)</span>
+  <div class="constellation-wrap">
+    <div class="constellation-bg"></div>
+    <svg class="constellation-svg" viewBox="0 0 600 400">
+      <line x1="95" y1="85" x2="265" y2="65"/>
+      <line x1="265" y1="65" x2="430" y2="100"/>
+      <line x1="430" y1="100" x2="510" y2="200"/>
+      <line x1="510" y1="200" x2="375" y2="280"/>
+      <line x1="375" y1="280" x2="170" y2="250"/>
+      <line x1="170" y1="250" x2="95" y2="85"/>
+      <line x1="265" y1="65" x2="170" y2="250"/>
+      <line x1="430" y1="100" x2="375" y2="280"/>
+    </svg>
+
+    <div class="star-habit" style="left: 70px; top: 55px;">
+      <div class="star-orb lit">📋</div>
+      <div class="star-label">RemNote</div>
+      <div class="star-streak-badge">4d</div>
+    </div>
+
+    <div class="star-habit" style="left: 240px; top: 35px;">
+      <div class="star-orb lit">🏋️</div>
+      <div class="star-label">Gym</div>
+      <div class="star-streak-badge">6d</div>
+    </div>
+
+    <div class="star-habit" style="left: 405px; top: 70px;">
+      <div class="star-orb dim">🎧</div>
+      <div class="star-label">Pimsleur</div>
+      <div class="star-streak-badge">3d</div>
+    </div>
+
+    <div class="star-habit" style="left: 485px; top: 170px;">
+      <div class="star-orb dim">🌙</div>
+      <div class="star-label">Bed by 9</div>
+    </div>
+
+    <div class="star-habit" style="left: 350px; top: 250px;">
+      <div class="star-orb dim">💧</div>
+      <div class="star-label">Water 2L</div>
+      <div class="star-streak-badge">1d</div>
+    </div>
+
+    <div class="star-habit" style="left: 145px; top: 220px;">
+      <div class="star-orb dim">🇩🇪</div>
+      <div class="star-label">German Anki</div>
+    </div>
+
+    <div class="star-habit" style="left: 250px; top: 310px;">
+      <div class="star-orb dim">📄</div>
+      <div class="star-label">Read a Paper</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION D: Today-Focused Stack ===== -->
+<div style="margin-bottom: 50px;">
+  <span class="option-tag">D — Today Stack (just today — clean, minimal, no grid)</span>
+  <div class="today-stack">
+    <div class="today-hdr">
+      <span class="today-title">Today</span>
+      <span class="today-count">2 of 7</span>
+    </div>
+
+    <div class="today-item completed">
+      <button class="today-check on">✓</button>
+      <span class="today-name">📋 RemNote</span>
+      <span class="today-streak-pill">4d</span>
+    </div>
+
+    <div class="today-item completed">
+      <button class="today-check on">✓</button>
+      <span class="today-name">🏋️ Gym</span>
+      <span class="today-streak-pill">6d</span>
+    </div>
+
+    <div class="today-item">
+      <button class="today-check off"></button>
+      <span class="today-name">🎧 Pimsleur</span>
+      <span class="today-streak-pill">3d</span>
+    </div>
+
+    <div class="today-item">
+      <button class="today-check off"></button>
+      <span class="today-name">🌙 Bed by 9pm</span>
+      <span class="today-streak-pill zero">--</span>
+    </div>
+
+    <div class="today-item">
+      <button class="today-check off"></button>
+      <span class="today-name">💧 Drink Water 2L</span>
+      <span class="today-streak-pill">1d</span>
+    </div>
+
+    <div class="today-item">
+      <button class="today-check off"></button>
+      <span class="today-name">🇩🇪 German Anki</span>
+      <span class="today-streak-pill zero">--</span>
+    </div>
+
+    <div class="today-item">
+      <button class="today-check off"></button>
+      <span class="today-name">📄 Read a Paper</span>
+      <span class="today-streak-pill zero">--</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section-label">Habits Tab — Expanded View</div>
+<p class="section-desc">What the dedicated "Habits" tab shows (more detail than overview).</p>
+
+<!-- ===== TAB H: Detail Cards with Week Bars ===== -->
+<div style="margin-bottom: 50px;">
+  <span class="option-tag">H — Detail Cards (icon + name + big streak + week as progress bars)</span>
+  <div class="detail-list">
+
+    <div class="detail-card"><div class="detail-inner">
+      <div class="detail-top">
+        <div class="detail-icon">📋</div>
+        <div class="detail-name">RemNote</div>
+        <div style="text-align:right">
+          <div class="detail-streak-num">4</div>
+          <div class="detail-streak-unit">day streak</div>
+        </div>
+      </div>
+      <div class="detail-week">
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">M</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">W</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot empty"></div></div>
+        <div class="detail-day"><div class="detail-day-label today">F</div><div class="detail-day-dot empty today-ring"></div></div>
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot future"></div></div>
+      </div>
+    </div></div>
+
+    <div class="detail-card"><div class="detail-inner">
+      <div class="detail-top">
+        <div class="detail-icon">🏋️</div>
+        <div class="detail-name">Gym</div>
+        <div style="text-align:right">
+          <div class="detail-streak-num">6</div>
+          <div class="detail-streak-unit">day streak</div>
+        </div>
+      </div>
+      <div class="detail-week">
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">M</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">W</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label today">F</div><div class="detail-day-dot done today-ring"></div></div>
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot future"></div></div>
+      </div>
+    </div></div>
+
+    <div class="detail-card"><div class="detail-inner">
+      <div class="detail-top">
+        <div class="detail-icon">🎧</div>
+        <div class="detail-name">Pimsleur</div>
+        <div style="text-align:right">
+          <div class="detail-streak-num">3</div>
+          <div class="detail-streak-unit">day streak</div>
+        </div>
+      </div>
+      <div class="detail-week">
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">M</div><div class="detail-day-dot empty"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">W</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label today">F</div><div class="detail-day-dot empty today-ring"></div></div>
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot future"></div></div>
+      </div>
+    </div></div>
+
+    <div class="detail-card"><div class="detail-inner">
+      <div class="detail-top">
+        <div class="detail-icon">🌙</div>
+        <div class="detail-name">Bed by 9pm</div>
+        <div style="text-align:right">
+          <div class="detail-streak-num zero">--</div>
+          <div class="detail-streak-unit">no streak</div>
+        </div>
+      </div>
+      <div class="detail-week">
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot empty"></div></div>
+        <div class="detail-day"><div class="detail-day-label">M</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot empty"></div></div>
+        <div class="detail-day"><div class="detail-day-label">W</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label">T</div><div class="detail-day-dot done"></div></div>
+        <div class="detail-day"><div class="detail-day-label today">F</div><div class="detail-day-dot empty today-ring"></div></div>
+        <div class="detail-day"><div class="detail-day-label">S</div><div class="detail-day-dot future"></div></div>
+      </div>
+    </div></div>
+
+  </div>
+</div>
+
+</body>
+</html>

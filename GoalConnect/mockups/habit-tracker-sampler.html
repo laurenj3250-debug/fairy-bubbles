@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker Sampler</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell-bg: rgba(45, 22, 28, 0.75);
+    --face-bg: rgba(85, 48, 52, 0.35);
+    --tray-bg: rgba(18, 10, 14, 0.5);
+    --text-primary: #F0DEC7;
+    --text-secondary: #D9B79A;
+    --text-muted: #A9826A;
+    --text-accent: #E1A45C;
+    --accent: #E1A45C;
+    --accent-dark: #c47a20;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0507;
+    color: var(--text-primary);
+    font-family: 'Source Sans 3', sans-serif;
+    padding: 40px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 50% 30%, rgba(80,40,30,0.25) 0%, transparent 60%),
+      linear-gradient(to bottom, #1a0e10, #0a0507);
+  }
+
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 16px;
+  }
+
+  .sampler-section {
+    margin-bottom: 60px;
+  }
+
+  .label {
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 20px; font-weight: 500;
+  }
+
+  /* ===== CARD SHELL (shared) ===== */
+  .shell {
+    background: var(--shell-bg); border-radius: 24px; padding: 4px;
+    box-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4);
+  }
+  .face {
+    background: var(--face-bg);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 20px; padding: 16px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    box-shadow: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+  }
+  .tray {
+    background: var(--tray-bg); border-radius: 16px; padding: 14px;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .badge {
+    font-size: 10px; font-weight: 600; color: var(--text-accent);
+    background: rgba(200,131,73,0.15); padding: 3px 10px; border-radius: 10px;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== HABIT NAMES ===== */
+  .habit-name {
+    font-size: 12px; color: rgba(240,222,199,0.7); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .day-hdr {
+    text-align: center; font-size: 9px; font-weight: 600;
+    color: rgba(169,130,106,0.5); text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif; letter-spacing: 1.5px;
+  }
+  .day-hdr.today { color: rgba(225,164,92,0.7); }
+
+  /* ============================================================
+     OPTION A — ROUNDED SQUARES (from approved mockup, refined)
+     Subtle warm fill, small checkmark, no glow
+     ============================================================ */
+  .grid-a {
+    display: grid; grid-template-columns: 140px repeat(7, 1fr);
+    column-gap: 6px; row-gap: 8px; align-items: center;
+  }
+  .cell-a {
+    width: 32px; height: 32px; border-radius: 8px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; border: none; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cell-a.empty {
+    background: rgba(15,10,8,0.6);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .cell-a.done {
+    background: rgba(200,131,73,0.3);
+    color: rgba(240,222,199,0.8);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .cell-a.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4);
+  }
+  .cell-a.done.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.5), 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .cell-a.future { opacity: 0.25; }
+
+  /* ============================================================
+     OPTION B — MINIMAL DOTS (smaller, tighter, elegant)
+     Tiny circles, amber fill, no check — just filled vs empty
+     ============================================================ */
+  .grid-b {
+    display: grid; grid-template-columns: 140px repeat(7, 1fr);
+    column-gap: 6px; row-gap: 10px; align-items: center;
+  }
+  .cell-b {
+    width: 22px; height: 22px; border-radius: 50%; margin: 0 auto;
+    border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .cell-b.empty {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .cell-b.done {
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(225,164,92,0.25);
+  }
+  .cell-b.today-ring {
+    box-shadow: 0 0 0 2px rgba(225,164,92,0.3);
+  }
+  .cell-b.done.today-ring {
+    box-shadow: 0 0 0 2px rgba(225,164,92,0.3), 0 0 6px rgba(225,164,92,0.25);
+  }
+  .cell-b.future { opacity: 0.2; }
+
+  /* ============================================================
+     OPTION C — PILL ROWS (each habit = horizontal bar)
+     Feels like a GitHub contribution graph but warmer
+     ============================================================ */
+  .grid-c {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .row-c {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .row-c .habit-name { width: 140px; flex-shrink: 0; }
+  .row-c .cells { display: flex; gap: 4px; }
+  .cell-c {
+    width: 36px; height: 24px; border-radius: 6px;
+    border: none; cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+  .cell-c.empty {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .cell-c.done {
+    background: linear-gradient(135deg, rgba(225,164,92,0.35), rgba(200,131,73,0.25));
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .cell-c.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.35);
+  }
+  .cell-c.done.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.5), 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .cell-c.future { opacity: 0.2; }
+  .day-hdr-row { display: flex; gap: 4px; margin-left: 148px; margin-bottom: 4px; }
+  .day-hdr-row .day-hdr { width: 36px; }
+
+  /* ============================================================
+     OPTION D — SOFT SQUARES + SUBTLE GLOW (middle ground)
+     Rounded squares, soft amber glow on done, check icon
+     ============================================================ */
+  .grid-d {
+    display: grid; grid-template-columns: 140px repeat(7, 1fr);
+    column-gap: 6px; row-gap: 8px; align-items: center;
+  }
+  .cell-d {
+    width: 32px; height: 32px; border-radius: 10px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; border: none; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .cell-d.empty {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+  }
+  .cell-d.done {
+    background: linear-gradient(145deg, rgba(225,180,110,0.25), rgba(200,131,73,0.35));
+    color: rgba(240,222,199,0.7);
+    box-shadow: 0 0 8px rgba(225,164,92,0.12), 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .cell-d.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.35);
+  }
+  .cell-d.done.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.45), 0 0 8px rgba(225,164,92,0.12);
+  }
+  .cell-d.future { opacity: 0.2; }
+
+  /* ============================================================
+     HABITS TAB — Two layout options
+     ============================================================ */
+
+  .habits-tab-container {
+    max-width: 800px;
+  }
+
+  /* Tab Layout E: Habit cards with inline weekly + streak */
+  .habit-card-row {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .habit-card {
+    background: rgba(45, 22, 28, 0.6); border-radius: 16px; padding: 3px;
+  }
+  .habit-card-inner {
+    background: rgba(85, 48, 52, 0.3);
+    backdrop-filter: blur(12px);
+    border-radius: 14px; padding: 14px 16px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .habit-card-info {
+    flex: 1; min-width: 0;
+  }
+  .habit-card-name {
+    font-size: 14px; font-weight: 500; color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .habit-card-streak {
+    font-size: 11px; color: var(--text-muted);
+  }
+  .habit-card-streak strong {
+    color: var(--text-accent); font-weight: 600;
+    font-family: 'Cormorant Garamond', serif; font-size: 13px;
+  }
+  .habit-card-week {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .habit-card-dot {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: none; cursor: pointer;
+  }
+  .habit-card-dot.empty {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .habit-card-dot.done {
+    background: rgba(200,131,73,0.35);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .habit-card-dot.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4);
+  }
+  .habit-card-toggle {
+    width: 40px; height: 40px; border-radius: 12px;
+    border: 2px solid rgba(225,164,92,0.2); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-accent); font-size: 16px; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .habit-card-toggle.checked {
+    background: rgba(200,131,73,0.25);
+    border-color: rgba(225,164,92,0.5);
+  }
+
+  /* Tab Layout F: Single-column list with day columns (like Streaks app) */
+  .streaks-list {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .streaks-hdr {
+    display: grid; grid-template-columns: 1fr repeat(7, 28px) 60px;
+    gap: 4px; align-items: center; padding: 0 16px 8px;
+  }
+  .streaks-row-shell {
+    background: rgba(45, 22, 28, 0.45); border-radius: 14px; padding: 2px;
+  }
+  .streaks-row {
+    display: grid; grid-template-columns: 1fr repeat(7, 28px) 60px;
+    gap: 4px; align-items: center;
+    background: rgba(85, 48, 52, 0.2);
+    backdrop-filter: blur(8px);
+    border-radius: 12px; padding: 10px 16px;
+    border-top: 1px solid rgba(255,200,140,0.05);
+  }
+  .streaks-name {
+    font-size: 13px; font-weight: 500; color: var(--text-primary);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .streaks-name .icon {
+    font-size: 16px; opacity: 0.8;
+  }
+  .streaks-dot {
+    width: 24px; height: 24px; border-radius: 7px; margin: 0 auto;
+    border: none; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 10px; transition: all 0.15s;
+  }
+  .streaks-dot.empty {
+    background: rgba(15,10,8,0.5);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .streaks-dot.done {
+    background: rgba(200,131,73,0.3);
+    color: rgba(240,222,199,0.75);
+  }
+  .streaks-dot.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.35);
+  }
+  .streaks-dot.done.today-ring {
+    box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.45);
+  }
+  .streaks-dot.future { opacity: 0.2; }
+  .streaks-streak {
+    text-align: right;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--text-accent);
+  }
+  .streaks-streak.zero { color: var(--text-muted); font-weight: 400; }
+
+  .divider {
+    height: 1px; margin: 50px 0;
+    background: linear-gradient(90deg, transparent, rgba(255,200,140,0.1), transparent);
+  }
+
+  .option-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 14px; display: block;
+  }
+</style>
+</head>
+<body>
+
+<h2>Habit Tracker — Grid Cell Styles</h2>
+<p class="label" style="margin-bottom:30px">Same data, 4 different feels. Pick which direction you like.</p>
+
+<!-- ===== OPTION A: Rounded Squares ===== -->
+<div class="sampler-section">
+  <span class="option-label">A — Rounded Squares (mockup style, refined)</span>
+  <div class="shell" style="max-width: 560px;">
+    <div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">3/7 Today</span>
+      </div>
+      <div class="tray">
+        <div class="grid-a">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div><div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-name">📋 RemNote</div>
+          <button class="cell-a done">✓</button><button class="cell-a done">✓</button><button class="cell-a done">✓</button>
+          <button class="cell-a done">✓</button><button class="cell-a empty"></button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+
+          <div class="habit-name">🏋️ Gym</div>
+          <button class="cell-a done">✓</button><button class="cell-a done">✓</button><button class="cell-a done">✓</button>
+          <button class="cell-a done">✓</button><button class="cell-a done">✓</button><button class="cell-a done today-ring">✓</button><button class="cell-a future"></button>
+
+          <div class="habit-name">🎧 Pimsleur</div>
+          <button class="cell-a done">✓</button><button class="cell-a empty"></button><button class="cell-a done">✓</button>
+          <button class="cell-a done">✓</button><button class="cell-a done">✓</button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+
+          <div class="habit-name">🌙 Bed by 9pm</div>
+          <button class="cell-a empty"></button><button class="cell-a done">✓</button><button class="cell-a empty"></button>
+          <button class="cell-a done">✓</button><button class="cell-a done">✓</button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+
+          <div class="habit-name">💧 Drink Water 2L</div>
+          <button class="cell-a empty"></button><button class="cell-a done">✓</button><button class="cell-a done">✓</button>
+          <button class="cell-a empty"></button><button class="cell-a done">✓</button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+
+          <div class="habit-name">🇩🇪 German Anki</div>
+          <button class="cell-a empty"></button><button class="cell-a empty"></button><button class="cell-a done">✓</button>
+          <button class="cell-a empty"></button><button class="cell-a empty"></button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+
+          <div class="habit-name">📄 Read a Paper</div>
+          <button class="cell-a empty"></button><button class="cell-a done">✓</button><button class="cell-a empty"></button>
+          <button class="cell-a empty"></button><button class="cell-a done">✓</button><button class="cell-a today-ring"></button><button class="cell-a future"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION B: Minimal Dots ===== -->
+<div class="sampler-section">
+  <span class="option-label">B — Minimal Dots (tiny, no checkmarks, just filled/empty)</span>
+  <div class="shell" style="max-width: 520px;">
+    <div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">3/7 Today</span>
+      </div>
+      <div class="tray">
+        <div class="grid-b">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div><div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-name">📋 RemNote</div>
+          <button class="cell-b done"></button><button class="cell-b done"></button><button class="cell-b done"></button>
+          <button class="cell-b done"></button><button class="cell-b empty"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">🏋️ Gym</div>
+          <button class="cell-b done"></button><button class="cell-b done"></button><button class="cell-b done"></button>
+          <button class="cell-b done"></button><button class="cell-b done"></button><button class="cell-b done today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">🎧 Pimsleur</div>
+          <button class="cell-b done"></button><button class="cell-b empty"></button><button class="cell-b done"></button>
+          <button class="cell-b done"></button><button class="cell-b done"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">🌙 Bed by 9pm</div>
+          <button class="cell-b empty"></button><button class="cell-b done"></button><button class="cell-b empty"></button>
+          <button class="cell-b done"></button><button class="cell-b done"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">💧 Drink Water 2L</div>
+          <button class="cell-b empty"></button><button class="cell-b done"></button><button class="cell-b done"></button>
+          <button class="cell-b empty"></button><button class="cell-b done"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">🇩🇪 German Anki</div>
+          <button class="cell-b empty"></button><button class="cell-b empty"></button><button class="cell-b done"></button>
+          <button class="cell-b empty"></button><button class="cell-b empty"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+
+          <div class="habit-name">📄 Read a Paper</div>
+          <button class="cell-b empty"></button><button class="cell-b done"></button><button class="cell-b empty"></button>
+          <button class="cell-b empty"></button><button class="cell-b done"></button><button class="cell-b today-ring"></button><button class="cell-b future"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION C: Pill Rows ===== -->
+<div class="sampler-section">
+  <span class="option-label">C — Wide Pills (GitHub contribution graph energy)</span>
+  <div class="shell" style="max-width: 560px;">
+    <div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">3/7 Today</span>
+      </div>
+      <div class="tray">
+        <div class="grid-c">
+          <div class="day-hdr-row">
+            <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+            <div class="day-hdr">W</div><div class="day-hdr">T</div><div class="day-hdr today">F</div><div class="day-hdr">S</div>
+          </div>
+
+          <div class="row-c"><div class="habit-name">📋 RemNote</div><div class="cells">
+            <button class="cell-c done"></button><button class="cell-c done"></button><button class="cell-c done"></button>
+            <button class="cell-c done"></button><button class="cell-c empty"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">🏋️ Gym</div><div class="cells">
+            <button class="cell-c done"></button><button class="cell-c done"></button><button class="cell-c done"></button>
+            <button class="cell-c done"></button><button class="cell-c done"></button><button class="cell-c done today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">🎧 Pimsleur</div><div class="cells">
+            <button class="cell-c done"></button><button class="cell-c empty"></button><button class="cell-c done"></button>
+            <button class="cell-c done"></button><button class="cell-c done"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">🌙 Bed by 9pm</div><div class="cells">
+            <button class="cell-c empty"></button><button class="cell-c done"></button><button class="cell-c empty"></button>
+            <button class="cell-c done"></button><button class="cell-c done"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">💧 Drink Water 2L</div><div class="cells">
+            <button class="cell-c empty"></button><button class="cell-c done"></button><button class="cell-c done"></button>
+            <button class="cell-c empty"></button><button class="cell-c done"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">🇩🇪 German Anki</div><div class="cells">
+            <button class="cell-c empty"></button><button class="cell-c empty"></button><button class="cell-c done"></button>
+            <button class="cell-c empty"></button><button class="cell-c empty"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+
+          <div class="row-c"><div class="habit-name">📄 Read a Paper</div><div class="cells">
+            <button class="cell-c empty"></button><button class="cell-c done"></button><button class="cell-c empty"></button>
+            <button class="cell-c empty"></button><button class="cell-c done"></button><button class="cell-c today-ring"></button><button class="cell-c future"></button>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION D: Soft Squares ===== -->
+<div class="sampler-section">
+  <span class="option-label">D — Soft Squares (rounded, subtle gradient glow, checks)</span>
+  <div class="shell" style="max-width: 560px;">
+    <div class="face">
+      <div class="card-hdr">
+        <span class="card-title">This Week</span>
+        <span class="badge">3/7 Today</span>
+      </div>
+      <div class="tray">
+        <div class="grid-d">
+          <div></div>
+          <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+          <div class="day-hdr">W</div><div class="day-hdr">T</div><div class="day-hdr today">F</div><div class="day-hdr">S</div>
+
+          <div class="habit-name">📋 RemNote</div>
+          <button class="cell-d done">✓</button><button class="cell-d done">✓</button><button class="cell-d done">✓</button>
+          <button class="cell-d done">✓</button><button class="cell-d empty"></button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+
+          <div class="habit-name">🏋️ Gym</div>
+          <button class="cell-d done">✓</button><button class="cell-d done">✓</button><button class="cell-d done">✓</button>
+          <button class="cell-d done">✓</button><button class="cell-d done">✓</button><button class="cell-d done today-ring">✓</button><button class="cell-d future"></button>
+
+          <div class="habit-name">🎧 Pimsleur</div>
+          <button class="cell-d done">✓</button><button class="cell-d empty"></button><button class="cell-d done">✓</button>
+          <button class="cell-d done">✓</button><button class="cell-d done">✓</button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+
+          <div class="habit-name">🌙 Bed by 9pm</div>
+          <button class="cell-d empty"></button><button class="cell-d done">✓</button><button class="cell-d empty"></button>
+          <button class="cell-d done">✓</button><button class="cell-d done">✓</button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+
+          <div class="habit-name">💧 Drink Water 2L</div>
+          <button class="cell-d empty"></button><button class="cell-d done">✓</button><button class="cell-d done">✓</button>
+          <button class="cell-d empty"></button><button class="cell-d done">✓</button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+
+          <div class="habit-name">🇩🇪 German Anki</div>
+          <button class="cell-d empty"></button><button class="cell-d empty"></button><button class="cell-d done">✓</button>
+          <button class="cell-d empty"></button><button class="cell-d empty"></button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+
+          <div class="habit-name">📄 Read a Paper</div>
+          <button class="cell-d empty"></button><button class="cell-d done">✓</button><button class="cell-d empty"></button>
+          <button class="cell-d empty"></button><button class="cell-d done">✓</button><button class="cell-d today-ring"></button><button class="cell-d future"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<h2>Habits Tab — Full Tab Layouts</h2>
+<p class="label" style="margin-bottom:30px">Two options for what the dedicated Habits tab looks like (not the overview grid).</p>
+
+<!-- ===== TAB LAYOUT E: Card per habit ===== -->
+<div class="sampler-section">
+  <span class="option-label">E — Habit Cards (each habit = its own card with week + today toggle)</span>
+  <div class="habits-tab-container">
+    <div class="habit-card-row">
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">📋 RemNote</div>
+            <div class="habit-card-streak"><strong>4</strong> day streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">🏋️ Gym</div>
+            <div class="habit-card-streak"><strong>6</strong> day streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done" style="box-shadow: inset 0 0 0 1.5px rgba(225,164,92,0.4);"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle checked">✓</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">🎧 Pimsleur</div>
+            <div class="habit-card-streak"><strong>3</strong> day streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">🌙 Bed by 9pm</div>
+            <div class="habit-card-streak" style="color: var(--text-muted);">No streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">💧 Drink Water 2L</div>
+            <div class="habit-card-streak"><strong>1</strong> day streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">🇩🇪 German Anki</div>
+            <div class="habit-card-streak" style="color: var(--text-muted);">No streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+      <div class="habit-card">
+        <div class="habit-card-inner">
+          <div class="habit-card-info">
+            <div class="habit-card-name">📄 Read a Paper</div>
+            <div class="habit-card-streak" style="color: var(--text-muted);">No streak</div>
+          </div>
+          <div class="habit-card-week">
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot empty"></button>
+            <button class="habit-card-dot done"></button>
+            <button class="habit-card-dot today-ring"></button>
+            <button class="habit-card-dot empty" style="opacity:0.2"></button>
+          </div>
+          <button class="habit-card-toggle">○</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== TAB LAYOUT F: Streaks list ===== -->
+<div class="sampler-section">
+  <span class="option-label">F — Streaks List (compact rows, week + streak count, all in one card)</span>
+  <div class="shell" style="max-width: 700px;">
+    <div class="face" style="padding: 16px 12px;">
+      <div class="card-hdr">
+        <span class="card-title">Habits</span>
+        <span class="badge">3/7 Today</span>
+      </div>
+      <div class="streaks-hdr">
+        <div></div>
+        <div class="day-hdr">S</div><div class="day-hdr">M</div><div class="day-hdr">T</div>
+        <div class="day-hdr">W</div><div class="day-hdr">T</div><div class="day-hdr today">F</div><div class="day-hdr">S</div>
+        <div class="day-hdr" style="text-align:right">Streak</div>
+      </div>
+      <div class="streaks-list">
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">📋</span> RemNote</div>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot empty"></button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak">4d</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">🏋️</span> Gym</div>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button><button class="streaks-dot done today-ring">✓</button><button class="streaks-dot future"></button>
+          <div class="streaks-streak">6d</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">🎧</span> Pimsleur</div>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak">3d</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">🌙</span> Bed by 9pm</div>
+          <button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button><button class="streaks-dot empty"></button>
+          <button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak zero">--</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">💧</span> Drink Water 2L</div>
+          <button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button><button class="streaks-dot done">✓</button>
+          <button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak">1d</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">🇩🇪</span> German Anki</div>
+          <button class="streaks-dot empty"></button><button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button>
+          <button class="streaks-dot empty"></button><button class="streaks-dot empty"></button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak zero">--</div>
+        </div></div>
+
+        <div class="streaks-row-shell"><div class="streaks-row">
+          <div class="streaks-name"><span class="icon">📄</span> Read a Paper</div>
+          <button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button><button class="streaks-dot empty"></button>
+          <button class="streaks-dot empty"></button><button class="streaks-dot done">✓</button><button class="streaks-dot today-ring"></button><button class="streaks-dot future"></button>
+          <div class="streaks-streak zero">--</div>
+        </div></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
