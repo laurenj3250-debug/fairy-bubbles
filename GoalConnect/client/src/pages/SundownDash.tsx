@@ -23,6 +23,7 @@ import { SundownMonthlyGoals } from '@/components/sundown/SundownMonthlyGoals';
 import { SundownGoalsTab } from '@/components/sundown/SundownGoalsTab';
 import { SundownHabitsTab } from '@/components/sundown/SundownHabitsTab';
 import { SundownJournalTab } from '@/components/sundown/SundownJournalTab';
+import { StreakFreeze } from '@/components/StreakFreeze';
 
 // ============================================================================
 // DATE UTILITIES
@@ -244,6 +245,7 @@ export default function SundownDash() {
                 <div className="sd-col-stack">
                   <SundownAuroraReward streak={streak} />
                   <SundownStardustRing percentage={completionPct} />
+                  <StreakFreeze />
                 </div>
               </div>
               <SundownMonthlyGoals goals={yearlyGoalsData} />

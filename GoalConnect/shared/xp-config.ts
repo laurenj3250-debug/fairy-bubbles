@@ -22,3 +22,13 @@ export const XP_CONFIG = {
 };
 
 export const STREAK_MILESTONES = [7, 30, 100] as const;
+
+/** Bonus XP — adds variability to the reward loop (Eyal Hook Model: variable reward) */
+export const XP_BONUSES = {
+  /** +1 XP for habits completed before 7am local time */
+  morningBird: 1,
+  /** +2 XP when ALL habits are done for the day */
+  allDone: 2,
+  /** +1 XP for habits completed on Saturday or Sunday */
+  weekendWarrior: 1,
+};

@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
 import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
 import { calculateStreak, calculateWeeklyCompletion, getStreakMultiplier } from "../pet-utils";
-import { XP_CONFIG, STREAK_MILESTONES } from "@shared/xp-config";
+import { XP_CONFIG, STREAK_MILESTONES, XP_BONUSES } from "@shared/xp-config";
 import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
 import { getDb } from "../db";
 import { log } from "../lib/logger";
@@ -613,14 +613,29 @@ export function registerHabitRoutes(app: Express) {
             const base = XP_CONFIG.habit[habit.difficulty || 'medium'] || XP_CONFIG.habit.medium;
             pointsEarned = Math.round(base * multiplier);
 
+            // Variable bonuses (Hook Model: variable reward)
+            const now = new Date();
+            const hour = now.getHours();
+            const day = now.getDay(); // 0=Sun, 6=Sat
+            const bonuses: string[] = [];
+
+            if (hour < 7) {
+              pointsEarned += XP_BONUSES.morningBird;
+              bonuses.push('early bird');
+            }
+            if (day === 0 || day === 6) {
+              pointsEarned += XP_BONUSES.weekendWarrior;
+              bonuses.push('weekend');
+            }
+
             await storage.addPoints(
               userId,
               pointsEarned,
               'habit_complete',
               logId,
-              `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x)`
+              `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x${bonuses.length ? ', ' + bonuses.join('+') : ''})`
             );
-            log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x)`);
+            log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x, bonuses: ${bonuses.join(',') || 'none'})`);
 
             // Check for streak milestones (one-time per habit per milestone)
             for (const milestone of STREAK_MILESTONES) {
@@ -657,6 +672,20 @@ export function registerHabitRoutes(app: Express) {
           // Daily activity bonus (server time, shared helper)
           const dailyBonus = await awardDailyBonusIfNeeded(userId);
           pointsEarned += dailyBonus;
+
+          // All-done bonus: check if every habit is now completed today
+          try {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const allHabits = await storage.getHabits(userId);
+            const todayLogs = await storage.getHabitLogsByDate(userId, todayStr);
+            const completedCount = todayLogs.filter((l: any) => l.completed).length;
+            if (completedCount >= allHabits.length && allHabits.length > 0) {
+              pointsEarned += XP_BONUSES.allDone;
+              log.info(`[habits] All-done bonus! ${completedCount}/${allHabits.length} habits, +${XP_BONUSES.allDone} XP`);
+            }
+          } catch (allDoneErr) {
+            log.error('[habits] All-done bonus check failed:', allDoneErr);
+          }
         } catch (pointsError) {
           log.error('[habits] Points award failed:', pointsError);
           // Don't fail the request

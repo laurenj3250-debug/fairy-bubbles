@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Snowflake, Coins } from "lucide-react";
-import { Button } from "./ui/button";
+import { Shield, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface StreakFreezeData {
@@ -21,6 +20,7 @@ export function StreakFreeze() {
     mutationFn: async () => {
       const res = await fetch("/api/streak-freezes/purchase", {
         method: "POST",
+        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -31,7 +31,7 @@ export function StreakFreeze() {
     onSuccess: () => {
       toast({
         title: "Streak Freeze Purchased!",
-        description: "You bought a streak freeze for 100 tokens",
+        description: "250 XP spent. Your streak is protected for 1 missed day.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/streak-freezes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
@@ -46,60 +46,83 @@ export function StreakFreeze() {
   });
 
   const freezeCount = freezeData?.freezeCount ?? 0;
-  const maxFreezes = 3;
+  const maxFreezes = 2;
 
   return (
-    <div className="card-ice-shelf p-4 shadow-lg">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Snowflake className="w-5 h-5 text-cyan-400" />
-          <h3 className="text-sm font-bold text-foreground">Streak Freezes</h3>
+    <div className="sd-shell" style={{ animationDelay: '0.7s' }}>
+      <div className="sd-face" style={{ padding: '14px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Shield style={{ width: 18, height: 18, color: 'var(--sd-text-accent)' }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--sd-text-primary)', fontFamily: "'Cormorant Garamond', serif", textTransform: 'uppercase' as const, letterSpacing: 1 }}>
+              Streak Freeze
+            </span>
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--sd-text-muted)' }}>
+            {freezeCount}/{maxFreezes}
+          </span>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {freezeCount}/{maxFreezes}
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        {/* Freeze inventory */}
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           {Array.from({ length: maxFreezes }).map((_, i) => (
             <motion.div
               key={i}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className={`flex-1 h-16 rounded-xl border-2 flex items-center justify-center ${
-                i < freezeCount
-                  ? "bg-cyan-500/20 border-cyan-500/50"
-                  : "bg-muted/30 border-muted-foreground/20"
-              }`}
+              style={{
+                flex: 1,
+                height: 44,
+                borderRadius: 'var(--sd-radius-md, 14px)',
+                border: `1.5px solid ${i < freezeCount ? 'rgba(225,164,92,0.4)' : 'rgba(255,200,140,0.08)'}`,
+                background: i < freezeCount
+                  ? 'linear-gradient(145deg, rgba(225,164,92,0.2), rgba(200,131,73,0.1))'
+                  : 'rgba(15,10,8,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: i < freezeCount ? '0 0 12px rgba(225,164,92,0.15)' : 'none',
+              }}
             >
-              <Snowflake
-                className={`w-8 h-8 ${
-                  i < freezeCount ? "text-cyan-400" : "text-muted-foreground/30"
-                }`}
+              <Shield
+                style={{
+                  width: 22,
+                  height: 22,
+                  color: i < freezeCount ? 'var(--sd-text-accent)' : 'rgba(169,130,106,0.25)',
+                }}
               />
             </motion.div>
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Streak freezes auto-save your streak if you miss a day. Earn 1 per 7-day
-          streak or purchase with tokens.
+        <p style={{ fontSize: 11, color: 'var(--sd-text-muted)', lineHeight: 1.4, marginBottom: 10 }}>
+          Protects your streak if you miss a day. Earn 1 per 7-day streak or buy with XP.
         </p>
 
-        {/* Purchase button */}
         {freezeCount < maxFreezes && (
-          <Button
+          <button
             onClick={() => purchaseMutation.mutate()}
             disabled={purchaseMutation.isPending}
-            size="sm"
-            className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+            style={{
+              width: '100%',
+              padding: '8px 0',
+              borderRadius: 'var(--sd-radius-md, 14px)',
+              border: '1px solid rgba(225,164,92,0.25)',
+              background: 'linear-gradient(145deg, rgba(225,164,92,0.2), rgba(200,131,73,0.15))',
+              color: 'var(--sd-text-accent)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              opacity: purchaseMutation.isPending ? 0.6 : 1,
+            }}
           >
-            <Coins className="w-4 h-4 mr-2" />
-            {purchaseMutation.isPending ? "Purchasing..." : "Buy Freeze (100 tokens)"}
-          </Button>
+            <Coins style={{ width: 14, height: 14 }} />
+            {purchaseMutation.isPending ? "Purchasing..." : "Buy Freeze (250 XP)"}
+          </button>
         )}
       </div>
     </div>
