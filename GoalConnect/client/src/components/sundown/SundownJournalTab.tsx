@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SundownCard } from "./SundownCard";
+import { EmptyState } from "@/components/EmptyState";
 import { WELLNESS_CUPS, parseCups } from "@shared/wellness-cups";
 import type { DreamScrollItem } from "@shared/schema";
 
@@ -105,12 +107,11 @@ export function SundownJournalTab() {
         {/* Items list */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {filteredItems.length === 0 ? (
-            <div style={{
-              padding: "20px 0", fontSize: 13,
-              color: "var(--sd-text-muted)", textAlign: "center",
-            }}>
-              {filter === "all" ? "No dream scroll items yet" : `No items in ${filter}`}
-            </div>
+            <EmptyState
+              icon={Sparkles}
+              title={filter === "all" ? "No dream scroll items yet" : `No items in ${filter}`}
+              description="Add dreams, goals, and wishes to your scroll."
+            />
           ) : (
             filteredItems.map((item) => {
               const cups = parseCups(item.cups);

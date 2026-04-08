@@ -1,5 +1,7 @@
+import { Target } from "lucide-react";
 import { SundownGoalsCard } from "./SundownGoalsCard";
 import { SundownMonthlyGoals } from "./SundownMonthlyGoals";
+import { EmptyState } from "@/components/EmptyState";
 
 interface GoalData {
   id: number;
@@ -14,6 +16,16 @@ interface SundownGoalsTabProps {
 }
 
 export function SundownGoalsTab({ goals }: SundownGoalsTabProps) {
+  if (goals.length === 0) {
+    return (
+      <EmptyState
+        icon={Target}
+        title="No goals yet"
+        description="Set your first yearly goal to start tracking progress."
+      />
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <SundownGoalsCard />
