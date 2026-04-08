@@ -1,6 +1,6 @@
 /**
  * RecentAdventuresWidget
- * Compact widget showing 3-4 most recent outdoor activities (adventures + climbing days) for IcyDash sidebar
+ * Compact widget showing 3-4 most recent outdoor activities (adventures + climbing days) for dashboard sidebar
  */
 
 import { useQuery } from "@tanstack/react-query";

@@ -17,7 +17,6 @@ import ImportSettings from "@/pages/ImportSettings";
 import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
-import IcyDash from "@/pages/IcyDash";
 import SundownDash from "@/pages/SundownDash";
 import Journey from "@/pages/Journey";
 import YearlyGoals from "@/pages/YearlyGoals";
@@ -119,7 +118,7 @@ function AppRoutes() {
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
 
-      {/* Main Dashboard - IcyDash (no MainLayout — has its own nav) */}
+      {/* Main Dashboard - SundownDash (no MainLayout — has its own nav) */}
       <Route path="/">
         <RequireAuth>
           <SundownDash />
