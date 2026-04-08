@@ -19,6 +19,12 @@
 | npm dependencies | 97 production + 35 dev = **132 total** |
 | `node_modules` size | 710 MB |
 | Client source size | 2.5 MB |
+| Distinct background colors | **68** across 3 CSS files |
+| Card/container patterns | **7** with 8 distinct backdrop-filter values |
+| Hardcoded colors in components | **498** (58% of all color usage) |
+| CSS variable colors in components | **362** (42%) |
+| Font families | **7** (CSS: 4, TSX inline: 3 more) |
+| Border-radius values | **34** distinct (benchmark: 3-4) |
 | Background images | **47 files** in `client/public/backgrounds/` (includes PDFs and non-image files mixed in) |
 | Frontend pages | 14 authenticated + 2 auth + 1 404 = **17 routes** |
 | API endpoints | **100+** across 18 route files |
@@ -41,21 +47,18 @@
 
 **Benchmark:** Streaks uses 1 font (SF Pro). Atoms uses 1 font. Finch uses 1 font + 1 display font. **GoalConnect uses 7.**
 
-### 1.2 Border-Radius Values: 18 distinct values
+### 1.2 Border-Radius Values: 34 distinct values
 
-```
-2px, 3px, 8px, 10px, 11px, 12px, 13px, 14px, 16px, 18px, 20px, 24px, 27px, 30px,
-50%, 0.75rem, 1rem, 1.5rem, plus compound values and var(--border-radius)
-```
+Found across CSS + TSX files: 2px, 3px, 8px, 10px, 11px, 12px, 13px, 14px, 16px, 18px, 20px, 24px, 27px, 30px, 50%, 0.75rem, 1rem, 1.5rem, plus 16 compound/contextual values and `var(--border-radius)`.
 
-**Benchmark:** A cohesive design system uses 3-4 radius tokens (small/medium/large/pill). GoalConnect uses 18.
+**Benchmark:** A cohesive design system uses 3-4 radius tokens (small/medium/large/pill). GoalConnect uses **34.**
 
-### 1.3 Color System: 291 hardcoded vs 684 variable
+### 1.3 Color System: 498 hardcoded vs 362 variable (in components)
 
 | Type | Count | Percentage |
 |------|-------|-----------|
-| CSS variable references (`var(--*)`) | 684 | 70% |
-| Hardcoded `rgba()` values in `.tsx` | 291 | 30% |
+| Hardcoded color values (hex/rgb/rgba) in components | **498** | **58%** |
+| CSS variable references (`var(--*)`) in components | 362 | 42% |
 
 **Top hardcoded offenders (most repeated):**
 - `rgba(168, 85, 247, 0.4)` — 7 occurrences (purple, IcyDash-era)
@@ -63,9 +66,23 @@
 - `rgba(249, 115, 22, 0.4)` — 5 occurrences (orange, IcyDash-era)
 - `rgba(225,164,92,0.15)` — 4 occurrences (amber, Sundown)
 
-**291 hardcoded colors means 30% of color usage bypasses the design system.** These will resist any theme change.
+**498 hardcoded colors means 58% of component styling bypasses the design system.** More than half of all color usage will resist any theme change. This is the core reason the app looks like 4 different products.
 
-### 1.4 CSS Files: 3 competing systems
+### 1.4 Card/Container Patterns: 7 distinct systems
+
+| Pattern | Class | CSS File | Backdrop-filter |
+|---------|-------|----------|----------------|
+| Sundown Shell | `.sd-shell` / `.sd-face` / `.sd-tray` | sundown.css | `blur(20px)` |
+| Glass Card | `.glass-card` | enchanted.css | `blur(16px)` |
+| Enchanted Card | `.enchanted-card` | enchanted.css | gradient + glow |
+| Wonderland Card | `.wonderland-card` | enchanted.css | triple-border |
+| Goal Tile | `.sd-goal-tile` / `.sd-goal-tile-inner` | sundown.css | glow variants |
+| Card Grid | `.card-grid` | index.css | none |
+| Card Hover | `.card-hover` | index.css | hover lift |
+
+**8 distinct backdrop-filter values** across these patterns. **Benchmark:** 1 card system.
+
+### 1.5 CSS Files: 3 competing systems
 
 | File | Lines | Purpose | Theme |
 |------|-------|---------|-------|
