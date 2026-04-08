@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useYearlyGoals } from "@/hooks/useYearlyGoals";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { Loader2, Sparkles } from "lucide-react";
 import {
   YearlyGoalsHeader,
@@ -90,11 +90,8 @@ export default function YearlyGoals() {
   };
 
   return (
-    <div className="min-h-screen relative">
-      <ForestBackground />
-
-      {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
+    <SundownPageWrapper title="Yearly Goals" subtitle="Your aspirations for the year">
+      <div className="px-5 md:px-8 pb-24">
         <div className="max-w-4xl mx-auto">
           <YearlyGoalsHeader
             year={year}
@@ -158,6 +155,6 @@ export default function YearlyGoals() {
           )}
         </div>
       </div>
-    </div>
+    </SundownPageWrapper>
   );
 }

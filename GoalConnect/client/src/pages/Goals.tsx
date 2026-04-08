@@ -13,7 +13,7 @@ import { useJourneyGoals } from "@/hooks/useJourneyGoals";
 import { useStravaStats } from "@/hooks/useStravaStats";
 import { useLiftingStats } from "@/hooks/useLiftingStats";
 import { useClimbingStats } from "@/hooks/useClimbingStats";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { Link } from "wouter";
 import { useYearlyGoals } from "@/hooks/useYearlyGoals";
 import { YearlyCategory, CompactGoalGrid } from "@/components/yearly-goals";
@@ -210,32 +210,27 @@ export default function Goals() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen relative">
-        <ForestBackground />
-        <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-          <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
+      <SundownPageWrapper title="Goals">
+        <div className="px-5 md:px-8 pb-24">
+          <div className="max-w-[900px] mx-auto space-y-5">
             {[1, 2, 3].map(i => (
-              <div key={i} className="glass-card frost-accent h-40 animate-pulse"></div>
+              <div key={i} className="sd-shell h-40 animate-pulse"></div>
             ))}
           </div>
         </div>
-      </div>
+      </SundownPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen relative">
-      <ForestBackground />
+    <SundownPageWrapper title="Goals" subtitle="Track your journey to each peak">
+      <div className="px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] mx-auto space-y-5">
 
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
-
-          {/* Header */}
+          {/* Header extras */}
           <header className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="logo-text tracking-wider text-2xl">GOALS</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
-                Track your journey to each peak
+              <p className="text-sm text-[var(--sd-text-muted)] mt-1">
               </p>
             </div>
             <Button
@@ -461,7 +456,7 @@ export default function Goals() {
         onOpenChange={setProgressDialogOpen}
         goal={progressGoal}
       />
-    </div>
+    </SundownPageWrapper>
   );
 }
 

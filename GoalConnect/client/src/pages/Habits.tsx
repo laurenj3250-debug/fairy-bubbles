@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Plus, Flame, Check, X, Calendar, BarChart3 } from "lucide-react";
 import { getToday, cn } from "@/lib/utils";
 import { HabitContributionGraph } from "@/components/HabitContributionGraph";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { Link } from "wouter";
 import {
   Dialog,
@@ -169,20 +169,14 @@ export default function Habits() {
   }, [habits]);
 
   return (
-    <div className="min-h-screen relative">
-      {/* Forest background */}
-      <ForestBackground />
+    <SundownPageWrapper title="Habits" subtitle={`${completedToday}/${totalHabits} completed today`}>
+      <div className="px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] mx-auto space-y-5">
 
-      {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
-
-          {/* Header */}
+          {/* Header extras */}
           <header className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="logo-text tracking-wider text-2xl">HABITS</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
-                {completedToday}/{totalHabits} completed today
+              <p className="text-sm text-[var(--sd-text-muted)] mt-1">
                 {overallStreak > 0 && (
                   <span className="ml-3 inline-flex items-center gap-1">
                     <Flame className="w-4 h-4 text-orange-500" />
@@ -385,6 +379,6 @@ export default function Habits() {
           </p>
         </DialogContent>
       </Dialog>
-    </div>
+    </SundownPageWrapper>
   );
 }

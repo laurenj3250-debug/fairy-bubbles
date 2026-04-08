@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { TodayCompletionStatus } from "@/components/TodayCompletionStatus";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
@@ -191,17 +191,11 @@ export default function Analytics() {
     useYearlyGoals(currentYear);
 
   return (
-    <div className="min-h-screen relative">
-      <ForestBackground />
-
-      {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-6">
-          {/* Header */}
+    <SundownPageWrapper title="Analytics" subtitle="All your data in one place">
+      <div className="px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] mx-auto space-y-6">
           <header className="mb-2">
-            <h1 className="logo-text tracking-wider text-2xl">ANALYTICS</h1>
-            <p className="text-sm text-[var(--text-muted)] mt-1">
-              All your data in one place
+            <p className="text-sm text-[var(--sd-text-muted)] mt-1">
             </p>
           </header>
 
@@ -258,6 +252,6 @@ export default function Analytics() {
           <MoodSection />
         </div>
       </div>
-    </div>
+    </SundownPageWrapper>
   );
 }
