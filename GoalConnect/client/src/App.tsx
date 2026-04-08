@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MainLayout } from "@/components/MainLayout";
-import { ProgressBackground } from "@/components/ProgressBackground";
+// ProgressBackground removed — each page has its own SundownPageWrapper
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -234,11 +234,9 @@ function App() {
           <BackgroundProvider>
             <TooltipProvider>
               <ErrorBoundary fallbackMessage="Page failed to load">
-                <ProgressBackground>
                   <Toaster />
                   <OfflineIndicator />
                   <AppRoutes />
-                </ProgressBackground>
               </ErrorBoundary>
               <style>{`
                 @keyframes spin {
