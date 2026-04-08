@@ -1,0 +1,70 @@
+/* ============================================================================
+   SUNDOWN DESIGN TOKENS — Single Source of Truth
+   All pages use these tokens. Sundown plum-brown desert aesthetic.
+   ============================================================================ */
+
+:root {
+  /* === BACKGROUNDS === */
+  --sd-bg-body: #1a0e10;
+  --sd-bg-deep: #0a0507;
+  --sd-shell-bg: rgba(45, 22, 28, 0.75);
+  --sd-face-bg: rgba(85, 48, 52, 0.35);
+  --sd-tray-bg: rgba(18, 10, 14, 0.5);
+  --sd-goal-shell: rgba(52, 28, 32, 0.6);
+  --sd-goal-face: rgba(85, 48, 50, 0.4);
+
+  /* === TEXT === */
+  --sd-text-primary: #F0DEC7;
+  --sd-text-secondary: #D9B79A;
+  --sd-text-muted: #A9826A;
+  --sd-text-accent: #E1A45C;
+
+  /* === ACCENTS === */
+  --sd-accent: #E1A45C;
+  --sd-accent-dark: #c47a20;
+  --sd-accent-mid: #D08A4F;
+
+  /* === EFFECTS === */
+  --sd-card-shadow: 0 4px 8px rgba(60,30,15,0.3), 0 20px 40px rgba(40,20,10,0.4), 0 40px 80px rgba(20,10,5,0.25);
+  --sd-face-inset: inset 0 1px 0 rgba(255,200,140,0.15), inset 0 -8px 16px rgba(0,0,0,0.2);
+  --sd-tray-inset: inset 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+  --sd-face-blur: 20px;
+
+  /* === RADIUS (4 tokens, replaces 34 values) === */
+  --sd-radius-sm: 8px;
+  --sd-radius-md: 14px;
+  --sd-radius-lg: 20px;
+  --sd-radius-xl: 24px;
+  --sd-shell-radius: 24px;
+  --sd-shell-pad: 4px;
+  --sd-face-radius: 20px;
+
+  /* === TYPOGRAPHY === */
+  --sd-font-heading: 'Cormorant Garamond', Georgia, serif;
+  --sd-font-body: 'Source Sans 3', system-ui, sans-serif;
+
+  /* === TAILWIND HSL BRIDGE ===
+     These map Sundown values to Tailwind's HSL variable system
+     so Radix UI + Tailwind utility classes use Sundown colors */
+  --background: 330 35% 6%;           /* #1a0e10 (sd-bg-body) */
+  --foreground: 30 38% 87%;           /* #F0DEC7 (sd-text-primary) */
+  --card: 330 30% 10%;                /* plum-brown card bg */
+  --card-foreground: 30 38% 87%;
+  --primary: 32 70% 62%;              /* #E1A45C (sd-accent) */
+  --primary-foreground: 330 35% 6%;
+  --secondary: 330 20% 20%;           /* muted plum */
+  --secondary-foreground: 30 38% 87%;
+  --accent: 32 70% 62%;               /* sd-accent */
+  --accent-foreground: 330 35% 6%;
+  --success: 32 50% 45%;              /* warm amber success */
+  --success-foreground: 30 38% 87%;
+  --warning: 32 70% 62%;              /* amber warning */
+  --warning-foreground: 330 35% 6%;
+  --destructive: 0 50% 45%;           /* muted red */
+  --destructive-foreground: 0 0% 100%;
+  --border: 330 15% 18%;              /* subtle plum border */
+  --input: 330 15% 14%;
+  --ring: 32 70% 62%;                 /* amber ring */
+  --muted: 330 15% 12%;               /* dark plum muted */
+  --muted-foreground: 30 25% 55%;     /* warm muted text */
+}

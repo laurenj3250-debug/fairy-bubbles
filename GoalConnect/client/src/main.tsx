@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import "./styles/enchanted.css"; // V5 luxury journal styles
+import "./styles/sundown-tokens.css"; // Unified Sundown design tokens (overrides index.css HSL vars)
 import './sundown.css';
 
 // Unregister any existing service workers to prevent caching issues
