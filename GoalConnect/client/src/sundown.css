@@ -267,8 +267,8 @@
 
 /* ===== HABIT GRID — Candlelight Grid ===== */
 .sd-habit-grid {
-  display: grid; grid-template-columns: 150px repeat(7, 1fr);
-  column-gap: 4px; row-gap: 6px; align-items: center;
+  display: grid; grid-template-columns: 150px repeat(7, minmax(44px, 1fr));
+  column-gap: 2px; row-gap: 6px; align-items: center;
 }
 .sd-day-hdr {
   text-align: center; font-size: 9px; font-weight: 600;
@@ -288,7 +288,7 @@
   filter: drop-shadow(0 0 3px rgba(225,164,92,0.2));
 }
 .sd-star-dot {
-  width: 30px; height: 30px; border-radius: 10px; margin: 0 auto;
+  width: 44px; height: 44px; border-radius: 14px; margin: 0 auto;
   display: flex; align-items: center; justify-content: center;
   position: relative; cursor: pointer; border: none; padding: 0;
 }
@@ -310,7 +310,7 @@
   animation: sd-candlelight-breathe 5s ease-in-out infinite;
 }
 .sd-star-dot.done::after {
-  content: ''; position: absolute; inset: -3px; border-radius: 13px;
+  content: ''; position: absolute; inset: -4px; border-radius: 18px;
   background: radial-gradient(circle, rgba(225,164,92,0.08), transparent 70%);
 }
 .sd-star-dot.today-ring {

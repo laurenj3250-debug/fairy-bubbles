@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Flame } from "lucide-react";
 import { SundownStardustTrail } from "./SundownStardustTrail";
 import { HabitIcon } from "./sundown-icons";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Habit {
   id: number;
@@ -139,18 +141,20 @@ function TodayView({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {habits.length === 0 && (
-        <div style={{ padding: '24px 0', fontSize: 13, color: 'var(--sd-text-muted)', textAlign: 'center' }}>
-          No habits yet
-        </div>
+        <EmptyState
+          icon={Flame}
+          title="No habits yet"
+          description="Add your first habit to start building streaks and earning XP."
+        />
       )}
       {habits.map((habit) => {
         const isDone = logMap.get(`${habit.id}:${todayDate}`) === true;
         const streak = streakMap.get(habit.id) ?? 0;
 
         const toggleStyles: React.CSSProperties = {
-          width: 32,
-          height: 32,
-          borderRadius: 10,
+          width: 44,
+          height: 44,
+          borderRadius: 14,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
