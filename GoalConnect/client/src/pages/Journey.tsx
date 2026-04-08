@@ -6,7 +6,7 @@ import { useClimbingStats } from "@/hooks/useClimbingStats";
 import { useStravaClimbingActivities } from "@/hooks/useStravaClimbingActivities";
 import { useClimbingLog } from "@/hooks/useClimbingLog";
 import { CyclingTab, LiftingTab, ClimbingTab } from "@/components/journey";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 
 type ActivityTab = "cycling" | "lifting" | "climbing";
 
@@ -30,39 +30,31 @@ export default function Journey() {
   };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Forest background */}
-      <ForestBackground />
-
-      {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="logo-text tracking-wider text-2xl">JOURNEY</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
-                Track your athletic progress
-              </p>
-            </div>
-            {/* Tab Selector */}
-            <div className="glass-card frost-accent p-1 inline-flex gap-1">
+    <SundownPageWrapper title="Journey" subtitle="Track your athletic progress">
+      <div className="px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] mx-auto space-y-5">
+          {/* Tab Selector */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <div className="sd-shell" style={{ padding: 3, display: 'inline-flex', gap: 2 }}>
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200",
                     activeTab === tab.id
-                      ? "bg-peach-400 text-white"
-                      : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                      ? "text-[var(--sd-bg-deep)]"
+                      : "text-[var(--sd-text-muted)] hover:text-[var(--sd-text-primary)]"
                   )}
+                  style={activeTab === tab.id ? {
+                    background: 'linear-gradient(145deg, rgba(225,164,92,0.9), rgba(200,131,73,0.8))',
+                  } : {}}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-          </header>
+          </div>
 
           {/* Tab Content */}
           <div className="space-y-5">
@@ -106,6 +98,6 @@ export default function Journey() {
           </div>
         </div>
       </div>
-    </div>
+    </SundownPageWrapper>
   );
 }
