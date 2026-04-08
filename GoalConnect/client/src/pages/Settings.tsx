@@ -3,7 +3,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Mountain, Lock, Check, Download, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
-import { ForestBackground } from "@/components/ForestBackground";
+import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 
 interface MountainBackground {
   id: number;
@@ -43,30 +43,17 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Forest background */}
-      <ForestBackground />
-
-      {/* Main content */}
-      <div className="relative z-10 px-5 md:px-8 pb-24 pt-8">
-        <div className="max-w-[900px] ml-0 md:ml-[188px] space-y-5">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="logo-text tracking-wider text-2xl">SETTINGS</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
-                Customize your experience
-              </p>
-            </div>
-          </header>
+    <SundownPageWrapper title="Settings" subtitle="Customize your experience">
+      <div className="px-5 md:px-8 pb-24">
+        <div className="max-w-[900px] mx-auto space-y-5">
 
           {/* Import Data Link */}
           <Link href="/settings/import">
-            <div className="glass-card frost-accent p-4 cursor-pointer transition-all hover:scale-[1.01] mb-5">
+            <div className="sd-shell cursor-pointer transition-all hover:scale-[1.01] mb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-peach-400/20">
-                    <Download className="w-6 h-6 text-peach-400" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[rgba(225,164,92,0.15)]">
+                    <Download className="w-6 h-6 text-[var(--sd-text-accent)]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg text-white">Import Data</h3>
@@ -81,9 +68,9 @@ export default function Settings() {
           </Link>
 
           {/* Unlocked Backgrounds */}
-          <div className="glass-card frost-accent p-5 mb-5">
+          <div className="sd-shell mb-5">
             <div className="flex items-center gap-2 mb-2">
-              <Mountain className="w-5 h-5 text-peach-400" />
+              <Mountain className="w-5 h-5 text-[var(--sd-text-accent)]" />
               <span className="card-title">Unlocked Backgrounds</span>
             </div>
             <p className="text-sm text-[var(--text-muted)] mb-4">
@@ -175,7 +162,7 @@ export default function Settings() {
 
           {/* Locked Backgrounds */}
           {lockedBackgrounds.length > 0 && (
-            <div className="glass-card frost-accent p-5">
+            <div className="sd-shell">
               <div className="flex items-center gap-2 mb-2">
                 <Lock className="w-5 h-5 text-[var(--text-muted)]" />
                 <span className="card-title">Locked Backgrounds</span>
@@ -228,6 +215,6 @@ export default function Settings() {
           )}
         </div>
       </div>
-    </div>
+    </SundownPageWrapper>
   );
 }
