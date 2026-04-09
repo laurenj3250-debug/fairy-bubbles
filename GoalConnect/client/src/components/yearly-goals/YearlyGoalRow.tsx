@@ -109,7 +109,7 @@ export function YearlyGoalRow({
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all",
               expanded
-                ? "bg-peach-400/10 ring-1 ring-peach-400/30 text-peach-400"
+                ? "bg-[rgba(225,164,92,0.8)]/10 ring-1 ring-peach-400/30 text-[var(--sd-text-accent)]"
                 : "bg-white/5 ring-1 ring-white/10 hover:ring-white/20 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             )}
           >
@@ -126,7 +126,7 @@ export function YearlyGoalRow({
               "w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0",
               goal.isCompleted
                 ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                : "bg-peach-400/10 text-peach-400 ring-1 ring-peach-400/30"
+                : "bg-[rgba(225,164,92,0.8)]/10 text-[var(--sd-text-accent)] ring-1 ring-peach-400/30"
             )}
           >
             {goal.isCompleted ? (
@@ -165,7 +165,7 @@ export function YearlyGoalRow({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500 ease-out",
-                    goal.isCompleted ? "bg-emerald-400" : "bg-peach-400"
+                    goal.isCompleted ? "bg-emerald-400" : "bg-[rgba(225,164,92,0.8)]"
                   )}
                   style={{ width: `${goal.progressPercent}%` }}
                 />
@@ -231,8 +231,8 @@ export function YearlyGoalRow({
               disabled={isClaimingReward}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
-                "bg-peach-400/20 hover:bg-peach-400/30",
-                "text-peach-400 text-sm font-medium",
+                "bg-[rgba(225,164,92,0.8)]/20 hover:bg-[rgba(225,164,92,0.8)]/30",
+                "text-[var(--sd-text-accent)] text-sm font-medium",
                 "ring-1 ring-peach-400/30",
                 "animate-pulse"
               )}

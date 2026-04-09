@@ -87,7 +87,7 @@ export function AdventureModal({
       onClick={() => !isSubmitting && onClose()}
     >
       <div
-        className="glass-card frost-accent w-full max-w-md p-6 space-y-4"
+        className="sd-shell w-full max-w-md p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -176,7 +176,7 @@ export function AdventureModal({
           <button
             type="submit"
             disabled={!activity.trim() || isSubmitting}
-            className="w-full py-2.5 bg-peach-500 hover:bg-peach-600 disabled:bg-peach-500/50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-peach-500 hover:bg-peach-600 disabled:bg-peach-500/50 text-[var(--sd-text-primary)] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

@@ -25,7 +25,7 @@ import {
 // ---------------------------------------------------------------------------
 function SectionSkeleton() {
   return (
-    <div className="glass-card frost-accent p-4 space-y-3">
+    <div className="sd-shell p-4 space-y-3">
       <Skeleton className="h-4 w-32 rounded" />
       <Skeleton className="h-48 w-full rounded-xl" />
     </div>
@@ -45,8 +45,8 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="glass-card frost-accent p-4 text-center">
-      <p className="text-2xl font-heading text-peach-400">{value}</p>
+    <div className="sd-shell p-4 text-center">
+      <p className="text-2xl font-heading text-[var(--sd-text-accent)]">{value}</p>
       <p className="text-xs text-[var(--text-muted)] mt-1">{label}</p>
       {sub && (
         <p className="text-[10px] text-[var(--text-muted)] opacity-60 mt-0.5">
@@ -71,13 +71,13 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h2 className="flex items-center gap-2 text-sm font-heading text-white/90">
-        <Icon className="w-4 h-4 text-peach-400" />
+      <h2 className="flex items-center gap-2 text-sm font-heading text-[var(--sd-text-primary)]/90">
+        <Icon className="w-4 h-4 text-[var(--sd-text-accent)]" />
         {title}
       </h2>
       {href && (
         <Link href={href}>
-          <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-peach-400 transition-colors cursor-pointer">
+          <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--sd-text-accent)] transition-colors cursor-pointer">
             View details <ArrowRight className="w-3 h-3" />
           </span>
         </Link>

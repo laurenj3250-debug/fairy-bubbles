@@ -56,7 +56,7 @@ export default function Settings() {
                     <Download className="w-6 h-6 text-[var(--sd-text-accent)]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-white">Import Data</h3>
+                    <h3 className="font-semibold text-lg text-[var(--sd-text-primary)]">Import Data</h3>
                     <p className="text-sm text-[var(--text-muted)]">
                       Connect Apple Health, Kilter Board & more
                     </p>
@@ -81,7 +81,7 @@ export default function Settings() {
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-48 bg-slate-700/30 animate-pulse rounded-xl" />
+                  <div key={i} className="h-48 bg-[rgba(45,22,28,0.3)] animate-pulse rounded-xl" />
                 ))}
               </div>
             ) : unlockedBackgrounds.length === 0 ? (
@@ -119,7 +119,7 @@ export default function Settings() {
 
                       {/* Active Badge */}
                       {bg.isActive && (
-                        <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 text-white shadow-lg" style={{
+                        <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 text-[var(--sd-text-primary)] shadow-lg" style={{
                           background: 'hsl(var(--accent))'
                         }}>
                           <Check className="w-3 h-3" />
@@ -129,8 +129,8 @@ export default function Settings() {
 
                       {/* Mountain Info */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-bold text-lg mb-1">{bg.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <h3 className="text-[var(--sd-text-primary)] font-bold text-lg mb-1">{bg.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-[var(--sd-text-secondary)]">
                           <span>{bg.elevation.toLocaleString()}m</span>
                           <span>•</span>
                           <span>{bg.country}</span>
@@ -147,7 +147,7 @@ export default function Settings() {
                         background: 'transparent'
                       }} onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--primary) / 0.1)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-semibold text-white shadow-lg" style={{
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-semibold text-[var(--sd-text-primary)] shadow-lg" style={{
                           background: 'hsl(var(--primary) / 0.9)'
                         }}>
                           Select
@@ -188,7 +188,7 @@ export default function Settings() {
                       {/* Lock Icon */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="rounded-full p-4 backdrop-blur-sm bg-black/40">
-                          <Lock className="w-8 h-8 text-white/40" />
+                          <Lock className="w-8 h-8 text-[var(--sd-text-primary)]/40" />
                         </div>
                       </div>
 

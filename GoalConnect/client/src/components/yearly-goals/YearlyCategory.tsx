@@ -45,7 +45,7 @@ export function YearlyCategory({
 
   return (
     <div className={cn(
-      "glass-card frost-accent overflow-hidden",
+      "sd-shell overflow-hidden",
       isComplete && "ring-1 ring-emerald-500/30"
     )}>
       {/* Category header - simplified */}

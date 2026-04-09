@@ -815,10 +815,10 @@ export default function ImportSettings() {
                         {stravaStats.strava.allTime.rides.distanceKm.toFixed(0)} km
                       </p>
                     </div>
-                    <div className="text-center p-4 bg-cyan-500/20 rounded-lg">
+                    <div className="text-center p-4 bg-[rgba(225,164,92,0.3)]/20 rounded-lg">
                       <p className="text-2xl font-bold">{stravaStats.strava.allTime.swims.count}</p>
                       <p className="text-sm text-muted-foreground">Swims</p>
-                      <p className="text-xs text-cyan-400">
+                      <p className="text-xs text-[var(--sd-text-accent)]">
                         {stravaStats.strava.allTime.swims.distanceKm.toFixed(0)} km
                       </p>
                     </div>

@@ -115,7 +115,7 @@ export function ClimbingTab({
         >
           🧗
         </motion.div>
-        <div className="text-xl font-semibold text-white">Connect Kilter Board</div>
+        <div className="text-xl font-semibold text-[var(--sd-text-primary)]">Connect Kilter Board</div>
         <div className="text-sm text-muted-foreground text-center max-w-sm">
           Link your Kilter Board account to unlock personality insights, session history, and fun stats
         </div>
@@ -132,7 +132,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "col-span-4 glass-card rounded-xl p-5 flex items-center gap-5 relative overflow-hidden bg-card/80 backdrop-blur-xl",
+          "col-span-4 sd-shell rounded-xl p-5 flex items-center gap-5 relative overflow-hidden bg-card/80 backdrop-blur-xl",
           displayInfo && `bg-gradient-to-br ${displayInfo.bgGradient}`
         )}
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
@@ -163,7 +163,7 @@ export function ClimbingTab({
               >
                 {displayInfo.displayName}
               </div>
-              <div className="text-sm text-white/70 mt-1 line-clamp-1">
+              <div className="text-sm text-[var(--sd-text-primary)]/70 mt-1 line-clamp-1">
                 {personality?.tagline}
               </div>
 
@@ -175,7 +175,7 @@ export function ClimbingTab({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 * i }}
-                    className="px-2 py-0.5 text-[10px] rounded-full bg-white/10 text-white/80 border border-white/5"
+                    className="px-2 py-0.5 text-[10px] rounded-full bg-white/10 text-[var(--sd-text-primary)]/80 border border-white/5"
                   >
                     {trait}
                   </motion.span>
@@ -200,7 +200,7 @@ export function ClimbingTab({
         ) : (
           <div className="flex-1 text-center py-4">
             <div className="text-5xl mb-3">🔮</div>
-            <div className="text-white/80 font-medium">
+            <div className="text-[var(--sd-text-primary)]/80 font-medium">
               Unlock your personality
             </div>
             <div className="text-sm text-muted-foreground/70 mt-1">
@@ -222,7 +222,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="col-span-2 glass-card rounded-xl p-4 flex flex-col justify-center bg-card/80 backdrop-blur-xl relative overflow-hidden"
+        className="col-span-2 sd-shell rounded-xl p-4 flex flex-col justify-center bg-card/80 backdrop-blur-xl relative overflow-hidden"
       >
         {/* Subtle gradient accent */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-500/20 to-transparent rounded-bl-full" />
@@ -240,8 +240,8 @@ export function ClimbingTab({
             <span className="text-muted-foreground/60 text-xs">sends</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Target className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-cyan-400 font-medium">{kilterStats?.totalSessions ?? 0}</span>
+            <Target className="w-3.5 h-3.5 text-[var(--sd-text-accent)]" />
+            <span className="text-[var(--sd-text-accent)] font-medium">{kilterStats?.totalSessions ?? 0}</span>
             <span className="text-muted-foreground/60 text-xs">sessions</span>
           </div>
         </div>
@@ -254,7 +254,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+        className="col-span-2 sd-shell rounded-xl p-4 bg-card/80 backdrop-blur-xl"
       >
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-3">
           Milestones
@@ -278,7 +278,7 @@ export function ClimbingTab({
               </span>
               <span className={cn(
                 "text-[11px] font-medium",
-                m.achieved ? "text-white" : "text-muted-foreground"
+                m.achieved ? "text-[var(--sd-text-primary)]" : "text-muted-foreground"
               )}>
                 {m.label}
               </span>
@@ -292,7 +292,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+        className="col-span-2 sd-shell rounded-xl p-4 bg-card/80 backdrop-blur-xl"
       >
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
           Grade Pyramid
@@ -324,7 +324,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="col-span-2 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+        className="col-span-2 sd-shell rounded-xl p-4 bg-card/80 backdrop-blur-xl"
       >
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
           Angle Performance
@@ -333,7 +333,7 @@ export function ClimbingTab({
           {angleLabels.map(({ key, icon, range }) => (
             <div key={key} className="text-center py-2 rounded-lg bg-white/5">
               <div className="text-lg mb-0.5">{icon}</div>
-              <div className="text-lg font-bold text-cyan-400 tabular-nums">
+              <div className="text-lg font-bold text-[var(--sd-text-accent)] tabular-nums">
                 {anglePerformance[key] ?? 0}
               </div>
               <div className="text-[10px] text-muted-foreground">{key}</div>
@@ -350,7 +350,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
+        className="col-span-3 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
       >
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
@@ -384,7 +384,7 @@ export function ClimbingTab({
                 <div className="text-[9px] text-muted-foreground">{climb.angle}°</div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate text-white/90">{climb.name}</div>
+                <div className="text-sm font-medium truncate text-[var(--sd-text-primary)]/90">{climb.name}</div>
                 <div className="text-[10px] text-muted-foreground">
                   {climb.attempts === 1 ? (
                     <span className="text-emerald-400">⚡ Flash</span>
@@ -408,7 +408,7 @@ export function ClimbingTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="col-span-3 glass-card rounded-xl p-4 bg-card/80 backdrop-blur-xl"
+        className="col-span-3 sd-shell rounded-xl p-4 bg-card/80 backdrop-blur-xl"
       >
         <SessionCalendar
           sessions={kilterStats?.sessions ?? []}

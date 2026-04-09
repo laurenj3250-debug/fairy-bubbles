@@ -180,7 +180,7 @@ export default function Habits() {
                 {overallStreak > 0 && (
                   <span className="ml-3 inline-flex items-center gap-1">
                     <Flame className="w-4 h-4 text-orange-500" />
-                    <span className="text-peach-400">{overallStreak}</span> day streak
+                    <span className="text-[var(--sd-text-accent)]">{overallStreak}</span> day streak
                   </span>
                 )}
               </p>
@@ -191,7 +191,7 @@ export default function Habits() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full px-3 py-2 text-[var(--text-muted)] hover:text-peach-400 transition-all"
+                  className="rounded-full px-3 py-2 text-[var(--text-muted)] hover:text-[var(--sd-text-accent)] transition-all"
                 >
                   <BarChart3 className="w-4 h-4 mr-1.5" />
                   Insights
@@ -202,7 +202,7 @@ export default function Habits() {
                   setEditingHabit(undefined);
                   setHabitDialogOpen(true);
                 }}
-                className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
+                className="rounded-full px-5 py-2 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] text-[var(--sd-text-primary)] transition-all hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Habit
@@ -212,7 +212,7 @@ export default function Habits() {
 
           {/* Contribution Graph */}
           {habits.length > 0 && contributionData.length > 0 && (
-            <div className="glass-card frost-accent p-4">
+            <div className="sd-shell p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="card-title">Activity Overview</span>
                 <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function Habits() {
                     max={today}
                     value={backfillDate || ""}
                     onChange={(e) => setBackfillDate(e.target.value || null)}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-peach-400/50"
+                    className="px-3 py-1.5 text-sm rounded-lg bg-white/10 border border-white/20 text-[var(--sd-text-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(225,164,92,0.4)]"
                   />
                 </div>
               </div>
@@ -246,9 +246,9 @@ export default function Habits() {
               <div className="w-8 h-8 border-4 border-white/20 border-t-peach-400 rounded-full animate-spin" />
             </div>
           ) : habits.length === 0 ? (
-            <div className="glass-card frost-accent p-12 text-center">
+            <div className="sd-shell p-12 text-center">
               <div className="text-6xl mb-4">🎯</div>
-              <h2 className="text-xl font-semibold text-white mb-2">No habits yet</h2>
+              <h2 className="text-xl font-semibold text-[var(--sd-text-primary)] mb-2">No habits yet</h2>
               <p className="text-[var(--text-muted)] mb-6">
                 Start building better habits today
               </p>
@@ -257,7 +257,7 @@ export default function Habits() {
                   setEditingHabit(undefined);
                   setHabitDialogOpen(true);
                 }}
-                className="rounded-full px-6 py-3 bg-peach-400 hover:bg-peach-500 text-white"
+                className="rounded-full px-6 py-3 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] text-[var(--sd-text-primary)]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Habit

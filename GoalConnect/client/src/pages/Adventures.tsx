@@ -51,7 +51,7 @@ export default function Adventures() {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               activeTab === "adventures"
-                ? "bg-peach-500/20 text-peach-400 border border-peach-500/30"
+                ? "bg-[rgba(225,164,92,0.15)] text-[var(--sd-text-accent)] border border-[rgba(225,164,92,0.25)]"
                 : "bg-white/5 text-[var(--text-muted)] border border-white/10 hover:bg-white/10"
             )}
           >
@@ -163,10 +163,10 @@ function AdventuresTab({ year }: { year: string }) {
   return (
     <>
       {/* Stats header */}
-      <div className="glass-card frost-accent p-4 flex items-center justify-between">
+      <div className="sd-shell p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-peach-500/20 flex items-center justify-center">
-            <Mountain className="w-5 h-5 text-peach-400" />
+          <div className="w-10 h-10 rounded-full bg-[rgba(225,164,92,0.15)] flex items-center justify-center">
+            <Mountain className="w-5 h-5 text-[var(--sd-text-accent)]" />
           </div>
           <div>
             <div className="text-lg font-bold text-[var(--text-primary)]">
@@ -179,7 +179,7 @@ function AdventuresTab({ year }: { year: string }) {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-peach-500 hover:bg-peach-600 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Adventure
@@ -189,10 +189,10 @@ function AdventuresTab({ year }: { year: string }) {
       {/* Photo Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-peach-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[var(--sd-text-accent)] animate-spin" />
         </div>
       ) : adventures.length === 0 ? (
-        <div className="glass-card frost-accent p-12 text-center">
+        <div className="sd-shell p-12 text-center">
           <Mountain className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
             No adventures yet
@@ -202,7 +202,7 @@ function AdventuresTab({ year }: { year: string }) {
           </p>
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-peach-500/20 text-peach-400 rounded-lg text-sm font-medium hover:bg-peach-500/30 transition-colors"
+            className="px-4 py-2 bg-[rgba(225,164,92,0.15)] text-[var(--sd-text-accent)] rounded-lg text-sm font-medium hover:bg-[rgba(225,164,92,0.25)] transition-colors"
           >
             Add your first adventure
           </button>
@@ -250,7 +250,7 @@ function AdventureCard({
 }) {
   return (
     <div
-      className="group relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-peach-500/30 transition-colors cursor-pointer"
+      className="group relative aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[rgba(225,164,92,0.25)] transition-colors cursor-pointer"
       onClick={onEdit}
     >
       {/* Photo or placeholder */}
@@ -262,7 +262,7 @@ function AdventureCard({
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-peach-500/10 to-orange-500/10">
-          <Camera className="w-8 h-8 text-peach-400/50" />
+          <Camera className="w-8 h-8 text-[var(--sd-text-accent)]/50" />
         </div>
       )}
 
@@ -379,7 +379,7 @@ function AdventureModal({
       onClick={onClose}
     >
       <div
-        className="glass-card frost-accent w-full max-w-md p-6 space-y-4"
+        className="sd-shell w-full max-w-md p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -468,7 +468,7 @@ function AdventureModal({
           <button
             type="submit"
             disabled={!activity.trim() || isSubmitting}
-            className="w-full py-2.5 bg-peach-500 hover:bg-peach-600 disabled:bg-peach-500/50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] disabled:bg-[rgba(225,164,92,0.4)] text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -558,7 +558,7 @@ function TimelineTab({ year }: { year: string }) {
 
   if (error) {
     return (
-      <div className="glass-card frost-accent p-12 text-center">
+      <div className="sd-shell p-12 text-center">
         <Mountain className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
           Failed to load adventures
@@ -573,7 +573,7 @@ function TimelineTab({ year }: { year: string }) {
   return (
     <>
       {/* Stats header with Add button */}
-      <div className="glass-card frost-accent p-4 flex items-center justify-between mb-4">
+      <div className="sd-shell p-4 flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
             <Clock className="w-5 h-5 text-amber-400" />
@@ -698,7 +698,7 @@ function BirdsTab({ year }: { year: string }) {
   return (
     <>
       {/* Stats header */}
-      <div className="glass-card frost-accent p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="sd-shell p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center">
             <Bird className="w-5 h-5 text-sky-400" />
@@ -757,7 +757,7 @@ function BirdsTab({ year }: { year: string }) {
           <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
         </div>
       ) : birds.length === 0 ? (
-        <div className="glass-card frost-accent p-12 text-center">
+        <div className="sd-shell p-12 text-center">
           <Bird className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
             {search ? "No species found" : "Life list empty"}
@@ -946,7 +946,7 @@ function BirdModal({
       onClick={onClose}
     >
       <div
-        className="glass-card frost-accent w-full max-w-md p-6 space-y-4"
+        className="sd-shell w-full max-w-md p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">

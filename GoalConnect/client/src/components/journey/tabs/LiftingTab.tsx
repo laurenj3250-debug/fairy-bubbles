@@ -207,7 +207,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: Lif
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-card/80 to-orange-900/20 backdrop-blur-xl"
+        className="col-span-2 sd-shell rounded-xl p-4 flex flex-col relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-card/80 to-orange-900/20 backdrop-blur-xl"
         style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.5)" }}
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
@@ -247,7 +247,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: Lif
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="col-span-4 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
+        className="col-span-4 row-span-1 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
@@ -346,7 +346,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: Lif
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="col-span-2 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
+        className="col-span-2 row-span-1 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
       >
         {/* Goal Ring */}
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-3">
@@ -429,7 +429,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: Lif
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
+        className="col-span-3 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl"
       >
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
           <Weight className="w-3 h-3 text-purple-400" />
@@ -462,7 +462,7 @@ export function LiftingTab({ yearlyWorkoutsGoal, onUpdateGoal, isUpdating }: Lif
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="col-span-3 glass-card rounded-xl p-4 flex items-center justify-between bg-gradient-to-r from-purple-900/20 via-card/80 to-orange-900/20 backdrop-blur-xl"
+        className="col-span-3 sd-shell rounded-xl p-4 flex items-center justify-between bg-gradient-to-r from-purple-900/20 via-card/80 to-orange-900/20 backdrop-blur-xl"
       >
         <div className="flex items-center gap-2">
           <Button

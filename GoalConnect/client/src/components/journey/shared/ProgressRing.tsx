@@ -11,14 +11,14 @@ interface ProgressRingProps {
 
 export function ProgressRing({ percent, goal, current, ahead, unit = "mi", color = "cyan" }: ProgressRingProps) {
   const colors = {
-    cyan: { stroke: "#06b6d4", text: "text-cyan-400", shadow: "rgba(6, 182, 212, 0.4)" },
+    cyan: { stroke: "#06b6d4", text: "text-[var(--sd-text-accent)]", shadow: "rgba(6, 182, 212, 0.4)" },
     purple: { stroke: "#a855f7", text: "text-purple-400", shadow: "rgba(168, 85, 247, 0.4)" },
     orange: { stroke: "#f97316", text: "text-orange-400", shadow: "rgba(249, 115, 22, 0.4)" },
   };
   const c = colors[color];
 
   return (
-    <div className="col-span-2 glass-card rounded-2xl p-4 flex gap-4 bg-card/70 backdrop-blur-xl">
+    <div className="col-span-2 sd-shell rounded-2xl p-4 flex gap-4 bg-card/70 backdrop-blur-xl">
       <div className="w-[90px] h-[90px] relative flex-shrink-0" style={{ filter: `drop-shadow(0 0 12px ${c.shadow})` }}>
         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
           <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />

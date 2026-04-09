@@ -43,32 +43,32 @@ export function MonthlyGoalsWidget() {
     <div className="bg-card/40 backdrop-blur-sm border border-card-border rounded-3xl p-5 shadow-lg topo-pattern" style={{ animationDelay: '1.5s' }}>
       <div className="flex items-center justify-between mb-4">
         <h3
-          className="text-sm font-bold text-white flex items-center gap-2"
+          className="text-sm font-bold text-[var(--sd-text-primary)] flex items-center gap-2"
           style={{ fontFamily: "'Comfortaa', cursive" }}
         >
-          <CalendarDays className="w-4 h-4 text-cyan-400" />
+          <CalendarDays className="w-4 h-4 text-[var(--sd-text-accent)]" />
           {monthDates.monthName.split(' ')[0]}
         </h3>
-        <Badge className="bg-cyan-500/20 text-cyan-200 border-cyan-400/30 text-xs">
+        <Badge className="bg-[rgba(225,164,92,0.15)] text-cyan-200 border-cyan-400/30 text-xs">
           {monthlyGoals.length} goals
         </Badge>
       </div>
 
       {monthlyGoals.length === 0 ? (
         <div className="text-center py-4">
-          <p className="text-xs text-white/60">No goals this month</p>
+          <p className="text-xs text-[var(--sd-text-primary)]/60">No goals this month</p>
         </div>
       ) : (
         <>
           {/* Summary Stats */}
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
-              <div className="text-lg font-bold text-white">{completedGoals}</div>
-              <div className="text-xs text-white/70">Completed</div>
+              <div className="text-lg font-bold text-[var(--sd-text-primary)]">{completedGoals}</div>
+              <div className="text-xs text-[var(--sd-text-primary)]/70">Completed</div>
             </div>
             <div className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
-              <div className="text-lg font-bold text-white">{monthlyGoals.length - completedGoals}</div>
-              <div className="text-xs text-white/70">In Progress</div>
+              <div className="text-lg font-bold text-[var(--sd-text-primary)]">{monthlyGoals.length - completedGoals}</div>
+              <div className="text-xs text-[var(--sd-text-primary)]/70">In Progress</div>
             </div>
           </div>
 
@@ -86,11 +86,11 @@ export function MonthlyGoalsWidget() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={cn(
                       "text-xs font-medium truncate flex-1 mr-2",
-                      isComplete ? "text-green-300" : "text-white/90"
+                      isComplete ? "text-green-300" : "text-[var(--sd-text-primary)]/90"
                     )}>
                       {goal.title}
                     </span>
-                    <span className="text-xs font-bold text-white flex-shrink-0">
+                    <span className="text-xs font-bold text-[var(--sd-text-primary)] flex-shrink-0">
                       {progress}%
                     </span>
                   </div>
@@ -107,7 +107,7 @@ export function MonthlyGoalsWidget() {
               );
             })}
             {monthlyGoals.length > 3 && (
-              <p className="text-xs text-white/60 text-center pt-1">
+              <p className="text-xs text-[var(--sd-text-primary)]/60 text-center pt-1">
                 +{monthlyGoals.length - 3} more goals
               </p>
             )}

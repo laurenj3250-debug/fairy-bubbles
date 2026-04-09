@@ -108,9 +108,9 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <Target className="w-5 h-5 text-cyan-300" />
+              <Target className="w-5 h-5 text-[var(--sd-text-accent)]" />
               <h3
-                className="text-lg font-bold text-white"
+                className="text-lg font-bold text-[var(--sd-text-primary)]"
                 style={{
                   fontFamily: "'Comfortaa', cursive",
                   textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
@@ -123,10 +123,10 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
             {/* Progress */}
             <div className="mb-2">
               <div className="flex justify-between mb-1">
-                <span className="text-white/80 text-sm font-medium">
+                <span className="text-[var(--sd-text-primary)]/80 text-sm font-medium">
                   {goal.currentValue}/{goal.targetValue} {goal.unit}
                 </span>
-                <span className="text-white/80 text-sm font-bold">
+                <span className="text-[var(--sd-text-primary)]/80 text-sm font-bold">
                   {percentage}%
                 </span>
               </div>
@@ -160,8 +160,8 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                 </>
               ) : (
                 <>
-                  <AlertCircle className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="text-cyan-400 text-xs font-medium">
+                  <AlertCircle className="w-3.5 h-3.5 text-[var(--sd-text-accent)]" />
+                  <span className="text-[var(--sd-text-accent)] text-xs font-medium">
                     Need {Math.ceil(rateNeeded)}/day • {daysLeft}d left
                   </span>
                 </>
@@ -169,7 +169,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
             </div>
 
             {goal.description && (
-              <p className="text-xs text-white/60 mb-2 line-clamp-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+              <p className="text-xs text-[var(--sd-text-primary)]/60 mb-2 line-clamp-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>
                 {goal.description}
               </p>
             )}
@@ -196,14 +196,14 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
               onClick={() => setIsExpanded(!isExpanded)}
               className="w-full flex items-center justify-between mb-2 text-left"
             >
-              <h4 className="text-xs font-semibold text-white/70 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-[var(--sd-text-primary)]/70 flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5" />
                 Habits ({linkedHabits.length})
               </h4>
               {isExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-white/50" />
+                <ChevronUp className="w-3.5 h-3.5 text-[var(--sd-text-primary)]/50" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-white/50" />
+                <ChevronDown className="w-3.5 h-3.5 text-[var(--sd-text-primary)]/50" />
               )}
             </button>
 
@@ -226,10 +226,10 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                           {habit.icon}
                         </div>
                         <div className="flex-1">
-                          <div className="text-xs font-medium text-white">
+                          <div className="text-xs font-medium text-[var(--sd-text-primary)]">
                             {habit.title}
                           </div>
-                          <div className="text-xs text-white/40">
+                          <div className="text-xs text-[var(--sd-text-primary)]/40">
                             {habit.cadence === 'daily' ? 'Daily' : `${habit.targetPerWeek}x/wk`}
                           </div>
                         </div>
@@ -242,7 +242,7 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
                         className={`w-8 h-8 rounded-md border-2 transition-all text-sm ${
                           completedToday
                             ? 'bg-green-500/30 border-green-400/50 text-green-200'
-                            : 'border-white/30 hover:border-green-400 hover:bg-green-500/20 text-white/70'
+                            : 'border-white/30 hover:border-green-400 hover:bg-green-500/20 text-[var(--sd-text-primary)]/70'
                         }`}
                       >
                         {completedToday ? '✓' : '○'}
@@ -257,10 +257,10 @@ export function GoalJourneyCard({ goal }: GoalJourneyCardProps) {
 
         {linkedHabits.length === 0 && (
           <div className="mt-3 p-3 bg-white/5 rounded-lg border-2 border-dashed border-white/20 text-center">
-            <p className="text-xs text-white/60 mb-1">
+            <p className="text-xs text-[var(--sd-text-primary)]/60 mb-1">
               No habits linked yet
             </p>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-[var(--sd-text-primary)]/40">
               Link habits to track progress!
             </p>
           </div>

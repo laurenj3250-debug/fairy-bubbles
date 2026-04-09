@@ -68,9 +68,9 @@ export function AdventureTimeline({
   // Empty state
   if (adventures.length === 0) {
     return (
-      <div className="glass-card frost-accent p-12 text-center">
+      <div className="sd-shell p-12 text-center">
         <div className="w-16 h-16 rounded-full bg-peach-500/10 flex items-center justify-center mx-auto mb-4">
-          <Mountain className="w-8 h-8 text-peach-400/50" />
+          <Mountain className="w-8 h-8 text-[var(--sd-text-accent)]/50" />
         </div>
         <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
           No adventures yet
@@ -127,8 +127,8 @@ function TimelineMonth({
             {/* Month label */}
             <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-1">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-peach-400 md:hidden" />
-                <span className="text-sm font-semibold text-peach-400">
+                <Calendar className="w-4 h-4 text-[var(--sd-text-accent)] md:hidden" />
+                <span className="text-sm font-semibold text-[var(--sd-text-accent)]">
                   {month.split(" ")[0]}
                 </span>
               </div>
@@ -193,7 +193,7 @@ function TimelineEntry({
       {/* Card */}
       <div
         className={cn(
-          "glass-card frost-accent overflow-hidden",
+          "sd-shell overflow-hidden",
           "transition-all duration-300",
           "hover:border-peach-500/30 hover:shadow-lg hover:shadow-peach-500/5",
           onEdit && "cursor-pointer"
@@ -210,7 +210,7 @@ function TimelineEntry({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-peach-500/10 to-orange-500/10">
-              <Camera className="w-12 h-12 text-peach-400/30" />
+              <Camera className="w-12 h-12 text-[var(--sd-text-accent)]/30" />
             </div>
           )}
 
@@ -220,19 +220,19 @@ function TimelineEntry({
           {/* Metadata overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             {/* Date */}
-            <div className="flex items-center gap-1.5 text-xs text-white/70 mb-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--sd-text-primary)]/70 mb-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span>{format(new Date(adventure.date), "EEEE, MMMM d")}</span>
             </div>
 
             {/* Activity title */}
-            <h3 className="text-lg font-semibold text-white mb-1">
+            <h3 className="text-lg font-semibold text-[var(--sd-text-primary)] mb-1">
               {adventure.activity}
             </h3>
 
             {/* Location */}
             {adventure.location && (
-              <div className="flex items-center gap-1.5 text-sm text-white/80">
+              <div className="flex items-center gap-1.5 text-sm text-[var(--sd-text-primary)]/80">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>{adventure.location}</span>
               </div>
@@ -240,7 +240,7 @@ function TimelineEntry({
 
             {/* Notes preview */}
             {adventure.notes && (
-              <p className="mt-2 text-xs text-white/60 line-clamp-2">
+              <p className="mt-2 text-xs text-[var(--sd-text-primary)]/60 line-clamp-2">
                 {adventure.notes}
               </p>
             )}
@@ -260,7 +260,7 @@ function TimelineEntry({
                   e.stopPropagation();
                   onEdit(adventure);
                 }}
-                className="p-2.5 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2.5 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-[var(--sd-text-primary)]/80 hover:text-[var(--sd-text-primary)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Edit adventure"
               >
                 <Edit2 className="w-4 h-4" />
@@ -272,7 +272,7 @@ function TimelineEntry({
                   e.stopPropagation();
                   onDelete(adventure.id);
                 }}
-                className="p-2.5 bg-black/50 hover:bg-red-500/70 backdrop-blur-sm rounded-lg text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2.5 bg-black/50 hover:bg-red-500/70 backdrop-blur-sm rounded-lg text-[var(--sd-text-primary)]/80 hover:text-[var(--sd-text-primary)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Delete adventure"
               >
                 <Trash2 className="w-4 h-4" />

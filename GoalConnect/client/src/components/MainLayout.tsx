@@ -46,7 +46,7 @@ export function MainLayout({ children, variant = "rail" }: MainLayoutProps) {
 
       {/* === NAV RAIL (hidden on mobile, only for rail variant) === */}
       {!isSidebar && (
-        <nav className="hidden md:flex glass-card rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
+        <nav className="hidden md:flex sd-shell rounded-none border-r border-border/50 flex-col items-center py-6 gap-2">
           {navItems.map(({ path, icon: Icon, label }) => {
             // Handle both "/" and "/v2" as home
             const isActive = location === path || (path === "/" && location === "/v2");

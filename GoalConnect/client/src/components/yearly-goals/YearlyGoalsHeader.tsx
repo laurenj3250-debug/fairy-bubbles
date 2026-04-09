@@ -37,7 +37,7 @@ export function YearlyGoalsHeader({
         </div>
 
         {/* Year selector */}
-        <div className="glass-card frost-accent !p-1 flex items-center gap-1">
+        <div className="sd-shell !p-1 flex items-center gap-1">
           <button
             onClick={goToPreviousYear}
             className="p-2 rounded-lg hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
@@ -64,16 +64,16 @@ export function YearlyGoalsHeader({
 
       {/* Stats Overview - matching Goals page pattern */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="glass-card frost-accent p-4 text-center">
-          <div className="text-3xl font-bold text-peach-400">{stats.completedGoals}</div>
+        <div className="sd-shell p-4 text-center">
+          <div className="text-3xl font-bold text-[var(--sd-text-accent)]">{stats.completedGoals}</div>
           <div className="text-sm text-[var(--text-muted)]">Completed</div>
         </div>
-        <div className="glass-card frost-accent p-4 text-center">
-          <div className="text-3xl font-bold text-white">{inProgress}</div>
+        <div className="sd-shell p-4 text-center">
+          <div className="text-3xl font-bold text-[var(--sd-text-primary)]">{inProgress}</div>
           <div className="text-sm text-[var(--text-muted)]">In Progress</div>
         </div>
-        <div className="glass-card frost-accent p-4 text-center">
-          <div className="text-3xl font-bold text-white">{stats.totalGoals}</div>
+        <div className="sd-shell p-4 text-center">
+          <div className="text-3xl font-bold text-[var(--sd-text-primary)]">{stats.totalGoals}</div>
           <div className="text-sm text-[var(--text-muted)]">Total</div>
         </div>
       </div>

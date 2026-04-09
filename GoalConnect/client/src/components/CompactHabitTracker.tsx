@@ -136,7 +136,7 @@ export function CompactHabitTracker({ className }: CompactHabitTrackerProps) {
   }, [weekLogs, habits, today]);
 
   return (
-    <div className={cn("glass-card interactive-glow p-6 rounded-3xl", className)}>
+    <div className={cn("sd-shell interactive-glow p-6 rounded-3xl", className)}>
       {/* Header with streak */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function CompactHabitTracker({ className }: CompactHabitTrackerProps) {
               className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center transition-all",
                 day.allComplete
-                  ? "bg-green-500 text-white"
+                  ? "bg-green-500 text-[var(--sd-text-primary)]"
                   : day.hasActivity
                   ? "bg-primary/30 text-primary"
                   : "bg-muted/50",

@@ -101,9 +101,9 @@ export default function YearlyGoals() {
 
           {/* Loading state */}
           {isLoading && (
-            <div className="glass-card flex items-center justify-center py-20">
+            <div className="sd-shell flex items-center justify-center py-20">
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-peach-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--sd-text-accent)]" />
                 <span className="text-sm text-[var(--text-muted)] font-body">Loading your goals...</span>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function YearlyGoals() {
 
           {/* Error state */}
           {error && (
-            <div className="glass-card !border-red-500/30 p-8 text-center">
+            <div className="sd-shell !border-red-500/30 p-8 text-center">
               <p className="text-red-400 font-body">Failed to load yearly goals</p>
               <p className="text-sm text-[var(--text-muted)] mt-2 font-body">Please try refreshing the page</p>
             </div>
@@ -119,9 +119,9 @@ export default function YearlyGoals() {
 
           {/* Empty state */}
           {!isLoading && !error && goals.length === 0 && (
-            <div className="glass-card p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-peach-400/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-peach-400" />
+            <div className="sd-shell p-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-[rgba(225,164,92,0.8)]/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-[var(--sd-text-accent)]" />
               </div>
               <h3 className="text-xl font-heading font-medium text-[var(--text-primary)] mb-2">
                 No goals for {year}

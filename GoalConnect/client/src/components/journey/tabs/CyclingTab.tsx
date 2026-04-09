@@ -51,7 +51,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
         </div>
         <a
           href="/import"
-          className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors"
+          className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-[var(--sd-text-primary)] font-medium rounded-lg transition-colors"
         >
           Connect Strava
         </a>
@@ -64,7 +64,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       {/* ═══════════ ROW 1: Hero Stats ═══════════ */}
 
       {/* HERO - Yearly Miles */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.5)" }}>
+      <div className="col-span-2 sd-shell rounded-xl p-4 flex flex-col relative overflow-hidden bg-card/80 backdrop-blur-xl" style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.5)" }}>
         <div className="flex items-start justify-between relative z-10">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
@@ -87,7 +87,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       </div>
 
       {/* GOAL PROGRESS */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
+      <div className="col-span-2 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
           <span className="w-2 h-2 rounded-full bg-cyan-500" />
           Goal Progress
@@ -99,7 +99,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
               <circle cx="50" cy="50" r="40" fill="none" stroke="#06b6d4" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${Math.min(progressPercent, 100) * 2.51} 251`} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-lg font-bold text-cyan-400">{progressPercent}%</div>
+              <div className="text-lg font-bold text-[var(--sd-text-accent)]">{progressPercent}%</div>
             </div>
           </div>
           <div className="flex-1">
@@ -116,14 +116,14 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       </div>
 
       {/* STREAK & THIS WEEK */}
-      <div className="col-span-2 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
+      <div className="col-span-2 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
           <span className="w-2 h-2 rounded-full bg-orange-500" />
           This Week
         </div>
         <div className="flex-1 grid grid-cols-2 gap-3">
           <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-400">{activityStats?.thisWeekMiles || 0}</div>
+            <div className="text-2xl font-bold text-[var(--sd-text-accent)]">{activityStats?.thisWeekMiles || 0}</div>
             <div className="text-xs text-muted-foreground">Miles</div>
           </div>
           <div className="text-center">
@@ -139,7 +139,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       {/* ═══════════ ROW 2: Recent Rides & Stats ═══════════ */}
 
       {/* RECENT RIDES */}
-      <div className="col-span-4 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
+      <div className="col-span-4 row-span-1 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl overflow-hidden">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3 flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-cyan-500" />
           Recent Rides
@@ -183,7 +183,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-lg font-semibold text-cyan-400">{ride.distanceMiles} mi</div>
+                  <div className="text-lg font-semibold text-[var(--sd-text-accent)]">{ride.distanceMiles} mi</div>
                   <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                     <TrendingUp className="w-3 h-3" />
                     {ride.avgSpeedMph} mph
@@ -209,7 +209,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       </div>
 
       {/* PERSONAL BESTS */}
-      <div className="col-span-2 row-span-1 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
+      <div className="col-span-2 row-span-1 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3 flex items-center gap-1.5">
           <Trophy className="w-3 h-3 text-amber-400" />
           Personal Bests
@@ -222,7 +222,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
               </div>
               <span className="text-sm text-muted-foreground">Longest</span>
             </div>
-            <span className="text-lg font-bold text-cyan-400">{activityStats?.longestRide || 0} mi</span>
+            <span className="text-lg font-bold text-[var(--sd-text-accent)]">{activityStats?.longestRide || 0} mi</span>
           </div>
           <div className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
             <div className="flex items-center gap-2">
@@ -248,11 +248,11 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       {/* ═══════════ ROW 3: Bottom Stats ═══════════ */}
 
       {/* THIS MONTH */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
+      <div className="col-span-3 sd-shell rounded-xl p-4 flex flex-col bg-card/80 backdrop-blur-xl">
         <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">This Month</div>
         <div className="flex-1 flex items-center justify-around">
           <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-400">{activityStats?.thisMonthMiles || 0}</div>
+            <div className="text-2xl font-bold text-[var(--sd-text-accent)]">{activityStats?.thisMonthMiles || 0}</div>
             <div className="text-xs text-muted-foreground">Miles</div>
           </div>
           <div className="text-center">
@@ -271,7 +271,7 @@ export function CyclingTab({ yearlyGoal, stravaStats, onUpdateGoal, isUpdating }
       </div>
 
       {/* YTD SUMMARY */}
-      <div className="col-span-3 glass-card rounded-xl p-4 flex items-center justify-around bg-card/80 backdrop-blur-xl">
+      <div className="col-span-3 sd-shell rounded-xl p-4 flex items-center justify-around bg-card/80 backdrop-blur-xl">
         {[
           { label: "YTD Rides", value: ytdRides.toString(), color: "#06b6d4", icon: Bike },
           { label: "YTD Hours", value: `${ytdHours}h`, color: "#f97316", icon: Timer },

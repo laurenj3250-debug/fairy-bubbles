@@ -186,7 +186,7 @@ export default function MediaLibrary() {
             setIsAdding(true);
             setEditingId(null);
           }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-peach-400/20 text-peach-400 hover:bg-peach-400/30 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)] hover:bg-[rgba(225,164,92,0.8)]/30 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add
@@ -204,7 +204,7 @@ export default function MediaLibrary() {
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors",
                 activeTab === tab.key
-                  ? "bg-peach-400/20 text-peach-400"
+                  ? "bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)]"
                   : "text-[var(--text-muted)] hover:bg-white/5"
               )}
             >
@@ -220,7 +220,7 @@ export default function MediaLibrary() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as MediaStatus | "all")}
-          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[var(--text-primary)] focus:outline-none focus:border-peach-400/50"
+          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
         >
           <option value="all">All Status</option>
           {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -231,7 +231,7 @@ export default function MediaLibrary() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[var(--text-primary)] focus:outline-none focus:border-peach-400/50"
+          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
         >
           <option value="recent">Recent</option>
           <option value="rating">Rating</option>
@@ -242,7 +242,7 @@ export default function MediaLibrary() {
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <div className="glass-card frost-accent mb-6 p-4">
+        <div className="sd-shell mb-6 p-4">
           <h3 className="font-heading font-semibold text-[var(--text-primary)] mb-4">
             {editingId ? "Edit Item" : "Add New Item"}
           </h3>
@@ -254,7 +254,7 @@ export default function MediaLibrary() {
               placeholder="Title *"
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
             />
 
             {/* Type & Status row */}
@@ -262,7 +262,7 @@ export default function MediaLibrary() {
               <select
                 value={formType}
                 onChange={(e) => setFormType(e.target.value as MediaType)}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] focus:outline-none focus:border-peach-400/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               >
                 {Object.entries(MEDIA_TYPE_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -272,7 +272,7 @@ export default function MediaLibrary() {
               <select
                 value={formStatus}
                 onChange={(e) => setFormStatus(e.target.value as MediaStatus)}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] focus:outline-none focus:border-peach-400/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               >
                 {Object.entries(STATUS_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -287,14 +287,14 @@ export default function MediaLibrary() {
                 placeholder="Author/Creator"
                 value={formAuthor}
                 onChange={(e) => setFormAuthor(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               />
               <input
                 type="number"
                 placeholder="Year"
                 value={formYear}
                 onChange={(e) => setFormYear(e.target.value)}
-                className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               />
             </div>
 
@@ -305,14 +305,14 @@ export default function MediaLibrary() {
                 placeholder="Current (e.g., S2E5, pg 145)"
                 value={formProgress}
                 onChange={(e) => setFormProgress(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               />
               <input
                 type="text"
                 placeholder="Total (e.g., 8 seasons)"
                 value={formTotalProgress}
                 onChange={(e) => setFormTotalProgress(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)]"
               />
             </div>
 
@@ -344,7 +344,7 @@ export default function MediaLibrary() {
               value={formNotes}
               onChange={(e) => setFormNotes(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-peach-400/50 resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[rgba(225,164,92,0.4)] resize-none"
             />
 
             {/* Actions */}
@@ -362,7 +362,7 @@ export default function MediaLibrary() {
               <button
                 onClick={editingId ? handleSaveEdit : handleAdd}
                 disabled={!formTitle.trim() || isCreating || isUpdating}
-                className="px-4 py-2 rounded-lg bg-peach-400/20 text-peach-400 hover:bg-peach-400/30 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)] hover:bg-[rgba(225,164,92,0.8)]/30 transition-colors disabled:opacity-50"
               >
                 {isCreating || isUpdating ? "Saving..." : editingId ? "Save" : "Add"}
               </button>
@@ -384,7 +384,7 @@ export default function MediaLibrary() {
             return (
               <div
                 key={item.id}
-                className="glass-card frost-accent p-3 flex items-start gap-3 group"
+                className="sd-shell p-3 flex items-start gap-3 group"
               >
                 {/* Icon */}
                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">

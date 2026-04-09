@@ -175,7 +175,7 @@ export function CompactGoalCard({
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-500 ease-out",
-                goal.isCompleted ? "bg-emerald-400" : "bg-peach-400"
+                goal.isCompleted ? "bg-emerald-400" : "bg-[rgba(225,164,92,0.8)]"
               )}
               style={{ width: `${goal.progressPercent}%` }}
             />
@@ -227,8 +227,8 @@ export function CompactGoalCard({
                   disabled={isIncrementing}
                   className={cn(
                     "p-1.5 rounded-lg",
-                    "bg-peach-400/20 text-peach-400 ring-1 ring-peach-400/30",
-                    "hover:bg-peach-400/30 transition-colors",
+                    "bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)] ring-1 ring-peach-400/30",
+                    "hover:bg-[rgba(225,164,92,0.8)]/30 transition-colors",
                     isIncrementing && "opacity-50"
                   )}
                 >
@@ -324,8 +324,8 @@ export function CompactGoalCard({
               disabled={isClaimingReward}
               className={cn(
                 "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-                "bg-peach-400/20 text-peach-400 ring-1 ring-peach-400/30",
-                "hover:bg-peach-400/30 transition-colors",
+                "bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)] ring-1 ring-peach-400/30",
+                "hover:bg-[rgba(225,164,92,0.8)]/30 transition-colors",
                 "animate-pulse"
               )}
             >

@@ -235,7 +235,7 @@ export default function Goals() {
             </div>
             <Button
               onClick={handleCreateNew}
-              className="rounded-full px-5 py-2 bg-peach-400 hover:bg-peach-500 text-white transition-all hover:scale-105"
+              className="rounded-full px-5 py-2 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] text-[var(--sd-text-primary)] transition-all hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Goal
@@ -244,16 +244,16 @@ export default function Goals() {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-peach-400">{completedGoals}</div>
+            <div className="sd-shell p-4 text-center">
+              <div className="text-3xl font-bold text-[var(--sd-text-accent)]">{completedGoals}</div>
               <div className="text-sm text-[var(--text-muted)]">Completed</div>
             </div>
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-white">{inProgressGoals}</div>
+            <div className="sd-shell p-4 text-center">
+              <div className="text-3xl font-bold text-[var(--sd-text-primary)]">{inProgressGoals}</div>
               <div className="text-sm text-[var(--text-muted)]">In Progress</div>
             </div>
-            <div className="glass-card frost-accent p-4 text-center">
-              <div className="text-3xl font-bold text-white">{goals.length}</div>
+            <div className="sd-shell p-4 text-center">
+              <div className="text-3xl font-bold text-[var(--sd-text-primary)]">{goals.length}</div>
               <div className="text-sm text-[var(--text-muted)]">Total</div>
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function Goals() {
         />
 
         {/* View Tabs */}
-          <div className="glass-card frost-accent p-2 flex flex-wrap gap-2">
+          <div className="sd-shell p-2 flex flex-wrap gap-2">
             {[
               { key: "all", label: "All", icon: Target },
               { key: "weekly", label: "Week", icon: Calendar },
@@ -291,8 +291,8 @@ export default function Goals() {
                 className={cn(
                   "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
                   activeView === tab.key
-                    ? "bg-peach-400 text-white"
-                    : "text-[var(--text-muted)] hover:text-white hover:bg-white/10"
+                    ? "bg-[rgba(225,164,92,0.8)] text-[var(--sd-text-primary)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--sd-text-primary)] hover:bg-white/10"
                 )}
                 onClick={() => setActiveView(tab.key as ViewType)}
               >
@@ -312,25 +312,25 @@ export default function Goals() {
             // Yearly Goals View
             <>
               {yearlyLoading && (
-                <div className="glass-card frost-accent flex items-center justify-center py-20">
+                <div className="sd-shell flex items-center justify-center py-20">
                   <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-peach-400" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--sd-text-accent)]" />
                     <span className="text-sm text-[var(--text-muted)] font-body">Loading yearly goals...</span>
                   </div>
                 </div>
               )}
 
               {yearlyError && (
-                <div className="glass-card frost-accent !border-red-500/30 p-8 text-center">
+                <div className="sd-shell !border-red-500/30 p-8 text-center">
                   <p className="text-red-400 font-body">Failed to load yearly goals</p>
                   <p className="text-sm text-[var(--text-muted)] mt-2 font-body">Please try refreshing the page</p>
                 </div>
               )}
 
               {!yearlyLoading && !yearlyError && yearlyGoals.length === 0 && (
-                <div className="glass-card frost-accent p-12 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-peach-400/10 flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-peach-400" />
+                <div className="sd-shell p-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[rgba(225,164,92,0.8)]/10 flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-[var(--sd-text-accent)]" />
                   </div>
                   <h3 className="text-xl font-heading font-medium text-[var(--text-primary)] mb-2">
                     No goals for {currentYear}
@@ -351,8 +351,8 @@ export default function Goals() {
                         className={cn(
                           "p-1.5 rounded transition-colors",
                           yearlyViewCompact
-                            ? "bg-peach-400/20 text-peach-400"
-                            : "text-[var(--text-muted)] hover:text-white"
+                            ? "bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)]"
+                            : "text-[var(--text-muted)] hover:text-[var(--sd-text-primary)]"
                         )}
                         aria-label="Grid view"
                         aria-pressed={yearlyViewCompact}
@@ -364,8 +364,8 @@ export default function Goals() {
                         className={cn(
                           "p-1.5 rounded transition-colors",
                           !yearlyViewCompact
-                            ? "bg-peach-400/20 text-peach-400"
-                            : "text-[var(--text-muted)] hover:text-white"
+                            ? "bg-[rgba(225,164,92,0.8)]/20 text-[var(--sd-text-accent)]"
+                            : "text-[var(--text-muted)] hover:text-[var(--sd-text-primary)]"
                         )}
                         aria-label="List view"
                         aria-pressed={!yearlyViewCompact}
@@ -377,7 +377,7 @@ export default function Goals() {
 
                   {/* Compact Grid View */}
                   {yearlyViewCompact ? (
-                    <div className="glass-card frost-accent p-4">
+                    <div className="sd-shell p-4">
                       <CompactGoalGrid
                         goals={yearlyGoals}
                         onToggle={handleYearlyToggle}
@@ -411,9 +411,9 @@ export default function Goals() {
               )}
             </>
           ) : filteredGoals.length === 0 ? (
-            <div className="glass-card frost-accent p-12 text-center">
-              <Target className="w-16 h-16 mx-auto mb-4 text-peach-400/60" />
-              <h2 className="text-2xl font-bold text-white mb-2">No Goals Yet</h2>
+            <div className="sd-shell p-12 text-center">
+              <Target className="w-16 h-16 mx-auto mb-4 text-[var(--sd-text-accent)]/60" />
+              <h2 className="text-2xl font-bold text-[var(--sd-text-primary)] mb-2">No Goals Yet</h2>
               <p className="text-[var(--text-muted)] mb-6">
                 {activeView === "all"
                   ? "Start by creating your first goal"
@@ -425,7 +425,7 @@ export default function Goals() {
               </p>
               <Button
                 onClick={handleCreateNew}
-                className="rounded-full px-6 py-3 bg-peach-400 hover:bg-peach-500 text-white"
+                className="rounded-full px-6 py-3 bg-[rgba(225,164,92,0.8)] hover:bg-[rgba(200,131,73,0.9)] text-[var(--sd-text-primary)]"
               >
                 Create Your First Goal
               </Button>
@@ -525,7 +525,7 @@ function GoalCard({ goal, onEdit, onAddProgress, onDelete }: {
 
   return (
     <div
-      className="glass-card frost-accent p-5 transition-all duration-300 hover:scale-[1.01] group"
+      className="sd-shell p-5 transition-all duration-300 hover:scale-[1.01] group"
     >
       {/* Soft gradient overlay based on progress */}
       <div
@@ -805,11 +805,11 @@ function JourneyGoalsSection({
   ];
 
   return (
-    <div className="glass-card frost-accent p-5">
+    <div className="sd-shell p-5">
       <div className="flex items-center justify-between mb-4">
         <span className="card-title">Fitness Progress</span>
         <Link href="/journey">
-          <span className="text-sm font-medium flex items-center gap-1 text-peach-400 hover:underline cursor-pointer">
+          <span className="text-sm font-medium flex items-center gap-1 text-[var(--sd-text-accent)] hover:underline cursor-pointer">
             Edit on Journey <ArrowRight className="w-4 h-4" />
           </span>
         </Link>
