@@ -1,4 +1,8 @@
 import { useState, useMemo } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Plus } from 'lucide-react';
 
 interface GoalData {
   id: number;
@@ -22,8 +26,22 @@ function getGlowClass(pct: number, isComplete: boolean): string {
 }
 
 export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
-  const currentMonth = new Date().getMonth(); // 0-indexed
+  const currentMonth = new Date().getMonth();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const { toast } = useToast();
+
+  const incrementMutation = useMutation({
+    mutationFn: async (goalId: number) => {
+      return await apiRequest(`/api/yearly-goals/${goalId}/increment`, 'POST', { amount: 1 });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/yearly-goals/with-progress'] });
+      toast({ title: '+1 progress' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to update goal', variant: 'destructive' });
+    },
+  });
 
   const completedCount = goals.filter((g) => g.current >= g.target).length;
 
@@ -104,12 +122,28 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
                         }}
                       />
                     </div>
-                    {isComplete && (
+                    {isComplete ? (
                       <div className="sd-completed-check">
                         <svg viewBox="0 0 24 24">
                           <polyline points="20,6 9,17 4,12" />
                         </svg>
                       </div>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); incrementMutation.mutate(goal.id); }}
+                        disabled={incrementMutation.isPending}
+                        style={{
+                          position: 'absolute', top: 8, right: 8,
+                          width: 28, height: 28, borderRadius: 8,
+                          border: '1px solid rgba(225,164,92,0.25)',
+                          background: 'rgba(225,164,92,0.1)',
+                          color: 'var(--sd-text-accent)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', padding: 0,
+                        }}
+                      >
+                        <Plus style={{ width: 16, height: 16 }} />
+                      </button>
                     )}
                   </div>
                 </div>

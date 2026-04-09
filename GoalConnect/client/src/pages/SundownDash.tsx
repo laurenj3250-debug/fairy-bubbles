@@ -22,8 +22,7 @@ import { SundownStardustRing } from '@/components/sundown/SundownStardustRing';
 import { SundownMonthlyGoals } from '@/components/sundown/SundownMonthlyGoals';
 import { SundownGoalsTab } from '@/components/sundown/SundownGoalsTab';
 import { SundownHabitsTab } from '@/components/sundown/SundownHabitsTab';
-import { SundownJournalTab } from '@/components/sundown/SundownJournalTab';
-import { StreakFreeze } from '@/components/StreakFreeze';
+// Journal tab and StreakFreeze removed per Lauren's request
 
 // ============================================================================
 // DATE UTILITIES
@@ -245,7 +244,6 @@ export default function SundownDash() {
                 <div className="sd-col-stack">
                   <SundownAuroraReward streak={streak} />
                   <SundownStardustRing percentage={completionPct} />
-                  <StreakFreeze />
                 </div>
               </div>
               <SundownMonthlyGoals goals={yearlyGoalsData} />
@@ -270,13 +268,6 @@ export default function SundownDash() {
                 onToggle={handleToggle}
                 completionPct={completionPct}
               />
-            </ErrorBoundary>
-          </div>
-
-          {/* Journal tab */}
-          <div style={{ display: !dataLoading && activeTab === 'Journal' ? 'block' : 'none' }}>
-            <ErrorBoundary fallbackMessage="Journal couldn't load">
-              <SundownJournalTab />
             </ErrorBoundary>
           </div>
 
