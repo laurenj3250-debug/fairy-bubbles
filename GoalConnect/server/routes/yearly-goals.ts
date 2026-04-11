@@ -77,9 +77,12 @@ const updateYearlyGoalSchema = z.object({
 });
 
 /**
- * Compute progress for a single goal based on its linked source
+ * Compute progress for a single goal based on its linked source.
+ * Exported so other routes (e.g. goal-calendar) can resolve the
+ * authoritative completion state without reading the possibly-stale
+ * persisted `completed` column.
  */
-async function computeGoalProgress(
+export async function computeGoalProgress(
   goal: YearlyGoal,
   year: string,
   userId: number,

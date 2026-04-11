@@ -132,7 +132,6 @@ export function YearlyGoalDialog({
               className={inputCls}
               style={inputStyle}
               autoFocus
-              required
               data-testid="yearly-goal-title-input"
             />
           </div>

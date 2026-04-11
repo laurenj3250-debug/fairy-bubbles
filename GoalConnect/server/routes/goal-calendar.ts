@@ -10,6 +10,7 @@ import { getDb } from "../db";
 import { yearlyGoals, goals } from "@shared/schema";
 import { eq, and, isNotNull, gte, lte, or } from "drizzle-orm";
 import { requireUser } from "../simple-auth";
+import { computeGoalProgress } from "./yearly-goals";
 import {
   generateMilestones,
   filterMilestonesToRange,
@@ -56,20 +57,12 @@ export function registerGoalCalendarRoutes(app: Express) {
       // Extract year from date range for milestone generation
       const year = startDate.substring(0, 4);
 
-      // Fetch yearly goals with due dates in range
-      const yearlyResults = await db
-        .select({
-          id: yearlyGoals.id,
-          title: yearlyGoals.title,
-          dueDate: yearlyGoals.dueDate,
-          completed: yearlyGoals.completed,
-          currentValue: yearlyGoals.currentValue,
-          targetValue: yearlyGoals.targetValue,
-          category: yearlyGoals.category,
-          goalType: yearlyGoals.goalType,
-          milestoneCadence: yearlyGoals.milestoneCadence,
-          year: yearlyGoals.year,
-        })
+      // Fetch full yearly goal rows (needed by computeGoalProgress which reads
+      // the linked* columns) and resolve each goal's authoritative completion
+      // state. Reading the persisted `completed` column directly would return
+      // stale data for goals whose values are computed from a linked source.
+      const rawYearlyResults = await db
+        .select()
         .from(yearlyGoals)
         .where(
           and(
@@ -77,6 +70,23 @@ export function registerGoalCalendarRoutes(app: Express) {
             eq(yearlyGoals.year, year)
           )
         );
+      const yearlyResults = await Promise.all(
+        rawYearlyResults.map(async (goal) => {
+          const withProgress = await computeGoalProgress(goal, year, user.id, db);
+          return {
+            id: goal.id,
+            title: goal.title,
+            dueDate: goal.dueDate,
+            completed: withProgress.isCompleted,
+            currentValue: withProgress.computedValue,
+            targetValue: goal.targetValue,
+            category: goal.category,
+            goalType: goal.goalType,
+            milestoneCadence: goal.milestoneCadence,
+            year: goal.year,
+          };
+        })
+      );
 
       // Fetch weekly/monthly goals with deadlines in range
       const weeklyResults = await db

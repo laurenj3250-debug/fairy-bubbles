@@ -15,8 +15,31 @@ SHOTS.mkdir(parents=True, exist_ok=True)
 EMAIL = "laurenj3250@gmail.com"
 PASSWORD = "Crumpet11!!"
 BASE = "http://localhost:5001"
+TEST_PREFIX = "_E2E_"
 
 results = []
+
+
+def _cleanup_stray_test_data(page):
+    """Best-effort delete of any _E2E_-prefixed records left over from prior runs."""
+    try:
+        deleted = page.evaluate(f"""async () => {{
+            const year = new Date().getFullYear().toString();
+            const r = await fetch(`/api/yearly-goals/with-progress?year=${{year}}`, {{credentials:'include'}});
+            const d = await r.json();
+            let count = 0;
+            for (const g of (d.goals || [])) {{
+                if (typeof g.title === 'string' && g.title.includes('{TEST_PREFIX}')) {{
+                    await fetch(`/api/yearly-goals/${{g.id}}`, {{method:'DELETE', credentials:'include'}});
+                    count++;
+                }}
+            }}
+            return count;
+        }}""")
+        if deleted and deleted > 0:
+            print(f"[cleanup] removed {deleted} stray test goals")
+    except Exception as e:
+        print(f"[cleanup] error: {e}")
 
 
 def record(name, status, detail=""):
@@ -46,8 +69,9 @@ def main():
         browser = p.chromium.launch(headless=True)
         page = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
         login(page)
+        _cleanup_stray_test_data(page)
 
-        # ===== 1. Empty-title validation (client-side short-circuit) =====
+        # ===== 1. Empty-title validation (client-side JS toast) =====
         print("\n== EMPTY TITLE VALIDATION ==")
         page.goto(BASE + "/", wait_until="networkidle")
         page.wait_for_timeout(1500)
@@ -56,13 +80,8 @@ def main():
         add_btn.click()
         page.wait_for_timeout(800)
         shot(page, "01-dialog-open")
-        # Remove HTML5 required attribute so we can submit empty
-        # (YearlyGoalDialog uses `required` on the input, which blocks native submit)
-        page.evaluate("""
-            const inp = document.querySelector('[data-testid=\"yearly-goal-title-input\"]');
-            if (inp) inp.removeAttribute('required');
-        """)
-        # Submit with empty title
+        # Submit with empty title — YearlyGoalDialog has no HTML5 `required`,
+        # so form submission runs the JS validation path directly.
         page.locator('[data-testid="yearly-goal-submit"]').first.click()
         page.wait_for_timeout(1000)
         shot(page, "02-empty-submit")
@@ -119,6 +138,9 @@ def main():
                "PASS" if del_status == 404 else "FAIL",
                f"status={del_status}")
 
+        # Post-test cleanup
+        try: _cleanup_stray_test_data(page)
+        except Exception as e: print(f"[cleanup] post-test: {e}")
         browser.close()
 
     print("\n===== HARDENING RESULTS =====")
