@@ -299,8 +299,13 @@ async function computeGoalProgress(
     Math.round((computedValue / goal.targetValue) * 100)
   );
 
+  // Keep persisted `completed`/`completedAt` in sync with computed state in
+  // the API response, so clients never see contradictory flags. (The DB row
+  // itself is not mutated here — see claim-reward endpoint for writes.)
   return {
     ...goal,
+    completed: isCompleted,
+    completedAt: isCompleted ? goal.completedAt ?? new Date() : null,
     computedValue,
     source,
     sourceLabel,

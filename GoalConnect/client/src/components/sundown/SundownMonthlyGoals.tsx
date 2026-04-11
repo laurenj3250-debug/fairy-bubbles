@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { YearlyGoalDialog } from '@/components/YearlyGoalDialog';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { useYearlyGoals, type YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
+import { isGoalLinked } from '@/lib/yearlyGoalUtils';
 
 interface GoalData {
   id: number;
@@ -162,15 +163,8 @@ export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoal
               const isComplete = goal.current >= goal.target;
               const glowClass = getGlowClass(pct, isComplete);
               const rawGoal = rawGoals.find((g) => g.id === goal.id);
-              // A goal is "linked" if it has any external source computing its value
-              // (either source='auto' OR it has a linked habit/journey/book/dreamscroll)
-              const isLinked =
-                rawGoal?.source === 'auto' ||
-                !!rawGoal?.sourceLabel ||
-                !!rawGoal?.linkedHabitId ||
-                !!rawGoal?.linkedJourneyKey ||
-                !!rawGoal?.linkedDreamScrollCategory;
-              const isManualCount = rawGoal?.goalType === 'count' && !isLinked;
+              const isManualCount =
+                rawGoal?.goalType === 'count' && !!rawGoal && !isGoalLinked(rawGoal);
 
               return (
                 <div

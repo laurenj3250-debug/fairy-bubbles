@@ -10,3 +10,7 @@ vite.config.ts.*
 !.env.example
 playwright/.auth/
 test-results/
+
+# E2E audit output
+.e2e-output/
+tests/e2e-audit/.e2e-output/

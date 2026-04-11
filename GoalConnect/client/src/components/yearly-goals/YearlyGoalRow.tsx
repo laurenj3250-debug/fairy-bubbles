@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
+import { isGoalLinked } from "@/lib/yearlyGoalUtils";
 import { SubItemList } from "./SubItemList";
 import { CategoryStyle } from "./categoryStyles";
 import confetti from "canvas-confetti";
@@ -48,7 +49,11 @@ export function YearlyGoalRow({
   isLast,
 }: YearlyGoalRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const isManual = goal.source === "manual";
+  const linked = isGoalLinked(goal);
+  // Keep `isManual` for legacy binary-toggle disable semantics — server
+  // reports source="manual" for count+link goals, but we want them toggleable
+  // iff not linked.
+  const isManual = goal.source === "manual" && !linked;
   const isDisabled = !isManual && goal.goalType !== "compound";
 
   // Trigger confetti on completion
@@ -205,8 +210,8 @@ export function YearlyGoalRow({
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Increment/decrement for manual count goals */}
-          {isManual && goal.goalType === "count" && !goal.isCompleted && (
+          {/* Increment/decrement — manual count goals only (linked goals compute value server-side) */}
+          {!linked && goal.goalType === "count" && !goal.isCompleted && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => handleIncrement(-1)}
@@ -256,8 +261,8 @@ export function YearlyGoalRow({
             </div>
           )}
 
-          {/* Edit + Delete (manual goals only get edit) */}
-          {onEdit && isManual && (
+          {/* Edit + Delete — shown for all goals (title/target/xpReward are user-editable regardless of link) */}
+          {onEdit && (
             <button
               onClick={onEdit}
               data-testid={`edit-yearly-goal-${goal.id}`}
