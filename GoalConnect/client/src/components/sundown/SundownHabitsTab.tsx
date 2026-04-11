@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Flame } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Flame, Plus, Pencil, Trash2 } from "lucide-react";
 import { SundownStardustTrail } from "./SundownStardustTrail";
 import { HabitIcon } from "./sundown-icons";
 import { EmptyState } from "@/components/EmptyState";
+import { HabitCreateDialog } from "@/components/HabitCreateDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import type { Habit as FullHabit } from "@shared/schema";
 
 interface Habit {
   id: number;
@@ -41,6 +46,52 @@ export function SundownHabitsTab({
   completionPct,
 }: SundownHabitsTabProps) {
   const [view, setView] = useState<ViewMode>('today');
+  const { toast } = useToast();
+
+  // Dialog state
+  const [habitDialogOpen, setHabitDialogOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<FullHabit | undefined>();
+  const [deletingHabit, setDeletingHabit] = useState<FullHabit | null>(null);
+
+  // Fetch full habit records so edit dialog can pre-fill all fields
+  const { data: fullHabits = [] } = useQuery<FullHabit[]>({
+    queryKey: ["/api/habits"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => apiRequest(`/api/habits/${id}`, "DELETE"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+      toast({ title: "Habit deleted" });
+    },
+    onError: () => toast({ title: "Failed to delete habit", variant: "destructive" }),
+  });
+
+  const handleEdit = (habitId: number) => {
+    const full = fullHabits.find((h) => h.id === habitId);
+    if (full) {
+      setEditingHabit(full);
+      setHabitDialogOpen(true);
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingHabit(undefined);
+    setHabitDialogOpen(true);
+  };
+
+  const handleDeleteClick = (habitId: number) => {
+    const full = fullHabits.find((h) => h.id === habitId);
+    if (full) setDeletingHabit(full);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deletingHabit) {
+      deleteMutation.mutate(deletingHabit.id);
+      setDeletingHabit(null);
+    }
+  };
 
   const { data: enrichedHabits = [] } = useQuery<EnrichedHabit[]>({
     queryKey: ["/api/habits-with-data"],
@@ -83,9 +134,32 @@ export function SundownHabitsTab({
             </button>
           ))}
         </div>
-        <span className="sd-habits-view-count">
-          {todayDoneCount}/{habits.length}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="sd-habits-view-count">
+            {todayDoneCount}/{habits.length}
+          </span>
+          <button
+            onClick={handleCreate}
+            data-testid="add-habit"
+            title="Add habit"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '6px 10px',
+              borderRadius: 10,
+              border: '1px solid rgba(225,164,92,0.35)',
+              background: 'linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.2))',
+              color: 'var(--sd-text-accent)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <Plus style={{ width: 14, height: 14 }} />
+            Add
+          </button>
+        </div>
       </div>
 
       {/* Today view */}
@@ -96,6 +170,8 @@ export function SundownHabitsTab({
           streakMap={streakMap}
           todayDate={todayDate}
           onToggle={onToggle}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
         />
       )}
 
@@ -119,6 +195,23 @@ export function SundownHabitsTab({
           weekDates={weekDates}
         />
       )}
+
+      <HabitCreateDialog
+        open={habitDialogOpen}
+        onOpenChange={(o) => {
+          setHabitDialogOpen(o);
+          if (!o) setEditingHabit(undefined);
+        }}
+        editHabit={editingHabit}
+      />
+      <DeleteConfirmDialog
+        open={!!deletingHabit}
+        onOpenChange={(o) => { if (!o) setDeletingHabit(null); }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Habit"
+        itemName={deletingHabit?.title ?? ''}
+        itemType="habit"
+      />
     </div>
   );
 }
@@ -131,12 +224,16 @@ function TodayView({
   streakMap,
   todayDate,
   onToggle,
+  onEdit,
+  onDelete,
 }: {
   habits: Habit[];
   logMap: Map<string, boolean>;
   streakMap: Map<number, number>;
   todayDate: string;
   onToggle: (habitId: number, date: string) => void;
+  onEdit: (habitId: number) => void;
+  onDelete: (habitId: number) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -246,6 +343,39 @@ function TodayView({
                     streak
                   </div>
                 )}
+              </div>
+              {/* Edit/Delete cluster */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  onClick={() => onEdit(habit.id)}
+                  data-testid={`edit-habit-${habit.id}`}
+                  title="Edit habit"
+                  style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    border: '1px solid rgba(225,164,92,0.2)',
+                    background: 'rgba(15,10,8,0.5)',
+                    color: 'var(--sd-text-muted)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  <Pencil style={{ width: 12, height: 12 }} />
+                </button>
+                <button
+                  onClick={() => onDelete(habit.id)}
+                  data-testid={`delete-habit-${habit.id}`}
+                  title="Delete habit"
+                  style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    border: '1px solid rgba(200,80,80,0.3)',
+                    background: 'rgba(15,10,8,0.5)',
+                    color: 'rgba(220,120,120,0.8)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  <Trash2 style={{ width: 12, height: 12 }} />
+                </button>
               </div>
             </div>
           </div>

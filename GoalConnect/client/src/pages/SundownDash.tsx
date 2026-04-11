@@ -246,14 +246,14 @@ export default function SundownDash() {
                   <SundownStardustRing percentage={completionPct} />
                 </div>
               </div>
-              <SundownMonthlyGoals goals={yearlyGoalsData} />
+              <SundownMonthlyGoals goals={yearlyGoalsData} rawGoals={goals} />
             </ErrorBoundary>
           </div>
 
           {/* Goals tab */}
           <div style={{ display: !dataLoading && activeTab === 'Goals' ? 'block' : 'none' }}>
             <ErrorBoundary fallbackMessage="Goals couldn't load">
-              <SundownGoalsTab goals={yearlyGoalsData} />
+              <SundownGoalsTab goals={yearlyGoalsData} rawGoals={goals} />
             </ErrorBoundary>
           </div>
 

@@ -9,6 +9,8 @@ import {
   ChevronDown,
   ChevronRight,
   Link as LinkIcon,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
@@ -23,6 +25,8 @@ interface YearlyGoalRowProps {
   onIncrement: (amount: number) => void;
   onToggleSubItem: (subItemId: string) => void;
   onClaimReward: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   isToggling?: boolean;
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
@@ -36,6 +40,8 @@ export function YearlyGoalRow({
   onIncrement,
   onToggleSubItem,
   onClaimReward,
+  onEdit,
+  onDelete,
   isToggling,
   isIncrementing,
   isClaimingReward,
@@ -248,6 +254,28 @@ export function YearlyGoalRow({
               <Sparkles className="w-3.5 h-3.5" />
               <span className="text-xs">Claimed</span>
             </div>
+          )}
+
+          {/* Edit + Delete (manual goals only get edit) */}
+          {onEdit && isManual && (
+            <button
+              onClick={onEdit}
+              data-testid={`edit-yearly-goal-${goal.id}`}
+              title="Edit goal"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              data-testid={`delete-yearly-goal-${goal.id}`}
+              title="Delete goal"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-red-500/20 text-[var(--text-muted)] hover:text-red-300 transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>

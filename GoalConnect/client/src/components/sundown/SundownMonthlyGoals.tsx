@@ -2,7 +2,10 @@ import { useState, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { YearlyGoalDialog } from '@/components/YearlyGoalDialog';
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import { useYearlyGoals, type YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 
 interface GoalData {
   id: number;
@@ -14,6 +17,7 @@ interface GoalData {
 
 interface SundownMonthlyGoalsProps {
   goals: GoalData[];
+  rawGoals?: YearlyGoalWithProgress[];
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -25,10 +29,17 @@ function getGlowClass(pct: number, isComplete: boolean): string {
   return 'glow-dim';
 }
 
-export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
+export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoalsProps) {
   const currentMonth = new Date().getMonth();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const { toast } = useToast();
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<YearlyGoalWithProgress | undefined>();
+  const [deletingGoal, setDeletingGoal] = useState<YearlyGoalWithProgress | null>(null);
+
+  const { deleteGoal } = useYearlyGoals();
 
   const incrementMutation = useMutation({
     mutationFn: async (goalId: number) => {
@@ -42,6 +53,34 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
       toast({ title: 'Failed to update goal', variant: 'destructive' });
     },
   });
+
+  const handleEdit = (goalId: number) => {
+    const raw = rawGoals.find((g) => g.id === goalId);
+    if (raw) {
+      setEditingGoal(raw);
+      setDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingGoal) return;
+    try {
+      await deleteGoal(deletingGoal.id);
+      toast({ title: 'Goal deleted' });
+      setDeletingGoal(null);
+    } catch (err) {
+      toast({
+        title: 'Failed to delete',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingGoal(undefined);
+    setDialogOpen(true);
+  };
 
   const completedCount = goals.filter((g) => g.current >= g.target).length;
 
@@ -67,9 +106,31 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
         <div className="sd-face">
           <div className="sd-card-hdr">
             <span className="sd-card-title">Goals</span>
-            <span className="sd-badge">
-              {completedCount}/{goals.length} Complete
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="sd-badge">
+                {completedCount}/{goals.length} Complete
+              </span>
+              <button
+                onClick={handleCreate}
+                data-testid="add-yearly-goal"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '6px 10px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(225,164,92,0.35)',
+                  background: 'linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.2))',
+                  color: 'var(--sd-text-accent)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus style={{ width: 14, height: 14 }} />
+                Add Goal
+              </button>
+            </div>
           </div>
 
           {/* Month tabs */}
@@ -100,6 +161,16 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
                   : 0;
               const isComplete = goal.current >= goal.target;
               const glowClass = getGlowClass(pct, isComplete);
+              const rawGoal = rawGoals.find((g) => g.id === goal.id);
+              // A goal is "linked" if it has any external source computing its value
+              // (either source='auto' OR it has a linked habit/journey/book/dreamscroll)
+              const isLinked =
+                rawGoal?.source === 'auto' ||
+                !!rawGoal?.sourceLabel ||
+                !!rawGoal?.linkedHabitId ||
+                !!rawGoal?.linkedJourneyKey ||
+                !!rawGoal?.linkedDreamScrollCategory;
+              const isManualCount = rawGoal?.goalType === 'count' && !isLinked;
 
               return (
                 <div
@@ -122,28 +193,75 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
                         }}
                       />
                     </div>
-                    {isComplete ? (
+                    {/* Action cluster — top right */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        display: 'flex',
+                        gap: 4,
+                      }}
+                    >
+                      {!isComplete && isManualCount && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); incrementMutation.mutate(goal.id); }}
+                          disabled={incrementMutation.isPending}
+                          data-testid={`increment-goal-${goal.id}`}
+                          title="Add progress"
+                          style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            border: '1px solid rgba(225,164,92,0.25)',
+                            background: 'rgba(225,164,92,0.1)',
+                            color: 'var(--sd-text-accent)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', padding: 0,
+                          }}
+                        >
+                          <Plus style={{ width: 14, height: 14 }} />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(goal.id); }}
+                        data-testid={`edit-goal-${goal.id}`}
+                        title="Edit goal"
+                        style={{
+                          width: 28, height: 28, borderRadius: 8,
+                          border: '1px solid rgba(225,164,92,0.2)',
+                          background: 'rgba(15,10,8,0.5)',
+                          color: 'var(--sd-text-muted)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', padding: 0,
+                        }}
+                      >
+                        <Pencil style={{ width: 12, height: 12 }} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const raw = rawGoals.find((g) => g.id === goal.id);
+                          if (raw) setDeletingGoal(raw);
+                        }}
+                        data-testid={`delete-goal-${goal.id}`}
+                        title="Delete goal"
+                        style={{
+                          width: 28, height: 28, borderRadius: 8,
+                          border: '1px solid rgba(200,80,80,0.3)',
+                          background: 'rgba(15,10,8,0.5)',
+                          color: 'rgba(220,120,120,0.8)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', padding: 0,
+                        }}
+                      >
+                        <Trash2 style={{ width: 12, height: 12 }} />
+                      </button>
+                    </div>
+                    {isComplete && (
                       <div className="sd-completed-check">
                         <svg viewBox="0 0 24 24">
                           <polyline points="20,6 9,17 4,12" />
                         </svg>
                       </div>
-                    ) : (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); incrementMutation.mutate(goal.id); }}
-                        disabled={incrementMutation.isPending}
-                        style={{
-                          position: 'absolute', top: 8, right: 8,
-                          width: 28, height: 28, borderRadius: 8,
-                          border: '1px solid rgba(225,164,92,0.25)',
-                          background: 'rgba(225,164,92,0.1)',
-                          color: 'var(--sd-text-accent)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', padding: 0,
-                        }}
-                      >
-                        <Plus style={{ width: 16, height: 16 }} />
-                      </button>
                     )}
                   </div>
                 </div>
@@ -161,6 +279,23 @@ export function SundownMonthlyGoals({ goals }: SundownMonthlyGoalsProps) {
           )}
         </div>
       </div>
+
+      <YearlyGoalDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o) setEditingGoal(undefined);
+        }}
+        goal={editingGoal}
+      />
+      <DeleteConfirmDialog
+        open={!!deletingGoal}
+        onOpenChange={(o) => { if (!o) setDeletingGoal(null); }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Yearly Goal"
+        itemName={deletingGoal?.title ?? ''}
+        itemType="goal"
+      />
     </div>
   );
 }

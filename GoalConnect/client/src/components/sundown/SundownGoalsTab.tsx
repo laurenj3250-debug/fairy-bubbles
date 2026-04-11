@@ -2,6 +2,7 @@ import { Target } from "lucide-react";
 import { SundownGoalsCard } from "./SundownGoalsCard";
 import { SundownMonthlyGoals } from "./SundownMonthlyGoals";
 import { EmptyState } from "@/components/EmptyState";
+import type { YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 
 interface GoalData {
   id: number;
@@ -13,9 +14,10 @@ interface GoalData {
 
 interface SundownGoalsTabProps {
   goals: GoalData[];
+  rawGoals?: YearlyGoalWithProgress[];
 }
 
-export function SundownGoalsTab({ goals }: SundownGoalsTabProps) {
+export function SundownGoalsTab({ goals, rawGoals = [] }: SundownGoalsTabProps) {
   if (goals.length === 0) {
     return (
       <EmptyState
@@ -29,7 +31,7 @@ export function SundownGoalsTab({ goals }: SundownGoalsTabProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <SundownGoalsCard />
-      <SundownMonthlyGoals goals={goals} />
+      <SundownMonthlyGoals goals={goals} rawGoals={rawGoals} />
     </div>
   );
 }

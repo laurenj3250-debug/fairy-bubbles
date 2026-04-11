@@ -13,6 +13,8 @@ interface YearlyCategoryProps {
   onIncrement: (goalId: number, amount: number) => void;
   onToggleSubItem: (goalId: number, subItemId: string) => void;
   onClaimReward: (goalId: number) => void;
+  onEdit?: (goal: YearlyGoalWithProgress) => void;
+  onDelete?: (goal: YearlyGoalWithProgress) => void;
   isToggling?: boolean;
   isIncrementing?: boolean;
   isClaimingReward?: boolean;
@@ -27,6 +29,8 @@ export function YearlyCategory({
   onIncrement,
   onToggleSubItem,
   onClaimReward,
+  onEdit,
+  onDelete,
   isToggling,
   isIncrementing,
   isClaimingReward,
@@ -101,6 +105,8 @@ export function YearlyCategory({
               onIncrement={(amount) => onIncrement(goal.id, amount)}
               onToggleSubItem={(subItemId) => onToggleSubItem(goal.id, subItemId)}
               onClaimReward={() => onClaimReward(goal.id)}
+              onEdit={onEdit ? () => onEdit(goal) : undefined}
+              onDelete={onDelete ? () => onDelete(goal) : undefined}
               isToggling={isToggling}
               isIncrementing={isIncrementing}
               isClaimingReward={isClaimingReward}

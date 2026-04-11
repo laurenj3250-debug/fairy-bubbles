@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useYearlyGoals } from "@/hooks/useYearlyGoals";
+import { useYearlyGoals, type YearlyGoalWithProgress } from "@/hooks/useYearlyGoals";
 import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { Loader2, Sparkles } from "lucide-react";
 import {
@@ -7,10 +7,15 @@ import {
   YearlyCategory,
 } from "@/components/yearly-goals";
 import { useToast } from "@/hooks/use-toast";
+import { YearlyGoalDialog } from "@/components/YearlyGoalDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 export default function YearlyGoals() {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<YearlyGoalWithProgress | undefined>();
+  const [deletingGoal, setDeletingGoal] = useState<YearlyGoalWithProgress | null>(null);
 
   const {
     goals,
@@ -24,11 +29,37 @@ export default function YearlyGoals() {
     incrementGoal,
     toggleSubItem,
     claimReward,
+    deleteGoal,
     isToggling,
     isIncrementing,
     isTogglingSubItem,
     isClaimingReward,
   } = useYearlyGoals(year);
+
+  const handleAddGoal = () => {
+    setEditingGoal(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditGoal = (goal: YearlyGoalWithProgress) => {
+    setEditingGoal(goal);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingGoal) return;
+    try {
+      await deleteGoal(deletingGoal.id);
+      toast({ title: "Goal deleted" });
+      setDeletingGoal(null);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to delete",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleToggle = async (goalId: number) => {
     try {
@@ -96,6 +127,7 @@ export default function YearlyGoals() {
           <YearlyGoalsHeader
             year={year}
             onYearChange={setYear}
+            onAddGoal={handleAddGoal}
             stats={stats}
           />
 
@@ -126,10 +158,19 @@ export default function YearlyGoals() {
               <h3 className="text-xl font-heading font-medium text-[var(--text-primary)] mb-2">
                 No goals for {year}
               </h3>
-              <p className="text-[var(--text-muted)] font-body max-w-md mx-auto">
+              <p className="text-[var(--text-muted)] font-body max-w-md mx-auto mb-6">
                 Set some ambitious goals to track your progress throughout the year.
                 Goals can be linked to habits and journey activities for automatic tracking.
               </p>
+              <button
+                onClick={handleAddGoal}
+                className="px-5 py-2.5 rounded-lg border border-[rgba(225,164,92,0.4)] text-[var(--sd-text-accent)] font-medium"
+                style={{
+                  background: "linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.2))",
+                }}
+              >
+                + Add your first goal
+              </button>
             </div>
           )}
 
@@ -146,6 +187,8 @@ export default function YearlyGoals() {
                   onIncrement={handleIncrement}
                   onToggleSubItem={handleToggleSubItem}
                   onClaimReward={handleClaimReward}
+                  onEdit={handleEditGoal}
+                  onDelete={(g) => setDeletingGoal(g)}
                   isToggling={isToggling}
                   isIncrementing={isIncrementing}
                   isClaimingReward={isClaimingReward}
@@ -155,6 +198,24 @@ export default function YearlyGoals() {
           )}
         </div>
       </div>
+
+      <YearlyGoalDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o) setEditingGoal(undefined);
+        }}
+        goal={editingGoal}
+        defaultYear={year}
+      />
+      <DeleteConfirmDialog
+        open={!!deletingGoal}
+        onOpenChange={(o) => { if (!o) setDeletingGoal(null); }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Yearly Goal"
+        itemName={deletingGoal?.title ?? ''}
+        itemType="goal"
+      />
     </SundownPageWrapper>
   );
 }

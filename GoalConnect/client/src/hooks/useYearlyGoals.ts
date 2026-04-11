@@ -66,6 +66,7 @@ export interface CreateYearlyGoalInput {
   linkedJourneyKey?: string;
   linkedDreamScrollCategory?: string;
   xpReward?: number;
+  dueDate?: string;
 }
 
 export interface UpdateYearlyGoalInput {
@@ -74,6 +75,7 @@ export interface UpdateYearlyGoalInput {
   targetValue?: number;
   position?: number;
   xpReward?: number;
+  dueDate?: string | null;
 }
 
 export function useYearlyGoals(year: string = new Date().getFullYear().toString()) {

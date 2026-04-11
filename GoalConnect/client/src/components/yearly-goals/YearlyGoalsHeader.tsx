@@ -1,9 +1,10 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface YearlyGoalsHeaderProps {
   year: string;
   onYearChange: (year: string) => void;
+  onAddGoal?: () => void;
   stats: {
     totalGoals: number;
     completedGoals: number;
@@ -15,6 +16,7 @@ interface YearlyGoalsHeaderProps {
 export function YearlyGoalsHeader({
   year,
   onYearChange,
+  onAddGoal,
   stats,
 }: YearlyGoalsHeaderProps) {
   const currentYear = new Date().getFullYear();
@@ -36,7 +38,21 @@ export function YearlyGoalsHeader({
           </p>
         </div>
 
-        {/* Year selector */}
+        {/* Right side: Add button + Year selector */}
+        <div className="flex items-center gap-2">
+          {onAddGoal && (
+            <button
+              onClick={onAddGoal}
+              data-testid="add-yearly-goal-page"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(225,164,92,0.35)] text-[var(--sd-text-accent)] text-sm font-medium transition-colors hover:bg-[rgba(225,164,92,0.1)]"
+              style={{
+                background: "linear-gradient(145deg, rgba(255,210,140,0.12), rgba(200,131,73,0.18))",
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Goal
+            </button>
+          )}
         <div className="sd-shell !p-1 flex items-center gap-1">
           <button
             onClick={goToPreviousYear}
@@ -59,6 +75,7 @@ export function YearlyGoalsHeader({
           >
             <ChevronRight className="w-5 h-5" />
           </button>
+        </div>
         </div>
       </header>
 
