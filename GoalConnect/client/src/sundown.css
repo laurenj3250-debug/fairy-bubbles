@@ -321,6 +321,59 @@
 }
 .sd-star-dot.future { opacity: 0.15; }
 
+/* ===== WEEKLY HABIT BAR (clean bar, left/right label) ===== */
+.sd-weekly-bar {
+  height: 44px;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  cursor: pointer;
+  border: 1px solid rgba(255,200,140,0.04);
+  background: rgba(15,10,8,0.5);
+  font-family: 'Source Sans 3', sans-serif;
+  transition: all 0.3s;
+}
+.sd-weekly-bar-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(225,164,92,0.12), rgba(225,164,92,0.06));
+  transition: width 0.4s;
+}
+.sd-weekly-bar-left {
+  position: relative; z-index: 1;
+  font-size: 11px; font-weight: 600;
+  color: var(--sd-text-muted, rgba(180,140,120,0.6));
+}
+.sd-weekly-bar-right {
+  position: relative; z-index: 1;
+  font-size: 11px; font-weight: 700;
+  color: var(--sd-text-muted, rgba(180,140,120,0.4));
+}
+/* Target met state */
+.sd-weekly-bar.met {
+  background: linear-gradient(135deg, rgba(255,210,140,0.28), rgba(200,131,73,0.38));
+  box-shadow: 0 0 14px rgba(225,164,92,0.2);
+  border-color: rgba(255,200,140,0.15);
+}
+.sd-weekly-bar.met .sd-weekly-bar-fill {
+  background: none;
+}
+.sd-weekly-bar.met .sd-weekly-bar-left {
+  color: rgba(30,15,10,0.7);
+}
+.sd-weekly-bar.met .sd-weekly-bar-right {
+  color: rgba(30,15,10,0.5);
+}
+/* Name glow when weekly target met */
+.sd-habit-label.weekly-met {
+  color: rgba(245,200,80,0.9) !important;
+}
+
 /* ===== AURORA GRADIENT LEVEL/REWARD ===== */
 .sd-aurora-card .sd-face {
   padding: 0; overflow: hidden; display: flex; flex-direction: column;

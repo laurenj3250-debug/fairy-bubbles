@@ -26,6 +26,7 @@ import { registerClimbingLogRoutes } from "./routes/climbing-log";
 import { registerLiftingRoutes } from "./routes/lifting";
 import { registerYearlyGoalRoutes } from "./routes/yearly-goals";
 import { registerGoalCalendarRoutes } from "./routes/goal-calendar";
+import { registerBrainDumpRoutes } from "./routes/brain-dump";
 import { registerMediaLibraryRoutes } from "./routes/media-library";
 import { registerAdventuresRoutes } from "./routes/adventures";
 import { registerRecentActivitiesRoutes } from "./routes/recent-activities";
@@ -468,6 +469,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register goal calendar routes
   registerGoalCalendarRoutes(app);
+
+  // Register brain dump (Airtable proxy)
+  registerBrainDumpRoutes(app);
 
   // Register media library routes
   registerMediaLibraryRoutes(app);

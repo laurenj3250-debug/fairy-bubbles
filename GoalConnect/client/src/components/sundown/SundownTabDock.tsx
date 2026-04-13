@@ -1,4 +1,4 @@
-const DEFAULT_TABS = ['Overview', 'Goals', 'Habits'];
+const DEFAULT_TABS = ['Overview', 'Goals', 'Habits', 'Dump'];
 
 interface SundownTabDockProps {
   activeTab: string;

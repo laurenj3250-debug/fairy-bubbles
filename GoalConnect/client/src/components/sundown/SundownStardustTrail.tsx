@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { resolveIcon } from './sundown-icons';
 
 interface SundownStardustTrailProps {
-  habits: Array<{ id: number; name: string; icon?: string }>;
+  habits: Array<{ id: number; name: string; icon?: string; cadence?: string | null; targetPerWeek?: number | null }>;
   habitLogs: Array<{ habitId: number; date: string; completed: boolean }>;
   weekDates: string[];
   todayIndex: number;
@@ -55,53 +55,80 @@ export function SundownStardustTrail({
             ))}
 
             {/* Habit rows */}
-            {habits.map((habit) => (
-              <React.Fragment key={habit.id}>
-                <div className="sd-habit-label">
-                  <svg className="sd-habit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    {resolveIcon(habit.icon).map((el, i) => {
-                      if (el.type === 'path') return <path key={i} d={el.d} />;
-                      if (el.type === 'circle') return <circle key={i} cx={el.cx} cy={el.cy} r={el.r} />;
-                      if (el.type === 'rect') return <rect key={i} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} />;
-                      if (el.type === 'polygon') return <polygon key={i} points={el.points} />;
-                      return null;
-                    })}
-                  </svg>
-                  {habit.name}
-                </div>
+            {habits.map((habit) => {
+              const isWeekly = habit.cadence === 'weekly' && (habit.targetPerWeek ?? 7) < 7;
+              const target = isWeekly ? (habit.targetPerWeek ?? 1) : 7;
+              const weekDoneCount = weekDates.filter(
+                (d) => logMap.get(`${habit.id}:${d}`),
+              ).length;
+              const targetMet = weekDoneCount >= target;
 
-                {weekDates.map((date, i) => {
-                  const done = !!logMap.get(`${habit.id}:${date}`);
-                  const isToday = i === todayIndex;
-                  const isFuture = i > todayIndex;
+              return (
+                <React.Fragment key={habit.id}>
+                  <div className={`sd-habit-label${targetMet && isWeekly ? ' weekly-met' : ''}`}>
+                    <svg className="sd-habit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      {resolveIcon(habit.icon).map((el, i) => {
+                        if (el.type === 'path') return <path key={i} d={el.d} />;
+                        if (el.type === 'circle') return <circle key={i} cx={el.cx} cy={el.cy} r={el.r} />;
+                        if (el.type === 'rect') return <rect key={i} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} />;
+                        if (el.type === 'polygon') return <polygon key={i} points={el.points} />;
+                        return null;
+                      })}
+                    </svg>
+                    {habit.name}
+                  </div>
 
-                  const classes = [
-                    'sd-star-dot',
-                    done ? 'done' : 'empty',
-                    isToday ? 'today-ring' : '',
-                    isFuture && !done ? 'future' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-
-                  return (
+                  {isWeekly ? (
+                    /* Weekly habit: clean bar spanning all 7 columns */
                     <button
-                      key={`${habit.id}-${date}`}
-                      className={classes}
-                      style={{
-                        animationDelay: done
-                          ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
-                          : undefined,
-                      }}
-                      onClick={() => onToggle(habit.id, date)}
-                      aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
+                      className={`sd-weekly-bar${targetMet ? ' met' : ''}`}
+                      style={{ gridColumn: '2 / -1' }}
+                      onClick={() => onToggle(habit.id, weekDates[todayIndex])}
                     >
-                      {done ? '✓' : ''}
+                      <span className="sd-weekly-bar-fill" style={{ width: `${Math.min(100, (weekDoneCount / target) * 100)}%` }} />
+                      <span className="sd-weekly-bar-left">
+                        {targetMet ? `✓ done this week` : `${weekDoneCount} of ${target} this week`}
+                      </span>
+                      <span className="sd-weekly-bar-right">
+                        {weekDoneCount}/{target}
+                      </span>
                     </button>
-                  );
-                })}
-              </React.Fragment>
-            ))}
+                  ) : (
+                    /* Daily habit: normal 7-dot grid */
+                    weekDates.map((date, i) => {
+                      const done = !!logMap.get(`${habit.id}:${date}`);
+                      const isToday = i === todayIndex;
+                      const isFuture = i > todayIndex;
+
+                      const classes = [
+                        'sd-star-dot',
+                        done ? 'done' : 'empty',
+                        isToday ? 'today-ring' : '',
+                        isFuture && !done ? 'future' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
+
+                      return (
+                        <button
+                          key={`${habit.id}-${date}`}
+                          className={classes}
+                          style={{
+                            animationDelay: done
+                              ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
+                              : undefined,
+                          }}
+                          onClick={() => onToggle(habit.id, date)}
+                          aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
+                        >
+                          {done ? '✓' : ''}
+                        </button>
+                      );
+                    })
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
       </div>

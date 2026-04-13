@@ -22,7 +22,7 @@ import { SundownStardustRing } from '@/components/sundown/SundownStardustRing';
 import { SundownMonthlyGoals } from '@/components/sundown/SundownMonthlyGoals';
 import { SundownGoalsTab } from '@/components/sundown/SundownGoalsTab';
 import { SundownHabitsTab } from '@/components/sundown/SundownHabitsTab';
-// Journal tab and StreakFreeze removed per Lauren's request
+import { SundownBrainDump } from '@/components/sundown/SundownBrainDump';
 
 // ============================================================================
 // DATE UTILITIES
@@ -156,7 +156,7 @@ export default function SundownDash() {
 
   // Map habits for StardusTrail
   const habitCardData = useMemo(
-    () => habits.map(h => ({ id: h.id, name: h.title, icon: h.icon })),
+    () => habits.map(h => ({ id: h.id, name: h.title, icon: h.icon, cadence: h.cadence, targetPerWeek: h.targetPerWeek })),
     [habits],
   );
 
@@ -268,6 +268,13 @@ export default function SundownDash() {
                 onToggle={handleToggle}
                 completionPct={completionPct}
               />
+            </ErrorBoundary>
+          </div>
+
+          {/* Dump tab */}
+          <div style={{ display: !dataLoading && activeTab === 'Dump' ? 'block' : 'none' }}>
+            <ErrorBoundary fallbackMessage="Brain Dump couldn't load">
+              <SundownBrainDump />
             </ErrorBoundary>
           </div>
 

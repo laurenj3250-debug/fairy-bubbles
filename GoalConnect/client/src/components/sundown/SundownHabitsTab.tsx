@@ -14,6 +14,8 @@ interface Habit {
   id: number;
   name: string;
   icon?: string;
+  cadence?: string | null;
+  targetPerWeek?: number | null;
 }
 
 interface HabitLog {
