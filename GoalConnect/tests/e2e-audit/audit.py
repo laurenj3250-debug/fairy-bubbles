@@ -206,7 +206,7 @@ def main():
                 has_text=""
             ).count()
             # View switcher pills
-            for view in ["today", "week", "rings"]:
+            for view in ["today", "week"]:
                 try:
                     pill = page.locator(f"button.sd-habits-view-pill:has-text('{view.capitalize()}')").first
                     pill.click()
