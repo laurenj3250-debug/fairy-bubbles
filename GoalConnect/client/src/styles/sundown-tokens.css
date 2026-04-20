@@ -68,3 +68,20 @@
   --muted: 330 15% 12%;               /* dark plum muted */
   --muted-foreground: 30 25% 55%;     /* warm muted text */
 }
+
+/* === TOUCH TARGETS === */
+.sd-touch {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.sd-touch:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
