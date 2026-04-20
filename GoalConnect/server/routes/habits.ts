@@ -22,12 +22,16 @@ const toggleBodySchema = z.object({
   habitId: z.number().int().positive(),
   date: z.string().regex(YYYY_MM_DD),
   localHour: z.number().int().min(0).max(23).optional(),
-  durationMinutes: z.number().int().optional(),
-  quantityCompleted: z.number().int().optional(),
-  sessionType: z.string().optional(),
-  incrementValue: z.number().int().optional(),
   note: z.string().optional(),
+  mood: z.number().int().min(1).max(5).optional(),
+  energy: z.number().int().min(1).max(5).optional(),
+  quantityCompleted: z.number().optional(),
+  durationMinutes: z.number().optional(),
+  sessionType: z.string().optional(),
+  incrementValue: z.number().optional(),
 });
+
+type ToggleBody = z.infer<typeof toggleBodySchema>;
 
 /**
  * Derive day-of-week (0=Sun, 6=Sat) from a YYYY-MM-DD string in a way that
@@ -488,253 +492,297 @@ export function registerHabitRoutes(app: Express) {
 
   // POST toggle habit log completion (supports cumulative goals and notes)
   app.post("/api/habit-logs/toggle", async (req, res) => {
+    // T4: Zod first. All parsing and validation happens before anything else.
+    const parsed = toggleBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request body",
+        issues: parsed.error.issues,
+      });
+    }
+    const body: ToggleBody = parsed.data;
+    const {
+      habitId,
+      date,
+      localHour,
+      note,
+      mood,
+      energy,
+      durationMinutes,
+      quantityCompleted,
+      sessionType,
+      incrementValue,
+    } = body;
+
+    let userId: number;
     try {
-      const userId = getUserId(req);
+      userId = getUserId(req);
+    } catch {
+      return res.status(401).json({ error: "Authentication required" });
+    }
 
-      // T1: client owns the calendar. We validate the body shape here but leave
-      // future-date / full validation to T4-T5 per the plan. `localHour` is
-      // optional for backwards-compat with pre-T3 clients.
-      const parsed = toggleBodySchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid request body" });
-      }
-      const { habitId, date, localHour, durationMinutes, quantityCompleted, sessionType, incrementValue, note } = parsed.data;
+    // Authz: fetch habit + confirm ownership before any writes.
+    const habit = await storage.getHabit(habitId);
+    if (!habit) {
+      return res.status(404).json({ error: "Habit not found" });
+    }
+    if (habit.userId !== userId) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
-      // Verify habit exists and user owns it
-      const habit = await storage.getHabit(habitId);
-      if (!habit) {
-        return res.status(404).json({ error: "Habit not found" });
-      }
-      if (habit.userId !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
+    const warnings: string[] = [];
+    const db = getDb();
+    const { habitLogs, habits: habitsTable } = await import("@shared/schema");
+    const { and, eq } = await import("drizzle-orm");
+    const inc = incrementValue ?? 1;
 
-      const db = getDb();
-      const { habits } = await import("@shared/schema");
-      const { eq } = await import("drizzle-orm");
-
-      // Check if log already exists for this date
-      const allLogs = await storage.getHabitLogs(habitId);
-      const existingLog = allLogs.find((log) => log.date === date);
-
-      let logResult;
-
-      if (existingLog) {
-        // Toggle the completion status
-        const updatedLog = await storage.updateHabitLog(existingLog.id, {
-          completed: !existingLog.completed,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-          note: note || existingLog.note, // Preserve existing note if not provided
-        });
-        logResult = updatedLog;
-
-        // For cumulative goals: update currentValue
-        if (habit.goalType === "cumulative" && updatedLog) {
-          const delta = updatedLog.completed ? (incrementValue || 1) : -(incrementValue || 1);
-          await db.update(habits)
-            .set({ currentValue: (habit.currentValue || 0) + delta })
-            .where(eq(habits.id, habitId));
-        }
-
-        // Update linked goal when toggling habit log
-        if (habit.linkedGoalId && updatedLog) {
-          try {
-            const linkedGoal = await storage.getGoal(habit.linkedGoalId);
-            if (linkedGoal) {
-              // Increment if now completed, decrement if now uncompleted
-              const newValue = updatedLog.completed
-                ? (linkedGoal.currentValue || 0) + 1
-                : Math.max(0, (linkedGoal.currentValue || 0) - 1);
-              await storage.updateGoal(habit.linkedGoalId, { currentValue: newValue });
-              log.debug('[habits] Updated linked goal on toggle', {
-                goalId: habit.linkedGoalId,
-                completed: updatedLog.completed,
-                newValue,
-              });
-            }
-          } catch (goalError) {
-            log.error('[habits] Failed to update linked goal on toggle:', goalError);
-          }
-        }
-      } else {
-        // Create new log
-        log.debug('[habits] Creating habit log with:', {
-          habitId,
-          userId,
-          date,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-          note,
-        });
-        const newLog = await storage.createHabitLog({
-          habitId,
-          userId,
-          date,
-          completed: true,
-          durationMinutes,
-          quantityCompleted,
-          sessionType,
-          incrementValue: incrementValue || 1,
-          note,
-        });
-        logResult = newLog;
-
-        // For cumulative goals: increment currentValue
-        if (habit.goalType === "cumulative") {
-          await db.update(habits)
-            .set({ currentValue: (habit.currentValue || 0) + (incrementValue || 1) })
-            .where(eq(habits.id, habitId));
-        }
-
-        // Update linked goal when creating new habit log (always completed)
-        if (habit.linkedGoalId) {
-          try {
-            const linkedGoal = await storage.getGoal(habit.linkedGoalId);
-            if (linkedGoal) {
-              await storage.updateGoal(habit.linkedGoalId, {
-                currentValue: (linkedGoal.currentValue || 0) + 1,
-              });
-              log.debug('[habits] Updated linked goal on new log', {
-                goalId: habit.linkedGoalId,
-                newValue: (linkedGoal.currentValue || 0) + 1,
-              });
-            }
-          } catch (goalError) {
-            log.error('[habits] Failed to update linked goal on new log:', goalError);
-          }
-        }
-      }
-
-      // Update habit score after logging
-      let scoreData: { current: number; change: number; percentage: number } | undefined;
-      try {
-        const { updateHabitScore } = await import("../services/habitScoring");
-        const scoreResult = await updateHabitScore(habitId, date);
-        scoreData = {
-          current: scoreResult.newScore,
-          change: scoreResult.scoreChange,
-          percentage: Math.round(scoreResult.newScore * 100)
-        };
-      } catch (scoreError: any) {
-        log.error('[habits] Score update failed:', scoreError);
-      }
-
-      // Award XP for habit completion
-      let pointsEarned = 0;
-      let streakDays = 0;
-
-      if (logResult?.completed) {
-        try {
-          const logId = logResult.id;
-
-          // Idempotency: check if points already awarded for this log
-          const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
-            userId, 'habit_complete', logId
+    // T4: Atomic upsert. Read-then-upsert lives inside a DB transaction so the
+    // toggle decision (flip existing completed value vs. create completed:true)
+    // is race-free and the unique constraint on (habitId, userId, date) can
+    // never produce a duplicate row.
+    let logResult: any;
+    let wasCreated = false;
+    try {
+      logResult = await db.transaction(async (tx) => {
+        const [existing] = await tx
+          .select()
+          .from(habitLogs)
+          .where(
+            and(
+              eq(habitLogs.habitId, habitId),
+              eq(habitLogs.userId, userId),
+              eq(habitLogs.date, date)
+            )
           );
 
-          if (!existingTx) {
-            // Calculate per-habit streak — anchor to the client's calendar day.
-            const habitLogs = await storage.getHabitLogs(habitId);
-            streakDays = calculateStreak(habitLogs, date);
-            const multiplier = getStreakMultiplier(streakDays);
+        // Decide the target `completed` value. If this is a fresh log, it's
+        // true. If there's an existing log and the caller did NOT provide an
+        // incrementValue, this is a toggle — flip the existing value. When an
+        // incrementValue IS provided (cumulative adds), the log stays completed.
+        const completed = existing
+          ? (incrementValue !== undefined ? true : !existing.completed)
+          : true;
+        wasCreated = !existing;
 
-            // Base XP by difficulty
-            const base = XP_CONFIG.habit[habit.difficulty || 'medium'] || XP_CONFIG.habit.medium;
-            pointsEarned = Math.round(base * multiplier);
+        // Build the upsert payload. Only include fields that were explicitly
+        // provided so we never clobber existing data with `undefined`. For the
+        // note field, preserve the existing note when the caller didn't send one.
+        const insertValues = {
+          habitId,
+          userId,
+          date,
+          completed,
+          incrementValue: inc,
+          ...(note !== undefined ? { note } : {}),
+          ...(mood !== undefined ? { mood } : {}),
+          ...(energy !== undefined ? { energyLevel: energy } : {}),
+          ...(durationMinutes !== undefined ? { durationMinutes } : {}),
+          ...(quantityCompleted !== undefined ? { quantityCompleted } : {}),
+          ...(sessionType !== undefined ? { sessionType } : {}),
+        };
 
-            // Variable bonuses (Hook Model: variable reward).
-            // T1: use the client-local hour + the day-of-week derived from the
-            // client-local date. Fall back to server clock for old callers.
-            const hour = typeof localHour === 'number' ? localHour : new Date().getHours();
-            const day = dayOfWeekFromDate(date); // 0=Sun, 6=Sat
-            const bonuses: string[] = [];
+        const updateSet: Record<string, unknown> = {
+          completed,
+          incrementValue: inc,
+        };
+        if (note !== undefined) updateSet.note = note;
+        if (mood !== undefined) updateSet.mood = mood;
+        if (energy !== undefined) updateSet.energyLevel = energy;
+        if (durationMinutes !== undefined) updateSet.durationMinutes = durationMinutes;
+        if (quantityCompleted !== undefined) updateSet.quantityCompleted = quantityCompleted;
+        if (sessionType !== undefined) updateSet.sessionType = sessionType;
 
-            if (hour < 7) {
-              pointsEarned += XP_BONUSES.morningBird;
-              bonuses.push('early bird');
-            }
-            if (day === 0 || day === 6) {
-              pointsEarned += XP_BONUSES.weekendWarrior;
-              bonuses.push('weekend');
-            }
+        const [row] = await tx
+          .insert(habitLogs)
+          .values(insertValues)
+          .onConflictDoUpdate({
+            target: [habitLogs.habitId, habitLogs.userId, habitLogs.date],
+            set: updateSet,
+          })
+          .returning();
 
-            await storage.addPoints(
-              userId,
-              pointsEarned,
-              'habit_complete',
-              logId,
-              `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x${bonuses.length ? ', ' + bonuses.join('+') : ''})`
-            );
-            log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x, bonuses: ${bonuses.join(',') || 'none'})`);
+        // For cumulative goals: adjust currentValue by the delta implied by the
+        // toggle. A fresh complete adds `inc`; a flip from true->false subtracts
+        // `inc`; a flip from false->true adds `inc`.
+        if (habit.goalType === "cumulative") {
+          const delta = existing
+            ? (completed === existing.completed ? 0 : (completed ? inc : -inc))
+            : inc;
+          if (delta !== 0) {
+            await tx
+              .update(habitsTable)
+              .set({ currentValue: (habit.currentValue || 0) + delta })
+              .where(eq(habitsTable.id, habitId));
+          }
+        }
 
-            // Check for streak milestones (one-time per habit per milestone)
-            for (const milestone of STREAK_MILESTONES) {
-              if (streakDays === milestone) {
-                try {
-                  const txs = await storage.getPointTransactions(userId);
-                  const alreadyAwarded = txs.some(
-                    tx => tx.type === 'streak_milestone'
-                      && tx.relatedId === habitId
-                      && tx.description.includes(`${milestone}-day`)
-                  );
-                  if (!alreadyAwarded) {
-                    const milestoneXP = XP_CONFIG.streakMilestone[milestone] || 0;
-                    if (milestoneXP > 0) {
-                      await storage.addPoints(
-                        userId,
-                        milestoneXP,
-                        'streak_milestone',
-                        habitId,
-                        `${habit.title} ${milestone}-day streak!`
-                      );
-                      pointsEarned += milestoneXP;
-                      log.info(`[habits] Streak milestone! ${habit.title} hit ${milestone}-day streak, awarded ${milestoneXP} XP`);
-                    }
-                  }
-                } catch (milestoneError) {
-                  log.error('[habits] Streak milestone award failed:', milestoneError);
-                }
-                break;
-              }
-            }
+        return row;
+      });
+    } catch (upsertError: any) {
+      log.error('[habits] Toggle upsert failed:', upsertError);
+      return res.status(500).json({ error: "Failed to toggle habit log" });
+    }
+
+    log.debug('[habits] Toggle upsert succeeded', {
+      habitId,
+      userId,
+      date,
+      completed: logResult?.completed,
+      created: wasCreated,
+    });
+
+    // Linked goal update — non-fatal, surfaces as warning on failure.
+    if (habit.linkedGoalId) {
+      try {
+        const linkedGoal = await storage.getGoal(habit.linkedGoalId);
+        if (linkedGoal) {
+          const newValue = logResult.completed
+            ? (linkedGoal.currentValue || 0) + 1
+            : Math.max(0, (linkedGoal.currentValue || 0) - 1);
+          await storage.updateGoal(habit.linkedGoalId, { currentValue: newValue });
+          log.debug('[habits] Updated linked goal on toggle', {
+            goalId: habit.linkedGoalId,
+            completed: logResult.completed,
+            newValue,
+          });
+        }
+      } catch (goalError: any) {
+        log.error('[habits] Failed to update linked goal on toggle:', goalError);
+        warnings.push(`Linked goal didn't update: ${goalError?.message || "unknown error"}`);
+      }
+    }
+
+    // Update habit score after logging — non-fatal.
+    let scoreData: { current: number; change: number; percentage: number } | undefined;
+    try {
+      const { updateHabitScore } = await import("../services/habitScoring");
+      const scoreResult = await updateHabitScore(habitId, date);
+      scoreData = {
+        current: scoreResult.newScore,
+        change: scoreResult.scoreChange,
+        percentage: Math.round(scoreResult.newScore * 100),
+      };
+    } catch (scoreError: any) {
+      log.error('[habits] Score update failed:', scoreError);
+      warnings.push(`Habit score didn't update: ${scoreError?.message || "unknown error"}`);
+    }
+
+    // Award XP for habit completion — non-fatal.
+    let pointsEarned = 0;
+    let streakDays = 0;
+
+    if (logResult?.completed) {
+      try {
+        const logId = logResult.id;
+
+        // Idempotency: check if points already awarded for this log
+        const existingTx = await storage.getPointTransactionByTypeAndRelatedId(
+          userId, 'habit_complete', logId
+        );
+
+        if (!existingTx) {
+          // Calculate per-habit streak — anchor to the client's calendar day.
+          const habitLogs = await storage.getHabitLogs(habitId);
+          streakDays = calculateStreak(habitLogs, date);
+          const multiplier = getStreakMultiplier(streakDays);
+
+          // Base XP by difficulty
+          const base = XP_CONFIG.habit[habit.difficulty || 'medium'] || XP_CONFIG.habit.medium;
+          pointsEarned = Math.round(base * multiplier);
+
+          // Variable bonuses (Hook Model: variable reward).
+          // T1: use the client-local hour + the day-of-week derived from the
+          // client-local date. Fall back to server clock for old callers.
+          const hour = typeof localHour === 'number' ? localHour : new Date().getHours();
+          const day = dayOfWeekFromDate(date); // 0=Sun, 6=Sat
+          const bonuses: string[] = [];
+
+          if (hour < 7) {
+            pointsEarned += XP_BONUSES.morningBird;
+            bonuses.push('early bird');
+          }
+          if (day === 0 || day === 6) {
+            pointsEarned += XP_BONUSES.weekendWarrior;
+            bonuses.push('weekend');
           }
 
-          // Daily activity bonus — anchored to the client's calendar day.
+          await storage.addPoints(
+            userId,
+            pointsEarned,
+            'habit_complete',
+            logId,
+            `Completed ${habit.title} (${streakDays}-day streak, ${multiplier}x${bonuses.length ? ', ' + bonuses.join('+') : ''})`
+          );
+          log.debug(`[habits] Awarded ${pointsEarned} XP for habit ${habit.title} (streak: ${streakDays}, multiplier: ${multiplier}x, bonuses: ${bonuses.join(',') || 'none'})`);
+
+          // Check for streak milestones (one-time per habit per milestone)
+          for (const milestone of STREAK_MILESTONES) {
+            if (streakDays === milestone) {
+              try {
+                const txs = await storage.getPointTransactions(userId);
+                const alreadyAwarded = txs.some(
+                  tx => tx.type === 'streak_milestone'
+                    && tx.relatedId === habitId
+                    && tx.description.includes(`${milestone}-day`)
+                );
+                if (!alreadyAwarded) {
+                  const milestoneXP = XP_CONFIG.streakMilestone[milestone] || 0;
+                  if (milestoneXP > 0) {
+                    await storage.addPoints(
+                      userId,
+                      milestoneXP,
+                      'streak_milestone',
+                      habitId,
+                      `${habit.title} ${milestone}-day streak!`
+                    );
+                    pointsEarned += milestoneXP;
+                    log.info(`[habits] Streak milestone! ${habit.title} hit ${milestone}-day streak, awarded ${milestoneXP} XP`);
+                  }
+                }
+              } catch (milestoneError: any) {
+                log.error('[habits] Streak milestone award failed:', milestoneError);
+                warnings.push(`Streak milestone bonus didn't apply: ${milestoneError?.message || "unknown error"}`);
+              }
+              break;
+            }
+          }
+        }
+
+        // Daily activity bonus — anchored to the client's calendar day.
+        try {
           const dailyBonus = await awardDailyBonusIfNeeded(userId, date);
           pointsEarned += dailyBonus;
-
-          // All-done bonus: check if every habit is now completed on the
-          // client's calendar day (the date this toggle is for).
-          try {
-            const allHabits = await storage.getHabits(userId);
-            const dayLogs = await storage.getHabitLogsByDate(userId, date);
-            const completedCount = dayLogs.filter((l: any) => l.completed).length;
-            if (completedCount >= allHabits.length && allHabits.length > 0) {
-              pointsEarned += XP_BONUSES.allDone;
-              log.info(`[habits] All-done bonus! ${completedCount}/${allHabits.length} habits on ${date}, +${XP_BONUSES.allDone} XP`);
-            }
-          } catch (allDoneErr) {
-            log.error('[habits] All-done bonus check failed:', allDoneErr);
-          }
-        } catch (pointsError) {
-          log.error('[habits] Points award failed:', pointsError);
-          // Don't fail the request
+        } catch (dailyErr: any) {
+          log.error('[habits] Daily bonus check failed:', dailyErr);
+          warnings.push(`Daily bonus didn't apply: ${dailyErr?.message || "unknown error"}`);
         }
-      }
 
-      return res.json({
-        ...logResult,
-        ...(scoreData ? { score: scoreData } : {}),
-        pointsEarned,
-        streakDays,
-      });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message || "Failed to toggle habit log" });
+        // All-done bonus: check if every habit is now completed on the
+        // client's calendar day (the date this toggle is for).
+        try {
+          const allHabits = await storage.getHabits(userId);
+          const dayLogs = await storage.getHabitLogsByDate(userId, date);
+          const completedCount = dayLogs.filter((l: any) => l.completed).length;
+          if (completedCount >= allHabits.length && allHabits.length > 0) {
+            pointsEarned += XP_BONUSES.allDone;
+            log.info(`[habits] All-done bonus! ${completedCount}/${allHabits.length} habits on ${date}, +${XP_BONUSES.allDone} XP`);
+          }
+        } catch (allDoneErr: any) {
+          log.error('[habits] All-done bonus check failed:', allDoneErr);
+          warnings.push(`All-done bonus didn't apply: ${allDoneErr?.message || "unknown error"}`);
+        }
+      } catch (pointsError: any) {
+        log.error('[habits] Points award failed:', pointsError);
+        warnings.push(`XP didn't save: ${pointsError?.message || "unknown error"}`);
+      }
     }
+
+    return res.json({
+      ...logResult,
+      ...(scoreData ? { score: scoreData } : {}),
+      pointsEarned,
+      streakDays,
+      ...(warnings.length ? { warnings } : {}),
+    });
   });
 }
