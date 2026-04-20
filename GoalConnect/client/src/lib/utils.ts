@@ -19,6 +19,15 @@ export function formatDateInput(date: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * The ONLY source of truth for "today" in the habits system.
+ *
+ * Returns the user's local calendar day as YYYY-MM-DD. The server never
+ * constructs its own "today" for habit logic — every toggle / streak / bonus
+ * call includes this value in the request so the client's timezone wins. See
+ * `server/routes/habits.ts` (T1, 2026-04-18) and
+ * `docs/plans/2026-04-18-habits-implementation-plan.md` for the cascade.
+ */
 export function getToday(): string {
   return formatDateInput(new Date());
 }

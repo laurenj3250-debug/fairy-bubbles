@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { z } from "zod";
 import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
 import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
@@ -9,6 +10,33 @@ import { getDb } from "../db";
 import { log } from "../lib/logger";
 
 const getUserId = (req: any) => requireUser(req).id;
+
+// T1: client owns the calendar. The server reads the date the client already
+// constructs via `client/src/lib/utils.ts:22` `getToday()` and trusts it for
+// calendar-day comparisons. `localHour` is the client's local hour-of-day
+// (0-23), used for time-of-day bonuses like early-bird. Both are optional so
+// pre-T3 clients keep working; when omitted, server falls back to its own clock.
+const YYYY_MM_DD = /^\d{4}-\d{2}-\d{2}$/;
+
+const toggleBodySchema = z.object({
+  habitId: z.number().int().positive(),
+  date: z.string().regex(YYYY_MM_DD),
+  localHour: z.number().int().min(0).max(23).optional(),
+  durationMinutes: z.number().int().optional(),
+  quantityCompleted: z.number().int().optional(),
+  sessionType: z.string().optional(),
+  incrementValue: z.number().int().optional(),
+  note: z.string().optional(),
+});
+
+/**
+ * Derive day-of-week (0=Sun, 6=Sat) from a YYYY-MM-DD string in a way that
+ * doesn't depend on server timezone. Parse as UTC to get a deterministic DOW
+ * for the calendar date the client chose.
+ */
+function dayOfWeekFromDate(dateStr: string): number {
+  return new Date(dateStr + 'T00:00:00Z').getUTCDay();
+}
 
 export function registerHabitRoutes(app: Express) {
   // GET all habits for user
@@ -33,7 +61,13 @@ export function registerHabitRoutes(app: Express) {
         return res.json({ currentStreak: 0, longestStreak: 0 });
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      // T1: client owns the calendar. Accept an optional `today` query param
+      // (YYYY-MM-DD, client-local). Fall back to server UTC for old callers.
+      const rawToday = typeof req.query.today === 'string' ? req.query.today : undefined;
+      const today = rawToday && YYYY_MM_DD.test(rawToday)
+        ? rawToday
+        : new Date().toISOString().split('T')[0];
+      const todayMs = new Date(today + 'T00:00:00Z').getTime();
 
       // Helper function to check if a day is "perfect" (all habits completed)
       const isPerfectDay = (dateString: string): boolean => {
@@ -45,37 +79,33 @@ export function registerHabitRoutes(app: Express) {
 
       // Calculate current streak (going backwards from today)
       let currentStreak = 0;
-      let checkDate = new Date();
+      let checkMs = todayMs;
 
       while (true) {
-        const dateString = checkDate.toISOString().split('T')[0];
+        const dateString = new Date(checkMs).toISOString().split('T')[0];
 
         if (!isPerfectDay(dateString)) {
           // If it's today and not perfect yet, check yesterday
           if (currentStreak === 0 && dateString === today) {
-            checkDate.setDate(checkDate.getDate() - 1);
+            checkMs -= 86400000;
             continue;
           }
           break;
         }
 
         currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        checkMs -= 86400000;
 
         if (currentStreak > 365) break; // Safety limit
       }
 
-      // Calculate longest streak ever
+      // Calculate longest streak ever over the last 365 days
       let longestStreak = currentStreak;
       let tempStreak = 0;
+      let scanMs = todayMs - 365 * 86400000;
 
-      // Check each day going back
-      let scanDate = new Date();
-      scanDate.setDate(scanDate.getDate() - 365); // Scan last year
-      const endDate = new Date();
-
-      while (scanDate <= endDate) {
-        const dateString = scanDate.toISOString().split('T')[0];
+      while (scanMs <= todayMs) {
+        const dateString = new Date(scanMs).toISOString().split('T')[0];
 
         if (isPerfectDay(dateString)) {
           tempStreak++;
@@ -84,7 +114,7 @@ export function registerHabitRoutes(app: Express) {
           tempStreak = 0;
         }
 
-        scanDate.setDate(scanDate.getDate() + 1);
+        scanMs += 86400000;
       }
 
       res.json({ currentStreak, longestStreak });
@@ -460,11 +490,15 @@ export function registerHabitRoutes(app: Express) {
   app.post("/api/habit-logs/toggle", async (req, res) => {
     try {
       const userId = getUserId(req);
-      const { habitId, date, durationMinutes, quantityCompleted, sessionType, incrementValue, note } = req.body;
 
-      if (!habitId || !date) {
-        return res.status(400).json({ error: "habitId and date are required" });
+      // T1: client owns the calendar. We validate the body shape here but leave
+      // future-date / full validation to T4-T5 per the plan. `localHour` is
+      // optional for backwards-compat with pre-T3 clients.
+      const parsed = toggleBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid request body" });
       }
+      const { habitId, date, localHour, durationMinutes, quantityCompleted, sessionType, incrementValue, note } = parsed.data;
 
       // Verify habit exists and user owns it
       const habit = await storage.getHabit(habitId);
@@ -604,19 +638,20 @@ export function registerHabitRoutes(app: Express) {
           );
 
           if (!existingTx) {
-            // Calculate per-habit streak
+            // Calculate per-habit streak — anchor to the client's calendar day.
             const habitLogs = await storage.getHabitLogs(habitId);
-            streakDays = calculateStreak(habitLogs);
+            streakDays = calculateStreak(habitLogs, date);
             const multiplier = getStreakMultiplier(streakDays);
 
             // Base XP by difficulty
             const base = XP_CONFIG.habit[habit.difficulty || 'medium'] || XP_CONFIG.habit.medium;
             pointsEarned = Math.round(base * multiplier);
 
-            // Variable bonuses (Hook Model: variable reward)
-            const now = new Date();
-            const hour = now.getHours();
-            const day = now.getDay(); // 0=Sun, 6=Sat
+            // Variable bonuses (Hook Model: variable reward).
+            // T1: use the client-local hour + the day-of-week derived from the
+            // client-local date. Fall back to server clock for old callers.
+            const hour = typeof localHour === 'number' ? localHour : new Date().getHours();
+            const day = dayOfWeekFromDate(date); // 0=Sun, 6=Sat
             const bonuses: string[] = [];
 
             if (hour < 7) {
@@ -669,19 +704,19 @@ export function registerHabitRoutes(app: Express) {
             }
           }
 
-          // Daily activity bonus (server time, shared helper)
-          const dailyBonus = await awardDailyBonusIfNeeded(userId);
+          // Daily activity bonus — anchored to the client's calendar day.
+          const dailyBonus = await awardDailyBonusIfNeeded(userId, date);
           pointsEarned += dailyBonus;
 
-          // All-done bonus: check if every habit is now completed today
+          // All-done bonus: check if every habit is now completed on the
+          // client's calendar day (the date this toggle is for).
           try {
-            const todayStr = new Date().toISOString().split('T')[0];
             const allHabits = await storage.getHabits(userId);
-            const todayLogs = await storage.getHabitLogsByDate(userId, todayStr);
-            const completedCount = todayLogs.filter((l: any) => l.completed).length;
+            const dayLogs = await storage.getHabitLogsByDate(userId, date);
+            const completedCount = dayLogs.filter((l: any) => l.completed).length;
             if (completedCount >= allHabits.length && allHabits.length > 0) {
               pointsEarned += XP_BONUSES.allDone;
-              log.info(`[habits] All-done bonus! ${completedCount}/${allHabits.length} habits, +${XP_BONUSES.allDone} XP`);
+              log.info(`[habits] All-done bonus! ${completedCount}/${allHabits.length} habits on ${date}, +${XP_BONUSES.allDone} XP`);
             }
           } catch (allDoneErr) {
             log.error('[habits] All-done bonus check failed:', allDoneErr);

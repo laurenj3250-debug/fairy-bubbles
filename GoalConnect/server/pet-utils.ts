@@ -2,8 +2,14 @@ import type { Habit, HabitLog } from "@shared/schema";
 
 /**
  * Calculate current streak (consecutive days with at least 1 habit completed)
+ *
+ * @param logs - habit logs
+ * @param referenceToday - optional client-local YYYY-MM-DD "today" used to decide
+ *   whether the streak is still active. If omitted, falls back to server's UTC
+ *   date (legacy). The client owns the calendar (see client/src/lib/utils.ts:22
+ *   `getToday()`); prefer passing it in.
  */
-export function calculateStreak(logs: HabitLog[]): number {
+export function calculateStreak(logs: HabitLog[], referenceToday?: string): number {
   if (logs.length === 0) return 0;
 
   // Get all unique dates with completed habits
@@ -17,9 +23,11 @@ export function calculateStreak(logs: HabitLog[]): number {
 
   if (sortedDates.length === 0) return 0;
 
-  // Check if today or yesterday has completion (streak is still active)
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  // Check if today or yesterday has completion (streak is still active).
+  // Prefer the client-provided "today" — client owns the calendar.
+  const today = referenceToday ?? new Date().toISOString().split('T')[0];
+  const todayMs = new Date(today + 'T00:00:00Z').getTime();
+  const yesterday = new Date(todayMs - 86400000).toISOString().split('T')[0];
 
   if (sortedDates[0] !== today && sortedDates[0] !== yesterday) {
     return 0; // Streak broken
