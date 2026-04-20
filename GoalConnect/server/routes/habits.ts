@@ -34,6 +34,19 @@ const toggleBodySchema = z.object({
 type ToggleBody = z.infer<typeof toggleBodySchema>;
 
 /**
+ * T5: Reject dates that are implausible for a habit log. Zod already checks
+ * YYYY-MM-DD shape; this checks RANGE. 30-day future buffer absorbs timezone
+ * slop + edge-of-day latency so a valid "today" log from the client's
+ * perspective never gets rejected. Year floor rejects garbage like "1999".
+ */
+function isValidLogDate(clientDate: string): boolean {
+  const today = new Date();
+  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const parsed = new Date(clientDate + "T00:00:00Z");
+  return !isNaN(parsed.getTime()) && parsed <= thirtyDaysFromNow && parsed.getFullYear() >= 2020;
+}
+
+/**
  * Derive day-of-week (0=Sun, 6=Sat) from a YYYY-MM-DD string in a way that
  * doesn't depend on server timezone. Parse as UTC to get a deterministic DOW
  * for the calendar date the client chose.
@@ -500,6 +513,13 @@ export function registerHabitRoutes(app: Express) {
         issues: parsed.error.issues,
       });
     }
+
+    // T5: Range-check the date. Zod only enforces shape; this rejects dates
+    // that are too far in the future or absurdly in the past.
+    if (!isValidLogDate(parsed.data.date)) {
+      return res.status(400).json({ error: "Date out of range" });
+    }
+
     const body: ToggleBody = parsed.data;
     const {
       habitId,
