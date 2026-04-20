@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
 import { requireUser } from "../simple-auth";
-import { insertHabitSchema, insertHabitLogSchema } from "@shared/schema";
+import { insertHabitSchema, insertHabitLogSchema, type HabitLog } from "@shared/schema";
 import { calculateStreak, calculateWeeklyCompletion, getStreakMultiplier } from "../pet-utils";
 import { XP_CONFIG, STREAK_MILESTONES, XP_BONUSES } from "@shared/xp-config";
 import { awardDailyBonusIfNeeded } from "../services/dailyBonus";
@@ -32,6 +32,23 @@ const toggleBodySchema = z.object({
 });
 
 type ToggleBody = z.infer<typeof toggleBodySchema>;
+
+// T6: Zod schema for the weekStart query param. Same YYYY-MM-DD shape as the
+// toggle body's `date` field. The handler below does the range math.
+const weekStartSchema = z.string().regex(YYYY_MM_DD);
+
+/**
+ * T6: Add N days to a YYYY-MM-DD string and return a YYYY-MM-DD string. Uses
+ * UTC arithmetic so DST transitions can't shift the computed day. This is
+ * string-math, NOT a calendar-day comparison — the client owns the calendar
+ * (per T1/C5), and this helper only walks a 7-day window relative to a
+ * client-supplied week-start anchor.
+ */
+function addDays(ymd: string, days: number): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 /**
  * T5: Reject dates that are implausible for a habit log. Zod already checks
@@ -137,6 +154,71 @@ export function registerHabitRoutes(app: Express) {
       res.json({ currentStreak, longestStreak });
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to get user streak" });
+    }
+  });
+
+  // T6: GET /api/habits/week?weekStart=YYYY-MM-DD
+  // Returns habits enriched with a parallel 7-element logs array per habit,
+  // plus per-habit streak and optional weeklyProgress. Replaces the
+  // combination of /api/habits + /api/habit-logs/range/* that Sundown uses.
+  // MUST come before /api/habits/:id so Express doesn't treat "week" as an id.
+  app.get("/api/habits/week", async (req, res) => {
+    try {
+      const parsed = weekStartSchema.safeParse(req.query.weekStart);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid weekStart" });
+      }
+
+      const userId = getUserId(req);
+      const startDate = parsed.data;
+      const endDate = addDays(startDate, 6);
+
+      const habits = await storage.getHabits(userId);
+
+      // No range method on storage; getAllHabitLogs returns all user logs and
+      // we filter by the 7-day window here. YYYY-MM-DD strings compare
+      // lexicographically in the same order they compare chronologically.
+      const allLogs = await storage.getAllHabitLogs(userId);
+      const logs = allLogs.filter((l) => l.date >= startDate && l.date <= endDate);
+
+      const logMap = new Map<string, HabitLog>();
+      for (const l of logs) {
+        logMap.set(`${l.habitId}:${l.date}`, l);
+      }
+
+      const weekDates = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(startDate, i));
+
+      const enrichedHabits = habits.map((h) => {
+        const perHabitLogs = allLogs.filter((l) => l.habitId === h.id);
+        const perHabitWeekLogs = logs.filter((l) => l.habitId === h.id);
+        // `weeklyProgress` counts completed week-logs against the habit's
+        // configured targetPerWeek. Habits without a target get null so the
+        // client can hide the indicator entirely.
+        const weeklyProgress = h.targetPerWeek
+          ? {
+              done: perHabitWeekLogs.filter((l) => l.completed).length,
+              target: h.targetPerWeek,
+            }
+          : null;
+
+        return {
+          ...h,
+          logs: weekDates.map((d) => logMap.get(`${h.id}:${d}`) ?? null),
+          // Anchor streak to the client's week-end so "today" is consistent
+          // with the week window the client is viewing.
+          streak: calculateStreak(perHabitLogs, endDate),
+          weeklyProgress,
+        };
+      });
+
+      res.json({
+        weekStart: startDate,
+        weekDates,
+        habits: enrichedHabits,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch habits week";
+      res.status(500).json({ error: message });
     }
   });
 
