@@ -265,6 +265,33 @@
 .sd-full-width { margin-bottom: 14px; }
 .sd-section { padding: 0 2.5rem 1.25rem; max-width: 1200px; margin: 0 auto; }
 
+/* ===== WEEK NAV (prev/next week in stardust trail) ===== */
+.sd-week-nav {
+  display: flex; align-items: center; gap: 8px;
+}
+.sd-week-nav-btn {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(15,10,8,0.45);
+  border: 1px solid rgba(255,200,140,0.18);
+  color: var(--sd-text-accent);
+  cursor: pointer; padding: 0;
+  transition: all 0.15s;
+}
+.sd-week-nav-btn:hover:not(:disabled) {
+  background: rgba(225,164,92,0.15);
+  border-color: rgba(255,200,140,0.35);
+}
+.sd-week-nav-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.sd-week-label {
+  min-width: 120px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== HABIT GRID — Candlelight Grid ===== */
 .sd-habit-grid {
   display: grid; grid-template-columns: 150px repeat(7, minmax(44px, 1fr));

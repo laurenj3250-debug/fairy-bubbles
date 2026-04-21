@@ -1,5 +1,6 @@
-import React from 'react';
-import { format } from 'date-fns';
+import React, { useState, useMemo } from 'react';
+import { format, addDays, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { resolveIcon } from './sundown-icons';
 
 interface SundownStardustTrailProps {
@@ -10,13 +11,34 @@ interface SundownStardustTrailProps {
   onToggle: (habitId: number, date: string) => void;
 }
 
+const MAX_WEEKS_BACK = 12;
+
 export function SundownStardustTrail({
   habits,
   habitLogs,
-  weekDates,
-  todayIndex,
+  weekDates: propWeekDates,
+  todayIndex: propTodayIndex,
   onToggle,
 }: SundownStardustTrailProps) {
+  // weekOffset: 0 = this week, -1 = last week, -2 = two weeks ago, ...
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const { weekDates, todayIndex, weekLabel } = useMemo(() => {
+    if (weekOffset === 0) {
+      return {
+        weekDates: propWeekDates,
+        todayIndex: propTodayIndex,
+        weekLabel: 'This week',
+      };
+    }
+    const thisWeekStart = parseISO(propWeekDates[0] + 'T12:00:00');
+    const offsetStart = addDays(thisWeekStart, weekOffset * 7);
+    const dates = [0, 1, 2, 3, 4, 5, 6].map(i => format(addDays(offsetStart, i), 'yyyy-MM-dd'));
+    const startLabel = format(parseISO(dates[0] + 'T12:00:00'), 'MMM d');
+    const endLabel = format(parseISO(dates[6] + 'T12:00:00'), 'MMM d');
+    return { weekDates: dates, todayIndex: -1, weekLabel: `${startLabel} – ${endLabel}` };
+  }, [weekOffset, propWeekDates, propTodayIndex]);
+
   // Build lookup: "habitId:date" -> completed
   const logMap = new Map<string, boolean>();
   for (const log of habitLogs) {
@@ -25,8 +47,8 @@ export function SundownStardustTrail({
     }
   }
 
-  // Today's stats
-  const todayDate = weekDates[todayIndex];
+  // Today's stats (only meaningful on current week)
+  const todayDate = weekDates[todayIndex] ?? '';
   const todayCompleted = habits.filter((h) =>
     logMap.get(`${h.id}:${todayDate}`),
   ).length;
@@ -34,12 +56,39 @@ export function SundownStardustTrail({
   // Day labels from actual dates
   const dayLabels = weekDates.map((d) => format(new Date(d + 'T12:00:00'), 'EEEEEE')[0]);
 
+  const goBack = () => setWeekOffset(o => Math.max(-MAX_WEEKS_BACK, o - 1));
+  const goForward = () => setWeekOffset(o => Math.min(0, o + 1));
+  const atCurrentWeek = weekOffset === 0;
+  const atOldest = weekOffset <= -MAX_WEEKS_BACK;
+
   return (
     <div className="sd-shell" style={{ animationDelay: '0.5s' }}>
       <div className="sd-face">
         <div className="sd-card-hdr">
-          <span className="sd-card-title">This Week</span>
-          <span className="sd-badge">{todayCompleted}/{habits.length} Today</span>
+          <div className="sd-week-nav">
+            <button
+              type="button"
+              className="sd-week-nav-btn"
+              onClick={goBack}
+              disabled={atOldest}
+              aria-label="Previous week"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="sd-card-title sd-week-label">{weekLabel}</span>
+            <button
+              type="button"
+              className="sd-week-nav-btn"
+              onClick={goForward}
+              disabled={atCurrentWeek}
+              aria-label="Next week"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+          {atCurrentWeek && (
+            <span className="sd-badge">{todayCompleted}/{habits.length} Today</span>
+          )}
         </div>
         <div className="sd-tray">
           <div className="sd-habit-grid">
@@ -87,8 +136,9 @@ export function SundownStardustTrail({
 
                   {weekDates.map((date, i) => {
                     const done = !!logMap.get(`${habit.id}:${date}`);
-                    const isToday = i === todayIndex;
-                    const isFuture = i > todayIndex;
+                    const isCurrentWeek = todayIndex >= 0;
+                    const isToday = isCurrentWeek && i === todayIndex;
+                    const isFuture = isCurrentWeek && i > todayIndex;
 
                     const classes = [
                       'sd-star-dot',
