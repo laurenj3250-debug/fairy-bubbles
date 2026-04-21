@@ -280,6 +280,20 @@
   display: flex; align-items: center; gap: 8px;
   font-size: 12px; color: rgba(240,222,199,0.7); white-space: nowrap; overflow: hidden;
 }
+.sd-habit-label-text {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden;
+}
+.sd-habit-name {
+  font-size: 12px; color: rgba(240,222,199,0.85);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sd-habit-weekly-progress {
+  font-size: 10px; color: rgba(169,130,106,0.7);
+  letter-spacing: 0.3px;
+}
+.sd-habit-label.weekly-met .sd-habit-weekly-progress {
+  color: rgba(225,164,92,0.85);
+}
 .sd-habit-icon {
   width: 20px; height: 20px;
   stroke: var(--sd-text-accent); fill: none;
@@ -615,5 +629,21 @@
   .sd-section { padding: 0 1rem 1.25rem; }
   .sd-residency-strip { padding: 0 16px 12px; }
   .sd-tab-wrap { padding: 0 16px 20px; }
-  .sd-habit-grid { grid-template-columns: 120px repeat(7, 1fr); }
+  .sd-habit-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    row-gap: 4px;
+  }
+  /* Hide the empty placeholder cell that preceded the day-label row in desktop layout */
+  .sd-habit-grid > div:first-child:empty { display: none; }
+  /* Stack the habit label above its 7 cells */
+  .sd-habit-label {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    white-space: normal;
+  }
+  .sd-habit-name {
+    white-space: normal;
+  }
+  /* Full-width cells, slightly shorter for mobile density */
+  .sd-star-dot { width: 100%; height: 42px; border-radius: 12px; }
 }

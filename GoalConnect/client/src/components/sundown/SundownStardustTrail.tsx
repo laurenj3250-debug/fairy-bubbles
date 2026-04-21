@@ -75,57 +75,47 @@ export function SundownStardustTrail({
                         return null;
                       })}
                     </svg>
-                    {habit.name}
+                    <span className="sd-habit-label-text">
+                      <span className="sd-habit-name">{habit.name}</span>
+                      {isWeekly && (
+                        <span className="sd-habit-weekly-progress">
+                          {targetMet ? `${weekDoneCount}/${target} done this week` : `${weekDoneCount}/${target} this week`}
+                        </span>
+                      )}
+                    </span>
                   </div>
 
-                  {isWeekly ? (
-                    /* Weekly habit: clean bar spanning all 7 columns */
-                    <button
-                      className={`sd-weekly-bar${targetMet ? ' met' : ''}`}
-                      style={{ gridColumn: '2 / -1' }}
-                      onClick={() => onToggle(habit.id, weekDates[todayIndex])}
-                    >
-                      <span className="sd-weekly-bar-fill" style={{ width: `${Math.min(100, (weekDoneCount / target) * 100)}%` }} />
-                      <span className="sd-weekly-bar-left">
-                        {targetMet ? `✓ done this week` : `${weekDoneCount} of ${target} this week`}
-                      </span>
-                      <span className="sd-weekly-bar-right">
-                        {weekDoneCount}/{target}
-                      </span>
-                    </button>
-                  ) : (
-                    /* Daily habit: normal 7-dot grid */
-                    weekDates.map((date, i) => {
-                      const done = !!logMap.get(`${habit.id}:${date}`);
-                      const isToday = i === todayIndex;
-                      const isFuture = i > todayIndex;
+                  {weekDates.map((date, i) => {
+                    const done = !!logMap.get(`${habit.id}:${date}`);
+                    const isToday = i === todayIndex;
+                    const isFuture = i > todayIndex;
 
-                      const classes = [
-                        'sd-star-dot',
-                        done ? 'done' : 'empty',
-                        isToday ? 'today-ring' : '',
-                        isFuture && !done ? 'future' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ');
+                    const classes = [
+                      'sd-star-dot',
+                      done ? 'done' : 'empty',
+                      isToday ? 'today-ring' : '',
+                      isFuture && !done ? 'future' : '',
+                      isWeekly && targetMet && done ? 'weekly-met' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
-                      return (
-                        <button
-                          key={`${habit.id}-${date}`}
-                          className={classes}
-                          style={{
-                            animationDelay: done
-                              ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
-                              : undefined,
-                          }}
-                          onClick={() => onToggle(habit.id, date)}
-                          aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
-                        >
-                          {done ? '✓' : ''}
-                        </button>
-                      );
-                    })
-                  )}
+                    return (
+                      <button
+                        key={`${habit.id}-${date}`}
+                        className={classes}
+                        style={{
+                          animationDelay: done
+                            ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
+                            : undefined,
+                        }}
+                        onClick={() => onToggle(habit.id, date)}
+                        aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
+                      >
+                        {done ? '✓' : ''}
+                      </button>
+                    );
+                  })}
                 </React.Fragment>
               );
             })}
