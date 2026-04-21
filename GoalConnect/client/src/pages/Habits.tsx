@@ -1,22 +1,17 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Habit, HabitLog } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { HabitCard } from "@/components/HabitCard";
 import { HabitCreateDialog } from "@/components/HabitCreateDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { Plus, Flame, Check, X, Calendar, BarChart3 } from "lucide-react";
-import { getToday, cn } from "@/lib/utils";
+import { Plus, Flame, BarChart3 } from "lucide-react";
+import { getToday } from "@/lib/utils";
 import { HabitContributionGraph } from "@/components/HabitContributionGraph";
 import { SundownPageWrapper } from "@/components/sundown/SundownPageWrapper";
 import { Link } from "wouter";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface HabitWithData extends Habit {
   streak: { streak: number };
@@ -28,8 +23,8 @@ export default function Habits() {
   const [habitDialogOpen, setHabitDialogOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
   const [deletingHabit, setDeletingHabit] = useState<HabitWithData | null>(null);
-  const [backfillDate, setBackfillDate] = useState<string | null>(null);
   const today = getToday();
+  const { toast } = useToast();
 
   // Fetch habits with data
   const { data: habitsRaw = [], isLoading } = useQuery<HabitWithData[]>({
@@ -47,44 +42,30 @@ export default function Habits() {
     queryKey: ["/api/habit-logs", today],
   });
 
-  // Fetch logs for backfill date (when dialog is open)
-  const { data: backfillLogs = [] } = useQuery<HabitLog[]>({
-    queryKey: ["/api/habit-logs", backfillDate],
-    enabled: !!backfillDate,
-  });
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
+    queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
+    queryClient.invalidateQueries({ predicate: (query) =>
+      typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
+  };
 
-  // Toggle habit completion
+  // Toggle habit completion for today (from big Check button)
   const toggleMutation = useMutation({
-    mutationFn: async (habitId: number) => {
-      return await apiRequest("/api/habit-logs/toggle", "POST", {
-        habitId,
-        date: today,
-      });
-    },
-    onSuccess: () => {
-      // Invalidate all habit-related queries for consistency across components
-      queryClient.invalidateQueries({ queryKey: [`/api/habit-logs/${today}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", today] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs/all"] });
-      queryClient.invalidateQueries({ predicate: (query) =>
-        typeof query.queryKey[0] === 'string' && query.queryKey[0].includes('/api/habit-logs/range/')
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
-    },
+    mutationFn: (habitId: number) =>
+      apiRequest("/api/habit-logs/toggle", "POST", { habitId, date: today }),
+    onSuccess: invalidateAll,
+    onError: () => toast({ title: "Couldn't save that", description: "Give it another tap.", variant: "destructive" }),
   });
 
-  // Toggle habit for a specific date (backfill)
-  const backfillMutation = useMutation({
-    mutationFn: async ({ habitId, date }: { habitId: number; date: string }) => {
-      return await apiRequest("/api/habit-logs/toggle", "POST", {
-        habitId,
-        date,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/habit-logs", backfillDate] });
-      queryClient.invalidateQueries({ queryKey: ["/api/habits-with-data"] });
-    },
+  // Toggle habit for any date (from heatmap cell tap — replaces old backfill dialog)
+  const toggleForDateMutation = useMutation({
+    mutationFn: ({ habitId, date }: { habitId: number; date: string }) =>
+      apiRequest("/api/habit-logs/toggle", "POST", { habitId, date }),
+    onSuccess: invalidateAll,
+    onError: () => toast({ title: "Couldn't save that", description: "Give it another tap.", variant: "destructive" }),
   });
 
   // Delete habit
@@ -97,20 +78,6 @@ export default function Habits() {
 
   const isCompletedToday = (habitId: number) => {
     return todayLogs.some(log => log.habitId === habitId && log.completed);
-  };
-
-  const isCompletedOnDate = (habitId: number, logs: HabitLog[]) => {
-    return logs.some(log => log.habitId === habitId && log.completed);
-  };
-
-  // Format date for display
-  const formatBackfillDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T12:00:00");
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   const handleEdit = (habit: Habit) => {
@@ -210,34 +177,34 @@ export default function Habits() {
             </div>
           </header>
 
-          {/* Contribution Graph */}
+          {/* Activity Overview — desktop inline, mobile collapsed */}
           {habits.length > 0 && contributionData.length > 0 && (
-            <div className="sd-shell p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="card-title">Activity Overview</span>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-[var(--text-muted)]">Log for date:</label>
-                  <input
-                    type="date"
-                    max={today}
-                    value={backfillDate || ""}
-                    onChange={(e) => setBackfillDate(e.target.value || null)}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-white/10 border border-white/20 text-[var(--sd-text-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(225,164,92,0.4)]"
+            <>
+              <div className="sd-shell p-4 hidden md:block">
+                <div className="mb-2">
+                  <span className="card-title">Activity Overview</span>
+                </div>
+                <HabitContributionGraph
+                  history={contributionData}
+                  weeks={12}
+                  title=""
+                  showMonthLabels={true}
+                />
+              </div>
+              <details className="sd-shell p-4 md:hidden">
+                <summary className="card-title cursor-pointer select-none">
+                  Activity overview (90 days)
+                </summary>
+                <div className="mt-3">
+                  <HabitContributionGraph
+                    history={contributionData}
+                    weeks={12}
+                    title=""
+                    showMonthLabels={true}
                   />
                 </div>
-              </div>
-              <HabitContributionGraph
-                history={contributionData}
-                weeks={12}
-                title=""
-                showMonthLabels={true}
-                onDayClick={(date) => setBackfillDate(date)}
-                selectedDate={backfillDate}
-              />
-              <p className="text-xs text-[var(--text-muted)] mt-2 text-center">
-                Click any day or use the date picker above to mark habits
-              </p>
-            </div>
+              </details>
+            </>
           )}
 
           {/* Habits List */}
@@ -248,9 +215,9 @@ export default function Habits() {
           ) : habits.length === 0 ? (
             <div className="sd-shell p-12 text-center">
               <div className="text-6xl mb-4">🎯</div>
-              <h2 className="text-xl font-semibold text-[var(--sd-text-primary)] mb-2">No habits yet</h2>
+              <h2 className="text-xl font-semibold text-[var(--sd-text-primary)] mb-2">Nothing to track yet</h2>
               <p className="text-[var(--text-muted)] mb-6">
-                Start building better habits today
+                Pick one thing — small — you'd like to do most days.
               </p>
               <Button
                 onClick={() => {
@@ -274,7 +241,7 @@ export default function Habits() {
                   onEdit={() => handleEdit(habit)}
                   onDelete={() => handleDelete(habit)}
                   isToggling={toggleMutation.isPending}
-                  onDayClick={(date) => setBackfillDate(date)}
+                  onDayClick={(date) => toggleForDateMutation.mutate({ habitId: habit.id, date })}
                 />
               ))}
             </div>
@@ -301,84 +268,6 @@ export default function Habits() {
         itemType="habit"
       />
 
-      {/* Backfill Dialog - Mark habits for past days */}
-      <Dialog open={!!backfillDate} onOpenChange={(open) => !open && setBackfillDate(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              {backfillDate && formatBackfillDate(backfillDate)}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto py-2">
-            {habits.map((habit) => {
-              const isCompleted = isCompletedOnDate(habit.id, backfillLogs);
-              const isToggling = backfillMutation.isPending;
-
-              return (
-                <button
-                  key={habit.id}
-                  onClick={() => {
-                    if (backfillDate && !isToggling) {
-                      backfillMutation.mutate({ habitId: habit.id, date: backfillDate });
-                    }
-                  }}
-                  disabled={isToggling}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all",
-                    "border border-foreground/10 hover:border-foreground/20",
-                    isCompleted
-                      ? "bg-primary/10 border-primary/30"
-                      : "bg-foreground/5 hover:bg-foreground/10",
-                    isToggling && "opacity-50 cursor-wait"
-                  )}
-                >
-                  {/* Checkbox indicator */}
-                  <div
-                    className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
-                      isCompleted
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-foreground/10"
-                    )}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <X className="w-3 h-3 text-foreground/30" />
-                    )}
-                  </div>
-
-                  {/* Habit info */}
-                  <div className="flex-1 text-left">
-                    <p className={cn(
-                      "font-medium",
-                      isCompleted ? "text-foreground" : "text-foreground/70"
-                    )}>
-                      {habit.title}
-                    </p>
-                  </div>
-
-                  {/* Status badge */}
-                  <span className={cn(
-                    "text-xs px-2 py-0.5 rounded-full",
-                    isCompleted
-                      ? "bg-primary/20 text-primary"
-                      : "bg-foreground/10 text-foreground/50"
-                  )}>
-                    {isCompleted ? "Done" : "Missed"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <p className="text-xs text-foreground/50 text-center mt-2">
-            Click a habit to toggle its completion for this day
-          </p>
-        </DialogContent>
-      </Dialog>
     </SundownPageWrapper>
   );
 }
