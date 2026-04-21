@@ -47,7 +47,7 @@ export function SundownHabitsTab({
   onToggle,
   completionPct,
 }: SundownHabitsTabProps) {
-  const [view, setView] = useState<ViewMode>('today');
+  const [view, setView] = useState<ViewMode>('week');
   const { toast } = useToast();
 
   // Dialog state
@@ -308,11 +308,6 @@ function TodayView({
                     {habit.name}
                   </span>
                 </div>
-                {streak > 0 && !isDone && (
-                  <div style={{ fontSize: 11, color: 'rgba(225,164,92,0.6)' }}>
-                    {streak}d streak at risk
-                  </div>
-                )}
                 {isDone && (
                   <div style={{ fontSize: 11, color: 'var(--sd-text-muted)' }}>
                     Done today
