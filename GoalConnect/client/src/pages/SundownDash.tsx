@@ -281,7 +281,6 @@ export default function SundownDash() {
           {/* Nav links — always visible */}
           <div className="sd-nav-row">
             {[
-              { href: '/habits', label: 'Habits' },
               { href: '/goals', label: 'Goals' },
               { href: '/analytics', label: 'Analytics' },
               { href: '/adventures', label: 'Adventures' },

@@ -8,7 +8,6 @@ import { MainLayout } from "@/components/MainLayout";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-import Habits from "@/pages/Habits";
 import HabitInsights from "@/pages/HabitInsights";
 import Goals from "@/pages/Goals";
 import DreamScroll from "@/pages/DreamScrollMountain";
@@ -124,13 +123,7 @@ function AppRoutes() {
           <SundownDash />
         </RequireAuth>
       </Route>
-      <Route path="/habits">
-        <RequireAuth>
-          <MainLayout variant="sidebar">
-            <Habits />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
+      <Route path="/habits"><Redirect to="/" /></Route>
       <Route path="/habit-insights">
         <RequireAuth>
           <MainLayout>
