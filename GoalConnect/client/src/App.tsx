@@ -18,6 +18,7 @@ import SignupPage from "@/pages/Signup";
 import LoginPage from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import SundownDash from "@/pages/SundownDash";
+import Fresh from "@/pages/Fresh";
 import Journey from "@/pages/Journey";
 import YearlyGoals from "@/pages/YearlyGoals";
 import MediaLibrary from "@/pages/MediaLibrary";
@@ -122,6 +123,11 @@ function AppRoutes() {
       <Route path="/">
         <RequireAuth>
           <SundownDash />
+        </RequireAuth>
+      </Route>
+      <Route path="/fresh">
+        <RequireAuth>
+          <Fresh />
         </RequireAuth>
       </Route>
       <Route path="/habits">
