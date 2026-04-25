@@ -2,11 +2,12 @@ import { useState, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { YearlyGoalDialog } from '@/components/YearlyGoalDialog';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { useYearlyGoals, type YearlyGoalWithProgress } from '@/hooks/useYearlyGoals';
 import { isGoalLinked } from '@/lib/yearlyGoalUtils';
+import { SegmentedGoalTile, SegmentedRingGradients } from '@/components/SegmentedGoalTile';
 
 interface GoalData {
   id: number;
@@ -22,13 +23,6 @@ interface SundownMonthlyGoalsProps {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function getGlowClass(pct: number, isComplete: boolean): string {
-  if (isComplete) return 'completed';
-  if (pct >= 70) return 'glow-high';
-  if (pct >= 30) return 'glow-moderate';
-  return 'glow-dim';
-}
 
 export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoalsProps) {
   const currentMonth = new Date().getMonth();
@@ -153,112 +147,40 @@ export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoal
             })}
           </div>
 
-          {/* Goals grid */}
-          <div className="sd-goals-grid">
+          {/* Goals grid — segmented rings */}
+          <SegmentedRingGradients />
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+              gap: 12,
+            }}
+          >
             {displayGoals.map((goal) => {
-              const pct =
-                goal.target > 0
-                  ? Math.round((goal.current / goal.target) * 100)
-                  : 0;
-              const isComplete = goal.current >= goal.target;
-              const glowClass = getGlowClass(pct, isComplete);
               const rawGoal = rawGoals.find((g) => g.id === goal.id);
               const isManualCount =
                 rawGoal?.goalType === 'count' && !!rawGoal && !isGoalLinked(rawGoal);
 
               return (
-                <div
+                <SegmentedGoalTile
                   key={goal.id}
-                  className={`sd-goal-tile ${glowClass}`}
-                >
-                  <div className="sd-goal-tile-inner">
-                    <div className="sd-goal-tile-name">{goal.title}</div>
-                    <div className="sd-goal-tile-fraction">
-                      {isComplete
-                        ? 'Complete'
-                        : `${goal.current} / ${goal.target} (${pct}%)`}
-                    </div>
-                    <div className="sd-goal-tile-bar">
-                      <div
-                        className="sd-goal-tile-fill"
-                        style={{
-                          width: `${Math.min(pct, 100)}%`,
-                          opacity: isComplete ? 0.4 : 1,
-                        }}
-                      />
-                    </div>
-                    {/* Action cluster — top right */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        display: 'flex',
-                        gap: 4,
-                      }}
-                    >
-                      {!isComplete && isManualCount && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); incrementMutation.mutate(goal.id); }}
-                          disabled={incrementMutation.isPending}
-                          data-testid={`increment-goal-${goal.id}`}
-                          title="Add progress"
-                          style={{
-                            width: 28, height: 28, borderRadius: 8,
-                            border: '1px solid rgba(225,164,92,0.25)',
-                            background: 'rgba(225,164,92,0.1)',
-                            color: 'var(--sd-text-accent)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', padding: 0,
-                          }}
-                        >
-                          <Plus style={{ width: 14, height: 14 }} />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEdit(goal.id); }}
-                        data-testid={`edit-goal-${goal.id}`}
-                        title="Edit goal"
-                        style={{
-                          width: 28, height: 28, borderRadius: 8,
-                          border: '1px solid rgba(225,164,92,0.2)',
-                          background: 'rgba(15,10,8,0.5)',
-                          color: 'var(--sd-text-muted)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', padding: 0,
-                        }}
-                      >
-                        <Pencil style={{ width: 12, height: 12 }} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const raw = rawGoals.find((g) => g.id === goal.id);
-                          if (raw) setDeletingGoal(raw);
-                        }}
-                        data-testid={`delete-goal-${goal.id}`}
-                        title="Delete goal"
-                        style={{
-                          width: 28, height: 28, borderRadius: 8,
-                          border: '1px solid rgba(200,80,80,0.3)',
-                          background: 'rgba(15,10,8,0.5)',
-                          color: 'rgba(220,120,120,0.8)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', padding: 0,
-                        }}
-                      >
-                        <Trash2 style={{ width: 12, height: 12 }} />
-                      </button>
-                    </div>
-                    {isComplete && (
-                      <div className="sd-completed-check">
-                        <svg viewBox="0 0 24 24">
-                          <polyline points="20,6 9,17 4,12" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  title={goal.title}
+                  current={goal.current}
+                  target={goal.target}
+                  category={goal.category}
+                  testId={`goal-tile-${goal.id}`}
+                  onAddProgress={
+                    isManualCount && goal.current < goal.target
+                      ? () => incrementMutation.mutate(goal.id)
+                      : undefined
+                  }
+                  addProgressPending={incrementMutation.isPending}
+                  onEdit={() => handleEdit(goal.id)}
+                  onDelete={() => {
+                    const raw = rawGoals.find((g) => g.id === goal.id);
+                    if (raw) setDeletingGoal(raw);
+                  }}
+                />
               );
             })}
           </div>

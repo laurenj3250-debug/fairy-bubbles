@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · Ring icon · BIG · 4 variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --c-residency: #e0a8c4;
+    --c-fitness: #9dd4b0;
+    --c-climbing: #ecbca3;
+    --c-outdoor: #b4d8a9;
+    --c-german: #e4d4a6;
+    --c-books: #c8bce0;
+    --c-piano: #d4b8dc;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 8px; padding: 18px;
+    background: rgba(10,5,7,0.9); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.12);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0; padding: 14px 22px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary); border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 14px rgba(225,164,92,0.25);
+  }
+
+  .take { display: none; padding: 32px 24px 100px; max-width: 1400px; margin: 0 auto; }
+  .take.active { display: block; }
+  .hdr { text-align: center; margin-bottom: 24px; }
+  .hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 400; letter-spacing: 5px; text-transform: uppercase; margin: 0 0 8px; }
+  .hdr p { color: var(--sd-text-muted); font-size: 16px; margin: 0; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 14px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 22px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 16px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+  .filter-pill {
+    padding: 9px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    background: rgba(45,22,28,0.5); color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.12);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .filter-pill .cnt { background: rgba(15,10,8,0.6); padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .filter-pill.urgent.active { background: rgba(200,100,90,0.25); border-color: rgba(200,100,90,0.5); color: #f4c0b5; }
+
+  .sec-hdr {
+    font-family: 'Cormorant Garamond', serif; font-size: 18px;
+    letter-spacing: 4px; text-transform: uppercase; color: var(--sd-text-muted);
+    margin: 24px 0 14px 4px;
+  }
+  .sec-hdr.hot { color: var(--sd-text-accent); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  /* Shared tile — BIGGER */
+  .tile {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.12);
+    border-radius: 20px;
+    padding: 24px 18px 18px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 12px; min-height: 280px;
+    transition: all 0.15s; position: relative;
+  }
+  .tile:hover { border-color: rgba(255,200,140,0.35); transform: translateY(-2px); }
+  .tile.overdue-card { border-color: rgba(200,100,90,0.5); background: rgba(90,30,30,0.28); }
+
+  .title { font-size: 17px; font-weight: 500; line-height: 1.3; margin-top: 4px; }
+  .bottom { display: flex; flex-direction: column; gap: 4px; margin-top: auto; width: 100%; }
+  .frac { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--sd-text-accent); line-height: 1; }
+  .due { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; color: var(--sd-text-muted); }
+  .due.overdue { color: #e4a89b; }
+  .due.soon { color: var(--sd-text-accent); }
+
+  /* R1 · THICK CANDLE */
+  .r1 .ring-wrap { position: relative; width: 140px; height: 140px; margin-top: 6px; filter: drop-shadow(0 0 14px rgba(225,164,92,0.4)); }
+  .r1 .ring-wrap svg { transform: rotate(-90deg); width: 140px; height: 140px; }
+  .r1 .track { fill: none; stroke: rgba(225,164,92,0.12); stroke-width: 18; }
+  .r1 .val { fill: none; stroke-width: 18; stroke-linecap: round; stroke: url(#gradThick); }
+  .r1 .val.urgent { stroke: url(#gradThickUrgent); }
+  .r1 .val.done { stroke: url(#gradThickDone); }
+  .r1 .inner {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 48px;
+  }
+
+  /* R2 · SEGMENTED */
+  .r2 .ring-wrap { position: relative; width: 140px; height: 140px; margin-top: 6px; }
+  .r2 .ring-wrap svg { transform: rotate(-90deg); width: 140px; height: 140px; }
+  .r2 .seg { fill: none; stroke-width: 14; stroke-linecap: butt; }
+  .r2 .seg.off { stroke: rgba(225,164,92,0.12); }
+  .r2 .seg.on { stroke: url(#gradSeg); filter: drop-shadow(0 0 4px rgba(225,164,92,0.45)); }
+  .r2 .seg.on.urgent { stroke: url(#gradSegUrgent); }
+  .r2 .inner {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 44px;
+  }
+  .r2 .count-label {
+    position: absolute;
+    bottom: -6px; left: 50%; transform: translateX(-50%);
+    background: rgba(15,10,8,0.85); border: 1px solid rgba(225,164,92,0.3);
+    padding: 3px 11px; border-radius: 999px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600; color: var(--sd-text-accent);
+    white-space: nowrap;
+  }
+
+  /* R3 · CATEGORY-COLORED */
+  .r3 .ring-wrap { position: relative; width: 130px; height: 130px; margin-top: 6px; }
+  .r3 .ring-wrap svg { transform: rotate(-90deg); width: 130px; height: 130px; }
+  .r3 .track { fill: none; stroke: rgba(169,130,106,0.15); stroke-width: 14; }
+  .r3 .val { fill: none; stroke-width: 14; stroke-linecap: round; stroke: var(--ring-color, var(--sd-text-accent)); filter: drop-shadow(0 0 7px var(--ring-color, rgba(225,164,92,0.5))); }
+  .r3 .inner {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 42px;
+  }
+  .r3 .cat-dot {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--ring-color);
+    box-shadow: 0 0 8px var(--ring-color);
+  }
+
+  /* R4 · DEADLINE-PACED */
+  .r4 .ring-wrap { position: relative; width: 140px; height: 140px; margin-top: 6px; }
+  .r4 .ring-wrap svg { transform: rotate(-90deg); width: 140px; height: 140px; overflow: visible; }
+  .r4 .track { fill: none; stroke: rgba(225,164,92,0.1); stroke-width: 14; }
+  .r4 .val { fill: none; stroke-width: 14; stroke-linecap: round; stroke: url(#gradPaced); }
+  .r4 .val.urgent { stroke: url(#gradPacedUrgent); }
+  .r4 .target-marker {
+    fill: #fff;
+    filter: drop-shadow(0 0 5px rgba(255,230,180,0.95));
+  }
+  .r4 .inner {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 44px;
+  }
+  .r4 .pace-note {
+    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    background: rgba(15,10,8,0.85); border: 1px solid rgba(225,164,92,0.25);
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    white-space: nowrap; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .r4 .pace-ahead { color: #a3d9b7; border-color: rgba(105,183,129,0.4); }
+  .r4 .pace-behind { color: #e4a89b; border-color: rgba(200,100,90,0.4); }
+  .r4 .pace-ontrack { color: var(--sd-text-accent); }
+
+  .pick-banner {
+    text-align: center; padding: 14px;
+    color: var(--sd-text-muted); font-size: 13px;
+    border-bottom: 1px dashed rgba(225,164,92,0.15);
+    background: rgba(15,10,8,0.4);
+  }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="gradThick" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+    <linearGradient id="gradThickUrgent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(240,160,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,100,90,1)"/>
+    </linearGradient>
+    <linearGradient id="gradThickDone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(150,210,170,1)"/>
+      <stop offset="100%" stop-color="rgba(105,183,129,1)"/>
+    </linearGradient>
+    <linearGradient id="gradSeg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+    <linearGradient id="gradSegUrgent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(240,160,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,100,90,1)"/>
+    </linearGradient>
+    <linearGradient id="gradPaced" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+    <linearGradient id="gradPacedUrgent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(240,160,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,100,90,1)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<nav class="takes-nav">
+  <button class="active" data-take="r1">R1 · Thick candle</button>
+  <button data-take="r2">R2 · Segmented</button>
+  <button data-take="r3">R3 · Category color</button>
+  <button data-take="r4">R4 · Deadline-paced</button>
+</nav>
+
+<div class="pick-banner">Bigger version. Pick a winner — tell me R1, R2, R3, or R4.</div>
+
+<!-- =========== R1: THICK CANDLE =========== -->
+<section class="take active r1" data-take="r1">
+  <div class="hdr">
+    <h1>R1 · Thick candle ring</h1>
+    <p>Chunky beefy ring · warm candle-glow · substantial feel</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:16px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val urgent" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="234"/></svg><div class="inner">📚</div></div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2 / 6</div><div class="due overdue">12d late</div></div></div>
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val urgent" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="351.9"/></svg><div class="inner">🔬</div></div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0 / 1</div><div class="due overdue">5d late</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="270"/></svg><div class="inner">🏋️</div></div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23 / 100</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="310"/></svg><div class="inner">🌿</div></div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6 / 50</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="141"/></svg><div class="inner">🧠</div></div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12 / 20</div><div class="due soon">Apr 30</div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 4 shown</div>
+  <div class="grid">
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="29"/></svg><div class="inner">🎓</div></div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11 / 12</div><div class="due">May 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="176"/></svg><div class="inner">🏃</div></div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5 / 10</div><div class="due">Sep 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="264"/></svg><div class="inner">🧗</div></div><div class="title">12 climbing days</div><div class="bottom"><div class="frac">3 / 12</div><div class="due">Oct 15</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="299"/></svg><div class="inner">🎹</div></div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div>
+  </div>
+</section>
+
+<!-- =========== R2: SEGMENTED =========== -->
+<section class="take r2" data-take="r2">
+  <div class="hdr">
+    <h1>R2 · Segmented ring</h1>
+    <p>Ring split into target-count pieces · 3 of 12 = 3 lit segments · counting feel</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:16px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"></svg><svg id="r2-books" viewBox="0 0 140 140" style="position:absolute; top:0; left:0;"></svg><div class="inner">📚</div><div class="count-label">2 of 6</div></div>
+      <div class="title">Read 6 physical books</div>
+      <div class="bottom"><div class="due overdue">12d late</div></div>
+    </div>
+    <div class="tile overdue-card">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="seg off" cx="70" cy="70" r="56"/></svg><div class="inner">🔬</div><div class="count-label">0 of 1</div></div>
+      <div class="title">Solo hemilaminectomy</div>
+      <div class="bottom"><div class="due overdue">5d late</div></div>
+    </div>
+    <div class="tile">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 140 140"><circle class="seg off" cx="70" cy="70" r="56" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 140 140" style="position:absolute; top:0; left:0; transform: rotate(-90deg);"><circle class="seg on" cx="70" cy="70" r="56" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="270"/></svg>
+        <div class="inner">🏋️</div>
+        <div class="count-label">23 of 100</div>
+      </div>
+      <div class="title">100 lifting days</div>
+      <div class="bottom"><div class="due soon">Apr 30</div></div>
+    </div>
+    <div class="tile">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 140 140"><circle class="seg off" cx="70" cy="70" r="56" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 140 140" style="position:absolute; top:0; left:0; transform: rotate(-90deg);"><circle class="seg on" cx="70" cy="70" r="56" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="310"/></svg>
+        <div class="inner">🌿</div>
+        <div class="count-label">6 of 50</div>
+      </div>
+      <div class="title">50 nature moments</div>
+      <div class="bottom"><div class="due soon">Apr 30</div></div>
+    </div>
+    <div class="tile" id="r2-neuro">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"></svg><div class="inner">🧠</div><div class="count-label">12 of 20</div></div>
+      <div class="title">Log 20 neuro cases</div>
+      <div class="bottom"><div class="due soon">Apr 30</div></div>
+    </div>
+  </div>
+
+  <div class="sec-hdr">Later · 4 shown</div>
+  <div class="grid">
+    <div class="tile" id="r2-yr1">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"></svg><div class="inner">🎓</div><div class="count-label">11 of 12</div></div>
+      <div class="title">Year 1 residency</div>
+      <div class="bottom"><div class="due">May 31</div></div>
+    </div>
+    <div class="tile" id="r2-10k">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"></svg><div class="inner">🏃</div><div class="count-label">5 of 10</div></div>
+      <div class="title">Run a 10K</div>
+      <div class="bottom"><div class="due">Sep 30</div></div>
+    </div>
+    <div class="tile" id="r2-climb">
+      <div class="ring-wrap"><svg viewBox="0 0 140 140"></svg><div class="inner">🧗</div><div class="count-label">3 of 12</div></div>
+      <div class="title">12 climbing days</div>
+      <div class="bottom"><div class="due">Oct 15</div></div>
+    </div>
+    <div class="tile">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 140 140"><circle class="seg off" cx="70" cy="70" r="56"/></svg>
+        <svg viewBox="0 0 140 140" style="position:absolute; top:0; left:0; transform: rotate(-90deg);"><circle class="seg on" cx="70" cy="70" r="56" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="289"/></svg>
+        <div class="inner">📖</div>
+        <div class="count-label">66 of 365</div>
+      </div>
+      <div class="title">365 Anki days</div>
+      <div class="bottom"><div class="due">Dec 31</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== R3: CATEGORY COLORED =========== -->
+<section class="take r3" data-take="r3">
+  <div class="hdr">
+    <h1>R3 · Category-colored ring</h1>
+    <p>Ring takes the category hue · climbing peach · residency pink · fitness mint</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:16px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card" style="--ring-color: var(--c-books);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="217"/></svg><div class="inner">📚</div></div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2 / 6</div><div class="due overdue">12d late</div></div></div>
+    <div class="tile overdue-card" style="--ring-color: var(--c-residency);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg><div class="inner">🔬</div></div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0 / 1</div><div class="due overdue">5d late</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-fitness);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="251"/></svg><div class="inner">🏋️</div></div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23 / 100</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-outdoor);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="288"/></svg><div class="inner">🌿</div></div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6 / 50</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-residency);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="131"/></svg><div class="inner">🧠</div></div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12 / 20</div><div class="due soon">Apr 30</div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 4 shown</div>
+  <div class="grid">
+    <div class="tile" style="--ring-color: var(--c-residency);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="27"/></svg><div class="inner">🎓</div></div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11 / 12</div><div class="due">May 31</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-fitness);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="163"/></svg><div class="inner">🏃</div></div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5 / 10</div><div class="due">Sep 30</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-climbing);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="245"/></svg><div class="inner">🧗</div></div><div class="title">12 climbing days</div><div class="bottom"><div class="frac">3 / 12</div><div class="due">Oct 15</div></div></div>
+    <div class="tile" style="--ring-color: var(--c-piano);"><span class="cat-dot"></span><div class="ring-wrap"><svg viewBox="0 0 130 130"><circle class="track" cx="65" cy="65" r="52"/><circle class="val" cx="65" cy="65" r="52" stroke-dasharray="326.7" stroke-dashoffset="278"/></svg><div class="inner">🎹</div></div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div>
+  </div>
+</section>
+
+<!-- =========== R4: DEADLINE-PACED =========== -->
+<section class="take r4" data-take="r4">
+  <div class="hdr">
+    <h1>R4 · Deadline-paced ring</h1>
+    <p>Ring shows where you ARE · white pip shows where you SHOULD be · pace label tells the story</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:16px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val urgent" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="234"/><circle class="target-marker" cx="70" cy="14" r="5"/></svg><div class="inner">📚</div><div class="pace-note pace-behind">behind 4</div></div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2 / 6</div><div class="due overdue">12d late</div></div></div>
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val urgent" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="351.9"/><circle class="target-marker" cx="70" cy="14" r="5"/></svg><div class="inner">🔬</div><div class="pace-note pace-behind">behind 1</div></div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0 / 1</div><div class="due overdue">5d late</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="270"/><circle class="target-marker" cx="119" cy="42" r="5"/></svg><div class="inner">🏋️</div><div class="pace-note pace-ontrack">on track</div></div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23 / 100</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="310"/><circle class="target-marker" cx="125" cy="60" r="5"/></svg><div class="inner">🌿</div><div class="pace-note pace-behind">behind 4</div></div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6 / 50</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="141"/><circle class="target-marker" cx="119" cy="42" r="5"/></svg><div class="inner">🧠</div><div class="pace-note pace-ahead">ahead 2</div></div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12 / 20</div><div class="due soon">Apr 30</div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 4 shown</div>
+  <div class="grid">
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="29"/><circle class="target-marker" cx="70" cy="126" r="5"/></svg><div class="inner">🎓</div><div class="pace-note pace-ahead">ahead</div></div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11 / 12</div><div class="due">May 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="176"/><circle class="target-marker" cx="42" cy="98" r="5"/></svg><div class="inner">🏃</div><div class="pace-note pace-ontrack">on track</div></div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5 / 10</div><div class="due">Sep 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="264"/><circle class="target-marker" cx="42" cy="98" r="5"/></svg><div class="inner">🧗</div><div class="pace-note pace-behind">behind 2</div></div><div class="title">12 climbing days</div><div class="bottom"><div class="frac">3 / 12</div><div class="due">Oct 15</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 140 140"><circle class="track" cx="70" cy="70" r="56"/><circle class="val" cx="70" cy="70" r="56" stroke-dasharray="351.9" stroke-dashoffset="299"/><circle class="target-marker" cx="14" cy="70" r="5"/></svg><div class="inner">🎹</div><div class="pace-note pace-behind">behind</div></div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div>
+  </div>
+</section>
+
+<script>
+  // Tab nav
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const take = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === take));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // R2 Segmented ring builder — draws N segments around a circle, fills `filled` of them
+  function drawSegments(svg, total, filled, urgent) {
+    const cx = 70, cy = 70, r = 56;
+    const circ = 2 * Math.PI * r;
+    const segLen = circ / total;
+    const gap = total <= 30 ? 3 : 1;
+    const dash = Math.max(2, segLen - gap);
+
+    svg.setAttribute('style', svg.getAttribute('style') || '');
+    svg.style.transform = 'rotate(-90deg)';
+    svg.innerHTML = '';
+
+    for (let i = 0; i < total; i++) {
+      const offset = -(i * segLen);
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+      c.setAttribute('class', 'seg ' + (i < filled ? 'on' + (urgent ? ' urgent' : '') : 'off'));
+      c.setAttribute('stroke-dasharray', `${dash} ${circ - dash}`);
+      c.setAttribute('stroke-dashoffset', offset);
+      svg.appendChild(c);
+    }
+  }
+
+  // Build R2 segmented rings
+  const r2Configs = [
+    { id: 'r2-books', total: 6, filled: 2, urgent: true },
+    { id: 'r2-neuro', total: 20, filled: 12, urgent: false },
+    { id: 'r2-yr1', total: 12, filled: 11, urgent: false },
+    { id: 'r2-10k', total: 10, filled: 5, urgent: false },
+    { id: 'r2-climb', total: 12, filled: 3, urgent: false },
+  ];
+  r2Configs.forEach(cfg => {
+    const tile = document.getElementById(cfg.id);
+    if (!tile) return;
+    const svg = tile.querySelector('.ring-wrap svg');
+    if (svg) drawSegments(svg, cfg.total, cfg.filled, cfg.urgent);
+  });
+
+  // Books in R2 — separate hookup since it's by id
+  const booksSvg = document.getElementById('r2-books');
+  if (booksSvg) drawSegments(booksSvg, 6, 2, true);
+</script>
+
+</body>
+</html>
