@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · 4 more takes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+  .take { display: none; padding: 24px 20px 80px; max-width: 1100px; margin: 0 auto; }
+  .take.active { display: block; }
+  .take-hdr { text-align: center; margin-bottom: 24px; }
+  .take-hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .take-hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+  .take-hdr .sub { font-style: italic; color: var(--sd-text-secondary); margin-top: 6px; }
+  .take-hdr .purpose { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(225,164,92,0.1); border: 1px solid rgba(225,164,92,0.2); font-size: 12px; color: var(--sd-text-accent); }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+
+  .due { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .due.overdue { background: rgba(200,100,90,0.15); color: #e4a89b; border: 1px solid rgba(200,100,90,0.4); }
+  .due.soon { background: rgba(225,164,92,0.15); color: var(--sd-text-accent); border: 1px solid rgba(225,164,92,0.4); }
+  .due.later { background: rgba(169,130,106,0.12); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+  .due.done { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+
+  .cat { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+  .cat.residency { background: rgba(180, 100, 140, 0.15); color: #e0a8c4; border: 1px solid rgba(180,100,140,0.3); }
+  .cat.fitness { background: rgba(100, 170, 130, 0.15); color: #9dd4b0; border: 1px solid rgba(100,170,130,0.3); }
+  .cat.climbing { background: rgba(220, 140, 100, 0.15); color: #ecbca3; border: 1px solid rgba(220,140,100,0.3); }
+  .cat.outdoor { background: rgba(130, 180, 120, 0.15); color: #b4d8a9; border: 1px solid rgba(130,180,120,0.3); }
+  .cat.german { background: rgba(200, 170, 100, 0.15); color: #e4d4a6; border: 1px solid rgba(200,170,100,0.3); }
+  .cat.books { background: rgba(160, 140, 200, 0.15); color: #c8bce0; border: 1px solid rgba(160,140,200,0.3); }
+
+  .kebab { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(225,164,92,0.15); background: rgba(15,10,8,0.5); color: var(--sd-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0; }
+
+  /* ============= TAKE E: RINGS ============= */
+  .rings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .ring-card {
+    background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 16px; padding: 20px 14px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    position: relative;
+  }
+  .ring-card.overdue-card { border: 1px solid rgba(200,100,90,0.4); box-shadow: 0 0 12px rgba(200,100,90,0.1); }
+  .ring-card.done-card { opacity: 0.5; }
+  .ring-wrap { position: relative; width: 110px; height: 110px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .track { fill: none; stroke: rgba(225,164,92,0.1); stroke-width: 9; }
+  .ring .val { fill: none; stroke: url(#gradA); stroke-width: 9; stroke-linecap: round; }
+  .ring .val.urgent { stroke: url(#gradUrgent); }
+  .ring .val.done { stroke: url(#gradDone); }
+  .ring-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+  .ring-pct { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--sd-text-accent); line-height: 1; }
+  .ring-frac { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .ring-title { font-size: 13px; font-weight: 500; text-align: center; line-height: 1.3; min-height: 34px; display: flex; align-items: center; justify-content: center; }
+  .ring-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .ring-kebab { position: absolute; top: 8px; right: 8px; }
+
+  /* ============= TAKE F: SPOTLIGHT ============= */
+  .spot-hero {
+    background: linear-gradient(145deg, rgba(200,100,90,0.2), rgba(90,30,30,0.35));
+    border: 1px solid rgba(200,100,90,0.4);
+    border-radius: 20px; padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .spot-hero-label { font-size: 11px; color: #e4a89b; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 10px; }
+  .spot-hero-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--sd-text-primary); line-height: 1.2; margin-bottom: 14px; }
+  .spot-hero-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .spot-hero-progress { display: flex; align-items: center; gap: 16px; }
+  .spot-hero-num { font-family: 'Cormorant Garamond', serif; font-size: 40px; color: var(--sd-text-accent); }
+  .spot-hero-num .denom { color: var(--sd-text-muted); font-size: 22px; }
+  .spot-hero-track { flex: 1; height: 10px; border-radius: 5px; background: rgba(15,10,8,0.7); overflow: hidden; }
+  .spot-hero-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.7), rgba(225,164,92,1)); border-radius: 5px; }
+  .spot-hero-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  .spot-list-hdr { font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: var(--sd-text-muted); margin: 24px 0 10px; }
+  .spot-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .spot-mini {
+    background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 10px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .spot-mini-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spot-mini-meta { display: flex; justify-content: space-between; align-items: center; gap: 4px; font-size: 11px; color: var(--sd-text-muted); }
+  .spot-mini-bar { height: 4px; border-radius: 2px; background: rgba(15,10,8,0.6); overflow: hidden; }
+  .spot-mini-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 2px; }
+
+  /* ============= TAKE G: JARS ============= */
+  .jars-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; align-items: end; margin-bottom: 32px; }
+  @media (max-width: 800px) { .jars-row { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 480px) { .jars-row { grid-template-columns: repeat(3, 1fr); } }
+  .jar-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s; }
+  .jar-wrap:hover { transform: translateY(-2px); }
+  .jar {
+    position: relative;
+    width: 80px; height: 160px;
+    border-radius: 16px 16px 10px 10px;
+    background: rgba(15,10,8,0.55);
+    border: 2px solid rgba(255,200,140,0.22);
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .jar-fill {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(255,210,140,0.5), rgba(225,164,92,0.8));
+    border-radius: 0 0 6px 6px;
+    box-shadow: inset 0 2px 8px rgba(255,220,180,0.4);
+    transition: height 0.6s ease;
+  }
+  .jar-fill::before {
+    content: ''; position: absolute; top: -3px; left: -5%; right: -5%; height: 8px;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,230,180,0.9), transparent 70%);
+  }
+  .jar-label { text-align: center; }
+  .jar-cat { font-size: 10px; text-transform: uppercase; letter-spacing: 1.3px; font-weight: 700; color: var(--sd-text-secondary); }
+  .jar-frac { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--sd-text-accent); line-height: 1; margin-top: 2px; }
+  .jar-pct { font-size: 10px; color: var(--sd-text-muted); margin-top: 1px; }
+
+  .jar-detail {
+    margin-top: 12px;
+    background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.1);
+    border-radius: 14px; padding: 18px;
+  }
+  .jar-detail-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .jar-detail-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; }
+  .jar-goal-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,200,140,0.05); }
+  .jar-goal-row:last-child { border-bottom: none; }
+  .jar-goal-name { flex: 1; font-size: 13px; }
+  .jar-goal-frac { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--sd-text-accent); }
+
+  /* ============= TAKE H: MONTH GRID (contribution) ============= */
+  .mg-wrap { background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08); border-radius: 14px; padding: 16px; overflow-x: auto; }
+  .mg-table { width: 100%; border-collapse: separate; border-spacing: 4px; min-width: 760px; }
+  .mg-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sd-text-muted); font-weight: 600; padding: 6px 0; text-align: center; }
+  .mg-table th:first-child { text-align: left; padding-left: 8px; }
+  .mg-table td { padding: 4px 2px; vertical-align: middle; }
+  .mg-goal-name { font-size: 13px; font-weight: 500; padding: 6px 8px 6px 8px; min-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .mg-goal-name .cat { margin-left: 6px; }
+  .mg-cell {
+    height: 28px; border-radius: 4px;
+    background: rgba(15,10,8,0.55); border: 1px solid rgba(255,200,140,0.08);
+    position: relative; overflow: hidden;
+  }
+  .mg-cell.month-current { border: 1px solid rgba(225,164,92,0.5); }
+  .mg-cell-fill {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--sd-done);
+  }
+  .mg-frac { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--sd-text-accent); text-align: center; padding: 0 6px; }
+  .mg-frac .unit { font-size: 9px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; display: block; margin-top: 1px; }
+  .mg-due-cell { text-align: center; }
+  .mg-due-cell .due { margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="gradA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+    <linearGradient id="gradUrgent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(240,160,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,100,90,1)"/>
+    </linearGradient>
+    <linearGradient id="gradDone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(150,210,170,1)"/>
+      <stop offset="100%" stop-color="rgba(105,183,129,1)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<nav class="takes-nav">
+  <button class="active" data-take="e">E · Rings</button>
+  <button data-take="f">F · Spotlight</button>
+  <button data-take="g">G · Jars</button>
+  <button data-take="h">H · Month grid</button>
+</nav>
+
+<!-- =========== TAKE E: RINGS =========== -->
+<section class="take active" data-take="e">
+  <div class="take-hdr">
+    <h1>Goals — Rings</h1>
+    <p>One progress ring per goal, scannable at a glance.</p>
+    <p class="sub">Vibe: Apple-Watch-style, visual percentages, no reading required</p>
+    <span class="purpose">Answer: which goals are actually moving</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 4 complete</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="rings-grid">
+    <!-- Overdue: urgent gradient -->
+    <div class="ring-card overdue-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val urgent" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="202"/></svg>
+        <div class="ring-center"><div><div class="ring-pct" style="color:#e4a89b">33%</div><div class="ring-frac">2 / 6</div></div></div>
+      </div>
+      <div class="ring-title">Read 6 physical books</div>
+      <div class="ring-meta"><span class="cat books">Books</span><span class="due overdue">12d late</span></div>
+    </div>
+
+    <div class="ring-card overdue-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val urgent" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6"/></svg>
+        <div class="ring-center"><div><div class="ring-pct" style="color:#e4a89b">0%</div><div class="ring-frac">0 / 1</div></div></div>
+      </div>
+      <div class="ring-title">Solo hemilaminectomy</div>
+      <div class="ring-meta"><span class="cat residency">Residency</span><span class="due overdue">5d late</span></div>
+    </div>
+
+    <!-- Normal -->
+    <div class="ring-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="24"/></svg>
+        <div class="ring-center"><div><div class="ring-pct">92%</div><div class="ring-frac">11 / 12</div></div></div>
+      </div>
+      <div class="ring-title">Finish year 1 of residency</div>
+      <div class="ring-meta"><span class="cat residency">Residency</span><span class="due soon">May 31</span></div>
+    </div>
+
+    <div class="ring-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="232"/></svg>
+        <div class="ring-center"><div><div class="ring-pct">23%</div><div class="ring-frac">23 / 100</div></div></div>
+      </div>
+      <div class="ring-title">100 lifting days</div>
+      <div class="ring-meta"><span class="cat fitness">Fitness</span><span class="due soon">Apr 30</span></div>
+    </div>
+
+    <div class="ring-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="151"/></svg>
+        <div class="ring-center"><div><div class="ring-pct">50%</div><div class="ring-frac">5 / 10 km</div></div></div>
+      </div>
+      <div class="ring-title">Run a 10K</div>
+      <div class="ring-meta"><span class="cat fitness">Fitness</span><span class="due later">Sep 30</span></div>
+    </div>
+
+    <div class="ring-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="226"/></svg>
+        <div class="ring-center"><div><div class="ring-pct">25%</div><div class="ring-frac">3 / 12</div></div></div>
+      </div>
+      <div class="ring-title">12 outdoor climbing days</div>
+      <div class="ring-meta"><span class="cat climbing">Climbing</span><span class="due later">Oct 15</span></div>
+    </div>
+
+    <div class="ring-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="247"/></svg>
+        <div class="ring-center"><div><div class="ring-pct">18%</div><div class="ring-frac">66 / 365</div></div></div>
+      </div>
+      <div class="ring-title">365 Anki days</div>
+      <div class="ring-meta"><span class="cat german">German</span><span class="due later">Dec 31</span></div>
+    </div>
+
+    <!-- Done -->
+    <div class="ring-card done-card">
+      <button class="kebab ring-kebab">⋮</button>
+      <div class="ring-wrap ring">
+        <svg width="110" height="110"><circle class="track" cx="55" cy="55" r="48"/><circle class="val done" cx="55" cy="55" r="48" stroke-dasharray="301.6" stroke-dashoffset="0"/></svg>
+        <div class="ring-center"><div><div class="ring-pct" style="color:#a3d9b7">100%</div><div class="ring-frac">Done</div></div></div>
+      </div>
+      <div class="ring-title">Finish first rotation</div>
+      <div class="ring-meta"><span class="cat residency">Residency</span><span class="due done">✓ Mar 12</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE F: SPOTLIGHT =========== -->
+<section class="take" data-take="f">
+  <div class="take-hdr">
+    <h1>Goals — Spotlight</h1>
+    <p>One goal gets the stage. Everything else is a backup singer.</p>
+    <p class="sub">Vibe: focus-first, triage by urgency, no scroll to find what matters</p>
+    <span class="purpose">Answer: the one thing I should look at right now</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 2 overdue</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="spot-hero">
+    <div class="spot-hero-label">Most urgent · needs you</div>
+    <div class="spot-hero-title">Read 6 physical books</div>
+    <div class="spot-hero-meta">
+      <span class="cat books">Books</span>
+      <span class="due overdue">12 days overdue</span>
+    </div>
+    <div class="spot-hero-progress">
+      <span class="spot-hero-num">2<span class="denom">/6</span></span>
+      <div class="spot-hero-track"><div class="spot-hero-fill" style="width:33%"></div></div>
+    </div>
+    <div class="spot-hero-actions">
+      <button class="big-add-btn" style="padding: 10px 16px; font-size: 13px;"><span>+</span> Log progress</button>
+      <button class="kebab" style="width:40px; height:40px; border-radius:999px;">⋮</button>
+    </div>
+  </div>
+
+  <div class="spot-list-hdr">Next up · due this month</div>
+  <div class="spot-list">
+    <div class="spot-mini">
+      <div class="spot-mini-title">100 lifting days</div>
+      <div class="spot-mini-meta"><span class="cat fitness">Fitness</span><span class="due soon">Apr 30</span></div>
+      <div class="spot-mini-meta"><span>23 / 100</span><span>23%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:23%"></div></div>
+    </div>
+    <div class="spot-mini">
+      <div class="spot-mini-title">50 phone-free nature moments</div>
+      <div class="spot-mini-meta"><span class="cat outdoor">Outdoor</span><span class="due soon">Apr 30</span></div>
+      <div class="spot-mini-meta"><span>6 / 50</span><span>12%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:12%"></div></div>
+    </div>
+    <div class="spot-mini">
+      <div class="spot-mini-title">Finish year one of residency</div>
+      <div class="spot-mini-meta"><span class="cat residency">Residency</span><span class="due soon">May 31</span></div>
+      <div class="spot-mini-meta"><span>11 / 12 mo</span><span>92%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:92%"></div></div>
+    </div>
+  </div>
+
+  <div class="spot-list-hdr">Rest of the year</div>
+  <div class="spot-list">
+    <div class="spot-mini">
+      <div class="spot-mini-title">Run a 10K</div>
+      <div class="spot-mini-meta"><span class="cat fitness">Fitness</span><span class="due later">Sep 30</span></div>
+      <div class="spot-mini-meta"><span>5 / 10 km</span><span>50%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:50%"></div></div>
+    </div>
+    <div class="spot-mini">
+      <div class="spot-mini-title">12 outdoor climbing days</div>
+      <div class="spot-mini-meta"><span class="cat climbing">Climbing</span><span class="due later">Oct 15</span></div>
+      <div class="spot-mini-meta"><span>3 / 12</span><span>25%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:25%"></div></div>
+    </div>
+    <div class="spot-mini">
+      <div class="spot-mini-title">Hit B2 on Goethe exam</div>
+      <div class="spot-mini-meta"><span class="cat german">German</span><span class="due later">Nov 30</span></div>
+      <div class="spot-mini-meta"><span>0 / 1</span><span>0%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:0%"></div></div>
+    </div>
+    <div class="spot-mini">
+      <div class="spot-mini-title">365 Anki days</div>
+      <div class="spot-mini-meta"><span class="cat german">German</span><span class="due later">Dec 31</span></div>
+      <div class="spot-mini-meta"><span>66 / 365</span><span>18%</span></div>
+      <div class="spot-mini-bar"><div class="spot-mini-fill" style="width:18%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE G: JARS =========== -->
+<section class="take" data-take="g">
+  <div class="take-hdr">
+    <h1>Goals — Jars</h1>
+    <p>Each life category is a jar filling up. Tap one to open its goals.</p>
+    <p class="sub">Vibe: tangible, at-a-glance balance across life areas</p>
+    <span class="purpose">Answer: which parts of my life are full, which are empty</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals across 7 jars</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="jars-row">
+    <div class="jar-wrap" onclick="selectJar('residency')">
+      <div class="jar"><div class="jar-fill" style="height:66%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#e0a8c4">Residency</div><div class="jar-frac">2 / 3</div><div class="jar-pct">66%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('fitness')">
+      <div class="jar"><div class="jar-fill" style="height:37%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#9dd4b0">Fitness</div><div class="jar-frac">0 / 2</div><div class="jar-pct">37%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('climbing')">
+      <div class="jar"><div class="jar-fill" style="height:12%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#ecbca3">Climbing</div><div class="jar-frac">0 / 2</div><div class="jar-pct">12%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('german')">
+      <div class="jar"><div class="jar-fill" style="height:42%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#e4d4a6">German</div><div class="jar-frac">1 / 3</div><div class="jar-pct">42%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('outdoor')">
+      <div class="jar"><div class="jar-fill" style="height:24%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#b4d8a9">Outdoor</div><div class="jar-frac">0 / 2</div><div class="jar-pct">24%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('books')">
+      <div class="jar"><div class="jar-fill" style="height:33%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#c8bce0">Books</div><div class="jar-frac">0 / 1</div><div class="jar-pct">33%</div></div>
+    </div>
+    <div class="jar-wrap" onclick="selectJar('bucket')">
+      <div class="jar"><div class="jar-fill" style="height:5%"></div></div>
+      <div class="jar-label"><div class="jar-cat" style="color:#eab4c0">Bucket list</div><div class="jar-frac">0 / 4</div><div class="jar-pct">5%</div></div>
+    </div>
+  </div>
+
+  <div class="jar-detail" id="jar-detail">
+    <div class="jar-detail-hdr">
+      <div class="jar-detail-title" id="jar-detail-title" style="color:#e0a8c4">Residency</div>
+      <span style="color:var(--sd-text-muted); font-size:12px;">3 goals · 2 complete</span>
+    </div>
+    <div id="jar-detail-list">
+      <div class="jar-goal-row">
+        <div class="jar-goal-name">Finish year one of residency</div>
+        <span class="due soon">May 31</span>
+        <div class="jar-goal-frac">11/12</div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="jar-goal-row">
+        <div class="jar-goal-name">Solo hemilaminectomy</div>
+        <span class="due overdue">5d late</span>
+        <div class="jar-goal-frac">0/1</div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="jar-goal-row" style="opacity:0.5;">
+        <div class="jar-goal-name" style="text-decoration: line-through;">Finish first rotation</div>
+        <span class="due done">✓ Mar 12</span>
+        <div class="jar-goal-frac">—</div>
+        <button class="kebab">⋮</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE H: MONTH GRID =========== -->
+<section class="take" data-take="h">
+  <div class="take-hdr">
+    <h1>Goals — Month grid</h1>
+    <p>12 months across, one goal per row. See when each goal actually moves.</p>
+    <p class="sub">Vibe: GitHub contribution graph for your life</p>
+    <span class="purpose">Answer: when does progress actually happen vs when should it</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 2026</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="mg-wrap">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th>Goal</th>
+          <th>Jan</th><th>Feb</th><th>Mar</th><th style="color:var(--sd-text-accent)">Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>
+          <th>Progress</th><th>Due</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mg-goal-name">Finish year 1 of residency <span class="cat residency">Res</span></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:100%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:100%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:100%"></div></div></td>
+          <td><div class="mg-cell month-current"><div class="mg-cell-fill" style="height:100%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:60%"></div></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">11/12<span class="unit">mo</span></td>
+          <td class="mg-due-cell"><span class="due soon">May 31</span></td>
+        </tr>
+        <tr>
+          <td class="mg-goal-name">100 lifting days <span class="cat fitness">Fit</span></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:40%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:70%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:50%"></div></div></td>
+          <td><div class="mg-cell month-current"><div class="mg-cell-fill" style="height:30%"></div></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">23/100<span class="unit">days</span></td>
+          <td class="mg-due-cell"><span class="due soon">Apr 30</span></td>
+        </tr>
+        <tr>
+          <td class="mg-goal-name">12 outdoor climbing days <span class="cat climbing">Clb</span></td>
+          <td><div class="mg-cell"></div></td>
+          <td><div class="mg-cell"></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:30%"></div></div></td>
+          <td><div class="mg-cell month-current"><div class="mg-cell-fill" style="height:15%"></div></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">3/12<span class="unit">days</span></td>
+          <td class="mg-due-cell"><span class="due later">Oct 15</span></td>
+        </tr>
+        <tr>
+          <td class="mg-goal-name">Read 6 physical books <span class="cat books">Bks</span></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:40%"></div></div></td>
+          <td><div class="mg-cell"></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:40%"></div></div></td>
+          <td><div class="mg-cell month-current"></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">2/6<span class="unit">books</span></td>
+          <td class="mg-due-cell"><span class="due overdue">12d late</span></td>
+        </tr>
+        <tr>
+          <td class="mg-goal-name">365 Anki days <span class="cat german">Ger</span></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:60%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:70%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:65%"></div></div></td>
+          <td><div class="mg-cell month-current"><div class="mg-cell-fill" style="height:70%"></div></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">66/365<span class="unit">days</span></td>
+          <td class="mg-due-cell"><span class="due later">Dec 31</span></td>
+        </tr>
+        <tr>
+          <td class="mg-goal-name">50 phone-free nature <span class="cat outdoor">Out</span></td>
+          <td><div class="mg-cell"></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:20%"></div></div></td>
+          <td><div class="mg-cell"><div class="mg-cell-fill" style="height:10%"></div></div></td>
+          <td><div class="mg-cell month-current"><div class="mg-cell-fill" style="height:15%"></div></div></td>
+          <td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td><td><div class="mg-cell"></div></td>
+          <td class="mg-frac">6/50<span class="unit">walks</span></td>
+          <td class="mg-due-cell"><span class="due soon">Apr 30</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === t));
+      window.scrollTo({ top: 0 });
+    });
+  });
+
+  const JAR_DATA = {
+    residency: { color:'#e0a8c4', label:'Residency', count:'3 goals · 2 complete', items: [
+      { name:'Finish year one of residency', due:'May 31', dueClass:'soon', frac:'11/12' },
+      { name:'Solo hemilaminectomy', due:'5d late', dueClass:'overdue', frac:'0/1' },
+      { name:'Finish first rotation', due:'✓ Mar 12', dueClass:'done', frac:'—', done:true }
+    ]},
+    fitness: { color:'#9dd4b0', label:'Fitness', count:'2 goals', items: [
+      { name:'100 lifting days', due:'Apr 30', dueClass:'soon', frac:'23/100' },
+      { name:'Run a 10K', due:'Sep 30', dueClass:'later', frac:'5/10 km' }
+    ]},
+    climbing: { color:'#ecbca3', label:'Climbing', count:'2 goals', items: [
+      { name:'12 outdoor climbing days', due:'Oct 15', dueClass:'later', frac:'3/12' },
+      { name:'Lead V4 outside', due:'Dec 31', dueClass:'later', frac:'0/1' }
+    ]},
+    german: { color:'#e4d4a6', label:'German', count:'3 goals · 1 complete', items: [
+      { name:'365 Anki days', due:'Dec 31', dueClass:'later', frac:'66/365' },
+      { name:'Hit B2 on Goethe exam', due:'Nov 30', dueClass:'later', frac:'0/1' },
+      { name:'Finish Pimsleur 1-5', due:'✓ Mar 22', dueClass:'done', frac:'—', done:true }
+    ]},
+    outdoor: { color:'#b4d8a9', label:'Outdoor', count:'2 goals', items: [
+      { name:'50 phone-free nature moments', due:'Apr 30', dueClass:'soon', frac:'6/50' },
+      { name:'Camp 5 nights', due:'Oct 31', dueClass:'later', frac:'1/5' }
+    ]},
+    books: { color:'#c8bce0', label:'Books', count:'1 goal · overdue', items: [
+      { name:'Read 6 physical books', due:'12d late', dueClass:'overdue', frac:'2/6' }
+    ]},
+    bucket: { color:'#eab4c0', label:'Bucket list', count:'4 goals', items: [
+      { name:'Spring climbing trip', due:'Jun 15', dueClass:'later', frac:'0/1' },
+      { name:'Scotland highlands', due:'Aug 31', dueClass:'later', frac:'0/1' },
+      { name:'Seal spotting day', due:'Oct 31', dueClass:'later', frac:'0/1' },
+      { name:'Ice skate outside', due:'Jan 31 (next)', dueClass:'later', frac:'0/1' }
+    ]}
+  };
+
+  function selectJar(key) {
+    const d = JAR_DATA[key];
+    if (!d) return;
+    const title = document.getElementById('jar-detail-title');
+    title.textContent = d.label;
+    title.style.color = d.color;
+    const list = document.getElementById('jar-detail-list');
+    list.innerHTML = d.items.map(it => `
+      <div class="jar-goal-row" style="${it.done ? 'opacity:0.5;' : ''}">
+        <div class="jar-goal-name" style="${it.done ? 'text-decoration:line-through;' : ''}">${it.name}</div>
+        <span class="due ${it.dueClass}">${it.due}</span>
+        <div class="jar-goal-frac">${it.frac}</div>
+        <button class="kebab">⋮</button>
+      </div>
+    `).join('');
+    // Update count
+    document.querySelector('#jar-detail .jar-detail-hdr span').textContent = d.count;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Habits · manage + understand — 4 takes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-tray-bg: rgba(18, 10, 14, 0.5);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-accent: rgba(225, 164, 92, 1);
+    --sd-accent-mid: rgba(200, 131, 73, 1);
+    --sd-cell-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+    --sd-cell-empty: rgba(15,10,8,0.55);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+    min-height: 100vh;
+  }
+
+  /* Tab switcher */
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+
+  .take { display: none; padding: 24px 20px 80px; max-width: 980px; margin: 0 auto; }
+  .take.active { display: block; }
+
+  .take-hdr { text-align: center; margin-bottom: 28px; }
+  .take-hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; color: var(--sd-text-primary); }
+  .take-hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+  .take-hdr .sub { font-style: italic; color: var(--sd-text-secondary); margin-top: 6px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+  .pill-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.25)); color: var(--sd-text-accent); border: 1px solid rgba(255,200,140,0.3); cursor: pointer; font-family: inherit; }
+  .ghost-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; background: transparent; color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.15); cursor: pointer; font-family: inherit; }
+
+  /* shared shell */
+  .shell { background: var(--sd-shell-bg); border-radius: 18px; padding: 3px; box-shadow: 0 0 30px rgba(225,164,92,0.05); }
+  .face { background: var(--sd-face-bg); backdrop-filter: blur(20px); border-radius: 16px; padding: 18px; border-top: 1px solid rgba(255,200,140,0.1); }
+  .kebab { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(225,164,92,0.15); background: rgba(15,10,8,0.5); color: var(--sd-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+
+  /* =========================================================
+     TAKE 1 — THE ORCHARD: vertical cards, radial ring focus
+     ========================================================= */
+  .orchard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .orchard-card { position: relative; overflow: hidden; min-height: 260px; }
+  .orchard-card .face { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+  .orchard-top { display: flex; align-items: center; gap: 10px; }
+  .orchard-icon { width: 36px; height: 36px; border-radius: 12px; background: rgba(225,164,92,0.15); border: 1px solid rgba(225,164,92,0.25); display: grid; place-items: center; font-size: 18px; }
+  .orchard-name { font-size: 15px; font-weight: 600; }
+  .orchard-ring-wrap { position: relative; align-self: center; margin: 6px 0; }
+  .orchard-ring { width: 140px; height: 140px; }
+  .orchard-ring .track { fill: none; stroke: rgba(225,164,92,0.12); stroke-width: 10; }
+  .orchard-ring .val { fill: none; stroke: url(#orchardGrad); stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+  .orchard-ring-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+  .orchard-ring-pct { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; color: var(--sd-text-accent); }
+  .orchard-ring-label { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+  .orchard-heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .orchard-heatmap > div { aspect-ratio: 1; border-radius: 4px; background: rgba(15,10,8,0.5); border: 1px solid rgba(255,200,140,0.12); }
+  .orchard-heatmap > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.3); }
+  .orchard-meta { display: flex; justify-content: space-between; align-items: center; color: var(--sd-text-muted); font-size: 12px; }
+  .orchard-meta .trend { color: var(--sd-text-accent); font-weight: 600; }
+  .orchard-kebab-float { position: absolute; top: 12px; right: 12px; }
+
+  /* =========================================================
+     TAKE 2 — THE LEDGER: dense table row per habit
+     ========================================================= */
+  .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  .ledger-table tr { background: var(--sd-face-bg); }
+  .ledger-table tr:hover { background: rgba(85,48,52,0.7); }
+  .ledger-table td {
+    padding: 14px 12px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+  }
+  .ledger-table td:first-child { border-left: 1px solid rgba(255,200,140,0.08); border-radius: 12px 0 0 12px; padding-left: 16px; }
+  .ledger-table td:last-child { border-right: 1px solid rgba(255,200,140,0.08); border-radius: 0 12px 12px 0; padding-right: 16px; }
+  .ledger-name { display: flex; align-items: center; gap: 10px; font-weight: 500; min-width: 160px; }
+  .ledger-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(225,164,92,0.12); display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
+  .ledger-strip { display: flex; gap: 2px; }
+  .ledger-strip > div { width: 10px; height: 16px; border-radius: 2px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); }
+  .ledger-strip > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.25); }
+  .ledger-stat { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--sd-text-accent); text-align: center; }
+  .ledger-stat .unit { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sd-text-muted); font-family: 'Source Sans 3', sans-serif; display: block; margin-top: 1px; }
+  .trend-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .trend-up { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .trend-down { background: rgba(200,120,100,0.15); color: #e4a89b; border: 1px solid rgba(200,120,100,0.3); }
+  .trend-flat { background: rgba(169,130,106,0.15); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+
+  @media (max-width: 720px) {
+    .ledger-hide-mobile { display: none; }
+  }
+
+  /* =========================================================
+     TAKE 3 — THE ARCHIVE: calm list, expand-to-detail
+     ========================================================= */
+  .archive-list { display: flex; flex-direction: column; gap: 6px; }
+  .archive-row { background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08); border-radius: 14px; padding: 14px 16px; cursor: pointer; transition: all 0.18s; }
+  .archive-row:hover { background: rgba(85,48,52,0.7); border-color: rgba(255,200,140,0.2); }
+  .archive-row-main { display: flex; align-items: center; gap: 14px; }
+  .archive-icon { width: 32px; height: 32px; border-radius: 10px; background: rgba(225,164,92,0.12); display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
+  .archive-name { flex: 1; font-weight: 500; font-size: 14px; }
+  .archive-spark { width: 140px; height: 30px; flex-shrink: 0; }
+  .archive-chip { flex-shrink: 0; }
+  .archive-row.expanded { background: rgba(85,48,52,0.75); border-color: rgba(255,200,140,0.25); }
+  .archive-expand { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,200,140,0.08); display: none; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .archive-row.expanded .archive-expand { display: grid; }
+  .archive-stat-block { background: rgba(15,10,8,0.35); padding: 12px; border-radius: 10px; }
+  .archive-stat-label { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .archive-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--sd-text-accent); }
+  .archive-heatmap { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(28, 1fr); gap: 2px; margin-top: 4px; }
+  .archive-heatmap > div { aspect-ratio: 1; border-radius: 2px; background: rgba(15,10,8,0.55); border: 1px solid rgba(255,200,140,0.06); }
+  .archive-heatmap > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.25); }
+  .archive-expand-actions { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 6px; }
+
+  /* =========================================================
+     TAKE 4 — THE GALLERY: heatmap-as-hero, one big thing per card
+     ========================================================= */
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+  .gallery-card { position: relative; cursor: pointer; transition: transform 0.22s; }
+  .gallery-card:hover { transform: translateY(-2px); }
+  .gallery-card .face { padding: 0; overflow: hidden; }
+  .gallery-heatmap {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 28px 24px 20px;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(225,164,92,0.1), transparent 70%),
+      rgba(18,10,14,0.4);
+  }
+  .gallery-heatmap > div { aspect-ratio: 1; border-radius: 8px; background: rgba(15,10,8,0.55); border: 1px solid rgba(255,200,140,0.12); }
+  .gallery-heatmap > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.35); box-shadow: 0 0 8px rgba(225,164,92,0.2); }
+  .gallery-footer { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .gallery-left { min-width: 0; }
+  .gallery-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gallery-meta { font-size: 11px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; }
+  .gallery-badge { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--sd-text-accent); line-height: 1; }
+  .gallery-badge .unit { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--sd-text-muted); font-family: 'Source Sans 3', sans-serif; display: block; text-align: right; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- SVG defs: gradients reused across takes -->
+<svg style="position:absolute; width:0; height:0;">
+  <defs>
+    <linearGradient id="orchardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Tabs -->
+<nav class="takes-nav" role="tablist">
+  <button class="active" data-take="orchard">1 · The Orchard</button>
+  <button data-take="ledger">2 · The Ledger</button>
+  <button data-take="archive">3 · The Archive</button>
+  <button data-take="gallery">4 · The Gallery</button>
+</nav>
+
+<!-- =========================================================
+     TAKE 1 — THE ORCHARD
+     ========================================================= -->
+<section class="take active" data-take="orchard">
+  <div class="take-hdr">
+    <h1>Habits</h1>
+    <p>The Orchard · each habit is a tree you're tending</p>
+    <p class="sub">Vibe: personal, organic, ring-forward, one card per habit</p>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits · this month</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <div class="orchard-grid">
+    <!-- Repeated habit card -->
+    <div class="orchard-card shell">
+      <div class="face">
+        <div class="orchard-top">
+          <div class="orchard-icon">⭐</div>
+          <div class="orchard-name">Gym</div>
+        </div>
+        <div class="orchard-ring-wrap">
+          <svg class="orchard-ring" viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="val" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="98"/>
+          </svg>
+          <div class="orchard-ring-center">
+            <div>
+              <div class="orchard-ring-pct">70%</div>
+              <div class="orchard-ring-label">this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="orchard-heatmap">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        </div>
+        <div class="orchard-meta">
+          <span>14d streak</span>
+          <span class="trend">Improving</span>
+        </div>
+      </div>
+      <div class="orchard-kebab-float"><button class="kebab">⋮</button></div>
+    </div>
+
+    <div class="orchard-card shell">
+      <div class="face">
+        <div class="orchard-top">
+          <div class="orchard-icon">📖</div>
+          <div class="orchard-name">Pimsleur</div>
+        </div>
+        <div class="orchard-ring-wrap">
+          <svg class="orchard-ring" viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="val" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="16"/>
+          </svg>
+          <div class="orchard-ring-center">
+            <div>
+              <div class="orchard-ring-pct">95%</div>
+              <div class="orchard-ring-label">this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="orchard-heatmap">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        </div>
+        <div class="orchard-meta">
+          <span>27d streak</span>
+          <span class="trend">Improving</span>
+        </div>
+      </div>
+      <div class="orchard-kebab-float"><button class="kebab">⋮</button></div>
+    </div>
+
+    <div class="orchard-card shell">
+      <div class="face">
+        <div class="orchard-top">
+          <div class="orchard-icon">🌙</div>
+          <div class="orchard-name">Bed by 9pm</div>
+        </div>
+        <div class="orchard-ring-wrap">
+          <svg class="orchard-ring" viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="val" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="181"/>
+          </svg>
+          <div class="orchard-ring-center">
+            <div>
+              <div class="orchard-ring-pct">45%</div>
+              <div class="orchard-ring-label">this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="orchard-heatmap">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+        </div>
+        <div class="orchard-meta">
+          <span>2d streak</span>
+          <span class="trend" style="color:#e4a89b">Declining</span>
+        </div>
+      </div>
+      <div class="orchard-kebab-float"><button class="kebab">⋮</button></div>
+    </div>
+
+    <div class="orchard-card shell">
+      <div class="face">
+        <div class="orchard-top">
+          <div class="orchard-icon">💧</div>
+          <div class="orchard-name">Drink Water 2L</div>
+        </div>
+        <div class="orchard-ring-wrap">
+          <svg class="orchard-ring" viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="val" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="131"/>
+          </svg>
+          <div class="orchard-ring-center">
+            <div>
+              <div class="orchard-ring-pct">60%</div>
+              <div class="orchard-ring-label">this month</div>
+            </div>
+          </div>
+        </div>
+        <div class="orchard-heatmap">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+        </div>
+        <div class="orchard-meta">
+          <span>0d streak</span>
+          <span class="trend" style="color:var(--sd-text-muted)">Steady</span>
+        </div>
+      </div>
+      <div class="orchard-kebab-float"><button class="kebab">⋮</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     TAKE 2 — THE LEDGER
+     ========================================================= -->
+<section class="take" data-take="ledger">
+  <div class="take-hdr">
+    <h1>Habits</h1>
+    <p>The Ledger · dense, scannable, one row per habit</p>
+    <p class="sub">Vibe: spreadsheet-calm, information-dense, Notion-meets-Linear</p>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <table class="ledger-table">
+    <tbody>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">⭐</div> Gym</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat">14<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">70%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-up">↑ Improving</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📖</div> Pimsleur</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat">27<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">95%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-up">↑ Improving</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌙</div> Bed by 9pm</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+          <div></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat">2<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">45%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-down">↓ Declining</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">💧</div> Drink Water 2L</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat">0<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">60%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-flat">— Steady</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📚</div> German Anki</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat">3<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">55%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-flat">— Steady</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌿</div> Phone-free nature</td>
+        <td class="ledger-hide-mobile"><div class="ledger-strip">
+          <div></div><div></div><div class="d"></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div></div><div class="d"></div><div></div><div></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div><div></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat">0<span class="unit">streak</span></div></td>
+        <td><div class="ledger-stat">20%<span class="unit">30d</span></div></td>
+        <td><span class="trend-chip trend-down">↓ Declining</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================
+     TAKE 3 — THE ARCHIVE
+     ========================================================= -->
+<section class="take" data-take="archive">
+  <div class="take-hdr">
+    <h1>Habits</h1>
+    <p>The Archive · calm list, tap a row to expand into the big picture</p>
+    <p class="sub">Vibe: text-first, quiet, click to zoom in</p>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">Tap any habit to open it · 6 total</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <div class="archive-list">
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">⭐</div>
+        <div class="archive-name">Gym</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="var(--sd-text-accent)" stroke-width="2" points="0,20 12,18 24,15 36,16 48,12 60,13 72,10 84,11 96,8 108,9 120,6 132,7 140,5"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-up">↑ Improving</span>
+      </div>
+      <div class="archive-expand">
+        <div class="archive-stat-block"><div class="archive-stat-label">Streak</div><div class="archive-stat-val">14 days</div></div>
+        <div class="archive-stat-block"><div class="archive-stat-label">Last 30 days</div><div class="archive-stat-val">70%</div></div>
+        <div class="archive-heatmap">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        </div>
+        <div class="archive-expand-actions">
+          <button class="ghost-btn">Edit</button>
+          <button class="ghost-btn">Open insights</button>
+          <button class="ghost-btn" style="margin-left:auto; color:#e4a89b;">Archive</button>
+        </div>
+      </div>
+    </div>
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">📖</div>
+        <div class="archive-name">Pimsleur</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="var(--sd-text-accent)" stroke-width="2" points="0,22 12,18 24,14 36,10 48,8 60,6 72,5 84,4 96,3 108,2 120,2 132,1 140,1"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-up">↑ Improving</span>
+      </div>
+    </div>
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">🌙</div>
+        <div class="archive-name">Bed by 9pm</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#e4a89b" stroke-width="2" points="0,8 12,10 24,12 36,14 48,13 60,15 72,17 84,16 96,19 108,20 120,22 132,24 140,25"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-down">↓ Declining</span>
+      </div>
+    </div>
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">💧</div>
+        <div class="archive-name">Drink Water 2L</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="var(--sd-text-muted)" stroke-width="2" points="0,14 12,15 24,13 36,15 48,14 60,15 72,14 84,15 96,13 108,15 120,14 132,15 140,14"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-flat">— Steady</span>
+      </div>
+    </div>
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">📚</div>
+        <div class="archive-name">German Anki</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="var(--sd-text-muted)" stroke-width="2" points="0,13 12,15 24,14 36,13 48,15 60,14 72,16 84,14 96,15 108,13 120,14 132,15 140,13"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-flat">— Steady</span>
+      </div>
+    </div>
+    <div class="archive-row" onclick="toggleExpand(this)">
+      <div class="archive-row-main">
+        <div class="archive-icon">🌿</div>
+        <div class="archive-name">Phone-free nature</div>
+        <svg class="archive-spark" viewBox="0 0 140 30" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#e4a89b" stroke-width="2" points="0,10 12,12 24,15 36,14 48,17 60,19 72,20 84,21 96,22 108,24 120,25 132,26 140,27"/>
+        </svg>
+        <span class="archive-chip trend-chip trend-down">↓ Declining</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     TAKE 4 — THE GALLERY
+     ========================================================= -->
+<section class="take" data-take="gallery">
+  <div class="take-hdr">
+    <h1>Habits</h1>
+    <p>The Gallery · big, visual, heatmap-as-hero</p>
+    <p class="sub">Vibe: Instagram grid, one photo per habit, numbers at the edge</p>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <div class="gallery-grid">
+    <div class="gallery-card shell">
+      <div class="face">
+        <div class="gallery-heatmap">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        </div>
+        <div class="gallery-footer">
+          <div class="gallery-left">
+            <div class="gallery-name">⭐ Gym</div>
+            <div class="gallery-meta">14d streak · ↑ Improving</div>
+          </div>
+          <div class="gallery-badge">70%<span class="unit">30d</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-card shell">
+      <div class="face">
+        <div class="gallery-heatmap">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        </div>
+        <div class="gallery-footer">
+          <div class="gallery-left">
+            <div class="gallery-name">📖 Pimsleur</div>
+            <div class="gallery-meta">27d streak · ↑ Improving</div>
+          </div>
+          <div class="gallery-badge">95%<span class="unit">30d</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-card shell">
+      <div class="face">
+        <div class="gallery-heatmap">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+        </div>
+        <div class="gallery-footer">
+          <div class="gallery-left">
+            <div class="gallery-name">🌙 Bed by 9pm</div>
+            <div class="gallery-meta">2d streak · ↓ Declining</div>
+          </div>
+          <div class="gallery-badge">45%<span class="unit">30d</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="gallery-card shell">
+      <div class="face">
+        <div class="gallery-heatmap">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+        </div>
+        <div class="gallery-footer">
+          <div class="gallery-left">
+            <div class="gallery-name">💧 Drink Water 2L</div>
+            <div class="gallery-meta">0d streak · — Steady</div>
+          </div>
+          <div class="gallery-badge">60%<span class="unit">30d</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const take = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(sec => sec.classList.toggle('active', sec.dataset.take === take));
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+  });
+
+  // Archive row expand toggle
+  function toggleExpand(row) {
+    row.classList.toggle('expanded');
+  }
+</script>
+
+</body>
+</html>

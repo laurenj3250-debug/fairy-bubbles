@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Habits · Momentum widgets</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-cell-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+
+  .hdr { text-align: center; padding: 32px 16px 20px; }
+  .hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+
+  .topbar { max-width: 1200px; margin: 0 auto 20px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pill-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.25)); color: var(--sd-text-accent); border: 1px solid rgba(255,200,140,0.3); cursor: pointer; font-family: inherit; }
+  .ghost-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; background: transparent; color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.15); cursor: pointer; font-family: inherit; }
+
+  .widget-grid {
+    max-width: 1200px; margin: 0 auto; padding: 0 20px 80px;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+  }
+  .widget { display: flex; flex-direction: column; }
+  .widget.w-4 { grid-column: span 4; }
+  .widget.w-6 { grid-column: span 6; }
+  .widget.w-8 { grid-column: span 8; }
+  .widget.w-12 { grid-column: span 12; }
+  @media (max-width: 900px) {
+    .widget.w-4, .widget.w-6, .widget.w-8 { grid-column: span 12; }
+  }
+
+  .shell { background: var(--sd-shell-bg); border-radius: 18px; padding: 3px; box-shadow: 0 0 30px rgba(225,164,92,0.04); flex: 1; }
+  .face { background: var(--sd-face-bg); backdrop-filter: blur(20px); border-radius: 16px; padding: 18px; border-top: 1px solid rgba(255,200,140,0.1); height: 100%; display: flex; flex-direction: column; }
+  .widget-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .widget-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--sd-text-secondary); }
+  .widget-sub { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+
+  .kebab { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(225,164,92,0.15); background: rgba(15,10,8,0.5); color: var(--sd-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+
+  /* Habit row (generic per-widget) */
+  .habit-line { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,200,140,0.06); }
+  .habit-line:last-child { border-bottom: none; }
+  .habit-icon { width: 26px; height: 26px; border-radius: 8px; background: rgba(225,164,92,0.12); display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+  .habit-name { flex: 1; font-size: 13px; color: var(--sd-text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Streaks widget */
+  .streak-stat { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--sd-text-accent); line-height: 1; }
+  .streak-bar { width: 90px; height: 4px; border-radius: 2px; background: rgba(15,10,8,0.6); overflow: hidden; border: 1px solid rgba(255,200,140,0.08); flex-shrink: 0; }
+  .streak-bar .fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 2px; }
+  .streak-to { font-size: 10px; color: var(--sd-text-muted); white-space: nowrap; }
+
+  /* Week delta widget */
+  .delta-chip { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; padding: 4px 12px; border-radius: 999px; min-width: 64px; text-align: center; }
+  .delta-up { background: rgba(105,183,129,0.12); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .delta-down { background: rgba(200,120,100,0.12); color: #e4a89b; border: 1px solid rgba(200,120,100,0.3); }
+  .delta-flat { background: rgba(169,130,106,0.12); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+
+  /* Trend widget */
+  .spark { width: 120px; height: 24px; flex-shrink: 0; }
+  .trend-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; min-width: 90px; justify-content: center; }
+  .trend-up { background: rgba(105,183,129,0.12); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .trend-down { background: rgba(200,120,100,0.12); color: #e4a89b; border: 1px solid rgba(200,120,100,0.3); }
+  .trend-flat { background: rgba(169,130,106,0.12); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+
+  /* Activity strip widget */
+  .strip-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .strip { display: flex; gap: 2px; flex: 1; }
+  .strip > div { flex: 1; height: 14px; border-radius: 2px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); }
+  .strip > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.25); }
+
+  /* Milestones widget */
+  .milestone-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,200,140,0.06); }
+  .milestone-row:last-child { border-bottom: none; }
+  .ms-progress { flex: 1; min-width: 0; }
+  .ms-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 3px; }
+  .ms-track { height: 5px; border-radius: 3px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); overflow: hidden; }
+  .ms-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 3px; }
+  .ms-date { font-size: 11px; color: var(--sd-text-accent); white-space: nowrap; font-weight: 600; min-width: 60px; text-align: right; }
+
+  /* This week widget — mini 7-cell per habit */
+  .week-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+  .week-cells { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; flex: 1; }
+  .week-cells > div { aspect-ratio: 1; border-radius: 5px; background: rgba(15,10,8,0.55); border: 1px solid rgba(255,200,140,0.2); }
+  .week-cells > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.35); box-shadow: 0 0 6px rgba(225,164,92,0.2); }
+  .week-cells > div.f { opacity: 0.35; }
+
+  /* Summary number widget */
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .summary-block { text-align: center; padding: 12px; background: rgba(15,10,8,0.35); border-radius: 10px; }
+  .summary-num { font-family: 'Cormorant Garamond', serif; font-size: 34px; color: var(--sd-text-accent); line-height: 1; }
+  .summary-label { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>Habits</h1>
+  <p>Momentum dashboard · separate widgets, each answering one thing</p>
+</div>
+
+<div class="topbar">
+  <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits · this week</span>
+  <div style="display:flex; gap:8px;">
+    <button class="ghost-btn">Rearrange</button>
+    <button class="ghost-btn">Insights</button>
+    <button class="pill-btn">+ New habit</button>
+  </div>
+</div>
+
+<div class="widget-grid">
+
+  <!-- Overall summary — spans full width at top -->
+  <div class="widget w-12 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div>
+          <div class="widget-title">This week at a glance</div>
+        </div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="summary" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="summary-block"><div class="summary-num">27</div><div class="summary-label">Longest streak (Pimsleur)</div></div>
+        <div class="summary-block"><div class="summary-num">+4%</div><div class="summary-label">Avg week Δ</div></div>
+        <div class="summary-block"><div class="summary-num">3 of 6</div><div class="summary-label">Improving</div></div>
+        <div class="summary-block"><div class="summary-num">Apr 24</div><div class="summary-label">Next milestone</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streaks widget -->
+  <div class="widget w-6 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">Streaks</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="habit-line">
+          <div class="habit-icon">📖</div><div class="habit-name">Pimsleur</div>
+          <div class="streak-stat">27</div>
+          <div class="streak-bar"><div class="fill" style="width:90%"></div></div>
+          <div class="streak-to">→ 30</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">⭐</div><div class="habit-name">Gym</div>
+          <div class="streak-stat">14</div>
+          <div class="streak-bar"><div class="fill" style="width:67%"></div></div>
+          <div class="streak-to">→ 21</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">📚</div><div class="habit-name">German Anki</div>
+          <div class="streak-stat">3</div>
+          <div class="streak-bar"><div class="fill" style="width:43%"></div></div>
+          <div class="streak-to">→ 7</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌙</div><div class="habit-name">Bed by 9pm</div>
+          <div class="streak-stat">2</div>
+          <div class="streak-bar"><div class="fill" style="width:28%"></div></div>
+          <div class="streak-to">→ 7</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">💧</div><div class="habit-name">Drink Water 2L</div>
+          <div class="streak-stat" style="color:var(--sd-text-muted)">0</div>
+          <div class="streak-bar"></div>
+          <div class="streak-to">start</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌿</div><div class="habit-name">Phone-free nature</div>
+          <div class="streak-stat" style="color:var(--sd-text-muted)">0</div>
+          <div class="streak-bar"></div>
+          <div class="streak-to">start</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week Δ widget -->
+  <div class="widget w-6 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">Week Δ</div><div class="widget-sub">vs last week</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="habit-line">
+          <div class="habit-icon">⭐</div><div class="habit-name">Gym</div>
+          <div class="delta-chip delta-up">+12%</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">📚</div><div class="habit-name">German Anki</div>
+          <div class="delta-chip delta-up">+8%</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">📖</div><div class="habit-name">Pimsleur</div>
+          <div class="delta-chip delta-up">+5%</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">💧</div><div class="habit-name">Drink Water 2L</div>
+          <div class="delta-chip delta-flat">±0%</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌿</div><div class="habit-name">Phone-free nature</div>
+          <div class="delta-chip delta-down">−5%</div>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌙</div><div class="habit-name">Bed by 9pm</div>
+          <div class="delta-chip delta-down">−18%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 30-day activity widget -->
+  <div class="widget w-8 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">Last 30 days</div><div class="widget-sub">Activity strip per habit</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="strip-row">
+          <div class="habit-icon">⭐</div><div class="habit-name" style="max-width:120px">Gym</div>
+          <div class="strip">
+            <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+            <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+            <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+            <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+            <div class="d"></div><div></div>
+          </div>
+        </div>
+        <div class="strip-row">
+          <div class="habit-icon">📖</div><div class="habit-name" style="max-width:120px">Pimsleur</div>
+          <div class="strip">
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+            <div class="d"></div><div class="d"></div>
+          </div>
+        </div>
+        <div class="strip-row">
+          <div class="habit-icon">🌙</div><div class="habit-name" style="max-width:120px">Bed by 9pm</div>
+          <div class="strip">
+            <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+            <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+            <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+            <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+            <div></div><div class="d"></div>
+          </div>
+        </div>
+        <div class="strip-row">
+          <div class="habit-icon">💧</div><div class="habit-name" style="max-width:120px">Drink Water 2L</div>
+          <div class="strip">
+            <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+            <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+            <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+            <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+            <div></div><div></div>
+          </div>
+        </div>
+        <div class="strip-row">
+          <div class="habit-icon">📚</div><div class="habit-name" style="max-width:120px">German Anki</div>
+          <div class="strip">
+            <div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+            <div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+            <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+            <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+            <div class="d"></div><div></div>
+          </div>
+        </div>
+        <div class="strip-row">
+          <div class="habit-icon">🌿</div><div class="habit-name" style="max-width:120px">Phone-free nature</div>
+          <div class="strip">
+            <div></div><div></div><div class="d"></div><div></div><div></div><div></div><div class="d"></div>
+            <div></div><div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div>
+            <div></div><div></div><div></div><div class="d"></div><div></div><div></div><div></div>
+            <div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div><div></div>
+            <div></div><div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend widget -->
+  <div class="widget w-4 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">Trend</div><div class="widget-sub">90-day direction</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="habit-line">
+          <div class="habit-icon">⭐</div><div class="habit-name">Gym</div>
+          <span class="trend-chip trend-up">↑ Improving</span>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">📖</div><div class="habit-name">Pimsleur</div>
+          <span class="trend-chip trend-up">↑ Improving</span>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">📚</div><div class="habit-name">German Anki</div>
+          <span class="trend-chip trend-flat">— Steady</span>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">💧</div><div class="habit-name">Drink Water 2L</div>
+          <span class="trend-chip trend-flat">— Steady</span>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌙</div><div class="habit-name">Bed by 9pm</div>
+          <span class="trend-chip trend-down">↓ Declining</span>
+        </div>
+        <div class="habit-line">
+          <div class="habit-icon">🌿</div><div class="habit-name">Phone-free nature</div>
+          <span class="trend-chip trend-down">↓ Declining</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next milestones widget -->
+  <div class="widget w-6 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">Next milestones</div><div class="widget-sub">At current pace</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="milestone-row">
+          <div class="habit-icon">📖</div>
+          <div class="ms-progress">
+            <div class="ms-label"><span>Pimsleur · 30-day</span><span>27 / 30</span></div>
+            <div class="ms-track"><div class="ms-fill" style="width:90%"></div></div>
+          </div>
+          <div class="ms-date">Apr 24</div>
+        </div>
+        <div class="milestone-row">
+          <div class="habit-icon">⭐</div>
+          <div class="ms-progress">
+            <div class="ms-label"><span>Gym · 21-day</span><span>14 / 21</span></div>
+            <div class="ms-track"><div class="ms-fill" style="width:67%"></div></div>
+          </div>
+          <div class="ms-date">Apr 28</div>
+        </div>
+        <div class="milestone-row">
+          <div class="habit-icon">📚</div>
+          <div class="ms-progress">
+            <div class="ms-label"><span>German Anki · 7-day</span><span>3 / 7</span></div>
+            <div class="ms-track"><div class="ms-fill" style="width:43%"></div></div>
+          </div>
+          <div class="ms-date">Apr 25</div>
+        </div>
+        <div class="milestone-row">
+          <div class="habit-icon">🌙</div>
+          <div class="ms-progress">
+            <div class="ms-label"><span>Bed by 9pm · 7-day</span><span>2 / 7</span></div>
+            <div class="ms-track"><div class="ms-fill" style="width:28%"></div></div>
+          </div>
+          <div class="ms-date">Apr 26</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- This week widget -->
+  <div class="widget w-6 shell">
+    <div class="face">
+      <div class="widget-hdr">
+        <div><div class="widget-title">This week</div><div class="widget-sub">Sun → Sat</div></div>
+        <button class="kebab">⋮</button>
+      </div>
+      <div>
+        <div class="week-row">
+          <div class="habit-icon">⭐</div><div class="habit-name" style="max-width:120px">Gym</div>
+          <div class="week-cells">
+            <div class="d"></div><div></div><div></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+        <div class="week-row">
+          <div class="habit-icon">📖</div><div class="habit-name" style="max-width:120px">Pimsleur</div>
+          <div class="week-cells">
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+        <div class="week-row">
+          <div class="habit-icon">🌙</div><div class="habit-name" style="max-width:120px">Bed by 9pm</div>
+          <div class="week-cells">
+            <div class="d"></div><div></div><div class="d"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+        <div class="week-row">
+          <div class="habit-icon">💧</div><div class="habit-name" style="max-width:120px">Drink Water 2L</div>
+          <div class="week-cells">
+            <div></div><div></div><div></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+        <div class="week-row">
+          <div class="habit-icon">📚</div><div class="habit-name" style="max-width:120px">German Anki</div>
+          <div class="week-cells">
+            <div></div><div></div><div></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+        <div class="week-row">
+          <div class="habit-icon">🌿</div><div class="habit-name" style="max-width:120px">Phone-free nature</div>
+          <div class="week-cells">
+            <div></div><div></div><div></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

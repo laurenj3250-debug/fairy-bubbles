@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · 25-goal dense + month-focus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+  .take { display: none; padding: 24px 20px 80px; max-width: 1200px; margin: 0 auto; }
+  .take.active { display: block; }
+  .take-hdr { text-align: center; margin-bottom: 20px; }
+  .take-hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .take-hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+  .take-hdr .purpose { display: inline-block; margin-top: 8px; padding: 5px 14px; border-radius: 999px; background: rgba(225,164,92,0.1); border: 1px solid rgba(225,164,92,0.2); font-size: 12px; color: var(--sd-text-accent); }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+  .ghost-btn { padding: 6px 12px; border-radius: 999px; font-size: 12px; background: transparent; color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.15); cursor: pointer; font-family: inherit; }
+
+  /* Chips */
+  .due { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .due.overdue { background: rgba(200,100,90,0.15); color: #e4a89b; border: 1px solid rgba(200,100,90,0.4); }
+  .due.soon { background: rgba(225,164,92,0.15); color: var(--sd-text-accent); border: 1px solid rgba(225,164,92,0.4); }
+  .due.later { background: rgba(169,130,106,0.12); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+  .due.done { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .cat { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; font-size: 9px; text-transform: uppercase; letter-spacing: 1.1px; font-weight: 600; white-space: nowrap; }
+  .cat.residency { background: rgba(180, 100, 140, 0.15); color: #e0a8c4; }
+  .cat.fitness { background: rgba(100, 170, 130, 0.15); color: #9dd4b0; }
+  .cat.climbing { background: rgba(220, 140, 100, 0.15); color: #ecbca3; }
+  .cat.outdoor { background: rgba(130, 180, 120, 0.15); color: #b4d8a9; }
+  .cat.german { background: rgba(200, 170, 100, 0.15); color: #e4d4a6; }
+  .cat.books { background: rgba(160, 140, 200, 0.15); color: #c8bce0; }
+  .cat.piano { background: rgba(170, 130, 180, 0.15); color: #d4b8dc; }
+  .cat.travel { background: rgba(140, 170, 200, 0.15); color: #b8cde4; }
+  .cat.relationship { background: rgba(220, 140, 160, 0.15); color: #f0b4c0; }
+  .cat.social { background: rgba(200, 160, 100, 0.15); color: #e4c8a4; }
+  .cat.financial { background: rgba(120, 160, 140, 0.15); color: #a8d0bc; }
+  .cat.bucket { background: rgba(210, 130, 150, 0.15); color: #eab4c0; }
+
+  .bar-track { height: 4px; border-radius: 2px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 2px; }
+
+  .kebab { width: 24px; height: 24px; border-radius: 6px; background: transparent; color: var(--sd-text-muted); border: none; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* ============= TAKE I: MONTH-FOCUS HYBRID ============= */
+  /* Big "Due April" section at top + collapsed sections below */
+  .hero-month {
+    background: linear-gradient(145deg, rgba(225,164,92,0.15), rgba(200,131,73,0.2));
+    border: 1px solid rgba(255,200,140,0.3);
+    border-radius: 18px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 24px rgba(225,164,92,0.1);
+  }
+  .hero-month-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .hero-month-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; letter-spacing: 3px; text-transform: uppercase; color: var(--sd-text-accent); }
+  .hero-month-count { color: var(--sd-text-secondary); font-size: 13px; }
+  .hero-month-count strong { color: var(--sd-text-accent); font-weight: 700; }
+  .hero-list { display: grid; gap: 6px; }
+  .hero-row {
+    background: rgba(15,10,8,0.35);
+    border: 1px solid rgba(255,200,140,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-row.overdue-row { border-left: 3px solid rgba(200,100,90,0.7); }
+  .hero-row-body { flex: 1; min-width: 0; }
+  .hero-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
+  .hero-row-meta { display: flex; gap: 8px; align-items: center; }
+  .hero-row-frac { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--sd-text-accent); font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 64px; text-align: right; }
+  .hero-row-plus {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: rgba(225,164,92,0.2); color: var(--sd-text-accent);
+    border: 1px solid rgba(225,164,92,0.4);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; font-weight: 700; flex-shrink: 0;
+  }
+
+  /* Later sections — collapsible, dense */
+  .later-sec { margin-bottom: 16px; }
+  .later-sec-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(15,10,8,0.3); border: 1px solid rgba(255,200,140,0.06);
+    cursor: pointer; user-select: none;
+  }
+  .later-sec-title { font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--sd-text-secondary); }
+  .later-sec-count { font-size: 11px; color: var(--sd-text-muted); }
+  .later-chev { color: var(--sd-text-muted); transition: transform 0.2s; }
+  .later-sec.open .later-chev { transform: rotate(90deg); }
+  .later-body { display: none; padding: 6px 0 4px; }
+  .later-sec.open .later-body { display: block; }
+  .compact-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-bottom: 1px solid rgba(255,200,140,0.04);
+  }
+  .compact-row:last-child { border-bottom: none; }
+  .compact-name { flex: 1; font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .compact-frac { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--sd-text-accent); min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; }
+  .compact-bar { width: 48px; height: 4px; flex-shrink: 0; }
+
+  /* ============= TAKE J: MONTH PICKER + FILTERED TABLE ============= */
+  .month-strip {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    padding: 8px;
+    background: var(--sd-face-bg);
+    border-radius: 14px;
+    border: 1px solid rgba(255,200,140,0.1);
+    margin-bottom: 18px;
+  }
+  .month-pill {
+    padding: 10px 4px; border-radius: 10px; text-align: center; cursor: pointer;
+    background: transparent; border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .month-pill:hover { background: rgba(225,164,92,0.08); }
+  .month-pill.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    border-color: rgba(255,200,140,0.4);
+    box-shadow: 0 0 10px rgba(225,164,92,0.2);
+  }
+  .month-pill .mn-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 1px; color: var(--sd-text-primary); font-weight: 500; }
+  .month-pill .mn-count {
+    font-size: 10px; color: var(--sd-text-muted); margin-top: 2px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .month-pill.active .mn-count { color: var(--sd-text-accent); }
+  .month-pill.has-overdue .mn-count { color: #e4a89b; }
+  .month-pill.empty .mn-name { opacity: 0.4; }
+  .month-pill.empty .mn-count { opacity: 0.4; }
+
+  @media (max-width: 700px) {
+    .month-strip { grid-template-columns: repeat(6, 1fr); }
+  }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-pill {
+    padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    background: rgba(45,22,28,0.5); color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.12);
+  }
+  .filter-pill.active { background: rgba(225,164,92,0.2); color: var(--sd-text-primary); border-color: rgba(225,164,92,0.4); }
+
+  .table-wrap { background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08); border-radius: 14px; padding: 8px; }
+  .g-table { width: 100%; border-collapse: collapse; }
+  .g-table thead th {
+    text-align: left; padding: 8px 10px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--sd-text-muted); font-weight: 600;
+    border-bottom: 1px solid rgba(255,200,140,0.1);
+  }
+  .g-table tbody tr { transition: background 0.1s; }
+  .g-table tbody tr:hover { background: rgba(85,48,52,0.55); }
+  .g-table tbody td { padding: 8px 10px; border-bottom: 1px solid rgba(255,200,140,0.04); font-size: 13px; vertical-align: middle; }
+  .g-table tr.overdue-row td:first-child { border-left: 3px solid rgba(200,100,90,0.7); padding-left: 8px; }
+  .g-table tr.done-row { opacity: 0.45; }
+  .g-table tr.done-row .g-title { text-decoration: line-through; }
+  .g-title-cell { min-width: 200px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .g-title { font-weight: 500; }
+  .g-frac { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--sd-text-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .g-bar-cell { width: 100px; }
+  .g-due-cell { white-space: nowrap; }
+  .g-cat-cell { width: 100px; }
+  .g-kebab-cell { width: 30px; text-align: right; }
+
+  @media (max-width: 700px) {
+    .g-hide-mobile { display: none; }
+    .g-table thead { display: none; }
+    .g-table, .g-table tbody, .g-table tr, .g-table td { display: block; }
+    .g-table tr { padding: 10px; border-bottom: 1px solid rgba(255,200,140,0.06); }
+    .g-table td { border: none; padding: 3px 0; }
+    .g-title-cell { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="takes-nav">
+  <button class="active" data-take="i">I · Month-focus hybrid</button>
+  <button data-take="j">J · Month picker + table</button>
+</nav>
+
+<!-- =========== TAKE I: MONTH-FOCUS HYBRID =========== -->
+<section class="take active" data-take="i">
+  <div class="take-hdr">
+    <h1>Goals — Due April up top</h1>
+    <p>Current month takes the hero. Everything else collapses into dense later sections.</p>
+    <span class="purpose">Built for 25+ goals · this-month forward</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">25 goals · 6 complete · 2 overdue</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="hero-month">
+    <div class="hero-month-hdr">
+      <div class="hero-month-title">Due April</div>
+      <div class="hero-month-count"><strong>5 goals</strong> · 2 overdue · 3 soon</div>
+    </div>
+    <div class="hero-list">
+      <div class="hero-row overdue-row">
+        <div class="hero-row-body">
+          <div class="hero-row-top">Read 6 physical books</div>
+          <div class="hero-row-meta"><span class="cat books">Books</span><span class="due overdue">12d late</span></div>
+        </div>
+        <div class="hero-row-frac">2/6</div>
+        <button class="hero-row-plus">+</button>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="hero-row overdue-row">
+        <div class="hero-row-body">
+          <div class="hero-row-top">Solo hemilaminectomy</div>
+          <div class="hero-row-meta"><span class="cat residency">Residency</span><span class="due overdue">5d late</span></div>
+        </div>
+        <div class="hero-row-frac">0/1</div>
+        <button class="hero-row-plus">+</button>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="hero-row">
+        <div class="hero-row-body">
+          <div class="hero-row-top">100 lifting days</div>
+          <div class="hero-row-meta"><span class="cat fitness">Fitness</span><span class="due soon">Apr 30</span></div>
+        </div>
+        <div class="hero-row-frac">23/100</div>
+        <button class="hero-row-plus">+</button>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="hero-row">
+        <div class="hero-row-body">
+          <div class="hero-row-top">50 phone-free nature moments</div>
+          <div class="hero-row-meta"><span class="cat outdoor">Outdoor</span><span class="due soon">Apr 30</span></div>
+        </div>
+        <div class="hero-row-frac">6/50</div>
+        <button class="hero-row-plus">+</button>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="hero-row">
+        <div class="hero-row-body">
+          <div class="hero-row-top">Log 20 neuro cases</div>
+          <div class="hero-row-meta"><span class="cat residency">Residency</span><span class="due soon">Apr 30</span></div>
+        </div>
+        <div class="hero-row-frac">12/20</div>
+        <button class="hero-row-plus">+</button>
+        <button class="kebab">⋮</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="later-sec open" onclick="toggleSec(this)">
+    <div class="later-sec-hdr">
+      <span class="later-sec-title">Due May</span>
+      <span class="later-sec-count">2 goals · <span class="later-chev">›</span></span>
+    </div>
+    <div class="later-body">
+      <div class="compact-row">
+        <span class="cat residency">Res</span>
+        <div class="compact-name">Finish year one of residency</div>
+        <div class="compact-bar bar-track"><div class="bar-fill" style="width:92%"></div></div>
+        <div class="compact-frac">11/12</div>
+        <span class="due soon">May 31</span>
+        <button class="kebab">⋮</button>
+      </div>
+      <div class="compact-row">
+        <span class="cat climbing">Clb</span>
+        <div class="compact-name">Send a V3 outdoor</div>
+        <div class="compact-bar bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        <div class="compact-frac">0/1</div>
+        <span class="due soon">May 31</span>
+        <button class="kebab">⋮</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="later-sec" onclick="toggleSec(this)">
+    <div class="later-sec-hdr">
+      <span class="later-sec-title">Later this year</span>
+      <span class="later-sec-count">12 goals · <span class="later-chev">›</span></span>
+    </div>
+    <div class="later-body">
+      <div class="compact-row"><span class="cat fitness">Fit</span><div class="compact-name">Run a 10K</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:50%"></div></div><div class="compact-frac">5/10 km</div><span class="due later">Sep 30</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat climbing">Clb</span><div class="compact-name">12 outdoor climbing days</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:25%"></div></div><div class="compact-frac">3/12</div><span class="due later">Oct 15</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat german">Ger</span><div class="compact-name">Hit B2 on Goethe exam</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="compact-frac">0/1</div><span class="due later">Nov 30</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat german">Ger</span><div class="compact-name">365 Anki days</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:18%"></div></div><div class="compact-frac">66/365</div><span class="due later">Dec 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat climbing">Clb</span><div class="compact-name">Lead V4 outside</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="compact-frac">0/1</div><span class="due later">Dec 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat piano">Pno</span><div class="compact-name">Learn Clair de Lune</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:15%"></div></div><div class="compact-frac">15%</div><span class="due later">Dec 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat outdoor">Out</span><div class="compact-name">Camp 5 nights</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:20%"></div></div><div class="compact-frac">1/5</div><span class="due later">Oct 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat travel">Trv</span><div class="compact-name">Scotland highlands trip</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="compact-frac">0/1</div><span class="due later">Aug 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat travel">Trv</span><div class="compact-name">Spring climbing trip</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="compact-frac">0/1</div><span class="due later">Jun 15</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat books">Bks</span><div class="compact-name">Finish Atomic Habits</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:65%"></div></div><div class="compact-frac">65%</div><span class="due later">Jul 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat financial">Fin</span><div class="compact-name">Max Roth IRA</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:30%"></div></div><div class="compact-frac">£2.3k/£7k</div><span class="due later">Dec 31</span><button class="kebab">⋮</button></div>
+      <div class="compact-row"><span class="cat social">Soc</span><div class="compact-name">Host 6 friend dinners</div><div class="compact-bar bar-track"><div class="bar-fill" style="width:33%"></div></div><div class="compact-frac">2/6</div><span class="due later">Dec 31</span><button class="kebab">⋮</button></div>
+    </div>
+  </div>
+
+  <div class="later-sec" onclick="toggleSec(this)">
+    <div class="later-sec-hdr">
+      <span class="later-sec-title">Done this year</span>
+      <span class="later-sec-count">6 goals · <span class="later-chev">›</span></span>
+    </div>
+    <div class="later-body">
+      <div class="compact-row" style="opacity:0.5;"><span class="cat residency">Res</span><div class="compact-name" style="text-decoration: line-through;">Finish first rotation</div><div class="compact-bar"></div><div class="compact-frac">—</div><span class="due done">✓ Mar 12</span></div>
+      <div class="compact-row" style="opacity:0.5;"><span class="cat german">Ger</span><div class="compact-name" style="text-decoration: line-through;">Finish Pimsleur 1-5</div><div class="compact-bar"></div><div class="compact-frac">—</div><span class="due done">✓ Mar 22</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE J: MONTH PICKER + FILTERED TABLE =========== -->
+<section class="take" data-take="j">
+  <div class="take-hdr">
+    <h1>Goals — Pick a month</h1>
+    <p>Month strip at top. Tap any month to filter. Table below handles 25+ goals densely.</p>
+    <span class="purpose">Built for scale · jump directly to any month</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">25 goals · showing <span id="j-showing">April (5)</span></div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+
+  <div class="month-strip" id="j-month-strip">
+    <div class="month-pill has-overdue active" data-month="Apr"><div class="mn-name">Apr</div><div class="mn-count">5 · 2 late</div></div>
+    <div class="month-pill" data-month="May"><div class="mn-name">May</div><div class="mn-count">2 due</div></div>
+    <div class="month-pill empty" data-month="Jun"><div class="mn-name">Jun</div><div class="mn-count">1 due</div></div>
+    <div class="month-pill empty" data-month="Jul"><div class="mn-name">Jul</div><div class="mn-count">1 due</div></div>
+    <div class="month-pill empty" data-month="Aug"><div class="mn-name">Aug</div><div class="mn-count">1 due</div></div>
+    <div class="month-pill empty" data-month="Sep"><div class="mn-name">Sep</div><div class="mn-count">1 due</div></div>
+    <div class="month-pill empty" data-month="Oct"><div class="mn-name">Oct</div><div class="mn-count">2 due</div></div>
+    <div class="month-pill empty" data-month="Nov"><div class="mn-name">Nov</div><div class="mn-count">1 due</div></div>
+    <div class="month-pill empty" data-month="Dec"><div class="mn-name">Dec</div><div class="mn-count">4 due</div></div>
+    <div class="month-pill empty" data-month="Jan"><div class="mn-name">Jan</div><div class="mn-count">2 done</div></div>
+    <div class="month-pill empty" data-month="Feb"><div class="mn-name">Feb</div><div class="mn-count">—</div></div>
+    <div class="month-pill empty" data-month="Mar"><div class="mn-name">Mar</div><div class="mn-count">4 done</div></div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-pill active">All</button>
+    <button class="filter-pill">Residency</button>
+    <button class="filter-pill">Fitness</button>
+    <button class="filter-pill">Climbing</button>
+    <button class="filter-pill">German</button>
+    <button class="filter-pill">Outdoor</button>
+    <button class="filter-pill">Books</button>
+    <button class="filter-pill">Travel</button>
+    <button class="filter-pill">Piano</button>
+    <button class="filter-pill">Financial</button>
+    <button class="filter-pill">Social</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="g-table">
+      <thead>
+        <tr>
+          <th>Goal</th>
+          <th class="g-hide-mobile">Category</th>
+          <th>Progress</th>
+          <th class="g-hide-mobile">Bar</th>
+          <th>Due</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Apr goals shown by default -->
+        <tr class="overdue-row">
+          <td class="g-title-cell"><span class="g-title">Read 6 physical books</span></td>
+          <td class="g-hide-mobile g-cat-cell"><span class="cat books">Books</span></td>
+          <td><span class="g-frac">2/6</span></td>
+          <td class="g-hide-mobile g-bar-cell"><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div></td>
+          <td class="g-due-cell"><span class="due overdue">12d late</span></td>
+          <td class="g-kebab-cell"><button class="kebab">⋮</button></td>
+        </tr>
+        <tr class="overdue-row">
+          <td class="g-title-cell"><span class="g-title">Solo hemilaminectomy</span></td>
+          <td class="g-hide-mobile g-cat-cell"><span class="cat residency">Residency</span></td>
+          <td><span class="g-frac">0/1</span></td>
+          <td class="g-hide-mobile g-bar-cell"><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div></td>
+          <td class="g-due-cell"><span class="due overdue">5d late</span></td>
+          <td class="g-kebab-cell"><button class="kebab">⋮</button></td>
+        </tr>
+        <tr>
+          <td class="g-title-cell"><span class="g-title">100 lifting days</span></td>
+          <td class="g-hide-mobile g-cat-cell"><span class="cat fitness">Fitness</span></td>
+          <td><span class="g-frac">23/100</span></td>
+          <td class="g-hide-mobile g-bar-cell"><div class="bar-track"><div class="bar-fill" style="width:23%"></div></div></td>
+          <td class="g-due-cell"><span class="due soon">Apr 30</span></td>
+          <td class="g-kebab-cell"><button class="kebab">⋮</button></td>
+        </tr>
+        <tr>
+          <td class="g-title-cell"><span class="g-title">50 phone-free nature moments</span></td>
+          <td class="g-hide-mobile g-cat-cell"><span class="cat outdoor">Outdoor</span></td>
+          <td><span class="g-frac">6/50</span></td>
+          <td class="g-hide-mobile g-bar-cell"><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div></td>
+          <td class="g-due-cell"><span class="due soon">Apr 30</span></td>
+          <td class="g-kebab-cell"><button class="kebab">⋮</button></td>
+        </tr>
+        <tr>
+          <td class="g-title-cell"><span class="g-title">Log 20 neuro cases</span></td>
+          <td class="g-hide-mobile g-cat-cell"><span class="cat residency">Residency</span></td>
+          <td><span class="g-frac">12/20</span></td>
+          <td class="g-hide-mobile g-bar-cell"><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div></td>
+          <td class="g-due-cell"><span class="due soon">Apr 30</span></td>
+          <td class="g-kebab-cell"><button class="kebab">⋮</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 14px; text-align: center;">
+    <button class="ghost-btn" id="j-show-all">Show all 25 goals</button>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === t));
+      window.scrollTo({ top: 0 });
+    });
+  });
+
+  function toggleSec(el) {
+    el.classList.toggle('open');
+  }
+
+  // Month pill interaction (take J)
+  document.querySelectorAll('#j-month-strip .month-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('#j-month-strip .month-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      const m = p.dataset.month;
+      const count = p.querySelector('.mn-count').textContent;
+      document.getElementById('j-showing').textContent = `${m} (${count.split(' ')[0]})`;
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · Icon tiles · 4 variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0; padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary); border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+
+  .take { display: none; padding: 24px 16px 80px; max-width: 1100px; margin: 0 auto; }
+  .take.active { display: block; }
+  .hdr { text-align: center; margin-bottom: 16px; }
+  .hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .hdr p { color: var(--sd-text-muted); font-size: 12px; margin: 0; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+  .filter-pill {
+    padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    background: rgba(45,22,28,0.5); color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.12);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .filter-pill .cnt { background: rgba(15,10,8,0.6); padding: 0 6px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .filter-pill.active { background: rgba(225,164,92,0.2); color: var(--sd-text-primary); border-color: rgba(225,164,92,0.4); }
+  .filter-pill.urgent.active { background: rgba(200,100,90,0.25); border-color: rgba(200,100,90,0.5); color: #f4c0b5; }
+
+  .sec-hdr {
+    font-family: 'Cormorant Garamond', serif; font-size: 13px;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--sd-text-muted);
+    margin: 14px 0 8px 2px;
+  }
+  .sec-hdr.hot { color: var(--sd-text-accent); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  /* Shared tile base */
+  .tile {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.1);
+    border-radius: 14px;
+    padding: 14px 10px 10px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 6px; min-height: 140px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .tile:hover { border-color: rgba(255,200,140,0.3); }
+  .tile.overdue-card { border-color: rgba(200,100,90,0.45); background: rgba(90,30,30,0.25); }
+  .tile.done-card { opacity: 0.5; }
+
+  /* =========================================================
+     N1 CLASSIC: big emoji + title + frac + due
+     ========================================================= */
+  .v1 .emoji {
+    font-size: 28px; line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(225,164,92,0.4));
+  }
+  .v1 .title { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .v1 .bottom { display: flex; flex-direction: column; gap: 3px; margin-top: auto; width: 100%; }
+  .v1 .frac { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--sd-text-accent); line-height: 1; }
+  .v1 .due { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: var(--sd-text-muted); }
+  .v1 .due.overdue { color: #e4a89b; }
+  .v1 .due.soon { color: var(--sd-text-accent); }
+
+  /* =========================================================
+     N2 RING-ICON: emoji inside a circular progress ring
+     ========================================================= */
+  .v2 .ring-wrap { position: relative; width: 80px; height: 80px; margin-top: 4px; }
+  .v2 .ring-wrap svg { transform: rotate(-90deg); width: 80px; height: 80px; }
+  .v2 .track { fill: none; stroke: rgba(225,164,92,0.12); stroke-width: 7; }
+  .v2 .val { fill: none; stroke-width: 7; stroke-linecap: round; stroke: url(#ringGradA); }
+  .v2 .val.urgent { stroke: url(#ringGradUrgent); }
+  .v2 .val.done { stroke: url(#ringGradDone); }
+  .v2 .ring-inner {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 26px;
+    filter: drop-shadow(0 0 5px rgba(225,164,92,0.4));
+  }
+  .v2 .title { font-size: 11px; font-weight: 500; line-height: 1.25; }
+  .v2 .bottom { display: flex; flex-direction: column; gap: 2px; margin-top: auto; width: 100%; }
+  .v2 .frac { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--sd-text-accent); line-height: 1; }
+  .v2 .due { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: var(--sd-text-muted); }
+  .v2 .due.overdue { color: #e4a89b; }
+  .v2 .due.soon { color: var(--sd-text-accent); }
+
+  /* =========================================================
+     N3 FILL-TILE: tile background fills with progress gradient
+     ========================================================= */
+  .v3 .fill-bg {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(255,210,140,0.35), rgba(200,131,73,0.25));
+    border-radius: 0 0 12px 12px;
+    pointer-events: none;
+    transition: height 0.6s ease;
+  }
+  .v3 .fill-bg::before {
+    content: ''; position: absolute; top: -2px; left: 0; right: 0; height: 4px;
+    background: linear-gradient(180deg, rgba(255,230,180,0.6), transparent);
+  }
+  .v3 .tile.overdue-card .fill-bg { background: linear-gradient(180deg, rgba(240,160,140,0.4), rgba(200,100,90,0.3)); }
+  .v3 .inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; height: 100%; }
+  .v3 .emoji { font-size: 26px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255,220,180,0.6)); }
+  .v3 .title { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .v3 .bottom { display: flex; flex-direction: column; gap: 2px; margin-top: auto; width: 100%; }
+  .v3 .frac { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--sd-text-primary); line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  .v3 .due { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: rgba(240,222,199,0.9); }
+  .v3 .due.overdue { color: #ffd9cc; }
+  .v3 .due.soon { color: #ffe9c2; }
+
+  /* =========================================================
+     N4 DATA-FORWARD: small icon, big fraction center, meta bottom
+     ========================================================= */
+  .v4 .tile-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  .v4 .emoji-sm {
+    font-size: 16px; line-height: 1;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(225,164,92,0.12);
+    display: grid; place-items: center;
+    filter: drop-shadow(0 0 3px rgba(225,164,92,0.3));
+  }
+  .v4 .due-chip { padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+  .v4 .due-chip.overdue { background: rgba(200,100,90,0.2); color: #e4a89b; border: 1px solid rgba(200,100,90,0.35); }
+  .v4 .due-chip.soon { background: rgba(225,164,92,0.18); color: var(--sd-text-accent); border: 1px solid rgba(225,164,92,0.35); }
+  .v4 .due-chip.later { background: rgba(169,130,106,0.15); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.25); }
+  .v4 .big-frac { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: var(--sd-text-accent); line-height: 1; margin: 6px 0 4px; font-weight: 500; }
+  .v4 .big-frac .denom { color: var(--sd-text-muted); font-size: 18px; }
+  .v4 .pct { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; }
+  .v4 .title { font-size: 11px; font-weight: 500; line-height: 1.3; margin-top: auto; text-align: center; }
+
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="ringGradA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,210,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,131,73,1)"/>
+    </linearGradient>
+    <linearGradient id="ringGradUrgent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(240,160,140,1)"/>
+      <stop offset="100%" stop-color="rgba(200,100,90,1)"/>
+    </linearGradient>
+    <linearGradient id="ringGradDone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(150,210,170,1)"/>
+      <stop offset="100%" stop-color="rgba(105,183,129,1)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<nav class="takes-nav">
+  <button class="active" data-take="v1">N1 · Classic icon</button>
+  <button data-take="v2">N2 · Ring icon</button>
+  <button data-take="v3">N3 · Fill tile</button>
+  <button data-take="v4">N4 · Data-forward</button>
+</nav>
+
+<!-- =========== N1: Classic icon =========== -->
+<section class="take active v1" data-take="v1">
+  <div class="hdr">
+    <h1>N1 · Classic icon</h1>
+    <p>Big emoji up top · title · fraction · due underneath</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="emoji">📚</div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2/6</div><div class="due overdue">12d late</div></div></div>
+    <div class="tile overdue-card"><div class="emoji">🔬</div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0/1</div><div class="due overdue">5d late</div></div></div>
+    <div class="tile"><div class="emoji">🏋️</div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23/100</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="emoji">🌿</div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6/50</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="emoji">🧠</div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12/20</div><div class="due soon">Apr 30</div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 12</div>
+  <div class="grid">
+    <div class="tile"><div class="emoji">🎓</div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11/12</div><div class="due">May 31</div></div></div>
+    <div class="tile"><div class="emoji">🏃</div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5/10</div><div class="due">Sep 30</div></div></div>
+    <div class="tile"><div class="emoji">🧗</div><div class="title">12 outdoor climbing days</div><div class="bottom"><div class="frac">3/12</div><div class="due">Oct 15</div></div></div>
+    <div class="tile"><div class="emoji">🇩🇪</div><div class="title">B2 Goethe exam</div><div class="bottom"><div class="frac">0/1</div><div class="due">Nov 30</div></div></div>
+    <div class="tile"><div class="emoji">📖</div><div class="title">365 Anki days</div><div class="bottom"><div class="frac">66/365</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="emoji">💪</div><div class="title">Lead V4 outside</div><div class="bottom"><div class="frac">0/1</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="emoji">🎹</div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="emoji">🏔️</div><div class="title">Scotland highlands</div><div class="bottom"><div class="frac">0/1</div><div class="due">Aug 31</div></div></div>
+    <div class="tile"><div class="emoji">⛺</div><div class="title">Camp 5 nights</div><div class="bottom"><div class="frac">1/5</div><div class="due">Oct 31</div></div></div>
+    <div class="tile"><div class="emoji">💰</div><div class="title">Max Roth IRA</div><div class="bottom"><div class="frac">30%</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="emoji">🍽️</div><div class="title">6 friend dinners</div><div class="bottom"><div class="frac">2/6</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="emoji">📕</div><div class="title">Atomic Habits</div><div class="bottom"><div class="frac">65%</div><div class="due">Jul 31</div></div></div>
+  </div>
+</section>
+
+<!-- =========== N2: Ring-icon (icon INSIDE ring) =========== -->
+<section class="take v2" data-take="v2">
+  <div class="hdr">
+    <h1>N2 · Ring icon</h1>
+    <p>Emoji lives inside a progress ring · ring IS the progress bar</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val urgent" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="143"/></svg><div class="ring-inner">📚</div></div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2/6</div><div class="due overdue">12d late</div></div></div>
+    <div class="tile overdue-card"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val urgent" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg><div class="ring-inner">🔬</div></div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0/1</div><div class="due overdue">5d late</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="164"/></svg><div class="ring-inner">🏋️</div></div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23/100</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="188"/></svg><div class="ring-inner">🌿</div></div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6/50</div><div class="due soon">Apr 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="85"/></svg><div class="ring-inner">🧠</div></div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12/20</div><div class="due soon">Apr 30</div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 12</div>
+  <div class="grid">
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="17"/></svg><div class="ring-inner">🎓</div></div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11/12</div><div class="due">May 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="107"/></svg><div class="ring-inner">🏃</div></div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5/10</div><div class="due">Sep 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="160"/></svg><div class="ring-inner">🧗</div></div><div class="title">12 outdoor climbing days</div><div class="bottom"><div class="frac">3/12</div><div class="due">Oct 15</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg><div class="ring-inner">🇩🇪</div></div><div class="title">B2 Goethe exam</div><div class="bottom"><div class="frac">0/1</div><div class="due">Nov 30</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="175"/></svg><div class="ring-inner">📖</div></div><div class="title">365 Anki days</div><div class="bottom"><div class="frac">66/365</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg><div class="ring-inner">💪</div></div><div class="title">Lead V4 outside</div><div class="bottom"><div class="frac">0/1</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="182"/></svg><div class="ring-inner">🎹</div></div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg><div class="ring-inner">🏔️</div></div><div class="title">Scotland highlands</div><div class="bottom"><div class="frac">0/1</div><div class="due">Aug 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="171"/></svg><div class="ring-inner">⛺</div></div><div class="title">Camp 5 nights</div><div class="bottom"><div class="frac">1/5</div><div class="due">Oct 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="149"/></svg><div class="ring-inner">💰</div></div><div class="title">Max Roth IRA</div><div class="bottom"><div class="frac">30%</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="143"/></svg><div class="ring-inner">🍽️</div></div><div class="title">6 friend dinners</div><div class="bottom"><div class="frac">2/6</div><div class="due">Dec 31</div></div></div>
+    <div class="tile"><div class="ring-wrap"><svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="val" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="75"/></svg><div class="ring-inner">📕</div></div><div class="title">Atomic Habits</div><div class="bottom"><div class="frac">65%</div><div class="due">Jul 31</div></div></div>
+  </div>
+</section>
+
+<!-- =========== N3: Fill-tile (background fills with progress) =========== -->
+<section class="take v3" data-take="v3">
+  <div class="hdr">
+    <h1>N3 · Fill tile</h1>
+    <p>Tile background fills up · water-level vibe · the card IS the progress bar</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="fill-bg" style="height:33%"></div><div class="inner"><div class="emoji">📚</div><div class="title">Read 6 physical books</div><div class="bottom"><div class="frac">2/6</div><div class="due overdue">12d late</div></div></div></div>
+    <div class="tile overdue-card"><div class="fill-bg" style="height:0%"></div><div class="inner"><div class="emoji">🔬</div><div class="title">Solo hemilaminectomy</div><div class="bottom"><div class="frac">0/1</div><div class="due overdue">5d late</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:23%"></div><div class="inner"><div class="emoji">🏋️</div><div class="title">100 lifting days</div><div class="bottom"><div class="frac">23/100</div><div class="due soon">Apr 30</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:12%"></div><div class="inner"><div class="emoji">🌿</div><div class="title">50 nature moments</div><div class="bottom"><div class="frac">6/50</div><div class="due soon">Apr 30</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:60%"></div><div class="inner"><div class="emoji">🧠</div><div class="title">Log 20 neuro cases</div><div class="bottom"><div class="frac">12/20</div><div class="due soon">Apr 30</div></div></div></div>
+  </div>
+  <div class="sec-hdr">Later · 12</div>
+  <div class="grid">
+    <div class="tile"><div class="fill-bg" style="height:92%"></div><div class="inner"><div class="emoji">🎓</div><div class="title">Year 1 residency</div><div class="bottom"><div class="frac">11/12</div><div class="due">May 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:50%"></div><div class="inner"><div class="emoji">🏃</div><div class="title">Run a 10K</div><div class="bottom"><div class="frac">5/10</div><div class="due">Sep 30</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:25%"></div><div class="inner"><div class="emoji">🧗</div><div class="title">12 outdoor climbing</div><div class="bottom"><div class="frac">3/12</div><div class="due">Oct 15</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:0%"></div><div class="inner"><div class="emoji">🇩🇪</div><div class="title">B2 Goethe exam</div><div class="bottom"><div class="frac">0/1</div><div class="due">Nov 30</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:18%"></div><div class="inner"><div class="emoji">📖</div><div class="title">365 Anki days</div><div class="bottom"><div class="frac">66/365</div><div class="due">Dec 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:0%"></div><div class="inner"><div class="emoji">💪</div><div class="title">Lead V4 outside</div><div class="bottom"><div class="frac">0/1</div><div class="due">Dec 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:15%"></div><div class="inner"><div class="emoji">🎹</div><div class="title">Clair de Lune</div><div class="bottom"><div class="frac">15%</div><div class="due">Dec 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:0%"></div><div class="inner"><div class="emoji">🏔️</div><div class="title">Scotland highlands</div><div class="bottom"><div class="frac">0/1</div><div class="due">Aug 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:20%"></div><div class="inner"><div class="emoji">⛺</div><div class="title">Camp 5 nights</div><div class="bottom"><div class="frac">1/5</div><div class="due">Oct 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:30%"></div><div class="inner"><div class="emoji">💰</div><div class="title">Max Roth IRA</div><div class="bottom"><div class="frac">30%</div><div class="due">Dec 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:33%"></div><div class="inner"><div class="emoji">🍽️</div><div class="title">6 friend dinners</div><div class="bottom"><div class="frac">2/6</div><div class="due">Dec 31</div></div></div></div>
+    <div class="tile"><div class="fill-bg" style="height:65%"></div><div class="inner"><div class="emoji">📕</div><div class="title">Atomic Habits</div><div class="bottom"><div class="frac">65%</div><div class="due">Jul 31</div></div></div></div>
+  </div>
+</section>
+
+<!-- =========== N4: Data-forward (small icon, big fraction) =========== -->
+<section class="take v4" data-take="v4">
+  <div class="hdr">
+    <h1>N4 · Data-forward</h1>
+    <p>Small icon badge top-left · huge fraction center · title anchors bottom</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="grid">
+    <div class="tile overdue-card"><div class="tile-top"><div class="emoji-sm">📚</div><span class="due-chip overdue">12d late</span></div><div class="big-frac">2<span class="denom">/6</span></div><div class="pct">33%</div><div class="title">Read 6 physical books</div></div>
+    <div class="tile overdue-card"><div class="tile-top"><div class="emoji-sm">🔬</div><span class="due-chip overdue">5d late</span></div><div class="big-frac">0<span class="denom">/1</span></div><div class="pct">0%</div><div class="title">Solo hemilaminectomy</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🏋️</div><span class="due-chip soon">Apr 30</span></div><div class="big-frac">23<span class="denom">/100</span></div><div class="pct">23%</div><div class="title">100 lifting days</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🌿</div><span class="due-chip soon">Apr 30</span></div><div class="big-frac">6<span class="denom">/50</span></div><div class="pct">12%</div><div class="title">50 nature moments</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🧠</div><span class="due-chip soon">Apr 30</span></div><div class="big-frac">12<span class="denom">/20</span></div><div class="pct">60%</div><div class="title">Log 20 neuro cases</div></div>
+  </div>
+  <div class="sec-hdr">Later · 12</div>
+  <div class="grid">
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🎓</div><span class="due-chip later">May 31</span></div><div class="big-frac">11<span class="denom">/12</span></div><div class="pct">92%</div><div class="title">Year 1 residency</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🏃</div><span class="due-chip later">Sep 30</span></div><div class="big-frac">5<span class="denom">/10</span></div><div class="pct">50%</div><div class="title">Run a 10K</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🧗</div><span class="due-chip later">Oct 15</span></div><div class="big-frac">3<span class="denom">/12</span></div><div class="pct">25%</div><div class="title">12 outdoor climbing</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🇩🇪</div><span class="due-chip later">Nov 30</span></div><div class="big-frac">0<span class="denom">/1</span></div><div class="pct">0%</div><div class="title">B2 Goethe exam</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">📖</div><span class="due-chip later">Dec 31</span></div><div class="big-frac">66<span class="denom">/365</span></div><div class="pct">18%</div><div class="title">365 Anki days</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">💪</div><span class="due-chip later">Dec 31</span></div><div class="big-frac">0<span class="denom">/1</span></div><div class="pct">0%</div><div class="title">Lead V4 outside</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🎹</div><span class="due-chip later">Dec 31</span></div><div class="big-frac">15<span class="denom">%</span></div><div class="pct">&nbsp;</div><div class="title">Clair de Lune</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🏔️</div><span class="due-chip later">Aug 31</span></div><div class="big-frac">0<span class="denom">/1</span></div><div class="pct">0%</div><div class="title">Scotland highlands</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">⛺</div><span class="due-chip later">Oct 31</span></div><div class="big-frac">1<span class="denom">/5</span></div><div class="pct">20%</div><div class="title">Camp 5 nights</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">💰</div><span class="due-chip later">Dec 31</span></div><div class="big-frac">30<span class="denom">%</span></div><div class="pct">&nbsp;</div><div class="title">Max Roth IRA</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">🍽️</div><span class="due-chip later">Dec 31</span></div><div class="big-frac">2<span class="denom">/6</span></div><div class="pct">33%</div><div class="title">6 friend dinners</div></div>
+    <div class="tile"><div class="tile-top"><div class="emoji-sm">📕</div><span class="due-chip later">Jul 31</span></div><div class="big-frac">65<span class="denom">%</span></div><div class="pct">&nbsp;</div><div class="title">Atomic Habits</div></div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === t));
+      window.scrollTo({ top: 0 });
+    });
+  });
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      const sec = p.closest('.take');
+      sec.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Habits · Ledger variants — 4 takes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-cell-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+
+  .take { display: none; padding: 24px 20px 80px; max-width: 1100px; margin: 0 auto; }
+  .take.active { display: block; }
+
+  .take-hdr { text-align: center; margin-bottom: 28px; }
+  .take-hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .take-hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+  .take-hdr .sub { font-style: italic; color: var(--sd-text-secondary); margin-top: 6px; }
+  .take-hdr .purpose {
+    display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px;
+    background: rgba(225,164,92,0.1); border: 1px solid rgba(225,164,92,0.2);
+    font-size: 12px; color: var(--sd-text-accent);
+  }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+  .pill-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: linear-gradient(145deg, rgba(255,210,140,0.15), rgba(200,131,73,0.25)); color: var(--sd-text-accent); border: 1px solid rgba(255,200,140,0.3); cursor: pointer; font-family: inherit; }
+  .ghost-btn { padding: 8px 14px; border-radius: 999px; font-size: 13px; background: transparent; color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.15); cursor: pointer; font-family: inherit; }
+  .kebab { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(225,164,92,0.15); background: rgba(15,10,8,0.5); color: var(--sd-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+
+  /* Base ledger table */
+  .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  .ledger-table tr { background: var(--sd-face-bg); transition: background 0.15s; }
+  .ledger-table tr:hover { background: rgba(85,48,52,0.7); }
+  .ledger-table td {
+    padding: 14px 12px;
+    border-top: 1px solid rgba(255,200,140,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    vertical-align: middle;
+  }
+  .ledger-table td:first-child { border-left: 1px solid rgba(255,200,140,0.08); border-radius: 12px 0 0 12px; padding-left: 16px; }
+  .ledger-table td:last-child { border-right: 1px solid rgba(255,200,140,0.08); border-radius: 0 12px 12px 0; padding-right: 16px; }
+  .ledger-table thead tr { background: transparent; }
+  .ledger-table thead tr:hover { background: transparent; }
+  .ledger-table th {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--sd-text-muted); font-weight: 600;
+    padding: 4px 12px; text-align: center;
+  }
+  .ledger-table th:first-child { text-align: left; padding-left: 16px; }
+  .ledger-name { display: flex; align-items: center; gap: 10px; font-weight: 500; min-width: 150px; }
+  .ledger-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(225,164,92,0.12); display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
+  .ledger-strip { display: flex; gap: 2px; }
+  .ledger-strip > div { width: 10px; height: 16px; border-radius: 2px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); }
+  .ledger-strip > div.d { background: var(--sd-cell-done); border-color: rgba(255,200,140,0.25); }
+  .ledger-stat { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--sd-text-accent); text-align: center; line-height: 1; }
+  .ledger-stat .unit { font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sd-text-muted); font-family: 'Source Sans 3', sans-serif; display: block; margin-top: 2px; font-weight: 400; }
+  .ledger-stat .pri { font-size: 22px; }
+  .trend-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .trend-up { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .trend-down { background: rgba(200,120,100,0.15); color: #e4a89b; border: 1px solid rgba(200,120,100,0.3); }
+  .trend-flat { background: rgba(169,130,106,0.15); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+  .delta-chip { font-size: 11px; font-weight: 700; font-family: 'Cormorant Garamond', serif; }
+  .delta-up { color: #a3d9b7; }
+  .delta-down { color: #e4a89b; }
+  .delta-flat { color: var(--sd-text-muted); }
+
+  /* Milestone bar — Variant A + D */
+  .milestone-wrap { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 130px; }
+  .milestone-top { display: flex; justify-content: space-between; width: 100%; font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .milestone-track { width: 100%; height: 6px; border-radius: 3px; background: rgba(15,10,8,0.6); overflow: hidden; position: relative; border: 1px solid rgba(255,200,140,0.08); }
+  .milestone-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 3px; }
+  .milestone-note { font-size: 10px; color: var(--sd-text-accent); font-weight: 600; }
+
+  /* Day-of-week ring — Variant C */
+  .dow-grid { display: grid; grid-template-columns: repeat(7, 16px); gap: 3px; justify-content: center; }
+  .dow-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .dow-col .dow-letter { font-size: 8px; color: var(--sd-text-muted); text-transform: uppercase; }
+  .dow-col .dow-bar { width: 14px; height: 24px; border-radius: 4px; background: rgba(15,10,8,0.55); border: 1px solid rgba(255,200,140,0.15); position: relative; overflow: hidden; }
+  .dow-col .dow-bar .fill { position: absolute; bottom: 0; left: 0; right: 0; background: var(--sd-cell-done); }
+
+  /* Projection — Variant D */
+  .projection { text-align: center; }
+  .projection .big { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--sd-text-accent); line-height: 1; }
+  .projection .sub { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px; }
+
+  /* Accumulation big number — Variant B */
+  .accum { text-align: center; }
+  .accum .big { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--sd-text-primary); line-height: 1; }
+  .accum .sub { font-size: 9px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 3px; }
+
+  /* Best-day / pattern note */
+  .pattern-note { font-size: 11px; color: var(--sd-text-secondary); font-style: italic; text-align: center; line-height: 1.4; }
+  .pattern-note strong { color: var(--sd-text-accent); font-style: normal; font-weight: 600; }
+
+  @media (max-width: 820px) {
+    .hide-mobile { display: none; }
+    .ledger-table { font-size: 13px; }
+    .ledger-table td { padding: 12px 8px; }
+    .ledger-name { min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="takes-nav" role="tablist">
+  <button class="active" data-take="a">A · Momentum</button>
+  <button data-take="b">B · Accumulation</button>
+  <button data-take="c">C · Patterns</button>
+  <button data-take="d">D · Projections</button>
+</nav>
+
+<!-- =========================================================
+     VARIANT A — MOMENTUM (trend-forward)
+     Columns: Name | 30-day strip | Streak | Week Δ | Trend | Milestone | kebab
+     ========================================================= -->
+<section class="take active" data-take="a">
+  <div class="take-hdr">
+    <h1>Habits — Momentum</h1>
+    <p>How am I trending?</p>
+    <p class="sub">Week-over-week delta + milestone bar show direction and what's next</p>
+    <span class="purpose">Answer: am I on the way up or sliding</span>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Habit</th><th class="hide-mobile">Last 30 days</th><th>Streak</th><th>Week Δ</th><th>Trend</th><th class="hide-mobile">Next milestone</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">⭐</div> Gym</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">14</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-up">+12%</div></td>
+        <td><span class="trend-chip trend-up">Improving</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>14</span><span>21</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:67%"></div></div>
+          <div class="milestone-note">7 to go</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📖</div> Pimsleur</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">27</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-up">+5%</div></td>
+        <td><span class="trend-chip trend-up">Improving</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>27</span><span>30</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:90%"></div></div>
+          <div class="milestone-note">3 to go</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌙</div> Bed by 9pm</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+          <div></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">2</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-down">−18%</div></td>
+        <td><span class="trend-chip trend-down">Declining</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>2</span><span>7</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:28%"></div></div>
+          <div class="milestone-note">5 to go</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">💧</div> Drink Water 2L</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-flat">±0%</div></td>
+        <td><span class="trend-chip trend-flat">Steady</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>0</span><span>7</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:0%"></div></div>
+          <div class="milestone-note">start one</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📚</div> German Anki</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">3</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-up">+8%</div></td>
+        <td><span class="trend-chip trend-flat">Steady</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>3</span><span>7</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:43%"></div></div>
+          <div class="milestone-note">4 to go</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌿</div> Phone-free nature</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div></div><div class="d"></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div></div><div class="d"></div><div></div><div></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div><div></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">days</span></div></td>
+        <td><div class="delta-chip delta-down">−5%</div></td>
+        <td><span class="trend-chip trend-down">Declining</span></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>0</span><span>7</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:0%"></div></div>
+          <div class="milestone-note">start one</div>
+        </div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================
+     VARIANT B — ACCUMULATION (volume-forward)
+     Columns: Name | 30-day strip | Total ever | This year | Avg/week | kebab
+     ========================================================= -->
+<section class="take" data-take="b">
+  <div class="take-hdr">
+    <h1>Habits — Accumulation</h1>
+    <p>How much have I actually done?</p>
+    <p class="sub">Total counts since you started, this year, and average per week</p>
+    <span class="purpose">Answer: the weight of my effort over time</span>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Habit</th><th class="hide-mobile">Last 30 days</th><th>Total ever</th><th>This year</th><th class="hide-mobile">Avg / week</th><th>Best streak</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">⭐</div> Gym</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="accum"><div class="big">482</div><div class="sub">Sessions</div></div></td>
+        <td><div class="accum"><div class="big">98</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">3.4</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">62</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📖</div> Pimsleur</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div>
+        </div></td>
+        <td><div class="accum"><div class="big">154</div><div class="sub">Lessons</div></div></td>
+        <td><div class="accum"><div class="big">112</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">6.7</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">41</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌙</div> Bed by 9pm</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+          <div></div><div class="d"></div>
+        </div></td>
+        <td><div class="accum"><div class="big">203</div><div class="sub">Nights</div></div></td>
+        <td><div class="accum"><div class="big">54</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">3.3</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">12</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">💧</div> Drink Water 2L</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="accum"><div class="big">276</div><div class="sub">Days</div></div></td>
+        <td><div class="accum"><div class="big">74</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">4.5</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">19</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📚</div> German Anki</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="accum"><div class="big">218</div><div class="sub">Sessions</div></div></td>
+        <td><div class="accum"><div class="big">66</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">4.0</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">17</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌿</div> Phone-free nature</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div></div><div class="d"></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div></div><div class="d"></div><div></div><div></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div><div></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="accum"><div class="big">47</div><div class="sub">Walks</div></div></td>
+        <td><div class="accum"><div class="big">24</div><div class="sub">2026</div></div></td>
+        <td class="hide-mobile"><div class="accum"><div class="big">1.5</div><div class="sub">per week</div></div></td>
+        <td><div class="ledger-stat"><span class="pri">5</span><span class="unit">best</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================
+     VARIANT C — PATTERNS (day-of-week behavior)
+     Columns: Name | DOW bars | Best day | Pattern note | Streak | kebab
+     ========================================================= -->
+<section class="take" data-take="c">
+  <div class="take-hdr">
+    <h1>Habits — Patterns</h1>
+    <p>When do I actually show up?</p>
+    <p class="sub">Day-of-week success bars surface the rhythms behind each habit</p>
+    <span class="purpose">Answer: which days make me, which days break me</span>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits · last 90 days</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Habit</th><th>Day-of-week rate</th><th class="hide-mobile">Best day</th><th class="hide-mobile">Pattern</th><th>Streak</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">⭐</div> Gym</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:30%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:80%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:85%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:55%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:90%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:50%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:25%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Thu</span><span class="unit">90% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note">Weekends off · <strong>Mon–Thu</strong> rhythm</div></td>
+        <td><div class="ledger-stat"><span class="pri">14</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📖</div> Pimsleur</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:92%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:98%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:96%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:95%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:97%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:93%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:86%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Mon</span><span class="unit">98% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note"><strong>Every day</strong> · bike commute ritual</div></td>
+        <td><div class="ledger-stat"><span class="pri">27</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌙</div> Bed by 9pm</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:30%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:62%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:54%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:58%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:48%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:18%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:15%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Mon</span><span class="unit">62% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note"><strong>Fri/Sat</strong> wrecks you · weekdays OK</div></td>
+        <td><div class="ledger-stat"><span class="pri">2</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">💧</div> Drink Water 2L</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:50%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:72%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:68%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:70%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:65%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:55%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:42%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Mon</span><span class="unit">72% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note">Work days win · weekends slip</div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📚</div> German Anki</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:60%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:78%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:65%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:72%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:68%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:45%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:38%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Mon</span><span class="unit">78% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note">Strong early week · fades by Fri</div></td>
+        <td><div class="ledger-stat"><span class="pri">3</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌿</div> Phone-free nature</td>
+        <td><div class="dow-grid">
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:65%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">M</div><div class="dow-bar"><div class="fill" style="height:12%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:8%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">W</div><div class="dow-bar"><div class="fill" style="height:10%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">T</div><div class="dow-bar"><div class="fill" style="height:15%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">F</div><div class="dow-bar"><div class="fill" style="height:20%"></div></div></div>
+          <div class="dow-col"><div class="dow-letter">S</div><div class="dow-bar"><div class="fill" style="height:70%"></div></div></div>
+        </div></td>
+        <td class="hide-mobile"><div class="ledger-stat"><span class="pri" style="font-size:15px">Sat</span><span class="unit">70% hit</span></div></td>
+        <td class="hide-mobile"><div class="pattern-note"><strong>Weekend only</strong> · never a weekday</div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">streak</span></div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================
+     VARIANT D — PROJECTIONS (forward-looking)
+     Columns: Name | 30-day strip | Streak | Next milestone bar | Proj 30d% | Linked goal | kebab
+     ========================================================= -->
+<section class="take" data-take="d">
+  <div class="take-hdr">
+    <h1>Habits — Projections</h1>
+    <p>Where is this headed?</p>
+    <p class="sub">Milestone progress + month-end projection + linked goal contribution</p>
+    <span class="purpose">Answer: if nothing changes, what's coming</span>
+  </div>
+  <div class="topbar">
+    <span style="color: var(--sd-text-muted); font-size: 13px;">6 habits</span>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost-btn">Insights</button>
+      <button class="pill-btn">+ New habit</button>
+    </div>
+  </div>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Habit</th><th class="hide-mobile">Last 30 days</th><th>Streak</th><th class="hide-mobile">Next milestone</th><th>Proj month-end</th><th class="hide-mobile">Goal contribution</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">⭐</div> Gym</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">14</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>14</span><span>21-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:67%"></div></div>
+          <div class="milestone-note">Apr 28</div>
+        </div></td>
+        <td><div class="projection"><div class="big">73%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">→ <strong>Lifting days</strong> goal · 11 of 52</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📖</div> Pimsleur</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          <div class="d"></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">27</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>27</span><span>30-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:90%"></div></div>
+          <div class="milestone-note">Apr 24</div>
+        </div></td>
+        <td><div class="projection"><div class="big">97%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">→ <strong>German fluency</strong> · on pace</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌙</div> Bed by 9pm</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div class="d"></div><div></div><div></div>
+          <div></div><div class="d"></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">2</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>2</span><span>7-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:28%"></div></div>
+          <div class="milestone-note">Apr 26 (if kept)</div>
+        </div></td>
+        <td><div class="projection"><div class="big">42%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">No goal linked</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">💧</div> Drink Water 2L</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div></div><div class="d"></div><div></div><div class="d"></div><div></div><div></div><div class="d"></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div class="d"></div><div></div><div class="d"></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>0</span><span>7-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:0%"></div></div>
+          <div class="milestone-note">start today</div>
+        </div></td>
+        <td><div class="projection"><div class="big">58%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">No goal linked</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">📚</div> German Anki</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div>
+          <div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div><div class="d"></div><div class="d"></div><div></div><div class="d"></div><div></div>
+          <div class="d"></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">3</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>3</span><span>7-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:43%"></div></div>
+          <div class="milestone-note">Apr 25 (if kept)</div>
+        </div></td>
+        <td><div class="projection"><div class="big">55%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">→ <strong>German fluency</strong> · 66 of 200</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td class="ledger-name"><div class="ledger-icon">🌿</div> Phone-free nature</td>
+        <td class="hide-mobile"><div class="ledger-strip">
+          <div></div><div></div><div class="d"></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div>
+          <div></div><div></div><div></div><div class="d"></div><div></div><div></div><div></div>
+          <div class="d"></div><div></div><div></div><div></div><div></div><div class="d"></div><div></div>
+          <div></div><div></div>
+        </div></td>
+        <td><div class="ledger-stat"><span class="pri">0</span><span class="unit">days</span></div></td>
+        <td class="hide-mobile"><div class="milestone-wrap">
+          <div class="milestone-top"><span>0</span><span>7-day</span></div>
+          <div class="milestone-track"><div class="milestone-fill" style="width:0%"></div></div>
+          <div class="milestone-note">start today</div>
+        </div></td>
+        <td><div class="projection"><div class="big">18%</div><div class="sub">projected 30d</div></div></td>
+        <td class="hide-mobile"><div class="pattern-note">→ <strong>Nature moments</strong> · 24 of 52</div></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const take = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(sec => sec.classList.toggle('active', sec.dataset.take === take));
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · 4 takes with due dates visible</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+    --sd-done: linear-gradient(145deg, rgba(255,210,140,0.35), rgba(200,131,73,0.45));
+    --sd-overdue: rgba(200, 100, 90, 0.9);
+    --sd-soon: rgba(225, 164, 92, 0.9);
+    --sd-far: rgba(169, 130, 106, 0.9);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+  .take { display: none; padding: 24px 20px 80px; max-width: 1100px; margin: 0 auto; }
+  .take.active { display: block; }
+
+  .take-hdr { text-align: center; margin-bottom: 24px; }
+  .take-hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .take-hdr p { color: var(--sd-text-muted); font-size: 13px; margin: 0; }
+  .take-hdr .sub { font-style: italic; color: var(--sd-text-secondary); margin-top: 6px; }
+  .take-hdr .purpose { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(225,164,92,0.1); border: 1px solid rgba(225,164,92,0.2); font-size: 12px; color: var(--sd-text-accent); }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+  .big-add-btn:hover { box-shadow: 0 0 24px rgba(225,164,92,0.4); }
+  .big-add-btn .plus { width: 18px; height: 18px; display: grid; place-items: center; }
+
+  .shell { background: var(--sd-shell-bg); border-radius: 16px; padding: 3px; }
+  .face { background: var(--sd-face-bg); backdrop-filter: blur(20px); border-radius: 14px; padding: 16px; border-top: 1px solid rgba(255,200,140,0.1); }
+  .kebab { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(225,164,92,0.15); background: rgba(15,10,8,0.5); color: var(--sd-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; }
+
+  /* Due-date chip (shared) */
+  .due { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .due.overdue { background: rgba(200,100,90,0.15); color: #e4a89b; border: 1px solid rgba(200,100,90,0.4); }
+  .due.soon { background: rgba(225,164,92,0.15); color: var(--sd-text-accent); border: 1px solid rgba(225,164,92,0.4); }
+  .due.later { background: rgba(169,130,106,0.12); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.3); }
+  .due.done { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+
+  /* Category chip */
+  .cat { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+  .cat.residency { background: rgba(180, 100, 140, 0.15); color: #e0a8c4; border: 1px solid rgba(180,100,140,0.3); }
+  .cat.fitness { background: rgba(100, 170, 130, 0.15); color: #9dd4b0; border: 1px solid rgba(100,170,130,0.3); }
+  .cat.climbing { background: rgba(220, 140, 100, 0.15); color: #ecbca3; border: 1px solid rgba(220,140,100,0.3); }
+  .cat.outdoor { background: rgba(130, 180, 120, 0.15); color: #b4d8a9; border: 1px solid rgba(130,180,120,0.3); }
+  .cat.german { background: rgba(200, 170, 100, 0.15); color: #e4d4a6; border: 1px solid rgba(200,170,100,0.3); }
+  .cat.books { background: rgba(160, 140, 200, 0.15); color: #c8bce0; border: 1px solid rgba(160,140,200,0.3); }
+  .cat.bucket { background: rgba(210, 130, 150, 0.15); color: #eab4c0; border: 1px solid rgba(210,130,150,0.3); }
+
+  .bar-track { height: 5px; border-radius: 3px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 3px; }
+  .bar-fill.done { background: linear-gradient(90deg, rgba(105,183,129,0.6), rgba(105,183,129,1)); opacity: 0.5; }
+
+  /* ============= TAKE A: BY DUE DATE (Urgency) ============= */
+  .sec-hdr { font-family: 'Cormorant Garamond', serif; font-size: 14px; text-transform: uppercase; letter-spacing: 3px; color: var(--sd-text-muted); margin: 20px 0 10px; padding-left: 4px; }
+  .sec-hdr.overdue { color: #e4a89b; }
+  .sec-hdr.soon { color: var(--sd-text-accent); }
+  .goal-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 6px;
+  }
+  .goal-row:hover { border-color: rgba(255,200,140,0.2); }
+  .goal-row.overdue-row { border-left: 3px solid rgba(200,100,90,0.7); }
+  .goal-row.soon-row { border-left: 3px solid rgba(225,164,92,0.7); }
+  .goal-body { flex: 1; min-width: 0; }
+  .goal-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .goal-title { font-size: 15px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .goal-sub { display: flex; align-items: center; gap: 10px; color: var(--sd-text-muted); font-size: 12px; margin-bottom: 6px; }
+  .goal-fraction { color: var(--sd-text-secondary); font-variant-numeric: tabular-nums; }
+  .goal-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .goal-plus {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: rgba(225,164,92,0.12); color: var(--sd-text-accent);
+    border: 1px solid rgba(225,164,92,0.3);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; font-weight: 700;
+  }
+
+  /* ============= TAKE B: BY CATEGORY ============= */
+  .cat-group { margin-bottom: 22px; }
+  .cat-group-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-left: 2px; }
+  .cat-group-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; }
+  .cat-group-count { font-size: 11px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .cat-goal {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 120px;
+  }
+  .cat-goal .title { font-size: 14px; font-weight: 500; }
+  .cat-goal .meta-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .cat-goal .frac { font-size: 12px; color: var(--sd-text-secondary); font-variant-numeric: tabular-nums; }
+
+  /* ============= TAKE C: TIMELINE ============= */
+  .timeline { position: relative; padding: 20px 0; }
+  .timeline::before {
+    content: ''; position: absolute; left: 120px; top: 20px; bottom: 20px;
+    width: 2px; background: linear-gradient(180deg, rgba(225,164,92,0.1), rgba(225,164,92,0.4), rgba(225,164,92,0.1));
+  }
+  .tl-row { display: grid; grid-template-columns: 100px 1fr; gap: 20px; align-items: center; margin-bottom: 14px; position: relative; }
+  .tl-month { text-align: right; padding-right: 22px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--sd-text-accent); letter-spacing: 2px; text-transform: uppercase; position: relative; }
+  .tl-month::after {
+    content: ''; position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--sd-text-accent);
+    box-shadow: 0 0 8px rgba(225,164,92,0.6);
+    border: 2px solid var(--sd-bg-deep);
+  }
+  .tl-card {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.1);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .tl-body { flex: 1; min-width: 0; }
+  .tl-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .tl-meta { display: flex; gap: 10px; align-items: center; color: var(--sd-text-muted); font-size: 12px; }
+  .tl-right { text-align: right; flex-shrink: 0; }
+  .tl-frac { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--sd-text-accent); line-height: 1; }
+  .tl-frac-unit { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.2px; display: block; margin-top: 2px; }
+
+  /* ============= TAKE D: DASHBOARD (summary + compact grid) ============= */
+  .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .summary-tile { background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08); border-radius: 14px; padding: 16px; text-align: center; }
+  .summary-tile.attention { border-color: rgba(200,100,90,0.3); background: rgba(90,30,30,0.3); }
+  .summary-num { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--sd-text-accent); line-height: 1; }
+  .summary-num.urgent { color: #e4a89b; }
+  .summary-label { font-size: 10px; color: var(--sd-text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
+
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .dash-card {
+    background: var(--sd-face-bg); border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 12px; padding: 14px; position: relative;
+    min-height: 120px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .dash-card.overdue-card { border-left: 3px solid rgba(200,100,90,0.7); }
+  .dash-card.done-card { opacity: 0.55; }
+  .dash-title { font-size: 14px; font-weight: 500; padding-right: 30px; }
+  .dash-kebab { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 6px; background: transparent; color: var(--sd-text-muted); border: none; cursor: pointer; font-size: 16px; }
+  .dash-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .dash-bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin-top: auto; }
+  .dash-frac { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--sd-text-accent); line-height: 1; }
+</style>
+</head>
+<body>
+
+<nav class="takes-nav">
+  <button class="active" data-take="a">A · By due date</button>
+  <button data-take="b">B · By category</button>
+  <button data-take="c">C · Timeline</button>
+  <button data-take="d">D · Dashboard</button>
+</nav>
+
+<!-- =========== TAKE A: BY DUE DATE =========== -->
+<section class="take active" data-take="a">
+  <div class="take-hdr">
+    <h1>Goals — By due date</h1>
+    <p>Sorted by urgency. Overdue first, then soon, then later.</p>
+    <p class="sub">Vibe: "what needs attention right now"</p>
+    <span class="purpose">Answer: what should I look at first</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 4 complete</div>
+    <button class="big-add-btn"><span class="plus">+</span> Add goal</button>
+  </div>
+
+  <div class="sec-hdr overdue">Overdue · 2</div>
+  <div class="goal-row overdue-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">Read 6 physical books</div><span class="cat books">Books</span></div>
+      <div class="goal-sub"><span class="goal-fraction">2 / 6</span><span class="due overdue">12 days late</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:33%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+  <div class="goal-row overdue-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">Complete a solo hemilaminectomy</div><span class="cat residency">Residency</span></div>
+      <div class="goal-sub"><span class="goal-fraction">0 / 1</span><span class="due overdue">5 days late</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+
+  <div class="sec-hdr soon">Soon · 3 this month</div>
+  <div class="goal-row soon-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">100 lifting days</div><span class="cat fitness">Fitness</span></div>
+      <div class="goal-sub"><span class="goal-fraction">23 / 100</span><span class="due soon">Apr 30</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:23%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+  <div class="goal-row soon-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">50 phone-free nature moments</div><span class="cat outdoor">Outdoor</span></div>
+      <div class="goal-sub"><span class="goal-fraction">6 / 50</span><span class="due soon">Apr 30</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:12%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+  <div class="goal-row soon-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">Finish year one of residency</div><span class="cat residency">Residency</span></div>
+      <div class="goal-sub"><span class="goal-fraction">11 / 12 months</span><span class="due soon">May 31</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:92%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+
+  <div class="sec-hdr">Later this year · 10</div>
+  <div class="goal-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">12 outdoor climbing days</div><span class="cat climbing">Climbing</span></div>
+      <div class="goal-sub"><span class="goal-fraction">3 / 12</span><span class="due later">Oct 15</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:25%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+  <div class="goal-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">Hit B2 on Goethe exam</div><span class="cat german">German</span></div>
+      <div class="goal-sub"><span class="goal-fraction">0 / 1</span><span class="due later">Nov 30</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+  <div class="goal-row">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title">365 Anki days</div><span class="cat german">German</span></div>
+      <div class="goal-sub"><span class="goal-fraction">66 / 365</span><span class="due later">Dec 31</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:18%"></div></div>
+    </div>
+    <div class="goal-right"><button class="goal-plus">+</button><button class="kebab">⋮</button></div>
+  </div>
+
+  <div class="sec-hdr">Done · 4 · <span style="text-transform:none; letter-spacing:0; font-size:11px; color:var(--sd-text-muted); font-style: italic;">tap to expand</span></div>
+  <div class="goal-row" style="opacity:0.5;">
+    <div class="goal-body">
+      <div class="goal-top"><div class="goal-title" style="text-decoration: line-through;">Finish first rotation</div><span class="cat residency">Residency</span></div>
+      <div class="goal-sub"><span class="due done">✓ done Mar 12</span></div>
+    </div>
+    <div class="goal-right"><button class="kebab">⋮</button></div>
+  </div>
+</section>
+
+<!-- =========== TAKE B: BY CATEGORY =========== -->
+<section class="take" data-take="b">
+  <div class="take-hdr">
+    <h1>Goals — By category</h1>
+    <p>Grouped by life area. See your residency, fitness, climbing stacks side by side.</p>
+    <p class="sub">Vibe: "how am I doing per domain"</p>
+    <span class="purpose">Answer: which parts of my life are moving</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 7 categories</div>
+    <button class="big-add-btn"><span class="plus">+</span> Add goal</button>
+  </div>
+
+  <div class="cat-group">
+    <div class="cat-group-hdr">
+      <span class="cat-group-title" style="color:#e0a8c4">Residency</span>
+      <span class="cat-group-count">3 goals · 1 overdue</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-goal">
+        <div class="title">Finish year one of residency</div>
+        <div class="meta-row"><span class="frac">11 / 12 mo</span><span class="due soon">May 31</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:92%"></div></div>
+      </div>
+      <div class="cat-goal" style="border-left:3px solid rgba(200,100,90,0.7)">
+        <div class="title">Solo hemilaminectomy</div>
+        <div class="meta-row"><span class="frac">0 / 1</span><span class="due overdue">5d late</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="cat-goal" style="opacity:0.55">
+        <div class="title">Finish first rotation</div>
+        <div class="meta-row"><span class="frac">—</span><span class="due done">✓ Mar 12</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-group">
+    <div class="cat-group-hdr">
+      <span class="cat-group-title" style="color:#9dd4b0">Fitness</span>
+      <span class="cat-group-count">2 goals</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-goal">
+        <div class="title">100 lifting days</div>
+        <div class="meta-row"><span class="frac">23 / 100</span><span class="due soon">Apr 30</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:23%"></div></div>
+      </div>
+      <div class="cat-goal">
+        <div class="title">Run a 10K</div>
+        <div class="meta-row"><span class="frac">5 / 10 km</span><span class="due later">Sep 30</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-group">
+    <div class="cat-group-hdr">
+      <span class="cat-group-title" style="color:#ecbca3">Climbing</span>
+      <span class="cat-group-count">2 goals</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-goal">
+        <div class="title">12 outdoor climbing days</div>
+        <div class="meta-row"><span class="frac">3 / 12</span><span class="due later">Oct 15</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:25%"></div></div>
+      </div>
+      <div class="cat-goal">
+        <div class="title">Lead V4 outside</div>
+        <div class="meta-row"><span class="frac">0 / 1</span><span class="due later">Dec 31</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-group">
+    <div class="cat-group-hdr">
+      <span class="cat-group-title" style="color:#e4d4a6">German</span>
+      <span class="cat-group-count">3 goals</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-goal">
+        <div class="title">365 Anki days</div>
+        <div class="meta-row"><span class="frac">66 / 365</span><span class="due later">Dec 31</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:18%"></div></div>
+      </div>
+      <div class="cat-goal">
+        <div class="title">B2 on Goethe exam</div>
+        <div class="meta-row"><span class="frac">0 / 1</span><span class="due later">Nov 30</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="cat-goal">
+        <div class="title">Finish Pimsleur 1-5</div>
+        <div class="meta-row"><span class="frac">180 / 150</span><span class="due done">✓ Mar 22</span></div>
+        <div class="bar-track"><div class="bar-fill done" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-group">
+    <div class="cat-group-hdr">
+      <span class="cat-group-title" style="color:#c8bce0">Books</span>
+      <span class="cat-group-count">1 goal · overdue</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-goal" style="border-left:3px solid rgba(200,100,90,0.7)">
+        <div class="title">6 physical books</div>
+        <div class="meta-row"><span class="frac">2 / 6</span><span class="due overdue">12d late</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:33%"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE C: TIMELINE =========== -->
+<section class="take" data-take="c">
+  <div class="take-hdr">
+    <h1>Goals — Timeline</h1>
+    <p>Calendar-scroll view. Goals arranged on a vertical line by due month.</p>
+    <p class="sub">Vibe: "the year ahead at a glance"</p>
+    <span class="purpose">Answer: what's waiting for me month by month</span>
+  </div>
+  <div class="topbar">
+    <div style="color: var(--sd-text-muted); font-size: 13px;">19 goals · 9 months remaining</div>
+    <button class="big-add-btn"><span class="plus">+</span> Add goal</button>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-month">Now · Apr</div>
+      <div class="tl-card" style="border-left:3px solid rgba(200,100,90,0.7)">
+        <div class="tl-body">
+          <div class="tl-title">Read 6 physical books · <span class="cat books">Books</span></div>
+          <div class="tl-meta"><span class="due overdue">12d overdue</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:33%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">2/6</div><div class="tl-frac-unit">books</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">Apr 30</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">100 lifting days · <span class="cat fitness">Fitness</span></div>
+          <div class="tl-meta"><span class="due soon">9 days left</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:23%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">23/100</div><div class="tl-frac-unit">days</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">May</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">Finish year one of residency · <span class="cat residency">Residency</span></div>
+          <div class="tl-meta"><span class="due soon">40 days left</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:92%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">11/12</div><div class="tl-frac-unit">months</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">Sep</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">Run a 10K · <span class="cat fitness">Fitness</span></div>
+          <div class="tl-meta"><span class="due later">~5 months</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:50%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">5/10</div><div class="tl-frac-unit">km</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">Oct</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">12 outdoor climbing days · <span class="cat climbing">Climbing</span></div>
+          <div class="tl-meta"><span class="due later">~6 months</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:25%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">3/12</div><div class="tl-frac-unit">days</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">Nov</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">Hit B2 on Goethe exam · <span class="cat german">German</span></div>
+          <div class="tl-meta"><span class="due later">~7 months</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:0%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">0/1</div><div class="tl-frac-unit">exam</div></div>
+      </div>
+    </div>
+
+    <div class="tl-row">
+      <div class="tl-month">Dec</div>
+      <div class="tl-card">
+        <div class="tl-body">
+          <div class="tl-title">365 Anki days · <span class="cat german">German</span></div>
+          <div class="tl-meta"><span class="due later">~8 months</span></div>
+          <div class="bar-track" style="margin-top:6px"><div class="bar-fill" style="width:18%"></div></div>
+        </div>
+        <div class="tl-right"><div class="tl-frac">66/365</div><div class="tl-frac-unit">days</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== TAKE D: DASHBOARD =========== -->
+<section class="take" data-take="d">
+  <div class="take-hdr">
+    <h1>Goals — Dashboard</h1>
+    <p>Summary tiles on top. Filterable grid below. Overdue stand out.</p>
+    <p class="sub">Vibe: "at-a-glance status, drill in when needed"</p>
+    <span class="purpose">Answer: how close am I to a clean year</span>
+  </div>
+  <div class="topbar">
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button class="cat" style="cursor:pointer; padding:6px 12px; background:rgba(225,164,92,0.25); border:1px solid rgba(225,164,92,0.4); color:var(--sd-text-primary);">All</button>
+      <button class="cat residency" style="cursor:pointer; padding:6px 12px;">Residency</button>
+      <button class="cat fitness" style="cursor:pointer; padding:6px 12px;">Fitness</button>
+      <button class="cat climbing" style="cursor:pointer; padding:6px 12px;">Climbing</button>
+      <button class="cat german" style="cursor:pointer; padding:6px 12px;">German</button>
+    </div>
+    <button class="big-add-btn"><span class="plus">+</span> Add goal</button>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-tile attention">
+      <div class="summary-num urgent">2</div>
+      <div class="summary-label">Overdue</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-num">3</div>
+      <div class="summary-label">Due this month</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-num">10</div>
+      <div class="summary-label">On track</div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-num">4 / 19</div>
+      <div class="summary-label">Complete</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-card overdue-card">
+      <div class="dash-title">Read 6 physical books</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat books">Books</span><span class="due overdue">12d late</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">2/6</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card overdue-card">
+      <div class="dash-title">Solo hemilaminectomy</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat residency">Residency</span><span class="due overdue">5d late</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">0/1</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-title">100 lifting days</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat fitness">Fitness</span><span class="due soon">Apr 30</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">23/100</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:23%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-title">Year 1 of residency</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat residency">Residency</span><span class="due soon">May 31</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">11/12</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-title">12 outdoor climbing days</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat climbing">Climbing</span><span class="due later">Oct 15</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">3/12</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-title">365 Anki days</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat german">German</span><span class="due later">Dec 31</span></div>
+      <div class="dash-bottom">
+        <div class="dash-frac">66/365</div>
+        <div style="flex:1; max-width:80px;"><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div></div>
+      </div>
+    </div>
+    <div class="dash-card done-card">
+      <div class="dash-title">Finish first rotation</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat residency">Residency</span><span class="due done">✓ Mar 12</span></div>
+    </div>
+    <div class="dash-card done-card">
+      <div class="dash-title">Finish Pimsleur 1-5</div>
+      <button class="dash-kebab">⋮</button>
+      <div class="dash-meta"><span class="cat german">German</span><span class="due done">✓ Mar 22</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === t));
+      window.scrollTo({ top: 0 });
+    });
+  });
+</script>
+
+</body>
+</html>

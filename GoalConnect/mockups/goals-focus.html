@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · Focus list</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+
+  /* Narrow single-column container — max 520px */
+  .wrap { max-width: 520px; margin: 0 auto; padding: 24px 16px 100px; position: relative; }
+
+  .hdr { text-align: center; margin-bottom: 18px; }
+  .hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .hdr p { color: var(--sd-text-muted); font-size: 12px; margin: 0; }
+
+  /* Smart-list pill row — horizontal scroll on mobile */
+  .pills {
+    display: flex; gap: 8px;
+    overflow-x: auto; padding: 4px 2px 10px;
+    margin-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pills::-webkit-scrollbar { display: none; }
+  .pill {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 999px;
+    background: rgba(45,22,28,0.55);
+    color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.12);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .pill .count {
+    background: rgba(15,10,8,0.6);
+    border: 1px solid rgba(255,200,140,0.08);
+    padding: 1px 7px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .pill.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary);
+    border-color: rgba(255,200,140,0.4);
+    box-shadow: 0 0 12px rgba(225,164,92,0.25);
+  }
+  .pill.active .count { background: rgba(255,210,140,0.25); color: var(--sd-text-primary); border-color: rgba(255,200,140,0.3); }
+  .pill.urgent { border-color: rgba(200,100,90,0.35); }
+  .pill.urgent .count { color: #e4a89b; border-color: rgba(200,100,90,0.4); }
+
+  /* List container */
+  .list {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.08);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,200,140,0.05);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover, .row:active { background: rgba(85,48,52,0.45); }
+  .row.overdue-row { border-left: 3px solid rgba(200,100,90,0.7); padding-left: 11px; }
+  .row.expanded { background: rgba(85,48,52,0.55); }
+  .row.done-row { opacity: 0.45; }
+  .row.done-row .title { text-decoration: line-through; }
+
+  /* Category color dot */
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 4px currentColor;
+  }
+  .dot.residency { background: #e0a8c4; color: #e0a8c4; }
+  .dot.fitness { background: #9dd4b0; color: #9dd4b0; }
+  .dot.climbing { background: #ecbca3; color: #ecbca3; }
+  .dot.outdoor { background: #b4d8a9; color: #b4d8a9; }
+  .dot.german { background: #e4d4a6; color: #e4d4a6; }
+  .dot.books { background: #c8bce0; color: #c8bce0; }
+  .dot.piano { background: #d4b8dc; color: #d4b8dc; }
+  .dot.travel { background: #b8cde4; color: #b8cde4; }
+
+  .row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .title {
+    font-size: 14px; font-weight: 500; color: var(--sd-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sub {
+    font-size: 11px; color: var(--sd-text-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sub .frac { font-family: 'Cormorant Garamond', serif; color: var(--sd-text-accent); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .due-chip {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+    background: rgba(169,130,106,0.12);
+    color: var(--sd-text-muted);
+    border: 1px solid rgba(169,130,106,0.25);
+  }
+  .due-chip.overdue { background: rgba(200,100,90,0.15); color: #e4a89b; border-color: rgba(200,100,90,0.4); }
+  .due-chip.soon { background: rgba(225,164,92,0.15); color: var(--sd-text-accent); border-color: rgba(225,164,92,0.35); }
+  .due-chip.done { background: rgba(105,183,129,0.12); color: #a3d9b7; border-color: rgba(105,183,129,0.3); }
+
+  /* Expanded row — shows bar + actions */
+  .expand {
+    display: none; padding: 0 14px 14px; gap: 10px; flex-direction: column;
+    background: rgba(85,48,52,0.55);
+    border-bottom: 1px solid rgba(255,200,140,0.05);
+  }
+  .row.expanded + .expand { display: flex; }
+  .expand-bar { height: 6px; border-radius: 3px; background: rgba(15,10,8,0.6); border: 1px solid rgba(255,200,140,0.08); overflow: hidden; }
+  .expand-bar .fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); border-radius: 3px; }
+  .expand-actions { display: flex; gap: 8px; }
+  .act-btn {
+    padding: 8px 14px; border-radius: 10px;
+    background: rgba(225,164,92,0.15); color: var(--sd-text-accent);
+    border: 1px solid rgba(225,164,92,0.3);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .act-btn.ghost {
+    background: transparent; color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+  }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    width: 56px; height: 56px;
+    border-radius: 999px;
+    background: linear-gradient(145deg, rgba(255,210,140,0.9), rgba(200,131,73,0.95));
+    color: #3a1a0a;
+    border: 1px solid rgba(255,220,180,0.5);
+    font-size: 26px; font-weight: 300;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 28px rgba(225,164,92,0.4), 0 4px 16px rgba(0,0,0,0.35);
+    z-index: 20;
+  }
+  .fab:hover { box-shadow: 0 0 36px rgba(225,164,92,0.6), 0 4px 20px rgba(0,0,0,0.45); }
+  @media (min-width: 700px) { .fab { right: calc(50% - 260px + 24px); } }
+
+  .empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--sd-text-muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* Tiny summary line above list */
+  .summary-line {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 2px 4px 10px;
+    font-size: 11px; color: var(--sd-text-muted);
+    text-transform: uppercase; letter-spacing: 1.2px;
+  }
+  .summary-line .count-num { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--sd-text-accent); text-transform: none; letter-spacing: 0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hdr">
+    <h1>Goals</h1>
+    <p>25 active · 6 complete · 2 overdue</p>
+  </div>
+
+  <!-- Smart-list pills -->
+  <div class="pills">
+    <button class="pill urgent"><span>Overdue</span><span class="count">2</span></button>
+    <button class="pill active"><span>Due April</span><span class="count">5</span></button>
+    <button class="pill"><span>This week</span><span class="count">3</span></button>
+    <button class="pill"><span>Next 30 days</span><span class="count">7</span></button>
+    <button class="pill"><span>Later</span><span class="count">12</span></button>
+    <button class="pill"><span>By category</span></button>
+    <button class="pill"><span>Done</span><span class="count">6</span></button>
+    <button class="pill"><span>All</span><span class="count">25</span></button>
+  </div>
+
+  <!-- Context line -->
+  <div class="summary-line">
+    <span>Showing — <span class="count-num">5 goals</span></span>
+    <span>Sorted — <span class="count-num">urgency</span></span>
+  </div>
+
+  <!-- List -->
+  <div class="list">
+    <div class="row overdue-row expanded" onclick="toggleRow(this)">
+      <span class="dot books" title="Books"></span>
+      <div class="row-body">
+        <span class="title">Read 6 physical books</span>
+        <span class="sub"><span class="frac">2 / 6</span> · 33%</span>
+      </div>
+      <span class="due-chip overdue">12d late</span>
+    </div>
+    <div class="expand">
+      <div class="expand-bar"><div class="fill" style="width:33%"></div></div>
+      <div class="expand-actions">
+        <button class="act-btn">+ Log progress</button>
+        <button class="act-btn ghost">Edit</button>
+        <button class="act-btn ghost" style="margin-left:auto;">⋮</button>
+      </div>
+    </div>
+
+    <div class="row overdue-row" onclick="toggleRow(this)">
+      <span class="dot residency" title="Residency"></span>
+      <div class="row-body">
+        <span class="title">Complete a solo hemilaminectomy</span>
+        <span class="sub"><span class="frac">0 / 1</span></span>
+      </div>
+      <span class="due-chip overdue">5d late</span>
+    </div>
+    <div class="expand">
+      <div class="expand-bar"><div class="fill" style="width:0%"></div></div>
+      <div class="expand-actions">
+        <button class="act-btn">+ Mark done</button>
+        <button class="act-btn ghost">Edit</button>
+        <button class="act-btn ghost" style="margin-left:auto;">⋮</button>
+      </div>
+    </div>
+
+    <div class="row" onclick="toggleRow(this)">
+      <span class="dot fitness" title="Fitness"></span>
+      <div class="row-body">
+        <span class="title">100 lifting days</span>
+        <span class="sub"><span class="frac">23 / 100</span> · 23%</span>
+      </div>
+      <span class="due-chip soon">Apr 30</span>
+    </div>
+    <div class="expand">
+      <div class="expand-bar"><div class="fill" style="width:23%"></div></div>
+      <div class="expand-actions">
+        <button class="act-btn">+ Log progress</button>
+        <button class="act-btn ghost">Edit</button>
+        <button class="act-btn ghost" style="margin-left:auto;">⋮</button>
+      </div>
+    </div>
+
+    <div class="row" onclick="toggleRow(this)">
+      <span class="dot outdoor" title="Outdoor"></span>
+      <div class="row-body">
+        <span class="title">50 phone-free nature moments</span>
+        <span class="sub"><span class="frac">6 / 50</span> · 12%</span>
+      </div>
+      <span class="due-chip soon">Apr 30</span>
+    </div>
+    <div class="expand">
+      <div class="expand-bar"><div class="fill" style="width:12%"></div></div>
+      <div class="expand-actions">
+        <button class="act-btn">+ Log progress</button>
+        <button class="act-btn ghost">Edit</button>
+        <button class="act-btn ghost" style="margin-left:auto;">⋮</button>
+      </div>
+    </div>
+
+    <div class="row" onclick="toggleRow(this)">
+      <span class="dot residency" title="Residency"></span>
+      <div class="row-body">
+        <span class="title">Log 20 neuro cases</span>
+        <span class="sub"><span class="frac">12 / 20</span> · 60%</span>
+      </div>
+      <span class="due-chip soon">Apr 30</span>
+    </div>
+    <div class="expand">
+      <div class="expand-bar"><div class="fill" style="width:60%"></div></div>
+      <div class="expand-actions">
+        <button class="act-btn">+ Log progress</button>
+        <button class="act-btn ghost">Edit</button>
+        <button class="act-btn ghost" style="margin-left:auto;">⋮</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" title="Add goal">+</button>
+
+<script>
+  function toggleRow(row) {
+    // Close all others
+    document.querySelectorAll('.row').forEach(r => { if (r !== row) r.classList.remove('expanded'); });
+    row.classList.toggle('expanded');
+  }
+
+  // Pill interaction
+  document.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

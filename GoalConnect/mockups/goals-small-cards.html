@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goals · 4 small-card takes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sd-bg-deep: #0a0507;
+    --sd-shell-bg: rgba(45, 22, 28, 0.75);
+    --sd-face-bg: rgba(85, 48, 52, 0.50);
+    --sd-text-primary: #F0DEC7;
+    --sd-text-secondary: #D9B79A;
+    --sd-text-muted: #A9826A;
+    --sd-text-accent: #E1A45C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--sd-bg-deep); color: var(--sd-text-primary); font-family: 'Source Sans 3', sans-serif; }
+  body { background:
+    radial-gradient(ellipse at 50% 10%, rgba(225,164,92,0.12), transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(147,64,46,0.15), transparent 60%),
+    var(--sd-bg-deep);
+  }
+  .takes-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; gap: 6px; padding: 16px;
+    background: rgba(10,5,7,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(225,164,92,0.1);
+    overflow-x: auto;
+  }
+  .takes-nav button {
+    flex-shrink: 0;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(45,22,28,0.6); color: var(--sd-text-muted);
+    border: 1px solid rgba(225,164,92,0.15);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.18s; font-family: inherit;
+  }
+  .takes-nav button.active {
+    background: linear-gradient(145deg, rgba(255,210,140,0.25), rgba(200,131,73,0.35));
+    color: var(--sd-text-primary); border-color: rgba(255,200,140,0.35);
+    box-shadow: 0 0 12px rgba(225,164,92,0.2);
+  }
+
+  .take { display: none; padding: 24px 16px 80px; max-width: 1100px; margin: 0 auto; }
+  .take.active { display: block; }
+
+  .hdr { text-align: center; margin-bottom: 18px; }
+  .hdr h1 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase; margin: 0 0 4px; }
+  .hdr p { color: var(--sd-text-muted); font-size: 12px; margin: 0; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 10px; flex-wrap: wrap; }
+  .big-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(255,200,140,0.4);
+    background: linear-gradient(145deg, rgba(255,210,140,0.3), rgba(200,131,73,0.4));
+    color: var(--sd-text-primary); font-weight: 600; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 0 18px rgba(225,164,92,0.25);
+  }
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+  .filter-pill {
+    padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    background: rgba(45,22,28,0.5); color: var(--sd-text-muted); border: 1px solid rgba(225,164,92,0.12);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .filter-pill .cnt { background: rgba(15,10,8,0.6); padding: 0 6px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .filter-pill.active { background: rgba(225,164,92,0.2); color: var(--sd-text-primary); border-color: rgba(225,164,92,0.4); }
+  .filter-pill.urgent.active { background: rgba(200,100,90,0.25); border-color: rgba(200,100,90,0.5); color: #f4c0b5; }
+
+  .sec-hdr {
+    font-family: 'Cormorant Garamond', serif; font-size: 14px;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--sd-text-muted);
+    margin: 16px 0 8px 2px;
+  }
+  .sec-hdr.hot { color: var(--sd-text-accent); }
+
+  /* Category hues (shared) */
+  :root {
+    --c-residency: #e0a8c4;
+    --c-fitness: #9dd4b0;
+    --c-climbing: #ecbca3;
+    --c-outdoor: #b4d8a9;
+    --c-german: #e4d4a6;
+    --c-books: #c8bce0;
+    --c-piano: #d4b8dc;
+    --c-travel: #b8cde4;
+    --c-relationship: #f0b4c0;
+    --c-social: #e4c8a4;
+    --c-financial: #a8d0bc;
+    --c-bucket: #eab4c0;
+  }
+
+  /* ============= K: STICKY NOTES ============= */
+  .k-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .k-card {
+    position: relative; cursor: pointer;
+    padding: 12px 12px 10px; border-radius: 14px;
+    min-height: 110px;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: transform 0.18s;
+    background: var(--bg); color: rgba(30,15,10,0.88);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,240,220,0.35);
+    border: 1px solid rgba(255,230,200,0.25);
+  }
+  .k-card:hover { transform: translateY(-2px) rotate(-0.5deg); }
+  .k-card.overdue-card { box-shadow: 0 0 0 2px rgba(200,100,90,0.55), 0 2px 10px rgba(0,0,0,0.3); }
+  .k-card.done-card { opacity: 0.4; }
+  .k-title { font-size: 13px; font-weight: 700; line-height: 1.25; flex: 1; }
+  .k-frac { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; line-height: 1; color: rgba(20,10,5,0.9); }
+  .k-frac .denom { color: rgba(40,20,10,0.55); font-size: 14px; }
+  .k-meta { display: flex; justify-content: space-between; align-items: center; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: rgba(30,15,10,0.6); }
+  .k-meta .due { padding: 2px 7px; border-radius: 999px; background: rgba(20,10,5,0.25); color: rgba(20,10,5,0.85); font-weight: 700; }
+  .k-meta .due.overdue { background: rgba(200,100,90,0.9); color: #fff; }
+
+  /* ============= L: STAMP CARDS (urgency left-bar) ============= */
+  .l-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .l-card {
+    display: flex; align-items: stretch;
+    border-radius: 10px;
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.1);
+    overflow: hidden; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .l-card:hover { background: rgba(85,48,52,0.7); border-color: rgba(255,200,140,0.25); }
+  .l-bar {
+    width: 5px; flex-shrink: 0;
+    background: rgba(169,130,106,0.4);
+  }
+  .l-bar.overdue { background: rgba(200,100,90,0.9); }
+  .l-bar.soon { background: rgba(225,164,92,0.9); }
+  .l-bar.done { background: rgba(105,183,129,0.8); }
+  .l-body { flex: 1; min-width: 0; padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .l-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .l-cat {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1.3px; font-weight: 700;
+  }
+  .l-due {
+    font-size: 10px; color: var(--sd-text-muted); font-weight: 600; white-space: nowrap;
+  }
+  .l-due.overdue { color: #e4a89b; }
+  .l-due.soon { color: var(--sd-text-accent); }
+  .l-title { font-size: 13px; font-weight: 500; line-height: 1.3; }
+  .l-bottom { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: auto; }
+  .l-frac { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--sd-text-accent); font-variant-numeric: tabular-nums; }
+  .l-mini-bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(15,10,8,0.6); overflow: hidden; }
+  .l-mini-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); }
+
+  /* ============= M: MINI GLASS CARDS ============= */
+  .m-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .m-card {
+    background: var(--sd-shell-bg);
+    border-radius: 12px; padding: 2px;
+    cursor: pointer; position: relative;
+    transition: transform 0.18s;
+  }
+  .m-card:hover { transform: translateY(-2px); }
+  .m-face {
+    background: var(--sd-face-bg); backdrop-filter: blur(20px);
+    border-radius: 10px; padding: 10px 12px;
+    border-top: 1px solid rgba(255,200,140,0.12);
+    display: flex; flex-direction: column; gap: 6px; min-height: 98px;
+  }
+  .m-card.overdue-card .m-face { box-shadow: inset 0 0 0 1px rgba(200,100,90,0.4); }
+  .m-card.done-card { opacity: 0.5; }
+  .m-top { display: flex; align-items: center; gap: 5px; }
+  .m-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 4px currentColor; }
+  .m-cat-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sd-text-muted); font-weight: 600; }
+  .m-title { font-size: 12px; font-weight: 500; line-height: 1.3; flex: 1; color: var(--sd-text-primary); }
+  .m-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+  .m-frac { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--sd-text-accent); font-variant-numeric: tabular-nums; line-height: 1; }
+  .m-due-chip { padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.8px; }
+  .m-due-chip.overdue { background: rgba(200,100,90,0.2); color: #e4a89b; border: 1px solid rgba(200,100,90,0.35); }
+  .m-due-chip.soon { background: rgba(225,164,92,0.18); color: var(--sd-text-accent); border: 1px solid rgba(225,164,92,0.35); }
+  .m-due-chip.later { background: rgba(169,130,106,0.15); color: var(--sd-text-muted); border: 1px solid rgba(169,130,106,0.25); }
+  .m-due-chip.done { background: rgba(105,183,129,0.15); color: #a3d9b7; border: 1px solid rgba(105,183,129,0.3); }
+  .m-bar { height: 3px; border-radius: 2px; background: rgba(15,10,8,0.6); overflow: hidden; }
+  .m-bar-fill { height: 100%; background: linear-gradient(90deg, rgba(255,210,140,0.6), rgba(225,164,92,1)); }
+
+  /* ============= N: ICON-LED TILES ============= */
+  .n-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .n-tile {
+    background: var(--sd-face-bg);
+    border: 1px solid rgba(255,200,140,0.1);
+    border-radius: 14px;
+    padding: 14px 10px 10px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 6px; min-height: 140px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .n-tile:hover { border-color: rgba(255,200,140,0.3); }
+  .n-tile.overdue-card { border-color: rgba(200,100,90,0.45); background: rgba(90,30,30,0.25); }
+  .n-tile.done-card { opacity: 0.45; }
+  .n-emoji {
+    font-size: 28px; line-height: 1;
+    filter: drop-shadow(0 0 6px currentColor);
+    color: var(--sd-text-accent);
+  }
+  .n-title { font-size: 11px; font-weight: 500; line-height: 1.3; color: var(--sd-text-primary); padding: 0 2px; }
+  .n-bottom { display: flex; flex-direction: column; gap: 3px; margin-top: auto; width: 100%; }
+  .n-frac { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--sd-text-accent); font-variant-numeric: tabular-nums; line-height: 1; }
+  .n-due { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: var(--sd-text-muted); }
+  .n-due.overdue { color: #e4a89b; }
+  .n-due.soon { color: var(--sd-text-accent); }
+</style>
+</head>
+<body>
+
+<nav class="takes-nav">
+  <button class="active" data-take="k">K · Sticky notes</button>
+  <button data-take="l">L · Stamp cards</button>
+  <button data-take="m">M · Mini glass</button>
+  <button data-take="n">N · Icon tiles</button>
+</nav>
+
+<!-- =========== TAKE K: STICKY NOTES =========== -->
+<section class="take active" data-take="k">
+  <div class="hdr">
+    <h1>Goals — Sticky notes</h1>
+    <p>Warm card colored by category · organic grid · tap to expand</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals · 2 overdue</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">This week<span class="cnt">3</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">Done<span class="cnt">6</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="k-grid">
+    <div class="k-card overdue-card" style="--bg: #e2b9cd;"><div class="k-title">Read 6 physical books</div><div class="k-frac">2<span class="denom">/6</span></div><div class="k-meta"><span>Books</span><span class="due overdue">12d late</span></div></div>
+    <div class="k-card overdue-card" style="--bg: #e0a8c4;"><div class="k-title">Solo hemilaminectomy</div><div class="k-frac">0<span class="denom">/1</span></div><div class="k-meta"><span>Residency</span><span class="due overdue">5d late</span></div></div>
+    <div class="k-card" style="--bg: #a6d3ba;"><div class="k-title">100 lifting days</div><div class="k-frac">23<span class="denom">/100</span></div><div class="k-meta"><span>Fitness</span><span class="due">Apr 30</span></div></div>
+    <div class="k-card" style="--bg: #bbd4ae;"><div class="k-title">50 phone-free nature moments</div><div class="k-frac">6<span class="denom">/50</span></div><div class="k-meta"><span>Outdoor</span><span class="due">Apr 30</span></div></div>
+    <div class="k-card" style="--bg: #e0a8c4;"><div class="k-title">Log 20 neuro cases</div><div class="k-frac">12<span class="denom">/20</span></div><div class="k-meta"><span>Residency</span><span class="due">Apr 30</span></div></div>
+  </div>
+
+  <div class="sec-hdr">Later this year · 12</div>
+  <div class="k-grid">
+    <div class="k-card" style="--bg: #e0a8c4;"><div class="k-title">Finish year 1 residency</div><div class="k-frac">11<span class="denom">/12</span></div><div class="k-meta"><span>Residency</span><span class="due">May 31</span></div></div>
+    <div class="k-card" style="--bg: #a6d3ba;"><div class="k-title">Run a 10K</div><div class="k-frac">5<span class="denom">/10km</span></div><div class="k-meta"><span>Fitness</span><span class="due">Sep 30</span></div></div>
+    <div class="k-card" style="--bg: #ecbca3;"><div class="k-title">12 outdoor climbing days</div><div class="k-frac">3<span class="denom">/12</span></div><div class="k-meta"><span>Climbing</span><span class="due">Oct 15</span></div></div>
+    <div class="k-card" style="--bg: #e4d4a6;"><div class="k-title">Hit B2 Goethe exam</div><div class="k-frac">0<span class="denom">/1</span></div><div class="k-meta"><span>German</span><span class="due">Nov 30</span></div></div>
+    <div class="k-card" style="--bg: #e4d4a6;"><div class="k-title">365 Anki days</div><div class="k-frac">66<span class="denom">/365</span></div><div class="k-meta"><span>German</span><span class="due">Dec 31</span></div></div>
+    <div class="k-card" style="--bg: #ecbca3;"><div class="k-title">Lead V4 outside</div><div class="k-frac">0<span class="denom">/1</span></div><div class="k-meta"><span>Climbing</span><span class="due">Dec 31</span></div></div>
+    <div class="k-card" style="--bg: #d4b8dc;"><div class="k-title">Learn Clair de Lune</div><div class="k-frac">15<span class="denom">%</span></div><div class="k-meta"><span>Piano</span><span class="due">Dec 31</span></div></div>
+    <div class="k-card" style="--bg: #b8cde4;"><div class="k-title">Scotland highlands</div><div class="k-frac">0<span class="denom">/1</span></div><div class="k-meta"><span>Travel</span><span class="due">Aug 31</span></div></div>
+    <div class="k-card" style="--bg: #bbd4ae;"><div class="k-title">Camp 5 nights</div><div class="k-frac">1<span class="denom">/5</span></div><div class="k-meta"><span>Outdoor</span><span class="due">Oct 31</span></div></div>
+    <div class="k-card" style="--bg: #a8d0bc;"><div class="k-title">Max Roth IRA</div><div class="k-frac">30<span class="denom">%</span></div><div class="k-meta"><span>Finance</span><span class="due">Dec 31</span></div></div>
+    <div class="k-card" style="--bg: #e4c8a4;"><div class="k-title">Host 6 friend dinners</div><div class="k-frac">2<span class="denom">/6</span></div><div class="k-meta"><span>Social</span><span class="due">Dec 31</span></div></div>
+    <div class="k-card" style="--bg: #c8bce0;"><div class="k-title">Finish Atomic Habits</div><div class="k-frac">65<span class="denom">%</span></div><div class="k-meta"><span>Books</span><span class="due">Jul 31</span></div></div>
+  </div>
+</section>
+
+<!-- =========== TAKE L: STAMP CARDS =========== -->
+<section class="take" data-take="l">
+  <div class="hdr">
+    <h1>Goals — Stamp cards</h1>
+    <p>Tight rectangles with urgency left-bar · minimal text · dense grid</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="l-grid">
+    <div class="l-card"><div class="l-bar overdue"></div><div class="l-body">
+      <div class="l-top"><span class="l-cat" style="color:var(--c-books)">Books</span><span class="l-due overdue">12d late</span></div>
+      <div class="l-title">Read 6 physical books</div>
+      <div class="l-bottom"><span class="l-frac">2/6</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:33%"></div></div></div>
+    </div></div>
+    <div class="l-card"><div class="l-bar overdue"></div><div class="l-body">
+      <div class="l-top"><span class="l-cat" style="color:var(--c-residency)">Residency</span><span class="l-due overdue">5d late</span></div>
+      <div class="l-title">Solo hemilaminectomy</div>
+      <div class="l-bottom"><span class="l-frac">0/1</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:0%"></div></div></div>
+    </div></div>
+    <div class="l-card"><div class="l-bar soon"></div><div class="l-body">
+      <div class="l-top"><span class="l-cat" style="color:var(--c-fitness)">Fitness</span><span class="l-due soon">Apr 30</span></div>
+      <div class="l-title">100 lifting days</div>
+      <div class="l-bottom"><span class="l-frac">23/100</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:23%"></div></div></div>
+    </div></div>
+    <div class="l-card"><div class="l-bar soon"></div><div class="l-body">
+      <div class="l-top"><span class="l-cat" style="color:var(--c-outdoor)">Outdoor</span><span class="l-due soon">Apr 30</span></div>
+      <div class="l-title">50 phone-free nature</div>
+      <div class="l-bottom"><span class="l-frac">6/50</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:12%"></div></div></div>
+    </div></div>
+    <div class="l-card"><div class="l-bar soon"></div><div class="l-body">
+      <div class="l-top"><span class="l-cat" style="color:var(--c-residency)">Residency</span><span class="l-due soon">Apr 30</span></div>
+      <div class="l-title">Log 20 neuro cases</div>
+      <div class="l-bottom"><span class="l-frac">12/20</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:60%"></div></div></div>
+    </div></div>
+  </div>
+
+  <div class="sec-hdr">Later this year · 12</div>
+  <div class="l-grid">
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-residency)">Residency</span><span class="l-due">May 31</span></div><div class="l-title">Year 1 of residency</div><div class="l-bottom"><span class="l-frac">11/12</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:92%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-fitness)">Fitness</span><span class="l-due">Sep 30</span></div><div class="l-title">Run a 10K</div><div class="l-bottom"><span class="l-frac">5/10</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:50%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-climbing)">Climbing</span><span class="l-due">Oct 15</span></div><div class="l-title">12 outdoor climbing days</div><div class="l-bottom"><span class="l-frac">3/12</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:25%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-german)">German</span><span class="l-due">Nov 30</span></div><div class="l-title">Hit B2 on Goethe</div><div class="l-bottom"><span class="l-frac">0/1</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:0%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-german)">German</span><span class="l-due">Dec 31</span></div><div class="l-title">365 Anki days</div><div class="l-bottom"><span class="l-frac">66/365</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:18%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-climbing)">Climbing</span><span class="l-due">Dec 31</span></div><div class="l-title">Lead V4 outside</div><div class="l-bottom"><span class="l-frac">0/1</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:0%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-piano)">Piano</span><span class="l-due">Dec 31</span></div><div class="l-title">Learn Clair de Lune</div><div class="l-bottom"><span class="l-frac">15%</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:15%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-travel)">Travel</span><span class="l-due">Aug 31</span></div><div class="l-title">Scotland highlands</div><div class="l-bottom"><span class="l-frac">0/1</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:0%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-outdoor)">Outdoor</span><span class="l-due">Oct 31</span></div><div class="l-title">Camp 5 nights</div><div class="l-bottom"><span class="l-frac">1/5</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:20%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-financial)">Finance</span><span class="l-due">Dec 31</span></div><div class="l-title">Max Roth IRA</div><div class="l-bottom"><span class="l-frac">30%</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:30%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-social)">Social</span><span class="l-due">Dec 31</span></div><div class="l-title">Host 6 friend dinners</div><div class="l-bottom"><span class="l-frac">2/6</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:33%"></div></div></div></div></div>
+    <div class="l-card"><div class="l-bar"></div><div class="l-body"><div class="l-top"><span class="l-cat" style="color:var(--c-books)">Books</span><span class="l-due">Jul 31</span></div><div class="l-title">Finish Atomic Habits</div><div class="l-bottom"><span class="l-frac">65%</span><div class="l-mini-bar"><div class="l-mini-fill" style="width:65%"></div></div></div></div></div>
+  </div>
+</section>
+
+<!-- =========== TAKE M: MINI GLASS ============= -->
+<section class="take" data-take="m">
+  <div class="hdr">
+    <h1>Goals — Mini glass</h1>
+    <p>Sundown shell tiny · tight grid · breathes like the dashboard</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="m-grid">
+    <div class="m-card overdue-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-books); background:var(--c-books);"></span><span class="m-cat-lbl">Books</span></div><div class="m-title">Read 6 physical books</div><div class="m-bar"><div class="m-bar-fill" style="width:33%"></div></div><div class="m-bottom"><span class="m-frac">2/6</span><span class="m-due-chip overdue">12d late</span></div></div></div>
+    <div class="m-card overdue-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-residency); background:var(--c-residency);"></span><span class="m-cat-lbl">Residency</span></div><div class="m-title">Solo hemilaminectomy</div><div class="m-bar"><div class="m-bar-fill" style="width:0%"></div></div><div class="m-bottom"><span class="m-frac">0/1</span><span class="m-due-chip overdue">5d late</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-fitness); background:var(--c-fitness);"></span><span class="m-cat-lbl">Fitness</span></div><div class="m-title">100 lifting days</div><div class="m-bar"><div class="m-bar-fill" style="width:23%"></div></div><div class="m-bottom"><span class="m-frac">23/100</span><span class="m-due-chip soon">Apr 30</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-outdoor); background:var(--c-outdoor);"></span><span class="m-cat-lbl">Outdoor</span></div><div class="m-title">50 phone-free nature</div><div class="m-bar"><div class="m-bar-fill" style="width:12%"></div></div><div class="m-bottom"><span class="m-frac">6/50</span><span class="m-due-chip soon">Apr 30</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-residency); background:var(--c-residency);"></span><span class="m-cat-lbl">Residency</span></div><div class="m-title">Log 20 neuro cases</div><div class="m-bar"><div class="m-bar-fill" style="width:60%"></div></div><div class="m-bottom"><span class="m-frac">12/20</span><span class="m-due-chip soon">Apr 30</span></div></div></div>
+  </div>
+
+  <div class="sec-hdr">Later this year · 12</div>
+  <div class="m-grid">
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-residency); background:var(--c-residency);"></span><span class="m-cat-lbl">Residency</span></div><div class="m-title">Year 1 of residency</div><div class="m-bar"><div class="m-bar-fill" style="width:92%"></div></div><div class="m-bottom"><span class="m-frac">11/12</span><span class="m-due-chip later">May 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-fitness); background:var(--c-fitness);"></span><span class="m-cat-lbl">Fitness</span></div><div class="m-title">Run a 10K</div><div class="m-bar"><div class="m-bar-fill" style="width:50%"></div></div><div class="m-bottom"><span class="m-frac">5/10</span><span class="m-due-chip later">Sep 30</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-climbing); background:var(--c-climbing);"></span><span class="m-cat-lbl">Climbing</span></div><div class="m-title">12 outdoor climbing days</div><div class="m-bar"><div class="m-bar-fill" style="width:25%"></div></div><div class="m-bottom"><span class="m-frac">3/12</span><span class="m-due-chip later">Oct 15</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-german); background:var(--c-german);"></span><span class="m-cat-lbl">German</span></div><div class="m-title">Hit B2 on Goethe</div><div class="m-bar"><div class="m-bar-fill" style="width:0%"></div></div><div class="m-bottom"><span class="m-frac">0/1</span><span class="m-due-chip later">Nov 30</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-german); background:var(--c-german);"></span><span class="m-cat-lbl">German</span></div><div class="m-title">365 Anki days</div><div class="m-bar"><div class="m-bar-fill" style="width:18%"></div></div><div class="m-bottom"><span class="m-frac">66/365</span><span class="m-due-chip later">Dec 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-climbing); background:var(--c-climbing);"></span><span class="m-cat-lbl">Climbing</span></div><div class="m-title">Lead V4 outside</div><div class="m-bar"><div class="m-bar-fill" style="width:0%"></div></div><div class="m-bottom"><span class="m-frac">0/1</span><span class="m-due-chip later">Dec 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-piano); background:var(--c-piano);"></span><span class="m-cat-lbl">Piano</span></div><div class="m-title">Clair de Lune</div><div class="m-bar"><div class="m-bar-fill" style="width:15%"></div></div><div class="m-bottom"><span class="m-frac">15%</span><span class="m-due-chip later">Dec 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-travel); background:var(--c-travel);"></span><span class="m-cat-lbl">Travel</span></div><div class="m-title">Scotland highlands</div><div class="m-bar"><div class="m-bar-fill" style="width:0%"></div></div><div class="m-bottom"><span class="m-frac">0/1</span><span class="m-due-chip later">Aug 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-outdoor); background:var(--c-outdoor);"></span><span class="m-cat-lbl">Outdoor</span></div><div class="m-title">Camp 5 nights</div><div class="m-bar"><div class="m-bar-fill" style="width:20%"></div></div><div class="m-bottom"><span class="m-frac">1/5</span><span class="m-due-chip later">Oct 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-financial); background:var(--c-financial);"></span><span class="m-cat-lbl">Finance</span></div><div class="m-title">Max Roth IRA</div><div class="m-bar"><div class="m-bar-fill" style="width:30%"></div></div><div class="m-bottom"><span class="m-frac">30%</span><span class="m-due-chip later">Dec 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-social); background:var(--c-social);"></span><span class="m-cat-lbl">Social</span></div><div class="m-title">6 friend dinners</div><div class="m-bar"><div class="m-bar-fill" style="width:33%"></div></div><div class="m-bottom"><span class="m-frac">2/6</span><span class="m-due-chip later">Dec 31</span></div></div></div>
+    <div class="m-card"><div class="m-face"><div class="m-top"><span class="m-dot" style="color:var(--c-books); background:var(--c-books);"></span><span class="m-cat-lbl">Books</span></div><div class="m-title">Finish Atomic Habits</div><div class="m-bar"><div class="m-bar-fill" style="width:65%"></div></div><div class="m-bottom"><span class="m-frac">65%</span><span class="m-due-chip later">Jul 31</span></div></div></div>
+  </div>
+</section>
+
+<!-- =========== TAKE N: ICON-LED TILES =========== -->
+<section class="take" data-take="n">
+  <div class="hdr">
+    <h1>Goals — Icon tiles</h1>
+    <p>Emoji/icon dominates · tiny title · dense Pinterest grid</p>
+  </div>
+  <div class="topbar">
+    <div style="color:var(--sd-text-muted); font-size:13px;">25 goals</div>
+    <button class="big-add-btn"><span>+</span> Add goal</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-pill urgent active">Due April<span class="cnt">5</span></button>
+    <button class="filter-pill">Overdue<span class="cnt">2</span></button>
+    <button class="filter-pill">Later<span class="cnt">12</span></button>
+    <button class="filter-pill">All<span class="cnt">25</span></button>
+  </div>
+
+  <div class="sec-hdr hot">Due April</div>
+  <div class="n-grid">
+    <div class="n-tile overdue-card"><div class="n-emoji">📚</div><div class="n-title">Read 6 physical books</div><div class="n-bottom"><div class="n-frac">2/6</div><div class="n-due overdue">12d late</div></div></div>
+    <div class="n-tile overdue-card"><div class="n-emoji">🔬</div><div class="n-title">Solo hemilaminectomy</div><div class="n-bottom"><div class="n-frac">0/1</div><div class="n-due overdue">5d late</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🏋️</div><div class="n-title">100 lifting days</div><div class="n-bottom"><div class="n-frac">23/100</div><div class="n-due soon">Apr 30</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🌿</div><div class="n-title">50 nature moments</div><div class="n-bottom"><div class="n-frac">6/50</div><div class="n-due soon">Apr 30</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🧠</div><div class="n-title">Log 20 neuro cases</div><div class="n-bottom"><div class="n-frac">12/20</div><div class="n-due soon">Apr 30</div></div></div>
+  </div>
+
+  <div class="sec-hdr">Later this year · 12</div>
+  <div class="n-grid">
+    <div class="n-tile"><div class="n-emoji">🎓</div><div class="n-title">Year 1 residency</div><div class="n-bottom"><div class="n-frac">11/12</div><div class="n-due">May 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🏃</div><div class="n-title">Run a 10K</div><div class="n-bottom"><div class="n-frac">5/10</div><div class="n-due">Sep 30</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🧗</div><div class="n-title">12 outdoor climbing days</div><div class="n-bottom"><div class="n-frac">3/12</div><div class="n-due">Oct 15</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🇩🇪</div><div class="n-title">B2 Goethe exam</div><div class="n-bottom"><div class="n-frac">0/1</div><div class="n-due">Nov 30</div></div></div>
+    <div class="n-tile"><div class="n-emoji">📖</div><div class="n-title">365 Anki days</div><div class="n-bottom"><div class="n-frac">66/365</div><div class="n-due">Dec 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">💪</div><div class="n-title">Lead V4 outside</div><div class="n-bottom"><div class="n-frac">0/1</div><div class="n-due">Dec 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🎹</div><div class="n-title">Clair de Lune</div><div class="n-bottom"><div class="n-frac">15%</div><div class="n-due">Dec 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🏔️</div><div class="n-title">Scotland highlands</div><div class="n-bottom"><div class="n-frac">0/1</div><div class="n-due">Aug 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">⛺</div><div class="n-title">Camp 5 nights</div><div class="n-bottom"><div class="n-frac">1/5</div><div class="n-due">Oct 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">💰</div><div class="n-title">Max Roth IRA</div><div class="n-bottom"><div class="n-frac">30%</div><div class="n-due">Dec 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">🍽️</div><div class="n-title">6 friend dinners</div><div class="n-bottom"><div class="n-frac">2/6</div><div class="n-due">Dec 31</div></div></div>
+    <div class="n-tile"><div class="n-emoji">📕</div><div class="n-title">Atomic Habits</div><div class="n-bottom"><div class="n-frac">65%</div><div class="n-due">Jul 31</div></div></div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.takes-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.take;
+      document.querySelectorAll('.takes-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.take').forEach(s => s.classList.toggle('active', s.dataset.take === t));
+      window.scrollTo({ top: 0 });
+    });
+  });
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      const sec = p.closest('.take');
+      sec.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
