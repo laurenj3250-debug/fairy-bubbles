@@ -124,7 +124,7 @@ export function SegmentedGoalTile({
       className={`group relative rounded-[16px] border p-4 pb-3 transition-all flex flex-col items-center text-center gap-2 min-h-[220px] ${handleClick ? "cursor-pointer hover:-translate-y-0.5" : ""} ${tileBorder}`}
       data-testid={testId}
     >
-      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+      <div className="absolute top-2 right-2 flex gap-1">
         {!isComplete && onAddProgress && (
           <button
             onClick={(e) => { e.stopPropagation(); onAddProgress(); }}
