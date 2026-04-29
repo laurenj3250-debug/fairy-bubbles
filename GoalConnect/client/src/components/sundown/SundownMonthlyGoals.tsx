@@ -158,8 +158,8 @@ export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoal
           >
             {displayGoals.map((goal) => {
               const rawGoal = rawGoals.find((g) => g.id === goal.id);
-              const isManualCount =
-                rawGoal?.goalType === 'count' && !!rawGoal && !isGoalLinked(rawGoal);
+              const canIncrement =
+                rawGoal?.goalType === 'count' && goal.current < goal.target;
 
               return (
                 <SegmentedGoalTile
@@ -169,8 +169,13 @@ export function SundownMonthlyGoals({ goals, rawGoals = [] }: SundownMonthlyGoal
                   target={goal.target}
                   category={goal.category}
                   testId={`goal-tile-${goal.id}`}
+                  onClick={
+                    canIncrement
+                      ? () => incrementMutation.mutate(goal.id)
+                      : undefined
+                  }
                   onAddProgress={
-                    isManualCount && goal.current < goal.target
+                    canIncrement
                       ? () => incrementMutation.mutate(goal.id)
                       : undefined
                   }
