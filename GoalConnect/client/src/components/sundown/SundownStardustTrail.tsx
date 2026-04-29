@@ -134,38 +134,48 @@ export function SundownStardustTrail({
                     </span>
                   </div>
 
-                  {weekDates.map((date, i) => {
-                    const done = !!logMap.get(`${habit.id}:${date}`);
-                    const isCurrentWeek = todayIndex >= 0;
-                    const isToday = isCurrentWeek && i === todayIndex;
-                    const isFuture = isCurrentWeek && i > todayIndex;
+                  {isWeekly && targetMet ? (
+                    <div
+                      className="sd-habit-week-met-pill"
+                      role="status"
+                      aria-label={`${habit.name} done this week (${weekDoneCount} of ${target})`}
+                    >
+                      <span className="sd-habit-week-met-check">✓</span>
+                      <span>Done this week</span>
+                    </div>
+                  ) : (
+                    weekDates.map((date, i) => {
+                      const done = !!logMap.get(`${habit.id}:${date}`);
+                      const isCurrentWeek = todayIndex >= 0;
+                      const isToday = isCurrentWeek && i === todayIndex;
+                      const isFuture = isCurrentWeek && i > todayIndex;
 
-                    const classes = [
-                      'sd-star-dot',
-                      done ? 'done' : 'empty',
-                      isToday ? 'today-ring' : '',
-                      isFuture && !done ? 'future' : '',
-                      isWeekly && targetMet && done ? 'weekly-met' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
+                      const classes = [
+                        'sd-star-dot',
+                        done ? 'done' : 'empty',
+                        isToday ? 'today-ring' : '',
+                        isFuture && !done ? 'future' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
 
-                    return (
-                      <button
-                        key={`${habit.id}-${date}`}
-                        className={classes}
-                        style={{
-                          animationDelay: done
-                            ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
-                            : undefined,
-                        }}
-                        onClick={() => onToggle(habit.id, date)}
-                        aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
-                      >
-                        {done ? '✓' : ''}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={`${habit.id}-${date}`}
+                          className={classes}
+                          style={{
+                            animationDelay: done
+                              ? `${(i * 0.15 + habits.indexOf(habit) * 0.05).toFixed(2)}s`
+                              : undefined,
+                          }}
+                          onClick={() => onToggle(habit.id, date)}
+                          aria-label={`${done ? 'Uncheck' : 'Check'} ${habit.name} for ${format(new Date(date + 'T12:00:00'), 'EEEE')}`}
+                        >
+                          {done ? '✓' : ''}
+                        </button>
+                      );
+                    })
+                  )}
                 </React.Fragment>
               );
             })}

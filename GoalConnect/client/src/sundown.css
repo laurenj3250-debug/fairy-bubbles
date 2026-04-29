@@ -415,6 +415,32 @@
   color: rgba(245,200,80,0.9) !important;
 }
 
+/* Weekly-met pill: replaces 7 day cells with a single full-width amber bar */
+.sd-habit-week-met-pill {
+  grid-column: 2 / -1;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(225, 164, 92, 0.25), rgba(217, 122, 79, 0.18));
+  border: 1px solid rgba(225, 164, 92, 0.5);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  color: #ffc784;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px rgba(225, 164, 92, 0.3), inset 0 1px 0 rgba(255, 240, 200, 0.2);
+  animation: sd-pill-fade-in 0.4s ease-out;
+}
+.sd-habit-week-met-check {
+  font-size: 14px;
+  color: #ffc784;
+}
+@keyframes sd-pill-fade-in {
+  from { opacity: 0; transform: scaleX(0.95); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
 /* ===== AURORA GRADIENT LEVEL/REWARD ===== */
 .sd-aurora-card .sd-face {
   padding: 0; overflow: hidden; display: flex; flex-direction: column;
